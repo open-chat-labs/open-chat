@@ -15,6 +15,8 @@ import type {
     ApiGroupGateUpdate,
     ApiConvertIntoCommunityResponse,
     ApiUpdatedRules,
+    ApiFollowThreadResponse,
+    ApiUnfollowThreadResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -42,6 +44,7 @@ import type {
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
     UpdatedRules,
+    FollowThreadResponse,
 } from "openchat-shared";
 import {
     CommonResponses,
@@ -204,6 +207,7 @@ function groupChatSummaryUpdates(
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         latestThreads: candid.latest_threads.map(threadDetails),
+        unfollowedThreads: Array.from(candid.unfollowed_threads),
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
@@ -679,4 +683,16 @@ export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
         enabled: rules.enabled,
         new_version: rules.newVersion,  
     };
+}
+
+export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("AlreadyFollowing" in candid || "NotFollowing" in candid) {
+        return "unchanged";
+    } else {
+        console.warn("followThread failed with", candid);
+        return "failed";
+    }
 }

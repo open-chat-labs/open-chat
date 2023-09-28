@@ -8,8 +8,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
-    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, HydratedMention, MessageIndex,
-    TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS,
+    is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
+    HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -36,6 +36,7 @@ impl GroupMembers {
             notifications_muted: Timestamped::new(false, now),
             mentions: Mentions::default(),
             threads: HashSet::new(),
+            unfollowed_threads: Vec::new(),
             proposal_votes: BTreeMap::default(),
             suspended: Timestamped::default(),
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
@@ -76,6 +77,7 @@ impl GroupMembers {
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         mentions: Mentions::default(),
                         threads: HashSet::new(),
+                        unfollowed_threads: Vec::new(),
                         proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
                         rules_accepted: None,
@@ -296,6 +298,8 @@ pub struct GroupMemberInternal {
     pub mentions: Mentions,
     #[serde(rename = "t", default, skip_serializing_if = "is_empty_hashset")]
     pub threads: HashSet<MessageIndex>,
+    #[serde(rename = "f", default, skip_serializing_if = "is_empty_slice")]
+    pub unfollowed_threads: Vec<MessageIndex>,
     #[serde(rename = "p", default, skip_serializing_if = "is_empty_btreemap")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
     #[serde(rename = "s", default, skip_serializing_if = "is_default")]
@@ -429,6 +433,7 @@ mod tests {
             notifications_muted: Timestamped::new(true, 1),
             mentions: Mentions::default(),
             threads: HashSet::new(),
+            unfollowed_threads: Vec::new(),
             proposal_votes: BTreeMap::new(),
             suspended: Timestamped::default(),
             min_visible_event_index: 0.into(),
@@ -459,6 +464,7 @@ mod tests {
             notifications_muted: Timestamped::new(true, 1),
             mentions,
             threads: HashSet::from([1.into()]),
+            unfollowed_threads: vec![1.into()],
             proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
             suspended: Timestamped::new(true, 1),
             min_visible_event_index: 1.into(),
@@ -471,8 +477,8 @@ mod tests {
         let member_bytes_len = member_bytes.len();
 
         // Before optimisation: 278 (? - this has now changed)
-        // After optimisation: 110
-        assert_eq!(member_bytes_len, 110);
+        // After optimisation: 114
+        assert_eq!(member_bytes_len, 114);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

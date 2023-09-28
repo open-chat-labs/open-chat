@@ -1011,5 +1011,19 @@
     "displayNameRules": "opcional",
     "displayName": "Nombre para mostrar",
     "communityDisplayNameRules": "solo dentro de esta comunidad",
-    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles"
+    "userIdCopiedToClipboard": "ID de usuario copiado al portapapeles",
+    "tip": {
+        "title": "Añadir una propina",
+        "failure": "Lo sentimos, no pudimos agregar tu consejo.",
+        "noExchangeRate": "No tenemos ningún tipo de cambio configurado para {token}",
+        "menu": "Consejo",
+        "plusFee": "+ tarifa {fee} {token}",
+        "advice": "Toca tantas veces como quieras para dejar una propina."
+    },
+    "followThread": "Sigue este hilo",
+    "unfollowThread": "Dejar de seguir este hilo",
+    "followThreadFailed": "Error al seguir el hilo",
+    "unfollowThreadFailed": "Error al dejar de seguir el hilo",
+    "doubleClickReply": "Haga doble clic en el mensaje para responder/editar",
+    "doubleTapReply": "Toca dos veces el mensaje para responder/editar"
 }

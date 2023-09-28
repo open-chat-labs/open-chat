@@ -1,13 +1,14 @@
 import type { Theme } from "../types";
+import { hexPercent } from "../utils";
 
 const veryDarkCyan = "#002b36";
 const darkCyan = "#073642";
 const darkCyan2 = "#0c586ba6";
 const darkBlue = "#186899";
-const gray = "#8b9898";
 const lightishGray = "#90aba7";
 const lightGray = "#d6dddc";
 const olive = "#748c09";
+const shadow = "inset 0px 2px 4px rgba(0,0,0,0.4)";
 
 const txt = lightGray;
 const txtLight = lightishGray;
@@ -30,7 +31,7 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = olive;
     base.accent = olive;
-    base.panel.left.bg = darkCyan;
+    base.panel.left.bg = hexPercent(darkCyan, 40);
     base.panel.right.modal = veryDarkCyan;
     base.modal.bd = base.bd;
     base.modal.bg = base.panel.right.modal;
@@ -40,15 +41,18 @@ export function getTheme(base: Theme): Theme {
     base.members.hv = darkCyan2;
     base.placeholder = txtLight;
     base.entry.input.bg = veryDarkCyan;
+    base.entry.input.sh = shadow;
     base.input.bg = veryDarkCyan;
+    base.input.sh = shadow;
     base.chatSearch.bg = veryDarkCyan;
+    base.chatSearch.sh = shadow;
     base.currentChat.msg.bg = darkCyan;
     base.currentChat.msg.me.bg = darkCyan2;
     base.currentChat.msg.txt = txtLight;
     base.currentChat.date.bg = base.currentChat.msg.bg;
     base.currentChat.msg.inert = base.currentChat.msg.bg;
-    base.notificationBar.bg = gray;
-    base.notificationBar.txt = txtLight;
+    base.notificationBar.bg = olive;
+    base.notificationBar.txt = txt;
     base.timeline.txt = base.notificationBar.txt;
     base.menu.bd = base.bd;
     base.menu.bg = base.panel.right.modal;
@@ -60,7 +64,7 @@ export function getTheme(base: Theme): Theme {
     base.reaction.me = olive;
     base.primary = olive;
     base.link.underline = base.primary;
-    base.scrollbar.bg = base.button.hv;
+    base.scrollbar.bg = hexPercent(base.button.hv, 60);
     base.toast.success.bg = base.notificationBar.bg;
 
     return base;

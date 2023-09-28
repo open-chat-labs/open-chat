@@ -5,6 +5,7 @@ use user_canister::*;
 generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(initial_state);
+generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
 // Updates
@@ -22,6 +23,7 @@ generate_update_call!(leave_group);
 generate_update_call!(mark_read);
 generate_update_call!(mute_notifications);
 generate_update_call!(remove_reaction);
+generate_update_call!(save_crypto_account);
 generate_update_call!(send_message_v2);
 generate_update_call!(send_message_with_transfer_to_channel);
 generate_update_call!(send_message_with_transfer_to_group);
@@ -32,14 +34,14 @@ generate_update_call!(undelete_messages);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
-    use crate::utils::now_nanos;
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::icrc1::Account;
+
     use types::{
-        icrc1, CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial,
-        MessageId, PendingCryptoTransaction, Reaction, Rules, TextContent, TimestampMillis, UserId,
+        CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
+        Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
@@ -260,17 +262,13 @@ pub mod happy_path {
             sender.canister(),
             &user_canister::tip_message::Args {
                 chat,
+                recipient,
                 thread_root_message_index: None,
                 message_id,
-                transfer: PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-                    ledger,
-                    token,
-                    amount,
-                    to: Account::from(Principal::from(recipient)),
-                    fee,
-                    memo: None,
-                    created: now_nanos(env),
-                }),
+                ledger,
+                token,
+                amount,
+                fee,
             },
         );
 

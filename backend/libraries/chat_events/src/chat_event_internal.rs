@@ -1,22 +1,22 @@
 use crate::incr;
-use itertools::Itertools;
 use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
-    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
-    MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
-    PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
-    ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, UserId,
-    UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
+    EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
+    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
+    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
+    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
+    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
+    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked,
+    UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -151,7 +151,7 @@ pub struct MessageInternal {
     #[serde(rename = "r", default, skip_serializing_if = "is_empty_slice")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     #[serde(rename = "ti", default, skip_serializing_if = "is_empty_slice")]
-    pub tips: Vec<(UserId, CompletedCryptoTransaction)>,
+    pub tips: Tips,
     #[serde(rename = "u", default, skip_serializing_if = "Option::is_none")]
     pub last_updated: Option<TimestampMillis>,
     #[serde(rename = "e", default, skip_serializing_if = "Option::is_none")]
@@ -166,15 +166,6 @@ pub struct MessageInternal {
 
 impl MessageInternal {
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
-        let mut tips = Vec::new();
-        for (ledger, group) in &self.tips.iter().group_by(|(_, transfer)| transfer.ledger_canister_id()) {
-            let mut per_user = Vec::new();
-            for (user_id, transfers) in &group.group_by(|(user_id, _)| user_id) {
-                per_user.push((*user_id, transfers.map(|(_, transfer)| transfer.units()).sum()));
-            }
-            tips.push((ledger, per_user));
-        }
-
         Message {
             message_index: self.message_index,
             message_id: self.message_id,
@@ -190,10 +181,10 @@ impl MessageInternal {
                 .iter()
                 .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
                 .collect(),
-            tips,
+            tips: self.tips.clone(),
             edited: self.last_edited.is_some(),
             forwarded: self.forwarded,
-            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate()),
+            thread_summary: self.thread_summary.as_ref().map(|t| t.hydrate(my_user_id)),
             last_updated: self.last_updated,
         }
     }
@@ -456,6 +447,8 @@ impl MessageContentInternal {
 pub struct ThreadSummaryInternal {
     #[serde(rename = "i")]
     pub participant_ids: Vec<UserId>,
+    #[serde(default, rename = "f")]
+    pub follower_ids: HashMap<UserId, Timestamped<bool>>,
     #[serde(rename = "r")]
     pub reply_count: u32,
     #[serde(rename = "e")]
@@ -465,13 +458,40 @@ pub struct ThreadSummaryInternal {
 }
 
 impl ThreadSummaryInternal {
-    pub fn hydrate(&self) -> ThreadSummary {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> ThreadSummary {
         ThreadSummary {
             participant_ids: self.participant_ids.clone(),
+            followed_by_me: my_user_id.map_or(false, |u| self.follower_ids.get(&u).map_or(false, |t| t.value)),
             reply_count: self.reply_count,
             latest_event_index: self.latest_event_index,
             latest_event_timestamp: self.latest_event_timestamp,
         }
+    }
+
+    pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
+        let new_entry = Timestamped::new(follow, now);
+        match self.follower_ids.entry(user_id) {
+            Occupied(mut e) => {
+                if e.get().value == follow {
+                    false
+                } else {
+                    e.insert(new_entry);
+                    true
+                }
+            }
+            Vacant(e) => {
+                e.insert(new_entry);
+                true
+            }
+        }
+    }
+
+    pub fn followers(&self) -> HashSet<UserId> {
+        HashSet::from_iter(self.follower_ids.iter().filter(|(_, t)| t.value).map(|(user_id, _)| *user_id))
+    }
+
+    pub fn get_follower(&self, user_id: UserId) -> Option<Timestamped<bool>> {
+        self.follower_ids.get(&user_id).cloned()
     }
 }
 
@@ -772,9 +792,8 @@ mod tests {
         ThreadSummaryInternal,
     };
     use candid::Principal;
-    use std::collections::HashSet;
-    use types::icrc1::{Account, CryptoAccount};
-    use types::{icrc1, CompletedCryptoTransaction, Cryptocurrency, EventWrapperInternal, Reaction, TextContent};
+    use std::collections::{HashMap, HashSet};
+    use types::{EventWrapperInternal, Reaction, TextContent, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -785,7 +804,7 @@ mod tests {
             content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             reactions: Vec::new(),
-            tips: Vec::new(),
+            tips: Tips::default(),
             last_updated: None,
             last_edited: None,
             deleted_by: None,
@@ -820,6 +839,8 @@ mod tests {
     #[test]
     fn serialize_with_no_defaults() {
         let principal = Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap();
+        let mut tips = Tips::default();
+        tips.push(principal, principal.into(), 1);
         let message = MessageInternal {
             message_index: 1.into(),
             message_id: 1.into(),
@@ -830,20 +851,7 @@ mod tests {
                 event_index: 1.into(),
             }),
             reactions: vec![(Reaction::new("1".to_string()), HashSet::from([principal.into()]))],
-            tips: vec![(
-                principal.into(),
-                CompletedCryptoTransaction::ICRC1(icrc1::CompletedCryptoTransaction {
-                    ledger: principal,
-                    token: Cryptocurrency::InternetComputer,
-                    amount: 1,
-                    from: CryptoAccount::Account(Account::from(principal)),
-                    to: CryptoAccount::Account(Account::from(principal)),
-                    fee: 1,
-                    memo: None,
-                    created: 1,
-                    block_index: 1,
-                }),
-            )],
+            tips,
             last_updated: Some(1),
             last_edited: Some(1),
             deleted_by: Some(DeletedByInternal {
@@ -852,6 +860,7 @@ mod tests {
             }),
             thread_summary: Some(ThreadSummaryInternal {
                 participant_ids: vec![principal.into()],
+                follower_ids: HashMap::new(),
                 reply_count: 1,
                 latest_event_index: 1.into(),
                 latest_event_timestamp: 1,
@@ -872,13 +881,13 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        // Before optimisation: 619
-        // After optimisation: 383
-        assert_eq!(message_bytes_len, 383);
+        // Before optimisation: 438
+        // After optimisation: 205
+        assert_eq!(message_bytes_len, 205);
 
-        // Before optimisation: 681
-        // After optimisation: 401
-        assert_eq!(event_bytes_len, 401);
+        // Before optimisation: 500
+        // After optimisation: 223
+        assert_eq!(event_bytes_len, 223);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

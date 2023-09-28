@@ -330,6 +330,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     my_metrics : opt ChatMetrics;
     is_public : opt bool;
     latest_threads : vec GroupCanisterThreadDetails;
+    unfollowed_threads : vec MessageIndex;
     notifications_muted : opt bool;
     frozen : FrozenGroupUpdate;
     wasm_version : opt BuildVersion;
@@ -465,6 +466,7 @@ type ChannelMembershipUpdates = record {
     notifications_muted : opt bool;
     my_metrics : opt ChatMetrics;
     latest_threads : vec GroupCanisterThreadDetails;
+    unfollowed_threads : vec MessageIndex;
     rules_accepted : opt bool;
 };
 
@@ -478,7 +480,6 @@ type SelectedGroupUpdates = record {
     invited_users : opt vec UserId;
     pinned_messages_added : vec MessageIndex;
     pinned_messages_removed : vec MessageIndex;
-    rules : opt Rules;
     chat_rules : opt VersionedRules;
 };
 
@@ -1269,6 +1270,7 @@ type CommunityRole = variant {
 
 type ThreadSummary = record {
     participant_ids : vec UserId;
+    followed_by_me : bool;
     reply_count : nat32;
     latest_event_index : EventIndex;
     latest_event_timestamp : TimestampMillis;

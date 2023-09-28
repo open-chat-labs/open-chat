@@ -15,6 +15,7 @@
         type ChatIdentifier,
         type ChatType,
         routeForMessage,
+        type PendingCryptocurrencyTransfer,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -35,6 +36,7 @@
         onMount,
         tick,
     } from "svelte";
+    import { dclickReply } from "../../stores/settings";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -43,7 +45,6 @@
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
-    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
@@ -52,6 +53,9 @@
     import ReminderBuilder from "./ReminderBuilder.svelte";
     import ReportMessage from "./ReportMessage.svelte";
     import { longpress } from "../../actions/longpress";
+    import TipBuilder from "./TipBuilder.svelte";
+    import TipThumbnail from "./TipThumbnail.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -96,15 +100,15 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let viewProfile = false;
-    let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
     let showReport = false;
     let messageMenu: ChatMessageMenu;
+    let tipping: string | undefined = undefined;
 
+    $: canTip = !me && confirmed && !inert && !failed;
     $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -131,6 +135,9 @@
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
+    $: messageContext = { chatId, threadRootMessageIndex };
+    $: lastCryptoSent = client.lastCryptoSent;
+    $: tips = msg.tips ? Object.entries(msg.tips) : [];
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -166,11 +173,6 @@
             observer?.unobserve(msgElement);
         }
     });
-
-    function chatWithUser() {
-        closeUserProfile();
-        dispatch("chatWith", { kind: "direct_chat", userId: msg.sender });
-    }
 
     function createReplyContext(): EnhancedReplyContext {
         return {
@@ -216,13 +218,17 @@
     }
 
     function doubleClickMessage() {
-        if (failed || msg.deleted) return;
+        if (failed || msg.deleted || !$dclickReply) return;
 
         if (me) {
             editMessage();
         } else if (confirmed) {
             reply();
         }
+    }
+
+    function tipMessage(ev: CustomEvent<string>) {
+        tipping = ev.detail;
     }
 
     function selectReaction(ev: CustomEvent<string>) {
@@ -314,14 +320,12 @@
     }
 
     function openUserProfile(ev: Event) {
-        if (ev.target) {
-            alignProfileTo = (ev.target as HTMLElement).getBoundingClientRect();
-        }
-        viewProfile = true;
-    }
-
-    function closeUserProfile() {
-        viewProfile = false;
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
+                bubbles: true,
+            })
+        );
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
@@ -346,9 +350,26 @@
     function canShare(): boolean {
         return canShareMessage(msg.content);
     }
+
+    function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
+        tipping = undefined;
+        const transfer = ev.detail;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[client.user.userId] ?? 0n;
+        client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
+            if (resp.kind === "success") {
+                lastCryptoSent.set(transfer.ledger);
+            } else {
+                toastStore.showFailureToast("tip.failure");
+            }
+        });
+    }
 </script>
 
 <svelte:window on:resize={recalculateMediaDimensions} />
+
+{#if tipping !== undefined}
+    <TipBuilder ledger={tipping} on:send={sendTip} on:close={() => (tipping = undefined)} {msg} />
+{/if}
 
 {#if showEmojiPicker && canReact}
     <Overlay on:close={() => (showEmojiPicker = false)} dismissible>
@@ -388,15 +409,6 @@
         {chatId}
         {canDelete}
         on:close={() => (showReport = false)} />
-{/if}
-
-{#if viewProfile}
-    <ViewUserProfile
-        alignTo={alignProfileTo}
-        userId={msg.sender}
-        chatButton={multiUserChat}
-        on:openDirectChat={chatWithUser}
-        on:close={closeUserProfile} />
 {/if}
 
 <div class="message-wrapper" class:last>
@@ -548,6 +560,7 @@
                     canShare={canShare()}
                     {me}
                     {canPin}
+                    {canTip}
                     {pinned}
                     {supportsReply}
                     {canQuoteReply}
@@ -573,6 +586,7 @@
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage}
+                    on:tipMessage={tipMessage}
                     on:reportMessage={() => (showReport = true)}
                     on:cancelReminder={cancelReminder}
                     on:remindMe={() => (showRemindMe = true)} />
@@ -612,6 +626,14 @@
                     {reaction}
                     {userIds}
                     myUserId={user?.userId} />
+            {/each}
+        </div>
+    {/if}
+
+    {#if tips.length > 0 && !inert}
+        <div class="tips" class:indent={showAvatar}>
+            {#each tips as [ledger, userTips]}
+                <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
             {/each}
         </div>
     {/if}
@@ -706,7 +728,8 @@
         }
     }
 
-    .message-reactions {
+    .message-reactions,
+    .tips {
         display: flex;
         justify-content: flex-start;
         flex-wrap: wrap;

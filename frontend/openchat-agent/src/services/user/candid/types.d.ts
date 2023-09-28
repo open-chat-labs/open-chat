@@ -113,6 +113,7 @@ export interface ChannelMembership {
 export interface ChannelMembershipUpdates {
   'role' : [] | [GroupRole],
   'notifications_muted' : [] | [boolean],
+  'unfollowed_threads' : Uint32Array | number[],
   'rules_accepted' : [] | [boolean],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'mentions' : Array<Mention>,
@@ -134,6 +135,21 @@ export interface ChannelMessageNotification {
   'thread_root_message_index' : [] | [MessageIndex],
   'channel_avatar_id' : [] | [bigint],
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
+  'message_index' : MessageIndex,
+}
+export interface ChannelMessageTippedNotification {
+  'tip' : string,
+  'channel_id' : ChannelId,
+  'tipped_by_display_name' : [] | [string],
+  'community_id' : CommunityId,
+  'message_event_index' : EventIndex,
+  'channel_name' : string,
+  'tipped_by' : UserId,
+  'community_avatar_id' : [] | [bigint],
+  'community_name' : string,
+  'tipped_by_name' : string,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'channel_avatar_id' : [] | [bigint],
   'message_index' : MessageIndex,
 }
 export interface ChannelMessagesRead {
@@ -556,6 +572,16 @@ export interface DirectMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface DirectMessageTippedNotification {
+  'tip' : string,
+  'username' : string,
+  'message_event_index' : EventIndex,
+  'them' : UserId,
+  'display_name' : [] | [string],
+  'user_avatar_id' : [] | [bigint],
+  'thread_root_message_index' : [] | [MessageIndex],
+  'message_index' : MessageIndex,
+}
 export interface DirectReactionAddedNotification {
   'username' : string,
   'message_event_index' : EventIndex,
@@ -728,6 +754,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
+  'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
   'next_message_expiry' : TimestampUpdate,
@@ -755,7 +782,7 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'permissions' : GroupPermissionsReduced,
+  'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
@@ -839,6 +866,18 @@ export interface GroupMessageNotification {
   'crypto_transfer' : [] | [NotificationCryptoTransferDetails],
   'message_index' : MessageIndex,
 }
+export interface GroupMessageTippedNotification {
+  'tip' : string,
+  'tipped_by_display_name' : [] | [string],
+  'group_avatar_id' : [] | [bigint],
+  'message_event_index' : EventIndex,
+  'tipped_by' : UserId,
+  'tipped_by_name' : string,
+  'chat_id' : ChatId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'group_name' : string,
+  'message_index' : MessageIndex,
+}
 export interface GroupNameChanged {
   'changed_by' : UserId,
   'new_name' : string,
@@ -847,21 +886,6 @@ export interface GroupNameChanged {
 export interface GroupPermissions {
   'block_users' : PermissionRole,
   'mention_all_members' : PermissionRole,
-  'change_permissions' : PermissionRole,
-  'delete_messages' : PermissionRole,
-  'send_messages' : PermissionRole,
-  'remove_members' : PermissionRole,
-  'update_group' : PermissionRole,
-  'invite_users' : PermissionRole,
-  'change_roles' : PermissionRole,
-  'add_members' : PermissionRole,
-  'create_polls' : PermissionRole,
-  'pin_messages' : PermissionRole,
-  'reply_in_thread' : PermissionRole,
-  'react_to_messages' : PermissionRole,
-}
-export interface GroupPermissionsReduced {
-  'block_users' : PermissionRole,
   'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
   'send_messages' : PermissionRole,
@@ -1031,6 +1055,7 @@ export interface Message {
   'forwarded' : boolean,
   'content' : MessageContent,
   'edited' : boolean,
+  'tips' : Array<[CanisterId, Array<[UserId, bigint]>]>,
   'last_updated' : [] | [TimestampMillis],
   'sender' : UserId,
   'thread_summary' : [] | [ThreadSummary],
@@ -1147,6 +1172,7 @@ export interface MuteNotificationsArgs { 'chat_id' : ChatId }
 export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface NamedAccount { 'name' : string, 'account' : string }
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -1202,10 +1228,13 @@ export type NnsUserOrAccount = { 'User' : UserId } |
 export type Notification = {
     'GroupReactionAdded' : GroupReactionAddedNotification
   } |
+  { 'ChannelMessageTipped' : ChannelMessageTippedNotification } |
+  { 'DirectMessageTipped' : DirectMessageTippedNotification } |
   { 'DirectMessage' : DirectMessageNotification } |
   { 'ChannelReactionAdded' : ChannelReactionAddedNotification } |
   { 'DirectReactionAdded' : DirectReactionAddedNotification } |
   { 'GroupMessage' : GroupMessageNotification } |
+  { 'GroupMessageTipped' : GroupMessageTippedNotification } |
   { 'AddedToChannel' : AddedToChannelNotification } |
   { 'ChannelMessage' : ChannelMessageNotification };
 export interface NotificationCryptoTransferDetails {
@@ -1407,6 +1436,11 @@ export interface RoleChanged {
   'new_role' : GroupRole,
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
+export type SaveCryptoAccountResponse = { 'Invalid' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'NameTaken' : null };
+export type SavedCryptoAccountsResponse = { 'Success' : Array<NamedAccount> };
 export interface SearchMessagesArgs {
   'max_results' : number,
   'user_id' : UserId,
@@ -1428,7 +1462,6 @@ export interface SelectedGroupUpdates {
   'members_removed' : Array<UserId>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [Rules],
   'blocked_users_added' : Array<UserId>,
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
@@ -1626,6 +1659,7 @@ export interface ThreadSummary {
   'participant_ids' : Array<UserId>,
   'reply_count' : number,
   'latest_event_index' : EventIndex,
+  'followed_by_me' : boolean,
 }
 export interface ThreadSyncDetails {
   'root_message_index' : MessageIndex,
@@ -1639,6 +1673,27 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface TipMessageArgs {
+  'fee' : bigint,
+  'token' : Cryptocurrency,
+  'chat' : Chat,
+  'recipient' : UserId,
+  'ledger' : CanisterId,
+  'message_id' : MessageId,
+  'amount' : bigint,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type TipMessageResponse = { 'TransferNotToMessageSender' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChatNotFound' : null } |
+  { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
+  { 'TransferCannotBeZero' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'CannotTipSelf' : null };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1838,6 +1893,14 @@ export interface _SERVICE {
   'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
+  'save_crypto_account' : ActorMethod<
+    [NamedAccount],
+    SaveCryptoAccountResponse
+  >,
+  'saved_crypto_accounts' : ActorMethod<
+    [EmptyArgs],
+    SavedCryptoAccountsResponse
+  >,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'send_message_with_transfer_to_channel' : ActorMethod<
@@ -1859,6 +1922,7 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

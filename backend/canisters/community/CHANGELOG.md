@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- All members can mention @everyone by default in private communities ([#4458](https://github.com/open-chat-labs/open-chat/pull/4458))
+
+## [[2.0.864](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.864-community)] - 2023-09-27
+
 ### Added
 
 - Implement tipping messages ([#4420](https://github.com/open-chat-labs/open-chat/pull/4420))
 - Implement notifications for message tips ([#4427](https://github.com/open-chat-labs/open-chat/pull/4427))
+- Implement follow/unfollow thread ([#4431](https://github.com/open-chat-labs/open-chat/pull/4431))
 
 ### Changed
 

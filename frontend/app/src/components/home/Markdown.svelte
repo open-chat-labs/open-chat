@@ -26,7 +26,7 @@
         return text.replace(/@UserId\(([\d\w-]+)\)/g, (match, p1) => {
             const u = $userStore[p1];
             if (u !== undefined) {
-                return `**[@${u.username}](/user/${u.userId})**`;
+                return `<profile-link text="${u.username}" user-id="${u.userId}" suppress-links="${suppressLinks}"></profile-link>`;
             }
             return match;
         });
@@ -46,7 +46,10 @@
 
     function replaceEveryone(text: string): string {
         if (!text.includes("@everyone")) return text;
-        return text.replace(/(^|[\s(){}\[\]])(@everyone)($|[\s(){}\[\]])/gm, "$1**$2**$3");
+        return text.replace(
+            /(^|[\s(){}\[\]])(@everyone)($|[\s(){}\[\]])/gm,
+            "$1[**$2**](?everyone)$3"
+        );
     }
 
     function replaceDatetimes(text: string): string {

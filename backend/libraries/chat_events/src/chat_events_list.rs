@@ -671,6 +671,7 @@ mod tests {
                 content: MessageContentInternal::Text(TextContent {
                     text: "hello".to_owned(),
                 }),
+                mentioned: Vec::new(),
                 replies_to: None,
                 now,
                 forwarded: false,

@@ -63,6 +63,8 @@ import type {
     MultiUserChatIdentifier,
     PublicGroupSummaryResponse,
     MessageContext,
+    PendingCryptocurrencyTransfer,
+    TipMessageResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -129,6 +131,7 @@ import type {
     UpdateUserGroupResponse,
     DeleteUserGroupsResponse,
     SetMemberDisplayNameResponse,
+    FollowThreadResponse,
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
@@ -278,7 +281,16 @@ export type WorkerRequest =
     | DeleteUserGroups
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp;
+    | SetCachePrimerTimestamp
+    | FollowThread
+    | TipMessage;
+
+type TipMessage = {
+    kind: "tipMessage";
+    messageContext: MessageContext;
+    messageId: bigint;
+    transfer: PendingCryptocurrencyTransfer;
+};
 
 type SetCommunityIndexes = {
     kind: "setCommunityIndexes";
@@ -925,13 +937,13 @@ type DeleteUserGroups = {
 
 type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
-}
+};
 
 type SetCachePrimerTimestamp = {
     chatIdentifierString: string;
     timestamp: bigint;
     kind: "setCachePrimerTimestamp";
-}
+};
 
 /**
  * Worker error type
@@ -1052,6 +1064,7 @@ export type WorkerResponseInner =
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
+    | TipMessageResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1276,8 +1289,17 @@ type SetMemberDisplayName = {
     kind: "setMemberDisplayName";
 };
 
+type FollowThread = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number;
+    follow: boolean;
+    kind: "followThread";
+};
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
+    : T extends TipMessage
+    ? TipMessageResponse
     : T extends UnpinMessage
     ? UnpinMessageResponse
     : T extends GetUpdates
@@ -1542,6 +1564,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteUserGroupsResponse
     : T extends SetMemberDisplayName
     ? SetMemberDisplayNameResponse
+    : T extends FollowThread
+    ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
     ? Record<string, bigint>
     : T extends SetCachePrimerTimestamp

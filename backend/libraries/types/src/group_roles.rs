@@ -29,8 +29,7 @@ pub struct GroupPermissions {
     pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub reply_in_thread: GroupPermissionRole,
-    // TODO: Remove this field once communities and groups have been released
-    #[serde(default = "group_permission_role_admin")]
+    #[serde(default = "group_permission_role_admins")]
     pub mention_all_members: GroupPermissionRole,
 }
 
@@ -88,6 +87,6 @@ fn group_permission_role_owner() -> GroupPermissionRole {
     GroupPermissionRole::Owner
 }
 
-fn group_permission_role_admin() -> GroupPermissionRole {
+fn group_permission_role_admins() -> GroupPermissionRole {
     GroupPermissionRole::Admins
 }

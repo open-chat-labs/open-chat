@@ -24,6 +24,7 @@ use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
     TimestampMillis, Timestamped, UserId,
 };
+use user_canister::NamedAccount;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
@@ -152,6 +153,8 @@ struct Data {
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub saved_crypto_accounts: Vec<NamedAccount>,
 }
 
 impl Data {
@@ -195,6 +198,7 @@ impl Data {
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            saved_crypto_accounts: Vec::new(),
         }
     }
 

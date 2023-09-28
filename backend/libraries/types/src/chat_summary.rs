@@ -224,6 +224,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    #[serde(default)]
+    pub unfollowed_threads: Vec<MessageIndex>,
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
@@ -245,8 +247,6 @@ pub struct SelectedGroupUpdates {
     pub invited_users: Option<Vec<UserId>>,
     pub pinned_messages_added: Vec<MessageIndex>,
     pub pinned_messages_removed: Vec<MessageIndex>,
-    // TODO: remove this field once the website is using `chat_rules` instead
-    pub rules: Option<Rules>,
     pub chat_rules: Option<VersionedRules>,
 }
 
@@ -259,7 +259,7 @@ impl SelectedGroupUpdates {
             || self.invited_users.is_some()
             || !self.pinned_messages_added.is_empty()
             || !self.pinned_messages_removed.is_empty()
-            || self.rules.is_some()
+            || self.chat_rules.is_some()
     }
 }
 

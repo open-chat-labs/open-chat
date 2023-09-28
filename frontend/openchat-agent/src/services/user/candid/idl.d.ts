@@ -2,7 +2,6 @@ import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
     ReplyContext,
-    ChatSummaryUpdates,
     DirectChatSummaryUpdates,
     ChatEventWrapper,
     CreateGroupResponse,
@@ -135,7 +134,7 @@ import {
     DeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
-    GroupPermissionsReduced
+    TipMessageResponse
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -144,7 +143,6 @@ export {
     EditMessageResponse as ApiEditMessageResponse,
     Message as ApiMessage,
     ReplyContext as ApiReplyContext,
-    ChatSummaryUpdates as ApiChatSummaryUpdates,
     DirectChatSummaryUpdates as ApiDirectChatSummaryUpdates,
     CreateGroupResponse as ApiCreateGroupResponse,
     DeleteGroupResponse as ApiDeleteGroupResponse,
@@ -273,7 +271,7 @@ export {
     DeleteCommunityResponse as ApiDeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
-    GroupPermissionsReduced as ApiGroupPermissionsReduced,
+    TipMessageResponse as ApiTipMessageResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

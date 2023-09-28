@@ -26,6 +26,7 @@ mod register_user_tests;
 mod registry_tests;
 mod remove_from_group_tests;
 mod rng;
+mod save_crypto_account_tests;
 mod send_crypto_tests;
 mod send_direct_message_tests;
 mod set_message_reminder_tests;

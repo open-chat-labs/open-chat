@@ -78,7 +78,7 @@ const development = build_env === "development";
 const testnet = !development && !production;
 const watch = process.env.ROLLUP_WATCH;
 
-const env = process.env.NODE_ENV ?? (development ? "development": "production");
+const env = process.env.NODE_ENV ?? (development ? "development" : "production");
 const version = process.env.OPENCHAT_WEBSITE_VERSION;
 if (!development && !version) {
     throw Error("OPENCHAT_WEBSITE_VERSION environment variable not set");
@@ -335,6 +335,17 @@ export default {
                                     .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
+                            <template id="profile-link-template">
+                                <style>
+                                    .profile-link {
+                                        cursor: pointer;
+                                        font-weight: 700;
+                                        text-decoration: underline;
+                                    }
+                                </style>
+                                <strong class="profile-link"></strong>
+                            </template>
+
                             <body></body>
                         </html>
                     `;

@@ -6,9 +6,7 @@
         ChatEvent as ChatEventType,
         OpenChat,
         Mention,
-        ThreadSummary,
         ChatIdentifier,
-        MessageContext,
     } from "openchat-client";
     import {
         ChatUpdated,
@@ -23,8 +21,10 @@
         SendingThreadMessage,
         SentMessage,
         SentThreadMessage,
+        ThreadUpdated,
         ThreadReactionSelected,
         chatIdentifiersEqual,
+        messageContextsEqual,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -44,6 +44,8 @@
     } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
 
+    // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
+    const MESSAGE_READ_THRESHOLD = 500;
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
     const SCROLL_THRESHOLD = 500;
@@ -60,7 +62,6 @@
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let setFocusMessageIndex: (index: number | undefined) => void;
-    export let selectedMessageContext: MessageContext | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
 
@@ -74,10 +75,14 @@
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
+    let messageObserver: IntersectionObserver;
     let labelObserver: IntersectionObserver;
+    let messageReadTimers: Record<number, number> = {};
 
+    $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
+    $: messageContext = { chatId: chat.id, threadRootMessageIndex: threadRootEvent?.event.messageIndex };
 
     const keyMeasurements = () => ({
         scrollHeight: messagesDiv!.scrollHeight,
@@ -141,15 +146,58 @@
     });
 
     afterUpdate(() => {
-        showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
+        updateShowGoToBottom();
     });
 
     function elementIsOffTheTop(el: Element): boolean {
         return el.getBoundingClientRect().top < 95;
     }
 
+    function updateShowGoToBottom() {
+        showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
+    }
+
     onMount(() => {
-        const options = {
+        const messageObserverOptions = {
+            root: messagesDiv as Element,
+            rootMargin: "0px",
+            threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
+        };
+
+        messageObserver = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
+            entries.forEach((entry) => {
+                const idxAttrs = entry.target.attributes.getNamedItem("data-index");
+                const idAttr = entry.target.attributes.getNamedItem("data-id");
+                const idx = idxAttrs
+                    ? Math.max(...idxAttrs.value.split(" ").map((v) => parseInt(v, 10)))
+                    : undefined;
+                const id = idAttr ? BigInt(idAttr.value) : undefined;
+                if (idx !== undefined) {
+                    const intersectionRatioRequired =
+                        0 < messagesDivHeight && messagesDivHeight < entry.boundingClientRect.height
+                            ? (messagesDivHeight * 0.5) / entry.boundingClientRect.height
+                            : 0.5;
+
+                    const isIntersecting = entry.intersectionRatio >= intersectionRatioRequired;
+                    if (isIntersecting && messageReadTimers[idx] === undefined) {
+                        const context = messageContext;
+                        const timer = window.setTimeout(() => {
+                            if (messageContextsEqual(context, messageContext)) {
+                                client.markMessageRead(messageContext, idx, id);
+                            }
+                            delete messageReadTimers[idx];
+                        }, MESSAGE_READ_THRESHOLD);
+                        messageReadTimers[idx] = timer;
+                    }
+                    if (!isIntersecting && messageReadTimers[idx] !== undefined) {
+                        window.clearTimeout(messageReadTimers[idx]);
+                        delete messageReadTimers[idx];
+                    }
+                }
+            });
+        }, messageObserverOptions);
+
+        const labelObserverOptions = {
             root: messagesDiv as Element,
             rootMargin: "-15px 0px 0px 0px",
             threshold: [0, 0.5, 1],
@@ -175,7 +223,7 @@
                     (label as HTMLElement).style.opacity = "1";
                 }
             }
-        }, options);
+        }, labelObserverOptions);
 
         if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
             interruptScroll(() => {
@@ -228,6 +276,9 @@
             if (ev instanceof LoadedThreadMessageWindow) {
                 onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
             }
+            if (ev instanceof ThreadUpdated) {
+                loadMoreIfRequired();
+            }
             if (ev instanceof SentThreadMessage) {
                 afterSendThreadMessage(threadRootEvent, ev.detail);
             }
@@ -276,7 +327,7 @@
         rootEvent: EventWrapper<Message>,
         event: EventWrapper<Message>
     ) {
-        const summary: ThreadSummary = {
+        const summary = {
             participantIds: new Set<string>([user.userId]),
             numberOfReplies: event.event.messageIndex + 1,
             latestEventIndex: event.index,
@@ -367,13 +418,41 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                (selectedMessageContext === undefined ||
-                    !failedMessagesStore.contains(selectedMessageContext, ev.event.messageId))
+                (messageContext === undefined ||
+                    !failedMessagesStore.contains(messageContext, ev.event.messageId))
         ) as EventWrapper<Message> | undefined;
     }
 
     function findElementWithMessageIndex(index: number): Element | null {
         return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
+    }
+
+    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return !unconfirmed.contains(messageContext, evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isFailed(_failed: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message" && messageContext) {
+            return failedMessagesStore.contains(messageContext, evt.event.messageId);
+        }
+        return false;
+    }
+
+    function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (readonly) return true;
+
+        if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
+            let messageIndex =
+                evt.event.kind === "message"
+                    ? evt.event.messageIndex
+                    : Math.max(...evt.event.messagesDeleted);
+            let messageId = evt.event.kind === "message" ? evt.event.messageId : undefined;
+            return client.isMessageRead(messageContext, messageIndex, messageId);
+        }
+        return true;
     }
 
     function checkIfTargetMessageHasAThread(index: number) {
@@ -547,6 +626,7 @@
         if (maintainScroll) {
             $eventListScrollTop = messagesDiv?.scrollTop;
         }
+        updateShowGoToBottom();
         menuStore.hideMenu();
         tooltipStore.hide();
         eventListLastScrolled.set(Date.now());
@@ -589,7 +669,7 @@
     class:interrupt
     class:reverse={reverseScroll}
     class={`scrollable-list ${rootSelector}`}>
-    <slot {labelObserver} />
+    <slot {isConfirmed} {isFailed} {isReadByMe} {messageObserver} {labelObserver} />
 </div>
 
 {#if !readonly}

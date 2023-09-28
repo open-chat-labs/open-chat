@@ -1,11 +1,5 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
-import {
-    openDB,
-    type DBSchema,
-    type IDBPDatabase,
-    type StoreNames,
-    type StoreValue
-} from "idb";
+import { openDB, type DBSchema, type IDBPDatabase, type StoreNames, type StoreValue } from "idb";
 import type {
     ChatEvent,
     ChatIdentifier,
@@ -24,6 +18,8 @@ import type {
     UpdatedEvent,
     MessageContext,
     CommunityDetails,
+    CommunitySummary,
+    DataContent,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -34,7 +30,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 84;
+const CACHE_VERSION = 85;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -88,7 +84,7 @@ export interface ChatSchema extends DBSchema {
     cachePrimer: {
         key: string;
         value: bigint;
-    }
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -179,11 +175,13 @@ export async function setCachedChats(
 ): Promise<void> {
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
+    const communities = chatState.communities.map(makeCommunitySerializable);
 
     const stateToCache = {
         ...chatState,
         directChats,
         groupChats,
+        communities,
     };
 
     const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite");
@@ -495,8 +493,8 @@ function dataToBlobUrl(data: Uint8Array, type?: string): string {
     return URL.createObjectURL(blob);
 }
 
-function removeBlobData(content: MessageContent): MessageContent {
-    if ("blobData" in content) {
+function removeBlobData<T extends MessageContent | DataContent>(content: T): T {
+    if ("blobData" in content && content.blobData !== undefined) {
         return {
             ...content,
             blobData: undefined,
@@ -758,6 +756,19 @@ export async function loadMessagesByMessageIndex(
     };
 }
 
+function makeCommunitySerializable(community: CommunitySummary): CommunitySummary {
+    const channels = community.channels.map(makeChatSummarySerializable);
+    const avatar = removeBlobData(community.avatar);
+    const banner = removeBlobData(community.banner);
+
+    return {
+        ...community,
+        channels,
+        avatar,
+        banner,
+    };
+}
+
 function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
     if (chat.latestMessage === undefined) return chat;
 
@@ -769,7 +780,7 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
 async function readAll<Name extends StoreNames<ChatSchema>>(
     db: Database,
-    storeName: Name
+    storeName: Name,
 ): Promise<Record<string, StoreValue<ChatSchema, Name>>> {
     const transaction = (await db).transaction([storeName]);
     const store = transaction.objectStore(storeName);

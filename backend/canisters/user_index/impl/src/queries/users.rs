@@ -3,16 +3,6 @@ use ic_cdk_macros::query;
 use user_index_canister::users_v2::{Response::*, *};
 
 #[query]
-fn users(args: user_index_canister::users::Args) -> user_index_canister::users::Response {
-    let Success(response) = read_state(|state| users_impl(args, state));
-
-    user_index_canister::users::Response::Success(user_index_canister::users::Result {
-        users: response.users.into_iter().map(|summary| summary.into()).collect(),
-        timestamp: response.timestamp,
-    })
-}
-
-#[query]
 fn users_v2(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }
