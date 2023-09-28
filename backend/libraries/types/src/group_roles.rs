@@ -60,7 +60,7 @@ impl Default for GroupPermissions {
             change_permissions: GroupPermissionRole::Admins,
             change_roles: GroupPermissionRole::Admins,
             add_members: GroupPermissionRole::Admins,
-            mention_all_members: GroupPermissionRole::Admins,
+            mention_all_members: GroupPermissionRole::Members,
             remove_members: GroupPermissionRole::Moderators,
             block_users: GroupPermissionRole::Moderators,
             delete_messages: GroupPermissionRole::Moderators,
