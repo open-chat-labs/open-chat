@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.866-group_index)] - 2023-09-27
+
 ### Changed 
 
 - Accept calls to `set_community_upgrade_concurrency` ([#4418](https://github.com/open-chat-labs/open-chat/pull/4418))

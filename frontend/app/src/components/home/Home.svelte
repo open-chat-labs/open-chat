@@ -800,6 +800,7 @@
             level === "channel" && $chatListScope.kind === "community"
                 ? { kind: "channel", communityId: $chatListScope.id.communityId, channelId: "" }
                 : { kind: "group_chat", groupId: "" };
+
         modal = ModalType.NewGroup;
         candidateGroup = {
             id,
@@ -816,7 +817,7 @@
                 updateGroup: "admin",
                 pinMessages: "admin",
                 inviteUsers: "admin",
-                mentionAllMembers: "admin",
+                mentionAllMembers: "member",
                 createPolls: "member",
                 sendMessages: "member",
                 reactToMessages: "member",
