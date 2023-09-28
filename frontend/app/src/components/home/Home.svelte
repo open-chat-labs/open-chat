@@ -192,9 +192,12 @@
                     notification.kind === "group_notification"
                 ) {
                     return client.isMessageRead(
-                        { chatId: notification.kind === "direct_notification"
-                            ? notification.sender
-                            : notification.chatId },
+                        {
+                            chatId:
+                                notification.kind === "direct_notification"
+                                    ? notification.sender
+                                    : notification.chatId,
+                        },
                         notification.messageIndex,
                         undefined
                     );
@@ -401,6 +404,12 @@
             if (hof !== null) {
                 modal = ModalType.HallOfFame;
                 page.replace(removeQueryStringParam("hof"));
+            }
+
+            const everyone = $querystring.get("everyone");
+            if (everyone !== null) {
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
+                page.replace(removeQueryStringParam("everyone"));
             }
         }
     }
