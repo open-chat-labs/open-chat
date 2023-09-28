@@ -7,6 +7,7 @@
         type ModerationFlag,
         ModerationFlags,
     } from "openchat-client";
+    import { isTouchDevice } from "../../../utils/devices";
     import Close from "svelte-material-icons/Close.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
@@ -29,6 +30,7 @@
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
+        dclickReply,
         restrictedSectionOpen,
         enterSend,
         lowBandwidth,
@@ -355,6 +357,12 @@
                     on:change={() => enterSend.toggle()}
                     label={$_("enterToSend")}
                     checked={$enterSend} />
+                <Toggle
+                    id={"dclick-reply"}
+                    small
+                    on:change={() => dclickReply.toggle()}
+                    label={$_(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
+                    checked={$dclickReply} />
                 {#if notificationsSupported}
                     <Toggle
                         id={"notifications"}

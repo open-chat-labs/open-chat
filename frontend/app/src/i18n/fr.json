@@ -1021,5 +1021,7 @@
     "followThread": "Suivez ce fil",
     "unfollowThread": "Ne plus suivre ce fil",
     "followThreadFailed": "Échec du suivi du fil de discussion",
-    "unfollowThreadFailed": "Échec de l'abandon du suivi du fil de discussion"
+    "unfollowThreadFailed": "Échec de l'abandon du suivi du fil de discussion",
+    "doubleClickReply": "Double-cliquez sur le message pour répondre/modifier",
+    "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier"
 }
