@@ -24,6 +24,7 @@
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
+    export let initialUsergroup: number | undefined = undefined;
 
     let searchTerm = "";
     let selectedGroup: UserGroupDetails | undefined = undefined;
@@ -46,6 +47,10 @@
         communityUsersList = Object.values(communityUsers);
         const end = Date.now();
         console.debug("PERF: Built community member lookup: ", end - start);
+
+        if (initialUsergroup !== undefined) {
+            selectedGroup = userGroups.find((ug) => ug.id === initialUsergroup);
+        }
     });
 
     function createLookup(

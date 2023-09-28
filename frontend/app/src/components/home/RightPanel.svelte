@@ -391,6 +391,7 @@
             invited={$currentChatInvited}
             members={$currentChatMembers}
             blocked={$currentChatBlocked}
+            initialUsergroup={lastState.userGroupId}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockGroupUser}
             on:unblockUser={onUnblockGroupUser}

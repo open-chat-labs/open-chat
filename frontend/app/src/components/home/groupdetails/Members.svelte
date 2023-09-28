@@ -28,6 +28,7 @@
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
+    export let initialUsergroup: number | undefined = undefined;
 
     let userGroups: UserGroups | undefined;
 
@@ -52,7 +53,7 @@
     let id = collection.id;
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
-    let selectedTab: "users" | "groups" = "users";
+    let selectedTab: "users" | "groups" = initialUsergroup === undefined ? "users" : "groups";
 
     $: searchTermLower = searchTerm.toLowerCase();
 
@@ -123,6 +124,7 @@
 
     function selectTab(tab: "users" | "groups") {
         selectedTab = tab;
+        initialUsergroup = undefined;
         userGroups?.reset();
     }
 </script>
@@ -236,7 +238,7 @@
     {/if}
 {:else if collection.kind === "community"}
     <div class="user-groups">
-        <UserGroups bind:this={userGroups} community={collection} />
+        <UserGroups bind:this={userGroups} {initialUsergroup} community={collection} />
     </div>
 {/if}
 
