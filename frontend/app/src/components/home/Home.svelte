@@ -87,6 +87,7 @@
         userId: string;
         chatButton: boolean;
         alignTo?: DOMRect;
+        inGlobalContext: boolean;
     };
 
     const client = getContext<OpenChat>("client");
@@ -911,6 +912,7 @@
         showProfileCard = {
             userId: ev.detail.userId,
             chatButton: ev.detail.chatButton,
+            inGlobalContext: ev.detail.inGlobalContext,
             alignTo: ev.target ? (ev.target as HTMLElement).getBoundingClientRect() : undefined,
         };
     }
@@ -932,7 +934,7 @@
 {#if showProfileCard !== undefined}
     <ViewUserProfile
         userId={showProfileCard.userId}
-        inGlobalContext={true}
+        inGlobalContext={showProfileCard.inGlobalContext}
         chatButton={showProfileCard.chatButton}
         alignTo={showProfileCard.alignTo}
         on:openDirectChat={chatWithFromProfileCard}
