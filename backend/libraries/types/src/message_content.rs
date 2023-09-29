@@ -128,7 +128,7 @@ impl MessageContent {
             MessageContent::Custom(c) => &c.kind,
         };
 
-        return message_type.to_string();
+        message_type.to_string()
     }
 
     pub fn text(&self) -> Option<&str> {
