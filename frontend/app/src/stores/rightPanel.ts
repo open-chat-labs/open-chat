@@ -56,6 +56,7 @@ export type ShowCommunityChannels = {
 
 export type ShowCommunityMembers = {
     kind: "show_community_members";
+    userGroupId?: number; 
 };
 
 export type ShowPinnedPanel = {

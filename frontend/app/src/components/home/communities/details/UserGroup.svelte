@@ -160,9 +160,10 @@
                     items={matchedUsers}
                     let:item>
                     <User
-                        on:open={() => addUserToGroup(item)}
+                        on:click={() => addUserToGroup(item)}
                         user={item}
                         me={false}
+                        profile={false}
                         {searchTerm} />
                 </VirtualList>
             </div>
