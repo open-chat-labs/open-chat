@@ -1,8 +1,8 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { ChatSummary, OpenChat } from "openchat-client";
-    import { type MessageContext, type PrizeContent } from "openchat-shared";
+    import type { ChatSummary, OpenChat, PrizeContentInitial } from "openchat-client";
+    import { type MessageContext } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -19,6 +19,9 @@
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
 
+    const ONE_HOUR = 1000 * 60 * 60;
+    const ONE_DAY = ONE_HOUR * 24;
+    const ONE_WEEK = ONE_DAY * 7;
     const client = getContext<OpenChat>("client");
     const user = client.user;
     const dispatch = createEventDispatcher();
@@ -62,35 +65,47 @@
         return balance - transferFees;
     }
 
-    function send() {
-        const prizes = generatePrizes();
+    function recipientFromContext({ chatId }: MessageContext) {
+        switch (chatId.kind) {
+            case "channel":
+                return chatId.communityId;
+            case "group_chat":
+                return chatId.groupId;
+            default:
+                throw new Error("We can't create prizes in direct chats");
+        }
+    }
 
-        console.log("Prizes: ", prizes);
-        // const content: CryptocurrencyContent = {
-        //     kind: "crypto_content",
-        //     caption: message === "" ? undefined : message,
-        //     transfer: {
-        //         kind: "pending",
-        //         ledger,
-        //         token: symbol,
-        //         recipient: receiver.userId,
-        //         amountE8s: draftAmount,
-        //         feeE8s: transferFees,
-        //         createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
-        //     },
-        // };
-        const content: PrizeContent = {
-            kind: "prize_content",
+    function getEndDate() {
+        const now = Date.now();
+        switch (selectedDuration) {
+            case "oneHour":
+                return BigInt(now + ONE_HOUR);
+            case "oneDay":
+                return BigInt(now + ONE_DAY);
+            case "oneWeek":
+                return BigInt(now + ONE_WEEK);
+        }
+    }
+
+    function send() {
+        const content: PrizeContentInitial = {
+            kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
-            prizesRemaining: 10,
-            prizesPending: 0,
-            winners: [],
-            token: symbol,
-            endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24 * 7),
+            endDate: getEndDate(),
+            transfer: {
+                kind: "pending",
+                ledger,
+                token: symbol,
+                recipient: recipientFromContext(context),
+                amountE8s: draftAmount,
+                feeE8s: transferFees,
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+            },
+            prizes: generatePrizes(),
         };
-        console.log("Message: ", content);
-        // client.sendMessageWithContent(context, content);
-        // dispatch("close");
+        client.sendMessageWithContent(context, content);
+        dispatch("close");
     }
 
     function cancel() {

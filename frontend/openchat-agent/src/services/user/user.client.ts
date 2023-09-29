@@ -63,6 +63,7 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
+    PrizeContentInitial,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -601,7 +602,9 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+        const content = apiPendingCryptoContent(
+            event.event.content as CryptocurrencyContent | PrizeContentInitial,
+        );
 
         const req: ApiSendMessageWithTransferToGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -661,7 +664,9 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+        const content = apiPendingCryptoContent(
+            event.event.content as CryptocurrencyContent | PrizeContentInitial,
+        );
 
         const req: ApiSendMessageWithTransferToChannelArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),

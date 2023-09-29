@@ -46,12 +46,21 @@ export type MessageContent =
     | GiphyContent
     | ProposalContent
     | PrizeContent
+    | PrizeContentInitial
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent;
+
+export interface PrizeContentInitial {
+    kind: "prize_content_initial";
+    endDate: bigint;
+    caption?: string;
+    transfer: PendingCryptocurrencyTransfer;
+    prizes: bigint[];
+}
 
 export type CaptionedContent =
     | AttachmentContent

@@ -145,6 +145,7 @@ import type {
     RegisterProposalVoteResponse,
     UserGroupSummary,
     TipsReceived,
+    PrizeContentInitial,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1359,7 +1360,9 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCryptoContent {
+export function apiPendingCryptoContent(
+    domain: CryptocurrencyContent | PrizeContentInitial,
+): ApiCryptoContent {
     return {
         recipient: Principal.fromText(domain.transfer.recipient),
         caption: apiOptional(identity, domain.caption),
