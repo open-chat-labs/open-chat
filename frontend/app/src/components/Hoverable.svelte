@@ -23,9 +23,11 @@
     let startY = 0; // mouse y position when timer started
 
     function startHover(e: MouseEvent) {
-        coords.x = e.clientX;
-        coords.y = e.clientY;
-        hoverTimer = window.setTimeout(() => (hovering = true), HOVER_DELAY);
+        if (!isTouchDevice) {
+            coords.x = e.clientX;
+            coords.y = e.clientY;
+            hoverTimer = window.setTimeout(() => (hovering = true), HOVER_DELAY);
+        }
     }
 
     function endHover() {
@@ -89,9 +91,7 @@
 
     function onContextMenu(e: MouseEvent) {
         e.preventDefault();
-        if (!isTouchDevice) {
-            startHover(e);
-        }
+        startHover(e);
     }
 
     onMount(() => {
