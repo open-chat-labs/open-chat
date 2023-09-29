@@ -47,8 +47,6 @@ pub struct DirectMessageNotification {
     pub sender_name: String,
     pub sender_display_name: Option<String>,
     pub message_type: String,
-    #[serde(default)]
-    pub message_sub_type: Option<String>,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
     pub sender_avatar_id: Option<u128>,
@@ -66,8 +64,6 @@ pub struct GroupMessageNotification {
     pub sender_name: String,
     pub sender_display_name: Option<String>,
     pub message_type: String,
-    #[serde(default)]
-    pub message_sub_type: Option<String>,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
     pub group_avatar_id: Option<u128>,
@@ -87,8 +83,6 @@ pub struct ChannelMessageNotification {
     pub sender_name: String,
     pub sender_display_name: Option<String>,
     pub message_type: String,
-    #[serde(default)]
-    pub message_sub_type: Option<String>,
     pub message_text: Option<String>,
     pub image_url: Option<String>,
     pub community_avatar_id: Option<u128>,
@@ -221,7 +215,6 @@ fn notification_length() {
         sender_name: "BlahBlah".to_string(),
         sender_display_name: None,
         message_type: "text".to_string(),
-        message_sub_type: None,
         message_text: Some("abc".to_string()),
         image_url: None,
         sender_avatar_id: None,
@@ -230,5 +223,5 @@ fn notification_length() {
 
     let bytes = candid::encode_one(notification).unwrap().len();
 
-    assert!(bytes < 860, "{bytes}");
+    assert!(bytes < 850, "{bytes}");
 }
