@@ -313,9 +313,9 @@ function defaultMessage(messageType: string, messageSubType: string | undefined)
             } else {
                 return "Meme message";
             }
+        default: 
+            return `${toTitleCase(messageType)} message`;
     }
-
-    return `${toTitleCase(messageType)} message`;
 }
 
 function isMessageNotification(notification: Notification): boolean {
