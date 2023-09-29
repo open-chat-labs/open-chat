@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `message_sub_type` to give more context to custom message notifications ([#4464](https://github.com/open-chat-labs/open-chat/pull/4464))
+
 ## [[2.0.865](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.865-group)] - 2023-09-27
 
 ### Added
