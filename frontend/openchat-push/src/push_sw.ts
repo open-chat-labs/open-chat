@@ -310,8 +310,9 @@ function defaultMessage(messageType: string, messageSubType: string | undefined)
         case "custom":
             if (messageSubType !== undefined) {
                 return `${toTitleCase(messageSubType)} message`;
+            } else {
+                return "Meme message";
             }
-            break;
     }
 
     return `${toTitleCase(messageType)} message`;
