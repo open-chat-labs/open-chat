@@ -31,14 +31,18 @@ const dollarToICP = 0.34;
 
 export const dollarExchangeRates: Record<string, number> = {
     icp: dollarToICP,
-    chat: 7, // dollarToICP / 0.04805,
-    hot: 113, // dollarToICP / 0.003,
-    kinic: 0.9, // dollarToICP / 0.378,
-    ckbtc: 0.000044, // dollarToICP / 7777.004,
-    dkp: 0.0012, // dollarToICP / 280,
-    ghost: 20000, // dollarToICP / 0.00001685,
-    mod: 52, // dollarToICP / 0.0065,
-    cat: 49, // dollarToICP / 0.0068998,
-    boom: 100, // dollarToICP / 0.00339,
-    icx: 3400000, // dollarToICP / 0.0000001,
+    chat: to2SigFigs(dollarToICP / 0.04805),
+    hot: to2SigFigs(dollarToICP / 0.003),
+    kinic: to2SigFigs(dollarToICP / 0.378),
+    ckbtc: to2SigFigs(dollarToICP / 7777.004),
+    dkp: to2SigFigs(dollarToICP / 280),
+    ghost: to2SigFigs(dollarToICP / 0.00001685),
+    mod: to2SigFigs(dollarToICP / 0.0065),
+    cat: to2SigFigs(dollarToICP / 0.0068998),
+    boom: to2SigFigs(dollarToICP / 0.00339),
+    icx: to2SigFigs(dollarToICP / 0.0000001),
 };
+
+function to2SigFigs(num: number): number {
+    return parseFloat(num.toPrecision(2));
+}
