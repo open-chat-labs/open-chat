@@ -30,7 +30,7 @@ export type CryptocurrencyDetails = {
 const dollarToICP = 0.34;
 
 export const dollarExchangeRates: Record<string, number> = {
-    icp: dollarToICP,
+    icp: to2SigFigs(dollarToICP),
     chat: to2SigFigs(dollarToICP / 0.04805),
     hot: to2SigFigs(dollarToICP / 0.003),
     kinic: to2SigFigs(dollarToICP / 0.378),
