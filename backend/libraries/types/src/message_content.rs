@@ -129,13 +129,6 @@ impl MessageContent {
         }
     }
 
-    pub fn message_sub_type(&self) -> Option<&str> {
-        match self {
-            MessageContent::Custom(c) => Some(&c.kind),
-            _ => None,
-        }
-    }
-
     pub fn text(&self) -> Option<&str> {
         match self {
             MessageContent::Text(t) => Some(t.text.as_str()),
