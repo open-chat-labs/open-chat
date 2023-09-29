@@ -35,10 +35,7 @@ generate_update_call!(undelete_messages);
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
-    use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::icrc1::Account;
-
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
         Reaction, Rules, TextContent, TimestampMillis, UserId,

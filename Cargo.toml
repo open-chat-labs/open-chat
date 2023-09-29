@@ -146,7 +146,7 @@ ic-cdk-macros = "0.7.0"
 ic-cdk-timers = "0.4.0"
 ic-ledger-types = "0.7.0"
 ic-stable-structures = "0.5.6"
-pocket-ic = { git = "https://github.com/dfinity/ic.git", rev = "6529a74eea03c55c1e093cc262e1237150b3a93f" }
+pocket-ic = { path = "/home/fxgst/ic/packages/pocket-ic" }
 ic-utils = "0.27.0"
 ic0 = "0.18.11"
 itertools = "0.11.0"
