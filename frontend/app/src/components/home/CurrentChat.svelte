@@ -35,6 +35,7 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
 
     type ConfirmedActionEvent =
         | ConfirmedSendMessage
@@ -72,6 +73,7 @@
     let firstUnreadMention: Mention | undefined;
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
+    let creatingPrizeMessage = false;
     let selectingGif = false;
     let buildingMeme = false;
     let pollBuilder: PollBuilder;
@@ -169,6 +171,10 @@
             ledger: $lastCryptoSent ?? LEDGER_CANISTER_ICP,
             amount: BigInt(0),
         };
+    }
+
+    function createPrizeMessage() {
+        creatingPrizeMessage = true;
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
@@ -378,6 +384,15 @@
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
+{#if creatingPrizeMessage}
+    <PrizeContentBuilder
+        context={messageContext}
+        {chat}
+        ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        draftAmount={0n}
+        on:close={() => (creatingPrizeMessage = false)} />
+{/if}
+
 <GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
 
 <MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
@@ -458,6 +473,7 @@
             on:attachGif={attachGif}
             on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}
+            on:createPrizeMessage={createPrizeMessage}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />
     {/if}

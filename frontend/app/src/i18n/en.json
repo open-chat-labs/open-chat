@@ -747,7 +747,17 @@
         "finished": "Finished",
         "winner": "**{recipient}** won **{amount}** {token}",
         "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
-        "allClaimed": "Fully claimed"
+        "allClaimed": "Fully claimed",
+        "title": "Prize",
+        "totalAmount": "Total prize amount",
+        "numberOfWinners": "Number of winners",
+        "duration": "How long will prize be active?",
+        "minPrize": "What is the minimum prize?",
+        "maxPrize": "What is the maximum prize?",
+        "distribution": "How should prizes be distributed?",
+        "equalDistribution": "Equal distribution",
+        "normalDistribution": "Normal distribution",
+        "randomDistribution": "Random distribution"
     },
     "upgrade": {
         "button": "Upgrade",
