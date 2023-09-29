@@ -6,6 +6,7 @@ use crate::{
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
+use serde_json::to_string;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 
@@ -108,8 +109,8 @@ impl MessageContent {
         references
     }
 
-    pub fn message_type(&self) -> &'static str {
-        match self {
+    pub fn message_type(&self) -> String {
+        let message_type = match self {
             MessageContent::Text(_) => "Text",
             MessageContent::Image(_) => "Image",
             MessageContent::Video(_) => "Video",
@@ -125,8 +126,10 @@ impl MessageContent {
             MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
             MessageContent::MessageReminder(_) => "MessageReminder",
             MessageContent::ReportedMessage(_) => "ReportedMessage",
-            MessageContent::Custom(_) => "Custom",
-        }
+            MessageContent::Custom(c) => &c.kind,
+        };
+
+        return message_type.to_string();
     }
 
     pub fn text(&self) -> Option<&str> {
