@@ -98,6 +98,7 @@ export interface ChannelMembershipUpdates {
 export interface ChannelMessageNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
+  'message_sub_type' : [] | [string],
   'image_url' : [] | [string],
   'sender_display_name' : [] | [string],
   'sender' : UserId,
@@ -432,6 +433,7 @@ export interface DirectChatSummaryUpdates {
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface DirectMessageNotification {
+  'message_sub_type' : [] | [string],
   'image_url' : [] | [string],
   'sender_display_name' : [] | [string],
   'sender_avatar_id' : [] | [bigint],
@@ -667,6 +669,7 @@ export interface GroupMatch {
   'member_count' : number,
 }
 export interface GroupMessageNotification {
+  'message_sub_type' : [] | [string],
   'image_url' : [] | [string],
   'group_avatar_id' : [] | [bigint],
   'sender_display_name' : [] | [string],

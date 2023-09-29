@@ -124,6 +124,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 sender_display_name: None,
                 message_type: content.message_type().to_string(),
+                message_sub_type: content.message_sub_type().map(|s| s.to_string()),
                 message_text: content.notification_text(&[], &[]),
                 image_url: content.notification_image_url(),
                 group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
