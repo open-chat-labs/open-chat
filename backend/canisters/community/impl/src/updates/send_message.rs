@@ -108,6 +108,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     sender_name: args.sender_name,
                     sender_display_name: member.display_name().value.clone().or(args.sender_display_name),
                     message_type: content.message_type().to_string(),
+                    message_sub_type: content.message_sub_type().map(|s| s.to_string()),
                     message_text: content.notification_text(
                         &args.mentioned,
                         &user_groups_mentioned
