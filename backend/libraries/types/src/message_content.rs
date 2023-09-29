@@ -6,7 +6,6 @@ use crate::{
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use serde_json::to_string;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 
