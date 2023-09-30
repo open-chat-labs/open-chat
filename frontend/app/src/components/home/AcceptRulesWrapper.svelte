@@ -46,7 +46,6 @@
     export let messageContext: MessageContext;
 
     $: canSend = client.canSendMessages(messageContext.chatId);
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
 
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
@@ -165,20 +164,6 @@
                         sendMessageContext.event,
                         chatRulesVersion,
                         communityRulesVersion
-                    );
-                    break;
-                }
-            }
-        } else {
-            switch (sendMessageContext.kind) {
-                case "send_message": {
-                    currentChatDraftMessage.setTextContent(
-                        messageContext.chatId,
-                        sendMessageContext.textContent
-                    );
-                    currentChatDraftMessage.setAttachment(
-                        messageContext.chatId,
-                        sendMessageContext.attachment
                     );
                     break;
                 }
