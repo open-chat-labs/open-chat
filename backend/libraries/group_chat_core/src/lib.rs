@@ -1391,7 +1391,10 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateSuccessResult {
-        let mut result = UpdateSuccessResult { rules_version: None };
+        let mut result = UpdateSuccessResult {
+            newly_public: false,
+            rules_version: None,
+        };
 
         let events = &mut self.events;
 
@@ -1521,6 +1524,7 @@ impl GroupChatCore {
                 if self.is_public {
                     self.min_visible_indexes_for_new_members =
                         Some((push_event_result.index, self.events.main_events_list().next_message_index()));
+                    result.newly_public = true;
                 }
             }
         }
@@ -1803,6 +1807,7 @@ pub enum UpdateResult {
 }
 
 pub struct UpdateSuccessResult {
+    pub newly_public: bool,
     pub rules_version: Option<Version>,
 }
 

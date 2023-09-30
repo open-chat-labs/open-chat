@@ -1,3 +1,4 @@
+use crate::updates::c2c_join_channel::join_channel_unchecked;
 use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
@@ -30,6 +31,8 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         let caller = state.env.caller();
 
         if let Some(member) = state.data.members.get(caller) {
+            let now = state.env.now();
+
             match channel.chat.update(
                 member.user_id,
                 args.name,
@@ -40,9 +43,15 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.gate,
                 args.public,
                 OptionUpdate::NoChange,
-                state.env.now(),
+                now,
             ) {
                 UpdateResult::Success(result) => {
+                    if result.newly_public && channel.chat.gate.is_none() {
+                        for m in state.data.members.iter_mut() {
+                            join_channel_unchecked(channel, m, true, now);
+                        }
+                    }
+
                     handle_activity_notification(state);
                     SuccessV2(SuccessResult {
                         rules_version: result.rules_version,
