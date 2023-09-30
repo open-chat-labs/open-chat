@@ -6,21 +6,18 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import { getContext } from "svelte";
+    import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import type {
         GIFObject,
         PagedGIFObject,
         GiphySearchResponse,
         GiphyContent,
-        MessageContext,
-        OpenChat,
     } from "openchat-client";
 
-    const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let open: boolean;
-    export let context: MessageContext;
 
     let refreshing = false;
     let message = "";
@@ -167,7 +164,7 @@
                 },
                 caption: message === "" ? undefined : message,
             };
-            client.sendMessageWithContent(context, content);
+            dispatch("sendMessageWithContent", { content });
             open = false;
         }
     }
