@@ -61,6 +61,7 @@ import type {
     ApiEditMessageResponse as ApiEditDirectMessageResponse,
     ApiLeaveGroupResponse,
     ApiChat,
+    ApiPrizeCotentInitial,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -1058,6 +1059,9 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "proposal_content":
             return { GovernanceProposal: apiProposalContent(domain) };
 
+        case "prize_content_initial":
+            return { Prize: apiPrizeContentInitial(domain) };
+
         case "prize_content":
             throw new Error("Incorrectly attempting to send prize content to the server");
 
@@ -1360,9 +1364,16 @@ function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
     };
 }
 
-export function apiPendingCryptoContent(
-    domain: CryptocurrencyContent | PrizeContentInitial,
-): ApiCryptoContent {
+export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCotentInitial {
+    return {
+        caption: apiOptional(identity, domain.caption),
+        transfer: apiPendingCryptoTransaction(domain.transfer),
+        end_date: domain.endDate,
+        prizes: domain.prizes.map((p) => ({ e8s: p })),
+    };
+}
+
+export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCryptoContent {
     return {
         recipient: Principal.fromText(domain.transfer.recipient),
         caption: apiOptional(identity, domain.caption),

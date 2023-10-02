@@ -33,7 +33,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     WithdrawCryptocurrencyResponse,
-    CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
     ArchiveChatResponse,
     BlobReference,
@@ -63,7 +62,6 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
-    PrizeContentInitial,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -114,7 +112,6 @@ import {
     apiMessageContent,
     editMessageResponse,
     apiOptional,
-    apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     addRemoveReactionResponse,
@@ -602,15 +599,11 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(
-            event.event.content as CryptocurrencyContent | PrizeContentInitial,
-        );
+        const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            content: {
-                Crypto: content,
-            },
+            content,
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
             rules_accepted: apiOptional(identity, rulesAccepted),
@@ -664,15 +657,11 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(
-            event.event.content as CryptocurrencyContent | PrizeContentInitial,
-        );
+        const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToChannelArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            content: {
-                Crypto: content,
-            },
+            content,
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
             mentioned: [],

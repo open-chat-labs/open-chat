@@ -1,12 +1,15 @@
 <script lang="ts">
+    export let logo: string;
     export let shadow = false;
     let spokes = new Array(16);
+
+    $: console.log("Logo: ", logo);
 </script>
 
 <div class="purse">
     <div class:shadow class="coin">
-        <div class="front" />
-        <div class="back" />
+        <div style={`background-image: url(${logo})`} class="front" />
+        <div style={`background-image: url(${logo})`} class="back" />
         <div class="side">
             {#each spokes as _spoke}
                 <div class="spoke" />
@@ -16,5 +19,5 @@
 </div>
 
 <style lang="scss">
-    @include spinning_coin(url("/assets/ckbtc_nobackground.svg"), 9rem, true);
+    @include spinning_coin(7rem, true);
 </style>

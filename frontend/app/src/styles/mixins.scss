@@ -532,13 +532,11 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin spinning_coin(
-    $coin_face: url("/assets/ckbtc_nobackground.svg"),
-    $coin_diam: 9rem,
-    $shadow: null
-) {
+@mixin spinning_coin($coin_diam: 9rem, $shadow: null) {
     $coin_depth: ($coin_diam * 0.1);
     $speed: 2s;
+    $padding: math.div($coin_diam, 20);
+    $shadow_size: math.div($padding, 2);
 
     .purse {
         height: $coin_diam;
@@ -566,12 +564,16 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
         .front,
         .back {
+            background-color: hsl(42, 40%, 60%);
             position: absolute;
-            background-image: $coin_face;
             height: $coin_diam;
             width: $coin_diam;
             border-radius: 50%;
-            background-size: cover;
+            background-size: contain;
+            background-repeat: no-repeat;
+            padding: $padding;
+            border: $padding solid transparent;
+            box-shadow: inset 0 $shadow_size $shadow_size hsl(42, 30%, 50%);
         }
 
         .front {

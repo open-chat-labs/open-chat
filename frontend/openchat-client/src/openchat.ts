@@ -1209,29 +1209,25 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    followThread(
-        chatId: ChatIdentifier,
-        message: Message,
-        follow: boolean
-    ): Promise<boolean> {
+    followThread(chatId: ChatIdentifier, message: Message, follow: boolean): Promise<boolean> {
         // Assume it will succeed
         localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-            followedByMe: follow
+            followedByMe: follow,
         });
 
         return this.sendRequest({
             kind: "followThread",
             chatId,
             threadRootMessageIndex: message.messageIndex,
-            follow
+            follow,
         }).then((resp) => {
             if (resp === "failed") {
                 localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-                    followedByMe: !follow
+                    followedByMe: !follow,
                 });
                 return false;
             } else {
-                return true
+                return true;
             }
         });
     }
@@ -2944,7 +2940,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private canRetryMessage(content: MessageContent): boolean {
-        return content.kind !== "poll_content" && content.kind !== "crypto_content";
+        return (
+            content.kind !== "poll_content" &&
+            content.kind !== "crypto_content" &&
+            content.kind !== "prize_content_initial"
+        );
     }
 
     rulesNeedAccepting(): boolean {

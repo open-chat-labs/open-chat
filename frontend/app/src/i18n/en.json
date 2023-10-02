@@ -742,6 +742,8 @@
     "wallet": "Wallet",
     "prizes": {
         "click": "Click the button below for a chance to win a prize.",
+        "live": "Prize message live! Others can click to claim 🎁",
+        "prizeFinished": "Your prize message has now finished",
         "claim": "Claim",
         "claimed": "Success!",
         "finished": "Finished",
@@ -756,8 +758,8 @@
         "maxPrize": "What is the maximum prize?",
         "distribution": "How should prizes be distributed?",
         "equalDistribution": "Equal distribution",
-        "normalDistribution": "Normal distribution",
-        "randomDistribution": "Random distribution"
+        "randomDistribution": "Random distribution",
+        "creatingYourPrizeMessage": "Please wait while we create your prize message"
     },
     "upgrade": {
         "button": "Upgrade",

@@ -1,8 +1,12 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { ChatSummary, OpenChat, PrizeContentInitial } from "openchat-client";
-    import { type MessageContext } from "openchat-shared";
+    import type {
+        ChatSummary,
+        OpenChat,
+        PrizeContentInitial,
+        MessageContext,
+    } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -89,6 +93,8 @@
     }
 
     function send() {
+        const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
+        const prizes = generatePrizes(fees);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -98,11 +104,11 @@
                 ledger,
                 token: symbol,
                 recipient: recipientFromContext(context),
-                amountE8s: draftAmount,
+                amountE8s: prizes.reduce((total, p) => total + p) + fees,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
-            prizes: generatePrizes(),
+            prizes,
         };
         dispatch("sendMessageWithContent", { content });
         dispatch("close");
@@ -135,24 +141,38 @@
         }
     }
 
-    function generatePrizes(): bigint[] {
+    function generatePrizes(fees: bigint): bigint[] {
+        const fund = draftAmount - fees;
+        const fundNum = Number(fund);
+
+        const share = Math.round(fundNum / numberOfWinners);
+
         switch (distribution) {
             case "equal":
-                return generateEquallyDistributedPrizes();
+                return generateEquallyDistributedPrizes(fund, share);
             case "random":
-                return generateRandomlyDistributedPrizes();
+                return generateRandomlyDistributedPrizes(fund, share);
         }
     }
 
-    function generateEquallyDistributedPrizes(): bigint[] {
-        const share = Number(draftAmount) / numberOfWinners;
-        return Array.from({ length: numberOfWinners }).map(() => BigInt(share));
+    // make sure that any rounding errors are corrected for
+    function compensateRounding(prizes: bigint[], fund: bigint): bigint[] {
+        const total = prizes.reduce((agg, p) => agg + p, 0n);
+        const diff = fund - total;
+        if (diff !== 0n) {
+            prizes[0] = prizes[0] + diff;
+        }
+        const adjusted = prizes.reduce((agg, p) => agg + p, 0n);
+        console.log("Figures: ", fund, adjusted);
+        return prizes;
     }
 
-    function generateRandomlyDistributedPrizes(): bigint[] {
-        const draftNum = Number(draftAmount);
-        const share = draftNum / numberOfWinners;
+    function generateEquallyDistributedPrizes(fund: bigint, share: number): bigint[] {
+        const prizes = Array.from({ length: numberOfWinners }).map(() => BigInt(share));
+        return compensateRounding(prizes, fund);
+    }
 
+    function generateRandomlyDistributedPrizes(fund: bigint, share: number): bigint[] {
         // TODO these numbers can obviously be tweaked
         const min = share * 0.1;
         const max = share * 2;
@@ -161,16 +181,10 @@
         const total = intermediate.reduce((agg, p) => agg + p, 0);
 
         // we might have more prizes than the total so let's scale
-        const scale = total / draftNum;
-        const scaled = intermediate.map((p) => Math.floor(p / scale));
-        const scaledTotal = scaled.reduce((agg, p) => agg + p, 0);
+        const scale = total / Number(fund);
+        const scaled = intermediate.map((p) => BigInt(Math.round(p / scale)));
 
-        // TODO - we have to Math.floor when we scale otherwise we won't get BigInts,
-        // but that means that in the end we will probably have slightly less than the draft amount
-
-        console.log("Total: ", total, scaledTotal, draftAmount);
-
-        return scaled.map((p) => BigInt(p));
+        return compensateRounding(scaled, fund);
     }
 
     function random(min: number, max: number): number {

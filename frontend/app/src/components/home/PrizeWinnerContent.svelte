@@ -13,6 +13,7 @@
 
     $: userStore = client.userStore;
     $: cryptoLookup = client.cryptoLookup;
+    $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
     $: tokenDetails = $cryptoLookup[content.transaction.ledger];
     $: symbol = tokenDetails.symbol;
     $: amount = client.formatTokens(content.transaction.amountE8s, 0, tokenDetails.decimals);
@@ -36,7 +37,7 @@
     <div class="graphic">
         <img class="lid" src={"/assets/lid.png"} />
         <div class="winner-coin">
-            <CkBtcSmall />
+            <CkBtcSmall {logo} />
         </div>
         <img class="box" src={"/assets/box.png"} />
     </div>
