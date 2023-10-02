@@ -2174,15 +2174,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.config.meteredApiKey,
             );
 
-            const isFollowedByMe =
-                this._liveState.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ??
-                false;
-            if (isFollowedByMe) {
-                const lastLoadedMessageIdx = this.lastMessageIndex(this._liveState.threadEvents);
-                if (lastLoadedMessageIdx !== undefined) {
-                    this.markThreadRead(chat.id, threadRootMessageIndex, lastLoadedMessageIdx);
-                }
-            }
             if (ascending) {
                 this.dispatchEvent(new LoadedNewThreadMessages());
             } else {
