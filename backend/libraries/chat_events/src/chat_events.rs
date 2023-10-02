@@ -601,12 +601,13 @@ impl ChatEvents {
                 let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
                 let token = content.transaction.token();
                 let ledger_canister_id = content.transaction.ledger_canister_id();
+                let fee = content.transaction.fee();
 
                 content.reservations.insert(user_id);
                 message.last_updated = Some(now);
                 self.last_updated_timestamps.mark_updated(None, event_index, now);
 
-                return ReservePrizeResult::Success(token, ledger_canister_id, amount);
+                return ReservePrizeResult::Success(token, ledger_canister_id, amount.e8s() as u128, fee);
             }
         }
 
@@ -1454,7 +1455,7 @@ pub enum TipMessageResult {
 }
 
 pub enum ReservePrizeResult {
-    Success(Cryptocurrency, CanisterId, Tokens),
+    Success(Cryptocurrency, CanisterId, u128, u128),
     MessageNotFound,
     AlreadyClaimed,
     PrizeFullyClaimed,
