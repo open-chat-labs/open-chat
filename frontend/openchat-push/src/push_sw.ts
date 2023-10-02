@@ -136,7 +136,6 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         body = messageText(
             n.messageText,
             n.messageType,
-            n.messageSubType,
             n.cryptoTransfer,
         );
         if (n.senderAvatarId !== undefined) {
@@ -154,7 +153,6 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
             n.messageText,
             n.messageType,
-            n.messageSubType,
             n.cryptoTransfer,
         )}`;
         if (n.groupAvatarId !== undefined) {
@@ -178,7 +176,6 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
             n.messageText,
             n.messageType,
-            n.messageSubType,
             n.cryptoTransfer,
         )}`;
         if (n.channelAvatarId !== undefined) {
@@ -288,7 +285,6 @@ async function showNotification(n: Notification, id: string): Promise<void> {
 function messageText(
     messageText: string | undefined,
     messageType: string,
-    messageSubType: string | undefined,
     cryptoTransfer: CryptoTransferDetails | undefined,
 ): string {
     if (messageText !== undefined && messageText.length > 0) {
@@ -299,22 +295,20 @@ function messageText(
         return `Sent ${Number(cryptoTransfer.amount) / Math.pow(10, 8)} ${cryptoTransfer.symbol}`;
     }
 
-    return defaultMessage(messageType, messageSubType);
+    return defaultMessage(messageType);
 }
 
-function defaultMessage(messageType: string, messageSubType: string | undefined): string {
+function defaultMessage(messageType: string): string {
     const messageTypeLower = messageType.toLowerCase();
     switch (messageTypeLower) {
         case "poll":
             return "Created a poll";
+        // Remove this case once the backend is updated to send the correct message type
         case "custom":
-            if (messageSubType !== undefined) {
-                return `${toTitleCase(messageSubType)} message`;
-            } else {
-                return "Meme message";
-            }
-        default: 
+            return "Meme message";
+        default: {
             return `${toTitleCase(messageType)} message`;
+        }
     }
 }
 

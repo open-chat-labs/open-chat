@@ -25,6 +25,7 @@ fn make_private_channel_public_succeeds() {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, i.to_string(), None);
     }
 
+    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
     client::community::happy_path::update_channel(
         env,
         &user1,
@@ -41,14 +42,7 @@ fn make_private_channel_public_succeeds() {
         },
     );
 
-    client::local_user_index::happy_path::join_channel(
-        env,
-        user2.principal,
-        canister_ids.local_user_index,
-        community_id,
-        channel_id,
-    );
-
+    // Check that user2 has been added to the channel and that it is now public
     let channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
 
     assert!(channel_summary.is_public);

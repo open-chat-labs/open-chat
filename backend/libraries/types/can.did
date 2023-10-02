@@ -156,7 +156,6 @@ type DirectMessageNotification = record {
     sender_name : text;
     sender_display_name : opt text;
     message_type : text;
-    message_sub_type : opt text;
     message_text : opt text;
     image_url : opt text;
     sender_avatar_id : opt nat;
@@ -580,7 +579,6 @@ type ChannelMessageNotification = record {
     sender_name : text;
     sender_display_name : opt text;
     message_type : text;
-    message_sub_type : opt text;
     message_text : opt text;
     image_url : opt text;
     community_avatar_id : opt nat;
@@ -598,7 +596,6 @@ type GroupMessageNotification = record {
     sender_name : text;
     sender_display_name : opt text;
     message_type : text;
-    message_sub_type : opt text;
     message_text : opt text;
     image_url : opt text;
     group_avatar_id : opt nat;
