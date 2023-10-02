@@ -5,8 +5,17 @@
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
+    export let isCommunityPublic: boolean;
 
     let roles = chatRoles.filter((role) => role !== "none");
+
+    $: {
+        if (isPublic && isCommunityPublic) {
+            permissions.mentionAllMembers = "admin";
+        } else {
+            permissions.mentionAllMembers = "member";
+        }
+    }
 </script>
 
 <SelectPermissionRole
@@ -51,7 +60,7 @@
     {roles}
     label={$_("permissions.replyInThread")}
     bind:rolePermission={permissions.replyInThread} />
-<!-- <SelectPermissionRole
+<SelectPermissionRole
     {roles}
     label={$_("permissions.mentionAllMembers", { values: { mention: "@everyone" } })}
-    bind:rolePermission={permissions.mentionAllMembers} /> -->
+    bind:rolePermission={permissions.mentionAllMembers} />

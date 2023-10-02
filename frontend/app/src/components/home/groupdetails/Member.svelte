@@ -63,10 +63,6 @@
     function blockUser() {
         dispatch("blockUser", { userId: member.userId });
     }
-
-    function openUserProfile() {
-        dispatch("openUserProfile", member.userId);
-    }
 </script>
 
 <User
@@ -75,8 +71,7 @@
     {searchTerm}
     role={member.role === "moderator" || member.role === "admin" || member.role === "owner"
         ? member.role
-        : undefined}
-    on:open={openUserProfile}>
+        : undefined}>
     {#if showMenu}
         <span class="menu">
             <MenuIcon position={"bottom"} align={"end"}>

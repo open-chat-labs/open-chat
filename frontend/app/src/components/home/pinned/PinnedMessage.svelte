@@ -11,7 +11,7 @@
     import { rtlStore } from "../../../stores/rtl";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
-    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -21,9 +21,6 @@
     export let senderId: string;
     export let msg: Message;
 
-    let viewProfile = false;
-    let usernameLink: Link;
-    let usernameLinkBoundingRect: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
 
     $: sender = $userStore[senderId];
@@ -34,19 +31,14 @@
     $: fill = client.fillMessage(msg);
     $: me = user.userId === senderId;
 
-    function chatWithUser() {
-        closeUserProfile();
-        dispatch("chatWith", { kind: "direct_chat", userId: senderId });
-    }
-
     function openUserProfile(e: Event) {
-        usernameLinkBoundingRect = usernameLink.getBoundingRect();
-        viewProfile = true;
         e.preventDefault();
-    }
-
-    function closeUserProfile() {
-        viewProfile = false;
+        e.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: { userId: sender.userId, chatButton: !me, inGlobalContext: false },
+                bubbles: true,
+            })
+        );
     }
 
     function goToMessageIndex() {
@@ -56,14 +48,6 @@
         });
     }
 </script>
-
-{#if viewProfile}
-    <ViewUserProfile
-        alignTo={usernameLinkBoundingRect}
-        userId={sender.userId}
-        on:openDirectChat={chatWithUser}
-        on:close={closeUserProfile} />
-{/if}
 
 <div class="message-row" class:me on:click={goToMessageIndex}>
     <div class="avatar" on:click={openUserProfile}>
@@ -81,7 +65,7 @@
         class:rtl={$rtlStore}>
         {#if !deleted}
             <div class="sender" class:fill class:rtl={$rtlStore}>
-                <Link bind:this={usernameLink} underline={"never"} on:click={openUserProfile}>
+                <Link underline={"never"} on:click={openUserProfile}>
                     <h4 class="username" class:fill class:crypto>{username}</h4>
                 </Link>
             </div>

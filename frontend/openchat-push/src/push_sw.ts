@@ -303,6 +303,9 @@ function defaultMessage(messageType: string): string {
     switch (messageTypeLower) {
         case "poll":
             return "Created a poll";
+        // Remove this case once the backend is updated to send the correct message type
+        case "custom":
+            return "Meme message";
         default: {
             return `${toTitleCase(messageType)} message`;
         }

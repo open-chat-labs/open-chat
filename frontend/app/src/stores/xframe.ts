@@ -12,6 +12,7 @@ const FRAME_ANCESTORS = [
     "https://mdocx-gyaaa-aaaak-qcbsq-cai.icp0.io",
     "https://zexzi-jyaaa-aaaam-abj3q-cai.icp0.io", //Betbase dev
     "https://xw4dq-4yaaa-aaaam-abeuq-cai.ic0.app", //Betbase live
+    "https://kjfeq-waaaa-aaaan-qedva-cai.icp0.io", // vaultbet test
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
 ];
 

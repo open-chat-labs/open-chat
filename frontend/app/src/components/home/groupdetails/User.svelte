@@ -8,6 +8,7 @@
     import { AvatarSize } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
+    import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -16,6 +17,7 @@
     export let me: boolean = false;
     export let searchTerm: string = "";
     export let role: string | undefined = undefined;
+    export let profile = true;
 
     // if search term is !== "", split the username into three parts [prefix, match, postfix]
 
@@ -24,8 +26,17 @@
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = client.getDisplayName(user, $communityMembers);
 
-    function onClick() {
-        dispatch("open", user.userId);
+    function onClick(ev: Event) {
+        if (profile) {
+            ev.target?.dispatchEvent(
+                new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                    detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
+                    bubbles: true,
+                })
+            );
+        }
+
+        dispatch("click");
     }
 </script>
 

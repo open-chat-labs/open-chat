@@ -416,7 +416,8 @@
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.public} />
+                            isPublic={candidateGroup.public}
+                            isCommunityPublic={$selectedCommunity?.public ?? true} />
                     {:else}
                         <GroupPermissionsViewer
                             bind:permissions={candidateGroup.permissions}

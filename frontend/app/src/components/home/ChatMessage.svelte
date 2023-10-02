@@ -36,6 +36,7 @@
         onMount,
         tick,
     } from "svelte";
+    import { dclickReply } from "../../stores/settings";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -44,7 +45,6 @@
     import TimeAndTicks from "./TimeAndTicks.svelte";
     import { iconSize } from "../../stores/iconSize";
     import MessageReaction from "./MessageReaction.svelte";
-    import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
     import { pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
@@ -55,6 +55,7 @@
     import { longpress } from "../../actions/longpress";
     import TipBuilder from "./TipBuilder.svelte";
     import TipThumbnail from "./TipThumbnail.svelte";
+    import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -99,8 +100,6 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let viewProfile = false;
-    let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
@@ -175,11 +174,6 @@
         }
     });
 
-    function chatWithUser() {
-        closeUserProfile();
-        dispatch("chatWith", { kind: "direct_chat", userId: msg.sender });
-    }
-
     function createReplyContext(): EnhancedReplyContext {
         return {
             kind: "rehydrated_reply_context",
@@ -224,7 +218,7 @@
     }
 
     function doubleClickMessage() {
-        if (failed || msg.deleted) return;
+        if (failed || msg.deleted || !$dclickReply) return;
 
         if (me) {
             editMessage();
@@ -326,14 +320,12 @@
     }
 
     function openUserProfile(ev: Event) {
-        if (ev.target) {
-            alignProfileTo = (ev.target as HTMLElement).getBoundingClientRect();
-        }
-        viewProfile = true;
-    }
-
-    function closeUserProfile() {
-        viewProfile = false;
+        ev.target?.dispatchEvent(
+            new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
+                detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
+                bubbles: true,
+            })
+        );
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
@@ -417,15 +409,6 @@
         {chatId}
         {canDelete}
         on:close={() => (showReport = false)} />
-{/if}
-
-{#if viewProfile}
-    <ViewUserProfile
-        alignTo={alignProfileTo}
-        userId={msg.sender}
-        chatButton={multiUserChat}
-        on:openDirectChat={chatWithUser}
-        on:close={closeUserProfile} />
 {/if}
 
 <div class="message-wrapper" class:last>

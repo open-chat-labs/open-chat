@@ -17,7 +17,6 @@
     import { createEventDispatcher, getContext } from "svelte";
     import SelectionButton from "../SelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
-    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
 
@@ -29,6 +28,7 @@
     export let invited: Set<string>;
     export let members: MemberType[];
     export let blocked: Set<string>;
+    export let initialUsergroup: number | undefined = undefined;
 
     let userGroups: UserGroups | undefined;
 
@@ -54,7 +54,6 @@
     let membersList: VirtualList;
     let memberView: "members" | "blocked" | "invited" = "members";
     let selectedTab: "users" | "groups" = "users";
-    let profileUserId: string | undefined = undefined;
 
     $: searchTermLower = searchTerm.toLowerCase();
 
@@ -69,6 +68,10 @@
             (memberView === "invited" && invited.size === 0)
         ) {
             memberView = "members";
+        }
+
+        if (initialUsergroup !== undefined) {
+            selectedTab = "groups";
         }
     }
 
@@ -121,20 +124,6 @@
 
     function setView(v: "members" | "blocked" | "invited"): void {
         memberView = v;
-    }
-
-    function openUserProfile(ev: CustomEvent<string>) {
-        profileUserId = ev.detail;
-    }
-
-    function closeUserProfile() {
-        profileUserId = undefined;
-    }
-
-    function userSelected() {
-        if (profileUserId === undefined) return;
-        dispatch("chatWith", { kind: "direct_chat", userId: profileUserId });
-        closeUserProfile();
     }
 
     function selectTab(tab: "users" | "groups") {
@@ -200,13 +189,6 @@
         </div>
     {/if}
 
-    {#if profileUserId !== undefined}
-        <ViewUserProfile
-            userId={profileUserId}
-            on:openDirectChat={userSelected}
-            on:close={closeUserProfile} />
-    {/if}
-
     {#if memberView === "members"}
         {#if me !== undefined}
             <Member
@@ -216,7 +198,6 @@
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}
-                on:openUserProfile={openUserProfile}
                 on:changeRole />
         {/if}
         <VirtualList
@@ -239,8 +220,7 @@
                 on:blockUser
                 on:chatWith
                 on:changeRole
-                on:removeMember
-                on:openUserProfile={openUserProfile} />
+                on:removeMember />
         </VirtualList>
     {:else if memberView === "blocked"}
         <div use:menuCloser class="user-list">
@@ -249,25 +229,22 @@
                     {user}
                     {searchTerm}
                     canUnblockUser={client.canUnblockUsers(collection.id)}
-                    on:openUserProfile={openUserProfile}
                     on:unblockUser />
             {/each}
         </div>
     {:else if memberView === "invited"}
         <div use:menuCloser class="user-list">
             {#each invitedUsers as user}
-                <InvitedUser
-                    {user}
-                    {searchTerm}
-                    canUninviteUser={false}
-                    on:openUserProfile={openUserProfile}
-                    on:uninviteUser />
+                <InvitedUser {user} {searchTerm} canUninviteUser={false} on:uninviteUser />
             {/each}
         </div>
     {/if}
 {:else if collection.kind === "community"}
     <div class="user-groups">
-        <UserGroups bind:this={userGroups} community={collection} />
+        <UserGroups
+            bind:this={userGroups}
+            bind:openedGroupId={initialUsergroup}
+            community={collection} />
     </div>
 {/if}
 

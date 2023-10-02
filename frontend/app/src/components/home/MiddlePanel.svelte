@@ -9,6 +9,7 @@
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
+    import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,26 +35,37 @@
             </div>
         {/if}
     {:else if $selectedChatStore !== undefined}
-        <CurrentChat
-            bind:currentChatMessages
-            {joining}
-            chat={$selectedChatStore}
-            events={$eventsStore}
-            filteredProposals={$filteredProposalsStore}
-            on:successfulImport
-            on:clearSelection
-            on:leaveGroup
-            on:replyPrivatelyTo
-            on:showInviteGroupUsers
-            on:showProposalFilters
-            on:showGroupMembers
-            on:chatWith
-            on:joinGroup
-            on:upgrade
-            on:toggleMuteNotifications
-            on:goToMessageIndex
-            on:convertGroupToCommunity
-            on:forward />
+        <AcceptRulesWrapper
+            let:sendMessageWithAttachment
+            let:forwardMessage
+            let:retrySend
+            let:sendMessageWithContent
+            messageContext={{ chatId: $selectedChatStore.id }}>
+            <CurrentChat
+                bind:currentChatMessages
+                {joining}
+                chat={$selectedChatStore}
+                events={$eventsStore}
+                filteredProposals={$filteredProposalsStore}
+                on:successfulImport
+                on:clearSelection
+                on:leaveGroup
+                on:replyPrivatelyTo
+                on:showInviteGroupUsers
+                on:showProposalFilters
+                on:showGroupMembers
+                on:chatWith
+                on:joinGroup
+                on:upgrade
+                on:toggleMuteNotifications
+                on:goToMessageIndex
+                on:convertGroupToCommunity
+                on:retrySend={retrySend}
+                on:sendMessageWithContent={sendMessageWithContent}
+                on:sendMessageWithAttachment={sendMessageWithAttachment}
+                on:forwardMessage={forwardMessage}
+                on:forward />
+        </AcceptRulesWrapper>
     {/if}
 </Panel>
 

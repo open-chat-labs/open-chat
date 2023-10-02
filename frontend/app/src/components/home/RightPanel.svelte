@@ -33,6 +33,7 @@
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import CommunityChannels from "./communities/details/CommunityChannels.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -368,6 +369,7 @@
             invited={$currentCommunityInvited}
             members={[...$currentCommunityMembers.values()]}
             blocked={$currentCommunityBlocked}
+            initialUsergroup={lastState.userGroupId}
             on:close={popRightPanelHistory}
             on:blockUser={onBlockCommunityUser}
             on:unblockUser={onUnblockCommnityUser}
@@ -413,13 +415,27 @@
             {user}
             on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChat !== undefined}
-        <Thread
-            on:chatWith
-            on:upgrade
-            on:replyPrivatelyTo
-            rootEvent={threadRootEvent}
-            chat={$selectedChat}
-            on:closeThread={closeThread} />
+        <AcceptRulesWrapper
+            let:sendMessageWithAttachment
+            let:forwardMessage
+            let:retrySend
+            let:sendMessageWithContent
+            messageContext={{
+                chatId: $selectedChat.id,
+                threadRootMessageIndex: threadRootEvent.event.messageIndex,
+            }}>
+            <Thread
+                on:chatWith
+                on:upgrade
+                on:replyPrivatelyTo
+                rootEvent={threadRootEvent}
+                chat={$selectedChat}
+                on:retrySend={retrySend}
+                on:sendMessageWithContent={sendMessageWithContent}
+                on:sendMessageWithAttachment={sendMessageWithAttachment}
+                on:forwardMessage={forwardMessage}
+                on:closeThread={closeThread} />
+        </AcceptRulesWrapper>
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
