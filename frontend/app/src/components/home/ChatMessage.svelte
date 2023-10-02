@@ -139,12 +139,6 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
 
-    afterUpdate(() => {
-        if (readByMe && observer && msgElement) {
-            observer.unobserve(msgElement);
-        }
-    });
-
     onMount(() => {
         if (!readByMe) {
             tick().then(() => {

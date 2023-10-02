@@ -28,12 +28,6 @@
                 : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
             : undefined;
 
-    afterUpdate(() => {
-        if (readByMe && observer && deletedMessagesElement) {
-            observer.unobserve(deletedMessagesElement);
-        }
-    });
-
     onMount(() => {
         if (!readByMe && deletedMessagesElement) {
             observer?.observe(deletedMessagesElement);
