@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, RangeSet, Rules,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, Rules,
     TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
@@ -258,8 +258,6 @@ impl Channel {
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
-            expired_messages: RangeSet::default(),
-            next_message_expiry: None,
             gate: chat.gate.value.clone(),
             membership,
         })

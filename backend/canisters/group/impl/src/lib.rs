@@ -21,7 +21,7 @@ use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    RangeSet, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -143,8 +143,6 @@ impl RuntimeState {
             wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
-            expired_messages: RangeSet::default(),
-            next_message_expiry: None,
             gate: chat.gate.value.clone(),
             rules_accepted: member
                 .rules_accepted

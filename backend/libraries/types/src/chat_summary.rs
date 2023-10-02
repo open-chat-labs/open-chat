@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
-    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
+    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId, Version,
     MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -23,7 +23,6 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
-    pub expired_messages: RangeSet<MessageIndex>,
 }
 
 impl DirectChatSummary {
@@ -63,8 +62,6 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    pub expired_messages: RangeSet<MessageIndex>,
-    pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -83,7 +80,6 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    pub newly_expired_messages: RangeSet<MessageIndex>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -135,8 +131,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    pub expired_messages: RangeSet<MessageIndex>,
-    pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -196,8 +190,6 @@ impl GroupCanisterGroupChatSummary {
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
-            expired_messages: self.expired_messages.merge(updates.newly_expired_messages),
-            next_message_expiry: updates.next_message_expiry.apply_to(self.next_message_expiry),
             gate: updates.gate.apply_to(self.gate),
             rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
         }
@@ -230,8 +222,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    pub newly_expired_messages: RangeSet<MessageIndex>,
-    pub next_message_expiry: OptionUpdate<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
 }

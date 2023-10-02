@@ -3,7 +3,7 @@ use canister_api_macros::query_msgpack;
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
-use types::{GroupCanisterGroupChatSummaryUpdates, OptionUpdate, RangeSet, MAX_THREADS_IN_SUMMARY};
+use types::{GroupCanisterGroupChatSummaryUpdates, OptionUpdate, MAX_THREADS_IN_SUMMARY};
 
 #[query]
 fn summary_updates(args: Args) -> Response {
@@ -79,8 +79,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         wasm_version: None,
         date_last_pinned: updates_from_events.date_last_pinned,
         events_ttl: updates_from_events.events_ttl,
-        newly_expired_messages: RangeSet::default(),
-        next_message_expiry: OptionUpdate::NoChange,
         gate: updates_from_events.gate,
         rules_accepted: member
             .rules_accepted
