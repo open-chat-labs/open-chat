@@ -4,6 +4,7 @@ use crate::*;
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
+use ledger_utils::create_pending_transaction;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
@@ -13,13 +14,13 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
-    Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
-    PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult,
-    TimestampMillis, Timestamped, Tips, UserId, VoteOperation,
+    CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex,
+    EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
+    HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
+    Milliseconds, MultiUserChat, PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult,
+    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos,
+    Timestamped, Tips, UserId, VoteOperation,
 };
-use types::{Hash, MessageReport, ReportedMessageInternal};
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
@@ -405,6 +406,37 @@ impl ChatEvents {
         }
 
         EndPollResult::PollNotFound
+    }
+
+    pub fn close_prize(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        now_nanos: TimestampNanos,
+    ) -> Option<PendingCryptoTransaction> {
+        let now_ms = now_nanos / 1_000_000;
+        if let Some((message, _)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into(), now_ms)
+        {
+            if let MessageContentInternal::Prize(p) = &mut message.content {
+                if let CryptoTransaction::Completed(t) = &p.transaction {
+                    let unclaimed = p.prizes_remaining.iter().map(|t| t.e8s() as u128).sum::<u128>();
+                    if unclaimed > 0 {
+                        p.prizes_remaining = Vec::new();
+                        return Some(create_pending_transaction(
+                            t.token(),
+                            t.ledger_canister_id(),
+                            unclaimed,
+                            t.fee(),
+                            message.sender,
+                            now_nanos,
+                        ));
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     pub fn record_proposal_vote(

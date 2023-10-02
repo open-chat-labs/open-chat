@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob};
+use crate::timer_job_types::{ClosePrizeJob, DeleteFileReferencesJob, EndPollJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -117,6 +117,14 @@ fn register_timer_jobs(
         }
     }
 
-    // TODO: If this is a prize message then set a timer to transfer
-    // the balance of any remaining prizes to the original sender
+    if let MessageContent::Prize(p) = &message_event.event.content {
+        timer_jobs.enqueue_job(
+            TimerJob::ClosePrize(ClosePrizeJob {
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+            }),
+            p.end_date,
+            now,
+        );
+    }
 }
