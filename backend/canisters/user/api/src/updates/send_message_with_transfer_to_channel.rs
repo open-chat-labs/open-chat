@@ -32,6 +32,7 @@ pub enum Response {
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
+    TransferCannotBeToSelf,
     UserSuspended,
     CommunityFrozen,
     RulesNotAccepted,

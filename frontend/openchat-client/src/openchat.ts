@@ -2174,15 +2174,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.config.meteredApiKey,
             );
 
-            const isFollowedByMe =
-                this._liveState.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ??
-                false;
-            if (isFollowedByMe) {
-                const lastLoadedMessageIdx = this.lastMessageIndex(this._liveState.threadEvents);
-                if (lastLoadedMessageIdx !== undefined) {
-                    this.markThreadRead(chat.id, threadRootMessageIndex, lastLoadedMessageIdx);
-                }
-            }
             if (ascending) {
                 this.dispatchEvent(new LoadedNewThreadMessages());
             } else {
@@ -2215,16 +2206,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
         return [resp.events, userIds];
-    }
-
-    private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-        for (let i = events.length - 1; i >= 0; i--) {
-            const evt = events[i].event;
-            if (evt.kind === "message") {
-                return evt.messageIndex;
-            }
-        }
-        return undefined;
     }
 
     removeChat(chatId: ChatIdentifier): void {

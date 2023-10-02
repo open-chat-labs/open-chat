@@ -38,7 +38,6 @@ export type ChannelNotification = {
     communityName: string;
     channelName: string;
     messageType: string;
-    messageSubType: string | undefined;
     messageText: string | undefined;
     imageUrl: string | undefined;
     communityAvatarId: bigint | undefined;
@@ -55,7 +54,6 @@ export type DirectNotification = {
     senderName: string;
     senderDisplayName: string | undefined;
     messageType: string;
-    messageSubType: string | undefined;
     messageText: string | undefined;
     imageUrl: string | undefined;
     senderAvatarId: bigint | undefined;
@@ -74,7 +72,6 @@ export type GroupNotification = {
     chatId: GroupChatIdentifier;
     groupName: string;
     messageType: string;
-    messageSubType: string | undefined;
     messageText: string | undefined;
     imageUrl: string | undefined;
     groupAvatarId: bigint | undefined;

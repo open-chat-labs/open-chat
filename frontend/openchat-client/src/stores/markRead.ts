@@ -53,7 +53,10 @@ export class MessagesRead {
     }
 
     updateThread(rootIndex: number, readUpTo: number): void {
-        this.threads[rootIndex] = readUpTo;
+        const current = this.threads[rootIndex];
+        if (current === undefined || current < readUpTo) {
+            this.threads[rootIndex] = readUpTo;
+        }
     }
 
     setThreads(threads: ThreadRead[]): void {
@@ -378,7 +381,7 @@ export class MessageReadTracker {
             return this.waiting.get(context)?.has(messageId) ?? false;
         } else if (context.threadRootMessageIndex !== undefined) {
             const serverState = this.serverState.get(context.chatId);
-            if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) > messageIndex)
+            if ((serverState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)
                 return true;
             const localState = this.state.get(context.chatId);
             if ((localState?.threads[context.threadRootMessageIndex] ?? -1) >= messageIndex)

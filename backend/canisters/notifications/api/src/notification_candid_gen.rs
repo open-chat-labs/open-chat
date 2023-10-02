@@ -10,7 +10,6 @@ fn main() {
         sender_name: "".to_string(),
         sender_display_name: None,
         message_type: "".to_string(),
-        message_sub_type: None,
         message_text: None,
         image_url: None,
         sender_avatar_id: None,

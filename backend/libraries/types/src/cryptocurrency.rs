@@ -4,6 +4,8 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 
+const ICP_FEE: u128 = 10_000;
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
@@ -39,7 +41,7 @@ impl Cryptocurrency {
 
     pub fn fee(&self) -> Option<u128> {
         match self {
-            Cryptocurrency::InternetComputer => Some(10_000),
+            Cryptocurrency::InternetComputer => Some(ICP_FEE),
             Cryptocurrency::SNS1 => Some(1_000),
             Cryptocurrency::CKBTC => Some(10),
             Cryptocurrency::CHAT => Some(100_000),
@@ -115,6 +117,14 @@ impl CryptoTransaction {
             CryptoTransaction::Failed(f) => f.units(),
         }
     }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            CryptoTransaction::Pending(p) => p.fee(),
+            CryptoTransaction::Completed(c) => c.fee(),
+            CryptoTransaction::Failed(f) => f.fee(),
+        }
+    }
 }
 
 impl PendingCryptoTransaction {
@@ -140,6 +150,13 @@ impl PendingCryptoTransaction {
         match self {
             PendingCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             PendingCryptoTransaction::ICRC1(t) => t.amount,
+        }
+    }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            PendingCryptoTransaction::NNS(_) => ICP_FEE,
+            PendingCryptoTransaction::ICRC1(t) => t.fee,
         }
     }
 
@@ -204,6 +221,13 @@ impl CompletedCryptoTransaction {
             CompletedCryptoTransaction::ICRC1(t) => t.amount,
         }
     }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            CompletedCryptoTransaction::NNS(_) => ICP_FEE,
+            CompletedCryptoTransaction::ICRC1(t) => t.fee,
+        }
+    }
 }
 
 impl FailedCryptoTransaction {
@@ -232,6 +256,13 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
             FailedCryptoTransaction::ICRC1(t) => t.amount,
+        }
+    }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            FailedCryptoTransaction::NNS(_) => ICP_FEE,
+            FailedCryptoTransaction::ICRC1(t) => t.fee,
         }
     }
 }

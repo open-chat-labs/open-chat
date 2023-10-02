@@ -13,7 +13,7 @@
         TimelineItem,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
@@ -26,22 +26,8 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
-    import AcceptRulesModal from "../AcceptRulesModal.svelte";
 
-    type ConfirmedActionEvent = ConfirmedSendMessage | ConfirmedRetrySendMessage;
-
-    type ConfirmedSendMessage = {
-        kind: "send_message";
-        textContent: string | undefined;
-        mentioned: User[];
-        attachment: AttachmentContent | undefined;
-    };
-
-    type ConfirmedRetrySendMessage = {
-        kind: "retry_send_message";
-        event: EventWrapper<Message>;
-    };
-
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
@@ -59,8 +45,6 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
-    let showAcceptRulesModal = false;
-    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -95,6 +79,7 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
+    $: isFollowedByMe = thread !== undefined && (thread.followedByMe || thread.participantIds.has(user.userId));
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -131,34 +116,12 @@
         draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
-    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        if (client.rulesNeedAccepting()) {
-            showAcceptRulesModal = true;
-            sendMessageContext = {
-                kind: "retry_send_message",
-                event: ev.detail,
-            };
-        } else {
-            client.retrySendMessage(messageContext, ev.detail);
-        }
-    }
-
     function sendMessageWithAttachment(
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
         mentioned: User[] = []
     ) {
-        if (client.rulesNeedAccepting()) {
-            showAcceptRulesModal = true;
-            sendMessageContext = {
-                kind: "send_message",
-                textContent,
-                mentioned,
-                attachment,
-            };
-        } else {
-            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
-        }
+        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }
 
     function cancelReply() {
@@ -244,78 +207,17 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
-
-    function onAcceptRules(
-        ev: CustomEvent<{
-            accepted: boolean;
-            chatRulesVersion: number | undefined;
-            communityRulesVersion: number | undefined;
-        }>
-    ) {
-        if (sendMessageContext === undefined) {
-            showAcceptRulesModal = false;
-            return;
-        }
-
-        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
-
-        if (accepted) {
-            switch (sendMessageContext.kind) {
-                case "send_message": {
-                    client.sendMessageWithAttachment(
-                        messageContext,
-                        sendMessageContext.textContent,
-                        sendMessageContext.attachment,
-                        sendMessageContext.mentioned,
-                        chatRulesVersion,
-                        communityRulesVersion
-                    );
-                    break;
-                }
-                case "retry_send_message": {
-                    client.retrySendMessage(
-                        messageContext,
-                        sendMessageContext.event,
-                        chatRulesVersion,
-                        communityRulesVersion
-                    );
-                    break;
-                }
-            }
-        } else {
-            switch (sendMessageContext.kind) {
-                case "send_message": {
-                    draftThreadMessages.setTextContent(
-                        threadRootMessageIndex,
-                        sendMessageContext.textContent
-                    );
-                    draftThreadMessages.setAttachment(
-                        threadRootMessageIndex,
-                        sendMessageContext.attachment
-                    );
-                    break;
-                }
-            }
-        }
-
-        sendMessageContext = undefined;
-        showAcceptRulesModal = false;
-    }
 </script>
 
-{#if showAcceptRulesModal}
-    <AcceptRulesModal on:close={onAcceptRules} />
-{/if}
+<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
 
-<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
+<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
 
-<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
-
-<MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
-        context={messageContext}
+        on:sendMessageWithContent
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
@@ -370,7 +272,11 @@
                             me={evt.event.sender === user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
-                            readByMe={evt.event.messageId === rootEvent.event.messageId || isReadByMe($messagesRead, evt)}
+                            readByMe={
+                                evt.event.messageId === rootEvent.event.messageId ||
+                                !isFollowedByMe ||
+                                isReadByMe($messagesRead, evt)
+                            }
                             readByThem
                             observer={messageObserver}
                             focused={evt.event.kind === "message" &&
@@ -398,7 +304,7 @@
                             on:editEvent={() => editEvent(evt)}
                             on:replyTo={replyTo}
                             on:upgrade
-                            on:retrySend={retrySend}
+                            on:retrySend
                             on:forward />
                     {/each}
                 {/each}
