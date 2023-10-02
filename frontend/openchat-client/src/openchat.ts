@@ -2208,16 +2208,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return [resp.events, userIds];
     }
 
-    private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-        for (let i = events.length - 1; i >= 0; i--) {
-            const evt = events[i].event;
-            if (evt.kind === "message") {
-                return evt.messageIndex;
-            }
-        }
-        return undefined;
-    }
-
     removeChat(chatId: ChatIdentifier): void {
         if (this._liveState.uninitializedDirectChats.has(chatId)) {
             removeUninitializedDirectChat(chatId);
