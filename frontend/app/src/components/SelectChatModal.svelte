@@ -25,6 +25,7 @@
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import Search from "./Search.svelte";
+    import { compareBigints } from "../utils/bigints";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -42,6 +43,7 @@
         avatarUrl: string;
         description: string;
         username: string | undefined;
+        lastUpdated: bigint;
     };
     type ShareCommunity = {
         kind: "community";
@@ -49,6 +51,7 @@
         name: string;
         avatarUrl: string;
         description: string;
+        lastUpdated: bigint;
         channels: ShareChat[];
     };
 
@@ -90,25 +93,29 @@
     }
 
     function chatMatchesSearch(chats: ShareChat[], searchTerm: string): ShareChat[] {
-        return chats.filter(
-            (c) =>
-                searchTerm === "" ||
-                c.name.toLowerCase().includes(searchTerm) ||
-                c.username?.toLowerCase()?.includes(searchTerm)
-        );
+        return chats
+            .filter(
+                (c) =>
+                    searchTerm === "" ||
+                    c.name.toLowerCase().includes(searchTerm) ||
+                    c.username?.toLowerCase()?.includes(searchTerm)
+            )
+            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
     }
 
     function communityMatchesSearch(communities: ShareCommunity[], searchTerm: string) {
-        return communities.reduce((agg, c) => {
-            const filtered = chatMatchesSearch(c.channels, searchTerm);
-            if (filtered.length > 0) {
-                agg.push({
-                    ...c,
-                    channels: filtered,
-                });
-            }
-            return agg;
-        }, [] as ShareCommunity[]);
+        return communities
+            .reduce((agg, c) => {
+                const filtered = chatMatchesSearch(c.channels, searchTerm);
+                if (filtered.length > 0) {
+                    agg.push({
+                        ...c,
+                        channels: filtered,
+                    });
+                }
+                return agg;
+            }, [] as ShareCommunity[])
+            .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
     }
 
     async function buildListOfTargets(
@@ -148,7 +155,7 @@
     async function normaliseCommunity(
         now: number,
         selectedChatId: ChatIdentifier | undefined,
-        { id, name, avatar, description, channels }: CommunitySummary
+        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary
     ): Promise<ShareCommunity> {
         const normalisedChannels = await Promise.all(
             filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c))
@@ -159,6 +166,7 @@
             name,
             avatarUrl: client.communityAvatarUrl(id.communityId, avatar),
             description,
+            lastUpdated,
             channels: normalisedChannels,
         };
     }
@@ -176,6 +184,7 @@
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                     username: "@" + them.username,
+                    lastUpdated: chatSummary.lastUpdated,
                 };
 
             default:
@@ -187,6 +196,7 @@
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
+                    lastUpdated: chatSummary.lastUpdated,
                 };
         }
     }

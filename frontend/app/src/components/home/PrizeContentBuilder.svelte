@@ -104,7 +104,7 @@
             },
             prizes: generatePrizes(),
         };
-        client.sendMessageWithContent(context, content);
+        dispatch("sendMessageWithContent", { content });
         dispatch("close");
     }
 

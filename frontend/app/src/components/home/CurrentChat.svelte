@@ -3,7 +3,7 @@
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
     import { closeNotificationsForChat } from "../../utils/notifications";
-    import { getContext, onMount, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
         type ChatSummary,
@@ -33,31 +33,8 @@
     import { randomSentence } from "../../utils/randomMsg";
     import { framed } from "../../stores/xframe";
     import { rightPanelHistory } from "../../stores/rightPanel";
-    import AcceptRulesModal from "./AcceptRulesModal.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
-
-    type ConfirmedActionEvent =
-        | ConfirmedSendMessage
-        | ConfirmedForwardMessage
-        | ConfirmedRetrySendMessage;
-
-    type ConfirmedSendMessage = {
-        kind: "send_message";
-        textContent: string | undefined;
-        mentioned: User[];
-        attachment: AttachmentContent | undefined;
-    };
-
-    type ConfirmedForwardMessage = {
-        kind: "forward_message";
-        msg: Message;
-    };
-
-    type ConfirmedRetrySendMessage = {
-        kind: "retry_send_message";
-        event: EventWrapper<Message>;
-    };
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -65,6 +42,7 @@
     export let events: EventWrapper<ChatEvent>[];
     export let filteredProposals: FilteredProposals | undefined;
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
@@ -82,8 +60,6 @@
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
-    let showAcceptRulesModal = false;
-    let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
 
     $: showChatHeader = !$mobileWidth || !$framed;
     $: messageContext = { chatId: chat.id };
@@ -245,43 +221,11 @@
         attachment: AttachmentContent | undefined,
         mentioned: User[] = []
     ) {
-        if (client.rulesNeedAccepting()) {
-            showAcceptRulesModal = true;
-            sendMessageContext = {
-                kind: "send_message",
-                textContent,
-                mentioned,
-                attachment,
-            };
-        } else {
-            client.sendMessageWithAttachment(messageContext, textContent, attachment, mentioned);
-        }
+        dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }
 
     function forwardMessage(msg: Message) {
-        if (!canSend || !client.canForward(msg.content)) return;
-
-        if (client.rulesNeedAccepting()) {
-            showAcceptRulesModal = true;
-            sendMessageContext = {
-                kind: "forward_message",
-                msg,
-            };
-        } else {
-            client.forwardMessage(messageContext, msg);
-        }
-    }
-
-    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        if (client.rulesNeedAccepting()) {
-            showAcceptRulesModal = true;
-            sendMessageContext = {
-                kind: "retry_send_message",
-                event: ev.detail,
-            };
-        } else {
-            client.retrySendMessage(messageContext, ev.detail);
-        }
+        dispatch("forwardMessage", msg);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
@@ -295,73 +239,9 @@
     function defaultCryptoTransferReceiver(): string | undefined {
         return $currentChatReplyingTo?.sender?.userId;
     }
-
-    function onAcceptRules(
-        ev: CustomEvent<{
-            accepted: boolean;
-            chatRulesVersion: number | undefined;
-            communityRulesVersion: number | undefined;
-        }>
-    ) {
-        if (sendMessageContext === undefined) {
-            showAcceptRulesModal = false;
-            return;
-        }
-
-        const { accepted, chatRulesVersion, communityRulesVersion } = ev.detail;
-
-        if (accepted) {
-            switch (sendMessageContext.kind) {
-                case "send_message": {
-                    client.sendMessageWithAttachment(
-                        messageContext,
-                        sendMessageContext.textContent,
-                        sendMessageContext.attachment,
-                        sendMessageContext.mentioned,
-                        chatRulesVersion,
-                        communityRulesVersion
-                    );
-                    break;
-                }
-                case "forward_message": {
-                    client.forwardMessage(
-                        messageContext,
-                        sendMessageContext.msg,
-                        chatRulesVersion,
-                        communityRulesVersion
-                    );
-                    break;
-                }
-                case "retry_send_message": {
-                    client.retrySendMessage(
-                        messageContext,
-                        sendMessageContext.event,
-                        chatRulesVersion,
-                        communityRulesVersion
-                    );
-                    break;
-                }
-            }
-        } else {
-            switch (sendMessageContext.kind) {
-                case "send_message": {
-                    currentChatDraftMessage.setTextContent(chat.id, sendMessageContext.textContent);
-                    currentChatDraftMessage.setAttachment(chat.id, sendMessageContext.attachment);
-                    break;
-                }
-            }
-        }
-
-        sendMessageContext = undefined;
-        showAcceptRulesModal = false;
-    }
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
-
-{#if showAcceptRulesModal}
-    <AcceptRulesModal on:close={onAcceptRules} />
-{/if}
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
@@ -371,15 +251,15 @@
         ownedCommunities={importToCommunities} />
 {/if}
 
-<PollBuilder context={messageContext} bind:this={pollBuilder} bind:open={creatingPoll} />
+<PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
 
 {#if creatingCryptoTransfer !== undefined}
     <CryptoTransferBuilder
-        context={messageContext}
         {chat}
         ledger={creatingCryptoTransfer.ledger}
         draftAmount={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
+        on:sendMessageWithContent
         on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
@@ -390,12 +270,13 @@
         {chat}
         ledger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
         draftAmount={0n}
+        on:sendMessageWithContent
         on:close={() => (creatingPrizeMessage = false)} />
 {/if}
 
-<GiphySelector context={messageContext} bind:this={giphySelector} bind:open={selectingGif} />
+<GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
 
-<MemeBuilder context={messageContext} bind:this={memeBuilder} bind:open={buildingMeme} />
+<MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
 
 <div class="wrapper">
     {#if showSearchHeader}
@@ -431,7 +312,7 @@
         on:chatWith
         on:upgrade
         on:forward
-        on:retrySend={retrySend}
+        on:retrySend
         {chat}
         {events}
         {filteredProposals}

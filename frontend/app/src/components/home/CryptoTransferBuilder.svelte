@@ -2,7 +2,7 @@
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type { ChatSummary, OpenChat, UserSummary } from "openchat-client";
-    import type { CryptocurrencyContent, MessageContext } from "openchat-shared";
+    import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -27,7 +27,6 @@
     export let ledger: string;
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
-    export let context: MessageContext;
 
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -92,7 +91,7 @@
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
-        client.sendMessageWithContent(context, content);
+        dispatch("sendMessageWithContent", { content });
         lastCryptoSent.set(ledger);
         dispatch("close");
     }

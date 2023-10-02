@@ -24,6 +24,7 @@
     const client = getContext<OpenChat>("client");
 
     export let community: CommunitySummary;
+    export let openedGroupId: number | undefined = undefined;
 
     let searchTerm = "";
     let selectedGroup: UserGroupDetails | undefined = undefined;
@@ -112,6 +113,7 @@
 
     export function reset() {
         selectedGroup = undefined;
+        openedGroupId = undefined;
     }
 </script>
 
@@ -125,7 +127,7 @@
         {community}
         {communityUsers}
         {communityUsersList}
-        on:cancel={() => (selectedGroup = undefined)}
+        on:cancel={reset}
         original={selectedGroup} />
 {:else}
     <div class="user-groups">
@@ -153,7 +155,9 @@
             {:else}
                 {#each matchingGroups as userGroup}
                     <div class="user-group-card">
-                        <CollapsibleCard open={false} headerText={userGroup.name}>
+                        <CollapsibleCard
+                            open={userGroup.id === openedGroupId}
+                            headerText={userGroup.name}>
                             <h4 slot="titleSlot" class="name">
                                 {#if canManageUserGroups}
                                     <div
