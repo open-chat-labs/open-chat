@@ -136,7 +136,6 @@
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
-    $: lastCryptoSent = client.lastCryptoSent;
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
 
     afterUpdate(() => {
