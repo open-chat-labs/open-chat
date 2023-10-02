@@ -139,7 +139,11 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
             }
         })
     } else if args.recipient == my_user_id {
-        ValidateRequestResult::Valid(my_user_id, UserType::_Self)
+        if matches!(args.content, MessageContentInitial::Crypto(_)) {
+            ValidateRequestResult::Invalid(TransferCannotBeToSelf)
+        } else {
+            ValidateRequestResult::Valid(my_user_id, UserType::_Self)
+        }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
         ValidateRequestResult::Valid(my_user_id, user_type)

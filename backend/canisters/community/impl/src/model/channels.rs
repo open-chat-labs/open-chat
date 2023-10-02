@@ -7,8 +7,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, Rules,
-    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    CommunityCanisterChannelSummaryUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
+    MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
@@ -198,7 +198,7 @@ impl Channel {
         let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
             (member.min_visible_event_index(), member.min_visible_message_index())
         } else if chat.is_public {
-            (EventIndex::default(), MessageIndex::default())
+            chat.min_visible_indexes_for_new_members.unwrap_or_default()
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
             (invitation.min_visible_event_index, invitation.min_visible_message_index)
         } else {

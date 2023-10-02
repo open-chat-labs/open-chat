@@ -34,6 +34,7 @@ type SendMessageResponse = variant {
     InvalidRequest : text;
     TransferFailed : text;
     TransferCannotBeZero;
+    TransferCannotBeToSelf;
     UserSuspended;
     InternalError : text;
 };
@@ -447,6 +448,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     InvalidRequest : text;
     TransferFailed : text;
     TransferCannotBeZero;
+    TransferCannotBeToSelf;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
@@ -482,6 +484,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     InvalidRequest : text;
     TransferFailed : text;
     TransferCannotBeZero;
+    TransferCannotBeToSelf;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
