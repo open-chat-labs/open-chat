@@ -7,8 +7,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
     ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, RangeSet,
-    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    CommunityCanisterChannelSummaryUpdates, EventIndex, GroupPermissionRole, GroupPermissions, MessageIndex, RangeSet, Rules,
+    TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 use super::members::CommunityMembers;
