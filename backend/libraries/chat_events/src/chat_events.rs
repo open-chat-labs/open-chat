@@ -423,14 +423,15 @@ impl ChatEvents {
                 match &p.transaction {
                     CryptoTransaction::Pending(_) => return FundTransferPending,
                     CryptoTransaction::Completed(t) => {
-                        let unclaimed = p.prizes_remaining.iter().map(|t| t.e8s() as u128).sum::<u128>();
+                        let fee = t.fee();
+                        let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
                         if unclaimed > 0 {
                             p.prizes_remaining = Vec::new();
                             return Success(create_pending_transaction(
                                 t.token(),
                                 t.ledger_canister_id(),
-                                unclaimed,
-                                t.fee(),
+                                unclaimed - fee,
+                                fee,
                                 message.sender,
                                 now_nanos,
                             ));
