@@ -4934,6 +4934,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "proposals_bot_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "ic-cdk",
+ "msgpack",
+ "proposals_bot_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "proposals_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -4944,6 +4956,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "fire_and_forget_handler",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",
@@ -4955,6 +4968,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "itertools 0.11.0",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "proposals_bot_canister",
  "serde",
@@ -6805,6 +6819,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "ic-ledger-types",
+ "proposals_bot_canister",
  "serde",
  "serde_bytes",
  "types",
@@ -6870,6 +6885,8 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "num-traits",
+ "proposals_bot_canister",
+ "proposals_bot_canister_c2c_client",
  "rand",
  "search",
  "serde",

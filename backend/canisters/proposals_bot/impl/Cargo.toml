@@ -17,6 +17,7 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
+fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
@@ -28,6 +29,7 @@ ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
