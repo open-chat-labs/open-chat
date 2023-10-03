@@ -442,14 +442,14 @@
         "pendingSentByYou": "vous envoyez {amount} {token} à {receiver}",
         "done": "actualiser et continuer",
         "amount": "Montant",
-        "fee": "Des frais de {fee} {token} seront ajoutés",
         "warning": "AVERTISSEMENT - il est de votre responsabilité de vous assurer que vous faites confiance à l'identité et aux motivations du destinataire. OpenChat ne peut pas annuler les transferts {token}.",
         "zeroBalance": "Vous n'avez pas de {token}.",
         "yourAccount": "Votre adresse {token}",
         "receiver": "Destinataire",
         "chooseReceiver": "entrer le nom d'utilisateur du destinataire",
         "max": "Max",
-        "viewTransaction": "[Transaction]({url})"
+        "viewTransaction": "[Transaction]({url})",
+        "fee": "Des frais de {fee} {token} seront ajoutés"
     },
     "cryptoAccount": {
         "manage": "Faire en sorte",
@@ -683,7 +683,19 @@
         "finished": "Fini",
         "winner": "**{recipient}** a gagné **{amount}** {token}",
         "claimFailed": "Désolé, votre réclamation n'a pas abouti ! Plus de chance la prochaine fois.",
-        "allClaimed": "Entièrement revendiqué"
+        "allClaimed": "Entièrement revendiqué",
+        "live": "Message de récompense en direct ! Les autres peuvent cliquer pour réclamer 🎁",
+        "prizeFinished": "Votre message de récompense est maintenant terminé",
+        "title": "Prix",
+        "totalAmount": "Montant total du prix",
+        "numberOfWinners": "Nombre de gagnants",
+        "duration": "Combien de temps le prix sera-t-il actif ?",
+        "minPrize": "Quel est le prix minimum ?",
+        "maxPrize": "Quel est le prix maximum ?",
+        "distribution": "Comment les prix doivent-ils être distribués ?",
+        "equalDistribution": "Répartition égale",
+        "randomDistribution": "Distribution aléatoire",
+        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense"
     },
     "upgrade": {
         "blurb": "Certaines fonctionnalités d'OpenChat ne sont disponibles que pour les comptes premium. Vous pouvez mettre à niveau votre compte soit en vérifiant un numéro de téléphone par SMS, soit en payant une petite redevance ICP.",

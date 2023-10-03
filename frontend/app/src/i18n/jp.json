@@ -442,14 +442,14 @@
         "pendingSentByYou": "{amount}{token}を{receiver}に送信しています",
         "done": "更新して続行",
         "amount": "数量",
-        "fee": "{fee} {token} の料金が追加されます",
         "warning": "警告 - 受信者の身元と動機を信頼することは、あなたの責任です。 OpenChat は {token} 転送を元に戻すことはできません。",
         "zeroBalance": "あなたは {token} を持っていません。",
         "yourAccount": "あなたの {token} アドレス",
         "receiver": "受信者",
         "chooseReceiver": "受信者のユーザー名を入力します",
         "max": "最大",
-        "viewTransaction": "[取引]({url})"
+        "viewTransaction": "[取引]({url})",
+        "fee": "{fee} {token}の料金が追加されます"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -684,7 +684,19 @@
         "finished": "終了した",
         "winner": "**{recipient}** 勝った **{amount}** {token}",
         "claimFailed": "申し訳ありませんが、あなたの請求は失敗しました!次回は頑張ってください。",
-        "allClaimed": "全て請求済み"
+        "allClaimed": "全て請求済み",
+        "live": "賞品メッセージライブ！他の人もクリックして申請できます 🎁",
+        "prizeFinished": "賞品メッセージが完成しました",
+        "title": "賞",
+        "totalAmount": "賞金総額",
+        "numberOfWinners": "当選者数",
+        "duration": "賞品はいつまで有効ですか?",
+        "minPrize": "最低賞金額はいくらですか?",
+        "maxPrize": "賞金の最高額はいくらですか?",
+        "distribution": "賞品はどのように配布されるべきですか？",
+        "equalDistribution": "均等配分",
+        "randomDistribution": "ランダム配布",
+        "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください"
     },
     "upgrade": {
         "blurb": "一部のOpenChat機能は、プレミアムアカウントでのみ利用できます。 SMSで電話番号を確認するか、少額のICP料金を支払うことで、アカウントをアップグレードできます。",
@@ -1015,7 +1027,7 @@
         "title": "ヒントを追加する",
         "failure": "申し訳ありませんが、チップを追加できませんでした",
         "noExchangeRate": "{token} には為替レートが設定されていません",
-        "menu": "ヒント",
+        "menu": "チップ",
         "plusFee": "+ {fee} {token} 手数料",
         "advice": "好きなだけタップしてチップを残しましょう"
     },

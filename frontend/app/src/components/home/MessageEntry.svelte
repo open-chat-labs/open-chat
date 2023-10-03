@@ -535,6 +535,7 @@
                 {pollsAllowed}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
+                on:createPrizeMessage
                 on:attachGif
                 on:makeMeme
                 on:createPoll
