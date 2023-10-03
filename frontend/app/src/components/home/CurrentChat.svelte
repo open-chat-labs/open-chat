@@ -129,10 +129,6 @@
         closeNotificationsForChat(chat.id);
     }
 
-    function onMarkAllRead() {
-        client.markAllRead(chat);
-    }
-
     function createPoll() {
         if (!client.canCreatePolls(chat.id)) return;
 
@@ -288,7 +284,6 @@
     {:else if showChatHeader}
         <CurrentChatHeader
             on:clearSelection
-            on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:showInviteGroupUsers
             on:showProposalFilters

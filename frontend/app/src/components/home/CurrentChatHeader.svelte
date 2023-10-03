@@ -175,7 +175,6 @@
             on:showProposalFilters
             on:showGroupMembers
             on:createPoll
-            on:markAllRead
             on:upgrade
             on:showInviteGroupUsers
             on:leaveGroup />

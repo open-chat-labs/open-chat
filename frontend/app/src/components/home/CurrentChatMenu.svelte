@@ -5,7 +5,6 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Import from "svelte-material-icons/Import.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
@@ -111,10 +110,6 @@
 
     function showGroupMembers() {
         dispatch("showGroupMembers", true);
-    }
-
-    function markAllRead() {
-        dispatch("markAllRead");
     }
 
     function blockUser() {
@@ -364,13 +359,6 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
-                        <CheckboxMultipleMarked
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("markAllRead")}</div>
-                    </MenuItem>
 
                     {#if client.user.isPlatformModerator}
                         {#if client.isFrozen(selectedChatSummary.id)}
@@ -439,14 +427,6 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
-                        <CheckboxMultipleMarked
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("markAllRead")}</div>
-                    </MenuItem>
-
                     {#if blocked}
                         <MenuItem on:click={unblockUser}>
                             <CancelIcon
