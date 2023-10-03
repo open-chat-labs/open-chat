@@ -164,7 +164,7 @@
 {#if collapsed}
     <div on:click={onClick}>
         <em>{proposal.title}</em>
-        <ExpandIcon viewBox="0 -5 24 24" />
+        <ExpandIcon viewBox="0 -3 24 24" />
     </div>
 {:else}
     <div class="wrapper">
