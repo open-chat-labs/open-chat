@@ -12,7 +12,7 @@
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
-    import { _, number } from "svelte-i18n";
+    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
