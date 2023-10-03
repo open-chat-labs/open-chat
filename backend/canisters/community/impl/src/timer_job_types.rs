@@ -5,7 +5,7 @@ use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction};
-use utils::time::HOUR_IN_MS;
+use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -152,19 +152,36 @@ impl Job for MarkGroupImportCompleteJob {
 
 impl Job for ClosePrizeJob {
     fn execute(&self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
+        mutate_state(|state| {
+            let now = state.env.now();
             if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                channel
+                match channel
                     .chat
                     .events
                     .close_prize(self.thread_root_message_index, self.message_index, state.env.now_nanos())
-            } else {
-                None
+                {
+                    chat_events::ClosePrizeResult::Success(pending_transaction) => {
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }),
+                            now,
+                            now,
+                        );
+                    }
+                    chat_events::ClosePrizeResult::FundTransferPending => {
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::ClosePrize(ClosePrizeJob {
+                                channel_id: self.channel_id,
+                                thread_root_message_index: self.thread_root_message_index,
+                                message_index: self.message_index,
+                            }),
+                            now + MINUTE_IN_MS,
+                            now,
+                        );
+                    }
+                    chat_events::ClosePrizeResult::NoRefund => (),
+                }
             }
-        }) {
-            let make_transfer_job = MakeTransferJob { pending_transaction };
-            make_transfer_job.execute();
-        }
+        });
     }
 }
 
@@ -181,7 +198,7 @@ impl Job for MakeTransferJob {
                     let now = state.env.now();
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }),
-                        now + HOUR_IN_MS,
+                        now + MINUTE_IN_MS,
                         now,
                     );
                 });
