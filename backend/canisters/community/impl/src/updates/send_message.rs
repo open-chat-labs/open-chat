@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{ClosePrizeJob, DeleteFileReferencesJob, EndPollJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -176,7 +176,7 @@ fn register_timer_jobs(
 
     if let MessageContent::Prize(p) = &message_event.event.content {
         timer_jobs.enqueue_job(
-            TimerJob::ClosePrize(ClosePrizeJob {
+            TimerJob::RefundPrize(RefundPrizeJob {
                 channel_id,
                 thread_root_message_index,
                 message_index: message_event.event.message_index,

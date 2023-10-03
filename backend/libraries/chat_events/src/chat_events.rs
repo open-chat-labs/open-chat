@@ -408,22 +408,21 @@ impl ChatEvents {
         EndPollResult::PollNotFound
     }
 
-    pub fn close_prize(
-        &mut self,
+    pub fn prize_refund(
+        &self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
         let now_ms = now_nanos / 1_000_000;
-        if let Some((message, _)) =
-            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into(), now_ms)
+        if let Some(message) =
+            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into(), now_ms)
         {
-            if let MessageContentInternal::Prize(p) = &mut message.content {
+            if let MessageContentInternal::Prize(p) = &message.content {
                 if let CryptoTransaction::Completed(t) = &p.transaction {
                     let fee = t.fee();
                     let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
                     if unclaimed > 0 {
-                        p.prizes_remaining = Vec::new();
                         return Some(create_pending_transaction(
                             t.token(),
                             t.ledger_canister_id(),
@@ -1310,11 +1309,21 @@ impl ChatEvents {
         event_key: EventKey,
         now: TimestampMillis,
     ) -> Option<(&mut MessageInternal, EventIndex)> {
-        let events_list = self.events_list_mut(min_visible_event_index, thread_root_message_index, now)?;
-
-        events_list
-            .get_mut(event_key, min_visible_event_index, now)
+        self.events_list_mut(min_visible_event_index, thread_root_message_index, now)
+            .and_then(|l| l.get_mut(event_key, min_visible_event_index, now))
             .and_then(|e| e.event.as_message_mut().map(|m| (m, e.index)))
+    }
+
+    fn message_internal(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+        event_key: EventKey,
+        now: TimestampMillis,
+    ) -> Option<&MessageInternal> {
+        self.events_list(min_visible_event_index, thread_root_message_index, now)
+            .and_then(|l| l.get(event_key, min_visible_event_index, now))
+            .and_then(|e| e.event.as_message())
     }
 
     fn expiry_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {

@@ -15,7 +15,7 @@ pub enum TimerJob {
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
-    ClosePrize(ClosePrizeJob),
+    RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
 }
 
@@ -57,7 +57,7 @@ pub struct MarkGroupImportCompleteJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ClosePrizeJob {
+pub struct RefundPrizeJob {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
@@ -77,7 +77,7 @@ impl Job for TimerJob {
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
-            TimerJob::ClosePrize(job) => job.execute(),
+            TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
         }
     }
@@ -150,14 +150,14 @@ impl Job for MarkGroupImportCompleteJob {
     }
 }
 
-impl Job for ClosePrizeJob {
+impl Job for RefundPrizeJob {
     fn execute(&self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
-            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+        if let Some(pending_transaction) = read_state(|state| {
+            if let Some(channel) = state.data.channels.get(&self.channel_id) {
                 channel
                     .chat
                     .events
-                    .close_prize(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+                    .prize_refund(self.thread_root_message_index, self.message_index, state.env.now_nanos())
             } else {
                 None
             }

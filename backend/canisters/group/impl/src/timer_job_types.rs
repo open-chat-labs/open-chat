@@ -1,5 +1,4 @@
-use crate::mutate_state;
-use crate::{activity_notifications::handle_activity_notification, read_state};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state};
 use canister_timer_jobs::Job;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
@@ -12,7 +11,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
-    ClosePrize(ClosePrizeJob),
+    RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
 }
 
@@ -34,7 +33,7 @@ pub struct EndPollJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ClosePrizeJob {
+pub struct RefundPrizeJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
@@ -50,7 +49,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
-            TimerJob::ClosePrize(job) => job.execute(),
+            TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
         }
     }
@@ -106,14 +105,14 @@ impl Job for EndPollJob {
     }
 }
 
-impl Job for ClosePrizeJob {
+impl Job for RefundPrizeJob {
     fn execute(&self) {
-        if let Some(pending_transaction) = mutate_state(|state| {
+        if let Some(pending_transaction) = read_state(|state| {
             state
                 .data
                 .chat
                 .events
-                .close_prize(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+                .prize_refund(self.thread_root_message_index, self.message_index, state.env.now_nanos())
         }) {
             let make_transfer_job = MakeTransferJob { pending_transaction };
             make_transfer_job.execute();
