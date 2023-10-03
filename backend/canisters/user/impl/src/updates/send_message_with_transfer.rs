@@ -34,6 +34,7 @@ async fn send_message_with_transfer_to_channel(
         PrepareResult::RecipientBlocked => return RecipientBlocked,
         PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
         PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
+        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
     };
 
     // Make the crypto transfer
@@ -111,6 +112,7 @@ async fn send_message_with_transfer_to_group(
         PrepareResult::RecipientBlocked => return RecipientBlocked,
         PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
         PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
+        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
     };
 
     // Make the crypto transfer
@@ -169,6 +171,7 @@ enum PrepareResult {
     RecipientBlocked,
     InvalidRequest(String),
     TransferCannotBeZero,
+    TransferCannotBeToSelf,
 }
 
 fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResult {
@@ -184,6 +187,10 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
 
     let pending_transaction = match &content {
         MessageContentInitial::Crypto(c) => {
+            let my_user_id = state.env.canister_id().into();
+            if c.recipient == my_user_id {
+                return TransferCannotBeToSelf;
+            }
             if state.data.blocked_users.contains(&c.recipient) {
                 return RecipientBlocked;
             }
@@ -199,7 +206,7 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
             match &c.transfer {
                 CryptoTransaction::Pending(t) => {
                     let total_prize = c.prizes.iter().map(|t| t.e8s()).sum::<u64>() as u128;
-                    let prize_fees = c.prizes.len() as u128 * t.token().fee().unwrap();
+                    let prize_fees = c.prizes.len() as u128 * t.fee();
                     let total_amount_to_send = total_prize + prize_fees;
 
                     if t.units() != total_amount_to_send {

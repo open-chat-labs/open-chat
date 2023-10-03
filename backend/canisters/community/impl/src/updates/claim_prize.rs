@@ -82,22 +82,20 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     let min_visible_event_index = channel_member.min_visible_event_index();
     let user_id = member.user_id;
 
-    let (token, ledger, amount) =
+    let (token, ledger, amount, fee) =
         match channel
             .chat
             .events
             .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
         {
             ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
-            ReservePrizeResult::Success(t, l, a) => (t, l, a),
+            ReservePrizeResult::Success(t, l, a, f) => (t, l, a, f),
             ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
             ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
             ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
         };
 
-    let fee = token.fee().unwrap(); // TODO send up the transaction fee when creating the prize message
-
-    let transaction = create_pending_transaction(token, ledger, amount.e8s() as u128, fee, user_id, now_nanos);
+    let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, now_nanos);
 
     Ok(PrepareResult {
         group: state.env.canister_id(),
