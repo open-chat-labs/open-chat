@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Notifications for custom messages should use the sub-type ([#4465](https://github.com/open-chat-labs/open-chat/pull/4465))
 - Support prize messages in any token by getting fee from original transfer ([#4470](https://github.com/open-chat-labs/open-chat/pull/4470))
 - Prevent transfers to yourself ([#4471](https://github.com/open-chat-labs/open-chat/pull/4471))
+- Retry sending tip if c2c call fails ([#4482](https://github.com/open-chat-labs/open-chat/pull/4482))
 
 ## [[2.0.867](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.867-user)] - 2023-09-27
 
