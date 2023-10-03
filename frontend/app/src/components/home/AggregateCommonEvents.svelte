@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import type { ChatIdentifier, Level, OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
     import { interpolateLevel } from "../../utils/i18n";
@@ -27,12 +27,6 @@
                 ? $_("oneMessageDeleted")
                 : $_("nMessagesDeleted", { values: { number: messagesDeleted.length } })
             : undefined;
-
-    afterUpdate(() => {
-        if (readByMe && observer && deletedMessagesElement) {
-            observer.unobserve(deletedMessagesElement);
-        }
-    });
 
     onMount(() => {
         if (!readByMe && deletedMessagesElement) {

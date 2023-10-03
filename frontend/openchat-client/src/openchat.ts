@@ -782,6 +782,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
+        if (this.messagesRead.isRead(context, messageIndex, messageId)) {
+            return;
+        }
+
         this.messagesRead.markMessageRead(context, messageIndex, messageId);
 
         const selectedChat = this._liveState.selectedChat;
@@ -1209,29 +1213,25 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    followThread(
-        chatId: ChatIdentifier,
-        message: Message,
-        follow: boolean
-    ): Promise<boolean> {
+    followThread(chatId: ChatIdentifier, message: Message, follow: boolean): Promise<boolean> {
         // Assume it will succeed
         localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-            followedByMe: follow
+            followedByMe: follow,
         });
 
         return this.sendRequest({
             kind: "followThread",
             chatId,
             threadRootMessageIndex: message.messageIndex,
-            follow
+            follow,
         }).then((resp) => {
             if (resp === "failed") {
                 localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-                    followedByMe: !follow
+                    followedByMe: !follow,
                 });
                 return false;
             } else {
-                return true
+                return true;
             }
         });
     }

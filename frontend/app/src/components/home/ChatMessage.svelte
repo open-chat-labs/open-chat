@@ -29,7 +29,6 @@
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import {
-        afterUpdate,
         createEventDispatcher,
         getContext,
         onDestroy,
@@ -137,12 +136,6 @@
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
-
-    afterUpdate(() => {
-        if (readByMe && observer && msgElement) {
-            observer.unobserve(msgElement);
-        }
-    });
 
     onMount(() => {
         if (!readByMe) {
