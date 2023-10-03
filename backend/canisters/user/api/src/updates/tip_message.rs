@@ -26,5 +26,6 @@ pub enum Response {
     TransferFailed(String),
     ChatFrozen,
     UserSuspended,
+    Retrying(String),
     InternalError(String, Box<CompletedCryptoTransaction>),
 }

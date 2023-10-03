@@ -140,6 +140,7 @@ type TipMessageResponse = variant {
     TransferFailed : text;
     ChatFrozen;
     UserSuspended;
+    Retrying : text;
     InternalError : record { text; CompletedCryptoTransaction };
 };
 
