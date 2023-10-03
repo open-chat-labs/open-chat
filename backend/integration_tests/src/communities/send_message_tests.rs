@@ -118,7 +118,7 @@ fn send_prize_in_channel() {
 
     let TestData {
         user1,
-        user2,
+        user2: _,
         community_id,
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
