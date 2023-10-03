@@ -36,6 +36,7 @@ import type {
     TimelineItem,
     TipsReceived,
     ThreadSummary,
+    PrizeContent,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -1068,16 +1069,32 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
+    let content = msg.content;
+    if (resp.kind === "transfer_success") {
+        switch (msg.content.kind) {
+            case "crypto_content":
+                content = { ...msg.content, transfer: resp.transfer } as CryptocurrencyContent;
+                break;
+            case "prize_content_initial":
+                content = {
+                    kind: "prize_content",
+                    prizesRemaining: msg.content.prizes.length,
+                    prizesPending: 0,
+                    winners: [],
+                    token: msg.content.transfer.token,
+                    endDate: msg.content.endDate,
+                    caption: msg.content.caption,
+                } as PrizeContent;
+                break;
+        }
+    }
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
-            content:
-                resp.kind === "transfer_success"
-                    ? ({ ...msg.content, transfer: resp.transfer } as CryptocurrencyContent)
-                    : msg.content,
+            content,
         },
     };
 }
@@ -1244,7 +1261,10 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
-        message.thread = { ...(message.thread ?? defaultThreadSummary()), ...localUpdates.threadSummary };
+        message.thread = {
+            ...(message.thread ?? defaultThreadSummary()),
+            ...localUpdates.threadSummary,
+        };
     }
 
     if (
@@ -1329,7 +1349,7 @@ function defaultThreadSummary(): ThreadSummary {
         followedByMe: false,
         numberOfReplies: 0,
         latestEventIndex: 0,
-        latestEventTimestamp: BigInt(0),            
+        latestEventTimestamp: BigInt(0),
     };
 }
 

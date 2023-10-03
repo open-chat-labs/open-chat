@@ -444,14 +444,14 @@
         "pendingSentByYou": "Sie senden {amount} {token} an {receiver}",
         "done": "aktualisieren und fortfahren",
         "amount": "Menge",
-        "fee": "Eine Gebühr von {fee} {token} wird hinzugefügt",
         "warning": "WARNUNG – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine {token}-Übertragungen rückgängig machen.",
         "zeroBalance": "Sie haben keine {token}.",
         "yourAccount": "Ihre {token}-Adresse",
         "receiver": "Empfänger",
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
         "max": "max",
-        "viewTransaction": "[Transaktion]({url})"
+        "viewTransaction": "[Transaktion]({url})",
+        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -685,7 +685,19 @@
         "finished": "Fertig bearbeitet",
         "winner": "**{recipient}** hat gewonnen **{amount}** {token}",
         "claimFailed": "Entschuldigung, Ihre Reklamation war erfolglos! Mehr Glück beim nächsten Mal.",
-        "allClaimed": "Vollständig beansprucht"
+        "allClaimed": "Vollständig beansprucht",
+        "live": "Gewinnnachricht live! Andere können klicken, um Anspruch zu erheben 🎁",
+        "prizeFinished": "Ihre Gewinnnachricht ist nun fertig",
+        "title": "Preis",
+        "totalAmount": "Gesamtpreisbetrag",
+        "numberOfWinners": "Anzahl der Gewinner",
+        "duration": "Wie lange wird der Preis aktiv sein?",
+        "minPrize": "Was ist der Mindestpreis?",
+        "maxPrize": "Was ist der Höchstgewinn?",
+        "distribution": "Wie sollen die Preise verteilt werden?",
+        "equalDistribution": "Gleichmäßige Verteilung",
+        "randomDistribution": "Zufällige Verteilung",
+        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen"
     },
     "upgrade": {
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",

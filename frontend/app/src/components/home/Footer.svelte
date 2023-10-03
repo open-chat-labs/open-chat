@@ -124,6 +124,7 @@
         on:createPoll
         on:searchChat
         on:tokenTransfer
+        on:createPrizeMessage
         on:attachGif
         on:makeMeme
         on:clearAttachment

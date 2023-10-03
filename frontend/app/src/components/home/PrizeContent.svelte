@@ -8,7 +8,7 @@
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
-    import CkBtcLarge from "../icons/CkBtcLarge.svelte";
+    import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
 
@@ -17,7 +17,13 @@
     export let content: PrizeContent;
     export let chatId: ChatIdentifier;
     export let messageId: bigint;
+    export let me: boolean;
 
+    $: cryptoLookup = client.cryptoLookup;
+    $: logo =
+        Object.values($cryptoLookup).find(
+            (t) => t.symbol.toLowerCase() === content.token.toLowerCase()
+        )?.logo ?? "";
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
     $: claimedByYou = content.winners.includes(client.user.userId);
@@ -30,7 +36,7 @@
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
-        if (e.isTrusted && chatId.kind === "group_chat") {
+        if (e.isTrusted && chatId.kind === "group_chat" && !me) {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
@@ -56,9 +62,8 @@
                 {/if}
             </span>
         </div>
-        <!-- <img class="image" alt="ckBTC logo" src={source} /> -->
         <div class="prize-coin">
-            <CkBtcLarge />
+            <SpinningToken {logo} />
         </div>
     </div>
     <div class="bottom">
@@ -67,7 +72,13 @@
                 {content.caption}
             </div>
         {/if}
-        <div class="click">{$_("prizes.click")}</div>
+        {#if !me}
+            <div class="click">{$_("prizes.click")}</div>
+        {:else if finished}
+            <div class="click">{$_("prizes.prizeFinished")}</div>
+        {:else}
+            <div class="click">{$_("prizes.live")}</div>
+        {/if}
         <div class="progress" bind:clientWidth={progressWidth}>
             <div
                 class="claimed"
@@ -86,16 +97,18 @@
                 </div>
             {/if}
 
-            <ButtonGroup align="fill">
-                <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
-                    >{claimedByYou
-                        ? $_("prizes.claimed")
-                        : finished
-                        ? $_("prizes.finished")
-                        : allClaimed
-                        ? $_("prizes.allClaimed")
-                        : $_("prizes.claim")}</Button>
-            </ButtonGroup>
+            {#if !me}
+                <ButtonGroup align="fill">
+                    <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
+                        >{claimedByYou
+                            ? $_("prizes.claimed")
+                            : finished
+                            ? $_("prizes.finished")
+                            : allClaimed
+                            ? $_("prizes.allClaimed")
+                            : $_("prizes.claim")}</Button>
+                </ButtonGroup>
+            {/if}
         </div>
     </div>
 </div>
@@ -116,6 +129,7 @@
             color: var(--button-txt);
         }
     }
+
     .top {
         position: relative;
         padding: 30px 0 30px 0;
@@ -125,6 +139,7 @@
         align-items: center;
         background: radial-gradient(circle, rgba(238, 31, 122, 1) 0%, rgba(59, 12, 190, 1) 80%);
     }
+
     .countdown {
         @include font-size(fs-60);
         font-weight: 700;
@@ -168,7 +183,7 @@
 
     .click {
         @include font(book, normal, fs-80);
-        color: var(--txt-light);
+        color: var(--txt);
         margin-bottom: $sp4;
     }
 
