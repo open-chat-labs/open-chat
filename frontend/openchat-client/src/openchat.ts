@@ -2925,7 +2925,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private canRetryMessage(content: MessageContent): boolean {
-        return content.kind !== "poll_content" && content.kind !== "crypto_content";
+        return (
+            content.kind !== "poll_content" &&
+            content.kind !== "crypto_content" &&
+            content.kind !== "prize_content_initial"
+        );
     }
 
     rulesNeedAccepting(): boolean {

@@ -5,6 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
+    import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -51,6 +52,11 @@
 
     function createTokenTransfer() {
         dispatch("tokenTransfer");
+        drawOpen = false;
+    }
+
+    function createPrizeMessage() {
+        dispatch("createPrizeMessage");
         drawOpen = false;
     }
 
@@ -145,6 +151,11 @@
                 </HoverIcon>
             </div>
         {/if}
+        <div class="prize" on:click|stopPropagation={createPrizeMessage}>
+            <HoverIcon title={"Create prize"}>
+                <Gift size={$iconSize} color={iconColour} />
+            </HoverIcon>
+        </div>
     {/if}
 </div>
 
@@ -172,6 +183,7 @@
     .gif,
     .meme,
     .poll,
+    .prize,
     .send-icp {
         flex: 0 0 15px;
     }
@@ -197,6 +209,7 @@
             .gif,
             .meme,
             .send-icp,
+            .prize,
             .poll {
                 top: -18px;
                 left: toRem(-44);
@@ -212,6 +225,7 @@
                 .gif,
                 .meme,
                 .send-icp,
+                .prize,
                 .poll {
                     left: unset;
                     right: toRem(-44);
@@ -250,6 +264,11 @@
                 .poll {
                     opacity: 1;
                     top: -300px;
+                    transition-delay: 0ms;
+                }
+                .prize {
+                    opacity: 1;
+                    top: -345px;
                     transition-delay: 0ms;
                 }
             }

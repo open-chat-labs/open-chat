@@ -99,7 +99,7 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let crypto = msg.content.kind === "crypto_content";
+    let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
