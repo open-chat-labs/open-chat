@@ -8,7 +8,7 @@
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
-    import CkBtcLarge from "../icons/CkBtcLarge.svelte";
+    import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
 
@@ -63,7 +63,7 @@
             </span>
         </div>
         <div class="prize-coin">
-            <CkBtcLarge {logo} />
+            <SpinningToken {logo} />
         </div>
     </div>
     <div class="bottom">
