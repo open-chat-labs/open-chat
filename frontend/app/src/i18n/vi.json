@@ -443,14 +443,14 @@
         "pendingSentByYou": "bạn đang gửi {token} {amount} đến {receiver}",
         "done": "làm mới và tiếp tục",
         "amount": "Số lượng",
-        "fee": "Một khoản phí {fee} {token} sẽ được thêm vào",
         "warning": "CẢNH BÁO - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng vào danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ chuyển khoản {token} nào.",
         "zeroBalance": "Bạn không có bất kỳ {token} nào.",
         "yourAccount": "Địa chỉ {token} của bạn",
         "receiver": "Người nhận",
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "max": "tối đa",
-        "viewTransaction": "[Giao dịch]({url})"
+        "viewTransaction": "[Giao dịch]({url})",
+        "fee": "Phí {fee} {token} sẽ được thêm vào"
     },
     "cryptoAccount": {
         "manage": "Quản lý",

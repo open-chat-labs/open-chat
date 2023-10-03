@@ -16,7 +16,6 @@
 
 <style lang="scss">
     .prize {
-        min-width: 300px;
         padding: $sp5;
         display: flex;
         flex-direction: column;

@@ -441,14 +441,14 @@
         "pendingSentByYou": "您正在向 {receiver} 发送 {amount} {token}",
         "done": "刷新并继续",
         "amount": "数量",
-        "fee": "将增加 {fee} {token} 的费用",
         "warning": "警告 - 您有责任确保您相信接收者的身份和动机。 OpenChat 无法撤销任何 {token} 传输。",
         "zeroBalance": "您没有任何 {token}。",
         "yourAccount": "您的 {token} 地址",
         "receiver": "接收者",
         "chooseReceiver": "输入接收者的用户名",
         "max": "最大余额",
-        "viewTransaction": "[交易]({url})"
+        "viewTransaction": "[交易]({url})",
+        "fee": "将添加 {fee} {token} 的费用"
     },
     "cryptoAccount": {
         "manage": "管理",

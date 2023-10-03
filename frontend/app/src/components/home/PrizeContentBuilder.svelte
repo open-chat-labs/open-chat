@@ -12,7 +12,7 @@
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
-    import { _ } from "svelte-i18n";
+    import { _, number } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -55,9 +55,10 @@
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFees = tokenDetails.transferFee;
+    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners);
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
-        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - transferFees : cryptoBalance;
+        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
     $: valid = error === undefined && validAmount && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
@@ -93,8 +94,9 @@
     }
 
     function send() {
-        const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
-        const prizes = generatePrizes(fees);
+        // const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
+        const prizes = generatePrizes();
+        const prizeFees = transferFees * BigInt(numberOfWinners);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -104,7 +106,7 @@
                 ledger,
                 token: symbol,
                 recipient: recipientFromContext(context),
-                amountE8s: prizes.reduce((total, p) => total + p) + fees,
+                amountE8s: prizes.reduce((total, p) => total + p) + prizeFees,
                 feeE8s: transferFees,
                 createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
@@ -141,17 +143,13 @@
         }
     }
 
-    function generatePrizes(fees: bigint): bigint[] {
-        const fund = draftAmount - fees;
-        const fundNum = Number(fund);
-
-        const share = Math.round(fundNum / numberOfWinners);
-
+    function generatePrizes(): bigint[] {
+        const share = Math.round(Number(draftAmount) / numberOfWinners);
         switch (distribution) {
             case "equal":
-                return generateEquallyDistributedPrizes(fund, share);
+                return generateEquallyDistributedPrizes(draftAmount, share);
             case "random":
-                return generateRandomlyDistributedPrizes(fund, share);
+                return generateRandomlyDistributedPrizes(draftAmount, share);
         }
     }
 
@@ -171,7 +169,6 @@
     }
 
     function generateRandomlyDistributedPrizes(fund: bigint, share: number): bigint[] {
-        // TODO these numbers can obviously be tweaked
         const min = share * 0.1;
         const max = share * 2;
 
@@ -228,8 +225,10 @@
                     <div class="transfer">
                         <TokenInput
                             {ledger}
+                            label={"prizes.totalAmount"}
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
+                            transferFees={totalFees}
                             maxAmount={maxAmount(cryptoBalance)}
                             bind:amount={draftAmount} />
                     </div>

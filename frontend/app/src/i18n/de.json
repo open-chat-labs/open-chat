@@ -444,14 +444,14 @@
         "pendingSentByYou": "Sie senden {amount} {token} an {receiver}",
         "done": "aktualisieren und fortfahren",
         "amount": "Menge",
-        "fee": "Eine Gebühr von {fee} {token} wird hinzugefügt",
         "warning": "WARNUNG – Es liegt in Ihrer Verantwortung sicherzustellen, dass Sie der Identität und den Motiven des Empfängers vertrauen. OpenChat kann keine {token}-Übertragungen rückgängig machen.",
         "zeroBalance": "Sie haben keine {token}.",
         "yourAccount": "Ihre {token}-Adresse",
         "receiver": "Empfänger",
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
         "max": "max",
-        "viewTransaction": "[Transaktion]({url})"
+        "viewTransaction": "[Transaktion]({url})",
+        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an"
     },
     "cryptoAccount": {
         "manage": "Verwalten",

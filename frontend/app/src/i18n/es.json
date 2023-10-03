@@ -443,14 +443,14 @@
         "pendingSentByYou": "está enviando {amount} {token} a {receiver}",
         "done": "actualizar y continuar",
         "amount": "Monto",
-        "fee": "Se agregará una tarifa de {fee} {token}",
         "warning": "ADVERTENCIA: es su responsabilidad asegurarse de que confía en la identidad y los motivos del destinatario. OpenChat no puede revertir ninguna transferencia {token}.",
         "zeroBalance": "No tienes {token}.",
         "yourAccount": "Tu dirección {token}",
         "receiver": "Recipiente",
         "chooseReceiver": "ingrese el nombre de usuario del destinatario",
         "max": "máx.",
-        "viewTransaction": "[Transacción]({url})"
+        "viewTransaction": "[Transacción]({url})",
+        "fee": "Se agregarán tarifas de {fee} {token}"
     },
     "cryptoAccount": {
         "manage": "Administrar",

@@ -442,14 +442,14 @@
         "pendingSentByYou": "вы отправляете {amount} {token} {receiver}",
         "done": "обновить и продолжить",
         "amount": "Количество",
-        "fee": "Будет добавлена плата в размере {fee} {token}",
         "warning": "ВНИМАНИЕ! Вы несете ответственность за то, чтобы быть уверенным в том, что доверяете личности и мотивам получателя. OpenChat не может отменить передачу {token}.",
         "zeroBalance": "У вас нет {token}.",
         "yourAccount": "Ваш адрес {token}",
         "receiver": "Получатель",
         "chooseReceiver": "введите имя пользователя получателя",
         "max": "Максимум",
-        "viewTransaction": "[Транзакция]({url})"
+        "viewTransaction": "[Транзакция]({url})",
+        "fee": "Будет добавлена комиссия в размере {fee} {token}."
     },
     "cryptoAccount": {
         "manage": "Управлять",

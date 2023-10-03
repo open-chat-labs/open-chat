@@ -533,7 +533,7 @@
         "send": "Send",
         "message": "Message",
         "messagePlaceholder": "Include an optional message",
-        "fee": "A fee of {fee} {token} will be added",
+        "fee": "Fees of {fee} {token} will be added",
         "unexpected": "An unexpected crypto transfer type was received",
         "confirmedSent": "{sender} sent {amount} {token} to {receiver}",
         "pendingSent": "{sender} is sending {amount} {token} to {receiver}",

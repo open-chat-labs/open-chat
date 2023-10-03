@@ -442,14 +442,14 @@
         "makeDeposit": "אנא בצע הפקדה לחשבון למעלה ורענן את יתרתך.",
         "done": "לרענן ולהמשיך",
         "amount": "כמות",
-        "fee": "תתווסף עמלה בסך {fee} {token}",
         "warning": "אזהרה - באחריותך להיות בטוח שאתה סומך על זהותו ומניעיו של הנמען. OpenChat לא יכול לבטל העברות של {token}.",
         "zeroBalance": "אין לך {token}.",
         "yourAccount": "כתובת ה-{token} שלך",
         "receiver": "מקבל",
         "chooseReceiver": "הזן את שם המשתמש של הנמען",
         "max": "מקסימום",
-        "viewTransaction": "[עסקה]({url})"
+        "viewTransaction": "[עסקה]({url})",
+        "fee": "עמלות של {fee} {token} יתווספו"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",

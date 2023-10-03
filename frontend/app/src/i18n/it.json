@@ -442,14 +442,14 @@
         "pendingSentByYou": "stai inviando {amount} {token} a {receiver}",
         "done": "rinfrescati e continua",
         "amount": "Quantità",
-        "fee": "Verrà aggiunta una commissione di {fee} {token}",
         "warning": "ATTENZIONE - è tua responsabilità assicurarti di fidarti dell'identità e delle motivazioni del destinatario. OpenChat non può annullare alcun trasferimento di {token}.",
         "zeroBalance": "Non hai alcun {token}.",
         "yourAccount": "Il tuo indirizzo {token}",
         "receiver": "Destinatario",
         "chooseReceiver": "inserire il nome utente del destinatario",
         "max": "Massimo",
-        "viewTransaction": "[Transazione]({url})"
+        "viewTransaction": "[Transazione]({url})",
+        "fee": "Verranno aggiunte commissioni di {fee} {token}"
     },
     "cryptoAccount": {
         "manage": "Gestire",
