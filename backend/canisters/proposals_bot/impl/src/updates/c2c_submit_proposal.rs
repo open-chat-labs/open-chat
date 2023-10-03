@@ -84,8 +84,8 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             from_treasury: if t.icp { 1 } else { 2 },
             amount_e8s: t.amount.try_into().unwrap(),
             memo: t.memo,
-            to_principal: Some(t.destination.owner),
-            to_subaccount: t.destination.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
+            to_principal: Some(t.to.owner),
+            to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
         }),
     }
 }

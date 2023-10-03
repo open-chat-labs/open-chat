@@ -20,7 +20,7 @@ pub enum ProposalToSubmitAction {
 pub struct TransferSnsTreasuryFunds {
     pub icp: bool,
     pub amount: u128,
-    pub destination: Account,
+    pub to: Account,
     pub memo: Option<u64>,
 }
 
