@@ -129,9 +129,6 @@
             color: var(--button-txt);
         }
     }
-    .prize {
-        min-width: 300px;
-    }
 
     .top {
         position: relative;

@@ -683,7 +683,19 @@
         "finished": "完成的",
         "winner": "**{recipient}** 领取了 **{amount}** {token}",
         "claimFailed": "抱歉，您未领取成功！祝你下次好运。",
-        "allClaimed": "已被领完"
+        "allClaimed": "已被领完",
+        "live": "奖品留言直播！其他人可以点击领取🎁",
+        "prizeFinished": "您的奖品留言现已完成",
+        "title": "奖",
+        "totalAmount": "总奖金金额",
+        "numberOfWinners": "获奖人数",
+        "duration": "奖品有效期多久？",
+        "minPrize": "最低奖金是多少？",
+        "maxPrize": "最高奖金是多少？",
+        "distribution": "奖品应该如何分配？",
+        "equalDistribution": "均等分配",
+        "randomDistribution": "随机分布",
+        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候"
     },
     "upgrade": {
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",

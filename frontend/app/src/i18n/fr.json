@@ -683,7 +683,19 @@
         "finished": "Fini",
         "winner": "**{recipient}** a gagné **{amount}** {token}",
         "claimFailed": "Désolé, votre réclamation n'a pas abouti ! Plus de chance la prochaine fois.",
-        "allClaimed": "Entièrement revendiqué"
+        "allClaimed": "Entièrement revendiqué",
+        "live": "Message de récompense en direct ! Les autres peuvent cliquer pour réclamer 🎁",
+        "prizeFinished": "Votre message de récompense est maintenant terminé",
+        "title": "Prix",
+        "totalAmount": "Montant total du prix",
+        "numberOfWinners": "Nombre de gagnants",
+        "duration": "Combien de temps le prix sera-t-il actif ?",
+        "minPrize": "Quel est le prix minimum ?",
+        "maxPrize": "Quel est le prix maximum ?",
+        "distribution": "Comment les prix doivent-ils être distribués ?",
+        "equalDistribution": "Répartition égale",
+        "randomDistribution": "Distribution aléatoire",
+        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense"
     },
     "upgrade": {
         "blurb": "Certaines fonctionnalités d'OpenChat ne sont disponibles que pour les comptes premium. Vous pouvez mettre à niveau votre compte soit en vérifiant un numéro de téléphone par SMS, soit en payant une petite redevance ICP.",

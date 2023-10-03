@@ -685,7 +685,19 @@
         "finished": "Acabado",
         "winner": "**{recipient}** ganó **{amount}** {token}",
         "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",
-        "allClaimed": "Completamente reclamado"
+        "allClaimed": "Completamente reclamado",
+        "live": "¡Mensaje de premio en vivo! Otros pueden hacer clic para reclamar 🎁",
+        "prizeFinished": "Tu mensaje de premio ya ha terminado.",
+        "title": "Premio",
+        "totalAmount": "Monto total del premio",
+        "numberOfWinners": "Número de ganadores",
+        "duration": "¿Cuánto tiempo estará activo el premio?",
+        "minPrize": "¿Cuál es el premio mínimo?",
+        "maxPrize": "¿Cuál es el premio máximo?",
+        "distribution": "¿Cómo deben distribuirse los premios?",
+        "equalDistribution": "Distribución equitativa",
+        "randomDistribution": "Distribución aleatoria",
+        "creatingYourPrizeMessage": "Espere mientras creamos su mensaje de premio."
     },
     "upgrade": {
         "blurb": "Algunas funciones de OpenChat solo están disponibles para cuentas premium. Puede actualizar su cuenta verificando un número de teléfono a través de SMS o pagando una pequeña tarifa de ICP.",

@@ -61,6 +61,10 @@
         box-shadow: inset 0 $shadow_size $shadow_size hsl(42, 30%, 50%);
     }
 
+    .back {
+        transform: scaleX(-1);
+    }
+
     .middle {
         background-color: hsl(42, 50%, 60%);
         padding: 1px;
