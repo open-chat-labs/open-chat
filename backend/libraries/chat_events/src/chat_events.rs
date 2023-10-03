@@ -18,8 +18,8 @@ use types::{
     EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
     HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
     Milliseconds, MultiUserChat, PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult,
-    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos,
-    Timestamped, Tips, UserId, VoteOperation,
+    PushIfNotContains, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos, Timestamped,
+    Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -159,7 +159,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
@@ -215,7 +214,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             if message.sender == args.caller || args.is_admin {
                 if message.deleted_by.is_some() {
@@ -267,7 +265,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             if let Some(deleted_by) = message.deleted_by.as_ref().map(|db| db.deleted_by) {
                 if deleted_by == args.caller || (args.is_admin && message.sender != deleted_by) {
@@ -316,10 +313,8 @@ impl ChatEvents {
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        now: TimestampMillis,
     ) -> Option<MessageContentInternal> {
-        let (message, _) =
-            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into(), now)?;
+        let (message, _) = self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())?;
 
         let deleted_by = message.deleted_by.clone()?;
 
@@ -334,7 +329,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_index.into(),
-            args.now,
         ) {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return match p.register_vote(args.user_id, args.option_index, args.operation) {
@@ -389,7 +383,7 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> EndPollResult {
         if let Some((message, event_index)) =
-            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into(), now)
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
         {
             if let MessageContentInternal::Poll(p) = &mut message.content {
                 return if p.ended || p.config.end_date.is_none() {
@@ -414,10 +408,7 @@ impl ChatEvents {
         message_index: MessageIndex,
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
-        let now_ms = now_nanos / 1_000_000;
-        if let Some(message) =
-            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into(), now_ms)
-        {
+        if let Some(message) = self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into()) {
             if let MessageContentInternal::Prize(p) = &message.content {
                 if let CryptoTransaction::Completed(t) = &p.transaction {
                     let fee = t.fee();
@@ -445,10 +436,9 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         message_index: MessageIndex,
         adopt: bool,
-        now: TimestampMillis,
     ) -> RecordProposalVoteResult {
         if let Some(proposal) = self
-            .message_internal_mut(min_visible_event_index, None, message_index.into(), now)
+            .message_internal_mut(min_visible_event_index, None, message_index.into())
             .and_then(
                 |(m, _)| {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut m.content {
@@ -477,7 +467,7 @@ impl ChatEvents {
     pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
         for update in updates {
             if let Some((message, event_index)) =
-                self.message_internal_mut(EventIndex::default(), None, update.message_id.into(), now)
+                self.message_internal_mut(EventIndex::default(), None, update.message_id.into())
             {
                 if message.sender == user_id {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
@@ -500,7 +490,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             let added = if let Some((_, users)) = message.reactions.iter_mut().find(|(r, _)| *r == args.reaction) {
                 users.insert(args.user_id)
@@ -538,7 +527,6 @@ impl ChatEvents {
             args.min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             let (removed, is_empty) = message
                 .reactions
@@ -580,7 +568,6 @@ impl ChatEvents {
             min_visible_event_index,
             args.thread_root_message_index,
             args.message_id.into(),
-            args.now,
         ) {
             if message.sender == args.user_id {
                 return CannotTipSelf;
@@ -615,7 +602,7 @@ impl ChatEvents {
         user_id: UserId,
         now: TimestampMillis,
     ) -> ReservePrizeResult {
-        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_id.into(), now) {
+        if let Some((message, event_index)) = self.message_internal_mut(min_visible_event_index, None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 if content.end_date < now {
                     return ReservePrizeResult::PrizeEnded;
@@ -654,9 +641,7 @@ impl ChatEvents {
         rng: &mut StdRng,
         now: TimestampMillis,
     ) -> ClaimPrizeResult {
-        if let Some((message, event_index)) =
-            self.message_internal_mut(EventIndex::default(), None, message_id.into(), TimestampMillis::default())
-        {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
                 if content.reservations.remove(&winner) {
@@ -700,7 +685,7 @@ impl ChatEvents {
         amount: Tokens,
         now: TimestampMillis,
     ) -> UnreservePrizeResult {
-        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now) {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
                 if content.reservations.remove(&user_id) {
@@ -763,7 +748,7 @@ impl ChatEvents {
         let message_id_bytes: [u8; 16] = hash[..16].try_into().unwrap();
         let message_id: MessageId = u128::from_be_bytes(message_id_bytes).into();
 
-        if let Some((message, index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now) {
+        if let Some((message, index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
                 r.reports.retain(|x| x.reported_by != user_id);
                 r.reports.push(MessageReport {
@@ -825,7 +810,7 @@ impl ChatEvents {
         use FollowThreadResult::*;
 
         if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
         {
             if let Some(summary) = &mut root_message.thread_summary {
                 if !summary.participant_ids.contains(&user_id) && summary.set_follow(user_id, now, true) {
@@ -851,7 +836,7 @@ impl ChatEvents {
         use UnfollowThreadResult::*;
 
         if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into(), now)
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
         {
             if let Some(summary) = &mut root_message.thread_summary {
                 if summary.set_follow(user_id, now, false) {
@@ -876,7 +861,7 @@ impl ChatEvents {
         now: TimestampMillis,
     ) {
         let (root_message, event_index) = self
-            .message_internal_mut(EventIndex::default(), None, thread_root_message_index.into(), now)
+            .message_internal_mut(EventIndex::default(), None, thread_root_message_index.into())
             .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_root_message_index:?}"));
 
         root_message.last_updated = Some(now);
@@ -933,14 +918,11 @@ impl ChatEvents {
             &mut self.main
         };
 
-        let maybe_message_index = event.as_message().map(|m| m.message_index);
         let event_index = events_list.push_event(event, correlation_id, expires_at, now);
 
         if let Some(timestamp) = expires_at {
-            self.expiring_events.insert(event_index, maybe_message_index, timestamp);
+            self.expiring_events.insert(event_index, timestamp);
         }
-
-        self.remove_expired_events(now);
 
         PushEventResult {
             index: event_index,
@@ -975,7 +957,7 @@ impl ChatEvents {
         max_results: u8,
         my_user_id: UserId,
     ) -> Vec<MessageMatch> {
-        self.visible_main_events_reader(min_visible_event_index, now)
+        self.visible_main_events_reader(min_visible_event_index)
             .iter(None, true)
             .filter_map(|e| e.event.as_message().filter(|m| m.deleted_by.is_none()).map(|m| (e, m)))
             .filter(|(_, m)| if query.users.is_empty() { true } else { query.users.contains(&m.sender) })
@@ -1019,8 +1001,7 @@ impl ChatEvents {
     }
 
     pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
-        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into(), now)
-        {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into()) {
             if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
                 r.hidden = true;
                 message.last_updated = Some(now);
@@ -1031,13 +1012,8 @@ impl ChatEvents {
         false
     }
 
-    pub fn hydrate_mention(
-        &self,
-        min_visible_event_index: EventIndex,
-        mention: &Mention,
-        now: TimestampMillis,
-    ) -> Option<HydratedMention> {
-        let events_reader = self.events_reader(min_visible_event_index, mention.thread_root_message_index, now)?;
+    pub fn hydrate_mention(&self, min_visible_event_index: EventIndex, mention: &Mention) -> Option<HydratedMention> {
+        let events_reader = self.events_reader(min_visible_event_index, mention.thread_root_message_index)?;
         events_reader.hydrate_mention(mention)
     }
 
@@ -1051,17 +1027,12 @@ impl ChatEvents {
             .filter(|m| if let Some(since) = if_updated_since { m.last_active > since } else { true })
     }
 
-    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
-        &self,
-        since: TimestampMillis,
-        now: TimestampMillis,
-        filter: F,
-    ) -> usize {
-        self.main.event_count_since(since, now, &filter)
+    pub fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: F) -> usize {
+        self.main.event_count_since(since, &filter)
             + self
                 .threads
                 .values()
-                .map(|e| e.event_count_since(since, now, &filter))
+                .map(|e| e.event_count_since(since, &filter))
                 .sum::<usize>()
     }
 
@@ -1070,10 +1041,9 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
-        now: TimestampMillis,
     ) -> bool {
-        if let Some(events_list) = self.events_reader(min_visible_event_index, thread_root_message_index, now) {
-            events_list.is_accessible(event_key, min_visible_event_index, now)
+        if let Some(events_list) = self.events_reader(min_visible_event_index, thread_root_message_index) {
+            events_list.is_accessible(event_key, min_visible_event_index)
         } else {
             false
         }
@@ -1086,7 +1056,6 @@ impl ChatEvents {
         updated_since: Option<TimestampMillis>,
         max_threads: usize,
         my_user_id: UserId,
-        now: TimestampMillis,
     ) -> Vec<GroupCanisterThreadDetails> {
         root_message_indexes
             .filter_map(|root_message_index| {
@@ -1095,7 +1064,7 @@ impl ChatEvents {
                     let latest_event = thread_events.latest_event_index()?;
                     let follower = self
                         .main
-                        .get((*root_message_index).into(), min_visible_event_index, now)?
+                        .get((*root_message_index).into(), min_visible_event_index)?
                         .event
                         .as_message()?
                         .thread_summary
@@ -1132,7 +1101,7 @@ impl ChatEvents {
         let mut unfollowed = Vec::new();
 
         for message_index in root_message_indexes.rev() {
-            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default(), 0) {
+            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default()) {
                 if let Some(message) = wrapped_event.event.as_message() {
                     if let Some(thread_summary) = message.thread_summary.as_ref() {
                         if let Some(follower) = thread_summary.get_follower(my_user_id) {
@@ -1197,55 +1166,51 @@ impl ChatEvents {
         );
     }
 
-    pub fn next_message_expiry(&self, now: TimestampMillis) -> Option<TimestampMillis> {
-        self.expiring_events.next_message_expiry(now)
+    pub fn next_event_expiry(&self) -> Option<TimestampMillis> {
+        self.expiring_events.next_event_expiry()
     }
 
-    pub fn expired_messages(&self, now: TimestampMillis) -> RangeSet<MessageIndex> {
-        self.expiring_events.expired_messages(now)
-    }
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) -> RemoveExpiredEventsResult {
+        let mut result = RemoveExpiredEventsResult::default();
 
-    pub fn expired_messages_since(&self, since: TimestampMillis, now: TimestampMillis) -> RangeSet<MessageIndex> {
-        self.expiring_events.expired_messages_since(since, now)
-    }
-
-    fn remove_expired_events(&mut self, now: TimestampMillis) {
-        for event_index in self.expiring_events.process_expired_events(now) {
+        while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
             if let Some(event) = self.main.remove_expired_event(event_index) {
+                result.events.push(event_index);
                 if let ChatEventInternal::Message(m) = event.event {
-                    self.threads.remove(&m.message_index);
+                    if let Some(thread) = m.thread_summary {
+                        self.threads.remove(&m.message_index);
+                        result
+                            .threads
+                            .push((m.message_index, thread.participants_and_followers(true)));
+                    }
                 }
             }
         }
+
+        result
     }
 
-    pub fn main_events_reader(&self, now: TimestampMillis) -> ChatEventsListReader {
-        ChatEventsListReader::new(&self.main, now)
+    pub fn main_events_reader(&self) -> ChatEventsListReader {
+        ChatEventsListReader::new(&self.main)
     }
 
-    pub fn visible_main_events_reader(
-        &self,
-        min_visible_event_index: EventIndex,
-        now: TimestampMillis,
-    ) -> ChatEventsListReader {
-        ChatEventsListReader::with_min_visible_event_index(&self.main, min_visible_event_index, now)
+    pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader {
+        ChatEventsListReader::with_min_visible_event_index(&self.main, min_visible_event_index)
     }
 
     pub fn events_reader(
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        now: TimestampMillis,
     ) -> Option<ChatEventsListReader> {
-        let events_list = self.events_list(min_visible_event_index, thread_root_message_index, now)?;
+        let events_list = self.events_list(min_visible_event_index, thread_root_message_index)?;
 
         if thread_root_message_index.is_some() {
-            Some(ChatEventsListReader::new(events_list, now))
+            Some(ChatEventsListReader::new(events_list))
         } else {
             Some(ChatEventsListReader::with_min_visible_event_index(
                 events_list,
                 min_visible_event_index,
-                now,
             ))
         }
     }
@@ -1266,13 +1231,9 @@ impl ChatEvents {
         &self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        now: TimestampMillis,
     ) -> Option<&ChatEventsList> {
         if let Some(root_message_index) = thread_root_message_index {
-            if self
-                .main
-                .is_accessible(root_message_index.into(), min_visible_event_index, now)
-            {
+            if self.main.is_accessible(root_message_index.into(), min_visible_event_index) {
                 self.threads.get(&root_message_index)
             } else {
                 None
@@ -1286,13 +1247,9 @@ impl ChatEvents {
         &mut self,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        now: TimestampMillis,
     ) -> Option<&mut ChatEventsList> {
         if let Some(root_message_index) = thread_root_message_index {
-            if self
-                .main
-                .is_accessible(root_message_index.into(), min_visible_event_index, now)
-            {
+            if self.main.is_accessible(root_message_index.into(), min_visible_event_index) {
                 self.threads.get_mut(&root_message_index)
             } else {
                 None
@@ -1307,10 +1264,9 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
-        now: TimestampMillis,
     ) -> Option<(&mut MessageInternal, EventIndex)> {
-        self.events_list_mut(min_visible_event_index, thread_root_message_index, now)
-            .and_then(|l| l.get_mut(event_key, min_visible_event_index, now))
+        self.events_list_mut(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| l.get_mut(event_key, min_visible_event_index))
             .and_then(|e| e.event.as_message_mut().map(|m| (m, e.index)))
     }
 
@@ -1319,10 +1275,9 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
-        now: TimestampMillis,
     ) -> Option<&MessageInternal> {
-        self.events_list(min_visible_event_index, thread_root_message_index, now)
-            .and_then(|l| l.get(event_key, min_visible_event_index, now))
+        self.events_list(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| l.get(event_key, min_visible_event_index))
             .and_then(|e| e.event.as_message())
     }
 
@@ -1527,6 +1482,12 @@ pub enum UnfollowThreadResult {
     Success,
     NotFollowing,
     ThreadNotFound,
+}
+
+#[derive(Default)]
+pub struct RemoveExpiredEventsResult {
+    pub events: Vec<EventIndex>,
+    pub threads: Vec<(MessageIndex, Vec<UserId>)>,
 }
 
 #[derive(Copy, Clone)]

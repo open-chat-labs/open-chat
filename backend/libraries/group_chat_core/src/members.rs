@@ -332,17 +332,12 @@ impl GroupMemberInternal {
         }
     }
 
-    pub fn most_recent_mentions(
-        &self,
-        since: Option<TimestampMillis>,
-        chat_events: &ChatEvents,
-        now: TimestampMillis,
-    ) -> Vec<HydratedMention> {
+    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &ChatEvents) -> Vec<HydratedMention> {
         let min_visible_event_index = self.min_visible_event_index();
 
         self.mentions
             .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m, now))
+            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, &m))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }

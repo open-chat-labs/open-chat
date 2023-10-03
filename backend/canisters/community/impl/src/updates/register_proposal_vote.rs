@@ -76,12 +76,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     };
 
     let min_visible_event_index = channel_member.min_visible_event_index();
-    let now = state.env.now();
 
     if let Some(proposal) = channel
         .chat
         .events
-        .visible_main_events_reader(min_visible_event_index, now)
+        .visible_main_events_reader(min_visible_event_index)
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {
@@ -111,15 +110,16 @@ fn commit(channel_id: ChannelId, user_id: UserId, args: Args, state: &mut Runtim
         None => return UserNotInChannel,
     };
 
-    let now = state.env.now();
     let min_visible_event_index = member.min_visible_event_index();
 
     match channel
         .chat
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
     {
         RecordProposalVoteResult::Success => {
+            let now = state.env.now();
+
             let votes = member.proposal_votes.entry(now).or_default();
             if !votes.contains(&args.message_index) {
                 votes.push(args.message_index);

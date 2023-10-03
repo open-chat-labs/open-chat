@@ -4,7 +4,6 @@ use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
 use group_chat_core::UpdateResult;
 use ic_cdk_macros::update;
-use types::OptionUpdate;
 
 #[update]
 #[trace]
@@ -42,7 +41,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.permissions,
                 args.gate,
                 args.public,
-                OptionUpdate::NoChange,
+                args.events_ttl,
                 now,
             ) {
                 UpdateResult::Success(result) => {

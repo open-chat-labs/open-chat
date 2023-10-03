@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -80,10 +80,19 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 let message_index = result.message_event.event.message_index;
                 let expires_at = result.message_event.expires_at;
 
+                let mut is_next_event_to_expire = false;
+                if let Some(expiry) = expires_at {
+                    is_next_event_to_expire = state.data.next_event_expiry.map_or(true, |ex| expiry < ex);
+                    if is_next_event_to_expire {
+                        state.data.next_event_expiry = expires_at;
+                    }
+                }
+
                 register_timer_jobs(
                     args.channel_id,
                     args.thread_root_message_index,
                     &result.message_event,
+                    is_next_event_to_expire,
                     now,
                     &mut state.data.timer_jobs,
                 );
@@ -150,6 +159,7 @@ fn register_timer_jobs(
     channel_id: ChannelId,
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
+    is_next_event_to_expire: bool,
     now: TimestampMillis,
     timer_jobs: &mut TimerJobs<TimerJob>,
 ) {
@@ -184,6 +194,11 @@ fn register_timer_jobs(
             p.end_date,
             now,
         );
+    }
+
+    if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
+        timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
+        timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
 }
 

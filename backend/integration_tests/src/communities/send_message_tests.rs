@@ -201,7 +201,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
@@ -231,7 +231,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
@@ -258,7 +258,7 @@ fn send_message_with_community_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
@@ -285,7 +285,7 @@ fn send_message_with_channel_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -312,8 +312,8 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
@@ -340,8 +340,8 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -371,8 +371,8 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(
         env,
@@ -406,8 +406,8 @@ fn send_message_with_previously_accepted_rules_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     send_dummy_message_with_rules(
         env,
@@ -443,8 +443,8 @@ fn send_message_with_old_community_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_community_rules(env, &user1, community_id, "No heavy petting or pets".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting or pets".to_string());
 
     let response = send_dummy_message_with_rules(
         env,
@@ -481,8 +481,14 @@ fn send_message_with_old_channel_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running or jumping".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
+    set_channel_rules(
+        env,
+        user1.principal,
+        community_id,
+        channel_id,
+        "No running or jumping".to_string(),
+    );
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -532,8 +538,8 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
         }
     );
 
-    set_community_rules(env, &user1, community_id, "No running".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No jumping".to_string());
+    set_community_rules(env, user1.principal, community_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No jumping".to_string());
 
     let community_rules = get_community_rules(env, &user2, community_id);
     let channel_rules = get_channel_rules(env, &user2, community_id, channel_id);
@@ -671,7 +677,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
     }
 }
 
-fn set_community_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, text: String) {
+fn set_community_rules(env: &mut StateMachine, sender: Principal, community_id: CommunityId, text: String) {
     let args = community_canister::update_community::Args {
         name: None,
         description: None,
@@ -688,10 +694,16 @@ fn set_community_rules(env: &mut StateMachine, user: &User, community_id: Commun
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, user.principal, community_id, &args);
+    client::community::happy_path::update_community(env, sender, community_id, &args);
 }
 
-fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
+fn set_channel_rules(
+    env: &mut StateMachine,
+    sender: Principal,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    text: String,
+) {
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,
@@ -702,12 +714,13 @@ fn set_channel_rules(env: &mut StateMachine, user: &User, community_id: Communit
         }),
         avatar: OptionUpdate::NoChange,
         permissions: None,
+        events_ttl: OptionUpdate::NoChange,
         gate: OptionUpdate::NoChange,
         public: None,
         channel_id,
     };
 
-    client::community::happy_path::update_channel(env, user, community_id, &args);
+    client::community::happy_path::update_channel(env, sender, community_id, &args);
 }
 
 struct TestData {

@@ -207,7 +207,7 @@ impl Channel {
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
 
-        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
+        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
         let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
 
@@ -219,7 +219,7 @@ impl Channel {
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
             role: m.role.into(),
-            mentions: m.most_recent_mentions(None, &chat.events, now),
+            mentions: m.most_recent_mentions(None, &chat.events),
             notifications_muted: m.notifications_muted.value,
             my_metrics: chat
                 .events
@@ -232,7 +232,6 @@ impl Channel {
                 None,
                 MAX_THREADS_IN_SUMMARY,
                 m.user_id,
-                now,
             ),
             rules_accepted: m
                 .rules_accepted
@@ -259,8 +258,6 @@ impl Channel {
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
-            expired_messages: chat.events.expired_messages(now),
-            next_message_expiry: chat.events.next_message_expiry(now),
             gate: chat.gate.value.clone(),
             membership,
         })
@@ -292,7 +289,7 @@ impl Channel {
         }
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
-        let updates_from_events = chat.summary_updates_from_events(since, user_id, now);
+        let updates_from_events = chat.summary_updates_from_events(since, user_id);
 
         let latest_message = can_view_latest_message
             .then_some(updates_from_events.latest_message)
@@ -314,7 +311,6 @@ impl Channel {
                 Some(since),
                 MAX_THREADS_IN_SUMMARY,
                 m.user_id,
-                now,
             ),
             unfollowed_threads: self
                 .chat

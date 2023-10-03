@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::jobs::import_groups::{finalize_group_import, mark_import_complete, process_channel_members};
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
@@ -12,6 +13,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
     FinalizeGroupImport(FinalizeGroupImportJob),
     ProcessGroupImportChannelMembers(ProcessGroupImportChannelMembersJob),
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
@@ -37,6 +39,9 @@ pub struct EndPollJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FinalizeGroupImportJob {
@@ -74,6 +79,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::FinalizeGroupImport(job) => job.execute(),
             TimerJob::ProcessGroupImportChannelMembers(job) => job.execute(),
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
@@ -86,13 +92,11 @@ impl Job for TimerJob {
 impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
-            let now = state.env.now();
-
             if let Some(content) = state.data.channels.get_mut(&self.channel_id).and_then(|channel| {
                 channel
                     .chat
                     .events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             }) {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
@@ -126,9 +130,16 @@ impl Job for EndPollJob {
                     .chat
                     .events
                     .end_poll(self.thread_root_message_index, self.message_index, now);
-                // handle_activity_notification(state);
+
+                handle_activity_notification(state);
             }
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }
 

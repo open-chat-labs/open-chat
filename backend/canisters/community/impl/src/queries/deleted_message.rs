@@ -16,7 +16,7 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
         if let Some(channel) = state.data.channels.get(&args.channel_id) {
             match channel
                 .chat
-                .deleted_message(user_id, args.thread_root_message_index, args.message_id, state.env.now())
+                .deleted_message(user_id, args.thread_root_message_index, args.message_id)
             {
                 DeletedMessageResult::Success(content) => Success(SuccessResult { content: *content }),
                 DeletedMessageResult::UserNotInGroup => UserNotInChannel,

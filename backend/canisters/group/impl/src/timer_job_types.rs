@@ -13,6 +13,7 @@ pub enum TimerJob {
     EndPoll(EndPollJob),
     RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -43,6 +44,9 @@ pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
@@ -51,6 +55,7 @@ impl Job for TimerJob {
             TimerJob::EndPoll(job) => job.execute(),
             TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
         }
     }
 }
@@ -58,14 +63,11 @@ impl Job for TimerJob {
 impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
-            let now = state.env.now();
-
-            if let Some(content) =
-                state
-                    .data
-                    .chat
-                    .events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
+            if let Some(content) = state
+                .data
+                .chat
+                .events
+                .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
@@ -139,5 +141,11 @@ impl Job for MakeTransferJob {
                 });
             }
         }
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }

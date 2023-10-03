@@ -511,6 +511,7 @@ export class OpenChatAgent extends EventTarget {
                     rules,
                     permissions,
                     avatar,
+                    undefined,
                     gate,
                     isPublic,
                 );

@@ -2,7 +2,7 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, type CommunityService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import { identity } from "../../utils/mapping";
+import { apiOptionUpdate, identity } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
@@ -125,6 +125,7 @@ import type {
     SetMemberDisplayNameResponse,
     UpdatedRules,
     FollowThreadResponse,
+    OptionUpdate,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -1109,6 +1110,7 @@ export class CommunityClient extends CandidService {
         rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
     ): Promise<UpdateGroupResponse> {
@@ -1120,6 +1122,7 @@ export class CommunityClient extends CandidService {
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
+                events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 gate:
                     gate === undefined
                         ? { NoChange: null }
@@ -1236,7 +1239,11 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    followThread(channelId: string, threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+    followThread(
+        channelId: string,
+        threadRootMessageIndex: number,
+        follow: boolean,
+    ): Promise<FollowThreadResponse> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: threadRootMessageIndex,

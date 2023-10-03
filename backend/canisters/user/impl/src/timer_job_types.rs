@@ -13,6 +13,7 @@ pub enum TimerJob {
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
     MessageReminder(MessageReminderJob),
+    RemoveExpiredEvents(RemoveExpiredEventsJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -44,6 +45,9 @@ pub struct MessageReminderJob {
     pub reminder_created_message_index: MessageIndex,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RemoveExpiredEventsJob;
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
@@ -51,6 +55,7 @@ impl Job for TimerJob {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
+            TimerJob::RemoveExpiredEvents(job) => job.execute(),
         }
     }
 }
@@ -82,9 +87,8 @@ impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
             if let Some(content) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
-                let now = state.env.now();
                 chat.events
-                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             }) {
                 if self.delete_files {
                     let files_to_delete = content.blob_references();
@@ -127,5 +131,11 @@ impl Job for MessageReminderJob {
             }
             openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
         });
+    }
+}
+
+impl Job for RemoveExpiredEventsJob {
+    fn execute(&self) {
+        mutate_state(|state| state.run_event_expiry_job());
     }
 }

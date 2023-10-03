@@ -5,7 +5,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -100,6 +100,26 @@ impl RuntimeState {
         }
     }
 
+    pub fn run_event_expiry_job(&mut self) {
+        let now = self.env.now();
+        let mut next_event_expiry = None;
+        for chat in self.data.direct_chats.iter_mut() {
+            chat.events.remove_expired_events(now);
+            if let Some(expiry) = chat.events.next_event_expiry() {
+                if next_event_expiry.map_or(true, |current| expiry < current) {
+                    next_event_expiry = Some(expiry);
+                }
+            }
+        }
+
+        self.data.next_event_expiry = next_event_expiry;
+        if let Some(expiry) = self.data.next_event_expiry {
+            self.data
+                .timer_jobs
+                .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -155,6 +175,8 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
     pub saved_crypto_accounts: Vec<NamedAccount>,
+    #[serde(default)]
+    pub next_event_expiry: Option<TimestampMillis>,
 }
 
 impl Data {
@@ -199,6 +221,7 @@ impl Data {
             diamond_membership_expires_at: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             saved_crypto_accounts: Vec::new(),
+            next_event_expiry: None,
         }
     }
 

@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
+- Use canister timers to remove expired events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
 
 ### Fixed
 
