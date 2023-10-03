@@ -162,8 +162,6 @@
         if (diff !== 0n) {
             prizes[0] = prizes[0] + diff;
         }
-        const adjusted = prizes.reduce((agg, p) => agg + p, 0n);
-        console.log("Figures: ", fund, adjusted);
         return prizes;
     }
 
