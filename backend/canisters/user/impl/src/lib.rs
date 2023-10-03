@@ -138,6 +138,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -156,6 +157,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_canister_id")]
+    pub proposals_bot_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -179,6 +182,10 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
 }
 
+fn proposals_bot_canister_id() -> CanisterId {
+    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -187,6 +194,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        proposals_bot_canister_id: CanisterId,
         username: String,
         display_name: Option<String>,
         test_mode: bool,
@@ -203,6 +211,7 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
+            proposals_bot_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -291,5 +300,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
 }
