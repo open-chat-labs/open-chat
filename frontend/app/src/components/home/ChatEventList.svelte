@@ -184,6 +184,7 @@
                         const timer = window.setTimeout(() => {
                             if (messageContextsEqual(context, messageContext)) {
                                 client.markMessageRead(messageContext, idx, id);
+                                messageObserver.unobserve(entry.target);
                             }
                             delete messageReadTimers[idx];
                         }, MESSAGE_READ_THRESHOLD);
