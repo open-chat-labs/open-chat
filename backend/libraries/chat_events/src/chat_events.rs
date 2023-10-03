@@ -18,8 +18,8 @@ use types::{
     EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
     HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
     Milliseconds, MultiUserChat, PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult,
-    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos,
-    Timestamped, Tips, UserId, VoteOperation,
+    PushIfNotContains, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos, Timestamped,
+    Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -408,9 +408,7 @@ impl ChatEvents {
         message_index: MessageIndex,
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
-        if let Some(message) =
-            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into())
-        {
+        if let Some(message) = self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into()) {
             if let MessageContentInternal::Prize(p) = &message.content {
                 if let CryptoTransaction::Completed(t) = &p.transaction {
                     let fee = t.fee();

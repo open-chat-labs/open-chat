@@ -149,4 +149,3 @@ impl Job for RemoveExpiredEventsJob {
         mutate_state(|state| state.run_event_expiry_job());
     }
 }
-

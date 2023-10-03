@@ -195,7 +195,7 @@ fn register_timer_jobs(
             now,
         );
     }
-  
+
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
