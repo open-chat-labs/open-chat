@@ -149,6 +149,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
@@ -165,6 +166,8 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_canister_id")]
+    pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -186,6 +189,10 @@ struct Data {
     pub platform_moderators_group: Option<ChatId>,
 }
 
+fn proposals_bot_canister_id() -> CanisterId {
+    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -194,9 +201,9 @@ impl Data {
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
+        proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
-        proposals_bot_user_id: UserId,
         internet_identity_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
@@ -208,6 +215,7 @@ impl Data {
             local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
             group_index_canister_id,
             notifications_index_canister_id,
+            proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
@@ -231,8 +239,8 @@ impl Data {
 
         // Register the ProposalsBot
         data.users.register(
-            proposals_bot_user_id.into(),
-            proposals_bot_user_id,
+            proposals_bot_canister_id,
+            proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
             None,
             0,
@@ -255,6 +263,7 @@ impl Default for Data {
             local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
+            proposals_bot_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
@@ -328,6 +337,7 @@ pub struct DiamondMembershipPaymentMetrics {
 pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
+    pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub internet_identity: CanisterId,
 }
