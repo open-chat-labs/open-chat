@@ -14,6 +14,7 @@
     import Bell from "svelte-material-icons/Bell.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
@@ -38,7 +39,6 @@
     export let blocked: boolean;
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
-    export let unreadMessages: number;
 
     $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
@@ -197,6 +197,10 @@
                 toastStore.showFailureToast("failedToUnsuspendUser");
             }
         });
+    }
+
+    function makeProposal() {
+        dispatch("makeProposal");
     }
 </script>
 
@@ -358,6 +362,16 @@
                                 <div slot="text">{$_("muteNotifications")}</div>
                             </MenuItem>
                         {/if}
+                    {/if}
+
+                    {#if $isProposalGroup}
+                        <MenuItem warning on:click={makeProposal}>
+                            <ChatQuestionIcon
+                                size={$iconSize}
+                                color={"var(--menu-warn"}
+                                slot="icon" />
+                            <div slot="text">{$_("makeProposal")}</div>
+                        </MenuItem>
                     {/if}
 
                     {#if client.user.isPlatformModerator}

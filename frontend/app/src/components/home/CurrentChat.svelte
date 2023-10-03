@@ -287,6 +287,7 @@
             on:toggleMuteNotifications
             on:showInviteGroupUsers
             on:showProposalFilters
+            on:makeProposal
             on:showGroupMembers
             on:leaveGroup
             on:upgrade
@@ -296,7 +297,6 @@
             on:importToCommunity={importToCommunity}
             {blocked}
             {readonly}
-            {unreadMessages}
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}

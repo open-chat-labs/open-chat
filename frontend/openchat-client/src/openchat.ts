@@ -327,6 +327,7 @@ import type {
     UpdatedRules,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    CandidateProposal,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5375,6 +5376,18 @@ export class OpenChat extends OpenChatAgentWorker {
         if (global.favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
+    }
+
+    submitProposal(proposal: CandidateProposal): Promise<void> {
+        console.log("Debug: submitProposal", proposal);
+        return new Promise<void>(resolve => setTimeout(resolve, 3000));
+        // return this.sendRequest({
+        //     kind: "submitProposal",
+        //     proposal,
+        // }).catch((err) => {
+        //     this._logger.error("Error submitting proposal", err);
+        //     return CommonResponses.failure();
+        // });
     }
 
     // **** End of Communities stuff
