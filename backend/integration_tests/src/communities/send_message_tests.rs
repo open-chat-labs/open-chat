@@ -1,4 +1,4 @@
-use crate::client::icrc1::happy_path;
+use crate::client::icrc1::happy_path::balance_of;
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
@@ -99,7 +99,7 @@ fn send_crypto_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user2_balance = happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
         assert_eq!(user2_balance, 10000);
     } else {
         panic!("{send_message_result:?}")
@@ -123,7 +123,7 @@ fn send_prize_in_channel() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    let inital_user1_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
     let fee = 10000;
     let prizes = vec![Tokens::from_e8s(100000)];
     let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
@@ -164,20 +164,19 @@ fn send_prize_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user1_balance_after_sending_prize = happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
         assert_eq!(user1_balance_after_sending_prize, inital_user1_balance - total - fee);
 
-        let community_balance_after_sending_prize =
-            happy_path::balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
         assert_eq!(community_balance_after_sending_prize, total);
 
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
 
-        let user1_balance_after_refund = happy_path::balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
         assert_eq!(user1_balance_after_refund, inital_user1_balance - 2 * fee);
 
-        let community_balance_after_refund = happy_path::balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
         assert_eq!(community_balance_after_refund, 0);
     } else {
         panic!("{send_message_result:?}")
