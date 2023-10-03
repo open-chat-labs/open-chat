@@ -413,36 +413,31 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
         now_nanos: TimestampNanos,
-    ) -> ClosePrizeResult {
-        use ClosePrizeResult::*;
+    ) -> Option<PendingCryptoTransaction> {
         let now_ms = now_nanos / 1_000_000;
         if let Some((message, _)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into(), now_ms)
         {
             if let MessageContentInternal::Prize(p) = &mut message.content {
-                match &p.transaction {
-                    CryptoTransaction::Pending(_) => return FundTransferPending,
-                    CryptoTransaction::Completed(t) => {
-                        let fee = t.fee();
-                        let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
-                        if unclaimed > 0 {
-                            p.prizes_remaining = Vec::new();
-                            return Success(create_pending_transaction(
-                                t.token(),
-                                t.ledger_canister_id(),
-                                unclaimed - fee,
-                                fee,
-                                message.sender,
-                                now_nanos,
-                            ));
-                        }
+                if let CryptoTransaction::Completed(t) = &p.transaction {
+                    let fee = t.fee();
+                    let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+                    if unclaimed > 0 {
+                        p.prizes_remaining = Vec::new();
+                        return Some(create_pending_transaction(
+                            t.token(),
+                            t.ledger_canister_id(),
+                            unclaimed - fee,
+                            fee,
+                            message.sender,
+                            now_nanos,
+                        ));
                     }
-                    CryptoTransaction::Failed(_) => (),
                 }
             }
         }
 
-        NoRefund
+        None
     }
 
     pub fn record_proposal_vote(
@@ -1548,10 +1543,4 @@ impl From<MessageId> for EventKey {
     fn from(value: MessageId) -> Self {
         EventKey::MessageId(value)
     }
-}
-
-pub enum ClosePrizeResult {
-    Success(PendingCryptoTransaction),
-    FundTransferPending,
-    NoRefund,
 }
