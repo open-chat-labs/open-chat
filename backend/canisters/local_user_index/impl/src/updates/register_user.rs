@@ -257,6 +257,7 @@ fn welcome_messages() -> Vec<String> {
             the future you'll be able to ask me questions or send me commands.",
         "Please join the [OpenChat](/community/dgegb-daaaa-aaaar-arlhq-cai) community to find out more about OpenChat, take \
             part in governance, request new features, report bugs or just chat.",
+        "To discover more communities click the \"Explore communities\" icon near the bottom of the navigation bar or [follow this link](/communities).",
     ];
 
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
