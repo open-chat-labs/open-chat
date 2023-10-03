@@ -96,6 +96,8 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
     SetDisplayNameResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -283,7 +285,18 @@ export type WorkerRequest =
     | GetCachePrimerTimestamps
     | SetCachePrimerTimestamp
     | FollowThread
+    | LoadSavedCryptoAccounts
+    | SaveCryptoAccount
     | TipMessage;
+
+type LoadSavedCryptoAccounts = {
+    kind: "loadSavedCryptoAccounts";
+};
+
+type SaveCryptoAccount = {
+    kind: "saveCryptoAccount";
+    namedAccount: NamedAccount;
+};
 
 type TipMessage = {
     kind: "tipMessage";
@@ -1065,6 +1078,8 @@ export type WorkerResponseInner =
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
     | TipMessageResponse
+    | NamedAccount[]
+    | SaveCryptoAccountResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1298,6 +1313,10 @@ type FollowThread = {
 
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
+    : T extends LoadSavedCryptoAccounts
+    ? NamedAccount[]
+    : T extends SaveCryptoAccount
+    ? SaveCryptoAccountResponse
     : T extends TipMessage
     ? TipMessageResponse
     : T extends UnpinMessage

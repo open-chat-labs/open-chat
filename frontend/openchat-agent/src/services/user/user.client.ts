@@ -62,6 +62,8 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -92,6 +94,8 @@ import {
     leaveCommunityResponse,
     deleteCommunityResponse,
     tipMessageResponse,
+    savedCryptoAccountsResponse,
+    saveCryptoAccountResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -620,6 +624,23 @@ export class UserClient extends CandidService {
             this.userService.send_message_with_transfer_to_group(req),
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
         ).then((resp) => [resp, event.event]);
+    }
+
+    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        return this.handleQueryResponse(
+            () => this.userService.saved_crypto_accounts({}),
+            savedCryptoAccountsResponse,
+        );
+    }
+
+    saveCryptoAccount({ name, account }: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        return this.handleResponse(
+            this.userService.save_crypto_account({
+                name,
+                account,
+            }),
+            saveCryptoAccountResponse,
+        );
     }
 
     sendMessageWithTransferToChannel(

@@ -327,6 +327,8 @@ import type {
     UpdatedRules,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4870,6 +4872,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 undoLocally();
                 return { kind: "failure" };
             });
+    }
+
+    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        return this.sendRequest({
+            kind: "loadSavedCryptoAccounts",
+        });
+    }
+
+    saveCryptoAccounts(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        return this.sendRequest({
+            kind: "saveCryptoAccount",
+            namedAccount,
+        });
     }
 
     private async updateRegistry() {

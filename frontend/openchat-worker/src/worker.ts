@@ -1241,7 +1241,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.followThread(payload.chatId, payload.threadRootMessageIndex, payload.follow),
+                    agent.followThread(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.follow,
+                    ),
                 );
                 break;
 
@@ -1268,6 +1272,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.transfer,
                     ),
+                );
+                break;
+
+            case "loadSavedCryptoAccounts":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.loadSavedCryptoAccounts(),
+                );
+                break;
+
+            case "saveCryptoAccount":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.saveCryptoAccount(payload.namedAccount),
                 );
                 break;
 
