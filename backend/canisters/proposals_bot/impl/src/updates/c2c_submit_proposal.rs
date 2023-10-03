@@ -22,7 +22,7 @@ async fn c2c_submit_proposal(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    match lookup_user(caller.into(), local_user_index_canister_id).await {
+    match lookup_user(caller, local_user_index_canister_id).await {
         Ok(_) => {}
         Err(LookupUserError::UserNotFound) => unreachable!(),
         Err(LookupUserError::InternalError(error)) => return InternalError(error),
