@@ -36,6 +36,7 @@
     let dollarScale = tweened(0);
     let centAmount = 0;
 
+    $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -84,6 +85,7 @@
             createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
         };
         dispatch("send", transfer);
+        lastCryptoSent.set(ledger);
     }
 
     function cancel() {
