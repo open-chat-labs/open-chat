@@ -341,7 +341,10 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
         if (chatId.kind === "channel") {
-            if (event.event.content.kind === "crypto_content") {
+            if (
+                event.event.content.kind === "crypto_content" ||
+                event.event.content.kind === "prize_content_initial"
+            ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
                     event.event.content.transfer.recipient,
@@ -364,7 +367,10 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatId.kind === "group_chat") {
-            if (event.event.content.kind === "crypto_content") {
+            if (
+                event.event.content.kind === "crypto_content" ||
+                event.event.content.kind === "prize_content_initial"
+            ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
                     event.event.content.transfer.recipient,
@@ -2508,11 +2514,19 @@ export class OpenChatAgent extends EventTarget {
         return setCachePrimerTimestamp(this.db, chatIdentifierString, timestamp);
     }
 
-    followThread(chatId: ChatIdentifier, threadRootMessageIndex: number, follow: boolean): Promise<FollowThreadResponse> {
+    followThread(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number,
+        follow: boolean,
+    ): Promise<FollowThreadResponse> {
         if (chatId.kind === "channel") {
-            return this.communityClient(chatId.communityId).followThread(chatId.channelId, threadRootMessageIndex, follow);        
+            return this.communityClient(chatId.communityId).followThread(
+                chatId.channelId,
+                threadRootMessageIndex,
+                follow,
+            );
         } else if (chatId.kind === "group_chat") {
-            return this.getGroupClient(chatId.groupId).followThread(threadRootMessageIndex, follow);        
+            return this.getGroupClient(chatId.groupId).followThread(threadRootMessageIndex, follow);
         } else {
             throw new Error("followThread not implemented for direct chats");
         }

@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -184,6 +184,18 @@ fn register_timer_jobs(
         }
     }
 
+    if let MessageContent::Prize(p) = &message_event.event.content {
+        timer_jobs.enqueue_job(
+            TimerJob::RefundPrize(RefundPrizeJob {
+                channel_id,
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+            }),
+            p.end_date,
+            now,
+        );
+    }
+  
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);

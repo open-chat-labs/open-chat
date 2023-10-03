@@ -170,6 +170,7 @@
                     <div class="transfer">
                         <TokenInput
                             {ledger}
+                            {transferFees}
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
                             maxAmount={maxAmount(cryptoBalance)}

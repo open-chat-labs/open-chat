@@ -4,6 +4,7 @@ use crate::*;
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
+use ledger_utils::create_pending_transaction;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
@@ -13,13 +14,13 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, HydratedMention, Mention,
-    Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, MultiUserChat, PollVotes,
-    PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult, TimestampMillis,
+    CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex,
+    EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
+    HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
+    Milliseconds, MultiUserChat, PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult,
+    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos,
     Timestamped, Tips, UserId, VoteOperation,
 };
-use types::{Hash, MessageReport, ReportedMessageInternal};
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
@@ -399,6 +400,36 @@ impl ChatEvents {
         }
 
         EndPollResult::PollNotFound
+    }
+
+    pub fn prize_refund(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        now_nanos: TimestampNanos,
+    ) -> Option<PendingCryptoTransaction> {
+        if let Some(message) =
+            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into())
+        {
+            if let MessageContentInternal::Prize(p) = &message.content {
+                if let CryptoTransaction::Completed(t) = &p.transaction {
+                    let fee = t.fee();
+                    let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+                    if unclaimed > 0 {
+                        return Some(create_pending_transaction(
+                            t.token(),
+                            t.ledger_canister_id(),
+                            unclaimed - fee,
+                            fee,
+                            message.sender,
+                            now_nanos,
+                        ));
+                    }
+                }
+            }
+        }
+
+        None
     }
 
     pub fn record_proposal_vote(
@@ -1236,11 +1267,20 @@ impl ChatEvents {
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
     ) -> Option<(&mut MessageInternal, EventIndex)> {
-        let events_list = self.events_list_mut(min_visible_event_index, thread_root_message_index)?;
-
-        events_list
-            .get_mut(event_key, min_visible_event_index)
+        self.events_list_mut(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| l.get_mut(event_key, min_visible_event_index))
             .and_then(|e| e.event.as_message_mut().map(|m| (m, e.index)))
+    }
+
+    fn message_internal(
+        &self,
+        min_visible_event_index: EventIndex,
+        thread_root_message_index: Option<MessageIndex>,
+        event_key: EventKey,
+    ) -> Option<&MessageInternal> {
+        self.events_list(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| l.get(event_key, min_visible_event_index))
+            .and_then(|e| e.event.as_message())
     }
 
     fn expiry_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {

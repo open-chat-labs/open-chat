@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RemoveExpiredEventsJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, RemoveExpiredEventsJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
@@ -127,11 +127,19 @@ fn register_timer_jobs(
         }
     }
 
+    if let MessageContent::Prize(p) = &message_event.event.content {
+        timer_jobs.enqueue_job(
+            TimerJob::RefundPrize(RefundPrizeJob {
+                thread_root_message_index,
+                message_index: message_event.event.message_index,
+            }),
+            p.end_date,
+            now,
+        );
+    }
+
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
     }
-
-    // TODO: If this is a prize message then set a timer to transfer
-    // the balance of any remaining prizes to the original sender
 }

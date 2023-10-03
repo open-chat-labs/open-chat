@@ -85,6 +85,7 @@
 <div class="token-input">
     <TokenInput
         {ledger}
+        {transferFees}
         maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
         bind:valid={validAmount}
         bind:amount={amountToSend} />

@@ -79,6 +79,7 @@
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
+    $: isFollowedByMe = thread !== undefined && (thread.followedByMe || thread.participantIds.has(user.userId));
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -271,8 +272,11 @@
                             me={evt.event.sender === user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
-                            readByMe={evt.event.messageId === rootEvent.event.messageId ||
-                                isReadByMe($messagesRead, evt)}
+                            readByMe={
+                                evt.event.messageId === rootEvent.event.messageId ||
+                                !isFollowedByMe ||
+                                isReadByMe($messagesRead, evt)
+                            }
                             readByThem
                             observer={messageObserver}
                             focused={evt.event.kind === "message" &&

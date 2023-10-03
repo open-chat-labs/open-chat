@@ -5,7 +5,8 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{TipMessageArgs, TipMessageResult};
 use ic_cdk_macros::update;
-use types::{icrc1, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
+use serde::Serialize;
+use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
@@ -28,10 +29,9 @@ async fn tip_message(args: Args) -> Response {
         created: now_nanos,
     });
     // Make the crypto transfer
-    let completed_transfer = match process_transaction(pending_transfer).await {
-        Ok(transfer) => transfer,
-        Err(failed) => return TransferFailed(failed.error_message().to_string()),
-    };
+    if let Err(failed) = process_transaction(pending_transfer).await {
+        return TransferFailed(failed.error_message().to_string());
+    }
 
     match prepare_result {
         PrepareResult::Direct(tip_message_args) => mutate_state(|state| tip_direct_chat_message(tip_message_args, state)),
@@ -46,7 +46,10 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::GroupFrozen) => ChatFrozen,
                 Ok(Response::UserNotInGroup) => ChatNotFound,
                 Ok(Response::UserSuspended) => UserSuspended,
-                Err(error) => InternalError(format!("{error:?}"), Box::new(completed_transfer)),
+                Err(error) => {
+                    mutate_state(|state| fire_and_forget_c2c_tip_message(group_id.into(), &c2c_args, state));
+                    Retrying(format!("{error:?}"))
+                }
             }
         }
         PrepareResult::Channel(community_id, c2c_args) => {
@@ -60,7 +63,10 @@ async fn tip_message(args: Args) -> Response {
                 Ok(Response::CommunityFrozen) => ChatFrozen,
                 Ok(Response::UserSuspended) => UserSuspended,
                 Ok(Response::UserNotInCommunity | Response::ChannelNotFound) => ChatNotFound,
-                Err(error) => InternalError(format!("{error:?}"), Box::new(completed_transfer)),
+                Err(error) => {
+                    mutate_state(|state| fire_and_forget_c2c_tip_message(community_id.into(), &c2c_args, state));
+                    Retrying(format!("{error:?}"))
+                }
             }
         }
     }
@@ -148,11 +154,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, state: &mut RuntimeState) -> Re
                     display_name: state.data.display_name.value.clone(),
                     user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
                 };
-                state.data.fire_and_forget_handler.send(
-                    args.recipient.into(),
-                    "c2c_tip_message_msgpack".to_string(),
-                    msgpack::serialize_then_unwrap(c2c_args),
-                );
+                fire_and_forget_c2c_tip_message(args.recipient.into(), &c2c_args, state);
                 Success
             }
             TipMessageResult::MessageNotFound => MessageNotFound,
@@ -162,4 +164,12 @@ fn tip_direct_chat_message(args: TipMessageArgs, state: &mut RuntimeState) -> Re
     } else {
         ChatNotFound
     }
+}
+
+fn fire_and_forget_c2c_tip_message<P: Serialize>(canister_id: CanisterId, payload: &P, state: &mut RuntimeState) {
+    state.data.fire_and_forget_handler.send(
+        canister_id,
+        "c2c_tip_message_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(payload),
+    );
 }

@@ -782,6 +782,10 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         messageId: bigint | undefined,
     ): void {
+        if (this.messagesRead.isRead(context, messageIndex, messageId)) {
+            return;
+        }
+
         this.messagesRead.markMessageRead(context, messageIndex, messageId);
 
         const selectedChat = this._liveState.selectedChat;
@@ -1209,29 +1213,25 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    followThread(
-        chatId: ChatIdentifier,
-        message: Message,
-        follow: boolean
-    ): Promise<boolean> {
+    followThread(chatId: ChatIdentifier, message: Message, follow: boolean): Promise<boolean> {
         // Assume it will succeed
         localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-            followedByMe: follow
+            followedByMe: follow,
         });
 
         return this.sendRequest({
             kind: "followThread",
             chatId,
             threadRootMessageIndex: message.messageIndex,
-            follow
+            follow,
         }).then((resp) => {
             if (resp === "failed") {
                 localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-                    followedByMe: !follow
+                    followedByMe: !follow,
                 });
                 return false;
             } else {
-                return true
+                return true;
             }
         });
     }
@@ -2174,15 +2174,6 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.config.meteredApiKey,
             );
 
-            const isFollowedByMe =
-                this._liveState.threadsFollowedByMe.get(chat.id)?.has(threadRootMessageIndex) ??
-                false;
-            if (isFollowedByMe) {
-                const lastLoadedMessageIdx = this.lastMessageIndex(this._liveState.threadEvents);
-                if (lastLoadedMessageIdx !== undefined) {
-                    this.markThreadRead(chat.id, threadRootMessageIndex, lastLoadedMessageIdx);
-                }
-            }
             if (ascending) {
                 this.dispatchEvent(new LoadedNewThreadMessages());
             } else {
@@ -2215,16 +2206,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         }
         return [resp.events, userIds];
-    }
-
-    private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
-        for (let i = events.length - 1; i >= 0; i--) {
-            const evt = events[i].event;
-            if (evt.kind === "message") {
-                return evt.messageIndex;
-            }
-        }
-        return undefined;
     }
 
     removeChat(chatId: ChatIdentifier): void {
@@ -2944,7 +2925,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private canRetryMessage(content: MessageContent): boolean {
-        return content.kind !== "poll_content" && content.kind !== "crypto_content";
+        return (
+            content.kind !== "poll_content" &&
+            content.kind !== "crypto_content" &&
+            content.kind !== "prize_content_initial"
+        );
     }
 
     rulesNeedAccepting(): boolean {

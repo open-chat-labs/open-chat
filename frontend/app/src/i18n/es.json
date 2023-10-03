@@ -443,14 +443,14 @@
         "pendingSentByYou": "está enviando {amount} {token} a {receiver}",
         "done": "actualizar y continuar",
         "amount": "Monto",
-        "fee": "Se agregará una tarifa de {fee} {token}",
         "warning": "ADVERTENCIA: es su responsabilidad asegurarse de que confía en la identidad y los motivos del destinatario. OpenChat no puede revertir ninguna transferencia {token}.",
         "zeroBalance": "No tienes {token}.",
         "yourAccount": "Tu dirección {token}",
         "receiver": "Recipiente",
         "chooseReceiver": "ingrese el nombre de usuario del destinatario",
         "max": "máx.",
-        "viewTransaction": "[Transacción]({url})"
+        "viewTransaction": "[Transacción]({url})",
+        "fee": "Se agregarán tarifas de {fee} {token}"
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -685,7 +685,19 @@
         "finished": "Acabado",
         "winner": "**{recipient}** ganó **{amount}** {token}",
         "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",
-        "allClaimed": "Completamente reclamado"
+        "allClaimed": "Completamente reclamado",
+        "live": "¡Mensaje de premio en vivo! Otros pueden hacer clic para reclamar 🎁",
+        "prizeFinished": "Tu mensaje de premio ya ha terminado.",
+        "title": "Premio",
+        "totalAmount": "Monto total del premio",
+        "numberOfWinners": "Número de ganadores",
+        "duration": "¿Cuánto tiempo estará activo el premio?",
+        "minPrize": "¿Cuál es el premio mínimo?",
+        "maxPrize": "¿Cuál es el premio máximo?",
+        "distribution": "¿Cómo deben distribuirse los premios?",
+        "equalDistribution": "Distribución equitativa",
+        "randomDistribution": "Distribución aleatoria",
+        "creatingYourPrizeMessage": "Espere mientras creamos su mensaje de premio."
     },
     "upgrade": {
         "blurb": "Algunas funciones de OpenChat solo están disponibles para cuentas premium. Puede actualizar su cuenta verificando un número de teléfono a través de SMS o pagando una pequeña tarifa de ICP.",

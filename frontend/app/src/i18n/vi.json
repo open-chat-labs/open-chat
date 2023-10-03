@@ -443,14 +443,14 @@
         "pendingSentByYou": "bạn đang gửi {token} {amount} đến {receiver}",
         "done": "làm mới và tiếp tục",
         "amount": "Số lượng",
-        "fee": "Một khoản phí {fee} {token} sẽ được thêm vào",
         "warning": "CẢNH BÁO - bạn có trách nhiệm đảm bảo rằng bạn tin tưởng vào danh tính và động cơ của người nhận. OpenChat không thể đảo ngược bất kỳ chuyển khoản {token} nào.",
         "zeroBalance": "Bạn không có bất kỳ {token} nào.",
         "yourAccount": "Địa chỉ {token} của bạn",
         "receiver": "Người nhận",
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "max": "tối đa",
-        "viewTransaction": "[Giao dịch]({url})"
+        "viewTransaction": "[Giao dịch]({url})",
+        "fee": "Phí {fee} {token} sẽ được thêm vào"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -684,7 +684,19 @@
         "finished": "Hoàn thành",
         "winner": "**{recipient}** đã thắng **{amount}** {token}",
         "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
-        "allClaimed": "Yêu cầu đầy đủ"
+        "allClaimed": "Yêu cầu đầy đủ",
+        "live": "Tin nhắn giải thưởng trực tiếp! Những người khác có thể nhấp để yêu cầu 🎁",
+        "prizeFinished": "Tin nhắn giải thưởng của bạn hiện đã kết thúc",
+        "title": "Phần thưởng",
+        "totalAmount": "Tổng số tiền thưởng",
+        "numberOfWinners": "Số người chiến thắng",
+        "duration": "Giải thưởng sẽ có hiệu lực trong bao lâu?",
+        "minPrize": "Giải thưởng tối thiểu là gì?",
+        "maxPrize": "Giải thưởng tối đa là bao nhiêu?",
+        "distribution": "Giải thưởng nên được phân phối như thế nào?",
+        "equalDistribution": "Phân phối bình đẳng",
+        "randomDistribution": "Phân phối ngẫu nhiên",
+        "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn"
     },
     "upgrade": {
         "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",

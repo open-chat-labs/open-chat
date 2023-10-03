@@ -3,7 +3,7 @@
     import type { OpenChat, PrizeWinnerContent } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import CkBtcSmall from "../icons/CkBtcSmall.svelte";
+    import SpinningToken from "../icons/SpinningToken.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -13,6 +13,7 @@
 
     $: userStore = client.userStore;
     $: cryptoLookup = client.cryptoLookup;
+    $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
     $: tokenDetails = $cryptoLookup[content.transaction.ledger];
     $: symbol = tokenDetails.symbol;
     $: amount = client.formatTokens(content.transaction.amountE8s, 0, tokenDetails.decimals);
@@ -32,11 +33,11 @@
     }
 </script>
 
-<div class="msg" on:click={zoomToMessage}>
+<div role="button" tabindex="0" class="msg" on:click={zoomToMessage}>
     <div class="graphic">
         <img class="lid" src={"/assets/lid.png"} />
         <div class="winner-coin">
-            <CkBtcSmall />
+            <SpinningToken mirror={false} size="small" {logo} />
         </div>
         <img class="box" src={"/assets/box.png"} />
     </div>
