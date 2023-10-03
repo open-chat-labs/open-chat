@@ -135,7 +135,6 @@
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
-    $: lastCryptoSent = client.lastCryptoSent;
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
 
     onMount(() => {
@@ -349,9 +348,7 @@
         const transfer = ev.detail;
         const currentTip = (msg.tips[transfer.ledger] ?? {})[client.user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
-            if (resp.kind === "success") {
-                lastCryptoSent.set(transfer.ledger);
-            } else {
+            if (resp.kind !== "success") {
                 toastStore.showFailureToast("tip.failure");
             }
         });
