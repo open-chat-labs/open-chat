@@ -34,5 +34,9 @@
         .icon {
             display: flex;
         }
+
+        .details h4 {
+            @include font(book, normal, fs-120);
+        }
     }
 </style>

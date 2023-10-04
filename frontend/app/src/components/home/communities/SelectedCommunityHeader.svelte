@@ -58,7 +58,7 @@
         display: flex;
         flex: 1;
         align-items: center;
-        gap: $sp4;
+        gap: $sp3;
         cursor: pointer;
     }
     .wrapper {
@@ -66,6 +66,11 @@
         gap: $sp3;
         align-items: center;
         @include font(book, normal, fs-70);
+    }
+
+    .name {
+        @include font(book, normal, fs-120);
+        margin-bottom: $sp1;
     }
 
     .members {
