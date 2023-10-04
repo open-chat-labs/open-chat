@@ -141,6 +141,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         service_owner_principals: vec![controller],
         user_index_canister_id,
         group_index_canister_id,
+        local_user_index_canister_id,
         nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
