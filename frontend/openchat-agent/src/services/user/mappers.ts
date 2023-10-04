@@ -359,6 +359,9 @@ export function sendMessageResponse(
     if ("TransferCannotBeZero" in candid) {
         return { kind: "transfer_cannot_be_zero" };
     }
+    if ("TransferCannotBeToSelf" in candid) {
+        return { kind: "transfer_cannot_be_to_self" };
+    }
     if ("RecipientBlocked" in candid) {
         return { kind: "recipient_blocked" };
     }
