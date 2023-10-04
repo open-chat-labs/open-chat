@@ -34,6 +34,19 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
+    pub fn set_neuron_id_for_submitting_proposals(
+        &mut self,
+        governance_canister_id: &CanisterId,
+        neuron_id: SnsNeuronId,
+    ) -> bool {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.neuron_id_for_submitting_proposals = Some(neuron_id);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn remove(&mut self, governance_canister_id: &CanisterId) -> bool {
         self.nervous_systems.remove(governance_canister_id).is_some()
     }

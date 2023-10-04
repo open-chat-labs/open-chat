@@ -4967,10 +4967,12 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icrc1_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "local_user_index_canister_c2c_client",
  "msgpack",
  "proposals_bot_canister",
+ "rand",
  "serde",
  "serializer",
  "sha2 0.10.7",
@@ -4978,6 +4980,7 @@ dependencies = [
  "sns_governance_canister_c2c_client",
  "tracing",
  "types",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 

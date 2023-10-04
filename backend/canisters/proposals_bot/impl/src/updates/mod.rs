@@ -3,4 +3,5 @@ mod appoint_admins;
 mod c2c_submit_proposal;
 mod import_proposals_group_into_community;
 mod remove_governance_canister;
+mod stake_neuron_for_submitting_proposals;
 mod wallet_receive;
