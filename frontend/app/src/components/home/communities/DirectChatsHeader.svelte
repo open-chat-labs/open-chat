@@ -18,21 +18,6 @@
 
 <style lang="scss">
     .direct-chats {
-        display: flex;
-        flex: 1;
-        align-items: center;
-        gap: $sp4;
-
-        @include mobile() {
-            padding: 0 $sp3;
-        }
-
-        .icon {
-            display: flex;
-        }
-
-        .details h4 {
-            @include font(book, normal, fs-120);
-        }
+        @include left_panel_header();
     }
 </style>

@@ -530,3 +530,22 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     -ms-user-select: none; // Internet Explorer/Edge
     user-select: none; // Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox
 }
+
+@mixin left_panel_header() {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: $sp4;
+
+    @include mobile() {
+        padding: 0 $sp3;
+    }
+
+    .icon {
+        display: flex;
+    }
+
+    .details h4 {
+        @include font(book, normal, fs-120);
+    }
+}
