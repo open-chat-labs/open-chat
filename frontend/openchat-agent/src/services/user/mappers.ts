@@ -137,12 +137,11 @@ import { ReplicaNotUpToDateError } from "../error";
 import type { Principal } from "@dfinity/principal";
 
 export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "Retrying" in candid) {
         return CommonResponses.success();
-    } else {
-        console.warn("tipMessage failed with: ", candid);
-        return CommonResponses.failure();
     }
+    console.warn("tipMessage failed with: ", candid);
+    return CommonResponses.failure();
 }
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
