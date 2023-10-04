@@ -1,4 +1,5 @@
 use crate::incr;
+use ic_ledger_types::Tokens;
 use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -14,7 +15,7 @@ use types::{
     GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
     MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
     MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
-    PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
+    PollContentInternal, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
     ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis,
     Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
@@ -313,7 +314,7 @@ pub struct CryptoContentInternal {
 }
 
 // TODO remove this after next release cycle
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize)]
 pub struct CryptoContentCombined {
     #[serde(alias = "r")]
     pub recipient: UserId,
@@ -359,6 +360,93 @@ impl TryFrom<CryptoContent> for CryptoContentInternal {
             Ok(CryptoContentInternal {
                 recipient: value.recipient,
                 transfer,
+                caption: value.caption,
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "PrizeContentCombined")]
+pub struct PrizeContentInternal {
+    #[serde(rename = "p")]
+    pub prizes_remaining: Vec<Tokens>,
+    #[serde(rename = "r")]
+    pub reservations: HashSet<UserId>,
+    #[serde(rename = "w")]
+    pub winners: HashSet<UserId>,
+    #[serde(rename = "t")]
+    pub transaction: CompletedCryptoTransaction,
+    #[serde(rename = "e")]
+    pub end_date: TimestampMillis,
+    #[serde(rename = "c")]
+    pub caption: Option<String>,
+}
+
+// TODO remove this after next release cycle
+#[derive(Deserialize)]
+pub struct PrizeContentCombined {
+    #[serde(alias = "p")]
+    pub prizes_remaining: Vec<Tokens>,
+    #[serde(alias = "r")]
+    pub reservations: HashSet<UserId>,
+    #[serde(alias = "w")]
+    pub winners: HashSet<UserId>,
+    #[serde(rename = "t")]
+    pub transaction: Option<CompletedCryptoTransaction>,
+    #[serde(alias = "e")]
+    pub end_date: TimestampMillis,
+    #[serde(alias = "c")]
+    pub caption: Option<String>,
+    #[serde(rename = "transaction")]
+    pub transaction_old: Option<CryptoTransaction>,
+}
+
+impl From<PrizeContentCombined> for PrizeContentInternal {
+    fn from(value: PrizeContentCombined) -> Self {
+        PrizeContentInternal {
+            prizes_remaining: value.prizes_remaining,
+            reservations: value.reservations,
+            winners: value.winners,
+            transaction: value.transaction.unwrap_or_else(|| {
+                if let Some(CryptoTransaction::Completed(t)) = value.transaction_old {
+                    t
+                } else {
+                    panic!("Transfer is not of type 'Completed'");
+                }
+            }),
+            end_date: value.end_date,
+            caption: value.caption,
+        }
+    }
+}
+
+impl From<&PrizeContentInternal> for PrizeContent {
+    fn from(value: &PrizeContentInternal) -> Self {
+        PrizeContent {
+            prizes_remaining: value.prizes_remaining.len() as u32,
+            prizes_pending: value.reservations.len() as u32,
+            winners: value.winners.iter().copied().collect(),
+            token: value.transaction.token(),
+            end_date: value.end_date,
+            caption: value.caption.clone(),
+        }
+    }
+}
+
+impl TryFrom<PrizeContentInitial> for PrizeContentInternal {
+    type Error = ();
+
+    fn try_from(value: PrizeContentInitial) -> Result<Self, Self::Error> {
+        if let CryptoTransaction::Completed(transaction) = value.transfer {
+            Ok(PrizeContentInternal {
+                prizes_remaining: value.prizes,
+                reservations: HashSet::new(),
+                winners: HashSet::new(),
+                transaction,
+                end_date: value.end_date,
                 caption: value.caption,
             })
         } else {
@@ -425,14 +513,7 @@ impl MessageContentInternal {
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
-            MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: p.prizes_remaining.len() as u32,
-                winners: p.winners.iter().copied().collect(),
-                token: p.transaction.token(),
-                end_date: p.end_date,
-                caption: p.caption.clone(),
-                prizes_pending: p.reservations.len() as u32,
-            }),
+            MessageContentInternal::Prize(p) => MessageContent::Prize(p.into()),
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(ReportedMessage {
@@ -593,14 +674,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
                     votes: HashMap::new(),
                 })
             }
-            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
-                prizes_remaining: p.prizes,
-                winners: HashSet::new(),
-                end_date: p.end_date,
-                caption: p.caption,
-                reservations: HashSet::new(),
-                transaction: p.transfer,
-            }),
+            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(p.try_into().unwrap()),
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c),
