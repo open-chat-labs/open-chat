@@ -60,9 +60,9 @@
                     if (resp.kind === "success") {
                         dispatch("close");
                     } else if (resp.kind === "name_taken") {
-                        error = "transferToken.accountNameTaken";
+                        error = "tokenTransfer.accountNameTaken";
                     } else {
-                        error = "transferToken.failedToSaveAccount";
+                        error = "tokenTransfer.failedToSaveAccount";
                     }
                 })
                 .finally(() => (busy = false));

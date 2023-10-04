@@ -12,17 +12,18 @@
     export let valid = false;
 
     let name = "";
+    $: trimmedName = name.trim();
 
     $: {
         valid =
-            name.length > 0 &&
-            accounts.find((a) => a.name.toLowerCase() === name.toLowerCase()) === undefined;
+            trimmedName.length > 0 &&
+            accounts.find((a) => a.name.toLowerCase() === trimmedName.toLowerCase()) === undefined;
     }
 
     export function saveAccount() {
         return client.saveCryptoAccount({
             account,
-            name,
+            name: trimmedName,
         });
     }
 </script>

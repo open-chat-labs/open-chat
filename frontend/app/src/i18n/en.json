@@ -553,7 +553,7 @@
         "saveAccountMessage": "Would you like to save this account for easier access next time?",
         "enterAccountName": "Enter a name for this account",
         "failedToSaveAccount": "Sorry, we were unable to save your account",
-        "accountNameTaken": "Sorry, that account name is taken",
+        "accountNameTaken": "You already have an account with that name",
         "chooseAddress": "Choose one of your saved addresses"
     },
     "cryptoAccount": {
