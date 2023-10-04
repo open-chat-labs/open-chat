@@ -129,12 +129,7 @@ impl GroupChatCore {
         self.events.has_updates_since(since) || self.invited_users.last_updated() > since
     }
 
-    pub fn summary_updates_from_events(
-        &self,
-        since: TimestampMillis,
-        user_id: Option<UserId>,
-        now: TimestampMillis,
-    ) -> SummaryUpdatesFromEvents {
+    pub fn summary_updates_from_events(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdatesFromEvents {
         let member = user_id.and_then(|user_id| self.members.get(&user_id));
 
         let min_visible_event_index = if let Some(member) = member {
@@ -147,10 +142,10 @@ impl GroupChatCore {
             panic!("Cannot get private summary updates if user is not a member");
         };
 
-        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
         let latest_message = events_reader.latest_message_event_if_updated(since, user_id);
         let mentions = member
-            .map(|m| m.most_recent_mentions(Some(since), &self.events, now))
+            .map(|m| m.most_recent_mentions(Some(since), &self.events))
             .unwrap_or_default();
 
         let mut updates = SummaryUpdatesFromEvents {
@@ -302,13 +297,10 @@ impl GroupChatCore {
             return None;
         };
 
-        let latest_event_timestamp = self.events.latest_event_timestamp().unwrap_or_default();
-
-        let events_reader = self
-            .events
-            .visible_main_events_reader(min_visible_event_index, latest_event_timestamp);
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
 
         let latest_event_index = events_reader.latest_event_index().unwrap();
+        let latest_event_timestamp = self.events.latest_event_timestamp().unwrap_or_default();
 
         let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
 
@@ -402,7 +394,7 @@ impl GroupChatCore {
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index, now) {
+        match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let latest_event_index = reader.latest_event_index().unwrap();
                 if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
@@ -438,7 +430,7 @@ impl GroupChatCore {
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index, now) {
+        match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let latest_event_index = reader.latest_event_index().unwrap();
                 if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
@@ -470,7 +462,7 @@ impl GroupChatCore {
     ) -> EventsResult {
         use EventsResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index, now) {
+        match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let latest_event_index = reader.latest_event_index().unwrap();
                 if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
@@ -500,7 +492,7 @@ impl GroupChatCore {
     ) -> MessagesResult {
         use MessagesResult::*;
 
-        match self.events_reader(user_id, thread_root_message_index, now) {
+        match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let latest_event_index = reader.latest_event_index().unwrap();
                 if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
@@ -528,17 +520,13 @@ impl GroupChatCore {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        now: TimestampMillis,
     ) -> DeletedMessageResult {
         use DeletedMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
             let min_visible_event_index = member.min_visible_event_index();
 
-            if let Some(events_reader) = self
-                .events
-                .events_reader(min_visible_event_index, thread_root_message_index, now)
-            {
+            if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
                 if let Some(message) = events_reader.message_internal(message_id.into()) {
                     return if let Some(deleted_by) = &message.deleted_by {
                         if matches!(message.content, MessageContentInternal::Deleted(_)) {
@@ -580,7 +568,7 @@ impl GroupChatCore {
                 threads
                     .into_iter()
                     .filter_map(|root_message_index| {
-                        self.build_thread_preview(member.user_id, member.min_visible_event_index(), root_message_index, now)
+                        self.build_thread_preview(member.user_id, member.min_visible_event_index(), root_message_index)
                     })
                     .collect(),
             )
@@ -714,7 +702,7 @@ impl GroupChatCore {
         if let Some(root_message_index) = thread_root_message_index {
             if !self
                 .events
-                .is_accessible(member.min_visible_event_index(), None, root_message_index.into(), now)
+                .is_accessible(member.min_visible_event_index(), None, root_message_index.into())
             {
                 return ThreadMessageNotFound;
             }
@@ -723,7 +711,7 @@ impl GroupChatCore {
         let min_visible_event_index = member.min_visible_event_index();
         let user_being_replied_to = replies_to
             .as_ref()
-            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index, now));
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
 
         let everyone_mentioned = member.role.can_mention_everyone(permissions) && is_everyone_mentioned(&content);
 
@@ -745,11 +733,11 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_followers: Option<HashSet<UserId>> = None;
+        let mut thread_followers: Option<Vec<UserId>> = None;
 
         if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
             self.events
-                .visible_main_events_reader(min_visible_event_index, now)
+                .visible_main_events_reader(min_visible_event_index)
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
@@ -758,9 +746,7 @@ impl GroupChatCore {
             }
 
             if let Some(thread_summary) = thread_root_message.thread_summary {
-                let followers = thread_summary.followers();
-                let participants = HashSet::from_iter(thread_summary.participant_ids);
-                thread_followers = Some(followers.union(&participants).copied().collect());
+                thread_followers = Some(thread_summary.participants_and_followers(false));
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -922,7 +908,7 @@ impl GroupChatCore {
                 {
                     if let Some(message_index) = self
                         .events
-                        .visible_main_events_reader(min_visible_event_index, now)
+                        .visible_main_events_reader(min_visible_event_index)
                         .message_internal(message_id.into())
                         .map(|m| m.message_index)
                     {
@@ -977,7 +963,7 @@ impl GroupChatCore {
 
             let events_reader = self
                 .events
-                .events_reader(min_visible_event_index, thread_root_message_index, now)
+                .events_reader(min_visible_event_index, thread_root_message_index)
                 .unwrap();
 
             let messages = results
@@ -1044,10 +1030,7 @@ impl GroupChatCore {
             let min_visible_event_index = member.min_visible_event_index();
             let user_id = member.user_id;
 
-            if !self
-                .events
-                .is_accessible(min_visible_event_index, None, message_index.into(), now)
-            {
+            if !self.events.is_accessible(min_visible_event_index, None, message_index.into()) {
                 return MessageNotFound;
             }
 
@@ -1091,7 +1074,7 @@ impl GroupChatCore {
 
             if !self
                 .events
-                .is_accessible(member.min_visible_event_index(), None, message_index.into(), now)
+                .is_accessible(member.min_visible_event_index(), None, message_index.into())
             {
                 return MessageNotFound;
             }
@@ -1163,7 +1146,7 @@ impl GroupChatCore {
                 } else {
                     // If there is only an initial "group created" event then allow these users
                     // to see the "group created" event by starting min_visible_* at zero
-                    let events_reader = self.events.main_events_reader(now);
+                    let events_reader = self.events.main_events_reader();
                     if events_reader.len() > 1 {
                         min_visible_event_index = events_reader.next_event_index();
                         min_visible_message_index = events_reader.next_message_index();
@@ -1593,19 +1576,24 @@ impl GroupChatCore {
         }
     }
 
-    fn events_reader(
-        &self,
-        user_id: Option<UserId>,
-        thread_root_message_index: Option<MessageIndex>,
-        now: TimestampMillis,
-    ) -> EventsReaderResult {
+    pub fn remove_expired_events(&mut self, now: TimestampMillis) {
+        let result = self.events.remove_expired_events(now);
+
+        for (thread_root_message_index, users) in result.threads {
+            for user_id in users {
+                if let Some(member) = self.members.get_mut(&user_id) {
+                    member.threads.remove(&thread_root_message_index);
+                    member.unfollowed_threads.retain(|&m| m != thread_root_message_index);
+                }
+            }
+        }
+    }
+
+    fn events_reader(&self, user_id: Option<UserId>, thread_root_message_index: Option<MessageIndex>) -> EventsReaderResult {
         use EventsReaderResult::*;
 
         if let Some(min_visible_event_index) = self.min_visible_event_index(user_id) {
-            if let Some(events_reader) = self
-                .events
-                .events_reader(min_visible_event_index, thread_root_message_index, now)
-            {
+            if let Some(events_reader) = self.events.events_reader(min_visible_event_index, thread_root_message_index) {
                 Success(events_reader)
             } else {
                 ThreadNotFound
@@ -1620,11 +1608,10 @@ impl GroupChatCore {
         replies_to: &GroupReplyContext,
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
-        now: TimestampMillis,
     ) -> Option<UserId> {
         let events_reader = self
             .events
-            .events_reader(min_visible_event_index, thread_root_message_index, now)?;
+            .events_reader(min_visible_event_index, thread_root_message_index)?;
 
         events_reader
             .message_internal(replies_to.event_index.into())
@@ -1656,17 +1643,14 @@ impl GroupChatCore {
         caller_user_id: UserId,
         min_visible_event_index: EventIndex,
         root_message_index: MessageIndex,
-        now: TimestampMillis,
     ) -> Option<ThreadPreview> {
         const MAX_PREVIEWED_REPLY_COUNT: usize = 2;
 
-        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
 
         let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
 
-        let thread_events_reader = self
-            .events
-            .events_reader(min_visible_event_index, Some(root_message_index), now)?;
+        let thread_events_reader = self.events.events_reader(min_visible_event_index, Some(root_message_index))?;
 
         Some(ThreadPreview {
             root_message,

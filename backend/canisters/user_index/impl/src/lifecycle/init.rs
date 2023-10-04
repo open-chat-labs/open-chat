@@ -20,9 +20,9 @@ fn init(args: Args) {
         args.local_user_index_canister_wasm,
         args.group_index_canister_id,
         args.notifications_index_canister_id,
+        args.proposals_bot_canister_id,
         args.cycles_dispenser_canister_id,
         args.storage_index_canister_id,
-        args.proposals_bot_user_id,
         args.internet_identity_canister_id,
         args.test_mode,
     );

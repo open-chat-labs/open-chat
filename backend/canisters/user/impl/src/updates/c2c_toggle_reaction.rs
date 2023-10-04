@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult, Reader};
-use types::{DirectReactionAddedNotification, EventIndex, Notification, TimestampMillis, UserId};
+use types::{DirectReactionAddedNotification, EventIndex, Notification, UserId};
 use user_canister::c2c_toggle_reaction::{Response::*, *};
 
 #[update_msgpack]
@@ -40,7 +40,7 @@ fn c2c_toggle_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             match chat.events.add_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success => {
                     if !state.data.suspended.value {
-                        if let Some((recipient, notification)) = build_notification(args, chat, now) {
+                        if let Some((recipient, notification)) = build_notification(args, chat) {
                             state.push_notification(recipient, notification);
                         }
                     }
@@ -70,7 +70,6 @@ fn build_notification(
         ..
     }: Args,
     chat: &DirectChat,
-    now: TimestampMillis,
 ) -> Option<(UserId, Notification)> {
     if username.is_empty() || chat.notifications_muted.value {
         return None;
@@ -78,7 +77,7 @@ fn build_notification(
 
     let message_event = chat
         .events
-        .main_events_reader(now)
+        .main_events_reader()
         .message_event(message_id.into(), None)
         .filter(|m| m.event.sender != chat.them)?;
 

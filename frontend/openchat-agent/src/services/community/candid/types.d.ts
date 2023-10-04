@@ -1795,6 +1795,7 @@ export interface UpdateChannelArgs {
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'public' : [] | [boolean],
   'rules' : [] | [UpdatedRules],
   'avatar' : DocumentUpdate,

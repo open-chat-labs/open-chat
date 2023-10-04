@@ -812,6 +812,7 @@ type UpdateChannelArgs = record {
     rules : opt UpdatedRules;
     avatar : DocumentUpdate;
     permissions : opt OptionalGroupPermissions;
+    events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
 };

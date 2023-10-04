@@ -18,9 +18,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let is_public = state.data.chat.is_public;
-    let now = state.env.now();
     let data = &state.data;
-    let events_reader = data.chat.events.main_events_reader(now);
+    let events_reader = data.chat.events.main_events_reader();
     let latest_event_timestamp = events_reader.latest_event_timestamp().unwrap_or_default();
     let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
 

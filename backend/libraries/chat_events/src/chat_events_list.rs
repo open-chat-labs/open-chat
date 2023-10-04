@@ -57,28 +57,24 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get(&e))
-            .filter(|e| !e.is_expired(now))
     }
 
     pub(crate) fn get_mut(
         &mut self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get_mut(&e))
-            .filter(|e| !e.is_expired(now))
     }
 
-    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex, now: TimestampMillis) -> bool {
-        self.get(event_key, min_visible_event_index, now).is_some()
+    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
+        self.get(event_key, min_visible_event_index).is_some()
     }
 
     pub(crate) fn iter(
@@ -86,10 +82,9 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
         let range = if let Some(start) = start {
-            if let Some(event_index) = self.get(start, min_visible_event_index, now).map(|e| e.index) {
+            if let Some(event_index) = self.get(start, min_visible_event_index).map(|e| e.index) {
                 if ascending {
                     self.events_map.range(event_index..)
                 } else {
@@ -102,7 +97,7 @@ impl ChatEventsList {
             self.events_map.range(min_visible_event_index..)
         };
 
-        let iter = range.map(|(_, e)| e).filter(move |e| !e.is_expired(now));
+        let iter = range.map(|(_, e)| e);
 
         if ascending {
             Box::new(iter)
@@ -132,17 +127,12 @@ impl ChatEventsList {
         updated
     }
 
-    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
-        &self,
-        since: TimestampMillis,
-        now: TimestampMillis,
-        filter: &F,
-    ) -> usize {
+    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
         self.events_map
             .values()
             .rev()
             .take_while(|e| e.timestamp > since)
-            .filter(|e| !e.is_expired(now) && filter(&e.event))
+            .filter(|e| filter(&e.event))
             .count()
     }
 
@@ -205,7 +195,6 @@ impl ChatEventsList {
 pub struct ChatEventsListReader<'r> {
     events_list: &'r ChatEventsList,
     min_visible_event_index: EventIndex,
-    now: TimestampMillis,
 }
 
 impl<'r> Deref for ChatEventsListReader<'r> {
@@ -217,19 +206,17 @@ impl<'r> Deref for ChatEventsListReader<'r> {
 }
 
 impl<'r> ChatEventsListReader<'r> {
-    pub(crate) fn new(events_list: &ChatEventsList, now: TimestampMillis) -> ChatEventsListReader {
-        Self::with_min_visible_event_index(events_list, EventIndex::default(), now)
+    pub(crate) fn new(events_list: &ChatEventsList) -> ChatEventsListReader {
+        Self::with_min_visible_event_index(events_list, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
         events_list: &ChatEventsList,
         min_visible_event_index: EventIndex,
-        now: TimestampMillis,
     ) -> ChatEventsListReader {
         ChatEventsListReader {
             events_list,
             min_visible_event_index,
-            now,
         }
     }
 }
@@ -413,7 +400,7 @@ pub trait Reader {
 
 impl<'r> Reader for ChatEventsListReader<'r> {
     fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.events_list.get(event_key, self.min_visible_event_index, self.now)
+        self.events_list.get(event_key, self.min_visible_event_index)
     }
 
     fn iter(
@@ -421,8 +408,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
         start: Option<EventKey>,
         ascending: bool,
     ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        self.events_list
-            .iter(start, ascending, self.min_visible_event_index, self.now)
+        self.events_list.iter(start, ascending, self.min_visible_event_index)
     }
 
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
@@ -432,7 +418,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .values()
                 .copied()
                 .rev()
-                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index, self.now))
+                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
@@ -470,7 +456,7 @@ mod tests {
     #[test]
     fn get() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let event_by_message_index = events_reader.get(EventKey::MessageIndex(10.into())).unwrap();
         let event_by_event_index = events_reader.get(event_by_message_index.index.into()).unwrap();
@@ -485,33 +471,16 @@ mod tests {
     #[test]
     fn get_before_min_visible_returns_none() {
         let events = setup_events(None);
-        let events_reader = events.visible_main_events_reader(10.into(), 0);
+        let events_reader = events.visible_main_events_reader(10.into());
 
         assert!(events_reader.get(EventKey::EventIndex(10.into())).is_some());
         assert!(events_reader.get(EventKey::EventIndex(9.into())).is_none());
     }
 
     #[test]
-    fn get_excludes_expired_events() {
-        let events = setup_events(Some(100));
-        let events_reader1 = events.main_events_reader(100);
-        let expires_at = events_reader1
-            .get(EventKey::EventIndex(20.into()))
-            .unwrap()
-            .expires_at
-            .unwrap();
-
-        let events_reader2 = events.main_events_reader(expires_at);
-        assert!(events_reader2.get(EventKey::EventIndex(20.into())).is_some());
-
-        let events_reader3 = events.main_events_reader(expires_at + 1);
-        assert!(events_reader3.get(EventKey::EventIndex(20.into())).is_none());
-    }
-
-    #[test]
     fn scan_ascending_from_start() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let results = events_reader.scan(None, true, usize::MAX, usize::MAX, None);
 
@@ -523,7 +492,7 @@ mod tests {
     #[test]
     fn scan_descending_from_end() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let results = events_reader.scan(None, false, usize::MAX, usize::MAX, None);
 
@@ -535,7 +504,7 @@ mod tests {
     #[test]
     fn scan_ascending() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start: MessageIndex = 20.into();
 
@@ -557,7 +526,7 @@ mod tests {
     #[test]
     fn scan_descending() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 30.into();
 
@@ -577,39 +546,9 @@ mod tests {
     }
 
     #[test]
-    fn iter_skips_expired() {
-        let mut events = setup_events(Some(2000)); // These will expire at 2000
-        let user_id = Principal::from_slice(&[1]).into();
-
-        events.set_events_time_to_live(user_id, Some(1000), 500);
-        push_events(&mut events, 500); // These will expire at 1500
-        events.set_events_time_to_live(user_id, Some(1500), 1000);
-        push_events(&mut events, 1000); // These will expire at 2500
-
-        let group1 = (0u32..=100).map(EventIndex::from).collect_vec();
-        let group2 = (101u32..=201).map(EventIndex::from).collect_vec();
-        let group3 = (202u32..=302).map(EventIndex::from).collect_vec();
-
-        let events_reader1 = events.main_events_reader(1250);
-        let expected1 = group1.iter().chain(group2.iter()).chain(group3.iter()).copied().collect_vec();
-        assert_eq!(events_reader1.iter(None, true).map(|e| e.index).collect_vec(), expected1);
-
-        let events_reader2 = events.main_events_reader(1750);
-        let expected2 = group1.iter().chain(group3.iter()).copied().collect_vec();
-        assert_eq!(events_reader2.iter(None, true).map(|e| e.index).collect_vec(), expected2);
-
-        let events_reader3 = events.main_events_reader(2250);
-        let expected3 = group3;
-        assert_eq!(events_reader3.iter(None, true).map(|e| e.index).collect_vec(), expected3);
-
-        let events_reader4 = events.main_events_reader(2750);
-        assert_eq!(events_reader4.iter(None, true).map(|e| e.index).collect_vec(), vec![]);
-    }
-
-    #[test]
     fn window_message_limit() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 30.into();
 
@@ -626,7 +565,7 @@ mod tests {
     #[test]
     fn window_event_limit() {
         let events = setup_events(None);
-        let events_reader = events.main_events_reader(0);
+        let events_reader = events.main_events_reader();
 
         let start = 40.into();
 
@@ -640,7 +579,7 @@ mod tests {
     #[test]
     fn window_min_visible_event_index() {
         let events = setup_events(None);
-        let events_reader = events.visible_main_events_reader(46.into(), 0);
+        let events_reader = events.visible_main_events_reader(46.into());
 
         let start = 50.into();
 

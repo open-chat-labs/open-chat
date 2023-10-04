@@ -5,7 +5,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
-use crate::timer_job_types::TimerJob;
+use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -100,6 +100,26 @@ impl RuntimeState {
         }
     }
 
+    pub fn run_event_expiry_job(&mut self) {
+        let now = self.env.now();
+        let mut next_event_expiry = None;
+        for chat in self.data.direct_chats.iter_mut() {
+            chat.events.remove_expired_events(now);
+            if let Some(expiry) = chat.events.next_event_expiry() {
+                if next_event_expiry.map_or(true, |current| expiry < current) {
+                    next_event_expiry = Some(expiry);
+                }
+            }
+        }
+
+        self.data.next_event_expiry = next_event_expiry;
+        if let Some(expiry) = self.data.next_event_expiry {
+            self.data
+                .timer_jobs
+                .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -118,6 +138,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -136,6 +157,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_canister_id")]
+    pub proposals_bot_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -155,6 +178,12 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
     pub saved_crypto_accounts: Vec<NamedAccount>,
+    #[serde(default)]
+    pub next_event_expiry: Option<TimestampMillis>,
+}
+
+fn proposals_bot_canister_id() -> CanisterId {
+    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 impl Data {
@@ -165,6 +194,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        proposals_bot_canister_id: CanisterId,
         username: String,
         display_name: Option<String>,
         test_mode: bool,
@@ -181,6 +211,7 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
+            proposals_bot_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -199,6 +230,7 @@ impl Data {
             diamond_membership_expires_at: None,
             fire_and_forget_handler: FireAndForgetHandler::default(),
             saved_crypto_accounts: Vec::new(),
+            next_event_expiry: None,
         }
     }
 
@@ -268,5 +300,6 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
 }

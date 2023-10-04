@@ -21,6 +21,7 @@
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { ChatIdentifier, MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
+    import PrizeContentInitial from "./PrizeContentInitial.svelte";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -58,8 +59,10 @@
     <CryptoContent {senderId} {content} {me} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
+{:else if content.kind === "prize_content_initial"}
+    <PrizeContentInitial {me} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent on:upgrade {chatId} {messageId} {content} />
+    <PrizeContent on:upgrade {chatId} {messageId} {content} {me} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}
