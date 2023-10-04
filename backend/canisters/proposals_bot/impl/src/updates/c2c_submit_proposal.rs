@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
-use proposals_bot_canister::ProposalToSubmitAction;
+use proposals_bot_canister::{ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{Motion, Proposal, Subaccount, TransferSnsTreasuryFunds};
@@ -81,7 +81,10 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             motion_text: "".to_string(),
         }),
         ProposalToSubmitAction::TransferSnsTreasuryFunds(t) => Action::TransferSnsTreasuryFunds(TransferSnsTreasuryFunds {
-            from_treasury: if t.icp { 1 } else { 2 },
+            from_treasury: match t.treasury {
+                Treasury::ICP => 1,
+                Treasury::SNS => 2,
+            },
             amount_e8s: t.amount.try_into().unwrap(),
             memo: t.memo,
             to_principal: Some(t.to.owner),

@@ -580,7 +580,10 @@ type ProposalToSubmit = record {
 type ProposalToSubmitAction = variant {
     Motion;
     TransferSnsTreasuryFunds : record {
-        icp: bool;
+        treasury: variant {
+            ICP;
+            SNS;
+        };
         amount : nat;
         to : Icrc1Account;
         memo : opt nat64;

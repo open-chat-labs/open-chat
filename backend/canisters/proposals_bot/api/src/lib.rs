@@ -18,10 +18,16 @@ pub enum ProposalToSubmitAction {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct TransferSnsTreasuryFunds {
-    pub icp: bool,
+    pub treasury: Treasury,
     pub amount: u128,
     pub to: Account,
     pub memo: Option<u64>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Treasury {
+    ICP,
+    SNS,
 }
 
 mod lifecycle;
