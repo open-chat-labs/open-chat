@@ -11,8 +11,8 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SnsNeuronId),
-    StakeTooLow,
     NeuronAlreadyExists(SnsNeuronId),
+    StakeTooLow,
     TransferError(String),
     GovernanceCanisterNotSupported,
     Unauthorized,
