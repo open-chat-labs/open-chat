@@ -1,6 +1,7 @@
 use crate::model::nervous_systems::NervousSystems;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
@@ -51,6 +52,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
             },
@@ -64,10 +66,18 @@ struct Data {
     pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    #[serde(default = "local_user_index_canister_id")]
+    pub local_user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
     pub test_mode: bool,
+}
+
+fn local_user_index_canister_id() -> CanisterId {
+    CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
 }
 
 impl Data {
@@ -75,6 +85,7 @@ impl Data {
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         test_mode: bool,
@@ -84,9 +95,11 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             group_index_canister_id,
+            local_user_index_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
             finished_proposals_to_process: VecDeque::new(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
             test_mode,
         }
     }
@@ -121,6 +134,7 @@ pub struct NervousSystemMetrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
 }

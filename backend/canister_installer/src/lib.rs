@@ -106,6 +106,7 @@ async fn install_service_canisters_impl(
         service_owner_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
+        local_user_index_canister_id: canister_ids.local_user_index,
         nns_governance_canister_id: canister_ids.nns_governance,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
