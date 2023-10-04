@@ -681,7 +681,19 @@
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
         "registryAction": "Registry Actions",
-        "unknownActionCategory": "Other Actions"
+        "unknownActionCategory": "Other Actions",
+        "makeProposal": "Make proposal",
+        "maker": {
+            "header": "Make a proposal",
+            "title": "Title",
+            "summary": "Summary",
+            "url": "Url",
+            "enterTitle": "Enter a title",
+            "enterSummary": "Enter a summary",
+            "enterUrl": "Enter a url",
+            "summaryRules": "supports markdown",
+            "urlRules": "optionally link to a page or document with supplemental details"
+        }
     },
     "yes": "Yes",
     "no": "No",
@@ -1029,6 +1041,5 @@
     "followThread": "Follow this thread",
     "unfollowThread": "Unfollow this thread",
     "followThreadFailed": "Follow thread failed",
-    "unfollowThreadFailed": "Unfollow thread failed",
-    "makeProposal": "Make proposal"
+    "unfollowThreadFailed": "Unfollow thread failed"
 }

@@ -19,7 +19,11 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let candidateProposal: CandidateProposal;
+    let candidateProposal: CandidateProposal = {
+        title: "",
+        url: undefined,
+        summary: "",
+    };
     let busy = false;
     let valid = false;
 
@@ -39,10 +43,10 @@
 </script>
 
 <ModalContent closeIcon on:close>
-    <div class="header" slot="header">$_("Make a proposal")</div>
+    <div class="header" slot="header">{$_("proposal.maker.header")}</div>
     <div class="body" slot="body">
         <section>
-            <Legend label={$_("proposal.title")} required />
+            <Legend label={$_("proposal.maker.title")} required />
             <Input
                 autofocus
                 disabled={busy}
@@ -50,10 +54,10 @@
                 minlength={MIN_TITLE_LENGTH}
                 maxlength={MAX_TITLE_LENGTH}
                 countdown
-                placeholder={$_("proposal.enterTitle")} />
+                placeholder={$_("proposal.maker.enterTitle")} />
         </section>
         <section>
-            <Legend label={$_("proposal.url")} />
+            <Legend label={$_("proposal.maker.url")} rules={$_("proposal.maker.urlRules")} />
             <Input
                 autofocus
                 disabled={busy}
@@ -61,16 +65,19 @@
                 minlength={MIN_URL_LENGTH}
                 maxlength={MAX_URL_LENGTH}
                 countdown
-                placeholder={$_("proposal.enterUrl")} />
+                placeholder={$_("proposal.maker.enterUrl")} />
         </section>
         <section>
-            <Legend label={$_("proposal.summary")} required />
+            <Legend
+                required
+                label={$_("proposal.maker.summary")}
+                rules={$_("proposal.maker.summaryRules")} />
             <TextArea
                 rows={4}
                 disabled={busy}
                 bind:value={candidateProposal.summary}
                 maxlength={MAX_SUMMARY_LENGTH}
-                placeholder={$_("proposal.enterSummary")} />
+                placeholder={$_("proposal.maker.enterSummary")} />
         </section>
         <!-- TO_PRINCIPAL=$5
         TO_SUBACCOUNT=$6
@@ -79,9 +86,8 @@
     </div>
     <span class="footer" slot="footer">
         <ButtonGroup>
-            <Button disabled={!valid || !busy} tiny secondary on:click={onClose}
-                >{$_("close")}</Button>
-            <Button disabled={!valid || !busy} tiny on:click={onSubmit}>{$_("submit")}</Button>
+            <Button disabled={busy} tiny secondary on:click={onClose}>{$_("close")}</Button>
+            <Button disabled={!valid || busy} tiny on:click={onSubmit}>{$_("submit")}</Button>
         </ButtonGroup>
     </span>
 </ModalContent>
