@@ -449,7 +449,13 @@
         "chooseReceiver": "受信者のユーザー名を入力します",
         "max": "最大",
         "viewTransaction": "[取引]({url})",
-        "fee": "{fee} {token}の料金が追加されます"
+        "fee": "{fee} {token}の料金が追加されます",
+        "saveAccount": "保存",
+        "saveAccountMessage": "次回簡単にアクセスできるように、このアカウントを保存しますか?",
+        "enterAccountName": "このアカウントの名前を入力してください",
+        "failedToSaveAccount": "申し訳ありませんが、アカウントを保存できませんでした",
+        "accountNameTaken": "その名前のアカウントはすでにお持ちです",
+        "chooseAddress": "保存したアドレスのいずれかを選択してください"
     },
     "cryptoAccount": {
         "manage": "管理",

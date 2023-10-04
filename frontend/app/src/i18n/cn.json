@@ -448,7 +448,13 @@
         "chooseReceiver": "输入接收者的用户名",
         "max": "最大余额",
         "viewTransaction": "[交易]({url})",
-        "fee": "将添加 {fee} {token} 的费用"
+        "fee": "将添加 {fee} {token} 的费用",
+        "saveAccount": "节省",
+        "saveAccountMessage": "您想保存此帐户以便下次访问吗？",
+        "enterAccountName": "输入此帐户的名称",
+        "failedToSaveAccount": "抱歉，我们无法保存您的帐户",
+        "accountNameTaken": "您已有一个同名帐户",
+        "chooseAddress": "选择您保存的地址之一"
     },
     "cryptoAccount": {
         "manage": "管理",

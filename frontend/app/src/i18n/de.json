@@ -451,7 +451,13 @@
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
         "max": "max",
         "viewTransaction": "[Transaktion]({url})",
-        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an"
+        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an",
+        "saveAccount": "Speichern",
+        "saveAccountMessage": "Möchten Sie dieses Konto speichern, um beim nächsten Mal leichter darauf zugreifen zu können?",
+        "enterAccountName": "Geben Sie einen Namen für dieses Konto ein",
+        "failedToSaveAccount": "Leider konnten wir Ihr Konto nicht speichern",
+        "accountNameTaken": "Sie haben bereits ein Konto mit diesem Namen",
+        "chooseAddress": "Wählen Sie eine Ihrer gespeicherten Adressen"
     },
     "cryptoAccount": {
         "manage": "Verwalten",

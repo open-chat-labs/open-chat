@@ -450,7 +450,13 @@
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "max": "tối đa",
         "viewTransaction": "[Giao dịch]({url})",
-        "fee": "Phí {fee} {token} sẽ được thêm vào"
+        "fee": "Phí {fee} {token} sẽ được thêm vào",
+        "saveAccount": "Cứu",
+        "saveAccountMessage": "Bạn có muốn lưu tài khoản này để truy cập dễ dàng hơn vào lần sau không?",
+        "enterAccountName": "Nhập tên cho tài khoản này",
+        "failedToSaveAccount": "Rất tiếc, chúng tôi không thể lưu tài khoản của bạn",
+        "accountNameTaken": "Bạn đã có tài khoản với tên đó",
+        "chooseAddress": "Chọn một trong những địa chỉ đã lưu của bạn"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
