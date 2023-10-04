@@ -8,15 +8,15 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
-    EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
-    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
-    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
-    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked,
-    UsersInvited, UsersUnblocked, VideoContent,
+    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
+    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
+    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
+    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
+    MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    PollContentInternal, PrizeContent, PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
+    ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis,
+    Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -273,7 +273,7 @@ pub enum MessageContentInternal {
     #[serde(rename = "p")]
     Poll(PollContentInternal),
     #[serde(rename = "c")]
-    Crypto(CryptoContent),
+    Crypto(CryptoContentInternal),
     #[serde(rename = "d")]
     Deleted(DeletedByInternal),
     #[serde(rename = "g")]
@@ -299,6 +299,71 @@ pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
     pub votes: HashMap<UserId, bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "CryptoContentCombined")]
+pub struct CryptoContentInternal {
+    #[serde(rename = "r")]
+    pub recipient: UserId,
+    #[serde(rename = "t")]
+    pub transfer: CompletedCryptoTransaction,
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct CryptoContentCombined {
+    #[serde(alias = "r")]
+    pub recipient: UserId,
+    #[serde(rename = "t", default)]
+    pub transfer: Option<CompletedCryptoTransaction>,
+    #[serde(alias = "c")]
+    pub caption: Option<String>,
+    #[serde(rename = "transfer", default)]
+    pub transfer_old: Option<CryptoTransaction>,
+}
+
+impl From<CryptoContentCombined> for CryptoContentInternal {
+    fn from(value: CryptoContentCombined) -> Self {
+        CryptoContentInternal {
+            recipient: value.recipient,
+            transfer: value.transfer.unwrap_or_else(|| {
+                if let Some(CryptoTransaction::Completed(t)) = value.transfer_old {
+                    t
+                } else {
+                    panic!("Transfer is not of type 'Completed'");
+                }
+            }),
+            caption: value.caption,
+        }
+    }
+}
+
+impl From<CryptoContentInternal> for CryptoContent {
+    fn from(value: CryptoContentInternal) -> Self {
+        CryptoContent {
+            recipient: value.recipient,
+            transfer: CryptoTransaction::Completed(value.transfer),
+            caption: value.caption,
+        }
+    }
+}
+
+impl TryFrom<CryptoContent> for CryptoContentInternal {
+    type Error = ();
+
+    fn try_from(value: CryptoContent) -> Result<Self, Self::Error> {
+        if let CryptoTransaction::Completed(transfer) = value.transfer {
+            Ok(CryptoContentInternal {
+                recipient: value.recipient,
+                transfer,
+                caption: value.caption,
+            })
+        } else {
+            Err(())
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -350,7 +415,7 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
+            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone().into()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.hydrate()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
             MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
@@ -517,7 +582,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
+            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c.try_into().unwrap()),
             MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
             MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
             MessageContentInitial::GovernanceProposal(p) => {
@@ -565,13 +630,11 @@ impl From<&MessageContentInternal> for Document {
                 let token = c.transfer.token();
                 document.add_field(token.token_symbol().to_string(), 1.0, false);
 
-                if let CryptoTransaction::Completed(c) = &c.transfer {
-                    let amount = c.units();
-                    // This is only used for string searching so it's better to default to 8 than to trap
-                    let decimals = c.token().decimals().unwrap_or(8);
-                    let amount_string = format_crypto_amount(amount, decimals);
-                    document.add_field(amount_string, 1.0, false);
-                }
+                let amount = c.transfer.units();
+                // This is only used for string searching so it's better to default to 8 than to trap
+                let decimals = c.transfer.token().decimals().unwrap_or(8);
+                let amount_string = format_crypto_amount(amount, decimals);
+                document.add_field(amount_string, 1.0, false);
 
                 try_add_caption(&mut document, c.caption.as_ref())
             }
