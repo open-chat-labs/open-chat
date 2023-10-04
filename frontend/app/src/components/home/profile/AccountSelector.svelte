@@ -12,7 +12,7 @@
     export let targetAccount: string;
 
     let selectedName: string | undefined = undefined;
-    let selecting = false;
+    let menuIcon: MenuIcon;
 
     $: {
         selectedName = accounts.find((a) => {
@@ -28,22 +28,21 @@
     }
 
     function selectAccount(namedAccount: NamedAccount) {
-        selecting = false;
         targetAccount = namedAccount.account;
     }
 </script>
 
-<div role="combobox" tabindex="0" class="selected" on:click={() => (selecting = !selecting)}>
+<div role="combobox" tabindex="0" class="selected" on:click={() => menuIcon?.showMenu()}>
     <div class="name">
         {selectedName ?? $_("tokenTransfer.chooseAddress")}
     </div>
-    <div class="icon" class:selecting>
-        <MenuIcon position={$mobileWidth ? "top" : "bottom"} align={"end"}>
+    <div class="icon">
+        <MenuIcon bind:this={menuIcon} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
             <div slot="icon">
                 <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
             </div>
             <div slot="menu">
-                <Menu fit>
+                <Menu>
                     {#each accounts as namedAccount}
                         <MenuItem unpadded on:click={() => selectAccount(namedAccount)}>
                             <div slot="text" class="named-account">
@@ -77,9 +76,6 @@
         .icon {
             transition: transform 250ms ease-in-out;
             transform-origin: 50%;
-            &.selecting {
-                transform: rotate(180deg);
-            }
         }
     }
 
