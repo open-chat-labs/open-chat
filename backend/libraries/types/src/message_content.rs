@@ -6,7 +6,7 @@ use crate::{
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
@@ -568,16 +568,6 @@ pub struct CryptoContent {
 pub struct PrizeContentInitial {
     pub prizes: Vec<Tokens>,
     pub transfer: CryptoTransaction,
-    pub end_date: TimestampMillis,
-    pub caption: Option<String>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PrizeContentInternal {
-    pub prizes_remaining: Vec<Tokens>,
-    pub reservations: HashSet<UserId>,
-    pub winners: HashSet<UserId>,
-    pub transaction: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
 }
