@@ -312,6 +312,7 @@ pub struct CryptoContentInternal {
     pub caption: Option<String>,
 }
 
+// TODO remove this after next release cycle
 #[derive(Deserialize, Clone, Debug)]
 pub struct CryptoContentCombined {
     #[serde(alias = "r")]
