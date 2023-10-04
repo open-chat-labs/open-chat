@@ -35,8 +35,24 @@ type AppointAdminsResponse = variant {
     NotFound;
 };
 
+type StakeNeuronForSubmittingProposalsArgs = record {
+    governance_canister_id : CanisterId;
+    stake : nat;
+};
+
+type StakeNeuronForSubmittingProposalsResponse = variant {
+    Success : SnsNeuronId;
+    StakeTooLow;
+    NeuronAlreadyExists : SnsNeuronId;
+    TransferError : text;
+    GovernanceCanisterNotSupported;
+    Unauthorized;
+    InternalError : text;
+};
+
 service : {
     add_governance_canister : (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
     remove_governance_canister : (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
     appoint_admins : (AppointAdminsArgs) -> (AppointAdminsResponse);
+    stake_neuron_for_submitting_proposals : (StakeNeuronForSubmittingProposalsArgs) -> (StakeNeuronForSubmittingProposalsResponse);
 };
