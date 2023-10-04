@@ -14,6 +14,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "remove_governance_canister"
         | "appoint_admins"
         | "import_proposals_group_into_community" => state.is_caller_governance_principal(),
+        "stake_neuron_for_submitting_proposals" => true,
         _ => false,
     };
 

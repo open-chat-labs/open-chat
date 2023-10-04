@@ -1256,6 +1256,34 @@ export const idlFactory = ({ IDL }) => {
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const ProposalToSubmitAction = IDL.Variant({
+    'TransferSnsTreasuryFunds' : IDL.Record({
+      'to' : Icrc1Account,
+      'memo' : IDL.Opt(IDL.Nat64),
+      'amount' : IDL.Nat,
+      'treasury' : IDL.Variant({ 'ICP' : IDL.Null, 'SNS' : IDL.Null }),
+    }),
+    'Motion' : IDL.Null,
+  });
+  const ProposalToSubmit = IDL.Record({
+    'url' : IDL.Text,
+    'title' : IDL.Text,
+    'action' : ProposalToSubmitAction,
+    'summary' : IDL.Text,
+  });
+  const SubmitProposalArgs = IDL.Record({
+    'governance_canister_id' : CanisterId,
+    'proposal' : ProposalToSubmit,
+  });
+  const SubmitProposalResponse = IDL.Variant({
+    'Retrying' : IDL.Text,
+    'Success' : IDL.Null,
+    'Unauthorized' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'GovernanceCanisterNotSupported' : IDL.Null,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
+  });
   const TipMessageArgs = IDL.Record({
     'fee' : IDL.Nat,
     'token' : Cryptocurrency,
@@ -1543,6 +1571,11 @@ export const idlFactory = ({ IDL }) => {
     'set_message_reminder_v2' : IDL.Func(
         [SetMessageReminderV2Args],
         [SetMessageReminderResponse],
+        [],
+      ),
+    'submit_proposal' : IDL.Func(
+        [SubmitProposalArgs],
+        [SubmitProposalResponse],
         [],
       ),
     'tip_message' : IDL.Func([TipMessageArgs], [TipMessageResponse], []),

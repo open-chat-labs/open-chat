@@ -18,17 +18,6 @@
 
 <style lang="scss">
     .favourites {
-        display: flex;
-        flex: 1;
-        align-items: center;
-        gap: $sp4;
-
-        @include mobile() {
-            padding: 0 $sp3;
-        }
-
-        .icon {
-            display: flex;
-        }
+        @include left_panel_header();
     }
 </style>
