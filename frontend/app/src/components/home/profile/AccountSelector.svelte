@@ -30,9 +30,13 @@
     function selectAccount(namedAccount: NamedAccount) {
         targetAccount = namedAccount.account;
     }
+
+    function showMenu() {
+        menuIcon.showMenu();
+    }
 </script>
 
-<div role="combobox" tabindex="0" class="selected" on:click={() => menuIcon?.showMenu()}>
+<div role="combobox" tabindex="0" class="selected" on:click|stopPropagation={showMenu}>
     <div class="name">
         {selectedName ?? $_("tokenTransfer.chooseAddress")}
     </div>
@@ -83,15 +87,8 @@
         padding: $sp3;
         display: flex;
         flex-direction: column;
-        color: var(--menu-txt);
-        @include font(bold, normal, fs-80);
+        @include font(book, normal, fs-80);
         font-family: "Roboto", sans-serif;
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--menu-hv);
-            }
-        }
 
         .name {
             color: var(--primary);
