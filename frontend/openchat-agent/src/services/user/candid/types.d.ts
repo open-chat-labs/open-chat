@@ -1362,6 +1362,22 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
+export interface ProposalToSubmit {
+  'url' : string,
+  'title' : string,
+  'action' : ProposalToSubmitAction,
+  'summary' : string,
+}
+export type ProposalToSubmitAction = {
+    'TransferSnsTreasuryFunds' : {
+      'to' : Icrc1Account,
+      'memo' : [] | [bigint],
+      'amount' : bigint,
+      'treasury' : { 'ICP' : null } |
+        { 'SNS' : null },
+    }
+  } |
+  { 'Motion' : null };
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1619,6 +1635,17 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
+export interface SubmitProposalArgs {
+  'governance_canister_id' : CanisterId,
+  'proposal' : ProposalToSubmit,
+}
+export type SubmitProposalResponse = { 'Retrying' : string } |
+  { 'Success' : null } |
+  { 'Unauthorized' : null } |
+  { 'UserSuspended' : null } |
+  { 'GovernanceCanisterNotSupported' : null } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : string };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1916,6 +1943,7 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
