@@ -860,10 +860,6 @@ export const idlFactory = ({ IDL }) => {
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
-  const MessageIndexRange = IDL.Record({
-    'end' : MessageIndex,
-    'start' : MessageIndex,
-  });
   const MessageEventWrapper = IDL.Record({
     'event' : Message,
     'timestamp' : TimestampMillis,
@@ -889,7 +885,6 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
-    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -899,7 +894,6 @@ export const idlFactory = ({ IDL }) => {
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'date_read_pinned' : IDL.Opt(TimestampMillis),
-    'expired_messages' : IDL.Vec(MessageIndexRange),
     'archived' : IDL.Bool,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
@@ -924,7 +918,6 @@ export const idlFactory = ({ IDL }) => {
     'last_updated' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
-    'expired_messages' : IDL.Vec(MessageIndexRange),
     'archived' : IDL.Bool,
     'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
@@ -1139,6 +1132,7 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
+    'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
     'RecipientNotFound' : IDL.Null,
@@ -1177,6 +1171,7 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'CommunityRulesNotAccepted' : IDL.Null,
     'InvalidRequest' : IDL.Text,
+    'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'RulesNotAccepted' : IDL.Null,
@@ -1209,6 +1204,7 @@ export const idlFactory = ({ IDL }) => {
     'RecipientBlocked' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
+    'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'RulesNotAccepted' : IDL.Null,
@@ -1271,6 +1267,7 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const TipMessageResponse = IDL.Variant({
+    'Retrying' : IDL.Text,
     'TransferNotToMessageSender' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
@@ -1367,7 +1364,6 @@ export const idlFactory = ({ IDL }) => {
     'updated_events' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat64)),
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
-    'newly_expired_messages' : IDL.Vec(MessageIndexRange),
     'archived' : IDL.Opt(IDL.Bool),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),

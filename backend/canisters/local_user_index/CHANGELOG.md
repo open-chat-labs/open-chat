@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Store `proposals_bot_canister_id` in user canisters ([#4485](https://github.com/open-chat-labs/open-chat/pull/4485))
+
 ## [[2.0.860](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.860-local_user_index)] - 2023-09-26
 
 ### Added

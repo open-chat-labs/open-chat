@@ -168,6 +168,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
         notifications_canister_id: state.data.notifications_canister_id,
+        proposals_bot_canister_id: state.data.proposals_bot_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         display_name: args.display_name.clone(),

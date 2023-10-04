@@ -6,7 +6,7 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use types::{
     CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate,
-    TimestampMillis,
+    SnsNeuronId, TimestampMillis,
 };
 use utils::time::MINUTE_IN_MS;
 
@@ -26,6 +26,12 @@ impl NervousSystems {
 
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<MultiUserChat> {
         self.nervous_systems.get(governance_canister_id).map(|ns| ns.chat_id)
+    }
+
+    pub fn get_neuron_id_for_submitting_proposals(&self, governance_canister_id: &CanisterId) -> Option<SnsNeuronId> {
+        self.nervous_systems
+            .get(governance_canister_id)
+            .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
     pub fn remove(&mut self, governance_canister_id: &CanisterId) -> bool {
@@ -201,6 +207,8 @@ pub struct NervousSystem {
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
+    #[serde(default)]
+    neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -227,6 +235,7 @@ impl NervousSystem {
             proposals_to_be_pushed: ProposalsToBePushed::default(),
             proposals_to_be_updated: ProposalsToBeUpdated::default(),
             active_proposals: BTreeMap::default(),
+            neuron_id_for_submitting_proposals: None,
         }
     }
 

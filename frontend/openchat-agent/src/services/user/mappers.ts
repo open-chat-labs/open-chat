@@ -163,12 +163,11 @@ export function savedCryptoAccountsResponse(
 }
 
 export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "Retrying" in candid) {
         return CommonResponses.success();
-    } else {
-        console.warn("tipMessage failed with: ", candid);
-        return CommonResponses.failure();
     }
+    console.warn("tipMessage failed with: ", candid);
+    return CommonResponses.failure();
 }
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
@@ -384,6 +383,9 @@ export function sendMessageResponse(
     }
     if ("TransferCannotBeZero" in candid) {
         return { kind: "transfer_cannot_be_zero" };
+    }
+    if ("TransferCannotBeToSelf" in candid) {
+        return { kind: "transfer_cannot_be_to_self" };
     }
     if ("RecipientBlocked" in candid) {
         return { kind: "recipient_blocked" };

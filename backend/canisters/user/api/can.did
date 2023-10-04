@@ -565,6 +565,41 @@ type SavedCryptoAccountsResponse = variant {
     Success : vec NamedAccount;
 };
 
+type SubmitProposalArgs = record {
+    governance_canister_id : CanisterId;
+    proposal : ProposalToSubmit;
+};
+
+type ProposalToSubmit = record {
+    title : text;
+    summary : text;
+    url : text;
+    action : ProposalToSubmitAction;
+};
+
+type ProposalToSubmitAction = variant {
+    Motion;
+    TransferSnsTreasuryFunds : record {
+        treasury: variant {
+            ICP;
+            SNS;
+        };
+        amount : nat;
+        to : Icrc1Account;
+        memo : opt nat64;
+    };
+};
+
+type SubmitProposalResponse = variant {
+    Success;
+    GovernanceCanisterNotSupported;
+    Unauthorized;
+    UserSuspended;
+    TransferFailed : text;
+    Retrying : text;
+    InternalError : text;
+};
+
 type InitUserPrincipalMigrationArgs = record {
     new_principal : principal;
 };
@@ -872,6 +907,7 @@ service : {
     manage_favourite_chats : (ManageFavouriteChatsArgs) -> (ManageFavouriteChatsResponse);
     archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
     save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
+    submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
