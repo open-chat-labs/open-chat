@@ -135,6 +135,7 @@ import type {
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
+import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 /**
  * Worker request types
  */
@@ -240,6 +241,7 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | StakeNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
@@ -871,6 +873,12 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type StakeNeuronForSubmittingProposals = {
+    governanceCanisterId: string;
+    stake: bigint;
+    kind: "stakeNeuronForSubmittingProposals";
+};
+
 type MarkSuspectedBot = {
     kind: "markSuspectedBot";
 };
@@ -1033,6 +1041,7 @@ export type WorkerResponseInner =
     | UpdatesResult
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
+    | StakeNeuronForSubmittingProposalsResponse
     | Map<string, Record<number, EventWrapper<Message>>>
     | PayForDiamondMembershipResponse
     | ClaimPrizeResponse
@@ -1478,6 +1487,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends StakeNeuronForSubmittingProposals
+    ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
     ? Map<string, Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
