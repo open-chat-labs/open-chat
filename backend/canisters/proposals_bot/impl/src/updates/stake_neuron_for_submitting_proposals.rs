@@ -24,6 +24,7 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
         user_index_canister_id,
         ledger_canister_id,
         nonce,
+        dissolve_delay_seconds,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -35,7 +36,7 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
         _ => return Unauthorized,
     }
 
-    match stake_neuron_impl(&args, this_canister_id, ledger_canister_id, nonce).await {
+    match stake_neuron_impl(&args, this_canister_id, ledger_canister_id, nonce, dissolve_delay_seconds).await {
         Ok(Success(neuron_id)) => {
             mutate_state(|state| {
                 state
@@ -56,6 +57,7 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
     ledger_canister_id: CanisterId,
     nonce: u64,
+    dissolve_delay_seconds: u32,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -77,6 +79,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
             user_index_canister_id: state.data.user_index_canister_id,
             ledger_canister_id: SNS_LEDGER_CANISTER_ID,
             nonce: state.env.rng().gen(),
+            dissolve_delay_seconds: 2_628_000, // Min for CHAT neurons
         })
     }
 }
@@ -86,6 +89,7 @@ async fn stake_neuron_impl(
     this_canister_id: CanisterId,
     ledger_canister_id: CanisterId,
     nonce: u64,
+    dissolve_delay_seconds: u32,
 ) -> CallResult<Response> {
     let subaccount = compute_neuron_staking_subaccount_bytes(this_canister_id, nonce);
 
@@ -110,7 +114,7 @@ async fn stake_neuron_impl(
 
     let neuron_id = claim_neuron(this_canister_id, args.governance_canister_id, nonce).await?;
 
-    increase_dissolve_delay(args.governance_canister_id, neuron_id).await?;
+    increase_dissolve_delay(args.governance_canister_id, neuron_id, dissolve_delay_seconds).await?;
 
     Ok(Success(neuron_id))
 }
@@ -135,12 +139,16 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
     }
 }
 
-async fn increase_dissolve_delay(governance_canister_id: CanisterId, neuron_id: SnsNeuronId) -> CallResult<()> {
+async fn increase_dissolve_delay(
+    governance_canister_id: CanisterId,
+    neuron_id: SnsNeuronId,
+    dissolve_delay_seconds: u32,
+) -> CallResult<()> {
     let args = ManageNeuron {
         subaccount: neuron_id.to_vec(),
         command: Some(Command::Configure(Configure {
             operation: Some(Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
-                additional_dissolve_delay_seconds: 1,
+                additional_dissolve_delay_seconds: dissolve_delay_seconds,
             })),
         })),
     };
