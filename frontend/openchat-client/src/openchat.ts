@@ -4880,7 +4880,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    saveCryptoAccounts(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
+    saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
         return this.sendRequest({
             kind: "saveCryptoAccount",
             namedAccount,

@@ -23,7 +23,8 @@
     let error: string | undefined = undefined;
     let amountToSend = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
-    let sending = false;
+    let busy = false;
+    let capturingAccount = false;
     let valid = false;
 
     $: cryptoLookup = client.cryptoLookup;
@@ -48,6 +49,24 @@
 
     function onBalanceRefreshError(ev: CustomEvent<string>) {
         error = ev.detail;
+    }
+
+    function saveAccount() {
+        if (sendCrypto) {
+            busy = true;
+            sendCrypto
+                .saveAccount()
+                .then((resp) => {
+                    if (resp.kind === "success") {
+                        dispatch("close");
+                    } else if (resp.kind === "name_taken") {
+                        error = "transferToken.accountNameTaken";
+                    } else {
+                        error = "transferToken.failedToSaveAccount";
+                    }
+                })
+                .finally(() => (busy = false));
+        }
     }
 </script>
 
@@ -76,8 +95,10 @@
             {#if mode === "send"}
                 <SendCrypto
                     bind:this={sendCrypto}
-                    bind:sending
+                    bind:busy
+                    bind:capturingAccount
                     bind:valid
+                    on:close
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
                     {ledger}
@@ -90,13 +111,23 @@
         <span slot="footer">
             <ButtonGroup>
                 {#if mode === "send"}
-                    <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                        >{$_("cancel")}</Button>
-                    <Button
-                        disabled={sending || !valid}
-                        loading={sending}
-                        tiny={$mobileWidth}
-                        on:click={() => sendCrypto?.send()}>{$_("tokenTransfer.send")}</Button>
+                    {#if capturingAccount}
+                        <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                            >{$_("noThanks")}</Button>
+                        <Button
+                            disabled={busy || !valid}
+                            loading={busy}
+                            tiny={$mobileWidth}
+                            on:click={saveAccount}>{$_("tokenTransfer.saveAccount")}</Button>
+                    {:else}
+                        <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                            >{$_("cancel")}</Button>
+                        <Button
+                            disabled={busy || !valid}
+                            loading={busy}
+                            tiny={$mobileWidth}
+                            on:click={() => sendCrypto?.send()}>{$_("tokenTransfer.send")}</Button>
+                    {/if}
                 {:else}
                     <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
                         >{$_("close")}</Button>
