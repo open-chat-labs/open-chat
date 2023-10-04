@@ -374,7 +374,7 @@ export function sendMessageResponse(
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };
     }
-    if ("TransferFailed" in candid) {
+    if ("TransferFailed" in candid || "TransferCannotBeToSelf" in candid) {
         return { kind: "transfer_failed" };
     }
     if ("TransferLimitExceeded" in candid) {

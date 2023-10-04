@@ -1053,10 +1053,6 @@ export const idlFactory = ({ IDL }) => {
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
-  const MessageIndexRange = IDL.Record({
-    'end' : MessageIndex,
-    'start' : MessageIndex,
-  });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -1075,7 +1071,6 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
-    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -1083,7 +1078,6 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
-    'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -1113,11 +1107,6 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : IDL.Nat,
   });
-  const TimestampUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : TimestampMillis,
-  });
   const FrozenGroupUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
@@ -1140,7 +1129,6 @@ export const idlFactory = ({ IDL }) => {
     'unfollowed_threads' : IDL.Vec(MessageIndex),
     'avatar_id' : DocumentIdUpdate,
     'rules_accepted' : IDL.Opt(IDL.Bool),
-    'next_message_expiry' : TimestampUpdate,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -1149,7 +1137,6 @@ export const idlFactory = ({ IDL }) => {
     ),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
-    'newly_expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
