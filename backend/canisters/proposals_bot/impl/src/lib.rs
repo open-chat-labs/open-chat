@@ -128,6 +128,7 @@ pub struct NervousSystemMetrics {
     pub latest_failed_proposals_update: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
+    pub neuron_for_submitting_proposals: Option<String>,
 }
 
 #[derive(Serialize, Debug)]

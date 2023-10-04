@@ -4961,6 +4961,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_index_canister",
  "group_index_canister_c2c_client",
+ "hex",
  "http_request",
  "human_readable",
  "ic-cdk",

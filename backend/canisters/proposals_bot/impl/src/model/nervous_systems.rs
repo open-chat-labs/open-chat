@@ -323,6 +323,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             latest_failed_proposals_update: ns.latest_failed_proposals_update,
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
+            neuron_for_submitting_proposals: ns.neuron_id_for_submitting_proposals.map(|n| hex::encode(n)),
         }
     }
 }
