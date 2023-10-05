@@ -1428,6 +1428,7 @@ export type SendMessageResponse =
     | SendMessageTooLong
     | SendMessageEmpty
     | TransferCannotBeZero
+    | TransferCannotBeToSelf
     | SendMessageRecipientNotFound
     | TransferFailed
     | TransferLimitExceeded
@@ -1478,6 +1479,10 @@ export type TransferLimitExceeded = {
 
 export type TransferCannotBeZero = {
     kind: "transfer_cannot_be_zero";
+};
+
+export type TransferCannotBeToSelf = {
+    kind: "transfer_cannot_be_to_self";
 };
 
 export type SendMessageRecipientBlocked = {

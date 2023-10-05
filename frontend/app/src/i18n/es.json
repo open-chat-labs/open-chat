@@ -450,7 +450,13 @@
         "chooseReceiver": "ingrese el nombre de usuario del destinatario",
         "max": "máx.",
         "viewTransaction": "[Transacción]({url})",
-        "fee": "Se agregarán tarifas de {fee} {token}"
+        "fee": "Se agregarán tarifas de {fee} {token}",
+        "saveAccount": "Ahorrar",
+        "saveAccountMessage": "¿Le gustaría guardar esta cuenta para acceder más fácilmente la próxima vez?",
+        "enterAccountName": "Introduzca un nombre para esta cuenta",
+        "failedToSaveAccount": "Lo sentimos, no pudimos guardar su cuenta.",
+        "accountNameTaken": "Ya tienes una cuenta con ese nombre.",
+        "chooseAddress": "Elija una de sus direcciones guardadas"
     },
     "cryptoAccount": {
         "manage": "Administrar",

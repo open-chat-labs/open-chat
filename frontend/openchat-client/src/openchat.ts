@@ -328,6 +328,8 @@ import type {
     UpdatedRules,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
     CandidateProposal,
 } from "openchat-shared";
 import {
@@ -4323,6 +4325,22 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    stakeNeuronForSubmittingProposals(
+        governanceCanisterId: string,
+        stake: bigint,
+    ): Promise<boolean> {
+        return this.sendRequest({
+            kind: "stakeNeuronForSubmittingProposals",
+            governanceCanisterId,
+            stake,
+        })
+            .then((resp) => resp.kind === "success")
+            .catch((err) => {
+                this._logger.error("Failed to stake neuron for submitting proposals", err);
+                return false;
+            });
+    }
+
     private onChatFrozen(
         chatId: MultiUserChatIdentifier,
         event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>,
@@ -4872,6 +4890,19 @@ export class OpenChat extends OpenChatAgentWorker {
                 undoLocally();
                 return { kind: "failure" };
             });
+    }
+
+    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        return this.sendRequest({
+            kind: "loadSavedCryptoAccounts",
+        });
+    }
+
+    saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        return this.sendRequest({
+            kind: "saveCryptoAccount",
+            namedAccount,
+        });
     }
 
     private async updateRegistry() {

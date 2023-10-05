@@ -449,7 +449,13 @@
         "chooseReceiver": "inserire il nome utente del destinatario",
         "max": "Massimo",
         "viewTransaction": "[Transazione]({url})",
-        "fee": "Verranno aggiunte commissioni di {fee} {token}"
+        "fee": "Verranno aggiunte commissioni di {fee} {token}",
+        "saveAccount": "Salva",
+        "saveAccountMessage": "Vuoi salvare questo account per accedervi più facilmente la prossima volta?",
+        "enterAccountName": "Inserisci un nome per questo account",
+        "failedToSaveAccount": "Siamo spiacenti, non siamo riusciti a salvare il tuo account",
+        "accountNameTaken": "Hai già un account con quel nome",
+        "chooseAddress": "Scegli uno dei tuoi indirizzi salvati"
     },
     "cryptoAccount": {
         "manage": "Gestire",

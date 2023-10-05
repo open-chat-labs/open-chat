@@ -136,6 +136,9 @@ import {
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
     TipMessageResponse,
+    SavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse,
+    NamedAccount,
     SubmitProposalResponse
 } from "./types";
 export {
@@ -276,6 +279,9 @@ export {
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
     TipMessageResponse as ApiTipMessageResponse,
     SubmitProposalResponse as ApiSubmitProposalResponse,
+    SavedCryptoAccountsResponse as ApiSavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
+    NamedAccount as ApiNamedAccount
 };
 
 export const idlFactory: IDL.InterfaceFactory;

@@ -1,5 +1,5 @@
 import type { DataContent } from "../data/data";
-import type { InternalError, NotAuthorised, Retrying, Success, TransferFailed, UserSuspended } from "../response";
+import type { Failure, InternalError, NotAuthorised, Retrying, Success, TransferFailed, UserSuspended } from "../response";
 
 export type UserOrUserGroup = UserSummary | UserGroupSummary | MentionEveryone;
 
@@ -22,7 +22,7 @@ export type UserGroupSummary = {
 
 export type MentionEveryone = {
     kind: "everyone";
-}
+};
 
 export type UserGroupDetails = {
     kind: "user_group";
@@ -257,6 +257,13 @@ export const ModerationFlags = {
     Adult: 2 as ModerationFlag,
     UnderReview: 4 as ModerationFlag,
 };
+
+export type NamedAccount = {
+    name: string;
+    account: string;
+};
+
+export type SaveCryptoAccountResponse = { kind: "name_taken" } | Success | Failure;
 
 export type SubmitProposalResponse = 
     Success | 

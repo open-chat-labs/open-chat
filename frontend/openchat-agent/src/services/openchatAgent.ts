@@ -18,6 +18,7 @@ import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import { NotificationsClient } from "./notifications/notifications.client";
+import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
 import { LedgerClient } from "./ledger/ledger.client";
@@ -95,6 +96,7 @@ import type {
     SendMessageResponse,
     SetBioResponse,
     SetUsernameResponse,
+    StakeNeuronForSubmittingProposalsResponse,
     StorageStatus,
     SuspendUserResponse,
     ThreadPreview,
@@ -196,6 +198,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupIndexClient: GroupIndexClient;
     private _userClient?: UserClient;
     private _notificationClient: NotificationsClient;
+    private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
     private _ledgerClients: Record<string, LedgerClient>;
@@ -217,6 +220,7 @@ export class OpenChatAgent extends EventTarget {
         this._userIndexClient = new UserIndexClient(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
+        this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
         this._ledgerClients = {};
@@ -2382,6 +2386,16 @@ export class OpenChatAgent extends EventTarget {
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this._userIndexClient.setUserUpgradeConcurrency(value);
+    }
+
+    stakeNeuronForSubmittingProposals(
+        governanceCanisterId: string,
+        stake: bigint,
+    ): Promise<StakeNeuronForSubmittingProposalsResponse> {
+        return this._proposalsBotClient.stakeNeuronForSubmittingProposals(
+            governanceCanisterId,
+            stake,
+        );
     }
 
     updateMarketMakerConfig(
