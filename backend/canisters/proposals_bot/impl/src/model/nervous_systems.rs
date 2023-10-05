@@ -5,17 +5,13 @@ use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use types::{
-    CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate,
-    SnsNeuronId, TimestampMillis,
+    CanisterId, MessageId, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate, SnsNeuronId,
+    TimestampMillis,
 };
-use utils::time::MINUTE_IN_MS;
-
-const MIN_INTERVAL_BETWEEN_SYNCS: Milliseconds = MINUTE_IN_MS; // 1 minute
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NervousSystems {
     nervous_systems: HashMap<CanisterId, NervousSystem>,
-    sync_in_progress: Option<CanisterId>,
 }
 
 impl NervousSystems {
@@ -55,25 +51,17 @@ impl NervousSystems {
         self.nervous_systems.contains_key(governance_canister_id)
     }
 
-    pub fn start_next_sync(&mut self, now: TimestampMillis) -> Option<CanisterId> {
-        if self.sync_in_progress.is_some() {
-            return None;
-        }
-
-        let latest_sync_filter = now.saturating_sub(MIN_INTERVAL_BETWEEN_SYNCS);
-
+    pub fn start_next_sync(&mut self) -> Vec<CanisterId> {
         self.nervous_systems
-            .values()
+            .values_mut()
             .filter(|ns| {
-                ns.proposals_to_be_pushed.queue.is_empty()
-                    && !ns.proposals_to_be_pushed.in_progress
-                    && ns.latest_sync().unwrap_or_default() < latest_sync_filter
+                ns.proposals_to_be_pushed.queue.is_empty() && !ns.proposals_to_be_pushed.in_progress && !ns.sync_in_progress
             })
-            .min_by_key(|ns| ns.latest_sync())
             .map(|ns| {
-                self.sync_in_progress = Some(ns.governance_canister_id);
+                ns.sync_in_progress = true;
                 ns.governance_canister_id
             })
+            .collect()
     }
 
     pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
@@ -147,14 +135,13 @@ impl NervousSystems {
     }
 
     pub fn mark_sync_complete(&mut self, governance_canister_id: &CanisterId, success: bool, now: TimestampMillis) {
-        self.sync_in_progress = None;
-
         if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
             if success {
                 ns.latest_successful_sync = Some(now);
             } else {
                 ns.latest_failed_sync = Some(now);
             }
+            ns.sync_in_progress = false;
         }
     }
 
@@ -222,6 +209,8 @@ pub struct NervousSystem {
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
     #[serde(default)]
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
+    #[serde(default)]
+    sync_in_progress: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -249,6 +238,7 @@ impl NervousSystem {
             proposals_to_be_updated: ProposalsToBeUpdated::default(),
             active_proposals: BTreeMap::default(),
             neuron_id_for_submitting_proposals: None,
+            sync_in_progress: false,
         }
     }
 
