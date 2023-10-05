@@ -20,7 +20,7 @@ export type UserSuspended = { kind: "user_suspended" };
 export type NoChange = {
     kind: "no_change";
 };
-export type InteralError = {
+export type InternalError = {
     kind: "internal_error";
 };
 export type Invalid = {
@@ -34,6 +34,14 @@ export type UserBlocked = {
 };
 export type NotPlatformModerator = {
     kind: "not_platform_moderator";
+};
+export type Retrying = {
+    kind: "retrying";
+    error: string;
+};
+export type TransferFailed = {
+    kind: "transfer_failed";
+    error?: string;
 };
 
 export const CommonResponses = {
@@ -51,7 +59,7 @@ export const CommonResponses = {
     noChange: (): NoChange => ({ kind: "no_change" } as NoChange),
     communityNotPublic: (): CommunityNotPublic =>
         ({ kind: "community_not_public" } as CommunityNotPublic),
-    internalError: (): InteralError => ({ kind: "internal_error" } as InteralError),
+    internalError: (): InternalError => ({ kind: "internal_error" } as InternalError),
     invalid: (): Invalid => ({ kind: "invalid" } as Invalid),
     targetUserNotInCommunity: (): TargetUserNotInCommunity =>
         ({ kind: "target_user_not_in_community" } as TargetUserNotInCommunity),

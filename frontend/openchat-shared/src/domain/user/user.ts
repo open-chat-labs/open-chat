@@ -1,4 +1,5 @@
 import type { DataContent } from "../data/data";
+import type { InternalError, NotAuthorised, Retrying, Success, TransferFailed, UserSuspended } from "../response";
 
 export type UserOrUserGroup = UserSummary | UserGroupSummary | MentionEveryone;
 
@@ -255,4 +256,17 @@ export const ModerationFlags = {
     Offensive: 1 as ModerationFlag,
     Adult: 2 as ModerationFlag,
     UnderReview: 4 as ModerationFlag,
+};
+
+export type SubmitProposalResponse = 
+    Success | 
+    Retrying | 
+    NotAuthorised | 
+    UserSuspended | 
+    GovernanceCanisterNotSupported | 
+    TransferFailed | 
+    InternalError;
+
+export type GovernanceCanisterNotSupported = {
+    kind: "governance_canister_not_supported";
 };

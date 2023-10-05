@@ -62,6 +62,8 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
+    CandidateProposal,
+    SubmitProposalResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -92,6 +94,8 @@ import {
     leaveCommunityResponse,
     deleteCommunityResponse,
     tipMessageResponse,
+    proposalToSubmit,
+    submitProposalResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -1093,6 +1097,16 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.set_community_indexes({ indexes }),
             (_) => true,
+        );
+    }
+
+    submitProposal(governanceCanisterId: Principal, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+        return this.handleResponse(
+            this.userService.submit_proposal({
+                governance_canister_id : governanceCanisterId,
+                proposal : proposalToSubmit(proposal),
+            }),
+            submitProposalResponse,
         );
     }
 }

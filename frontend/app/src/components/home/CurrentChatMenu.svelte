@@ -364,15 +364,15 @@
                         {/if}
                     {/if}
 
-                    <!-- {#if $isProposalGroup} -->
-                    <MenuItem on:click={makeProposal}>
-                        <ChatQuestionIcon
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("proposal.makeProposal")}</div>
-                    </MenuItem>
-                    <!-- {/if} -->
+                    {#if $isProposalGroup}
+                        <MenuItem on:click={makeProposal}>
+                            <ChatQuestionIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("proposal.makeProposal")}</div>
+                        </MenuItem>
+                    {/if}
 
                     {#if client.user.isPlatformModerator}
                         {#if client.isFrozen(selectedChatSummary.id)}

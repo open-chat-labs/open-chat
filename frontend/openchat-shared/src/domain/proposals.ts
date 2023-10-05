@@ -14,18 +14,10 @@ export type Motion = {
 }
 
 export type TransferSnsFunds = {
-    kind: "transfer",
+    kind: "transfer_sns_funds",
     treasury: Treasury,
     amount: bigint,
     to: Principal,
 }
 
-export type Treasury = ICP | SNS;
-
-export type ICP = {
-    kind: "ICP"
-}
-
-export type SNS = {
-    kind: "SNS"
-}
+export type Treasury = "SNS" | "ICP";

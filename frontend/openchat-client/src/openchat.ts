@@ -1,4 +1,5 @@
 /* eslint-disable no-case-declarations */
+import { Principal } from "@dfinity/principal";
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
@@ -4965,6 +4966,31 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
+        return this.sendRequest({
+            kind: "submitProposal",
+            governanceCanisterId: Principal.fromText(governanceCanisterId),
+            proposal,
+        }).then((resp) => {
+            if (resp.kind === "success" || resp.kind === "retrying") {
+                return true;
+            }
+
+            let error = resp.kind;
+            if ("error" in resp) {
+                error += " " + resp?.error;
+            }
+            console.debug("Failed to submit proposal", error);
+            this._logger.error("Failed to submit proposal", error);
+            return false;
+        })
+        .catch((err) => {
+            console.debug("Unable to submit proposal", err);
+            this._logger.error("Unable to submit proposal", err);
+            return false;
+        });
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
@@ -5376,18 +5402,6 @@ export class OpenChat extends OpenChatAgentWorker {
         if (global.favourites.size > 0) return { kind: "favourite" };
         if (global.groupChats.size > 0) return { kind: "group_chat" };
         return { kind: "direct_chat" };
-    }
-
-    submitProposal(proposal: CandidateProposal): Promise<void> {
-        console.log("Debug: submitProposal", proposal);
-        return new Promise<void>(resolve => setTimeout(resolve, 3000));
-        // return this.sendRequest({
-        //     kind: "submitProposal",
-        //     proposal,
-        // }).catch((err) => {
-        //     this._logger.error("Error submitting proposal", err);
-        //     return CommonResponses.failure();
-        // });
     }
 
     // **** End of Communities stuff

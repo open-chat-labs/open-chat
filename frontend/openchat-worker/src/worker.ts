@@ -1245,6 +1245,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "submitProposal":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.submitProposal(payload.governanceCanisterId, payload.proposal),
+                );
+                break;
+
             case "getCachePrimerTimestamps":
                 executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
                 break;

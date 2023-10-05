@@ -690,9 +690,20 @@
             "url": "Url",
             "enterTitle": "Enter a title",
             "enterSummary": "Enter a summary",
-            "enterUrl": "Enter a url",
+            "enterUrl": "Enter an optional url",
             "summaryRules": "supports markdown",
-            "urlRules": "optionally link to a page or document with supplemental details"
+            "urlRules": "link to supplemental details",
+            "unexpectedError": "Unexpected error submitting proposal",
+            "toPrincipal": "Recipient account principal",
+            "enterToPrincipal": "Enter a recipient account principal",
+            "amount": "Amount",
+            "amountRules": "at least 1 {token} token",
+            "enterAmount": "Enter a quantity of {token} tokens",
+            "type": "Proposal type",
+            "treasury": "Token to transfer from treasury",
+            "insufficientFunds": "You need at least {min_balance} {token} tokens in your wallet to submit a proposal",
+            "info": "It costs 4 {token} tokens to submit a proposal. This is to prevent spam. Only if your proposal is adopted will this be refunded. It can take up to an hour after your proposal is adopted before you receive the refund.",
+            "infoLegend": "Notes"
         }
     },
     "yes": "Yes",

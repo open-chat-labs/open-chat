@@ -1064,7 +1064,9 @@
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Wallet}
+        dismissible={modal !== ModalType.SelectChat &&
+            modal !== ModalType.Wallet &&
+            modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.SelectChat}
