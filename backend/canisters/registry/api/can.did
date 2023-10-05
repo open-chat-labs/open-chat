@@ -8,7 +8,7 @@ type UpdatesResponse = variant {
     Success : record {
         last_updated : TimestampMillis;
         token_details : opt vec TokenDetails;
-        named_neurons : opt vec record { CanisterId; vec NamedNeuron };
+        named_neurons : vec record { CanisterId; vec NamedNeuron };
     };
     SuccessNoUpdates;
 };

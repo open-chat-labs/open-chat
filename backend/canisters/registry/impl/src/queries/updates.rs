@@ -18,7 +18,7 @@ fn updates_impl(args: Args, state: &RuntimeState) -> Response {
         Success(SuccessResult {
             last_updated,
             token_details: Some(state.data.tokens.get_all().to_vec()),
-            named_neurons: Some(state.data.named_neurons.updated_since(since)),
+            named_neurons: state.data.named_neurons.updated_since(since),
         })
     } else {
         SuccessNoUpdates

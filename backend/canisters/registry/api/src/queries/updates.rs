@@ -19,5 +19,5 @@ pub enum Response {
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub token_details: Option<Vec<TokenDetails>>,
-    pub named_neurons: Option<HashMap<CanisterId, Vec<NamedNeuron>>>,
+    pub named_neurons: HashMap<CanisterId, Vec<NamedNeuron>>,
 }
