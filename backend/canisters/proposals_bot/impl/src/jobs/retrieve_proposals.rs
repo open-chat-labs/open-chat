@@ -1,6 +1,7 @@
 use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
 use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
+use crate::jobs::push_proposals;
 use crate::{governance_clients, mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use sns_governance_canister::types::ProposalData;
@@ -128,6 +129,8 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId
                     .data
                     .nervous_systems
                     .mark_sync_complete(governance_canister_id, true, now);
+
+                push_proposals::start_job_if_required(state);
             });
         }
         Err(_) => {
