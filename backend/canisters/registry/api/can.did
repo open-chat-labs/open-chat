@@ -8,6 +8,7 @@ type UpdatesResponse = variant {
     Success : record {
         last_updated : TimestampMillis;
         token_details : opt vec TokenDetails;
+        named_neurons : opt vec record { CanisterId; vec NamedNeuron };
     };
     SuccessNoUpdates;
 };
@@ -29,6 +30,12 @@ type TokenDetails = record {
     transaction_url_format : text;
     added : TimestampMillis;
     last_updated : TimestampMillis;
+};
+
+type NamedNeuron = record {
+    neuron_id : text;
+    name : text;
+    added : TimestampMillis;
 };
 
 service : {

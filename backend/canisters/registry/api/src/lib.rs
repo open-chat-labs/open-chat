@@ -52,3 +52,10 @@ impl Display for TokenStandard {
         }
     }
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct NamedNeuron {
+    pub neuron_id: String,
+    pub name: String,
+    pub added: TimestampMillis,
+}

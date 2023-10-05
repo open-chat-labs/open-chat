@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::rng::random_principal;
+use crate::rng::{random_principal, random_string};
 use crate::setup::install_icrc1_ledger;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
@@ -91,4 +91,59 @@ fn add_token_succeeds() {
         updates_response2,
         registry_canister::updates::Response::SuccessNoUpdates
     ));
+}
+
+#[test]
+fn add_named_neuron_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let governance_canister_id = random_principal();
+    let neuron_id = random_principal().to_string();
+    let name = random_string();
+
+    client::registry::add_named_neuron(
+        env,
+        *controller,
+        canister_ids.registry,
+        &registry_canister::add_named_neuron::Args {
+            governance_canister_id,
+            neuron_id: neuron_id.clone(),
+            name: name.clone(),
+        },
+    );
+
+    let now = now_millis(env);
+
+    let updates_response1 = client::registry::updates(
+        env,
+        random_principal(),
+        canister_ids.registry,
+        &registry_canister::updates::Args { since: Some(now - 1) },
+    );
+
+    if let registry_canister::updates::Response::Success(result) = updates_response1 {
+        assert_eq!(result.last_updated, now);
+
+        let named_neurons = result.named_neurons.unwrap();
+        assert_eq!(named_neurons.len(), 1);
+
+        let (canister_id, neurons) = named_neurons.iter().next().unwrap();
+
+        assert_eq!(*canister_id, governance_canister_id);
+        assert_eq!(neurons.len(), 1);
+
+        let named_neuron = neurons.first().unwrap();
+
+        assert_eq!(named_neuron.neuron_id, neuron_id);
+        assert_eq!(named_neuron.name, name);
+        assert_eq!(named_neuron.added, now);
+    } else {
+        panic!()
+    }
 }

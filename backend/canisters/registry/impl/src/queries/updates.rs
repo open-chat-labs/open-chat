@@ -2,6 +2,7 @@ use crate::{read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::query;
 use registry_canister::updates::{Response::*, *};
+use std::cmp::max;
 
 #[query]
 #[trace]
@@ -10,12 +11,14 @@ fn updates(args: Args) -> Response {
 }
 
 fn updates_impl(args: Args, state: &RuntimeState) -> Response {
-    let last_updated = state.data.tokens.last_updated();
+    let last_updated = max(state.data.tokens.last_updated(), state.data.named_neurons.last_updated());
+    let since = args.since.unwrap_or_default();
 
-    if args.since.map_or(true, |since| since < last_updated) {
+    if since < last_updated {
         Success(SuccessResult {
             last_updated,
             token_details: Some(state.data.tokens.get_all().to_vec()),
+            named_neurons: Some(state.data.named_neurons.updated_since(since)),
         })
     } else {
         SuccessNoUpdates

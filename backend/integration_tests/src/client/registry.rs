@@ -5,4 +5,5 @@ use registry_canister::*;
 generate_query_call!(updates);
 
 // Updates
+generate_update_call!(add_named_neuron);
 generate_update_call!(add_token);

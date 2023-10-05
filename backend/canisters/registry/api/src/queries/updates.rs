@@ -1,7 +1,8 @@
-use crate::TokenDetails;
+use crate::{NamedNeuron, TokenDetails};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::TimestampMillis;
+use std::collections::HashMap;
+use types::{CanisterId, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -18,4 +19,5 @@ pub enum Response {
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub token_details: Option<Vec<TokenDetails>>,
+    pub named_neurons: Option<HashMap<CanisterId, Vec<NamedNeuron>>>,
 }

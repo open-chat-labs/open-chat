@@ -1,10 +1,11 @@
+use crate::model::named_neurons::NamedNeurons;
 use crate::model::tokens::Tokens;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use registry_canister::{NervousSystem, TokenDetails};
+use registry_canister::{NamedNeuron, NervousSystem, TokenDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
@@ -46,6 +47,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             tokens: self.data.tokens.get_all().to_vec(),
+            named_neurons: self.data.named_neurons.as_ref().clone(),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
                 sns_wasm: self.data.sns_wasm_canister_id,
@@ -61,6 +63,8 @@ struct Data {
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
+    #[serde(default)]
+    named_neurons: NamedNeurons,
     failed_sns_launches: HashSet<CanisterId>,
     test_mode: bool,
 }
@@ -77,6 +81,7 @@ impl Data {
             sns_wasm_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
+            named_neurons: NamedNeurons::default(),
             failed_sns_launches: HashSet::new(),
             test_mode,
         }
@@ -118,6 +123,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub tokens: Vec<TokenDetails>,
+    pub named_neurons: HashMap<CanisterId, Vec<NamedNeuron>>,
     pub failed_sns_launches: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }
