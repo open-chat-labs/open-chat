@@ -17,6 +17,7 @@
     import { toastStore } from "../../../stores/toast";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
@@ -24,7 +25,6 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
 
-    const OC_DEV_TEAM_NEURON = "afdbb46396374af0baad270f06e738fbf60997359e3f1bbea2293312e3278aef";
     const dispatch = createEventDispatcher();
 
     export let content: ProposalContent;
@@ -140,8 +140,9 @@
     }
 
     function truncatedProposerId(): string {
-        if (proposal.proposer === OC_DEV_TEAM_NEURON) {
-            return "OpenChat Dev Team";
+        const name = NamedNeurons[proposal.proposer];
+        if (name !== undefined) {
+            return name;
         }
 
         if (proposal.proposer.length < 12) {
