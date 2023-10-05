@@ -1224,120 +1224,42 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "nns_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
-    if (domain.kind === "openchat_gate")
+    if (domain.kind === "sns_gate") {
         return [
             {
                 SnsNeuron: {
-                    governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                    governance_canister_id: Principal.fromText(domain.governanceCanister),
                     min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
                     min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
                 },
             },
         ];
-    if (domain.kind === "sns1_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
-    if (domain.kind === "kinic_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(KinicGovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
-    if (domain.kind === "hotornot_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(HotOrNotGovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
+    }
     return [];
 }
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
-    if (domain.kind === "openchat_gate")
+    if (domain.kind === "sns_gate") {
         return {
             SnsNeuron: {
-                governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                governance_canister_id: Principal.fromText(domain.governanceCanister),
                 min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
                 min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
             },
         };
-    if (domain.kind === "sns1_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
-    if (domain.kind === "kinic_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(KinicGovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
-    if (domain.kind === "hotornot_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(HotOrNotGovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
+    }
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
-        const criteria = {
+        return {
+            kind: "sns_gate",
             minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
             minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
+            governanceCanister: candid.SnsNeuron.governance_canister_id.toString(),
         };
-        const canisterId = candid.SnsNeuron.governance_canister_id.toString();
-        if (canisterId === OpenChatGovernanceCanisterId) {
-            return {
-                kind: "openchat_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === Sns1GovernanceCanisterId) {
-            return {
-                kind: "sns1_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === KinicGovernanceCanisterId) {
-            return {
-                kind: "kinic_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === HotOrNotGovernanceCanisterId) {
-            return {
-                kind: "hotornot_gate",
-                ...criteria,
-            };
-        }
-        throw new Error(
-            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`,
-        );
     }
     if ("DiamondMember" in candid) {
         return {

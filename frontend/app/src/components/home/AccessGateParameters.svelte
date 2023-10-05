@@ -1,13 +1,21 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { E8S_PER_TOKEN, type SNSAccessGate } from "openchat-client";
-    import { snsGateBindings } from "../../utils/access";
+    import { E8S_PER_TOKEN, OpenChat, type SNSAccessGate } from "openchat-client";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     export let gate: SNSAccessGate;
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
 </script>
 
 <div class="detail">
-    <div>{$_("access.snsHolder", { values: snsGateBindings[gate.kind].labelParams })}</div>
+    <div>
+        {$_("access.snsHolder", {
+            values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
+        })}
+    </div>
     <div class="params">
         {#if gate.minDissolveDelay}
             <div>

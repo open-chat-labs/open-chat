@@ -1,7 +1,7 @@
-import type { AccessGate, InterpolationValues, SNSAccessGate } from "openchat-client";
+import type { AccessGate, CryptocurrencyDetails, InterpolationValues } from "openchat-client";
 
 export type GateBinding = {
-    index: number;
+    key: string;
     label: string;
     gate: AccessGate;
     enabled: boolean;
@@ -9,80 +9,68 @@ export type GateBinding = {
     labelParams?: InterpolationValues;
 };
 
-const ocGate: GateBinding = {
-    index: 2,
-    label: "access.snsHolder",
-    gate: { kind: "openchat_gate" },
+function getSnsGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>): GateBinding[] {
+    return Object.values(cryptoLookup).map((v) => {
+        return {
+            label: "access.snsHolder",
+            gate: { kind: "sns_gate", governanceCanister: v.governanceCanister! },
+            key: `sns_gate_${v.symbol.toLowerCase()}`,
+            enabled: true,
+            cssClass: v.symbol.toLowerCase(),
+            labelParams: { token: v.symbol },
+        };
+    });
+}
+
+const noGate: GateBinding = {
+    label: "access.openAccess",
+    key: "no_gate",
+    gate: { kind: "no_gate" },
     enabled: true,
-    cssClass: "oc",
-    labelParams: { token: "CHAT" },
+    cssClass: "open",
 };
 
-const kinicGate: GateBinding = {
-    index: 4,
-    label: "access.snsHolder",
-    gate: { kind: "kinic_gate" },
+const diamondGate: GateBinding = {
+    label: "access.diamondMember",
+    key: "diamond_gate",
+    gate: { kind: "diamond_gate" },
     enabled: true,
-    cssClass: "kinic",
-    labelParams: { token: "KINIC" },
+    cssClass: "diamond",
 };
 
-const hotOrNotGate: GateBinding = {
-    index: 5,
-    label: "access.snsHolder",
-    gate: { kind: "hotornot_gate" },
+const nnsGate: GateBinding = {
+    label: "access.nnsHolder",
+    key: "nns_gate",
+    gate: { kind: "nns_gate" },
+    enabled: false,
+    cssClass: "nns",
+};
+
+const nftGate: GateBinding = {
+    label: "access.nftHolder",
+    key: "nft_gate",
+    gate: { kind: "nft_gate" },
+    enabled: false,
+    cssClass: "nft",
+};
+
+const credentialGate: GateBinding = {
+    label: "access.credential",
+    key: "credential_gate",
+    gate: { kind: "credential_gate", issuer: "", credential: "" },
     enabled: true,
-    cssClass: "hotornot",
-    labelParams: { token: "HOT" },
+    cssClass: "credential",
 };
 
-const sns1Gate: GateBinding = {
-    index: 3,
-    label: "access.snsHolder",
-    gate: { kind: "sns1_gate" },
-    enabled: true,
-    cssClass: "sns1",
-    labelParams: { token: "SNS-1" },
-};
-
-export const snsGateBindings: Record<SNSAccessGate["kind"], GateBinding> = {
-    openchat_gate: ocGate,
-    sns1_gate: sns1Gate,
-    kinic_gate: kinicGate,
-    hotornot_gate: hotOrNotGate,
-};
-
-export const gateBindings: GateBinding[] = [
-    {
-        index: 0,
-        label: "access.openAccess",
-        gate: { kind: "no_gate" },
-        enabled: true,
-        cssClass: "open",
-    },
-    {
-        index: 1,
-        label: "access.diamondMember",
-        gate: { kind: "diamond_gate" },
-        enabled: true,
-        cssClass: "diamond",
-    },
-    ocGate,
-    sns1Gate,
-    kinicGate,
-    hotOrNotGate,
-    {
-        index: 6,
-        label: "access.nnsHolder",
-        gate: { kind: "nns_gate" },
-        enabled: false,
-        cssClass: "nns",
-    },
-    {
-        index: 7,
-        label: "access.nftHolder",
-        gate: { kind: "nft_gate" },
-        enabled: false,
-        cssClass: "nft",
-    },
-];
+export function getGateBindings(
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+): GateBinding[] {
+    return [
+        noGate,
+        diamondGate,
+        credentialGate,
+        ...getSnsGateBindings(cryptoLookup),
+        nnsGate,
+        nftGate,
+    ];
+}

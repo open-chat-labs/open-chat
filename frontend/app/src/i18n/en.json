@@ -506,6 +506,7 @@
         "public": "Public",
         "private": "Private",
         "gate": "Access gate",
+        "credential": "Credential gate",
         "chooseGate": "Choose an access gate",
         "diamondMember": "Diamond membership",
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",

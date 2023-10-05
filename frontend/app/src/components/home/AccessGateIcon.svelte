@@ -2,19 +2,21 @@
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, type AccessGate, isSnsGate } from "openchat-client";
-    import { createEventDispatcher } from "svelte";
+    import { E8S_PER_TOKEN, type AccessGate, isSnsGate, OpenChat } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
-    import { snsGateBindings } from "../../utils/access";
 
     export let gate: AccessGate;
     export let position: Position = "top";
     export let align: Alignment = "start";
     export let small = false;
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     $: params = formatParams(gate);
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
 
     function formatParams(gate: AccessGate): string {
         const parts = [];
@@ -48,12 +50,12 @@
         </TooltipWrapper>
     {:else if isSnsGate(gate)}
         <TooltipWrapper {position} {align}>
-            <div slot="target" class={`icon ${snsGateBindings[gate.kind].cssClass}`} class:small />
+            <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>
                         {`${$_("access.snsHolderInfo", {
-                            values: snsGateBindings[gate.kind].labelParams,
+                            values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
                         })}`}
                     </p>
                     <p class="params">{params}</p>
@@ -82,18 +84,6 @@
     .diamond {
         cursor: pointer;
         @include font-size(fs-130);
-    }
-    .oc {
-        background-image: url("/assets/spinner.svg");
-    }
-    .sns1 {
-        background-image: url("/assets/sns1_token.png");
-    }
-    .kinic {
-        background-image: url("/assets/kinic_token.png");
-    }
-    .hot {
-        background-image: url("../assets/hot_token.svg");
     }
 
     .params {

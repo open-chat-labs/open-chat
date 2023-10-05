@@ -327,6 +327,7 @@ import type {
     UpdatedRules,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    SNSAccessGate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -2249,6 +2250,16 @@ export class OpenChat extends OpenChatAgentWorker {
             );
         }
         return false;
+    }
+
+    getTokenDetailsForSnsAccessGate(
+        gate: AccessGate,
+        cryptoLookup: Record<string, CryptocurrencyDetails>,
+    ): CryptocurrencyDetails | undefined {
+        if (gate.kind !== "sns_gate") return undefined;
+        return Object.values(cryptoLookup).find(
+            (td) => td.governanceCanister === gate.governanceCanister,
+        );
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {

@@ -10,6 +10,8 @@
         type HasLevel,
         type HasMembershipRole,
         isSnsGate,
+        type InterpolationValues,
+        type SNSAccessGate,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
@@ -19,7 +21,7 @@
     import { iconSize } from "../../stores/iconSize";
     import Legend from "../Legend.svelte";
     import Input from "../Input.svelte";
-    import { gateBindings, snsGateBindings } from "../../utils/access";
+    import { getGateBindings, type GateBinding } from "../../utils/access";
     import { fade } from "svelte/transition";
 
     type T = $$Generic;
@@ -34,14 +36,18 @@
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
     let minStake = client.getMinStakeInTokens(original.gate);
+    let gateBindings: GateBinding[] = [];
 
     $: invalidDissolveDelay = minDissolveDelay !== undefined && isNaN(minDissolveDelay);
     $: invalidMinStake = minStake !== undefined && isNaN(minStake);
+    $: cryptoLookup = client.cryptoLookup;
+    $: console.log("Cryptos: ", $cryptoLookup);
 
-    let selectedGateIndex = 0;
+    let selectedGateKey: string | undefined = undefined;
 
     onMount(() => {
-        selectedGateIndex = gateBindings.findIndex((g) => candidate.gate.kind === g.gate.kind) ?? 0;
+        gateBindings = getGateBindings($cryptoLookup);
+        selectedGateKey = gateBindings.find((g) => candidate.gate.kind === g.gate.kind)?.key;
     });
 
     afterUpdate(() => {
@@ -72,9 +78,16 @@
     }
 
     function updateGate() {
-        candidate.gate = gateBindings[selectedGateIndex]?.gate;
+        candidate.gate = gateBindings.find((g) => g.key === selectedGateKey)?.gate ?? {
+            kind: "no_gate",
+        };
         minDissolveDelay = undefined;
         minStake = undefined;
+    }
+
+    function snsHolderParams(gate: SNSAccessGate): InterpolationValues {
+        const tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
+        return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
 </script>
 
@@ -148,9 +161,9 @@
         <div class="section">
             <div class="section-title">{$_("access.chooseGate")}</div>
             <div class="choose-gate">
-                <Select margin={false} on:change={updateGate} bind:value={selectedGateIndex}>
+                <Select margin={false} on:change={updateGate} bind:value={selectedGateKey}>
                     {#each gateBindings as gate}
-                        <option disabled={!gate.enabled} value={gate.index}
+                        <option disabled={!gate.enabled} value={gate.key}
                             >{$_(gate.label, { values: gate.labelParams })}</option>
                     {/each}
                 </Select>
@@ -175,7 +188,7 @@
             {:else if isSnsGate(candidate.gate)}
                 <div class="info">
                     {$_("access.snsHolderInfo", {
-                        values: snsGateBindings[candidate.gate.kind].labelParams,
+                        values: snsHolderParams(candidate.gate),
                     })}
                 </div>
             {:else if candidate.gate.kind === "no_gate"}
