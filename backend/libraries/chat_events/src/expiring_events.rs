@@ -4,6 +4,7 @@ use types::{EventIndex, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ExpiringEvents {
+    #[serde(skip_deserializing)]
     event_expiry_dates: BTreeSet<(TimestampMillis, EventIndex)>,
 }
 

@@ -8,25 +8,6 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
-export interface AddHotGroupExclusionsArgs {
-  'duration' : [] | [Milliseconds],
-  'groups' : Array<ChatId>,
-}
-export type AddHotGroupExclusionsResponse = { 'Success' : null };
-export interface AddReactionArgs {
-  'user_id' : UserId,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : string,
-}
-export type AddReactionResponse = { 'MessageNotFound' : null } |
-  { 'NoChange' : null } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'InvalidReaction' : null } |
-  { 'SuccessV2' : PushEventResult };
 export interface AddedToChannelNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -38,16 +19,6 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
-export interface ArchiveUnarchiveChatsArgs {
-  'to_archive' : Array<Chat>,
-  'to_unarchive' : Array<Chat>,
-}
-export type ArchiveUnarchiveChatsResponse = {
-    'PartialSuccess' : { 'chats_not_found' : Array<Chat> }
-  } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'Failure' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -63,27 +34,16 @@ export interface BannerChanged {
   'changed_by' : UserId,
   'previous_banner' : [] | [bigint],
 }
-export type BioArgs = {};
-export type BioResponse = { 'Success' : string };
 export interface BlobReference {
   'blob_id' : bigint,
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
-export interface BlockUserArgs { 'user_id' : UserId }
-export type BlockUserResponse = { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface BuildVersion {
   'major' : number,
   'minor' : number,
   'patch' : number,
 }
-export interface CachedGroupChatSummaries {
-  'summaries' : Array<GroupChatSummary>,
-  'timestamp' : TimestampMillis,
-}
-export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
-export type CancelMessageReminderResponse = { 'Success' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -152,12 +112,6 @@ export interface ChannelMessageTippedNotification {
   'channel_avatar_id' : [] | [bigint],
   'message_index' : MessageIndex,
 }
-export interface ChannelMessagesRead {
-  'channel_id' : ChannelId,
-  'threads' : Array<ThreadRead>,
-  'read_up_to' : [] | [MessageIndex],
-  'date_read_pinned' : [] | [TimestampMillis],
-}
 export interface ChannelReactionAddedNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -210,16 +164,6 @@ export interface ChatEventWrapper {
   'expires_at' : [] | [TimestampMillis],
 }
 export type ChatId = CanisterId;
-export type ChatInList = { 'Group' : ChatId } |
-  { 'Favourite' : Chat } |
-  { 'Direct' : ChatId } |
-  { 'Community' : [CommunityId, ChannelId] };
-export interface ChatMessagesRead {
-  'threads' : Array<ThreadRead>,
-  'read_up_to' : [] | [MessageIndex],
-  'chat_id' : ChatId,
-  'date_read_pinned' : [] | [TimestampMillis],
-}
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
@@ -245,14 +189,6 @@ export interface ChatMetrics {
   'kinic_messages' : bigint,
   'custom_type_messages' : bigint,
   'prize_messages' : bigint,
-}
-export interface CommunitiesInitial {
-  'summaries' : Array<UserCanisterCommunitySummary>,
-}
-export interface CommunitiesUpdates {
-  'added' : Array<UserCanisterCommunitySummary>,
-  'updated' : Array<UserCanisterCommunitySummaryUpdates>,
-  'removed' : Array<CommunityId>,
 }
 export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
@@ -368,10 +304,6 @@ export interface CommunityMembershipUpdates {
   'display_name' : TextUpdate,
   'rules_accepted' : [] | [boolean],
 }
-export interface CommunityMessagesRead {
-  'community_id' : CommunityId,
-  'channels_read' : Array<ChannelMessagesRead>,
-}
 export type CommunityPermissionRole = { 'Owners' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
@@ -391,66 +323,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'ICRC1' : Icrc1CompletedCryptoTransaction };
-export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
-export type ContactsArgs = {};
-export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
-export interface CreateCommunityArgs {
-  'is_public' : boolean,
-  'permissions' : [] | [CommunityPermissions],
-  'default_channel_rules' : [] | [Rules],
-  'gate' : [] | [AccessGate],
-  'name' : string,
-  'banner' : [] | [Document],
-  'description' : string,
-  'history_visible_to_new_joiners' : boolean,
-  'default_channels' : Array<string>,
-  'rules' : Rules,
-  'avatar' : [] | [Document],
-  'primary_language' : string,
-}
-export type CreateCommunityResponse = { 'DefaultChannelsInvalid' : null } |
-  { 'NameReserved' : null } |
-  { 'RulesTooLong' : FieldTooLongResult } |
-  { 'DescriptionTooLong' : FieldTooLongResult } |
-  { 'NameTooShort' : FieldTooShortResult } |
-  { 'Throttled' : null } |
-  { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : CreateCommunitySuccessResult } |
-  { 'Unauthorized' : null } |
-  { 'UserSuspended' : null } |
-  { 'RulesTooShort' : FieldTooShortResult } |
-  { 'NameTooLong' : FieldTooLongResult } |
-  { 'NameTaken' : null } |
-  { 'InternalError' : string } |
-  { 'MaxCommunitiesCreated' : number } |
-  { 'BannerTooBig' : FieldTooLongResult };
-export interface CreateCommunitySuccessResult { 'community_id' : CommunityId }
-export interface CreateGroupArgs {
-  'is_public' : boolean,
-  'permissions' : [] | [GroupPermissions],
-  'gate' : [] | [AccessGate],
-  'name' : string,
-  'description' : string,
-  'events_ttl' : [] | [Milliseconds],
-  'history_visible_to_new_joiners' : boolean,
-  'rules' : Rules,
-  'avatar' : [] | [Document],
-}
-export type CreateGroupResponse = { 'NameReserved' : null } |
-  { 'RulesTooLong' : FieldTooLongResult } |
-  { 'DescriptionTooLong' : FieldTooLongResult } |
-  { 'NameTooShort' : FieldTooShortResult } |
-  { 'Throttled' : null } |
-  { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : CreateGroupSuccessResult } |
-  { 'UserSuspended' : null } |
-  { 'RulesTooShort' : FieldTooShortResult } |
-  { 'NameTooLong' : FieldTooLongResult } |
-  { 'NameTaken' : null } |
-  { 'MaxGroupsCreated' : number } |
-  { 'InternalError' : null } |
-  { 'UnauthorizedToCreatePublicGroup' : null };
-export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -475,41 +347,10 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
-export interface DeleteCommunityArgs { 'community_id' : CommunityId }
-export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : string };
-export interface DeleteGroupArgs { 'chat_id' : ChatId }
-export type DeleteGroupResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'InternalError' : string };
-export interface DeleteMessagesArgs {
-  'user_id' : UserId,
-  'message_ids' : Array<MessageId>,
-  'correlation_id' : bigint,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type DeleteMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
-export interface DeletedMessageArgs {
-  'user_id' : UserId,
-  'message_id' : MessageId,
-}
-export type DeletedMessageResponse = { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : { 'content' : MessageContent } } |
-  { 'MessageHardDeleted' : null } |
-  { 'MessageNotDeleted' : null };
 export interface DiamondMembershipDetails {
   'recurring' : [] | [DiamondMembershipPlanDuration],
   'expires_at' : TimestampMillis,
@@ -545,15 +386,6 @@ export interface DirectChatSummaryUpdates {
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
-}
-export interface DirectChatsInitial {
-  'summaries' : Array<DirectChatSummary>,
-  'pinned' : Array<ChatId>,
-}
-export interface DirectChatsUpdates {
-  'added' : Array<DirectChatSummary>,
-  'pinned' : [] | [Array<ChatId>],
-  'updated' : Array<DirectChatSummaryUpdates>,
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
@@ -599,38 +431,8 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
-export type EditMessageResponse = { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'UserBlocked' : null };
-export interface EditMessageV2Args {
-  'content' : MessageContentInitial,
-  'user_id' : UserId,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EmptyArgs = {};
 export type EventIndex = number;
-export interface EventsArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'user_id' : UserId,
-  'max_messages' : number,
-  'max_events' : number,
-  'ascending' : boolean,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'start_index' : EventIndex,
-}
-export interface EventsByIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'user_id' : UserId,
-  'events' : Uint32Array | number[],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<ChatEventWrapper>,
   'timestamp' : TimestampMillis,
@@ -643,24 +445,8 @@ export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
 }
-export interface EventsWindowArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'mid_point' : MessageIndex,
-  'user_id' : UserId,
-  'max_messages' : number,
-  'max_events' : number,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
-export interface FavouriteChatsInitial {
-  'chats' : Array<Chat>,
-  'pinned' : Array<Chat>,
-}
-export interface FavouriteChatsUpdates {
-  'chats' : [] | [Array<Chat>],
-  'pinned' : [] | [Array<Chat>],
-}
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -804,17 +590,6 @@ export interface GroupChatSummary {
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface GroupChatsInitial {
-  'summaries' : Array<UserCanisterGroupChatSummary>,
-  'pinned' : Array<ChatId>,
-  'cached' : [] | [CachedGroupChatSummaries],
-}
-export interface GroupChatsUpdates {
-  'added' : Array<UserCanisterGroupChatSummary>,
-  'pinned' : [] | [Array<ChatId>],
-  'updated' : Array<UserCanisterGroupChatSummaryUpdates>,
-  'removed' : Array<ChatId>,
-}
 export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
@@ -923,8 +698,6 @@ export interface GroupVisibilityChanged {
   'now_public' : boolean,
 }
 export type Hash = Uint8Array | number[];
-export type HotGroupExclusionsArgs = {};
-export type HotGroupExclusionsResponse = { 'Success' : Array<ChatId> };
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -980,58 +753,12 @@ export interface IndexedNotification {
   'value' : NotificationEnvelope,
   'index' : bigint,
 }
-export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
-export type InitUserPrincipalMigrationResponse = { 'Success' : null };
-export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
-export type InitialStateResponse = {
-    'Success' : {
-      'communities' : CommunitiesInitial,
-      'blocked_users' : Array<UserId>,
-      'favourite_chats' : FavouriteChatsInitial,
-      'group_chats' : GroupChatsInitial,
-      'avatar_id' : [] | [bigint],
-      'direct_chats' : DirectChatsInitial,
-      'timestamp' : TimestampMillis,
-    }
-  };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'TooFewOptions' : number } |
   { 'TooManyOptions' : number } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export interface LeaveCommunityArgs { 'community_id' : CommunityId }
-export type LeaveCommunityResponse = { 'CommunityNotFound' : null } |
-  { 'LastOwnerCannotLeave' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'CommunityNotPublic' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : string };
-export interface LeaveGroupArgs {
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type LeaveGroupResponse = { 'GroupNotFound' : null } |
-  { 'GroupNotPublic' : null } |
-  { 'OwnerCannotLeave' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'InternalError' : string };
-export interface ManageFavouriteChatsArgs {
-  'to_add' : Array<Chat>,
-  'to_remove' : Array<Chat>,
-}
-export type ManageFavouriteChatsResponse = { 'Success' : null } |
-  { 'UserSuspended' : null };
-export interface MarkReadArgs {
-  'community_messages_read' : Array<CommunityMessagesRead>,
-  'messages_read' : Array<ChatMessagesRead>,
-}
-export type MarkReadResponse = { 'Success' : null };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1128,41 +855,14 @@ export interface MessageUnpinned {
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
-export interface MessagesByMessageIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'messages' : Uint32Array | number[],
-  'user_id' : UserId,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type MessagesByMessageIndexResponse = {
-    'ReplicaNotUpToDate' : EventIndex
-  } |
-  { 'ChatNotFound' : null } |
-  {
-    'Success' : {
-      'messages' : Array<MessageEventWrapper>,
-      'latest_event_index' : EventIndex,
-    }
-  };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
-export type MigrateUserPrincipalArgs = {};
-export type MigrateUserPrincipalResponse = { 'PrincipalAlreadyInUse' : null } |
-  { 'MigrationAlreadyInProgress' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'MigrationNotInitialized' : null };
 export type Milliseconds = bigint;
 export type MultiUserChat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] };
-export interface MuteNotificationsArgs { 'chat_id' : ChatId }
-export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string };
-export interface NamedAccount { 'name' : string, 'account' : string }
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -1248,7 +948,6 @@ export interface OptionalCommunityPermissions {
   'change_roles' : [] | [CommunityPermissionRole],
   'create_private_channel' : [] | [CommunityPermissionRole],
 }
-export interface OptionalContact { 'nickname' : TextUpdate, 'user_id' : UserId }
 export interface OptionalGroupPermissions {
   'block_users' : [] | [PermissionRole],
   'mention_all_members' : [] | [PermissionRole],
@@ -1302,9 +1001,6 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
-export interface PinChatV2Request { 'chat' : ChatInList }
-export type PinChatV2Response = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -1362,22 +1058,6 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
-export interface ProposalToSubmit {
-  'url' : string,
-  'title' : string,
-  'action' : ProposalToSubmitAction,
-  'summary' : string,
-}
-export type ProposalToSubmitAction = {
-    'TransferSnsTreasuryFunds' : {
-      'to' : Icrc1Account,
-      'memo' : [] | [bigint],
-      'amount' : bigint,
-      'treasury' : { 'ICP' : null } |
-        { 'SNS' : null },
-    }
-  } |
-  { 'Motion' : null };
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1395,17 +1075,6 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface PublicProfile {
-  'bio' : string,
-  'is_premium' : boolean,
-  'created' : TimestampMillis,
-  'username' : string,
-  'display_name' : [] | [string],
-  'avatar_id' : [] | [bigint],
-  'phone_is_verified' : boolean,
-}
-export type PublicProfileArgs = {};
-export type PublicProfileResponse = { 'Success' : PublicProfile };
 export interface PushEventResult {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -1414,19 +1083,6 @@ export interface PushEventResult {
 export type Reaction = string;
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RemoveReactionArgs {
-  'user_id' : UserId,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-  'reaction' : string,
-}
-export type RemoveReactionResponse = { 'MessageNotFound' : null } |
-  { 'NoChange' : null } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_index' : EventIndex,
@@ -1442,22 +1098,6 @@ export interface RoleChanged {
   'new_role' : GroupRole,
 }
 export interface Rules { 'text' : string, 'enabled' : boolean }
-export type SaveCryptoAccountResponse = { 'Invalid' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'NameTaken' : null };
-export type SavedCryptoAccountsResponse = { 'Success' : Array<NamedAccount> };
-export interface SearchMessagesArgs {
-  'max_results' : number,
-  'user_id' : UserId,
-  'search_term' : string,
-}
-export type SearchMessagesResponse = { 'TermTooShort' : number } |
-  { 'ChatNotFound' : null } |
-  { 'Success' : SearchMessagesSuccessResult } |
-  { 'TermTooLong' : number } |
-  { 'InvalidTerm' : null };
-export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1469,150 +1109,6 @@ export interface SelectedGroupUpdates {
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
-}
-export type SendMessageResponse = { 'TextTooLong' : number } |
-  {
-    'TransferSuccessV2' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'chat_id' : ChatId,
-      'event_index' : EventIndex,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'MessageEmpty' : null } |
-  { 'InvalidPoll' : InvalidPollReason } |
-  { 'RecipientBlocked' : null } |
-  { 'UserSuspended' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferCannotBeToSelf' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : string } |
-  { 'RecipientNotFound' : null };
-export interface SendMessageV2Args {
-  'content' : MessageContentInitial,
-  'recipient' : UserId,
-  'forwarding' : boolean,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export interface SendMessageWithTransferToChannelArgs {
-  'channel_id' : ChannelId,
-  'channel_rules_accepted' : [] | [Version],
-  'community_id' : CommunityId,
-  'content' : MessageContentInitial,
-  'community_rules_accepted' : [] | [Version],
-  'mentioned' : Array<User>,
-  'sender_display_name' : [] | [string],
-  'sender_name' : string,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type SendMessageWithTransferToChannelResponse = {
-    'TextTooLong' : number
-  } |
-  { 'UserNotInChannel' : CompletedCryptoTransaction } |
-  { 'ChannelNotFound' : CompletedCryptoTransaction } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'UserNotInCommunity' : [] | [CompletedCryptoTransaction] } |
-  { 'RecipientBlocked' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'CommunityRulesNotAccepted' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferCannotBeToSelf' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
-  { 'RulesNotAccepted' : null } |
-  { 'CryptocurrencyNotSupported' : Cryptocurrency };
-export interface SendMessageWithTransferToGroupArgs {
-  'content' : MessageContentInitial,
-  'mentioned' : Array<User>,
-  'sender_display_name' : [] | [string],
-  'group_id' : ChatId,
-  'rules_accepted' : [] | [Version],
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type SendMessageWithTransferToGroupResponse = {
-    'TextTooLong' : number
-  } |
-  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
-  { 'ChatFrozen' : null } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'RecipientBlocked' : null } |
-  { 'UserSuspended' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferCannotBeToSelf' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
-  { 'RulesNotAccepted' : null } |
-  { 'CryptocurrencyNotSupported' : Cryptocurrency };
-export interface SetAvatarArgs { 'avatar' : [] | [Document] }
-export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
-export interface SetBioArgs { 'text' : string }
-export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
-export interface SetCommunityIndexesArgs {
-  'indexes' : Array<[CommunityId, number]>,
-}
-export type SetCommunityIndexesResponse = { 'Success' : null };
-export interface SetContactArgs { 'contact' : OptionalContact }
-export type SetContactResponse = { 'NoChange' : null } |
-  { 'NicknameTooLong' : FieldTooLongResult } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'NicknameTooShort' : FieldTooShortResult };
-export type SetMessageReminderResponse = {
-    'NotesTooLong' : FieldTooLongResult
-  } |
-  { 'Success' : bigint } |
-  { 'ReminderDateInThePast' : null } |
-  { 'UserSuspended' : null };
-export interface SetMessageReminderV2Args {
-  'chat' : Chat,
-  'notes' : [] | [string],
-  'remind_at' : TimestampMillis,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface SnsNeuronGate {
   'min_stake_e8s' : [] | [bigint],
@@ -1635,17 +1131,19 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
-export interface SubmitProposalArgs {
+export interface StakeNeuronForSubmittingProposalsArgs {
+  'stake' : bigint,
   'governance_canister_id' : CanisterId,
-  'proposal' : ProposalToSubmit,
 }
-export type SubmitProposalResponse = { 'Retrying' : string } |
-  { 'Success' : null } |
+export type StakeNeuronForSubmittingProposalsResponse = {
+    'NeuronAlreadyExists' : SnsNeuronId
+  } |
+  { 'TransferError' : string } |
+  { 'Success' : SnsNeuronId } |
   { 'Unauthorized' : null } |
-  { 'UserSuspended' : null } |
   { 'GovernanceCanisterNotSupported' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : string };
+  { 'InternalError' : string } |
+  { 'StakeTooLow' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1670,10 +1168,6 @@ export interface ThreadPreview {
   'total_replies' : number,
   'root_message' : MessageEventWrapper,
 }
-export interface ThreadRead {
-  'root_message_index' : MessageIndex,
-  'read_up_to' : MessageIndex,
-}
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
@@ -1693,115 +1187,17 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
-export interface TipMessageArgs {
-  'fee' : bigint,
-  'token' : Cryptocurrency,
-  'chat' : Chat,
-  'recipient' : UserId,
-  'ledger' : CanisterId,
-  'message_id' : MessageId,
-  'amount' : bigint,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type TipMessageResponse = { 'Retrying' : string } |
-  { 'TransferNotToMessageSender' : null } |
-  { 'MessageNotFound' : null } |
-  { 'ChatNotFound' : null } |
-  { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'TransferCannotBeZero' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
-  { 'CannotTipSelf' : null };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface UnblockUserArgs { 'user_id' : UserId }
-export type UnblockUserResponse = { 'Success' : null } |
-  { 'UserSuspended' : null };
-export interface UndeleteMessagesArgs {
-  'user_id' : UserId,
-  'message_ids' : Array<MessageId>,
-  'correlation_id' : bigint,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type UndeleteMessagesResponse = { 'ChatNotFound' : null } |
-  { 'Success' : { 'messages' : Array<Message> } } |
-  { 'UserSuspended' : null };
-export interface UnmuteNotificationsArgs { 'chat_id' : ChatId }
-export type UnmuteNotificationsResponse = { 'ChatNotFound' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string };
-export interface UnpinChatV2Request { 'chat' : ChatInList }
-export type UnpinChatV2Response = { 'ChatNotFound' : null } |
-  { 'Success' : null };
 export interface UpdatedRules {
   'new_version' : boolean,
   'text' : string,
   'enabled' : boolean,
 }
-export interface UpdatesArgs { 'updates_since' : TimestampMillis }
-export type UpdatesResponse = {
-    'Success' : {
-      'communities' : CommunitiesUpdates,
-      'username' : [] | [string],
-      'blocked_users' : [] | [Array<UserId>],
-      'favourite_chats' : FavouriteChatsUpdates,
-      'display_name' : TextUpdate,
-      'group_chats' : GroupChatsUpdates,
-      'avatar_id' : DocumentIdUpdate,
-      'direct_chats' : DirectChatsUpdates,
-      'timestamp' : TimestampMillis,
-    }
-  } |
-  { 'SuccessNoUpdates' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
-export interface UserCanisterChannelSummary {
-  'channel_id' : ChannelId,
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'date_read_pinned' : [] | [TimestampMillis],
-  'threads_read' : Array<[MessageIndex, MessageIndex]>,
-  'archived' : boolean,
-}
-export interface UserCanisterChannelSummaryUpdates {
-  'channel_id' : ChannelId,
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'date_read_pinned' : [] | [TimestampMillis],
-  'threads_read' : Array<[MessageIndex, MessageIndex]>,
-  'archived' : [] | [boolean],
-}
-export interface UserCanisterCommunitySummary {
-  'community_id' : CommunityId,
-  'channels' : Array<UserCanisterChannelSummary>,
-  'pinned' : Array<ChannelId>,
-  'index' : number,
-  'archived' : boolean,
-}
-export interface UserCanisterCommunitySummaryUpdates {
-  'community_id' : CommunityId,
-  'channels' : Array<UserCanisterChannelSummaryUpdates>,
-  'pinned' : [] | [Array<ChannelId>],
-  'index' : [] | [number],
-  'archived' : [] | [boolean],
-}
-export interface UserCanisterGroupChatSummary {
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'chat_id' : ChatId,
-  'date_read_pinned' : [] | [TimestampMillis],
-  'threads_read' : Array<[MessageIndex, MessageIndex]>,
-  'archived' : boolean,
-}
-export interface UserCanisterGroupChatSummaryUpdates {
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'chat_id' : ChatId,
-  'date_read_pinned' : [] | [TimestampMillis],
-  'threads_read' : Array<[MessageIndex, MessageIndex]>,
-  'archived' : [] | [boolean],
-}
 export interface UserGroup {
   'members' : number,
   'name' : string,
@@ -1846,118 +1242,9 @@ export interface VideoContent {
 }
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
-export interface WithdrawCryptoArgs { 'withdrawal' : PendingCryptoTransaction }
-export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
-  { 'TransactionFailed' : FailedCryptoTransaction } |
-  { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
-  'add_hot_group_exclusions' : ActorMethod<
-    [AddHotGroupExclusionsArgs],
-    AddHotGroupExclusionsResponse
-  >,
-  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
-  'archive_unarchive_chats' : ActorMethod<
-    [ArchiveUnarchiveChatsArgs],
-    ArchiveUnarchiveChatsResponse
-  >,
-  'bio' : ActorMethod<[BioArgs], BioResponse>,
-  'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
-  'cancel_message_reminder' : ActorMethod<
-    [CancelMessageReminderArgs],
-    CancelMessageReminderResponse
-  >,
-  'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
-  'create_community' : ActorMethod<
-    [CreateCommunityArgs],
-    CreateCommunityResponse
-  >,
-  'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
-  'delete_community' : ActorMethod<
-    [DeleteCommunityArgs],
-    DeleteCommunityResponse
-  >,
-  'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
-  'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
-  'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
-  'edit_message_v2' : ActorMethod<[EditMessageV2Args], EditMessageResponse>,
-  'events' : ActorMethod<[EventsArgs], EventsResponse>,
-  'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
-  'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
-  'hot_group_exclusions' : ActorMethod<
-    [HotGroupExclusionsArgs],
-    HotGroupExclusionsResponse
-  >,
-  'init_user_principal_migration' : ActorMethod<
-    [InitUserPrincipalMigrationArgs],
-    InitUserPrincipalMigrationResponse
-  >,
-  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
-  'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
-  'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
-  'manage_favourite_chats' : ActorMethod<
-    [ManageFavouriteChatsArgs],
-    ManageFavouriteChatsResponse
-  >,
-  'mark_read' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
-  'messages_by_message_index' : ActorMethod<
-    [MessagesByMessageIndexArgs],
-    MessagesByMessageIndexResponse
-  >,
-  'migrate_user_principal' : ActorMethod<
-    [MigrateUserPrincipalArgs],
-    MigrateUserPrincipalResponse
-  >,
-  'mute_notifications' : ActorMethod<
-    [MuteNotificationsArgs],
-    MuteNotificationsResponse
-  >,
-  'pin_chat_v2' : ActorMethod<[PinChatV2Request], PinChatV2Response>,
-  'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
-  'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
-  'save_crypto_account' : ActorMethod<
-    [NamedAccount],
-    SaveCryptoAccountResponse
-  >,
-  'saved_crypto_accounts' : ActorMethod<
-    [EmptyArgs],
-    SavedCryptoAccountsResponse
-  >,
-  'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
-  'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
-  'send_message_with_transfer_to_channel' : ActorMethod<
-    [SendMessageWithTransferToChannelArgs],
-    SendMessageWithTransferToChannelResponse
-  >,
-  'send_message_with_transfer_to_group' : ActorMethod<
-    [SendMessageWithTransferToGroupArgs],
-    SendMessageWithTransferToGroupResponse
-  >,
-  'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
-  'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
-  'set_community_indexes' : ActorMethod<
-    [SetCommunityIndexesArgs],
-    SetCommunityIndexesResponse
-  >,
-  'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
-  'set_message_reminder_v2' : ActorMethod<
-    [SetMessageReminderV2Args],
-    SetMessageReminderResponse
-  >,
-  'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
-  'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
-  'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
-  'undelete_messages' : ActorMethod<
-    [UndeleteMessagesArgs],
-    UndeleteMessagesResponse
-  >,
-  'unmute_notifications' : ActorMethod<
-    [UnmuteNotificationsArgs],
-    UnmuteNotificationsResponse
-  >,
-  'unpin_chat_v2' : ActorMethod<[UnpinChatV2Request], UnpinChatV2Response>,
-  'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
-  'withdraw_crypto_v2' : ActorMethod<
-    [WithdrawCryptoArgs],
-    WithdrawCryptoResponse
+  'stake_neuron_for_submitting_proposals' : ActorMethod<
+    [StakeNeuronForSubmittingProposalsArgs],
+    StakeNeuronForSubmittingProposalsResponse
   >,
 }

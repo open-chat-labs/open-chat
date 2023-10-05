@@ -865,6 +865,17 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "stakeNeuronForSubmittingProposals":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.stakeNeuronForSubmittingProposals(
+                        payload.governanceCanisterId,
+                        payload.stake,
+                    ),
+                );
+                break;
+
             case "markSuspectedBot":
                 executeThenReply(payload, correlationId, agent.markSuspectedBot());
                 break;
