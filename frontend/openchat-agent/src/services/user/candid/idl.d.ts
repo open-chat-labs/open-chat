@@ -135,7 +135,10 @@ import {
     DeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
-    TipMessageResponse
+    TipMessageResponse,
+    SavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse,
+    NamedAccount
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -273,7 +276,10 @@ export {
     DeleteCommunityResponse as ApiDeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
-    TipMessageResponse as ApiTipMessageResponse
+    TipMessageResponse as ApiTipMessageResponse,
+    SavedCryptoAccountsResponse as ApiSavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
+    NamedAccount as ApiNamedAccount
 };
 
 export const idlFactory: IDL.InterfaceFactory;

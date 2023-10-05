@@ -3,10 +3,11 @@
     export let selected: boolean = false;
     export let warning: boolean = false;
     export let separator: boolean = false;
+    export let unpadded: boolean = false;
 </script>
 
 {#if disabled}
-    <div class:disabled class="menu-item" role="menuitem">
+    <div class:unpadded class:disabled class="menu-item" role="menuitem">
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -15,7 +16,14 @@
 {:else if separator}
     <hr class="separator" />
 {:else}
-    <div tabindex="0" class="menu-item" on:click role="menuitem" class:selected class:warning>
+    <div
+        class:unpadded
+        tabindex="0"
+        class="menu-item"
+        on:click
+        role="menuitem"
+        class:selected
+        class:warning>
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -32,6 +40,10 @@
         @include font-size(fs-90);
         padding: 10px;
         gap: 10px;
+
+        &.unpadded {
+            padding: 0;
+        }
 
         &:last-child {
             border-bottom: none;

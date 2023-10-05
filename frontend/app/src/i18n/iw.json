@@ -449,7 +449,13 @@
         "chooseReceiver": "הזן את שם המשתמש של הנמען",
         "max": "מקסימום",
         "viewTransaction": "[עסקה]({url})",
-        "fee": "עמלות של {fee} {token} יתווספו"
+        "fee": "עמלות של {fee} {token} יתווספו",
+        "saveAccount": "להציל",
+        "saveAccountMessage": "האם תרצה לשמור חשבון זה לגישה קלה יותר בפעם הבאה?",
+        "enterAccountName": "הזן שם עבור חשבון זה",
+        "failedToSaveAccount": "מצטערים, לא הצלחנו לשמור את חשבונך",
+        "accountNameTaken": "כבר יש לך חשבון בשם זה",
+        "chooseAddress": "בחר אחת מהכתובות השמורות שלך"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",

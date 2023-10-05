@@ -58,6 +58,8 @@ import type {
     ApiArchiveUnarchiveChatsResponse,
     ApiSendMessageWithTransferToChannelResponse,
     ApiTipMessageResponse,
+    ApiSavedCryptoAccountsResponse,
+    ApiSaveCryptoAccountResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -114,6 +116,8 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -135,6 +139,28 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import type { Principal } from "@dfinity/principal";
+
+export function saveCryptoAccountResponse(
+    candid: ApiSaveCryptoAccountResponse,
+): SaveCryptoAccountResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else if ("NameTaken" in candid) {
+        return { kind: "name_taken" };
+    } else {
+        console.warn("saveCryptoAccountResponse failed with: ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function savedCryptoAccountsResponse(
+    candid: ApiSavedCryptoAccountsResponse,
+): NamedAccount[] {
+    if ("Success" in candid) {
+        return candid.Success;
+    }
+    return [];
+}
 
 export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageResponse {
     if ("Success" in candid || "Retrying" in candid) {

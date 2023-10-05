@@ -1286,6 +1286,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "loadSavedCryptoAccounts":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.loadSavedCryptoAccounts(),
+                );
+                break;
+
+            case "saveCryptoAccount":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.saveCryptoAccount(payload.namedAccount),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
