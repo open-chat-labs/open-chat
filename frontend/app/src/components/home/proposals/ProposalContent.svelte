@@ -24,6 +24,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
 
+    const OC_DEV_TEAM_NEURON = "afdbb46396374af0baad270f06e738fbf60997359e3f1bbea2293312e3278aef";
     const dispatch = createEventDispatcher();
 
     export let content: ProposalContent;
@@ -139,6 +140,10 @@
     }
 
     function truncatedProposerId(): string {
+        if (proposal.proposer === OC_DEV_TEAM_NEURON) {
+            return "OpenChat Dev Team";
+        }
+
         if (proposal.proposer.length < 12) {
             return proposal.proposer;
         }
