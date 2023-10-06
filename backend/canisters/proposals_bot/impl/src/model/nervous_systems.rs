@@ -88,6 +88,12 @@ impl NervousSystems {
         None
     }
 
+    pub fn any_proposals_to_update(&self) -> bool {
+        self.nervous_systems
+            .values()
+            .any(|ns| !ns.proposals_to_be_updated.pending.is_empty())
+    }
+
     pub fn dequeue_next_proposals_to_update(&mut self) -> Option<ProposalsToUpdate> {
         self.nervous_systems
             .values_mut()
