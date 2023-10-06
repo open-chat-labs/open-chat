@@ -5,12 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `username` to `c2c_lookup_user` response ([#4511](https://github.com/open-chat-labs/open-chat/pull/4511))
+
 ## [[2.0.873](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.873-user_index)] - 2023-10-06
 
 ### Changed
 
 - Store `proposals_bot_canister_id` in user canisters ([#4485](https://github.com/open-chat-labs/open-chat/pull/4485))
-- Add `username` to `c2c_lookup_user` response ([#4511](https://github.com/open-chat-labs/open-chat/pull/4511))
 
 ## [[2.0.861](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.861-user_index)] - 2023-09-26
 
