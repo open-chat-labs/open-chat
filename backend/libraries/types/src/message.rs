@@ -13,7 +13,6 @@ pub struct Message {
     pub content: MessageContent,
     pub replies_to: Option<ReplyContext>,
     pub reactions: Vec<(Reaction, Vec<UserId>)>,
-    #[serde(default)]
     pub tips: Tips,
     pub thread_summary: Option<ThreadSummary>,
     pub edited: bool,

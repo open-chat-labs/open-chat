@@ -231,7 +231,6 @@ struct Data {
     groups_being_imported: GroupsBeingImported,
     #[serde(skip, default = "init_instruction_counts_log")]
     instruction_counts_log: InstructionCountsLog,
-    #[serde(default)]
     next_event_expiry: Option<TimestampMillis>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
