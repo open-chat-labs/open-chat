@@ -99,7 +99,7 @@ mod tests {
             let expected_groups = vec![1u8, 3, 4, 7, 2, 5];
             for (i, expected_group) in expected_groups.into_iter().enumerate() {
                 let chat_id = Principal::from_slice(&[expected_group]).into();
-                assert_eq!(result.matches[i].chat_id, chat_id);
+                assert_eq!(result.matches[i].id, chat_id);
             }
         } else {
             panic!();
