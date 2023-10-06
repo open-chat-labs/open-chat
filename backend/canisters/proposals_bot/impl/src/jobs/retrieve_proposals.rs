@@ -138,13 +138,15 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                 for proposal in decided_user_submitted_proposals {
                     let ledger_canister_id = Cryptocurrency::CHAT.ledger_canister_id().unwrap();
                     let fee = Cryptocurrency::CHAT.fee().unwrap();
+                    let amount = 4_0000_0000 - fee;
+
                     if proposal.adopted {
                         let job = ProcessUserSubmittedProposalAdoptedJob {
                             governance_canister_id,
                             proposal_id: proposal.proposal_id,
                             user_id: proposal.user_id,
                             ledger_canister_id,
-                            refund_amount: 4_0000_0000 - fee,
+                            refund_amount: amount,
                             fee,
                         };
                         job.execute();
@@ -157,7 +159,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                             governance_canister_id,
                             ledger_canister_id,
                             neuron_id,
-                            amount: 4_0000_0000 - fee,
+                            amount,
                             fee,
                         };
                         job.execute();
