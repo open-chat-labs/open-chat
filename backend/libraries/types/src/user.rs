@@ -46,6 +46,7 @@ pub struct User {
 pub struct UserDetails {
     pub principal: Principal,
     pub user_id: UserId,
+    pub username: String,
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
