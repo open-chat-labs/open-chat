@@ -2,12 +2,13 @@ use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES,
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
 use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
 use crate::jobs::{push_proposals, update_proposals};
+use crate::timer_job_types::{ProcessUserSubmittedProposalAdoptedJob, TimerJob};
 use crate::{governance_clients, mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Milliseconds, Proposal};
+use types::{CanisterId, Cryptocurrency, Milliseconds, Proposal};
 use utils::time::MINUTE_IN_MS;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
@@ -39,7 +40,7 @@ fn start_next_sync(state: &mut RuntimeState) -> Vec<(CanisterId, bool)> {
 async fn get_and_process_nns_proposals(governance_canister_id: CanisterId) {
     let response = get_nns_proposals(governance_canister_id).await;
 
-    handle_proposals_response(&governance_canister_id, response);
+    handle_proposals_response(governance_canister_id, response);
 }
 
 async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalInfo>> {
@@ -69,7 +70,7 @@ async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
 async fn get_and_process_sns_proposals(governance_canister_id: CanisterId) {
     let response = get_sns_proposals(governance_canister_id).await;
 
-    handle_proposals_response(&governance_canister_id, response);
+    handle_proposals_response(governance_canister_id, response);
 }
 
 async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec<ProposalData>> {
@@ -98,13 +99,13 @@ async fn get_sns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
     Ok(proposals)
 }
 
-fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId, response: CallResult<Vec<R>>) {
+fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId, response: CallResult<Vec<R>>) {
     match response {
         Ok(raw_proposals) => {
             let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
 
             mutate_state(|state| {
-                let previous_active_proposals = state.data.nervous_systems.active_proposals(governance_canister_id);
+                let previous_active_proposals = state.data.nervous_systems.active_proposals(&governance_canister_id);
                 let mut no_longer_active: HashSet<_> = previous_active_proposals.into_iter().collect();
                 for id in proposals.iter().map(|p| p.id()) {
                     no_longer_active.remove(&id);
@@ -113,25 +114,49 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId
                     state
                         .data
                         .finished_proposals_to_process
-                        .push_back((*governance_canister_id, *id));
+                        .push_back((governance_canister_id, *id));
 
                     crate::jobs::update_finished_proposals::start_job_if_required(state);
                 }
 
                 state.data.nervous_systems.process_proposals(
-                    governance_canister_id,
+                    &governance_canister_id,
                     proposals,
                     no_longer_active.into_iter().collect(),
                 );
+
+                push_proposals::start_job_if_required(state);
+                update_proposals::start_job_if_required(state);
+
+                let decided_user_submitted_proposals = state
+                    .data
+                    .nervous_systems
+                    .take_newly_decided_user_submitted_proposals(governance_canister_id);
+
+                for proposal in decided_user_submitted_proposals {
+                    let now = state.env.now();
+                    let fee = Cryptocurrency::CHAT.fee().unwrap();
+                    if proposal.adopted {
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::ProcessUserSubmittedProposalAdopted(ProcessUserSubmittedProposalAdoptedJob {
+                                governance_canister_id,
+                                proposal_id: proposal.proposal_id,
+                                user_id: proposal.user_id,
+                                ledger_canister_id: Cryptocurrency::CHAT.ledger_canister_id().unwrap(),
+                                refund_amount: 4_0000_0000 - fee,
+                                fee,
+                            }),
+                            now,
+                            now,
+                        )
+                    }
+                }
 
                 let now = state.env.now();
                 state
                     .data
                     .nervous_systems
-                    .mark_sync_complete(governance_canister_id, true, now);
-
-                push_proposals::start_job_if_required(state);
-                update_proposals::start_job_if_required(state);
+                    .mark_sync_complete(&governance_canister_id, true, now);
             });
         }
         Err(_) => {
@@ -140,7 +165,7 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId
                 state
                     .data
                     .nervous_systems
-                    .mark_sync_complete(governance_canister_id, false, now);
+                    .mark_sync_complete(&governance_canister_id, false, now);
             });
         }
     }

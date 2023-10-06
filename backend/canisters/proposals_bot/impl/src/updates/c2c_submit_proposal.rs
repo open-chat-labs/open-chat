@@ -74,7 +74,16 @@ pub(crate) async fn submit_proposal(
         Ok(response) => {
             if let Some(command) = response.command {
                 return match command {
-                    manage_neuron_response::Command::MakeProposal(_) => Success,
+                    manage_neuron_response::Command::MakeProposal(p) => {
+                        mutate_state(|state| {
+                            state.data.nervous_systems.record_user_submitted_proposal(
+                                governance_canister_id,
+                                user_id,
+                                p.proposal_id.unwrap().id,
+                            )
+                        });
+                        Success
+                    }
                     manage_neuron_response::Command::Error(error) => InternalError(format!("{error:?}")),
                     _ => unreachable!(),
                 };
