@@ -216,7 +216,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    #[serde(default)]
     pub unfollowed_threads: Vec<MessageIndex>,
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
