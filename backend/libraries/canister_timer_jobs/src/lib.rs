@@ -53,7 +53,7 @@ impl<J> TimerJobs<J> {
 }
 
 pub trait Job: 'static {
-    fn execute(&self);
+    fn execute(self);
 }
 
 #[derive(Serialize, Deserialize)]

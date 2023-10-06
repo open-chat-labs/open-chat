@@ -49,7 +49,7 @@ pub struct MessageReminderJob {
 pub struct RemoveExpiredEventsJob;
 
 impl Job for TimerJob {
-    fn execute(&self) {
+    fn execute(self) {
         match self {
             TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
@@ -61,7 +61,7 @@ impl Job for TimerJob {
 }
 
 impl Job for RetrySendingFailedMessagesJob {
-    fn execute(&self) {
+    fn execute(self) {
         let (pending_messages, sender_name, sender_display_name, sender_avatar_id) = read_state(|state| {
             (
                 state
@@ -84,7 +84,7 @@ impl Job for RetrySendingFailedMessagesJob {
 }
 
 impl Job for HardDeleteMessageContentJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| {
             if let Some(content) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
@@ -110,13 +110,13 @@ impl Job for HardDeleteMessageContentJob {
 }
 
 impl Job for DeleteFileReferencesJob {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
     }
 }
 
 impl Job for MessageReminderJob {
-    fn execute(&self) {
+    fn execute(self) {
         let replies_to = C2CReplyContext::OtherChat(self.chat, self.thread_root_message_index, self.event_index);
         let content = MessageContent::MessageReminder(MessageReminderContent {
             reminder_id: self.reminder_id,
@@ -135,7 +135,7 @@ impl Job for MessageReminderJob {
 }
 
 impl Job for RemoveExpiredEventsJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
     }
 }
