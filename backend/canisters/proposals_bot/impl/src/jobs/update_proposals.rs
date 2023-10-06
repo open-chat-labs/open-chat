@@ -11,7 +11,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.nervous_systems.any_proposals_to_update() {
+    if TIMER_ID.with(|t| t.get().is_none()) && state.data.nervous_systems.any_proposals_to_update() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'update_proposals' job started");
@@ -22,33 +22,11 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    match mutate_state(try_get_next) {
-        GetNextResult::Success(proposals) => {
-            ic_cdk::spawn(update_proposals(*proposals));
-        }
-        GetNextResult::Continue => {}
-        GetNextResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'update_proposals' job stopped");
-            }
-        }
-    }
-}
-
-enum GetNextResult {
-    Success(Box<ProposalsToUpdate>),
-    Continue,
-    QueueEmpty,
-}
-
-fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
-    if let Some(proposals) = state.data.nervous_systems.dequeue_next_proposals_to_update() {
-        GetNextResult::Success(Box::new(proposals))
-    } else if state.data.nervous_systems.any_proposals_to_update() {
-        GetNextResult::Continue
-    } else {
-        GetNextResult::QueueEmpty
+    if let Some(proposals) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposals_to_update()) {
+        ic_cdk::spawn(update_proposals(proposals));
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk_timers::clear_timer(timer_id);
+        trace!("'update_proposals' job stopped");
     }
 }
 
@@ -108,13 +86,12 @@ fn mark_proposals_updated(governance_canister_id: CanisterId, proposals: Vec<Pro
                 .data
                 .nervous_systems
                 .mark_proposals_update_failed(&governance_canister_id, proposals, now);
-
-            start_job_if_required(state);
         } else {
             state
                 .data
                 .nervous_systems
                 .mark_proposals_updated(&governance_canister_id, now);
         }
+        start_job_if_required(state);
     });
 }

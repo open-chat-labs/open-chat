@@ -1,4 +1,3 @@
-website -> users -> groups -> communities
+Website -> GroupIndex
 
-Website first because fields have been removed from chat summaries + fields have been added to `update_channel` args.
-Users before groups because fields have been removed from group chat summaries.
+Website before GroupIndex because the `chat_id` field has been removed from `GroupMatch`
