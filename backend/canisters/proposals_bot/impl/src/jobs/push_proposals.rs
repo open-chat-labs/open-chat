@@ -14,7 +14,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.nervous_systems.any_proposals_to_push() {
+    if TIMER_ID.with(|t| t.get().is_none()) && state.data.nervous_systems.any_proposals_to_push() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'push_proposals' job started");
