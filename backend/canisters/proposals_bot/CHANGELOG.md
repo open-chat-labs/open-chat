@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use canister timer rather than heartbeat to retrieve proposals ([#4504](https://github.com/open-chat-labs/open-chat/pull/4504))
 - Use canister timer rather than heartbeat to push proposals ([#4506](https://github.com/open-chat-labs/open-chat/pull/4506))
 - Use canister timer rather than heartbeat to update proposals ([#4507](https://github.com/open-chat-labs/open-chat/pull/4507))
+- Refund deposit if proposal is successful ([#4509](https://github.com/open-chat-labs/open-chat/pull/4509))
 
 ## [[2.0.843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.843-proposals_bot)] - 2023-09-11
 
