@@ -3,40 +3,46 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds};
-use types::{CanisterId, SnsNeuronId, UserId};
+use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
+use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use utils::time::SECOND_IN_MS;
+
+const OC_ROOT_URL: &str = "https://oc.app/";
 
 #[update_msgpack]
 #[trace]
 async fn c2c_submit_proposal(args: Args) -> Response {
     let PrepareResult {
         caller,
-        local_user_index_canister_id,
+        user_index_canister_id,
         neuron_id,
+        chat,
     } = match read_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let user_id = match lookup_user(caller, local_user_index_canister_id).await {
-        Ok(u) => u.user_id,
+    let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
+        Ok(u) => u,
         Err(LookupUserError::UserNotFound) => unreachable!(),
         Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
-    submit_proposal(user_id, args.governance_canister_id, neuron_id, args.proposal).await
+    let proposal = prepare_proposal(args.proposal, user_id, username, chat);
+
+    submit_proposal(user_id, args.governance_canister_id, neuron_id, proposal).await
 }
 
 struct PrepareResult {
     caller: Principal,
-    local_user_index_canister_id: CanisterId,
+    user_index_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
+    chat: MultiUserChat,
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -47,12 +53,37 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     {
         Ok(PrepareResult {
             caller: state.env.caller(),
-            local_user_index_canister_id: state.data.local_user_index_canister_id,
+            user_index_canister_id: state.data.user_index_canister_id,
             neuron_id,
+            chat: state.data.nervous_systems.get_chat_id(&args.governance_canister_id).unwrap(),
         })
     } else {
         Err(GovernanceCanisterNotSupported)
     }
+}
+
+fn prepare_proposal(
+    mut proposal: ProposalToSubmit,
+    user_id: UserId,
+    username: String,
+    chat: MultiUserChat,
+) -> ProposalToSubmit {
+    proposal.title = proposal.title.trim().to_string();
+    proposal.summary = proposal.summary.trim().to_string();
+    proposal.url = proposal.url.trim().to_string();
+
+    let chat_url = match chat {
+        MultiUserChat::Group(group_id) => format!("{OC_ROOT_URL}group/{group_id}"),
+        MultiUserChat::Channel(community_id, channel_id) => {
+            format!("{OC_ROOT_URL}community/{community_id}/channel/{channel_id}")
+        }
+    };
+    let user_url = format!("{OC_ROOT_URL}user/{user_id}");
+
+    let suffix = format!("\n\n> Submitted by [@{username}]({user_url}) on [OpenChat]({chat_url})");
+    proposal.summary.push_str(&suffix);
+
+    proposal
 }
 
 pub(crate) async fn submit_proposal(
