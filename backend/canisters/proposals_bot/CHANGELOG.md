@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support submitting proposals from within OpenChat ([#4486](https://github.com/open-chat-labs/open-chat/pull/4486))
 - Make ProposalsBot able to stake neurons for submitting proposals ([#4493](https://github.com/open-chat-labs/open-chat/pull/4493))
 
+### Changed
+
+- Use canister timer rather than heartbeat to retrieve proposals ([#4504](https://github.com/open-chat-labs/open-chat/pull/4504))
+
 ## [[2.0.843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.843-proposals_bot)] - 2023-09-11
 
 ### Changed
