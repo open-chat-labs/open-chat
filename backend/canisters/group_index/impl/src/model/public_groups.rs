@@ -254,7 +254,6 @@ impl From<&PublicGroupInfo> for GroupMatch {
     fn from(group: &PublicGroupInfo) -> Self {
         GroupMatch {
             id: group.id,
-            chat_id: group.id,
             name: group.name.clone(),
             description: group.description.clone(),
             avatar_id: group.avatar_id,
