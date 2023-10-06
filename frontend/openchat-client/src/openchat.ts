@@ -5007,16 +5007,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 return true;
             }
 
-            let error = resp.kind;
-            if ("error" in resp) {
-                error += " " + resp?.error;
-            }
-            console.debug("Failed to submit proposal", error);
-            this._logger.error("Failed to submit proposal", error);
+            this._logger.error("Failed to submit proposal", resp);
             return false;
         })
         .catch((err) => {
-            console.debug("Unable to submit proposal", err);
             this._logger.error("Unable to submit proposal", err);
             return false;
         });

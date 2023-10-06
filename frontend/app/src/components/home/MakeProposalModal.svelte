@@ -3,7 +3,12 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import { type MultiUserChat, type OpenChat, type Treasury } from "openchat-client";
+    import {
+        routeForChatIdentifier,
+        type MultiUserChat,
+        type OpenChat,
+        type Treasury,
+    } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -167,17 +172,14 @@
     }
 
     function wrappedSummary(summary: string) {
-        let path;
-        if (selectedMultiUserChat.kind === "group_chat") {
-            path = `group/${selectedMultiUserChat.id.groupId}`;
-        } else {
-            const id = selectedMultiUserChat.id;
-            path = `community/${id.communityId}/channel/${id.channelId}`;
-        }
+        const groupPath = routeForChatIdentifier(
+            selectedMultiUserChat.kind === "group_chat" ? "group_chat" : "community",
+            selectedMultiUserChat.id
+        );
 
         return `${summary}
 
-> Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app/${path})`;
+> Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app${groupPath})`;
     }
 </script>
 
