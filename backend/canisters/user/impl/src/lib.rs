@@ -157,7 +157,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_canister_id")]
     pub proposals_bot_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
@@ -176,14 +175,8 @@ struct Data {
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub saved_crypto_accounts: Vec<NamedAccount>,
-    #[serde(default)]
     pub next_event_expiry: Option<TimestampMillis>,
-}
-
-fn proposals_bot_canister_id() -> CanisterId {
-    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 impl Data {

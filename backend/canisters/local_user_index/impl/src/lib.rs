@@ -191,7 +191,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_canister_id")]
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
@@ -207,10 +206,6 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
-}
-
-fn proposals_bot_canister_id() -> CanisterId {
-    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
