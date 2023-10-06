@@ -69,7 +69,6 @@ pub struct ChannelMembershipUpdates {
     pub notifications_muted: Option<bool>,
     pub my_metrics: Option<ChatMetrics>,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    #[serde(default)]
     pub unfollowed_threads: Vec<MessageIndex>,
     pub rules_accepted: Option<bool>,
 }

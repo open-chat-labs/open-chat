@@ -29,7 +29,6 @@ pub struct GroupPermissions {
     pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub reply_in_thread: GroupPermissionRole,
-    #[serde(default = "group_permission_role_admins")]
     pub mention_all_members: GroupPermissionRole,
 }
 
@@ -49,7 +48,6 @@ pub struct OptionalGroupPermissions {
     pub send_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
     pub reply_in_thread: Option<GroupPermissionRole>,
-    #[serde(default)]
     pub mention_all_members: Option<GroupPermissionRole>,
 }
 
@@ -85,8 +83,4 @@ pub enum GroupPermissionRole {
 
 fn group_permission_role_owner() -> GroupPermissionRole {
     GroupPermissionRole::Owner
-}
-
-fn group_permission_role_admins() -> GroupPermissionRole {
-    GroupPermissionRole::Admins
 }

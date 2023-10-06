@@ -301,7 +301,6 @@ struct Data {
     pub test_mode: bool,
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
-    #[serde(default)]
     pub next_event_expiry: Option<TimestampMillis>,
 }
 

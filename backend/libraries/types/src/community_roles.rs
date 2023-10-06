@@ -16,12 +16,7 @@ pub struct CommunityPermissions {
     pub remove_members: CommunityPermissionRole,
     pub create_public_channel: CommunityPermissionRole,
     pub create_private_channel: CommunityPermissionRole,
-    #[serde(default = "admins")]
     pub manage_user_groups: CommunityPermissionRole,
-}
-
-fn admins() -> CommunityPermissionRole {
-    CommunityPermissionRole::Admins
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
