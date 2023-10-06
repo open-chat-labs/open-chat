@@ -617,7 +617,7 @@
             "type": "Vorschlagstyp",
             "treasury": "Token zur Übertragung aus der Schatzkammer",
             "insufficientFunds": "Sie benötigen mindestens {min_balance} {token} Token in Ihrem Wallet, um einen Vorschlag einzureichen",
-            "info": "Die Einreichung eines Vorschlags kostet 4 {token}-Token. Dies dient der Spam-Verhinderung. Nur wenn Ihr Vorschlag angenommen wird, wird dieser zurückerstattet. Nach der Annahme Ihres Vorschlags kann es bis zu einer Stunde dauern, bis Sie die Rückerstattung erhalten.",
+            "info": "Die Einreichung eines Vorschlags kostet {cost} {token} Token. Dies dient der Spam-Verhinderung. Nur wenn Ihr Vorschlag angenommen wird, wird dieser zurückerstattet. Nach der Annahme Ihres Vorschlags kann es bis zu einer Stunde dauern, bis Sie die Rückerstattung erhalten.",
             "infoLegend": "Anmerkungen"
         }
     },

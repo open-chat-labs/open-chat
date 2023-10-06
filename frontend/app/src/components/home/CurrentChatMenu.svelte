@@ -31,6 +31,7 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -44,6 +45,10 @@
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
+    $: isChatProposalsGroup =
+        selectedChatSummary.kind !== "direct_chat" &&
+        selectedChatSummary.subtype?.kind === "governance_proposals" &&
+        selectedChatSummary.subtype.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: userStore = client.userStore;
     $: isBot = $userStore[userId]?.kind === "bot";
@@ -364,7 +369,7 @@
                         {/if}
                     {/if}
 
-                    {#if $isProposalGroup}
+                    {#if isChatProposalsGroup}
                         <MenuItem on:click={makeProposal}>
                             <ChatQuestionIcon
                                 size={$iconSize}

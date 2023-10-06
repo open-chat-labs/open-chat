@@ -22,6 +22,7 @@ export type NoChange = {
 };
 export type InternalError = {
     kind: "internal_error";
+    error?: string;
 };
 export type Invalid = {
     kind: "invalid";

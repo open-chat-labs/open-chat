@@ -614,7 +614,7 @@
             "type": "Loại đề xuất",
             "treasury": "Token để chuyển từ kho bạc",
             "insufficientFunds": "Bạn cần ít nhất {min_balance} {token} mã thông báo trong ví của mình để gửi đề xuất",
-            "info": "Cần 4 mã thông báo {token} để gửi đề xuất. Điều này là để ngăn chặn thư rác. Chỉ khi đề xuất của bạn được thông qua thì số tiền này mới được hoàn trả. Có thể mất tới một giờ sau khi đề xuất của bạn được thông qua trước khi bạn nhận được tiền hoàn lại.",
+            "info": "Phải tốn {cost} {token} mã thông báo để gửi đề xuất. Điều này là để ngăn chặn thư rác. Chỉ khi đề xuất của bạn được thông qua thì số tiền này mới được hoàn trả. Có thể mất tới một giờ sau khi đề xuất của bạn được thông qua trước khi bạn nhận được tiền hoàn lại.",
             "infoLegend": "Ghi chú"
         }
     },

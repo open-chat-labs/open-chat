@@ -1090,10 +1090,10 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
         return { kind: "retrying", error: candid.Retrying };
     }
     if ("TransferFailed" in candid) {
-        return { kind: "retrying", error: candid.TransferFailed };
+        return { kind: "transfer_failed", error: candid.TransferFailed };
     }
     if ("InternalError" in candid) {
-        return { kind: "retrying", error: candid.InternalError };
+        return { kind: "internal_error", error: candid.InternalError };
     }
     if ("GovernanceCanisterNotSupported" in candid) {
         return { kind: "governance_canister_not_supported" };

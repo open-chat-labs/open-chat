@@ -242,7 +242,7 @@
                 <section>
                     <Legend label={$_("proposal.maker.infoLegend")} />
                     <p class="info">
-                        {$_("proposal.maker.info", { values: { token: "CHAT" } })}
+                        {$_("proposal.maker.info", { values: { cost: "4", token: "CHAT" } })}
                     </p>
                 </section>
             </div>
