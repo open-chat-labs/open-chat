@@ -64,6 +64,12 @@ impl NervousSystems {
             .collect()
     }
 
+    pub fn any_proposals_to_push(&self) -> bool {
+        self.nervous_systems
+            .values()
+            .any(|ns| !ns.proposals_to_be_pushed.queue.is_empty())
+    }
+
     pub fn dequeue_next_proposal_to_push(&mut self) -> Option<ProposalToPush> {
         for ns in self
             .nervous_systems
