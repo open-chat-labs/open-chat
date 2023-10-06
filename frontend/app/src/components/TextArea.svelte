@@ -9,6 +9,10 @@
     export let minlength: number = 0;
     export let maxlength: number = Number.MAX_VALUE;
     export let rows: number = 4;
+    export let margin: boolean = true;
+    export let scroll: boolean = false;
+    export let outerHeight: number = 0;
+    export let innerHeight: number = 0;
 
     onMount(() => {
         if (autofocus) {
@@ -20,8 +24,8 @@
     $: warn = remaining <= 5;
 </script>
 
-<div class="outer-wrapper">
-    <div class="input-wrapper">
+<div class="outer-wrapper" class:margin bind:clientHeight={outerHeight}>
+    <div class="input-wrapper" bind:clientHeight={innerHeight}>
         <textarea
             bind:this={inp}
             {rows}
@@ -32,7 +36,8 @@
             {maxlength}
             {placeholder}
             bind:value
-            class={"textbox"} />
+            class="textbox"
+            class:scroll />
     </div>
     {#if !disabled && maxlength < Number.MAX_VALUE}
         <div class:warn class="countdown">{value.length}/{maxlength}</div>
@@ -42,7 +47,11 @@
 
 <style lang="scss">
     .outer-wrapper {
-        margin-bottom: $sp3;
+        margin: 0;
+
+        &.margin {
+            margin-bottom: $sp3;
+        }
     }
 
     .input-wrapper {
@@ -67,6 +76,11 @@
         margin-bottom: $sp2;
 
         @include input(normal);
+
+        &.scroll {
+            resize: none;
+            @include nice-scrollbar();
+        }
 
         &.invalid {
             border: 1px solid var(--error);

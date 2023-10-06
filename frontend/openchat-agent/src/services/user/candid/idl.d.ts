@@ -138,7 +138,8 @@ import {
     TipMessageResponse,
     SavedCryptoAccountsResponse,
     SaveCryptoAccountResponse,
-    NamedAccount
+    NamedAccount,
+    SubmitProposalResponse
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -277,6 +278,7 @@ export {
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
     TipMessageResponse as ApiTipMessageResponse,
+    SubmitProposalResponse as ApiSubmitProposalResponse,
     SavedCryptoAccountsResponse as ApiSavedCryptoAccountsResponse,
     SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
     NamedAccount as ApiNamedAccount

@@ -170,6 +170,8 @@ import type {
     SetMemberDisplayNameResponse,
     UpdatedRules,
     FollowThreadResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2545,4 +2547,8 @@ export class OpenChatAgent extends EventTarget {
             throw new Error("followThread not implemented for direct chats");
         }
     }
+
+    submitProposal(governanceCanisterId: Principal, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+        return this.userClient.submitProposal(governanceCanisterId, proposal);
+    }    
 }
