@@ -614,9 +614,7 @@
             "enterAmount": "Ingrese una cantidad de tokens {token}",
             "type": "Tipo de propuesta",
             "treasury": "Token para transferir desde tesorería",
-            "insufficientFunds": "Necesita al menos {min_balance} {token} tokens en su billetera para enviar una propuesta",
-            "info": "Cuesta {cost} {token} tokens enviar una propuesta. Esto es para prevenir spam. Sólo si se adopta su propuesta se le reembolsará. Puede pasar hasta una hora después de que se adopte su propuesta antes de recibir el reembolso.",
-            "infoLegend": "Notas"
+            "message": "Se requiere un depósito de tokens {cost} {token} (incluye dos conjuntos de tarifas de transferencia) para enviar una propuesta, que se reembolsa si se adopta."
         }
     },
     "yes": "Sí",

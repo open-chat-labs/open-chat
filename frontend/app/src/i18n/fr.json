@@ -612,9 +612,7 @@
             "enterAmount": "Entrez une quantité de jetons {token}",
             "type": "Type de proposition",
             "treasury": "Jeton à transférer du trésor",
-            "insufficientFunds": "Vous avez besoin d'au moins {min_balance} {token} jetons dans votre portefeuille pour soumettre une proposition.",
-            "info": "Il en coûte {cost} {token} jetons pour soumettre une proposition. Ceci afin d'éviter le spam. Ce n'est que si votre proposition est adoptée que celle-ci sera remboursée. Cela peut prendre jusqu'à une heure après l'adoption de votre proposition avant que vous receviez le remboursement.",
-            "infoLegend": "Remarques"
+            "message": "Un dépôt de jetons {cost} {token} (comprend deux séries de frais de transfert) est requis pour soumettre une proposition qui est remboursée si la proposition est adoptée."
         }
     },
     "yes": "Oui",

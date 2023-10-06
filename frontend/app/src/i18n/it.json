@@ -612,9 +612,7 @@
             "enterAmount": "Inserisci una quantità di token {token}",
             "type": "Tipo di proposta",
             "treasury": "Gettone da trasferire dal tesoro",
-            "insufficientFunds": "Hai bisogno di almeno {min_balance} {token} token nel tuo portafoglio per inviare una proposta",
-            "info": "Inviare una proposta costa {cost} {token} token. Questo per prevenire lo spam. Solo se la tua proposta verrà adottata questa verrà rimborsata. Potrebbe essere necessaria fino a un'ora dall'adozione della proposta prima di ricevere il rimborso.",
-            "infoLegend": "Appunti"
+            "message": "Per presentare una proposta è richiesto un deposito di token {cost} {token} (include due serie di commissioni di trasferimento) che verrà rimborsato se la proposta viene adottata."
         }
     },
     "yes": "sì",

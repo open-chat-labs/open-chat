@@ -165,6 +165,14 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
+    $: selectedMultiUserChat =
+        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
+            ? $selectedChatStore
+            : undefined;
+    $: governanceCanisterId =
+        selectedMultiUserChat !== undefined
+            ? selectedMultiUserChat.subtype?.governanceCanisterId
+            : undefined;
 
     $: {
         document.title =
@@ -1088,8 +1096,11 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
             <HallOfFame on:close={closeModal} />
-        {:else if modal === ModalType.MakeProposal}
-            <MakeProposalModal on:close={closeModal} />
+        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && governanceCanisterId !== undefined}
+            <MakeProposalModal
+                {selectedMultiUserChat}
+                {governanceCanisterId}
+                on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

@@ -613,9 +613,7 @@
             "enterAmount": "Nhập số lượng mã thông báo {token}",
             "type": "Loại đề xuất",
             "treasury": "Token để chuyển từ kho bạc",
-            "insufficientFunds": "Bạn cần ít nhất {min_balance} {token} mã thông báo trong ví của mình để gửi đề xuất",
-            "info": "Phải tốn {cost} {token} mã thông báo để gửi đề xuất. Điều này là để ngăn chặn thư rác. Chỉ khi đề xuất của bạn được thông qua thì số tiền này mới được hoàn trả. Có thể mất tới một giờ sau khi đề xuất của bạn được thông qua trước khi bạn nhận được tiền hoàn lại.",
-            "infoLegend": "Ghi chú"
+            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua."
         }
     },
     "yes": "Đúng",

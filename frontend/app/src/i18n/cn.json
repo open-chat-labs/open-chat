@@ -612,9 +612,7 @@
             "enterAmount": "输入 {token} 代币的数量",
             "type": "提案类型",
             "treasury": "从金库转账的代币",
-            "insufficientFunds": "您的钱包中至少需要 {min_balance} {token} 代币才能提交提案",
-            "info": "提交提案需要花费 {cost} {token} 代币。这是为了防止垃圾邮件。只有您的建议被采纳后，这笔款项才会被退还。您的提案被采纳后最多可能需要一个小时才能收到退款。",
-            "infoLegend": "笔记"
+            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。"
         }
     },
     "quoteReply": "引用",

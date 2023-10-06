@@ -707,9 +707,7 @@
             "enterAmount": "Enter a quantity of {token} tokens",
             "type": "Proposal type",
             "treasury": "Token to transfer from treasury",
-            "insufficientFunds": "You need at least {min_balance} {token} tokens in your wallet to submit a proposal",
-            "info": "It costs {cost} {token} tokens to submit a proposal. This is to prevent spam. Only if your proposal is adopted will this be refunded. It can take up to an hour after your proposal is adopted before you receive the refund.",
-            "infoLegend": "Notes"
+            "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted."
         }
     },
     "yes": "Yes",

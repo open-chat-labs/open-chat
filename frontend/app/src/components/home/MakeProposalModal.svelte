@@ -3,7 +3,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import ModalContent from "../ModalContent.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import { LEDGER_CANISTER_CHAT, type OpenChat, type Treasury } from "openchat-client";
+    import { type MultiUserChat, type OpenChat, type Treasury } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -11,22 +11,28 @@
     import TextArea from "../TextArea.svelte";
     import Select from "../Select.svelte";
     import Radio from "../Radio.svelte";
-    import { OC_GOVERNANCE_CANISTER_ID, isPrincipalValid } from "../../utils/sns";
+    import { isPrincipalValid } from "../../utils/sns";
     import { Principal } from "@dfinity/principal";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import Markdown from "./Markdown.svelte";
+    import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
+    import AccountInfo from "./AccountInfo.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
     const MAX_URL_LENGTH = 2000;
     const MIN_SUMMARY_LENGTH = 3;
-    const MAX_SUMMARY_LENGTH = 7000;
+    const MAX_SUMMARY_LENGTH = 5000;
     const MIN_AMOUNT = 1;
-    const MAX_AMOUNT = 1000000;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+    const user = client.user;
+    const proposalCost = BigInt(400000000);
+
+    export let selectedMultiUserChat: MultiUserChat;
+    export let governanceCanisterId: string;
 
     let title = "";
     let url = "";
@@ -34,22 +40,31 @@
     let treasury: Treasury = "SNS";
     let amount = "";
     let recipient = "";
-    let step = 0;
+    let step = -1;
     let actualWidth = 0;
     let summaryPreview = false;
-    let busy = false;
+    let busy = true;
     let selectedProposalType: "motion" | "transfer_sns_funds" = "motion";
-    let errorMessage: string | undefined = undefined;
+    let message = "";
+    let error = true;
     let recipientValid = false;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
+    let refreshingBalance = false;
+    let balanceWithRefresh: BalanceWithRefresh;
 
+    $: tokenDetails = client.getTokenByGovernanceCanister(governanceCanisterId);
+    $: ledger = tokenDetails.ledger;
     $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[LEDGER_CANISTER_CHAT] ?? BigInt(0);
-    $: insufficientFunds = cryptoBalance < BigInt(400200000);
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: symbol = tokenDetails.symbol;
+    $: howToBuyUrl = tokenDetails.howToBuyUrl;
+    $: transferFees = tokenDetails.transferFee;
+    $: requiredFunds = proposalCost + transferFees + transferFees;
+    $: insufficientFunds = cryptoBalance < requiredFunds;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
-    $: token = treasury === "SNS" ? "CHAT" : "ICP";
+    $: token = treasury === "SNS" ? symbol : "ICP";
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
@@ -61,15 +76,17 @@
         urlValid &&
         summaryValid &&
         (selectedProposalType === "motion" || (amountValid && recipientValid));
+    $: canSubmit = step === 2 || (step === 1 && selectedProposalType === "motion");
 
     $: {
-        if (insufficientFunds) {
-            errorMessage = $_("proposal.maker.insufficientFunds", {
-                values: { min_balance: "4.002", token: "CHAT" },
-            });
-        } else {
-            errorMessage = undefined;
+        if (tokenDetails !== undefined) {
+            message = defaultMessage();
         }
+    }
+
+    function defaultMessage(): string {
+        const cost = client.formatTokens(requiredFunds, 0, tokenDetails.decimals);
+        return $_("proposal.maker.message", { values: { cost, token: symbol } });
     }
 
     function onClose() {
@@ -78,7 +95,17 @@
 
     function isAmountValid(value: string): boolean {
         const amount = Number(value);
-        return amount >= MIN_AMOUNT && amount <= MAX_AMOUNT;
+        return amount >= MIN_AMOUNT;
+    }
+
+    function onClickPrimary() {
+        if (step === 0) {
+            balanceWithRefresh.refresh();
+        } else if (step === 1) {
+            step = 2;
+        } else if (step === 2) {
+            onSubmit();
+        }
     }
 
     function onSubmit() {
@@ -97,7 +124,7 @@
                   };
 
         client
-            .submitProposal(OC_GOVERNANCE_CANISTER_ID, {
+            .submitProposal(governanceCanisterId, {
                 title,
                 url: url === "" ? undefined : url,
                 summary,
@@ -105,19 +132,78 @@
             })
             .then((success) => {
                 busy = false;
-                errorMessage = success ? undefined : $_("proposal.maker.unexpectedError");
+                error = !success;
                 if (success) {
                     dispatch("close");
+                } else {
+                    message = $_("proposal.maker.unexpectedError");
                 }
             });
     }
+
+    function onStartRefreshingBalance() {
+        refreshingBalance = true;
+    }
+
+    function onRefreshingBalanceSuccess() {
+        if (step === -1) {
+            step = insufficientFunds ? 0 : 1;
+            busy = false;
+            if (!insufficientFunds) {
+                error = false;
+            }
+        } else if (step === 0 && !insufficientFunds) {
+            step = 1;
+            error = false;
+        }
+
+        refreshingBalance = false;
+    }
+
+    function onRefreshingBalanceFailed() {
+        message = "Failed to refresh balance";
+        error = true;
+        refreshingBalance = false;
+    }
+
+    function wrappedSummary(summary: string) {
+        let path;
+        if (selectedMultiUserChat.kind === "group_chat") {
+            path = `group/${selectedMultiUserChat.id.groupId}`;
+        } else {
+            const id = selectedMultiUserChat.id;
+            path = `community/${id.communityId}/channel/${id.channelId}`;
+        }
+
+        return `${summary}
+
+> Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app/${path})`;
+    }
 </script>
 
-<ModalContent bind:actualWidth closeIcon fill on:close>
-    <div class="header" slot="header">{$_("proposal.maker.header")}</div>
+<ModalContent bind:actualWidth fill>
+    <div class="header" slot="header">
+        {$_("proposal.maker.header")}
+        <BalanceWithRefresh
+            bind:this={balanceWithRefresh}
+            {ledger}
+            value={cryptoBalance}
+            label={$_("cryptoAccount.shortBalanceLabel")}
+            bold
+            on:click={onStartRefreshingBalance}
+            on:refreshed={onRefreshingBalanceSuccess}
+            on:error={onRefreshingBalanceFailed} />
+    </div>
     <div class="body" slot="body">
         <div class="sections" style={`left: -${left}px`}>
-            <div class="common" class:visible={step === 0}>
+            <div class="topup hidden" class:visible={step === 0}>
+                <AccountInfo {ledger} {user} />
+                <p>{$_("tokenTransfer.makeDeposit")}</p>
+                <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
+                    {$_("howToBuyToken", { values: { token: symbol } })}
+                </a>
+            </div>
+            <div class="common hidden" class:visible={step === 1}>
                 <section class="type">
                     <Legend label={$_("proposal.maker.type")} />
                     <Select bind:value={selectedProposalType} margin={false}>
@@ -173,7 +259,7 @@
                     <div style={`height: ${summaryContainerHeight}px`}>
                         {#if summaryPreview}
                             <div class="markdown" style={`height: ${summaryHeight}px`}>
-                                <Markdown inline={false} text={summary} />
+                                <Markdown inline={false} text={wrappedSummary(summary)} />
                             </div>
                         {:else}
                             <TextArea
@@ -192,15 +278,15 @@
                     </div>
                 </section>
             </div>
-            <div class="transfer" class:visible={step === 1}>
-                {#if selectedProposalType === "transfer_sns_funds"}
+            <div class="action hidden" class:visible={step === 2}>
+                <div class="hidden" class:visible={selectedProposalType === "transfer_sns_funds"}>
                     <section>
                         <Legend label={$_("proposal.maker.treasury")} required />
                         <Radio
                             id="chat_treasury"
                             group="treasury"
-                            value="CHAT"
-                            label="CHAT"
+                            value={symbol}
+                            label={symbol}
                             disabled={busy}
                             checked={treasury === "SNS"}
                             on:change={() => (treasury = "SNS")} />
@@ -233,28 +319,21 @@
                             disabled={busy}
                             invalid={amount.length > 0 && !amountValid}
                             minlength={1}
-                            maxlength={12}
+                            maxlength={20}
                             bind:value={amount}
-                            countdown
-                            placeholder={$_("proposal.maker.enterAmount", { values: { token } })} />
+                            placeholder={$_("proposal.maker.enterAmount", {
+                                values: { token },
+                            })} />
                     </section>
-                {/if}
-                <section>
-                    <Legend label={$_("proposal.maker.infoLegend")} />
-                    <p class="info">
-                        {$_("proposal.maker.info", { values: { cost: "4", token: "CHAT" } })}
-                    </p>
-                </section>
+                </div>
             </div>
         </div>
     </div>
     <span class="footer" slot="footer">
-        {#if errorMessage !== undefined}
-            <p class="error">{errorMessage}</p>
-        {/if}
+        <p class="message" class:error>{message}</p>
         <div class="group-buttons">
             <div class="back">
-                {#if step > 0}
+                {#if step > 1 || (step == 1 && insufficientFunds)}
                     <Button
                         disabled={busy}
                         small={!$mobileWidth}
@@ -270,22 +349,13 @@
                     on:click={onClose}
                     secondary>{$_("cancel")}</Button>
 
-                {#if step == 1}
-                    <Button
-                        disabled={busy || !valid}
-                        loading={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={onSubmit}>{$_("submit")}</Button>
-                {:else}
-                    <Button
-                        disabled={busy}
-                        small={!$mobileWidth}
-                        tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>
-                        {$_("group.next")}
-                    </Button>
-                {/if}
+                <Button
+                    disabled={busy || (canSubmit && !valid)}
+                    loading={busy || refreshingBalance}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={onClickPrimary}
+                    >{$_(step === 0 ? "refresh" : canSubmit ? "submit" : "group.next")}</Button>
             </div>
         </div>
     </span>
@@ -300,6 +370,13 @@
 
     :global(.group-buttons .actions button) {
         height: auto;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $sp2;
     }
 
     .footer {
@@ -350,15 +427,18 @@
         margin-bottom: $sp3;
     }
 
+    .topup,
     .common,
-    .transfer {
+    .action {
         flex: 0 0 100%;
         gap: $sp2;
         display: flex;
         flex-direction: column;
-        visibility: hidden;
         transition: visibility 250ms ease-in-out;
+    }
 
+    .hidden {
+        visibility: hidden;
         &.visible {
             visibility: visible;
         }
@@ -391,13 +471,11 @@
         @include nice-scrollbar();
     }
 
-    .info {
-        @include input(normal);
-        color: var(--txt-light);
-    }
-
-    .error {
-        color: var(--error);
+    .message {
         margin-bottom: $sp4;
+        color: var(--txt-light);
+        &.error {
+            color: var(--error);
+        }
     }
 </style>
