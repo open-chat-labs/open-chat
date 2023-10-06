@@ -4,9 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
+use std::mem;
 use types::{
-    CanisterId, MessageId, MultiUserChat, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate, SnsNeuronId,
-    TimestampMillis,
+    CanisterId, MessageId, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, ProposalUpdate,
+    SnsNeuronId, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -134,6 +135,21 @@ impl NervousSystems {
         }
     }
 
+    pub fn take_newly_decided_user_submitted_proposals(
+        &mut self,
+        governance_canister_id: CanisterId,
+    ) -> Vec<UserSubmittedProposalResult> {
+        if let Some(ns) = self
+            .nervous_systems
+            .get_mut(&governance_canister_id)
+            .filter(|ns| !ns.decided_user_submitted_proposals.is_empty())
+        {
+            mem::take(&mut ns.decided_user_submitted_proposals)
+        } else {
+            Vec::new()
+        }
+    }
+
     pub fn queue_proposal_to_update(&mut self, governance_canister_id: CanisterId, proposal: ProposalUpdate) {
         if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
             ns.proposals_to_be_updated.pending.insert(proposal.message_id, proposal);
@@ -199,6 +215,17 @@ impl NervousSystems {
         }
     }
 
+    pub fn record_user_submitted_proposal(
+        &mut self,
+        governance_canister_id: CanisterId,
+        user_id: UserId,
+        proposal_id: ProposalId,
+    ) {
+        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
+            ns.active_user_submitted_proposals.insert(proposal_id, user_id);
+        }
+    }
+
     pub fn metrics(&self) -> Vec<NervousSystemMetrics> {
         self.nervous_systems
             .values()
@@ -223,6 +250,10 @@ pub struct NervousSystem {
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
     #[serde(default)]
     sync_in_progress: bool,
+    #[serde(default)]
+    active_user_submitted_proposals: HashMap<ProposalId, UserId>,
+    #[serde(default)]
+    decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -251,11 +282,30 @@ impl NervousSystem {
             active_proposals: BTreeMap::default(),
             neuron_id_for_submitting_proposals: None,
             sync_in_progress: false,
+            active_user_submitted_proposals: HashMap::default(),
+            decided_user_submitted_proposals: Vec::new(),
         }
     }
 
     pub fn process_proposal(&mut self, proposal: Proposal) {
         let proposal_id = proposal.id();
+
+        if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied() {
+            if let Some(adopted) = match proposal.status() {
+                ProposalDecisionStatus::Unspecified | ProposalDecisionStatus::Open => None,
+                ProposalDecisionStatus::Adopted | ProposalDecisionStatus::Executed | ProposalDecisionStatus::Failed => {
+                    Some(true)
+                }
+                ProposalDecisionStatus::Rejected => Some(false),
+            } {
+                self.active_user_submitted_proposals.remove(&proposal_id);
+                self.decided_user_submitted_proposals.push(UserSubmittedProposalResult {
+                    proposal_id,
+                    user_id,
+                    adopted,
+                });
+            }
+        }
 
         if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
             let status = proposal.status();
@@ -340,4 +390,11 @@ pub struct ProposalsToUpdate {
     pub governance_canister_id: CanisterId,
     pub chat_id: MultiUserChat,
     pub proposals: Vec<ProposalUpdate>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UserSubmittedProposalResult {
+    pub proposal_id: ProposalId,
+    pub user_id: UserId,
+    pub adopted: bool,
 }
