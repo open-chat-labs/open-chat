@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed `filter_groups` and `c2c_filter_groups` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))
+
 ## [[2.0.866](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.866-group_index)] - 2023-09-27
 
 ### Changed 
