@@ -18,6 +18,7 @@ fn c2c_lookup_user_impl(args: Args, state: &RuntimeState) -> Response {
         Success(UserDetails {
             principal: user.principal,
             user_id: user.user_id,
+            username: user.username.clone(),
             is_bot: user.is_bot,
             is_platform_moderator,
             is_platform_operator,
