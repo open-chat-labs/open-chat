@@ -1,7 +1,8 @@
 use crate::model::nervous_systems::NervousSystems;
+use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use fire_and_forget_handler::FireAndForgetHandler;
+use canister_timer_jobs::TimerJobs;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
@@ -16,6 +17,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -72,7 +74,7 @@ struct Data {
     pub nns_governance_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     #[serde(default)]
-    pub fire_and_forget_handler: FireAndForgetHandler,
+    pub timer_jobs: TimerJobs<TimerJob>,
     pub test_mode: bool,
 }
 
@@ -99,7 +101,7 @@ impl Data {
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
             finished_proposals_to_process: VecDeque::new(),
-            fire_and_forget_handler: FireAndForgetHandler::default(),
+            timer_jobs: TimerJobs::default(),
             test_mode,
         }
     }
