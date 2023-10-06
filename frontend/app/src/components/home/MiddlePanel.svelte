@@ -53,6 +53,7 @@
                 on:replyPrivatelyTo
                 on:showInviteGroupUsers
                 on:showProposalFilters
+                on:makeProposal
                 on:showGroupMembers
                 on:chatWith
                 on:joinGroup

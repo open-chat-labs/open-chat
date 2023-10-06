@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [[2.0.872](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.872-local_user_index)] - 2023-10-05
 
+### Added
+
+- Add a welcome message to help new users discover communities ([#4484](https://github.com/open-chat-labs/open-chat/pull/4484))
+
 ### Changed
 
 - Store `proposals_bot_canister_id` in user canisters ([#4485](https://github.com/open-chat-labs/open-chat/pull/4485))

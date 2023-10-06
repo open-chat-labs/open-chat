@@ -25,7 +25,6 @@
     export let selectedChatSummary: ChatSummary;
     export let blocked: boolean;
     export let readonly: boolean;
-    export let unreadMessages: number;
     export let hasPinned: boolean;
 
     let showSuspendUserModal = false;
@@ -164,7 +163,6 @@
         <CurrentChatMenu
             bind:showSuspendUserModal
             {hasPinned}
-            {unreadMessages}
             {selectedChatSummary}
             {blocked}
             on:convertGroupToCommunity
@@ -173,9 +171,9 @@
             on:showGroupDetails={showGroupDetails}
             on:searchChat
             on:showProposalFilters
+            on:makeProposal
             on:showGroupMembers
             on:createPoll
-            on:markAllRead
             on:upgrade
             on:showInviteGroupUsers
             on:leaveGroup />
