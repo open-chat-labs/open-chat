@@ -282,12 +282,12 @@ export function setCommunityModerationFlagsResponse(
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {
     return {
-        chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
+        chatId: { kind: "group_chat", groupId: candid.id.toString() },
         name: candid.name,
         description: candid.description,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
-            canisterId: candid.chat_id.toString(),
+            canisterId: candid.id.toString(),
         })),
     };
 }
