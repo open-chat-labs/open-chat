@@ -1,4 +1,5 @@
 /* eslint-disable no-case-declarations */
+import { Principal } from "@dfinity/principal";
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
@@ -329,6 +330,7 @@ import type {
     TipMessageResponse,
     NamedAccount,
     SaveCryptoAccountResponse,
+    CandidateProposal,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -4992,6 +4994,25 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "setCachePrimerTimestamp",
             chatIdentifierString,
             timestamp,
+        });
+    }
+
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
+        return this.sendRequest({
+            kind: "submitProposal",
+            governanceCanisterId: Principal.fromText(governanceCanisterId),
+            proposal,
+        }).then((resp) => {
+            if (resp.kind === "success" || resp.kind === "retrying") {
+                return true;
+            }
+
+            this._logger.error("Failed to submit proposal", resp);
+            return false;
+        })
+        .catch((err) => {
+            this._logger.error("Unable to submit proposal", err);
+            return false;
         });
     }
 

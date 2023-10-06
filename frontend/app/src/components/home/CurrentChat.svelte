@@ -129,10 +129,6 @@
         closeNotificationsForChat(chat.id);
     }
 
-    function onMarkAllRead() {
-        client.markAllRead(chat);
-    }
-
     function createPoll() {
         if (!client.canCreatePolls(chat.id)) return;
 
@@ -288,10 +284,10 @@
     {:else if showChatHeader}
         <CurrentChatHeader
             on:clearSelection
-            on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
             on:showInviteGroupUsers
             on:showProposalFilters
+            on:makeProposal
             on:showGroupMembers
             on:leaveGroup
             on:upgrade
@@ -301,7 +297,6 @@
             on:importToCommunity={importToCommunity}
             {blocked}
             {readonly}
-            {unreadMessages}
             selectedChatSummary={chat}
             hasPinned={$currentChatPinnedMessages.size > 0} />
     {/if}

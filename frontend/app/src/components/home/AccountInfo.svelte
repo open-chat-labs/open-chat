@@ -44,7 +44,9 @@
 
 <div class="account-info">
     <QRCode text={account} size={qrSize} logo={tokenDetails.logo} {border} />
-    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
+    <p class="your-account" class:centered>
+        {$_("tokenTransfer.yourAccount", { values: { token: symbol } })}
+    </p>
     <div class="receiver" class:centered>
         <div class="account">
             {collapseAccount(account)}
@@ -84,5 +86,9 @@
             cursor: pointer;
             width: 30px;
         }
+    }
+
+    .your-account {
+        margin-top: $sp4;
     }
 </style>

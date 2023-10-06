@@ -26,3 +26,4 @@ export * from "./permission";
 export * from "./identity";
 export * from "./structure";
 export * from "./response";
+export * from "./proposals";

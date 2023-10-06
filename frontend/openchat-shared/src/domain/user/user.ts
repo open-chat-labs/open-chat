@@ -1,5 +1,5 @@
 import type { DataContent } from "../data/data";
-import type { Failure, Success } from "../response";
+import type { Failure, InternalError, NotAuthorised, Retrying, Success, TransferFailed, UserSuspended } from "../response";
 
 export type UserOrUserGroup = UserSummary | UserGroupSummary | MentionEveryone;
 
@@ -264,3 +264,16 @@ export type NamedAccount = {
 };
 
 export type SaveCryptoAccountResponse = { kind: "name_taken" } | Success | Failure;
+
+export type SubmitProposalResponse = 
+    Success | 
+    Retrying | 
+    NotAuthorised | 
+    UserSuspended | 
+    GovernanceCanisterNotSupported | 
+    TransferFailed | 
+    InternalError;
+
+export type GovernanceCanisterNotSupported = {
+    kind: "governance_canister_not_supported";
+};
