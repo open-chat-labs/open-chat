@@ -16,7 +16,7 @@ pub struct AddUserToSatoshiDice {
 }
 
 impl Job for TimerJob {
-    fn execute(&self) {
+    fn execute(self) {
         match self {
             TimerJob::AddUserToSatoshiDice(job) => job.execute(),
         }
@@ -24,7 +24,7 @@ impl Job for TimerJob {
 }
 
 impl Job for AddUserToSatoshiDice {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(add_user(self.user_id, self.attempt));
 
         async fn add_user(user_id: UserId, attempt: usize) {
