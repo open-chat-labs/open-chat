@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use canister timer rather than heartbeat to update proposals ([#4507](https://github.com/open-chat-labs/open-chat/pull/4507))
 - Refund deposit if user submitted proposal is successful ([#4509](https://github.com/open-chat-labs/open-chat/pull/4509))
 - Top up neuron if user submitted proposal is rejected ([#4510](https://github.com/open-chat-labs/open-chat/pull/4510))
+- Add 'Submitted by @Username on OpenChat' suffix to proposals ([#4511](https://github.com/open-chat-labs/open-chat/pull/4511))
 
 ## [[2.0.843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.843-proposals_bot)] - 2023-09-11
 
