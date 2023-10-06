@@ -74,7 +74,7 @@ pub struct MakeTransferJob {
 }
 
 impl Job for TimerJob {
-    fn execute(&self) {
+    fn execute(self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
@@ -90,7 +90,7 @@ impl Job for TimerJob {
 }
 
 impl Job for HardDeleteMessageContentJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| {
             if let Some(content) = state.data.channels.get_mut(&self.channel_id).and_then(|channel| {
                 channel
@@ -116,13 +116,13 @@ impl Job for HardDeleteMessageContentJob {
 }
 
 impl Job for DeleteFileReferencesJob {
-    fn execute(&self) {
-        ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
+    fn execute(self) {
+        ic_cdk::spawn(storage_bucket_client::delete_files(self.files));
     }
 }
 
 impl Job for EndPollJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
             if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
@@ -138,31 +138,31 @@ impl Job for EndPollJob {
 }
 
 impl Job for RemoveExpiredEventsJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
     }
 }
 
 impl Job for FinalizeGroupImportJob {
-    fn execute(&self) {
+    fn execute(self) {
         finalize_group_import(self.group_id);
     }
 }
 
 impl Job for ProcessGroupImportChannelMembersJob {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(process_channel_members(self.group_id, self.channel_id, self.attempt));
     }
 }
 
 impl Job for MarkGroupImportCompleteJob {
-    fn execute(&self) {
+    fn execute(self) {
         mark_import_complete(self.group_id, self.channel_id);
     }
 }
 
 impl Job for RefundPrizeJob {
-    fn execute(&self) {
+    fn execute(self) {
         if let Some(pending_transaction) = read_state(|state| {
             if let Some(channel) = state.data.channels.get(&self.channel_id) {
                 channel
@@ -180,9 +180,9 @@ impl Job for RefundPrizeJob {
 }
 
 impl Job for MakeTransferJob {
-    fn execute(&self) {
+    fn execute(self) {
         let sender = read_state(|state| state.env.canister_id());
-        let pending = self.pending_transaction.clone();
+        let pending = self.pending_transaction;
         ic_cdk::spawn(make_transfer(pending, sender));
 
         async fn make_transfer(pending_transaction: PendingCryptoTransaction, sender: CanisterId) {
