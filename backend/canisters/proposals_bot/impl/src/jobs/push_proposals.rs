@@ -25,33 +25,11 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    match mutate_state(try_get_next) {
-        GetNextResult::Success(proposal) => {
-            ic_cdk::spawn(push_proposal(*proposal));
-        }
-        GetNextResult::Continue => {}
-        GetNextResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'push_proposals' job stopped");
-            }
-        }
-    }
-}
-
-enum GetNextResult {
-    Success(Box<ProposalToPush>),
-    Continue,
-    QueueEmpty,
-}
-
-fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
-    if let Some(proposal) = state.data.nervous_systems.dequeue_next_proposal_to_push() {
-        GetNextResult::Success(Box::new(proposal))
-    } else if state.data.nervous_systems.any_proposals_to_push() {
-        GetNextResult::Continue
-    } else {
-        GetNextResult::QueueEmpty
+    if let Some(proposal) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push()) {
+        ic_cdk::spawn(push_proposal(proposal));
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk_timers::clear_timer(timer_id);
+        trace!("'push_proposals' job stopped");
     }
 }
 
@@ -133,14 +111,13 @@ fn mark_proposal_pushed(governance_canister_id: CanisterId, proposal: Proposal, 
                 .data
                 .nervous_systems
                 .mark_proposal_push_failed(&governance_canister_id, proposal);
-
-            start_job_if_required(state);
         } else {
             state
                 .data
                 .nervous_systems
                 .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
         }
+        start_job_if_required(state);
     });
 }
 
