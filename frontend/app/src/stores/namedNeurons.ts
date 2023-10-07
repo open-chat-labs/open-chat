@@ -6,4 +6,5 @@ export const NamedNeurons: Record<string, string> = {
     "2d92f39b8937c4cbb92796e04b62d3c0b235820f031856b8f250e37917e18730": "Kinic Developer Organization",
     "266e91dbb8d435de82a7d961f0ac0060015a597a4e542d9e7f30a488cab8a592": "Kinic Developer Organization",
     "eda6976220ea999ed4d5df28b217e4d452786b6c9dc8f3d892256eaca00017ce": "ICX Dev Team",
+    "fd052a2a6648357c984cd8a04edcb9e34a48967a46f44db9264f5156d7e96c61": "Modclub Foundation",
 };
