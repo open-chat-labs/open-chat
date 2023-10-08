@@ -67,7 +67,6 @@ import {
     compareIsNotYouThenUsername,
     compareUsername,
     formatLastOnlineDate,
-    groupAvatarUrl,
     nullUser,
     userAvatarUrl,
 } from "./utils/user";
@@ -331,6 +330,7 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     CandidateProposal,
+    GroupSubtype,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1244,12 +1244,24 @@ export class OpenChat extends OpenChatAgentWorker {
         return getContentAsText(formatter, content, get(cryptoLookup));
     }
 
+    groupAvatarUrl<T extends { blobUrl?: string; subtype?: GroupSubtype }>(chat?: T): string {
+        if (chat?.blobUrl !== undefined) {
+            return chat.blobUrl;
+        } else if (chat?.subtype?.kind === "governance_proposals") {
+            // If this is a governance proposals chat and no avatar has been set, use the default one for the SNS
+            const snsLogo = this.getSnsLogo(chat.subtype.governanceCanisterId);
+            if (snsLogo !== undefined) {
+                return snsLogo;
+            }
+        }
+        return "/assets/group.svg";
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
-    groupAvatarUrl = groupAvatarUrl;
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -4932,6 +4944,12 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
+    private getSnsLogo(governanceCanisterId: string): string | undefined {
+        return Object.values(get(cryptoLookup)).find(
+            (t) => t.governanceCanister === governanceCanisterId,
+        )?.logo;
+    }
+
     // the key might be a username or it might be a user group name
     getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
@@ -5002,18 +5020,19 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "submitProposal",
             governanceCanisterId: Principal.fromText(governanceCanisterId),
             proposal,
-        }).then((resp) => {
-            if (resp.kind === "success" || resp.kind === "retrying") {
-                return true;
-            }
-
-            this._logger.error("Failed to submit proposal", resp);
-            return false;
         })
-        .catch((err) => {
-            this._logger.error("Unable to submit proposal", err);
-            return false;
-        });
+            .then((resp) => {
+                if (resp.kind === "success" || resp.kind === "retrying") {
+                    return true;
+                }
+
+                this._logger.error("Failed to submit proposal", resp);
+                return false;
+            })
+            .catch((err) => {
+                this._logger.error("Unable to submit proposal", err);
+                return false;
+            });
     }
 
     // **** Communities Stuff
