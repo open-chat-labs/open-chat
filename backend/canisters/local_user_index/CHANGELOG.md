@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `report_message` which has been superseded by `report_message_v2` ([#4524](https://github.com/open-chat-labs/open-chat/pull/4524))
+
 ### Fixed
 
 - Fix 'Report message' functionality ([#4523](https://github.com/open-chat-labs/open-chat/pull/4523))
