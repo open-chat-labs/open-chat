@@ -1093,6 +1093,7 @@ export type WorkerResponseInner =
     | TipMessageResponse
     | NamedAccount[]
     | SaveCryptoAccountResponse
+    | SubmitProposalResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
