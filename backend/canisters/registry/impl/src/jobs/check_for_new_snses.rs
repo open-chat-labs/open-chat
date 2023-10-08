@@ -62,13 +62,13 @@ async fn run_async() {
 }
 
 async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bool> {
-    if let Ok(response) = sns_swap_canister_c2c_client::get_lifecycle(sns_swap_canister_id, &Empty {}).await {
-        match response.lifecycle {
-            Some(LIFECYCLE_COMMITTED) => Some(true),
-            Some(LIFECYCLE_ABORTED) => Some(false),
-            _ => None,
-        }
-    } else {
-        None
+    let response = sns_swap_canister_c2c_client::get_lifecycle(sns_swap_canister_id, &Empty {})
+        .await
+        .ok()?;
+
+    match response.lifecycle? {
+        LIFECYCLE_COMMITTED => Some(true),
+        LIFECYCLE_ABORTED => Some(false),
+        _ => None,
     }
 }
