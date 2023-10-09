@@ -1,4 +1,4 @@
-import type { ChatIdentifier, EventWrapper, Message, MessageContext } from "openchat-shared";
+import type { EventWrapper, Message, MessageContext } from "openchat-shared";
 
 export class LoadedNewMessages extends CustomEvent<MessageContext> {
     constructor(context: MessageContext) {
@@ -52,9 +52,9 @@ export class LoadedMessageWindow extends CustomEvent<{
     }
 }
 
-export class ChatUpdated extends CustomEvent<ChatIdentifier> {
-    constructor(chatId: ChatIdentifier) {
-        super("openchat_event", { detail: chatId });
+export class ChatUpdated extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", { detail: context });
     }
 }
 

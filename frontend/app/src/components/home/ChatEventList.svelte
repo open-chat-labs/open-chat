@@ -16,7 +16,6 @@
         ReactionSelected,
         SendingMessage,
         SentMessage,
-        chatIdentifiersEqual,
         messageContextsEqual,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
@@ -245,7 +244,7 @@
         if (ev instanceof LoadedMessageWindow) {
             onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
         }
-        if (ev instanceof ChatUpdated && chatIdentifiersEqual(ev.detail, chat.id)) {
+        if (ev instanceof ChatUpdated && messageContextsEqual(ev.detail, messageContext)) {
             loadMoreIfRequired();
         }
         if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {

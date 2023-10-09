@@ -479,7 +479,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.refreshUpdatedEvents(serverChat, updatedEvents);
         this.loadChatDetails(serverChat);
-        this.dispatchEvent(new ChatUpdated(chatId));
+        this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
     private loadedIdentity(id: Identity) {
@@ -2809,7 +2809,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 );
                 if (threadRootEvent !== undefined) {
                     selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
-                    this.dispatchEvent(new ChatUpdated(chatId));
+                    this.dispatchEvent(
+                        new ChatUpdated({
+                            chatId,
+                            threadRootMessageIndex: selectedThreadRootMessageIndex,
+                        }),
+                    );
                 }
             }
         } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
