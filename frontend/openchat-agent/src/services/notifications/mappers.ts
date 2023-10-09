@@ -131,7 +131,7 @@ export function channelNotification(
         sender: candid.sender.toString(),
         threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
+        messageEventIndex: candid.event_index,
         senderName: candid.sender_name,
         senderDisplayName: optional(candid.sender_display_name, identity),
         chatId: {
@@ -160,7 +160,7 @@ export function groupNotification(
         sender: candid.sender.toString(),
         threadRootMessageIndex: optional(candid.thread_root_message_index, identity),
         messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
+        messageEventIndex: candid.event_index,
         senderName: candid.sender_name,
         senderDisplayName: optional(candid.sender_display_name, identity),
         chatId: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -180,15 +180,15 @@ export function directNotification(
 ): DirectNotification {
     return {
         kind: "direct_notification",
-        sender: { kind: "direct_chat", userId: candid.sender.toString() },
+        them: candid.sender.toString(),
         messageIndex: candid.message_index,
-        eventIndex: candid.event_index,
-        senderName: candid.sender_name,
-        senderDisplayName: optional(candid.sender_display_name, identity),
+        messageEventIndex: candid.event_index,
+        username: candid.sender_name,
+        displayName: optional(candid.sender_display_name, identity),
         messageType: candid.message_type,
         messageText: optional(candid.message_text, identity),
         imageUrl: optional(candid.image_url, identity),
-        senderAvatarId: optional(candid.sender_avatar_id, identity),
+        userAvatarId: optional(candid.sender_avatar_id, identity),
         cryptoTransfer: optional(candid.crypto_transfer, cryptoTransfer),
         timestamp,
     };
@@ -246,7 +246,7 @@ function directReactionNotification(
 ): DirectReaction {
     return {
         kind: "direct_reaction",
-        them: { kind: "direct_chat", userId: candid.them.toString() },
+        them: candid.them.toString(),
         messageIndex: candid.message_index,
         messageEventIndex: candid.message_event_index,
         username: candid.username,
@@ -309,7 +309,7 @@ function directMessageTipped(
 ): DirectMessageTipped {
     return {
         kind: "direct_message_tipped",
-        them: { kind: "direct_chat", userId: candid.them.toString() },
+        them: candid.them.toString(),
         messageIndex: candid.message_index,
         messageEventIndex: candid.message_event_index,
         username: candid.username,
