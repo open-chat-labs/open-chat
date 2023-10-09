@@ -7,9 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
+
+## [[2.0.876](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.876-proposals_bot)] - 2023-10-09
+
+### Added
+
 - Support submitting proposals from within OpenChat ([#4486](https://github.com/open-chat-labs/open-chat/pull/4486))
 - Make ProposalsBot able to stake neurons for submitting proposals ([#4493](https://github.com/open-chat-labs/open-chat/pull/4493))
-- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
 
 ### Changed
 
