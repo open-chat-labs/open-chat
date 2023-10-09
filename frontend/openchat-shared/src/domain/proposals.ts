@@ -1,5 +1,3 @@
-import { Principal } from "@dfinity/principal";
-
 export type CandidateProposal = {
     title: string;
     url: string | undefined;
@@ -17,7 +15,7 @@ export type TransferSnsFunds = {
     kind: "transfer_sns_funds",
     treasury: Treasury,
     amount: bigint,
-    to: Principal,
+    toPrincipal: string;
 }
 
 export type Treasury = "SNS" | "ICP";

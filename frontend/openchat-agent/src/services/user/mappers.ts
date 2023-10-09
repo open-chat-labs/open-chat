@@ -142,7 +142,7 @@ import {
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
-import type { Principal } from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
 import type { ProposalToSubmit, ProposalToSubmitAction } from "./candid/types";
 
 export function saveCryptoAccountResponse(
@@ -1071,7 +1071,7 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
         case "transfer_sns_funds":
             return { TransferSnsTreasuryFunds: {
                 to: {
-                    owner: action.to,
+                    owner: Principal.fromText(action.toPrincipal),
                     subaccount: []
                 },
                 amount: action.amount,
