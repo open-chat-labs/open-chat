@@ -1,5 +1,9 @@
 import { IDL } from "@dfinity/candid";
-import { type ApiNotification, NotificationIdl, notification as toNotification } from "openchat-agent";
+import {
+    type ApiNotification,
+    NotificationIdl,
+    notification as toNotification,
+} from "openchat-agent";
 import type {
     Notification,
     DirectChatIdentifier,
@@ -133,11 +137,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
             userId: n.sender.userId,
         };
         title = n.senderDisplayName ?? n.senderName;
-        body = messageText(
-            n.messageText,
-            n.messageType,
-            n.cryptoTransfer,
-        );
+        body = messageText(n.messageText, n.messageType, n.cryptoTransfer);
         if (n.senderAvatarId !== undefined) {
             icon = avatarUrl(n.sender.userId, n.senderAvatarId);
         } else if (n.messageType === "File") {
@@ -202,11 +202,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         if (n.userAvatarId !== undefined) {
             icon = avatarUrl(n.them.userId, n.userAvatarId);
         }
-        path = routeForMessage(
-            "direct_chat",
-            { chatId: n.them },
-            n.messageIndex,
-        );
+        path = routeForMessage("direct_chat", { chatId: n.them }, n.messageIndex);
         tag = path;
         timestamp = Number(n.timestamp);
     } else if (n.kind === "channel_reaction") {
@@ -243,10 +239,55 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         );
         tag = path;
         timestamp = Number(n.timestamp);
+    } else if (n.kind === "direct_message_tipped") {
+        title = n.username;
+        body = `${n.displayName ?? n.username} tipped your message ${n.tip}`;
+        if (n.userAvatarId !== undefined) {
+            icon = avatarUrl(n.them.userId, n.userAvatarId);
+        }
+        path = routeForMessage("direct_chat", { chatId: n.them }, n.messageIndex);
+        tag = path;
+        timestamp = Number(n.timestamp);
+    } else if (n.kind === "channel_message_tipped") {
+        title = `${n.communityName} / ${n.channelName}`;
+        body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
+        if (n.channelAvatarId !== undefined) {
+            icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
+        } else if (n.communityAvatarId !== undefined) {
+            icon = avatarUrl(n.chatId.communityId, n.communityAvatarId);
+        }
+        path = routeForMessage(
+            "community",
+            {
+                chatId: n.chatId,
+                threadRootMessageIndex: n.threadRootMessageIndex,
+            },
+            n.messageIndex,
+        );
+        tag = path;
+        timestamp = Number(n.timestamp);
+    } else if (n.kind === "group_message_tipped") {
+        title = n.groupName;
+        body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
+        if (n.groupAvatarId !== undefined) {
+            icon = avatarUrl(n.chatId.groupId, n.groupAvatarId);
+        }
+        path = routeForMessage(
+            "group_chat",
+            {
+                chatId: n.chatId,
+                threadRootMessageIndex: n.threadRootMessageIndex,
+            },
+            n.messageIndex,
+        );
+        tag = path;
+        timestamp = Number(n.timestamp);
     } else if (n.kind === "added_to_channel_notification") {
         // TODO Multi language support
         title = `${n.communityName} / ${n.channelName}`;
-        body = `${n.addedByDisplayName ?? n.addedByUsername} added you to the channel "${n.channelName}" in the community "${n.communityName}"`;
+        body = `${n.addedByDisplayName ?? n.addedByUsername} added you to the channel "${
+            n.channelName
+        }" in the community "${n.communityName}"`;
         if (n.channelAvatarId !== undefined) {
             icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
         } else if (n.communityAvatarId !== undefined) {
