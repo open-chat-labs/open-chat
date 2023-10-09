@@ -1,4 +1,4 @@
-import type { ChannelIdentifier, GroupChatIdentifier } from "../chat/chat";
+import type { ChannelIdentifier, DirectChatIdentifier, GroupChatIdentifier } from "../chat/chat";
 
 export type Notification =
     | AddedToChannelNotification
@@ -98,7 +98,7 @@ export type GroupMessageTipped = GroupNotificationCommon & {
 };
 
 export type DirectNotificationCommon = {
-    them: string;
+    chatId: DirectChatIdentifier;
     messageIndex: number;
     messageEventIndex: number;
     username: string;

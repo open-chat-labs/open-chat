@@ -180,7 +180,7 @@ export function directNotification(
 ): DirectNotification {
     return {
         kind: "direct_notification",
-        them: candid.sender.toString(),
+        chatId: { kind: "direct_chat", userId: candid.sender.toString() },
         messageIndex: candid.message_index,
         messageEventIndex: candid.event_index,
         username: candid.sender_name,
@@ -246,7 +246,7 @@ function directReactionNotification(
 ): DirectReaction {
     return {
         kind: "direct_reaction",
-        them: candid.them.toString(),
+        chatId: { kind: "direct_chat", userId: candid.them.toString() },
         messageIndex: candid.message_index,
         messageEventIndex: candid.message_event_index,
         username: candid.username,
@@ -309,7 +309,7 @@ function directMessageTipped(
 ): DirectMessageTipped {
     return {
         kind: "direct_message_tipped",
-        them: candid.them.toString(),
+        chatId: { kind: "direct_chat", userId: candid.them.toString() },
         messageIndex: candid.message_index,
         messageEventIndex: candid.message_event_index,
         username: candid.username,

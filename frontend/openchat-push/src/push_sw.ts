@@ -260,7 +260,7 @@ function defaultMessage(messageType: string): string {
 function notificationPath(n: Notification): string {
     switch (n.kind) {
         case "direct_notification":
-            return routeForChatIdentifier("direct_chat", { kind: "direct_chat", userId: n.them });
+            return routeForChatIdentifier("direct_chat", n.chatId);
 
         case "direct_reaction":
         case "direct_message_tipped":

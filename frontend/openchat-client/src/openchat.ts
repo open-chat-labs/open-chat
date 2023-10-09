@@ -3300,12 +3300,7 @@ export class OpenChat extends OpenChatAgentWorker {
         switch (notification.kind) {
             case "direct_notification":
             case "direct_reaction":
-            case "direct_message_tipped": {
-                chatId = { kind: "direct_chat", userId: notification.them };
-                eventIndex = notification.messageEventIndex;
-                break;
-            }
-
+            case "direct_message_tipped":
             case "group_notification":
             case "group_reaction":
             case "group_message_tipped":
@@ -3313,8 +3308,10 @@ export class OpenChat extends OpenChatAgentWorker {
             case "channel_reaction":
             case "channel_message_tipped": {
                 chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
                 eventIndex = notification.messageEventIndex;
+                if ("threadRootMessageIndex" in notification) {
+                    threadRootMessageIndex = notification.threadRootMessageIndex;
+                }
                 break;
             }
 
