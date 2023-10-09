@@ -4,7 +4,7 @@ import type { UserLookup, UserSummary } from "openchat-shared";
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
     now: number,
-    lastOnline: number
+    lastOnline: number,
 ): string {
     const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
@@ -43,7 +43,7 @@ export function buildUsernameList(
     userIds: Set<string>,
     myUserId: string | undefined,
     users: UserLookup,
-    maxUsernames = 99
+    maxUsernames = 99,
 ): string {
     const includesMe = myUserId !== undefined ? userIds.has(myUserId) : false;
 
@@ -95,7 +95,7 @@ export function compareUsername(u1: UserSummary, u2: UserSummary): number {
 }
 
 export function compareIsNotYouThenUsername(
-    yourUserId: string
+    yourUserId: string,
 ): (u1: UserSummary, u2: UserSummary) => number {
     return (u1: UserSummary, u2: UserSummary) => {
         const u1IsYou = u1.userId === yourUserId;
@@ -105,10 +105,6 @@ export function compareIsNotYouThenUsername(
         }
         return u1.username === u2.username ? 0 : u2.username < u1.username ? 1 : -1;
     };
-}
-
-export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
-    return dataContent?.blobUrl ?? "/assets/group.svg";
 }
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
