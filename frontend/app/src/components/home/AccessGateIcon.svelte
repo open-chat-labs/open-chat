@@ -48,6 +48,17 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
+    {:else if gate.kind === "credential_gate"}
+        <TooltipWrapper {position} {align}>
+            <div slot="target" class="credential">🔒️</div>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
+                    {$_("access.credentialGateInfo", {
+                        values: { issuer: gate.issuer, credential: gate.credential },
+                    })}
+                </TooltipPopup>
+            </div>
+        </TooltipWrapper>
     {:else if isSnsGate(gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
@@ -81,7 +92,8 @@
             width: 26px;
         }
     }
-    .diamond {
+    .diamond,
+    .credential {
         cursor: pointer;
         @include font-size(fs-130);
     }

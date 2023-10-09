@@ -1,4 +1,6 @@
 <script lang="ts">
+    import CredentialSelector from "./CredentialSelector.svelte";
+
     import { interpolateLevel } from "../../utils/i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -37,13 +39,14 @@
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
     let minStake = client.getMinStakeInTokens(original.gate);
     let gateBindings: GateBinding[] = [];
+    let selectedGateKey: string | undefined = undefined;
 
     $: invalidDissolveDelay = minDissolveDelay !== undefined && isNaN(minDissolveDelay);
     $: invalidMinStake = minStake !== undefined && isNaN(minStake);
     $: cryptoLookup = client.cryptoLookup;
-    $: console.log("Cryptos: ", $cryptoLookup);
-
-    let selectedGateKey: string | undefined = undefined;
+    $: isDiamond = client.isDiamond;
+    $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
+    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
     onMount(() => {
         gateBindings = getGateBindings($cryptoLookup);
@@ -64,11 +67,6 @@
             };
         }
     });
-
-    $: isDiamond = client.isDiamond;
-    $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
-
-    $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
     function toggleScope() {
         candidate.public = !candidate.public;
@@ -193,6 +191,9 @@
                 </div>
             {:else if candidate.gate.kind === "no_gate"}
                 <div class="info">{$_("access.openAccessInfo")}</div>
+            {/if}
+            {#if candidate.gate.kind === "credential_gate"}
+                <CredentialSelector bind:gate={candidate.gate} />
             {/if}
         </div>
     </div>

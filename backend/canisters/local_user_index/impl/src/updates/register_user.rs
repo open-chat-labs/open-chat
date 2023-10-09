@@ -91,9 +91,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
-        return Err(PublicKeyInvalid(error));
-    }
+    // if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
+    //     return Err(PublicKeyInvalid(error));
+    // }
 
     if state.data.global_users.len() >= USER_LIMIT {
         return Err(UserLimitReached);

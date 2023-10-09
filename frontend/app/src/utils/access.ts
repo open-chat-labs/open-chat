@@ -1,7 +1,7 @@
 import type { AccessGate, CryptocurrencyDetails, InterpolationValues } from "openchat-client";
 
 export type GateBinding = {
-    key: string;
+    key: AccessGate["kind"];
     label: string;
     gate: AccessGate;
     enabled: boolean;
@@ -74,3 +74,30 @@ export function getGateBindings(
         nftGate,
     ];
 }
+
+export type Credential = {
+    name: string;
+    value: string;
+};
+
+export type CredentialIssuer = {
+    name: string;
+    value: string;
+    credentials: Credential[];
+};
+
+export const credentialIssuers: CredentialIssuer[] = [
+    {
+        name: "Dfinity",
+        value: "dfinity",
+        credentials: [
+            { value: "dfinity_employee", name: "Is Dfinity employee" },
+            { value: "something_else", name: "Some other thing" },
+        ],
+    },
+    {
+        name: "MODCLUB",
+        value: "modclub",
+        credentials: [{ value: "is_human", name: "Is human" }],
+    },
+];

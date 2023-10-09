@@ -327,7 +327,6 @@ import type {
     UpdatedRules,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
-    SNSAccessGate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -605,6 +604,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
         this.getCurrentUser()
             .then((user) => {
+                console.log("Loaded user: ", user);
                 switch (user.kind) {
                     case "unknown_user":
                         // TODO remove this once the principal migration can be done via the UI
@@ -1069,10 +1069,64 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    private verifyAccessGate(gate: AccessGate): Promise<unknown> {
+        if (gate.kind !== "credential_gate") return Promise.resolve();
+
+        return new Promise((resolve, _reject) => {
+            const url = new URL(this.config.internetIdentityUrl);
+            url.pathname = "vc-flow";
+            const iiWin = window.open(url);
+
+            /**
+             * TODOs - unhook the window message event handler otherwise they will pile up
+             * - add some sort of timeout otherwise we could be left hanging
+             * - would be good to add a correlation Id to the request since the response is pretty opaque
+             * - do we need to show some UI in OpenChat while this interaction is going on?
+             */
+
+            if (iiWin) {
+                iiWin.addEventListener("close", () => {
+                    resolve(undefined);
+                });
+
+                window.addEventListener("message", (ev: MessageEvent) => {
+                    // make sure that the message actually came from II
+                    if (ev.origin === url.origin) {
+                        if ("method" in ev.data) {
+                            if (ev.data.method === "vc-flow-ready") {
+                                iiWin.postMessage(
+                                    {
+                                        id: 1,
+                                        jsonrpc: "2.0",
+                                        method: "request_credential",
+                                        params: {
+                                            issuer: {
+                                                issuerOrigin: gate.issuer,
+                                                credentialId: gate.credential,
+                                            },
+                                            credentialSubject: this._identity
+                                                ?.getPrincipal()
+                                                .toString(),
+                                        },
+                                    },
+                                    url.origin,
+                                );
+                            }
+                        }
+                        if ("result" in ev.data && "verifiableRepresentation" in ev.data.result) {
+                            resolve(ev.data.result.verifiableRepresentation);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
     async joinGroup(
         chat: MultiUserChat,
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
+        const credential = await this.verifyAccessGate(chat.gate);
+        return this.sendRequest({ kind: "joinGroup", chatId: chat.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markAdded(resp.group);
@@ -3676,6 +3730,7 @@ export class OpenChat extends OpenChatAgentWorker {
             displayName,
             referralCode: this._referralCode,
         }).then((res) => {
+            console.log("register user response: ", res);
             if (res.kind === "success") {
                 this.clearReferralCode();
             }

@@ -152,14 +152,10 @@ import {
     ProposalDecisionStatus,
     ProposalRewardStatus,
     UnsupportedValueError,
-    OpenChatGovernanceCanisterId,
-    Sns1GovernanceCanisterId,
     chatIdentifiersEqual,
     CommonResponses,
     emptyChatMetrics,
     codeToText,
-    KinicGovernanceCanisterId,
-    HotOrNotGovernanceCanisterId,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
@@ -1224,6 +1220,15 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "nns_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
+    if (domain.kind === "credential_gate")
+        return [
+            {
+                VerifiedCredential: {
+                    issuer: domain.issuer,
+                    credential: domain.credential,
+                },
+            },
+        ];
     if (domain.kind === "sns_gate") {
         return [
             {
@@ -1240,6 +1245,13 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
+    if (domain.kind === "credential_gate")
+        return {
+            VerifiedCredential: {
+                issuer: domain.issuer,
+                credential: domain.credential,
+            },
+        };
     if (domain.kind === "sns_gate") {
         return {
             SnsNeuron: {
@@ -1264,6 +1276,13 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("DiamondMember" in candid) {
         return {
             kind: "diamond_gate",
+        };
+    }
+    if ("VerifiedCredential" in candid) {
+        return {
+            kind: "credential_gate",
+            issuer: candid.VerifiedCredential.issuer,
+            credential: candid.VerifiedCredential.credential,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);

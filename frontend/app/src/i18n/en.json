@@ -506,7 +506,10 @@
         "public": "Public",
         "private": "Private",
         "gate": "Access gate",
-        "credential": "Credential gate",
+        "credential": "Verified credential",
+        "credentialGateInfo": "Only users who can supply the \"{credential}\" credential from \"{issuer}\" will be allowed to join",
+        "credentialParamIssuer": "Issuer: {issuer}",
+        "credentialParamCredential": "Credential: {credential}",
         "chooseGate": "Choose an access gate",
         "diamondMember": "Diamond membership",
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",
@@ -522,7 +525,9 @@
         "optional": "Optional",
         "openAccessInfo": "There are no special access requirements to join",
         "gateCheckFailed": "Access gate not met",
-        "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members."
+        "cannotMakePublic": "You cannot make a private {level} public as that would risk the privacy of the existing members.",
+        "credentialIssuer": "Credential issuer",
+        "requiredCredential": "Required credential"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

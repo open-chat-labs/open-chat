@@ -2,6 +2,8 @@ WATCH=$1
 
 export BUILD_ENV=development
 export INTERNET_IDENTITY_URL=http://127.0.0.1:8080?canisterId=qhbym-qaaaa-aaaaa-aaafq-cai
+# export INTERNET_IDENTITY_URL=http://127.0.0.1:8080?canisterId=a4tbr-q4aaa-aaaaa-qaafq-cai
+# export INTERNET_IDENTITY_URL=http://127.0.0.1:5173?canisterId=a4tbr-q4aaa-aaaaa-qaafq-cai
 export NFID_URL=http://localhost:8080?canisterId=qhbym-qaaaa-aaaaa-aaafq-cai
 export DFX_NETWORK=local
 export DEV_PORT=5001
