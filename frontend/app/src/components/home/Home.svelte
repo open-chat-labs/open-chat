@@ -215,7 +215,7 @@
                         {
                             chatId:
                                 notification.kind === "direct_notification"
-                                    ? notification.sender
+                                    ? { kind: "direct_chat", userId: notification.them }
                                     : notification.chatId,
                         },
                         notification.messageIndex,
