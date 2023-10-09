@@ -1,8 +1,4 @@
-import type {
-    ChannelIdentifier,
-    DirectChatIdentifier,
-    GroupChatIdentifier,
-} from "../chat/chat";
+import type { ChannelIdentifier, DirectChatIdentifier, GroupChatIdentifier } from "../chat/chat";
 
 export type Notification =
     | AddedToChannelNotification
@@ -11,7 +7,10 @@ export type Notification =
     | GroupNotification
     | ChannelReaction
     | DirectReaction
-    | GroupReaction;
+    | GroupReaction
+    | ChannelMessageTipped
+    | DirectMessageTipped
+    | GroupMessageTipped;
 
 export type AddedToChannelNotification = {
     kind: "added_to_channel_notification";
@@ -119,6 +118,50 @@ export type GroupReaction = {
     addedByName: string;
     addedByDisplayName: string | undefined;
     reaction: string;
+    groupAvatarId: bigint | undefined;
+    timestamp: bigint;
+};
+
+export type ChannelMessageTipped = {
+    kind: "channel_message_tipped";
+    chatId: ChannelIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageEventIndex: number;
+    communityName: string;
+    channelName: string;
+    tippedBy: string;
+    tippedByName: string;
+    tippedByDisplayName: string | undefined;
+    tip: string;
+    communityAvatarId: bigint | undefined;
+    channelAvatarId: bigint | undefined;
+    timestamp: bigint;
+};
+
+export type DirectMessageTipped = {
+    kind: "direct_message_tipped";
+    messageIndex: number;
+    messageEventIndex: number;
+    them: DirectChatIdentifier;
+    username: string;
+    displayName: string | undefined;
+    tip: string;
+    userAvatarId: bigint | undefined;
+    timestamp: bigint;
+};
+
+export type GroupMessageTipped = {
+    kind: "group_message_tipped";
+    chatId: GroupChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageEventIndex: number;
+    groupName: string;
+    tippedBy: string;
+    tippedByName: string;
+    tippedByDisplayName: string | undefined;
+    tip: string;
     groupAvatarId: bigint | undefined;
     timestamp: bigint;
 };
