@@ -44,10 +44,6 @@ impl NervousSystems {
         }
     }
 
-    pub fn remove(&mut self, governance_canister_id: &CanisterId) -> bool {
-        self.nervous_systems.remove(governance_canister_id).is_some()
-    }
-
     pub fn exists(&self, governance_canister_id: &CanisterId) -> bool {
         self.nervous_systems.contains_key(governance_canister_id)
     }
