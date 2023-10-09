@@ -40,6 +40,8 @@ serializer = { path = "../../../libraries/serializer" }
 sha2 = { workspace = true }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
+sns_swap_canister_c2c_client = { path = "../../../external_canisters/sns_swap/c2c_client" }
+sns_wasm_canister_c2c_client = { path = "../../../external_canisters/sns_wasm/c2c_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

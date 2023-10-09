@@ -54,9 +54,9 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
-                local_user_index: self.data.local_user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
+                sns_wasm: self.data.sns_wasm_canister_id,
             },
         }
     }
@@ -68,18 +68,20 @@ struct Data {
     pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "local_user_index_canister_id")]
-    pub local_user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
+    #[serde(default = "sns_wasm_canister_id")]
+    pub sns_wasm_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub failed_sns_launches: HashSet<CanisterId>,
     pub test_mode: bool,
 }
 
-fn local_user_index_canister_id() -> CanisterId {
-    CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
+fn sns_wasm_canister_id() -> CanisterId {
+    CanisterId::from_text("qaa6y-5yaaa-aaaaa-aaafa-cai").unwrap()
 }
 
 impl Data {
@@ -87,9 +89,9 @@ impl Data {
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        local_user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
+        sns_wasm_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -97,11 +99,12 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             group_index_canister_id,
-            local_user_index_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
+            sns_wasm_canister_id,
             finished_proposals_to_process: VecDeque::new(),
             timer_jobs: TimerJobs::default(),
+            failed_sns_launches: HashSet::default(),
             test_mode,
         }
     }
@@ -137,9 +140,9 @@ pub struct NervousSystemMetrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
-    pub local_user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
+    pub sns_wasm: CanisterId,
 }
 
 // Deterministically generate each MessageId so that there is never any chance of a proposal
