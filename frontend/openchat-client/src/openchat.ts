@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import { Principal } from "@dfinity/principal";
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
@@ -4998,7 +4997,7 @@ export class OpenChat extends OpenChatAgentWorker {
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
         return this.sendRequest({
             kind: "submitProposal",
-            governanceCanisterId: Principal.fromText(governanceCanisterId),
+            governanceCanisterId,
             proposal,
         })
             .then((resp) => {

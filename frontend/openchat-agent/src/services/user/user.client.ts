@@ -1121,10 +1121,10 @@ export class UserClient extends CandidService {
         );
     }
 
-    submitProposal(governanceCanisterId: Principal, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
         return this.handleResponse(
             this.userService.submit_proposal({
-                governance_canister_id : governanceCanisterId,
+                governance_canister_id : Principal.fromText(governanceCanisterId),
                 proposal : proposalToSubmit(proposal),
             }),
             submitProposalResponse,
