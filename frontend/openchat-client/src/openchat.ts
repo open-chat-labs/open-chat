@@ -209,20 +209,13 @@ import {
     ChatUpdated,
     LoadedMessageWindow,
     LoadedNewMessages,
-    LoadedNewThreadMessages,
     LoadedPreviousMessages,
-    LoadedPreviousThreadMessages,
-    LoadedThreadMessageWindow,
     ReactionSelected,
     SelectedChatInvalid,
     SendingMessage,
-    SendingThreadMessage,
     SendMessageFailed,
     SentMessage,
-    SentThreadMessage,
     ThreadClosed,
-    ThreadUpdated,
-    ThreadReactionSelected,
     ThreadSelected,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -486,7 +479,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.refreshUpdatedEvents(serverChat, updatedEvents);
         this.loadChatDetails(serverChat);
-        this.dispatchEvent(new ChatUpdated());
+        this.dispatchEvent(new ChatUpdated({ chatId, threadRootMessageIndex: undefined }));
     }
 
     private loadedIdentity(id: Identity) {
@@ -1676,18 +1669,6 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    private dispatchReactionSelected(
-        threadRootMessageIndex: number | undefined,
-        messageId: bigint,
-        kind: "add" | "remove",
-    ): void {
-        if (threadRootMessageIndex === undefined) {
-            this.dispatchEvent(new ReactionSelected(messageId, kind));
-        } else {
-            this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
-        }
-    }
-
     selectReaction(
         chatId: ChatIdentifier,
         userId: string,
@@ -1718,7 +1699,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         }
 
-        this.dispatchReactionSelected(threadRootMessageIndex, messageId, kind);
+        this.dispatchEvent(new ReactionSelected(messageId, kind));
 
         const result = (
             kind == "add"
@@ -1789,7 +1770,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this.clearThreadEvents();
         await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-        this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex, initialLoad));
+        this.dispatchEvent(
+            new LoadedMessageWindow(
+                { chatId, threadRootMessageIndex: threadRootEvent.event.messageIndex },
+                messageIndex,
+                initialLoad,
+            ),
+        );
 
         return messageIndex;
     }
@@ -1837,9 +1824,18 @@ export class OpenChat extends OpenChatAgentWorker {
                 return undefined;
             }
 
-            await this.handleEventsResponse(clientChat, eventsResponse, false);
-
-            this.dispatchEvent(new LoadedMessageWindow(messageIndex, initialLoad));
+            if (await this.handleEventsResponse(clientChat, eventsResponse, false)) {
+                this.dispatchEvent(
+                    new LoadedMessageWindow(
+                        {
+                            chatId: clientChat.id,
+                            threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+                        },
+                        messageIndex,
+                        initialLoad,
+                    ),
+                );
+            }
 
             return messageIndex;
         }
@@ -1849,14 +1845,14 @@ export class OpenChat extends OpenChatAgentWorker {
         chat: ChatSummary,
         resp: EventsResponse<ChatEvent>,
         keepCurrentEvents = true,
-    ): Promise<void> {
-        if (resp === "events_failed") return;
+    ): Promise<boolean> {
+        if (resp === "events_failed") return false;
 
         if (!keepCurrentEvents) {
             clearServerEvents(chat.id);
             chatStateStore.setProp(chat.id, "userGroupKeys", new Set<string>());
         } else if (!isContiguous(chat.id, resp.events)) {
-            return;
+            return false;
         }
 
         const userIds = userIdsFromEvents(resp.events);
@@ -1871,6 +1867,8 @@ export class OpenChat extends OpenChatAgentWorker {
             this._liveState.userStore,
             this.config.meteredApiKey,
         );
+
+        return true;
     }
 
     private async updateUserStoreFromCommunityState(id: CommunityIdentifier): Promise<void> {
@@ -2191,9 +2189,11 @@ export class OpenChat extends OpenChatAgentWorker {
             );
 
             if (ascending) {
-                this.dispatchEvent(new LoadedNewThreadMessages());
+                this.dispatchEvent(new LoadedNewMessages({ chatId, threadRootMessageIndex }));
             } else {
-                this.dispatchEvent(new LoadedPreviousThreadMessages(initialLoad));
+                this.dispatchEvent(
+                    new LoadedPreviousMessages({ chatId, threadRootMessageIndex }, initialLoad),
+                );
             }
         }
     }
@@ -2333,10 +2333,14 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        await this.handleEventsResponse(serverChat, eventsResponse);
-
-        this.dispatchEvent(new LoadedPreviousMessages(initialLoad));
-        return;
+        if (await this.handleEventsResponse(serverChat, eventsResponse)) {
+            this.dispatchEvent(
+                new LoadedPreviousMessages(
+                    { chatId, threadRootMessageIndex: threadRootEvent?.event.messageIndex },
+                    initialLoad,
+                ),
+            );
+        }
     }
 
     private loadEvents(
@@ -2428,7 +2432,12 @@ export class OpenChat extends OpenChatAgentWorker {
             );
         }
 
-        this.dispatchEvent(new LoadedNewMessages());
+        this.dispatchEvent(
+            new LoadedNewMessages({
+                chatId,
+                threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+            }),
+        );
         return newLatestMessage;
     }
 
@@ -2791,16 +2800,21 @@ export class OpenChat extends OpenChatAgentWorker {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
                 mergeServerEvents(events, newEvents),
             );
-            const threadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
-            if (threadRootMessageIndex !== undefined) {
+            const selectedThreadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
+            if (selectedThreadRootMessageIndex !== undefined) {
                 const threadRootEvent = newEvents.find(
                     (e) =>
                         e.event.kind === "message" &&
-                        e.event.messageIndex === threadRootMessageIndex,
+                        e.event.messageIndex === selectedThreadRootMessageIndex,
                 );
                 if (threadRootEvent !== undefined) {
                     selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
-                    this.dispatchEvent(new ThreadUpdated());
+                    this.dispatchEvent(
+                        new ChatUpdated({
+                            chatId,
+                            threadRootMessageIndex: selectedThreadRootMessageIndex,
+                        }),
+                    );
                 }
             }
         } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
@@ -3165,17 +3179,12 @@ export class OpenChat extends OpenChatAgentWorker {
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
     ) {
-        if (threadRootMessageIndex !== undefined) {
-            this.dispatchEvent(new SendingThreadMessage());
-        } else {
-            this.dispatchEvent(new SendingMessage());
-        }
+        const context = { chatId: chat.id, threadRootMessageIndex };
+        this.dispatchEvent(new SendingMessage(context));
 
         // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
         // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
         window.setTimeout(() => {
-            const context = { chatId: chat.id, threadRootMessageIndex };
-
             unconfirmed.add(context, messageEvent);
             failedMessagesStore.delete(context, messageEvent.event.messageId);
 
@@ -3195,11 +3204,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
-                if (threadRootMessageIndex !== undefined) {
-                    this.dispatchEvent(new SentThreadMessage(messageEvent));
-                } else {
-                    this.dispatchEvent(new SentMessage());
-                }
+                this.dispatchEvent(new SentMessage(context, messageEvent));
             });
         }, 0);
     }
@@ -3401,7 +3406,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const kind = message.added ? "add" : "remove";
 
         if (matchingMessage !== undefined) {
-            this.dispatchReactionSelected(message.threadRootMessageIndex, message.messageId, kind);
+            this.dispatchEvent(new ReactionSelected(message.messageId, kind));
 
             localMessageUpdates.markReaction(message.messageId, {
                 reaction: message.reaction,
@@ -3495,11 +3500,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const context = { chatId, threadRootMessageIndex };
 
-        if (threadRootMessageIndex !== undefined) {
-            this.dispatchEvent(new SendingThreadMessage());
-        } else {
-            this.dispatchEvent(new SendingMessage());
-        }
+        this.dispatchEvent(new SendingMessage(context));
 
         window.setTimeout(() => {
             unconfirmed.add(context, {
@@ -3511,17 +3512,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 },
             });
 
-            if (threadRootMessageIndex !== undefined) {
-                this.dispatchEvent(new SentThreadMessage(message.messageEvent));
-            } else {
-                this.dispatchEvent(new SentMessage());
-            }
-
-            // since we will only get here if we actually have the thread open
-            // we should mark read up to this message too
-            if (threadRootMessageIndex !== undefined) {
-                this.markThreadRead(chatId, threadRootMessageIndex, messageIndex);
-            }
+            this.dispatchEvent(new SentMessage(context, message.messageEvent));
         }, 0);
     }
 

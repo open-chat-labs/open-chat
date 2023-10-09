@@ -1,14 +1,8 @@
-import type { EventWrapper, Message } from "openchat-shared";
+import type { EventWrapper, Message, MessageContext } from "openchat-shared";
 
-export class LoadedNewMessages extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class LoadedNewThreadMessages extends Event {
-    constructor() {
-        super("openchat_event");
+export class LoadedNewMessages extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", { detail: context });
     }
 }
 
@@ -18,15 +12,12 @@ export class SendMessageFailed extends CustomEvent<boolean> {
     }
 }
 
-export class LoadedPreviousMessages extends CustomEvent<boolean> {
-    constructor(initialising: boolean) {
-        super("openchat_event", { detail: initialising });
-    }
-}
-
-export class LoadedPreviousThreadMessages extends CustomEvent<boolean> {
-    constructor(initialising: boolean) {
-        super("openchat_event", { detail: initialising });
+export class LoadedPreviousMessages extends CustomEvent<{
+    context: MessageContext;
+    initializing: boolean;
+}> {
+    constructor(context: MessageContext, initializing: boolean) {
+        super("openchat_event", { detail: { context, initializing } });
     }
 }
 
@@ -36,66 +27,34 @@ export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "ad
     }
 }
 
-export class ThreadReactionSelected extends CustomEvent<{
-    messageId: bigint;
-    kind: "add" | "remove";
+export class SendingMessage extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", { detail: context });
+    }
+}
+
+export class SentMessage extends CustomEvent<{
+    context: MessageContext;
+    event: EventWrapper<Message>;
 }> {
-    constructor(messageId: bigint, kind: "add" | "remove") {
-        super("openchat_event", { detail: { messageId, kind } });
-    }
-}
-
-export class ThreadUpdated extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class SentMessage extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class SendingMessage extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
-    constructor(event: EventWrapper<Message>) {
-        super("openchat_event", { detail: event });
-    }
-}
-
-export class SendingThreadMessage extends Event {
-    constructor() {
-        super("openchat_event");
-    }
-}
-
-export class LoadedThreadMessageWindow extends CustomEvent<{
-    messageIndex: number;
-    initialLoad: boolean;
-}> {
-    constructor(messageIndex: number, initialLoad: boolean) {
-        super("openchat_event", { detail: { messageIndex, initialLoad } });
+    constructor(context: MessageContext, event: EventWrapper<Message>) {
+        super("openchat_event", { detail: { context, event } });
     }
 }
 
 export class LoadedMessageWindow extends CustomEvent<{
+    context: MessageContext;
     messageIndex: number;
     initialLoad: boolean;
 }> {
-    constructor(messageIndex: number, initialLoad: boolean) {
-        super("openchat_event", { detail: { messageIndex, initialLoad } });
+    constructor(context: MessageContext, messageIndex: number, initialLoad: boolean) {
+        super("openchat_event", { detail: { context, messageIndex, initialLoad } });
     }
 }
 
-export class ChatUpdated extends Event {
-    constructor() {
-        super("openchat_event");
+export class ChatUpdated extends CustomEvent<MessageContext> {
+    constructor(context: MessageContext) {
+        super("openchat_event", { detail: context });
     }
 }
 
@@ -108,12 +67,6 @@ export class ChatsUpdated extends Event {
 export class SelectedChatInvalid extends Event {
     constructor() {
         super("openchat_event");
-    }
-}
-
-export class ThreadMessagesLoaded extends CustomEvent<boolean> {
-    constructor(ascending: boolean) {
-        super("openchat_event", { detail: ascending });
     }
 }
 
