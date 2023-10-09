@@ -264,11 +264,7 @@ function notificationPath(n: Notification): string {
 
         case "direct_reaction":
         case "direct_message_tipped":
-            return routeForMessage(
-                "direct_chat",
-                { chatId: { kind: "direct_chat", userId: n.them } },
-                n.messageIndex,
-            );
+            return routeForMessage("direct_chat", { chatId: n.chatId }, n.messageIndex);
 
         case "group_notification":
             return routeForMessageContext("group_chat", {
