@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support submitting proposals from within OpenChat ([#4486](https://github.com/open-chat-labs/open-chat/pull/4486))
 - Make ProposalsBot able to stake neurons for submitting proposals ([#4493](https://github.com/open-chat-labs/open-chat/pull/4493))
+- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
 
 ### Changed
 
