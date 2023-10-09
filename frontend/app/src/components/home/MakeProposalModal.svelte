@@ -17,7 +17,6 @@
     import Select from "../Select.svelte";
     import Radio from "../Radio.svelte";
     import { isPrincipalValid } from "../../utils/sns";
-    import { Principal } from "@dfinity/principal";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import Markdown from "./Markdown.svelte";
@@ -123,7 +122,7 @@
                 ? { kind: selectedProposalType }
                 : {
                       kind: selectedProposalType,
-                      to: Principal.fromText(recipient),
+                      toPrincipal: recipient,
                       amount: BigInt(amount),
                       treasury,
                   };
