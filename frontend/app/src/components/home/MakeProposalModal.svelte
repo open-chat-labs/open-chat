@@ -106,10 +106,10 @@
     function onClickPrimary() {
         if (step === 0) {
             balanceWithRefresh.refresh();
+        } else if (canSubmit) {
+            onSubmit();
         } else if (step === 1) {
             step = 2;
-        } else if (step === 2) {
-            onSubmit();
         }
     }
 

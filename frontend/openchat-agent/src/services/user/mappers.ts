@@ -1079,7 +1079,6 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
                 treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null }
             }};
     }
-    throw new Error("Unexpected proposal action");
 }
 
 export function submitProposalResponse(candid: ApiSubmitProposalResponse): SubmitProposalResponse {

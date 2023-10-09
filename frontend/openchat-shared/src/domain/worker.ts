@@ -139,7 +139,6 @@ import type {
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
-import type { Principal } from "@dfinity/principal";
 import type { CandidateProposal } from "./proposals";
 /**
  * Worker request types
@@ -1326,7 +1325,7 @@ type FollowThread = {
 };
 
 type SubmitProposal = {
-    governanceCanisterId: Principal;
+    governanceCanisterId: string;
     proposal: CandidateProposal;
     kind: "submitProposal";
 };

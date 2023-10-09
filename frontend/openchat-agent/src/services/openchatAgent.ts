@@ -2548,7 +2548,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    submitProposal(governanceCanisterId: Principal, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
         return this.userClient.submitProposal(governanceCanisterId, proposal);
     }    
 }
