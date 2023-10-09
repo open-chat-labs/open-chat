@@ -213,10 +213,7 @@
                 ) {
                     return client.isMessageRead(
                         {
-                            chatId:
-                                notification.kind === "direct_notification"
-                                    ? notification.sender
-                                    : notification.chatId,
+                            chatId: notification.chatId
                         },
                         notification.messageIndex,
                         undefined

@@ -6,12 +6,22 @@ import {
 } from "openchat-agent";
 import type {
     Notification,
-    DirectChatIdentifier,
     ChannelIdentifier,
     CryptoTransferDetails,
+    DirectNotification,
+    DirectReaction,
+    DirectMessageTipped,
+    GroupNotification,
+    GroupReaction,
+    GroupMessageTipped,
+    ChannelNotification,
+    ChannelReaction,
+    ChannelMessageTipped,
+    AddedToChannelNotification,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
+    isMessageNotification,
     routeForMessage,
     routeForMessageContext,
     routeForChatIdentifier,
@@ -123,184 +133,82 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     let image = undefined;
     let title: string;
     let body: string;
-    let path: string;
-    let tag: string;
-    let timestamp: number;
 
-    // If true, we close existing notifications where the `path` matches, this ensures this new notification will
-    // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
-    // notification will be silent
-    let closeExistingNotifications = false;
-    if (n.kind === "direct_notification") {
-        const chatId: DirectChatIdentifier = {
-            kind: "direct_chat",
-            userId: n.sender.userId,
-        };
-        title = n.senderDisplayName ?? n.senderName;
-        body = messageText(n.messageText, n.messageType, n.cryptoTransfer);
-        if (n.senderAvatarId !== undefined) {
-            icon = avatarUrl(n.sender.userId, n.senderAvatarId);
-        } else if (n.messageType === "File") {
-            icon = FILE_ICON;
-        }
-        image = n.imageUrl;
-        path = routeForChatIdentifier("direct_chat", chatId);
-        tag = n.sender.userId;
-        timestamp = Number(n.timestamp);
-        closeExistingNotifications = true;
-    } else if (n.kind === "group_notification") {
-        title = n.groupName;
-        body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
-            n.messageText,
-            n.messageType,
-            n.cryptoTransfer,
-        )}`;
-        if (n.groupAvatarId !== undefined) {
-            icon = avatarUrl(n.chatId.groupId, n.groupAvatarId);
-        } else if (n.messageType === "File") {
-            icon = FILE_ICON;
-        }
-        image = n.imageUrl;
-        path = routeForMessageContext("group_chat", {
-            chatId: n.chatId,
-            threadRootMessageIndex: n.threadRootMessageIndex,
-        });
-        tag = n.chatId.groupId;
-        if (n.threadRootMessageIndex !== undefined) {
-            tag += `_${n.threadRootMessageIndex}`;
-        }
-        timestamp = Number(n.timestamp);
-        closeExistingNotifications = true;
-    } else if (n.kind === "channel_notification") {
-        title = `${n.communityName} / ${n.channelName}`;
-        body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
-            n.messageText,
-            n.messageType,
-            n.cryptoTransfer,
-        )}`;
-        if (n.channelAvatarId !== undefined) {
-            icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
-        } else if (n.communityAvatarId !== undefined) {
-            icon = avatarUrl(n.chatId.communityId, n.communityAvatarId);
-        } else if (n.messageType === "File") {
-            icon = FILE_ICON;
-        }
-        image = n.imageUrl;
-        path = routeForMessageContext("community", {
-            chatId: n.chatId,
-            threadRootMessageIndex: n.threadRootMessageIndex,
-        });
-        tag = `${n.chatId.communityId}_${n.chatId.channelId}}`;
-        if (n.threadRootMessageIndex !== undefined) {
-            tag += `_${n.threadRootMessageIndex}`;
-        }
-        timestamp = Number(n.timestamp);
-        closeExistingNotifications = true;
-    } else if (n.kind === "direct_reaction") {
-        title = n.username;
-        body = `${n.displayName ?? n.username} reacted '${n.reaction}' to your message`;
+    if (isDirectNotification(n)) {
+        title = n.displayName ?? n.username;
         if (n.userAvatarId !== undefined) {
-            icon = avatarUrl(n.them.userId, n.userAvatarId);
+            icon = avatarUrl(n.chatId.userId, n.userAvatarId);
         }
-        path = routeForMessage("direct_chat", { chatId: n.them }, n.messageIndex);
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "channel_reaction") {
-        title = `${n.communityName} / ${n.channelName}`;
-        body = `${n.addedByDisplayName ?? n.addedByName} reacted '${n.reaction}' to your message`;
-        if (n.channelAvatarId !== undefined) {
-            icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
-        } else if (n.communityAvatarId !== undefined) {
-            icon = avatarUrl(n.chatId.communityId, n.communityAvatarId);
+
+        if (n.kind === "direct_notification") {
+            body = messageText(n.messageText, n.messageType, n.cryptoTransfer);
+            image = n.imageUrl;
+        } else if (n.kind === "direct_reaction") {
+            body = `${n.displayName ?? n.username} reacted '${n.reaction}' to your message`;
+        } else {
+            body = `${n.displayName ?? n.username} tipped your message ${n.tip}`;
         }
-        path = routeForMessage(
-            "community",
-            {
-                chatId: n.chatId,
-                threadRootMessageIndex: n.threadRootMessageIndex,
-            },
-            n.messageIndex,
-        );
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "group_reaction") {
+    } else if (isGroupNotification(n)) {
         title = n.groupName;
-        body = `${n.addedByDisplayName ?? n.addedByName} reacted '${n.reaction}' to your message`;
         if (n.groupAvatarId !== undefined) {
             icon = avatarUrl(n.chatId.groupId, n.groupAvatarId);
         }
-        path = routeForMessage(
-            "group_chat",
-            {
-                chatId: n.chatId,
-                threadRootMessageIndex: n.threadRootMessageIndex,
-            },
-            n.messageIndex,
-        );
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "direct_message_tipped") {
-        title = n.username;
-        body = `${n.displayName ?? n.username} tipped your message ${n.tip}`;
-        if (n.userAvatarId !== undefined) {
-            icon = avatarUrl(n.them.userId, n.userAvatarId);
+
+        if (n.kind === "group_notification") {
+            body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
+                n.messageText,
+                n.messageType,
+                n.cryptoTransfer,
+            )}`;
+            image = n.imageUrl;
+        } else if (n.kind === "group_reaction") {
+            body = `${n.addedByDisplayName ?? n.addedByName} reacted '${
+                n.reaction
+            }' to your message`;
+        } else {
+            body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
         }
-        path = routeForMessage("direct_chat", { chatId: n.them }, n.messageIndex);
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "channel_message_tipped") {
+    } else if (isChannelNotification(n)) {
         title = `${n.communityName} / ${n.channelName}`;
-        body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
         if (n.channelAvatarId !== undefined) {
             icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
         } else if (n.communityAvatarId !== undefined) {
             icon = avatarUrl(n.chatId.communityId, n.communityAvatarId);
         }
-        path = routeForMessage(
-            "community",
-            {
-                chatId: n.chatId,
-                threadRootMessageIndex: n.threadRootMessageIndex,
-            },
-            n.messageIndex,
-        );
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "group_message_tipped") {
-        title = n.groupName;
-        body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
-        if (n.groupAvatarId !== undefined) {
-            icon = avatarUrl(n.chatId.groupId, n.groupAvatarId);
+
+        if (n.kind === "channel_notification") {
+            body = `${n.senderDisplayName ?? n.senderName}: ${messageText(
+                n.messageText,
+                n.messageType,
+                n.cryptoTransfer,
+            )}`;
+            image = n.imageUrl;
+        } else if (n.kind === "channel_reaction") {
+            body = `${n.addedByDisplayName ?? n.addedByName} reacted '${
+                n.reaction
+            }' to your message`;
+        } else if (n.kind === "channel_message_tipped") {
+            body = `${n.tippedByDisplayName ?? n.tippedByName} tipped your message ${n.tip}`;
+        } else {
+            body = `${n.addedByDisplayName ?? n.addedByUsername} added you to the channel "${
+                n.channelName
+            }" in the community "${n.communityName}"`;
         }
-        path = routeForMessage(
-            "group_chat",
-            {
-                chatId: n.chatId,
-                threadRootMessageIndex: n.threadRootMessageIndex,
-            },
-            n.messageIndex,
-        );
-        tag = path;
-        timestamp = Number(n.timestamp);
-    } else if (n.kind === "added_to_channel_notification") {
-        // TODO Multi language support
-        title = `${n.communityName} / ${n.channelName}`;
-        body = `${n.addedByDisplayName ?? n.addedByUsername} added you to the channel "${
-            n.channelName
-        }" in the community "${n.communityName}"`;
-        if (n.channelAvatarId !== undefined) {
-            icon = channelAvatarUrl(n.chatId, n.channelAvatarId);
-        } else if (n.communityAvatarId !== undefined) {
-            icon = avatarUrl(n.chatId.communityId, n.communityAvatarId);
-        }
-        path = routeForChatIdentifier("none", n.chatId);
-        tag = path;
-        timestamp = Number(n.timestamp);
     } else {
         throw new UnsupportedValueError("Unexpected notification type received", n);
     }
 
-    if (closeExistingNotifications) {
+    const path = notificationPath(n);
+    const tag = path;
+
+    // If true, we close existing notifications where the `path` matches, this ensures this new notification will
+    // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
+    // notification will be silent
+    if (isMessageNotification(n)) {
+        if (icon === undefined && n.messageType === "File") {
+            icon = FILE_ICON;
+        }
+
         // We need to close any existing notifications for the same tag otherwise the new notification will not be shown
         const existing = await self.registration.getNotifications({ tag });
         existing.forEach((n) => n.close());
@@ -311,7 +219,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         icon,
         image,
         tag,
-        timestamp,
+        timestamp: Number(n.timestamp),
         data: {
             path,
             notification: n,
@@ -319,7 +227,6 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     };
 
     console.debug("PUSH: about to show notification: ", toShow, id);
-
     await self.registration.showNotification(title, toShow);
 }
 
@@ -350,11 +257,90 @@ function defaultMessage(messageType: string): string {
     }
 }
 
-function isMessageNotification(notification: Notification): boolean {
+function notificationPath(n: Notification): string {
+    switch (n.kind) {
+        case "direct_notification":
+            return routeForChatIdentifier("direct_chat", n.chatId);
+
+        case "direct_reaction":
+        case "direct_message_tipped":
+            return routeForMessage(
+                "direct_chat",
+                { chatId: { kind: "direct_chat", userId: n.them } },
+                n.messageIndex,
+            );
+
+        case "group_notification":
+            return routeForMessageContext("group_chat", {
+                chatId: n.chatId,
+                threadRootMessageIndex: n.threadRootMessageIndex,
+            });
+
+        case "group_reaction":
+        case "group_message_tipped":
+            return routeForMessage(
+                "group_chat",
+                {
+                    chatId: n.chatId,
+                    threadRootMessageIndex: n.threadRootMessageIndex,
+                },
+                n.messageIndex,
+            );
+
+        case "channel_notification":
+            return routeForMessageContext("community", {
+                chatId: n.chatId,
+                threadRootMessageIndex: n.threadRootMessageIndex,
+            });
+
+        case "channel_reaction":
+        case "channel_message_tipped":
+            return routeForMessage(
+                "community",
+                {
+                    chatId: n.chatId,
+                    threadRootMessageIndex: n.threadRootMessageIndex,
+                },
+                n.messageIndex,
+            );
+
+        case "added_to_channel_notification":
+            return routeForChatIdentifier("none", n.chatId);
+    }
+}
+
+function isDirectNotification(
+    notification: Notification,
+): notification is DirectNotification | DirectReaction | DirectMessageTipped {
+    return (
+        notification.kind === "direct_notification" ||
+        notification.kind === "direct_reaction" ||
+        notification.kind === "direct_message_tipped"
+    );
+}
+
+function isGroupNotification(
+    notification: Notification,
+): notification is GroupNotification | GroupReaction | GroupMessageTipped {
+    return (
+        notification.kind === "group_notification" ||
+        notification.kind === "group_reaction" ||
+        notification.kind === "group_message_tipped"
+    );
+}
+
+function isChannelNotification(
+    notification: Notification,
+): notification is
+    | ChannelNotification
+    | ChannelReaction
+    | ChannelMessageTipped
+    | AddedToChannelNotification {
     return (
         notification.kind === "channel_notification" ||
-        notification.kind === "direct_notification" ||
-        notification.kind === "group_notification"
+        notification.kind === "channel_reaction" ||
+        notification.kind === "channel_message_tipped" ||
+        notification.kind === "added_to_channel_notification"
     );
 }
 

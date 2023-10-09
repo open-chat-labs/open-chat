@@ -359,6 +359,7 @@ import {
     userOrUserGroupName,
     userOrUserGroupId,
     extractUserIdsFromMentions,
+    isMessageNotification,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3296,45 +3297,24 @@ export class OpenChat extends OpenChatAgentWorker {
         let chatId: ChatIdentifier;
         let threadRootMessageIndex: number | undefined = undefined;
         let eventIndex: number;
-        let isReaction = false;
         switch (notification.kind) {
-            case "channel_notification": {
+            case "direct_notification":
+            case "direct_reaction":
+            case "direct_message_tipped":
+            case "group_notification":
+            case "group_reaction":
+            case "group_message_tipped":
+            case "channel_notification":
+            case "channel_reaction":
+            case "channel_message_tipped": {
                 chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                eventIndex = notification.eventIndex;
-                break;
-            }
-            case "direct_notification": {
-                chatId = notification.sender;
-                eventIndex = notification.eventIndex;
-                break;
-            }
-            case "group_notification": {
-                chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                eventIndex = notification.eventIndex;
-                break;
-            }
-            case "channel_reaction": {
-                chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
                 eventIndex = notification.messageEventIndex;
-                isReaction = true;
+                if ("threadRootMessageIndex" in notification) {
+                    threadRootMessageIndex = notification.threadRootMessageIndex;
+                }
                 break;
             }
-            case "direct_reaction": {
-                chatId = notification.them;
-                eventIndex = notification.messageEventIndex;
-                isReaction = true;
-                break;
-            }
-            case "group_reaction": {
-                chatId = notification.chatId;
-                threadRootMessageIndex = notification.threadRootMessageIndex;
-                eventIndex = notification.messageEventIndex;
-                isReaction = true;
-                break;
-            }
+
             case "added_to_channel_notification":
                 return;
         }
@@ -3348,7 +3328,7 @@ export class OpenChat extends OpenChatAgentWorker {
             serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
         const latestClientEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
-        if (isReaction) {
+        if (!isMessageNotification(notification)) {
             // TODO first clear the existing cache entry
             return;
         }

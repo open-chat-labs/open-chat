@@ -25,144 +25,107 @@ export type AddedToChannelNotification = {
     timestamp: bigint;
 };
 
-export type ChannelNotification = {
+export type ChannelNotification = ChannelNotificationCommon & {
     kind: "channel_notification";
-    chatId: ChannelIdentifier;
     sender: string;
-    threadRootMessageIndex: number | undefined;
-    messageIndex: number;
-    eventIndex: number;
     senderName: string;
     senderDisplayName: string | undefined;
-    communityName: string;
-    channelName: string;
     messageType: string;
     messageText: string | undefined;
     imageUrl: string | undefined;
-    communityAvatarId: bigint | undefined;
-    channelAvatarId: bigint | undefined;
     cryptoTransfer: CryptoTransferDetails | undefined;
-    timestamp: bigint;
 };
 
-export type DirectNotification = {
+export type DirectNotification = DirectNotificationCommon & {
     kind: "direct_notification";
-    sender: DirectChatIdentifier;
-    messageIndex: number;
-    eventIndex: number;
-    senderName: string;
-    senderDisplayName: string | undefined;
     messageType: string;
     messageText: string | undefined;
     imageUrl: string | undefined;
-    senderAvatarId: bigint | undefined;
     cryptoTransfer: CryptoTransferDetails | undefined;
-    timestamp: bigint;
 };
 
-export type GroupNotification = {
+export type GroupNotification = GroupNotificationCommon & {
     kind: "group_notification";
     sender: string;
-    threadRootMessageIndex: number | undefined;
-    messageIndex: number;
-    eventIndex: number;
     senderName: string;
     senderDisplayName: string | undefined;
-    chatId: GroupChatIdentifier;
-    groupName: string;
     messageType: string;
     messageText: string | undefined;
     imageUrl: string | undefined;
-    groupAvatarId: bigint | undefined;
     cryptoTransfer: CryptoTransferDetails | undefined;
-    timestamp: bigint;
 };
 
-export type ChannelReaction = {
+export type ChannelReaction = ChannelNotificationCommon & {
     kind: "channel_reaction";
-    chatId: ChannelIdentifier;
-    threadRootMessageIndex: number | undefined;
-    messageIndex: number;
-    messageEventIndex: number;
-    communityName: string;
-    channelName: string;
     addedBy: string;
     addedByName: string;
     addedByDisplayName: string | undefined;
     reaction: string;
-    communityAvatarId: bigint | undefined;
-    channelAvatarId: bigint | undefined;
-    timestamp: bigint;
 };
 
-export type DirectReaction = {
+export type DirectReaction = DirectNotificationCommon & {
     kind: "direct_reaction";
-    messageIndex: number;
-    messageEventIndex: number;
-    them: DirectChatIdentifier;
-    username: string;
-    displayName: string | undefined;
     reaction: string;
-    userAvatarId: bigint | undefined;
-    timestamp: bigint;
 };
 
-export type GroupReaction = {
+export type GroupReaction = GroupNotificationCommon & {
     kind: "group_reaction";
-    chatId: GroupChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    messageIndex: number;
-    messageEventIndex: number;
-    groupName: string;
     addedBy: string;
     addedByName: string;
     addedByDisplayName: string | undefined;
     reaction: string;
+};
+
+export type ChannelMessageTipped = ChannelNotificationCommon & {
+    kind: "channel_message_tipped";
+    tippedBy: string;
+    tippedByName: string;
+    tippedByDisplayName: string | undefined;
+    tip: string;
+};
+
+export type DirectMessageTipped = DirectNotificationCommon & {
+    kind: "direct_message_tipped";
+    tip: string;
+};
+
+export type GroupMessageTipped = GroupNotificationCommon & {
+    kind: "group_message_tipped";
+    tippedBy: string;
+    tippedByName: string;
+    tippedByDisplayName: string | undefined;
+    tip: string;
+};
+
+export type DirectNotificationCommon = {
+    chatId: DirectChatIdentifier;
+    messageIndex: number;
+    messageEventIndex: number;
+    username: string;
+    displayName: string | undefined;
+    userAvatarId: bigint | undefined;
+    timestamp: bigint;
+};
+
+export type GroupNotificationCommon = {
+    chatId: GroupChatIdentifier;
+    groupName: string;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    messageEventIndex: number;
     groupAvatarId: bigint | undefined;
     timestamp: bigint;
 };
 
-export type ChannelMessageTipped = {
-    kind: "channel_message_tipped";
+export type ChannelNotificationCommon = {
     chatId: ChannelIdentifier;
     threadRootMessageIndex: number | undefined;
     messageIndex: number;
     messageEventIndex: number;
     communityName: string;
     channelName: string;
-    tippedBy: string;
-    tippedByName: string;
-    tippedByDisplayName: string | undefined;
-    tip: string;
     communityAvatarId: bigint | undefined;
     channelAvatarId: bigint | undefined;
-    timestamp: bigint;
-};
-
-export type DirectMessageTipped = {
-    kind: "direct_message_tipped";
-    messageIndex: number;
-    messageEventIndex: number;
-    them: DirectChatIdentifier;
-    username: string;
-    displayName: string | undefined;
-    tip: string;
-    userAvatarId: bigint | undefined;
-    timestamp: bigint;
-};
-
-export type GroupMessageTipped = {
-    kind: "group_message_tipped";
-    chatId: GroupChatIdentifier;
-    threadRootMessageIndex: number | undefined;
-    messageIndex: number;
-    messageEventIndex: number;
-    groupName: string;
-    tippedBy: string;
-    tippedByName: string;
-    tippedByDisplayName: string | undefined;
-    tip: string;
-    groupAvatarId: bigint | undefined;
     timestamp: bigint;
 };
 
