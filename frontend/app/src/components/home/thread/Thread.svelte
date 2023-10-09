@@ -199,7 +199,7 @@
     }
 
     function goToMessageIndex(index: number) {
-        chatEventList?.scrollToMessageIndex(chat.id, index, false);
+        chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
     function onGoToMessageIndex(
@@ -241,7 +241,6 @@
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
-    setFocusMessageIndex={(idx) => client.setFocusThreadMessageIndex(chat.id, idx)}
     footer
     {events}
     {chat}

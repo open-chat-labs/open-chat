@@ -6,23 +6,16 @@
         ChatEvent as ChatEventType,
         OpenChat,
         Mention,
-        ChatIdentifier,
+        MessageContext,
     } from "openchat-client";
     import {
         ChatUpdated,
         LoadedMessageWindow,
         LoadedNewMessages,
-        LoadedNewThreadMessages,
         LoadedPreviousMessages,
-        LoadedPreviousThreadMessages,
-        LoadedThreadMessageWindow,
         ReactionSelected,
         SendingMessage,
-        SendingThreadMessage,
         SentMessage,
-        SentThreadMessage,
-        ThreadUpdated,
-        ThreadReactionSelected,
         chatIdentifiersEqual,
         messageContextsEqual,
     } from "openchat-client";
@@ -61,7 +54,6 @@
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
-    export let setFocusMessageIndex: (index: number | undefined) => void;
     export let threadRootEvent: EventWrapper<Message> | undefined;
     export let maintainScroll: boolean;
 
@@ -244,60 +236,35 @@
 
     async function clientEvent(ev: Event): Promise<void> {
         await tick();
-        if (threadRootEvent === undefined) {
-            if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-                onLoadedNewMessages();
-            }
-            if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
-                onLoadedPreviousMessages(ev.detail);
-            }
-            if (ev instanceof LoadedMessageWindow) {
-                onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
-            }
-            if (ev instanceof ChatUpdated) {
-                loadMoreIfRequired();
-            }
-            if (ev instanceof SentMessage) {
-                afterSendMessage();
-            }
-            if (ev instanceof SendingMessage) {
-                scrollToBottomOnSend = insideBottomThreshold();
-            }
-            if (ev instanceof ReactionSelected) {
-                afterReaction(ev.detail.messageId, ev.detail.kind);
-            }
+        if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
+            onLoadedNewMessages(ev.detail);
         }
-        if (threadRootEvent !== undefined) {
-            if (ev instanceof LoadedNewThreadMessages && !scrollingToMessage) {
-                onLoadedNewMessages();
-            }
-            if (ev instanceof LoadedPreviousThreadMessages && !scrollingToMessage) {
-                onLoadedPreviousMessages(ev.detail);
-            }
-            if (ev instanceof LoadedThreadMessageWindow) {
-                onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
-            }
-            if (ev instanceof ThreadUpdated) {
-                loadMoreIfRequired();
-            }
-            if (ev instanceof SentThreadMessage) {
-                afterSendThreadMessage(threadRootEvent, ev.detail);
-            }
-            if (ev instanceof SendingThreadMessage) {
-                scrollToBottomOnSend = insideBottomThreshold();
-            }
-            if (ev instanceof ThreadReactionSelected) {
-                afterThreadReaction(ev.detail.messageId, ev.detail.kind);
-            }
+        if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
+            onLoadedPreviousMessages(ev.detail.context, ev.detail.initializing);
+        }
+        if (ev instanceof LoadedMessageWindow) {
+            onMessageWindowLoaded(ev.detail.context, ev.detail.messageIndex, ev.detail.initialLoad);
+        }
+        if (ev instanceof ChatUpdated && chatIdentifiersEqual(ev.detail, chat.id)) {
+            loadMoreIfRequired();
+        }
+        if (ev instanceof SentMessage && messageContextsEqual(ev.detail.context, messageContext)) {
+            afterSendMessage(ev.detail.context, ev.detail.event);
+        }
+        if (ev instanceof SendingMessage && messageContextsEqual(ev.detail, messageContext)) {
+            scrollToBottomOnSend = insideBottomThreshold();
+        }
+        if (ev instanceof ReactionSelected) {
+            afterReaction(ev.detail.messageId, ev.detail.kind);
         }
     }
 
     async function afterReaction(messageId: bigint, kind: "add" | "remove") {
         if (
             !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
-            chat.latestMessage?.event?.messageId === messageId &&
             kind === "add" &&
-            insideBottomThreshold()
+            insideBottomThreshold() &&
+            findLastMessage()?.messageId === messageId
         ) {
             await scrollBottom("smooth");
         }
@@ -311,34 +278,17 @@
         }
     }
 
-    async function afterThreadReaction(messageId: bigint, kind: "add" | "remove") {
-        if (
-            !client.moreNewMessagesAvailable(chat.id, threadRootEvent) &&
-            kind === "add" &&
-            insideBottomThreshold()
-        ) {
-            const lastMessage = findLastMessage();
-            if (lastMessage?.messageId === messageId) {
-                await scrollBottom("smooth");
-            }
+    async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
+        if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
+            const summary = {
+                participantIds: new Set<string>([user.userId]),
+                numberOfReplies: event.event.messageIndex + 1,
+                latestEventIndex: event.index,
+                latestEventTimestamp: event.timestamp,
+            };
+            client.markThreadSummaryUpdated(threadRootEvent.event.messageId, summary);
         }
-    }
 
-    function afterSendThreadMessage(
-        rootEvent: EventWrapper<Message>,
-        event: EventWrapper<Message>
-    ) {
-        const summary = {
-            participantIds: new Set<string>([user.userId]),
-            numberOfReplies: event.event.messageIndex + 1,
-            latestEventIndex: event.index,
-            latestEventTimestamp: event.timestamp,
-        };
-        client.markThreadSummaryUpdated(rootEvent.event.messageId, summary);
-        afterSendMessage();
-    }
-
-    async function afterSendMessage() {
         if (!client.moreNewMessagesAvailable(chat.id, threadRootEvent) && scrollToBottomOnSend) {
             await scrollBottom("smooth");
             scrollToBottomOnSend = false;
@@ -401,7 +351,7 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(chat.id, mention.messageIndex, false);
+            scrollToMessageIndex(messageContext, mention.messageIndex, false);
         }
     }
 
@@ -473,14 +423,14 @@
     }
 
     export async function scrollToMessageIndex(
-        chatId: ChatIdentifier,
+        context: MessageContext,
         index: number,
         preserveFocus: boolean,
         filling: boolean = false,
         hasLookedUpEvent: boolean = false
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
-        if (!chatIdentifiersEqual(chatId, chat.id)) return Promise.resolve();
+        if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
 
         if (index < 0) {
             setFocusMessageIndex(undefined);
@@ -493,16 +443,19 @@
         if (element) {
             setFocusMessageIndex(index);
             await scrollToElement(element);
+            if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
             if (!filling) {
                 // if we are not filling in extra events around the target then check if we need to open a thread
                 checkIfTargetMessageHasAThread(index);
             }
             if (await loadMoreIfRequired(false, true)) {
-                return scrollToMessageIndex(chatId, index, preserveFocus, true);
+                return scrollToMessageIndex(context, index, preserveFocus, true);
             } else {
                 if (!preserveFocus) {
                     window.setTimeout(() => {
-                        setFocusMessageIndex(undefined);
+                        if (messageContextsEqual(context, messageContext)) {
+                            setFocusMessageIndex(undefined);
+                        }
                     }, 200);
                 }
                 scrollingToMessage = false;
@@ -514,8 +467,8 @@
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
-                    await client.loadEventWindow(chatId, index, threadRootEvent);
-                    return scrollToMessageIndex(chatId, index, preserveFocus, filling, true);
+                    await client.loadEventWindow(context.chatId, index, threadRootEvent);
+                    return scrollToMessageIndex(context, index, preserveFocus, filling, true);
                 }
             } else {
                 // if we got here it means that we could not find the DOM element for and event that we
@@ -525,25 +478,29 @@
                 // The *next* message?, the bottom?, nowhere?
                 const nextMessage = findElementWithMessageIndex(index + 1);
                 return nextMessage
-                    ? scrollToMessageIndex(chatId, index + 1, preserveFocus, filling)
+                    ? scrollToMessageIndex(context, index + 1, preserveFocus, filling)
                     : scrollBottom();
             }
         }
     }
 
     export async function onMessageWindowLoaded(
+        context: MessageContext,
         messageIndex: number | undefined,
         initialLoad = false
     ) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
+        if (!messageContextsEqual(context, messageContext)) return;
         initialised = true;
-        await scrollToMessageIndex(chat.id, messageIndex, false);
+        await scrollToMessageIndex(context, messageIndex, false);
     }
 
-    async function onLoadedPreviousMessages(initialLoad: boolean) {
+    async function onLoadedPreviousMessages(context: MessageContext, initialLoad: boolean) {
         await tick();
+        if (!messageContextsEqual(context, messageContext)) return;
         await resetScroll(initialLoad);
+        if (!messageContextsEqual(context, messageContext)) return;
         if (reverseScroll) {
             // Seems like we *must* interrupt the scroll to stop runaway loading
             // even though we do not need to do any adjustment of the scrollTop in this direction.
@@ -557,8 +514,9 @@
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
-    async function onLoadedNewMessages() {
+    async function onLoadedNewMessages(context: MessageContext) {
         await tick();
+        if (!messageContextsEqual(context, messageContext)) return;
 
         if (reverseScroll) {
             await adjustScrollTopIfNecessary(false, false);
@@ -637,16 +595,18 @@
         loadMoreIfRequired(true);
     }
 
-    async function loadIndexThenScrollToBottom(messageIndex: number) {
-        await scrollToMessageIndex(chat.id, messageIndex, false);
-        await scrollBottom();
+    async function loadIndexThenScrollToBottom(context: MessageContext, messageIndex: number) {
+        await scrollToMessageIndex(context, messageIndex, false);
+        if (messageContextsEqual(context, messageContext)) {
+            await scrollBottom();
+        }
     }
 
     function scrollToLast() {
         if (threadSummary !== undefined) {
-            loadIndexThenScrollToBottom(threadSummary.numberOfReplies - 1);
+            loadIndexThenScrollToBottom(messageContext, threadSummary.numberOfReplies - 1);
         } else {
-            loadIndexThenScrollToBottom(chat.latestMessage?.event.messageIndex ?? -1);
+            loadIndexThenScrollToBottom(messageContext, chat.latestMessage?.event.messageIndex ?? -1);
         }
     }
 
@@ -657,6 +617,14 @@
         scrollTimeout = window.setTimeout(() => {
             eventListScrolling.set(false);
         }, delay);
+    }
+
+    function setFocusMessageIndex(messageIndex: number | undefined) {
+        if (threadRootEvent === undefined) {
+            client.setFocusMessageIndex(chat.id, messageIndex);
+        } else {
+            client.setFocusThreadMessageIndex(chat.id, messageIndex);
+        }
     }
 </script>
 
