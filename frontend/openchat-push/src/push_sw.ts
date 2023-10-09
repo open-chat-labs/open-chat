@@ -137,7 +137,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     if (isDirectNotification(n)) {
         title = n.displayName ?? n.username;
         if (n.userAvatarId !== undefined) {
-            icon = avatarUrl(n.them, n.userAvatarId);
+            icon = avatarUrl(n.chatId.userId, n.userAvatarId);
         }
 
         if (n.kind === "direct_notification") {
