@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
 
+### Changed
+
+- Add logging around submitting proposals ([#4538](https://github.com/open-chat-labs/open-chat/pull/4538))
+
 ### Removed
 
 - Remove `add_governance_canister` since it is now automated ([#4532](https://github.com/open-chat-labs/open-chat/pull/4532))

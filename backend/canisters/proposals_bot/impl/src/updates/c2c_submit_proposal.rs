@@ -8,6 +8,7 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds};
+use tracing::{error, info};
 use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use utils::time::SECOND_IN_MS;
@@ -30,7 +31,10 @@ async fn c2c_submit_proposal(args: Args) -> Response {
     let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
         Ok(u) => u,
         Err(LookupUserError::UserNotFound) => unreachable!(),
-        Err(LookupUserError::InternalError(error)) => return InternalError(error),
+        Err(LookupUserError::InternalError(error)) => {
+            error!(error = error.as_str(), %caller, "Failed to lookup user");
+            return InternalError(error);
+        }
     };
 
     let proposal = prepare_proposal(args.proposal, user_id, username, chat);
@@ -106,20 +110,26 @@ pub(crate) async fn submit_proposal(
             if let Some(command) = response.command {
                 return match command {
                     manage_neuron_response::Command::MakeProposal(p) => {
+                        let proposal_id = p.proposal_id.unwrap().id;
                         mutate_state(|state| {
                             state.data.nervous_systems.record_user_submitted_proposal(
                                 governance_canister_id,
                                 user_id,
-                                p.proposal_id.unwrap().id,
+                                proposal_id,
                             )
                         });
+                        info!(proposal_id, %user_id, "Proposal submitted");
                         Success
                     }
-                    manage_neuron_response::Command::Error(error) => InternalError(format!("{error:?}")),
+                    manage_neuron_response::Command::Error(error) => {
+                        error!(?error, %user_id, "Failed to submit proposal");
+                        InternalError(format!("{error:?}"))
+                    }
                     _ => unreachable!(),
                 };
             }
-            InternalError("Response command was empty".to_string())
+            error!(%user_id, "Failed to submit proposal, response was empty");
+            InternalError("Empty response from `manage_neuron`".to_string())
         }
         Err(error) => {
             mutate_state(|state| {
