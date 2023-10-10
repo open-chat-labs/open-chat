@@ -28,7 +28,6 @@
     const MAX_URL_LENGTH = 2000;
     const MIN_SUMMARY_LENGTH = 3;
     const MAX_SUMMARY_LENGTH = 5000;
-    const MIN_AMOUNT = 1;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -42,7 +41,7 @@
     let url = "";
     let summary = "";
     let treasury: Treasury = "SNS";
-    let amount = "";
+    let amountText = "";
     let recipient = "";
     let step = -1;
     let actualWidth = 0;
@@ -63,8 +62,8 @@
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFee;
-    $: requiredFunds = proposalCost + transferFees + transferFees;
+    $: transferFee = tokenDetails.transferFee;
+    $: requiredFunds = proposalCost + transferFee + transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -72,7 +71,8 @@
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
-    $: amountValid = isAmountValid(amount);
+    $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
+    $: amountValid = amount >= transferFee;
     $: recipientValid = isPrincipalValid(recipient);
     $: valid =
         !insufficientFunds &&
@@ -97,11 +97,6 @@
         dispatch("close");
     }
 
-    function isAmountValid(value: string): boolean {
-        const amount = Number(value);
-        return amount >= MIN_AMOUNT;
-    }
-
     function onClickPrimary() {
         if (step === 0) {
             balanceWithRefresh.refresh();
@@ -123,7 +118,7 @@
                 : {
                       kind: selectedProposalType,
                       toPrincipal: recipient,
-                      amount: BigInt(amount),
+                      amount: BigInt(Math.floor(amount)),
                       treasury,
                   };
 
@@ -318,10 +313,10 @@
                             required />
                         <Input
                             disabled={busy}
-                            invalid={amount.length > 0 && !amountValid}
+                            invalid={amountText.length > 0 && !amountValid}
                             minlength={1}
                             maxlength={20}
-                            bind:value={amount}
+                            bind:value={amountText}
                             placeholder={$_("proposal.maker.enterAmount", {
                                 values: { token },
                             })} />
