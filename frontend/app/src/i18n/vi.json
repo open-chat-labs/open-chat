@@ -860,7 +860,16 @@
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
         "snsHolder": "người giữ nơ ron {token}",
-        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia"
+        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia",
+        "initiateCredentialCheck": "Xác minh thông tin xác thực",
+        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\" từ nhà phát hành \"{issuer}\"",
+        "verify": "Xác minh",
+        "credential": "Thông tin xác thực đã được xác minh",
+        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ \"{issuer}\" mới được phép tham gia",
+        "credentialParamIssuer": "Nhà phát hành: {issuer}",
+        "credentialParamCredential": "Thông tin xác thực: {credential}",
+        "credentialIssuer": "Nhà phát hành chứng chỉ",
+        "requiredCredential": "Thông tin xác thực bắt buộc"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",

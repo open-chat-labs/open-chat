@@ -859,7 +859,16 @@
         "gateCheckFailed": "Porte d'accès non rencontrée",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "snsHolder": "support de neurone {token}",
-        "snsHolderInfo": "Seuls les détenteurs de {token} neurones seront autorisés à rejoindre"
+        "snsHolderInfo": "Seuls les détenteurs de {token} neurones seront autorisés à rejoindre",
+        "initiateCredentialCheck": "Vérifier les informations d'identification",
+        "credentialCheckMessage": "Pour rejoindre ce {level}, vous devez vérifier les informations d'identification \"{credential}\" de l'émetteur \"{issuer}\".",
+        "verify": "Vérifier",
+        "credential": "Titre vérifié",
+        "credentialGateInfo": "Seuls les utilisateurs pouvant fournir les identifiants « {credential} » de « {issuer} » seront autorisés à rejoindre",
+        "credentialParamIssuer": "Émetteur : {issuer}",
+        "credentialParamCredential": "Identifiant : {credential}",
+        "credentialIssuer": "Émetteur de titres de compétences",
+        "requiredCredential": "Titre requis"
     },
     "communities": {
         "explore": "Explorer les communautés",

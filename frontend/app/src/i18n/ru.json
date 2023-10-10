@@ -859,7 +859,16 @@
         "gateCheckFailed": "Въездные ворота не выполнены",
         "cannotMakePublic": "Вы не можете сделать закрытый {level} общедоступным, так как это поставит под угрозу конфиденциальность существующих участников.",
         "snsHolder": "{token} держатель нейрона",
-        "snsHolderInfo": "Присоединиться смогут только владельцы {token} нейронов."
+        "snsHolderInfo": "Присоединиться смогут только владельцы {token} нейронов.",
+        "initiateCredentialCheck": "Подтвердить учетные данные",
+        "credentialCheckMessage": "Чтобы присоединиться к этому {level}, вам необходимо подтвердить учетные данные \"{credential}\" от эмитента \"{issuer}\".",
+        "verify": "Проверять",
+        "credential": "Проверенные учетные данные",
+        "credentialGateInfo": "Присоединиться смогут только пользователи, которые могут предоставить учетные данные «{credential}» из «{issuer}».",
+        "credentialParamIssuer": "Эмитент: {issuer}",
+        "credentialParamCredential": "Учетные данные: {credential}",
+        "credentialIssuer": "Эмитент учетных данных",
+        "requiredCredential": "Требуемые учетные данные"
     },
     "communities": {
         "explore": "Исследуйте сообщества",

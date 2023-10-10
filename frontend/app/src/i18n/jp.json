@@ -860,7 +860,16 @@
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
         "snsHolder": "{token} ニューロン ホルダー",
-        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます"
+        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます",
+        "initiateCredentialCheck": "資格情報の検証",
+        "credentialCheckMessage": "この {level} に参加するには、発行者「{credential}」からの「{issuer}」資格情報を確認する必要があります。",
+        "verify": "確認する",
+        "credential": "検証された資格情報",
+        "credentialGateInfo": "「{credential}」から「{issuer}」認証情報を提供できるユーザーのみが参加を許可されます",
+        "credentialParamIssuer": "発行者: {issuer}",
+        "credentialParamCredential": "資格情報: {credential}",
+        "credentialIssuer": "資格情報の発行者",
+        "requiredCredential": "必要な資格情報"
     },
     "communities": {
         "explore": "コミュニティを探索する",

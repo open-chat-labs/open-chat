@@ -857,7 +857,16 @@
         "gateCheckFailed": "שער הגישה לא נפגש",
         "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
         "snsHolder": "מחזיק נוירון {token}",
-        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף"
+        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף",
+        "initiateCredentialCheck": "אמת את האישור",
+        "credentialCheckMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לאמת את האישור \"{credential}\" מהמנפיק \"{issuer}\"",
+        "verify": "תאשר",
+        "credential": "אישור מאומת",
+        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-\"{issuer}\" יורשו להצטרף",
+        "credentialParamIssuer": "מנפיק: {issuer}",
+        "credentialParamCredential": "אישור: {credential}",
+        "credentialIssuer": "מנפיק אישורים",
+        "requiredCredential": "אישור נדרש"
     },
     "communities": {
         "explore": "חקור קהילות",

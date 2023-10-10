@@ -861,7 +861,16 @@
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "cannotMakePublic": "No puede hacer público un {level} privado, ya que eso pondría en riesgo la privacidad de los miembros existentes.",
         "snsHolder": "{token} titular de la neurona",
-        "snsHolderInfo": "Solo los titulares de {token} neuronas podrán unirse"
+        "snsHolderInfo": "Solo los titulares de {token} neuronas podrán unirse",
+        "initiateCredentialCheck": "Verificar credencial",
+        "credentialCheckMessage": "Para unirse a este {level}, debe verificar la credencial \"{credential}\" del emisor \"{issuer}\"",
+        "verify": "Verificar",
+        "credential": "Credencial verificada",
+        "credentialGateInfo": "Solo los usuarios que puedan proporcionar la credencial \"{credential}\" de \"{issuer}\" podrán unirse",
+        "credentialParamIssuer": "Emisor: {issuer}",
+        "credentialParamCredential": "Credencial: {credential}",
+        "credentialIssuer": "Emisor de credenciales",
+        "requiredCredential": "Credencial requerida"
     },
     "communities": {
         "explore": "Explora comunidades",
