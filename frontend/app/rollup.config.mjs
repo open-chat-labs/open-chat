@@ -335,17 +335,7 @@ export default {
                                     .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
-                            <template id="profile-link-template">
-                                <style>
-                                    .profile-link {
-                                        cursor: pointer;
-                                        font-weight: 700;
-                                        text-decoration: underline;
-                                    }
-                                </style>
-                                <strong class="profile-link"></strong>
-                            </template>
-
+                            <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
                             <body></body>
                         </html>
                     `;
