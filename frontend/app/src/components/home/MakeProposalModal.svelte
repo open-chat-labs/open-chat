@@ -41,7 +41,7 @@
     let url = "";
     let summary = "";
     let treasury: Treasury = "SNS";
-    let amount = "";
+    let amountText = "";
     let recipient = "";
     let step = -1;
     let actualWidth = 0;
@@ -71,8 +71,8 @@
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
-    $: amountE8s = Number(amount) * Number(Math.pow(10, tokenDetails.decimals));
-    $: amountValid = amountE8s >= transferFee;
+    $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
+    $: amountValid = amount >= transferFee;
     $: recipientValid = isPrincipalValid(recipient);
     $: valid =
         !insufficientFunds &&
@@ -118,7 +118,7 @@
                 : {
                       kind: selectedProposalType,
                       toPrincipal: recipient,
-                      amount: BigInt(Math.floor(amountE8s)),
+                      amount: BigInt(Math.floor(amount)),
                       treasury,
                   };
 
@@ -313,10 +313,10 @@
                             required />
                         <Input
                             disabled={busy}
-                            invalid={amount.length > 0 && !amountValid}
+                            invalid={amountText.length > 0 && !amountValid}
                             minlength={1}
                             maxlength={20}
-                            bind:value={amount}
+                            bind:value={amountText}
                             placeholder={$_("proposal.maker.enterAmount", {
                                 values: { token },
                             })} />
