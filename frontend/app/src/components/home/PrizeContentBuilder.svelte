@@ -59,6 +59,7 @@
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
+    $: minAmount = BigInt(100) * BigInt(numberOfWinners) * transferFees;
     $: valid = error === undefined && validAmount && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
@@ -229,6 +230,7 @@
                             autofocus={!multiUserChat}
                             bind:valid={validAmount}
                             transferFees={totalFees}
+                            {minAmount}
                             maxAmount={maxAmount(cryptoBalance)}
                             bind:amount={draftAmount} />
                     </div>

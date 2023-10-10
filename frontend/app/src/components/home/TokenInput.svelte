@@ -10,6 +10,7 @@
 
     export let amount: bigint = BigInt(0);
     export let autofocus: boolean = false;
+    export let minAmount: bigint = BigInt(0);
     export let maxAmount: bigint;
     export let ledger: string;
     export let valid: boolean = false;
@@ -59,7 +60,7 @@
     }
 
     function validate() {
-        if (amount <= 0 || amount > maxAmount) {
+        if (amount === BigInt(0) || amount < minAmount || amount > maxAmount) {
             valid = false;
         } else {
             valid = true;
