@@ -1,4 +1,4 @@
-use crate::timer_job_types::{SubmitProposalJob, TimerJob};
+use crate::timer_job_types::{LookupUserThenSubmitProposalJob, SubmitProposalJob, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -28,18 +28,15 @@ async fn c2c_submit_proposal(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
-        Ok(u) => u,
-        Err(LookupUserError::UserNotFound) => unreachable!(),
-        Err(LookupUserError::InternalError(error)) => {
-            error!(error = error.as_str(), %caller, "Failed to lookup user");
-            return InternalError(error);
-        }
-    };
-
-    let proposal = prepare_proposal(args.proposal, user_id, username, chat);
-
-    submit_proposal(user_id, args.governance_canister_id, neuron_id, proposal).await
+    lookup_user_then_submit_proposal(
+        caller,
+        user_index_canister_id,
+        neuron_id,
+        chat,
+        args.governance_canister_id,
+        args.proposal,
+    )
+    .await
 }
 
 struct PrepareResult {
@@ -90,6 +87,41 @@ fn prepare_proposal(
     proposal
 }
 
+pub(crate) async fn lookup_user_then_submit_proposal(
+    caller: Principal,
+    user_index_canister_id: CanisterId,
+    neuron_id: SnsNeuronId,
+    chat: MultiUserChat,
+    governance_canister_id: CanisterId,
+    proposal: ProposalToSubmit,
+) -> Response {
+    let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
+        Ok(u) => u,
+        Err(LookupUserError::UserNotFound) => unreachable!(),
+        Err(LookupUserError::InternalError(error)) => {
+            error!(error = error.as_str(), %caller, "Failed to lookup user");
+            mutate_state(|state| {
+                enqueue_job(
+                    TimerJob::LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob {
+                        caller,
+                        user_index_canister_id,
+                        neuron_id,
+                        chat,
+                        governance_canister_id,
+                        proposal,
+                    }),
+                    state,
+                )
+            });
+            return Retrying("Failed to lookup user".to_string());
+        }
+    };
+
+    let proposal = prepare_proposal(proposal, user_id, username, chat);
+
+    submit_proposal(user_id, governance_canister_id, neuron_id, proposal).await
+}
+
 pub(crate) async fn submit_proposal(
     user_id: UserId,
     governance_canister_id: CanisterId,
@@ -133,16 +165,14 @@ pub(crate) async fn submit_proposal(
         }
         Err(error) => {
             mutate_state(|state| {
-                let now = state.env.now();
-                state.data.timer_jobs.enqueue_job(
+                enqueue_job(
                     TimerJob::SubmitProposal(SubmitProposalJob {
                         user_id,
                         governance_canister_id,
                         neuron_id,
                         proposal,
                     }),
-                    now + (10 * SECOND_IN_MS),
-                    now,
+                    state,
                 )
             });
             Retrying(format!("{error:?}"))
@@ -166,4 +196,9 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
         }),
     }
+}
+
+fn enqueue_job(job: TimerJob, state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.timer_jobs.enqueue_job(job, now + (10 * SECOND_IN_MS), now)
 }

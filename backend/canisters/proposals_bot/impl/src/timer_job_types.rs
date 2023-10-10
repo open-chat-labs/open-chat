@@ -1,5 +1,5 @@
 use crate::mutate_state;
-use crate::updates::c2c_submit_proposal::submit_proposal;
+use crate::updates::c2c_submit_proposal::{lookup_user_then_submit_proposal, submit_proposal};
 use candid::Principal;
 use canister_timer_jobs::Job;
 use proposals_bot_canister::ProposalToSubmit;
@@ -9,12 +9,13 @@ use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
 use types::icrc1::{Account, TransferArg};
-use types::{CanisterId, ProposalId, SnsNeuronId, UserId};
+use types::{CanisterId, MultiUserChat, ProposalId, SnsNeuronId, UserId};
 use utils::time::SECOND_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     SubmitProposal(SubmitProposalJob),
+    LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
     ProcessUserSubmittedProposalAdopted(ProcessUserSubmittedProposalAdoptedJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
@@ -25,6 +26,16 @@ pub struct SubmitProposalJob {
     pub governance_canister_id: CanisterId,
     pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
+    pub proposal: ProposalToSubmit,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LookupUserThenSubmitProposalJob {
+    pub caller: Principal,
+    pub user_index_canister_id: CanisterId,
+    pub governance_canister_id: CanisterId,
+    pub neuron_id: SnsNeuronId,
+    pub chat: MultiUserChat,
     pub proposal: ProposalToSubmit,
 }
 
@@ -57,6 +68,7 @@ impl Job for TimerJob {
     fn execute(self) {
         match self {
             TimerJob::SubmitProposal(job) => job.execute(),
+            TimerJob::LookupUserThenSubmitProposal(job) => job.execute(),
             TimerJob::ProcessUserSubmittedProposalAdopted(job) => job.execute(),
             TimerJob::TopUpNeuron(job) => job.execute(),
             TimerJob::RefreshNeuron(job) => job.execute(),
@@ -68,6 +80,22 @@ impl Job for SubmitProposalJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
             submit_proposal(self.user_id, self.governance_canister_id, self.neuron_id, self.proposal).await;
+        });
+    }
+}
+
+impl Job for LookupUserThenSubmitProposalJob {
+    fn execute(self) {
+        ic_cdk::spawn(async move {
+            lookup_user_then_submit_proposal(
+                self.caller,
+                self.user_index_canister_id,
+                self.neuron_id,
+                self.chat,
+                self.governance_canister_id,
+                self.proposal,
+            )
+            .await;
         });
     }
 }
