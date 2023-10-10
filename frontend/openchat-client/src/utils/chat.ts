@@ -1261,9 +1261,16 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
+        const current = message.thread ?? defaultThreadSummary();
+        const participantIds = new Set<string>([
+            ...current.participantIds,
+            ...(localUpdates.threadSummary.participantIds ?? []),
+        ]);
+
         message.thread = {
-            ...(message.thread ?? defaultThreadSummary()),
+            ...current,
             ...localUpdates.threadSummary,
+            participantIds,
         };
     }
 
