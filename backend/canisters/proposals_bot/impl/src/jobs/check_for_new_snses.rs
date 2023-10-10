@@ -44,7 +44,7 @@ async fn run_async() {
                         sns_governance_canister_c2c_client::get_metadata(governance_canister_id, &Empty {}).await
                     {
                         let name = metadata.name.unwrap();
-                        ic_cdk::spawn(create_group(governance_canister_id, name));
+                        ic_cdk::spawn(create_group(governance_canister_id, sns.ledger_canister_id.unwrap(), name));
                     }
                 } else {
                     info!(%root_canister_id, "Recording failed SNS launch");
@@ -67,7 +67,7 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
     }
 }
 
-async fn create_group(governance_canister_id: CanisterId, name: String) {
+async fn create_group(governance_canister_id: CanisterId, ledger_canister_id: CanisterId, name: String) {
     let (group_index_canister_id, is_nns) = read_state(|state| {
         (
             state.data.group_index_canister_id,
@@ -98,10 +98,11 @@ async fn create_group(governance_canister_id: CanisterId, name: String) {
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
         Ok(group_index_canister::c2c_create_group::Response::Success(result)) => {
             mutate_state(|state| {
-                state
-                    .data
-                    .nervous_systems
-                    .add(governance_canister_id, MultiUserChat::Group(result.chat_id));
+                state.data.nervous_systems.add(
+                    governance_canister_id,
+                    ledger_canister_id,
+                    MultiUserChat::Group(result.chat_id),
+                );
             });
             info!(%governance_canister_id, name = name.as_str(), "Proposals group created");
         }
