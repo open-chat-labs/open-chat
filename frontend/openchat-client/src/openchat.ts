@@ -398,6 +398,7 @@ import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
+import { verifyCredential } from "./utils/credentials";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1069,63 +1070,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private verifyAccessGate(gate: AccessGate): Promise<unknown> {
-        if (gate.kind !== "credential_gate") return Promise.resolve();
+    verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
+        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
 
-        return new Promise((resolve, _reject) => {
-            const url = new URL(this.config.internetIdentityUrl);
-            url.pathname = "vc-flow";
-            const iiWin = window.open(url);
-
-            /**
-             * TODOs - unhook the window message event handler otherwise they will pile up
-             * - add some sort of timeout otherwise we could be left hanging
-             * - would be good to add a correlation Id to the request since the response is pretty opaque
-             * - do we need to show some UI in OpenChat while this interaction is going on?
-             */
-
-            if (iiWin) {
-                iiWin.addEventListener("close", () => {
-                    resolve(undefined);
-                });
-
-                window.addEventListener("message", (ev: MessageEvent) => {
-                    // make sure that the message actually came from II
-                    if (ev.origin === url.origin) {
-                        if ("method" in ev.data) {
-                            if (ev.data.method === "vc-flow-ready") {
-                                iiWin.postMessage(
-                                    {
-                                        id: 1,
-                                        jsonrpc: "2.0",
-                                        method: "request_credential",
-                                        params: {
-                                            issuer: {
-                                                issuerOrigin: gate.issuer,
-                                                credentialId: gate.credential,
-                                            },
-                                            credentialSubject: this._identity
-                                                ?.getPrincipal()
-                                                .toString(),
-                                        },
-                                    },
-                                    url.origin,
-                                );
-                            }
-                        }
-                        if ("result" in ev.data && "verifiableRepresentation" in ev.data.result) {
-                            resolve(ev.data.result.verifiableRepresentation);
-                        }
-                    }
-                });
-            }
-        });
+        return verifyCredential(
+            this.config.internetIdentityUrl,
+            this._identity!.getPrincipal().toString(),
+            gate.issuerOrigin,
+            gate.credentialId,
+        );
     }
 
     async joinGroup(
         chat: MultiUserChat,
+        credential?: string,
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        const credential = await this.verifyAccessGate(chat.gate);
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -5155,12 +5114,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
-        return this.sendRequest({ kind: "joinCommunity", id })
+    async joinCommunity(
+        community: CommunitySummary,
+        credential?: string,
+    ): Promise<"success" | "failure" | "gate_check_failed"> {
+        return this.sendRequest({ kind: "joinCommunity", id: community.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
                     this.addCommunityLocally(resp.community);
-                    removeCommunityPreview(id);
+                    removeCommunityPreview(community.id);
                     this.loadCommunityDetails(resp.community);
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
@@ -5409,6 +5371,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Error creating community user group", err);
                 return CommonResponses.failure();
             });
+    }
+
+    getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
+        return this._liveState.communities.values().find((c) => {
+            return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
+        });
     }
 
     updateUserGroup(

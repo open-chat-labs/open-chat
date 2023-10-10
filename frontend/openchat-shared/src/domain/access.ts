@@ -17,8 +17,8 @@ export type NftGate = { kind: "nft_gate" };
 // TODO - this might end up being more complex e.g. a credential might not simply be a string it might be more complex like e.g. age > 18
 export type CredentialGate = {
     kind: "credential_gate";
-    issuer: string;
-    credential: string;
+    issuerOrigin: string;
+    credentialId: string;
 };
 
 export type SNSAccessGate = {

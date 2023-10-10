@@ -376,11 +376,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "joinGroup":
-                executeThenReply(payload, correlationId, agent.joinGroup(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.joinGroup(payload.chatId, payload.credential),
+                );
                 break;
 
             case "joinCommunity":
-                executeThenReply(payload, correlationId, agent.joinCommunity(payload.id));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.joinCommunity(payload.id, payload.credential),
+                );
                 break;
 
             case "updateGroup":

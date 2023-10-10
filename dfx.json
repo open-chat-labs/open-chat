@@ -130,6 +130,11 @@
       "candid": "sns/candid/sns_swap.did",
       "type": "custom",
       "wasm": ""
+    },
+    "vc_issuer": {
+      "type": "custom",
+      "wasm": "wasms/vc_issuer.wasm",
+      "candid": "sns/candid/sns_root.did"
     }
   },
   "networks": {

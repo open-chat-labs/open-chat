@@ -29,6 +29,7 @@
         GroupChatSummary,
         ChannelIdentifier,
         UpdatedRules,
+        CredentialGate,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -76,6 +77,7 @@
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
+    import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "../../stores/community";
@@ -138,6 +140,7 @@
         NewGroup,
         Wallet,
         GateCheckFailed,
+        VerifyCredential,
         HallOfFame,
         EditCommunity,
     }
@@ -145,6 +148,9 @@
     let modal = ModalType.None;
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let joining: MultiUserChat | undefined = undefined;
+    let credentialCheck:
+        | { group: MultiUserChat; gate: CredentialGate; select: boolean }
+        | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
@@ -464,6 +470,7 @@
         candidateGroup = undefined;
         candidateCommunity = undefined;
         joining = undefined;
+        credentialCheck = undefined;
     }
 
     function closeNoAccess() {
@@ -699,13 +706,37 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         const { group, select } = ev.detail;
-        doJoinGroup(group, select);
+        doJoinGroup(group, select, undefined);
     }
 
-    async function doJoinGroup(group: MultiUserChat, select: boolean): Promise<void> {
+    function credentialReceived(ev: CustomEvent<string>) {
+        if (credentialCheck !== undefined) {
+            const { group, select } = credentialCheck;
+            closeModal();
+            doJoinGroup(group, select, ev.detail);
+        }
+    }
+
+    async function doJoinGroup(
+        group: MultiUserChat,
+        select: boolean,
+        credential: string | undefined
+    ): Promise<void> {
         joining = group;
+        if (group.gate.kind === "credential_gate" && credential === undefined) {
+            credentialCheck = { group, select, gate: group.gate };
+            modal = ModalType.VerifyCredential;
+            return Promise.resolve();
+        } else if (group.kind === "channel") {
+            const community = client.getCommunityForChannel(group.id);
+            if (community?.gate.kind === "credential_gate" && credential === undefined) {
+                credentialCheck = { group, select, gate: community.gate };
+                modal = ModalType.VerifyCredential;
+                return Promise.resolve();
+            }
+        }
         return client
-            .joinGroup(group)
+            .joinGroup(group, credential)
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
@@ -1068,6 +1099,12 @@
             <NoAccess on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
+        {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}
+            <InitiateCredentialCheck
+                level={credentialCheck.group.level}
+                on:close={closeModal}
+                on:credentialReceived={credentialReceived}
+                gate={credentialCheck.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}

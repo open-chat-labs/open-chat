@@ -54,7 +54,7 @@
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     {$_("access.credentialGateInfo", {
-                        values: { issuer: gate.issuer, credential: gate.credential },
+                        values: { issuer: gate.issuerOrigin, credential: gate.credentialId },
                     })}
                 </TooltipPopup>
             </div>

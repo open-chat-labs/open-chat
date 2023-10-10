@@ -18,8 +18,8 @@
     });
 
     function sync() {
-        gate.issuer = selectedCredentialIssuer.value;
-        gate.credential = selectedCredential.value;
+        gate.issuerOrigin = selectedCredentialIssuer.value;
+        gate.credentialId = selectedCredential.value;
     }
 
     function issuerChanged() {

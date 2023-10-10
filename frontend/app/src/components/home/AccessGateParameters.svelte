@@ -23,12 +23,12 @@
         <div class="params">
             <div>
                 {`${$_("access.credentialParamIssuer", {
-                    values: { issuer: gate.issuer },
+                    values: { issuer: gate.issuerOrigin },
                 })}`}
             </div>
             <div>
                 {`${$_("access.credentialParamCredential", {
-                    values: { credential: gate.credential },
+                    values: { credential: gate.credentialId },
                 })}`}
             </div>
         </div>

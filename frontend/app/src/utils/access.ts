@@ -14,7 +14,7 @@ function getSnsGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>)
         return {
             label: "access.snsHolder",
             gate: { kind: "sns_gate", governanceCanister: v.governanceCanister! },
-            key: `sns_gate_${v.symbol.toLowerCase()}`,
+            key: "sns_gate",
             enabled: true,
             cssClass: v.symbol.toLowerCase(),
             labelParams: { token: v.symbol },
@@ -57,7 +57,7 @@ const nftGate: GateBinding = {
 const credentialGate: GateBinding = {
     label: "access.credential",
     key: "credential_gate",
-    gate: { kind: "credential_gate", issuer: "", credential: "" },
+    gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
     enabled: true,
     cssClass: "credential",
 };
@@ -88,16 +88,16 @@ export type CredentialIssuer = {
 
 export const credentialIssuers: CredentialIssuer[] = [
     {
-        name: "Dfinity",
-        value: "dfinity",
+        name: "Employment Info Ltd",
+        value: "https://employment.info",
         credentials: [
-            { value: "dfinity_employee", name: "Is Dfinity employee" },
-            { value: "something_else", name: "Some other thing" },
+            { value: "VerifiedEmployee", name: "Is verified employee" },
+            { value: "SomeOther", name: "Some other thing" },
         ],
     },
     {
         name: "MODCLUB",
-        value: "modclub",
-        credentials: [{ value: "is_human", name: "Is human" }],
+        value: "https://modclub.com",
+        credentials: [{ value: "IsHuman", name: "Is a human" }],
     },
 ];

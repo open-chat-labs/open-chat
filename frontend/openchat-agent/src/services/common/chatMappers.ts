@@ -1224,8 +1224,8 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
-                    issuer: domain.issuer,
-                    credential: domain.credential,
+                    issuer: domain.issuerOrigin,
+                    credential: domain.credentialId,
                 },
             },
         ];
@@ -1248,8 +1248,8 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
-                issuer: domain.issuer,
-                credential: domain.credential,
+                issuer: domain.issuerOrigin,
+                credential: domain.credentialId,
             },
         };
     if (domain.kind === "sns_gate") {
@@ -1281,8 +1281,8 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("VerifiedCredential" in candid) {
         return {
             kind: "credential_gate",
-            issuer: candid.VerifiedCredential.issuer,
-            credential: candid.VerifiedCredential.credential,
+            issuerOrigin: candid.VerifiedCredential.issuer,
+            credentialId: candid.VerifiedCredential.credential,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);

@@ -1,6 +1,5 @@
 <script lang="ts">
     import CredentialSelector from "./CredentialSelector.svelte";
-
     import { interpolateLevel } from "../../utils/i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../Checkbox.svelte";
@@ -151,7 +150,7 @@
     </div>
 {/if}
 
-{#if !requiresUpgrade && candidate.public}
+{#if !requiresUpgrade}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
