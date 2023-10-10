@@ -5,13 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-### Added
-
-- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
-
 ### Changed
 
 - Add logging around submitting proposals ([#4538](https://github.com/open-chat-labs/open-chat/pull/4538))
+
+## [[2.0.879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-09
+
+### Added
+
+- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
 
 ### Removed
 
