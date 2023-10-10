@@ -697,13 +697,7 @@ fn set_community_rules(env: &mut PocketIc, sender: Principal, community_id: Comm
     client::community::happy_path::update_community(env, sender, community_id, &args);
 }
 
-fn set_channel_rules(
-    env: &mut PocketIc,
-    sender: Principal,
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    text: String,
-) {
+fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId, text: String) {
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,
