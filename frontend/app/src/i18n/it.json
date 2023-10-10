@@ -1062,5 +1062,6 @@
     "followThreadFailed": "Seguire il thread non è riuscito",
     "unfollowThreadFailed": "Smetti di seguire il thread non riuscito",
     "doubleClickReply": "Fare doppio clic sul messaggio per rispondere/modificare",
-    "doubleTapReply": "Tocca due volte il messaggio per rispondere/modificare"
+    "doubleTapReply": "Tocca due volte il messaggio per rispondere/modificare",
+    "minimumAmount": "Minimo: {amount} {symbol}"
 }
