@@ -88,12 +88,10 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
-    $: threadSummary = threadRootMessage?.thread ?? msg.thread;
-    $: canFollow =
-        threadSummary !== undefined &&
-        !threadSummary.followedByMe &&
-        !threadSummary.participantIds.has(user.userId);
-    $: canUnfollow = threadSummary !== undefined && threadSummary.followedByMe;
+    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
+    $: isFollowedByMe = threadRootMessage !== undefined && ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
+    $: canFollow = threadRootMessage !== undefined && !isFollowedByMe;
+    $: canUnfollow = isFollowedByMe;
 
     export function showMenu() {
         menuIcon?.showMenu();
