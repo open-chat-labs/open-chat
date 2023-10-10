@@ -1,42 +1,20 @@
 import "../../../libraries/types/can.did";
 
-type AddGovernanceCanisterArgs = record {
+type StakeNeuronForSubmittingProposalsArgs = record {
     governance_canister_id : CanisterId;
-    community_id : opt CommunityId;
-    name : text;
-    description : opt text;
-    avatar : opt Document;
+    stake : nat;
 };
 
-type AddGovernanceCanisterResponse = variant {
-    Success;
-    AlreadyAdded;
+type StakeNeuronForSubmittingProposalsResponse = variant {
+    Success : SnsNeuronId;
+    StakeTooLow;
+    NeuronAlreadyExists : SnsNeuronId;
+    TransferError : text;
+    GovernanceCanisterNotSupported;
+    Unauthorized;
     InternalError : text;
-};
-
-type RemoveGovernanceCanisterArgs = record {
-    governance_canister_id : CanisterId;
-    delete_group : bool;
-};
-
-type RemoveGovernanceCanisterResponse = variant {
-    Success;
-    NotFound;
-    InternalError : text;
-};
-
-type AppointAdminsArgs = record {
-    governance_canister_id : CanisterId;
-    users : vec UserId;
-};
-
-type AppointAdminsResponse = variant {
-    Success;
-    NotFound;
 };
 
 service : {
-    add_governance_canister : (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
-    remove_governance_canister : (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
-    appoint_admins : (AppointAdminsArgs) -> (AppointAdminsResponse);
+    stake_neuron_for_submitting_proposals : (StakeNeuronForSubmittingProposalsArgs) -> (StakeNeuronForSubmittingProposalsResponse);
 };

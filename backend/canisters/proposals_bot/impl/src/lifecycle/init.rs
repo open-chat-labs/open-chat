@@ -20,6 +20,7 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.nns_governance_canister_id,
+        args.sns_wasm_canister_id,
         args.test_mode,
     );
 

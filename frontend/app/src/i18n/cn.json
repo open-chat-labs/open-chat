@@ -448,7 +448,13 @@
         "chooseReceiver": "输入接收者的用户名",
         "max": "最大余额",
         "viewTransaction": "[交易]({url})",
-        "fee": "将添加 {fee} {token} 的费用"
+        "fee": "将添加 {fee} {token} 的费用",
+        "saveAccount": "节省",
+        "saveAccountMessage": "您想保存此帐户以便下次访问吗？",
+        "enterAccountName": "输入此帐户的名称",
+        "failedToSaveAccount": "抱歉，我们无法保存您的帐户",
+        "accountNameTaken": "您已有一个同名帐户",
+        "chooseAddress": "选择您保存的地址之一"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -586,7 +592,28 @@
         "unknownActionCategory": "其他行为",
         "notificationsAction": "通知索引操作",
         "registryAction": "注册表操作",
-        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。"
+        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
+        "makeProposal": "提出建议",
+        "maker": {
+            "header": "提出建议",
+            "title": "标题",
+            "summary": "概括",
+            "url": "网址",
+            "enterTitle": "输入标题",
+            "enterSummary": "输入摘要",
+            "enterUrl": "输入可选网址",
+            "summaryRules": "支持降价",
+            "urlRules": "补充详细信息的链接",
+            "unexpectedError": "提交提案时出现意外错误",
+            "toPrincipal": "收款人账户本金",
+            "enterToPrincipal": "输入收件人帐户主体",
+            "amount": "数量",
+            "amountRules": "至少 1 个 {token} 令牌",
+            "enterAmount": "输入 {token} 代币的数量",
+            "type": "提案类型",
+            "treasury": "从金库转账的代币",
+            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。"
+        }
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",

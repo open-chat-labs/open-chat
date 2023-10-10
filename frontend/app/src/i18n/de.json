@@ -451,7 +451,13 @@
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
         "max": "max",
         "viewTransaction": "[Transaktion]({url})",
-        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an"
+        "fee": "Es fallen Gebühren in Höhe von {fee} {token} an",
+        "saveAccount": "Speichern",
+        "saveAccountMessage": "Möchten Sie dieses Konto speichern, um beim nächsten Mal leichter darauf zugreifen zu können?",
+        "enterAccountName": "Geben Sie einen Namen für dieses Konto ein",
+        "failedToSaveAccount": "Leider konnten wir Ihr Konto nicht speichern",
+        "accountNameTaken": "Sie haben bereits ein Konto mit diesem Namen",
+        "chooseAddress": "Wählen Sie eine Ihrer gespeicherten Adressen"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -590,7 +596,28 @@
         "unknownActionCategory": "Andere Aktionen",
         "notificationsAction": "Indexaktionen für Benachrichtigungen",
         "registryAction": "Registrierungsaktionen",
-        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihre OpenChat-Benutzer-ID lautet: {userId}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> ."
+        "noEligibleNeuronsMessage": "Keine geeigneten oder verknüpften Neuronen gefunden. Um über Vorschläge in OpenChat abzustimmen, müssen Sie zunächst Ihre OpenChat-Benutzer-ID als Hotkey zu allen Neuronen hinzufügen, mit denen Sie abstimmen möchten.<br/><br/> Ihre OpenChat-Benutzer-ID lautet: {userId}.<br/><br/> Weitere Informationen zu Abstimmungen und Governance finden Sie <a target=\"_blank\" href=\"https://oc.app/blog/governance\">in diesem Blogbeitrag</a> .",
+        "makeProposal": "Machen Sie einen Vorschlag",
+        "maker": {
+            "header": "Mache einen Antrag",
+            "title": "Titel",
+            "summary": "Zusammenfassung",
+            "url": "URL",
+            "enterTitle": "Geben Sie einen Titel ein",
+            "enterSummary": "Geben Sie eine Zusammenfassung ein",
+            "enterUrl": "Geben Sie eine optionale URL ein",
+            "summaryRules": "unterstützt Markdown",
+            "urlRules": "Link zu ergänzenden Details",
+            "unexpectedError": "Unerwarteter Fehler beim Senden des Angebots",
+            "toPrincipal": "Hauptkonto des Empfängers",
+            "enterToPrincipal": "Geben Sie einen Empfängerkontoprinzipal ein",
+            "amount": "Menge",
+            "amountRules": "mindestens 1 {token}-Token",
+            "enterAmount": "Geben Sie eine Menge von {token} Token ein",
+            "type": "Vorschlagstyp",
+            "treasury": "Token zur Übertragung aus der Schatzkammer",
+            "message": "Um einen Vorschlag einzureichen, ist eine Anzahlung von {cost} {token} Token (einschließlich zweier Transfergebühren) erforderlich, die zurückerstattet wird, wenn der Vorschlag angenommen wird."
+        }
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",

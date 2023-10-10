@@ -21,6 +21,8 @@
         box-shadow: var(--menu-sh);
         border-radius: $sp2;
         border: 1px solid var(--menu-bd);
+        max-height: 80vh;
+        overflow-y: auto;
 
         @include mobile() {
             &.centered {

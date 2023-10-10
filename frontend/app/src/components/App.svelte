@@ -99,6 +99,7 @@
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
         };
 
@@ -251,6 +252,16 @@
                 console.log("User upgrade concurrency set", value);
             } else {
                 console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
+    }
+
+    function stakeNeuronForSubmittingProposals(governanceCanisterId: string, stake: bigint): void {
+        client.stakeNeuronForSubmittingProposals(governanceCanisterId, stake).then((success) => {
+            if (success) {
+                console.log("Neuron staked successfully");
+            } else {
+                console.log("Failed to stake neuron");
             }
         });
     }

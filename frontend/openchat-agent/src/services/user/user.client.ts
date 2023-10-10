@@ -62,6 +62,10 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -92,6 +96,10 @@ import {
     leaveCommunityResponse,
     deleteCommunityResponse,
     tipMessageResponse,
+    savedCryptoAccountsResponse,
+    saveCryptoAccountResponse,
+    proposalToSubmit,
+    submitProposalResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -622,6 +630,23 @@ export class UserClient extends CandidService {
         ).then((resp) => [resp, event.event]);
     }
 
+    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        return this.handleQueryResponse(
+            () => this.userService.saved_crypto_accounts({}),
+            savedCryptoAccountsResponse,
+        );
+    }
+
+    saveCryptoAccount({ name, account }: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        return this.handleResponse(
+            this.userService.save_crypto_account({
+                name,
+                account,
+            }),
+            saveCryptoAccountResponse,
+        );
+    }
+
     sendMessageWithTransferToChannel(
         id: ChannelIdentifier,
         recipientId: string,
@@ -1093,6 +1118,16 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.set_community_indexes({ indexes }),
             (_) => true,
+        );
+    }
+
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+        return this.handleResponse(
+            this.userService.submit_proposal({
+                governance_canister_id : Principal.fromText(governanceCanisterId),
+                proposal : proposalToSubmit(proposal),
+            }),
+            submitProposalResponse,
         );
     }
 }

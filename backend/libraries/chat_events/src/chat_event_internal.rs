@@ -1,4 +1,5 @@
 use crate::incr;
+use ic_ledger_types::Tokens;
 use ledger_utils::format_crypto_amount;
 use search::Document;
 use serde::{Deserialize, Serialize};
@@ -8,15 +9,15 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy, DirectChatCreated, EventIndex,
-    EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated,
-    GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged,
-    ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageReminderContent,
-    MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent,
-    PrizeContentInternal, PrizeWinnerContent, Proposal, ProposalContent, Reaction, ReplyContext, ReportedMessage,
-    ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis, Timestamped, Tips, UserId, UsersBlocked,
-    UsersInvited, UsersUnblocked, VideoContent,
+    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
+    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
+    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
+    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
+    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
+    MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    PollContentInternal, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
+    ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis,
+    Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -273,7 +274,7 @@ pub enum MessageContentInternal {
     #[serde(rename = "p")]
     Poll(PollContentInternal),
     #[serde(rename = "c")]
-    Crypto(CryptoContent),
+    Crypto(CryptoContentInternal),
     #[serde(rename = "d")]
     Deleted(DeletedByInternal),
     #[serde(rename = "g")]
@@ -299,6 +300,90 @@ pub struct ProposalContentInternal {
     pub governance_canister_id: CanisterId,
     pub proposal: Proposal,
     pub votes: HashMap<UserId, bool>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CryptoContentInternal {
+    #[serde(rename = "r")]
+    pub recipient: UserId,
+    #[serde(rename = "t")]
+    pub transfer: CompletedCryptoTransaction,
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
+    pub caption: Option<String>,
+}
+
+impl From<CryptoContentInternal> for CryptoContent {
+    fn from(value: CryptoContentInternal) -> Self {
+        CryptoContent {
+            recipient: value.recipient,
+            transfer: CryptoTransaction::Completed(value.transfer),
+            caption: value.caption,
+        }
+    }
+}
+
+impl TryFrom<CryptoContent> for CryptoContentInternal {
+    type Error = ();
+
+    fn try_from(value: CryptoContent) -> Result<Self, Self::Error> {
+        if let CryptoTransaction::Completed(transfer) = value.transfer {
+            Ok(CryptoContentInternal {
+                recipient: value.recipient,
+                transfer,
+                caption: value.caption,
+            })
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInternal {
+    #[serde(rename = "p")]
+    pub prizes_remaining: Vec<Tokens>,
+    #[serde(rename = "r")]
+    pub reservations: HashSet<UserId>,
+    #[serde(rename = "w")]
+    pub winners: HashSet<UserId>,
+    #[serde(rename = "t")]
+    pub transaction: CompletedCryptoTransaction,
+    #[serde(rename = "e")]
+    pub end_date: TimestampMillis,
+    #[serde(rename = "c")]
+    pub caption: Option<String>,
+}
+
+impl From<&PrizeContentInternal> for PrizeContent {
+    fn from(value: &PrizeContentInternal) -> Self {
+        PrizeContent {
+            prizes_remaining: value.prizes_remaining.len() as u32,
+            prizes_pending: value.reservations.len() as u32,
+            winners: value.winners.iter().copied().collect(),
+            token: value.transaction.token(),
+            end_date: value.end_date,
+            caption: value.caption.clone(),
+        }
+    }
+}
+
+impl TryFrom<PrizeContentInitial> for PrizeContentInternal {
+    type Error = ();
+
+    fn try_from(value: PrizeContentInitial) -> Result<Self, Self::Error> {
+        if let CryptoTransaction::Completed(transaction) = value.transfer {
+            Ok(PrizeContentInternal {
+                prizes_remaining: value.prizes,
+                reservations: HashSet::new(),
+                winners: HashSet::new(),
+                transaction,
+                end_date: value.end_date,
+                caption: value.caption,
+            })
+        } else {
+            Err(())
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -350,7 +435,7 @@ impl MessageContentInternal {
             MessageContentInternal::Audio(a) => MessageContent::Audio(a.clone()),
             MessageContentInternal::File(f) => MessageContent::File(f.clone()),
             MessageContentInternal::Poll(p) => MessageContent::Poll(p.hydrate(my_user_id)),
-            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
+            MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone().into()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.hydrate()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
             MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
@@ -359,14 +444,7 @@ impl MessageContentInternal {
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
-            MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
-                prizes_remaining: p.prizes_remaining.len() as u32,
-                winners: p.winners.iter().copied().collect(),
-                token: p.transaction.token(),
-                end_date: p.end_date,
-                caption: p.caption.clone(),
-                prizes_pending: p.reservations.len() as u32,
-            }),
+            MessageContentInternal::Prize(p) => MessageContent::Prize(p.into()),
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(ReportedMessage {
@@ -517,7 +595,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
+            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c.try_into().unwrap()),
             MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
             MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
             MessageContentInitial::GovernanceProposal(p) => {
@@ -527,14 +605,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
                     votes: HashMap::new(),
                 })
             }
-            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
-                prizes_remaining: p.prizes,
-                winners: HashSet::new(),
-                end_date: p.end_date,
-                caption: p.caption,
-                reservations: HashSet::new(),
-                transaction: p.transfer,
-            }),
+            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(p.try_into().unwrap()),
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r),
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c),
@@ -565,13 +636,11 @@ impl From<&MessageContentInternal> for Document {
                 let token = c.transfer.token();
                 document.add_field(token.token_symbol().to_string(), 1.0, false);
 
-                if let CryptoTransaction::Completed(c) = &c.transfer {
-                    let amount = c.units();
-                    // This is only used for string searching so it's better to default to 8 than to trap
-                    let decimals = c.token().decimals().unwrap_or(8);
-                    let amount_string = format_crypto_amount(amount, decimals);
-                    document.add_field(amount_string, 1.0, false);
-                }
+                let amount = c.transfer.units();
+                // This is only used for string searching so it's better to default to 8 than to trap
+                let decimals = c.transfer.token().decimals().unwrap_or(8);
+                let amount_string = format_crypto_amount(amount, decimals);
+                document.add_field(amount_string, 1.0, false);
 
                 try_add_caption(&mut document, c.caption.as_ref())
             }

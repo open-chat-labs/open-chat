@@ -1,6 +1,8 @@
 use crate::model::nervous_systems::NervousSystems;
+use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
@@ -15,6 +17,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -53,6 +56,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
+                sns_wasm: self.data.sns_wasm_canister_id,
             },
         }
     }
@@ -66,7 +70,10 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
+    pub sns_wasm_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
+    pub timer_jobs: TimerJobs<TimerJob>,
+    pub failed_sns_launches: HashSet<CanisterId>,
     pub test_mode: bool,
 }
 
@@ -77,6 +84,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
+        sns_wasm_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -86,7 +94,10 @@ impl Data {
             group_index_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
+            sns_wasm_canister_id,
             finished_proposals_to_process: VecDeque::new(),
+            timer_jobs: TimerJobs::default(),
+            failed_sns_launches: HashSet::default(),
             test_mode,
         }
     }
@@ -115,6 +126,7 @@ pub struct NervousSystemMetrics {
     pub latest_failed_proposals_update: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
+    pub neuron_for_submitting_proposals: Option<String>,
 }
 
 #[derive(Serialize, Debug)]
@@ -123,6 +135,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
+    pub sns_wasm: CanisterId,
 }
 
 // Deterministically generate each MessageId so that there is never any chance of a proposal

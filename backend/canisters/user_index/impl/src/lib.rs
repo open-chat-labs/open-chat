@@ -166,7 +166,6 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_canister_id")]
     pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -187,10 +186,6 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
-}
-
-fn proposals_bot_canister_id() -> CanisterId {
-    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 impl Data {

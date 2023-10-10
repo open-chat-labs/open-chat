@@ -65,7 +65,7 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
                 result.tips[ledger][userId] = result.tips[ledger][userId] + amount;
             }
 
-            if (result.tips[ledger][userId] === 0n) {
+            if (result.tips[ledger][userId] <= 0n) {
                 delete result.tips[ledger][userId];
             }
 

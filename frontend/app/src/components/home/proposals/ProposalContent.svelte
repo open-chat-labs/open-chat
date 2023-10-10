@@ -17,6 +17,7 @@
     import { toastStore } from "../../../stores/toast";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
@@ -139,6 +140,11 @@
     }
 
     function truncatedProposerId(): string {
+        const name = NamedNeurons[proposal.proposer];
+        if (name !== undefined) {
+            return name;
+        }
+
         if (proposal.proposer.length < 12) {
             return proposal.proposer;
         }

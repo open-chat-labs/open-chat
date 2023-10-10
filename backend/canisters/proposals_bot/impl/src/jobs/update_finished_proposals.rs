@@ -1,5 +1,6 @@
 use crate::governance_clients::common::WrappedProposalId;
 use crate::governance_clients::nns::ListProposalInfo;
+use crate::jobs::update_proposals;
 use crate::{generate_message_id, governance_clients, mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_timers::TimerId;
@@ -54,7 +55,9 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
             state
                 .data
                 .nervous_systems
-                .queue_proposal_to_update(governance_canister_id, proposal)
+                .queue_proposal_to_update(governance_canister_id, proposal);
+
+            update_proposals::start_job_if_required(state);
         }),
         Ok(None) => {}
         Err(_) => {
@@ -62,7 +65,9 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
                 state
                     .data
                     .finished_proposals_to_process
-                    .push_back((governance_canister_id, proposal_id))
+                    .push_back((governance_canister_id, proposal_id));
+
+                start_job_if_required(state);
             });
         }
     }

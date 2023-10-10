@@ -14,12 +14,11 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex,
-    EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult,
-    PushIfNotContains, Reaction, RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos, Timestamped,
-    Tips, UserId, VoteOperation,
+    CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
+    Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
+    PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction,
+    RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -410,19 +409,17 @@ impl ChatEvents {
     ) -> Option<PendingCryptoTransaction> {
         if let Some(message) = self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into()) {
             if let MessageContentInternal::Prize(p) = &message.content {
-                if let CryptoTransaction::Completed(t) = &p.transaction {
-                    let fee = t.fee();
-                    let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
-                    if unclaimed > 0 {
-                        return Some(create_pending_transaction(
-                            t.token(),
-                            t.ledger_canister_id(),
-                            unclaimed - fee,
-                            fee,
-                            message.sender,
-                            now_nanos,
-                        ));
-                    }
+                let fee = p.transaction.fee();
+                let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+                if unclaimed > 0 {
+                    return Some(create_pending_transaction(
+                        p.transaction.token(),
+                        p.transaction.ledger_canister_id(),
+                        unclaimed - fee,
+                        fee,
+                        message.sender,
+                        now_nanos,
+                    ));
                 }
             }
         }

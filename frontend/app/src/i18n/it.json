@@ -449,7 +449,13 @@
         "chooseReceiver": "inserire il nome utente del destinatario",
         "max": "Massimo",
         "viewTransaction": "[Transazione]({url})",
-        "fee": "Verranno aggiunte commissioni di {fee} {token}"
+        "fee": "Verranno aggiunte commissioni di {fee} {token}",
+        "saveAccount": "Salva",
+        "saveAccountMessage": "Vuoi salvare questo account per accedervi più facilmente la prossima volta?",
+        "enterAccountName": "Inserisci un nome per questo account",
+        "failedToSaveAccount": "Siamo spiacenti, non siamo riusciti a salvare il tuo account",
+        "accountNameTaken": "Hai già un account con quel nome",
+        "chooseAddress": "Scegli uno dei tuoi indirizzi salvati"
     },
     "cryptoAccount": {
         "manage": "Gestire",
@@ -586,7 +592,28 @@
         "unknownActionCategory": "Altre azioni",
         "notificationsAction": "Notifiche Indice Azioni",
         "registryAction": "Azioni di registro",
-        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> ."
+        "noEligibleNeuronsMessage": "Nessun neurone idoneo o collegato trovato. Per votare proposte da OpenChat devi prima aggiungere il tuo ID utente OpenChat come tasto di scelta rapida a qualsiasi neurone con cui desideri votare.<br/><br/> Il tuo ID utente OpenChat è: {userId}.<br/><br/> Per ulteriori informazioni sul voto e sulla governance leggere <a target=\"_blank\" href=\"https://oc.app/blog/governance\">questo post del blog</a> .",
+        "makeProposal": "Fai una proposta",
+        "maker": {
+            "header": "Fai una proposta",
+            "title": "Titolo",
+            "summary": "Riepilogo",
+            "url": "URL",
+            "enterTitle": "Inserisci un titolo",
+            "enterSummary": "Inserisci un riepilogo",
+            "enterUrl": "Inserisci un URL facoltativo",
+            "summaryRules": "supporta il ribasso",
+            "urlRules": "collegamento a dettagli supplementari",
+            "unexpectedError": "Errore imprevisto durante l'invio della proposta",
+            "toPrincipal": "Entità dell'account del destinatario",
+            "enterToPrincipal": "Immettere un'entità account del destinatario",
+            "amount": "Quantità",
+            "amountRules": "almeno 1 token {token}",
+            "enterAmount": "Inserisci una quantità di token {token}",
+            "type": "Tipo di proposta",
+            "treasury": "Gettone da trasferire dal tesoro",
+            "message": "Per presentare una proposta è richiesto un deposito di token {cost} {token} (include due serie di commissioni di trasferimento) che verrà rimborsato se la proposta viene adottata."
+        }
     },
     "yes": "sì",
     "no": "No",

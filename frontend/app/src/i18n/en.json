@@ -548,7 +548,13 @@
         "receiver": "Recipient",
         "chooseReceiver": "enter the recipient's user name",
         "done": "refresh and continue",
-        "max": "Max"
+        "max": "Max",
+        "saveAccount": "Save",
+        "saveAccountMessage": "Would you like to save this account for easier access next time?",
+        "enterAccountName": "Enter a name for this account",
+        "failedToSaveAccount": "Sorry, we were unable to save your account",
+        "accountNameTaken": "You already have an account with that name",
+        "chooseAddress": "Choose one of your saved addresses"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "Balance",
@@ -681,7 +687,28 @@
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
         "registryAction": "Registry Actions",
-        "unknownActionCategory": "Other Actions"
+        "unknownActionCategory": "Other Actions",
+        "makeProposal": "Make proposal",
+        "maker": {
+            "header": "Make a proposal",
+            "title": "Title",
+            "summary": "Summary",
+            "url": "Url",
+            "enterTitle": "Enter a title",
+            "enterSummary": "Enter a summary",
+            "enterUrl": "Enter an optional url",
+            "summaryRules": "supports markdown",
+            "urlRules": "link to supplemental details",
+            "unexpectedError": "Unexpected error submitting proposal",
+            "toPrincipal": "Recipient account principal",
+            "enterToPrincipal": "Enter a recipient account principal",
+            "amount": "Amount",
+            "amountRules": "at least 1 {token} token",
+            "enterAmount": "Enter a quantity of {token} tokens",
+            "type": "Proposal type",
+            "treasury": "Token to transfer from treasury",
+            "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted."
+        }
     },
     "yes": "Yes",
     "no": "No",

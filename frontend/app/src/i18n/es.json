@@ -450,7 +450,13 @@
         "chooseReceiver": "ingrese el nombre de usuario del destinatario",
         "max": "máx.",
         "viewTransaction": "[Transacción]({url})",
-        "fee": "Se agregarán tarifas de {fee} {token}"
+        "fee": "Se agregarán tarifas de {fee} {token}",
+        "saveAccount": "Ahorrar",
+        "saveAccountMessage": "¿Le gustaría guardar esta cuenta para acceder más fácilmente la próxima vez?",
+        "enterAccountName": "Introduzca un nombre para esta cuenta",
+        "failedToSaveAccount": "Lo sentimos, no pudimos guardar su cuenta.",
+        "accountNameTaken": "Ya tienes una cuenta con ese nombre.",
+        "chooseAddress": "Elija una de sus direcciones guardadas"
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -588,7 +594,28 @@
         "unknownActionCategory": "Otras acciones",
         "notificationsAction": "Índice de notificaciones Acciones",
         "registryAction": "Acciones de registro",
-        "noEligibleNeuronsMessage": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su identificación de usuario de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.<br/><br/> Su ID de usuario de OpenChat es: {userId}.<br/><br/> Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> ."
+        "noEligibleNeuronsMessage": "No se encontraron neuronas elegibles o vinculadas. Para votar propuestas desde OpenChat, primero debe agregar su identificación de usuario de OpenChat como tecla de acceso rápido a cualquier neurona con la que desee votar.<br/><br/> Su ID de usuario de OpenChat es: {userId}.<br/><br/> Para obtener más información sobre votación y gobernanza, lea <a target=\"_blank\" href=\"https://oc.app/blog/governance\">esta publicación de blog</a> .",
+        "makeProposal": "hacer propuesta",
+        "maker": {
+            "header": "Hacer una proposición",
+            "title": "Título",
+            "summary": "Resumen",
+            "url": "URL",
+            "enterTitle": "Introduce un título",
+            "enterSummary": "Introduzca un resumen",
+            "enterUrl": "Introduce una URL opcional",
+            "summaryRules": "admite rebajas",
+            "urlRules": "enlace a detalles complementarios",
+            "unexpectedError": "Error inesperado al enviar la propuesta",
+            "toPrincipal": "Principal de la cuenta del destinatario",
+            "enterToPrincipal": "Introduzca el principal de la cuenta del destinatario",
+            "amount": "Cantidad",
+            "amountRules": "al menos 1 token {token}",
+            "enterAmount": "Ingrese una cantidad de tokens {token}",
+            "type": "Tipo de propuesta",
+            "treasury": "Token para transferir desde tesorería",
+            "message": "Se requiere un depósito de tokens {cost} {token} (incluye dos conjuntos de tarifas de transferencia) para enviar una propuesta, que se reembolsa si se adopta."
+        }
     },
     "yes": "Sí",
     "no": "No",

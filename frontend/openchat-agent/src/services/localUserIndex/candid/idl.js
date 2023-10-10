@@ -157,10 +157,6 @@ export const idlFactory = ({ IDL }) => {
     'mentions' : IDL.Vec(Mention),
     'my_metrics' : ChatMetrics,
   });
-  const MessageIndexRange = IDL.Record({
-    'end' : MessageIndex,
-    'start' : MessageIndex,
-  });
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'timestamp' : TimestampMillis,
@@ -515,13 +511,11 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'membership' : IDL.Opt(ChannelMembership),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
     'member_count' : IDL.Nat32,
-    'expired_messages' : IDL.Vec(MessageIndexRange),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const CommunityPermissionRole = IDL.Variant({
@@ -644,7 +638,6 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
-    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -652,7 +645,6 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
-    'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -697,17 +689,6 @@ export const idlFactory = ({ IDL }) => {
     'ReferralCodeInvalid' : IDL.Null,
     'CyclesBalanceTooLow' : IDL.Null,
   });
-  const ReportMessageArgs = IDL.Record({
-    'notes' : IDL.Opt(IDL.Text),
-    'chat_id' : ChatId,
-    'reason_code' : IDL.Nat32,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const ReportMessageResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
   const MultiUserChat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
@@ -718,6 +699,10 @@ export const idlFactory = ({ IDL }) => {
     'reason_code' : IDL.Nat32,
     'event_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ReportMessageResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   return IDL.Service({
     'invite_users_to_channel' : IDL.Func(
@@ -743,11 +728,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
-    'report_message' : IDL.Func(
-        [ReportMessageArgs],
-        [ReportMessageResponse],
-        [],
-      ),
     'report_message_v2' : IDL.Func(
         [ReportMessageV2Args],
         [ReportMessageResponse],
