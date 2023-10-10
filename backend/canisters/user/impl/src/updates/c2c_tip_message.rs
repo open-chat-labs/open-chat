@@ -37,7 +37,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         ) {
             if let Some(event) = chat
                 .events
-                .main_events_reader(now)
+                .main_events_reader()
                 .message_event_internal(args.message_id.into())
             {
                 let notification = Notification::DirectMessageTipped(DirectMessageTipped {

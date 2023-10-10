@@ -269,13 +269,11 @@ export interface CommunityCanisterChannelSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
-  'next_message_expiry' : [] | [TimestampMillis],
   'membership' : [] | [ChannelMembership],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
   'member_count' : number,
-  'expired_messages' : Array<MessageIndexRange>,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
@@ -530,7 +528,6 @@ export interface DirectChatSummary {
   'last_updated' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
-  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
@@ -545,7 +542,6 @@ export interface DirectChatSummaryUpdates {
   'updated_events' : Array<[number, bigint]>,
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
-  'newly_expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -727,7 +723,6 @@ export interface GroupCanisterGroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
-  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -735,7 +730,6 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'expired_messages' : Array<MessageIndexRange>,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -757,14 +751,12 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
-  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -798,7 +790,6 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
-  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -808,7 +799,6 @@ export interface GroupChatSummary {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
-  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -848,7 +838,6 @@ export interface GroupMatch {
   'name' : string,
   'description' : string,
   'avatar_id' : [] | [bigint],
-  'chat_id' : ChatId,
   'member_count' : number,
 }
 export interface GroupMessageNotification {
@@ -1372,6 +1361,22 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
+export interface ProposalToSubmit {
+  'url' : string,
+  'title' : string,
+  'action' : ProposalToSubmitAction,
+  'summary' : string,
+}
+export type ProposalToSubmitAction = {
+    'TransferSnsTreasuryFunds' : {
+      'to' : Icrc1Account,
+      'memo' : [] | [bigint],
+      'amount' : bigint,
+      'treasury' : { 'ICP' : null } |
+        { 'SNS' : null },
+    }
+  } |
+  { 'Motion' : null };
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1490,6 +1495,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'RecipientBlocked' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidRequest' : string } |
+  { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
@@ -1536,6 +1542,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'CommunityFrozen' : null } |
   { 'CommunityRulesNotAccepted' : null } |
   { 'InvalidRequest' : string } |
+  { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
@@ -1570,6 +1577,7 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'RecipientBlocked' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidRequest' : string } |
+  { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
@@ -1626,6 +1634,17 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
+export interface SubmitProposalArgs {
+  'governance_canister_id' : CanisterId,
+  'proposal' : ProposalToSubmit,
+}
+export type SubmitProposalResponse = { 'Retrying' : string } |
+  { 'Success' : null } |
+  { 'Unauthorized' : null } |
+  { 'UserSuspended' : null } |
+  { 'GovernanceCanisterNotSupported' : null } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : string };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1683,7 +1702,8 @@ export interface TipMessageArgs {
   'amount' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type TipMessageResponse = { 'TransferNotToMessageSender' : null } |
+export type TipMessageResponse = { 'Retrying' : string } |
+  { 'TransferNotToMessageSender' : null } |
   { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'ChatFrozen' : null } |
@@ -1922,6 +1942,7 @@ export interface _SERVICE {
     [SetMessageReminderV2Args],
     SetMessageReminderResponse
   >,
+  'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<

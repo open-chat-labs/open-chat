@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import TokenInput from "../TokenInput.svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { NamedAccount, OpenChat } from "openchat-client";
     import { ICP_SYMBOL } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
@@ -9,11 +9,15 @@
     import { toastStore } from "../../../stores/toast";
     import { iconSize } from "../../../stores/iconSize";
     import Scanner from "./Scanner.svelte";
+    import SaveAccount from "./SaveAccount.svelte";
+    import AccountSelector from "./AccountSelector.svelte";
 
     export let ledger: string;
     export let amountToSend: bigint;
-    export let sending = false;
+    export let busy = false;
     export let valid = false;
+    export let validAccountName = false;
+    export let capturingAccount = false;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -22,6 +26,8 @@
     let validAmount = false;
     let targetAccount: string = "";
     let scanner: Scanner;
+    let accounts: NamedAccount[] = [];
+    let saveAccountElement: SaveAccount;
 
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -30,22 +36,35 @@
     $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
     $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
+    $: validSend =
+        validAmount &&
+        amountToSend > BigInt(0) &&
+        targetAccount !== "" &&
+        targetAccount !== account;
     $: {
-        valid =
-            validAmount &&
-            amountToSend > BigInt(0) &&
-            targetAccount !== "" &&
-            targetAccount !== account;
+        valid = capturingAccount ? validAccountName : validSend;
+    }
+
+    onMount(async () => {
+        accounts = await client.loadSavedCryptoAccounts();
+    });
+
+    export function saveAccount() {
+        return saveAccountElement?.saveAccount();
     }
 
     export function scan() {
         scanner?.scan();
     }
 
+    function unknownAccount(account: string): boolean {
+        return accounts.find((a) => a.account === account) === undefined;
+    }
+
     export function send() {
         if (!valid) return;
 
-        sending = true;
+        busy = true;
         dispatch("error", undefined);
         client
             .withdrawCryptocurrency({
@@ -60,11 +79,16 @@
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);
-                    targetAccount = "";
                     dispatch("refreshBalance");
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
                         values: { symbol },
                     });
+                    if (unknownAccount(targetAccount)) {
+                        capturingAccount = true;
+                    } else {
+                        dispatch("close");
+                        targetAccount = "";
+                    }
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
@@ -76,30 +100,43 @@
                 client.logError(`Unable to withdraw ${symbol}`, err);
                 toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
-            .finally(() => (sending = false));
+            .finally(() => (busy = false));
     }
 </script>
 
-<Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
+{#if capturingAccount}
+    <SaveAccount
+        bind:this={saveAccountElement}
+        bind:valid={validAccountName}
+        account={targetAccount}
+        {accounts} />
+{:else}
+    <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
-<div class="token-input">
-    <TokenInput
-        {ledger}
-        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
-        bind:valid={validAmount}
-        bind:amount={amountToSend} />
-</div>
-<div class="target">
-    <Input
-        bind:value={targetAccount}
-        countdown={false}
-        maxlength={100}
-        placeholder={$_("cryptoAccount.sendTarget")} />
-
-    <div class="qr" on:click={scan}>
-        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
+    <div class="token-input">
+        <TokenInput
+            {ledger}
+            {transferFees}
+            maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+            bind:valid={validAmount}
+            bind:amount={amountToSend} />
     </div>
-</div>
+    <div class="target">
+        <Input
+            bind:value={targetAccount}
+            countdown={false}
+            maxlength={100}
+            placeholder={$_("cryptoAccount.sendTarget")} />
+
+        <div class="qr" on:click={scan}>
+            <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
+        </div>
+    </div>
+
+    <div class="accounts">
+        <AccountSelector bind:targetAccount {accounts} />
+    </div>
+{/if}
 
 <style lang="scss">
     :global(.target .input-wrapper input) {

@@ -23,6 +23,7 @@ generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message_v2);
+generate_update_call!(toggle_mute_notifications);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);

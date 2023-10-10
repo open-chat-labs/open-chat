@@ -33,7 +33,6 @@ import type {
     EditMessageResponse,
     MarkReadRequest,
     WithdrawCryptocurrencyResponse,
-    CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
     ArchiveChatResponse,
     BlobReference,
@@ -63,6 +62,10 @@ import type {
     ChannelIdentifier,
     Rules,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -93,6 +96,10 @@ import {
     leaveCommunityResponse,
     deleteCommunityResponse,
     tipMessageResponse,
+    savedCryptoAccountsResponse,
+    saveCryptoAccountResponse,
+    proposalToSubmit,
+    submitProposalResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -113,7 +120,6 @@ import {
     apiMessageContent,
     editMessageResponse,
     apiOptional,
-    apiPendingCryptoContent,
     apiPendingCryptocurrencyWithdrawal,
     apiReplyContextArgs,
     addRemoveReactionResponse,
@@ -601,13 +607,11 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+        const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            content: {
-                Crypto: content,
-            },
+            content,
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
             rules_accepted: apiOptional(identity, rulesAccepted),
@@ -624,6 +628,23 @@ export class UserClient extends CandidService {
             this.userService.send_message_with_transfer_to_group(req),
             (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId),
         ).then((resp) => [resp, event.event]);
+    }
+
+    loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
+        return this.handleQueryResponse(
+            () => this.userService.saved_crypto_accounts({}),
+            savedCryptoAccountsResponse,
+        );
+    }
+
+    saveCryptoAccount({ name, account }: NamedAccount): Promise<SaveCryptoAccountResponse> {
+        return this.handleResponse(
+            this.userService.save_crypto_account({
+                name,
+                account,
+            }),
+            saveCryptoAccountResponse,
+        );
     }
 
     sendMessageWithTransferToChannel(
@@ -661,13 +682,11 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
+        const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToChannelArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            content: {
-                Crypto: content,
-            },
+            content,
             sender_name: sender.username,
             sender_display_name: apiOptional(identity, sender.displayName),
             mentioned: [],
@@ -1099,6 +1118,16 @@ export class UserClient extends CandidService {
         return this.handleResponse(
             this.userService.set_community_indexes({ indexes }),
             (_) => true,
+        );
+    }
+
+    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+        return this.handleResponse(
+            this.userService.submit_proposal({
+                governance_canister_id : Principal.fromText(governanceCanisterId),
+                proposal : proposalToSubmit(proposal),
+            }),
+            submitProposalResponse,
         );
     }
 }

@@ -61,6 +61,7 @@
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
     $: selectedCommunity = client.selectedCommunity;
+    $: messageContext = { chatId: chat.id, threadRootMessageIndex: undefined };
 
     // treat this as if it might be null so we don't get errors when it's unmounted
     let chatEventList: ChatEventList | undefined;
@@ -75,11 +76,11 @@
 
     function doGoToMessageIndex(index: number): void {
         page(routeForChatIdentifier($chatListScope.kind, chat.id));
-        chatEventList?.scrollToMessageIndex(chat.id, index, false);
+        chatEventList?.scrollToMessageIndex(messageContext, index, false);
     }
 
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
-        chatEventList?.scrollToMessageIndex(chat.id, index, preserveFocus);
+        chatEventList?.scrollToMessageIndex(messageContext, index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -100,7 +101,7 @@
     }
 
     export function externalGoToMessage(messageIndex: number): void {
-        chatEventList?.onMessageWindowLoaded(messageIndex);
+        chatEventList?.onMessageWindowLoaded(messageContext, messageIndex);
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -274,7 +275,6 @@
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    setFocusMessageIndex={(idx) => client.setFocusMessageIndex(chat.id, idx)}
     {events}
     {chat}
     bind:initialised

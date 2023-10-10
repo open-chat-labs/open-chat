@@ -13,13 +13,14 @@
     export let maxAmount: bigint;
     export let ledger: string;
     export let valid: boolean = false;
+    export let label: string = "tokenTransfer.amount";
+    export let transferFees: bigint;
 
     let inputElement: HTMLInputElement;
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
-    $: transferFees = tokenDetails.transferFee;
     $: tokenDecimals = tokenDetails.decimals;
 
     onMount(() => {
@@ -67,7 +68,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_("tokenTransfer.amount")} rules={symbol} />
+    <Legend label={$_(label)} rules={symbol} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">

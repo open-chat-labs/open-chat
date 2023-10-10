@@ -1,7 +1,7 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds, TestEnv, NNS_GOVERNANCE_CANISTER_ID, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
+use crate::utils::{local_bin, tick_many};
+use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc1_ledger_canister::MetadataValue;
@@ -95,9 +95,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_user_index_canister_wasm,
         group_index_canister_id,
         notifications_index_canister_id,
+        proposals_bot_canister_id,
         cycles_dispenser_canister_id,
         storage_index_canister_id,
-        proposals_bot_user_id: proposals_bot_canister_id.into(),
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         wasm_version: BuildVersion::min(),
         test_mode: true,
@@ -165,7 +165,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         service_owner_principals: vec![controller],
         user_index_canister_id,
         group_index_canister_id,
-        nns_governance_canister_id: NNS_GOVERNANCE_CANISTER_ID,
+        nns_governance_canister_id,
+        sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,

@@ -175,6 +175,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -190,6 +191,7 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -219,6 +221,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
+        proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
@@ -232,6 +235,7 @@ impl Data {
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
+            proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -278,5 +282,6 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

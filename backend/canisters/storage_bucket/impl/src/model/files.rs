@@ -318,10 +318,7 @@ impl Files {
         self.add_blob_if_not_exists(completed_file.hash, completed_file.bytes.into_vec());
 
         if let Some(expiry) = completed_file.expiry {
-            self.expiration_queue
-                .entry(expiry)
-                .or_insert_with(VecDeque::new)
-                .push_back(file_id);
+            self.expiration_queue.entry(expiry).or_default().push_back(file_id);
         }
 
         self.files.insert(

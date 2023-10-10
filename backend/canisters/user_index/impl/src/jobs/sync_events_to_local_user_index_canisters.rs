@@ -11,7 +11,10 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.user_index_event_sync_queue.is_empty() {
+    if TIMER_ID.with(|t| t.get().is_none())
+        && !state.data.user_index_event_sync_queue.is_empty()
+        && !state.data.user_index_event_sync_queue.sync_in_progress()
+    {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'sync_events_to_local_user_index_canisters' job started");
@@ -22,33 +25,11 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    match mutate_state(try_get_next) {
-        GetNextResult::Success(batch) => {
-            ic_cdk::spawn(process_batch(batch));
-        }
-        GetNextResult::Continue => {}
-        GetNextResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'sync_events_to_local_user_index_canisters' job stopped");
-            }
-        }
-    }
-}
-
-enum GetNextResult {
-    Success(Vec<(CanisterId, Vec<LocalUserIndexEvent>)>),
-    Continue,
-    QueueEmpty,
-}
-
-fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
-    if state.data.user_index_event_sync_queue.is_empty() {
-        GetNextResult::QueueEmpty
-    } else if let Some(batch) = state.data.user_index_event_sync_queue.try_start_batch() {
-        GetNextResult::Success(batch)
-    } else {
-        GetNextResult::Continue
+    if let Some(batch) = mutate_state(|state| state.data.user_index_event_sync_queue.try_start_batch()) {
+        ic_cdk::spawn(process_batch(batch));
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk_timers::clear_timer(timer_id);
+        trace!("'sync_events_to_local_user_index_canisters' job stopped");
     }
 }
 
@@ -60,7 +41,10 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {
 
     futures::future::join_all(futures).await;
 
-    mutate_state(|state| state.data.user_index_event_sync_queue.mark_batch_completed());
+    mutate_state(|state| {
+        state.data.user_index_event_sync_queue.mark_batch_completed();
+        start_job_if_required(state);
+    });
 }
 
 async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) {
@@ -74,8 +58,6 @@ async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) 
                 .data
                 .user_index_event_sync_queue
                 .mark_sync_failed_for_canister(canister_id, events);
-
-            start_job_if_required(state);
         });
     }
 }

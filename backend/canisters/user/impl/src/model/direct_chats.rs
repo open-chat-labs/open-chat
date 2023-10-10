@@ -41,6 +41,10 @@ impl DirectChats {
         self.direct_chats.values()
     }
 
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut DirectChat> {
+        self.direct_chats.values_mut()
+    }
+
     pub fn len(&self) -> usize {
         self.direct_chats.len()
     }

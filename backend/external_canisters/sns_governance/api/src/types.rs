@@ -421,7 +421,7 @@ pub mod proposal {
         DeregisterDappCanisters(super::DeregisterDappCanisters),
     }
 }
-#[derive(candid::CandidType, candid::Deserialize, Clone, PartialEq)]
+#[derive(candid::CandidType, candid::Deserialize, Clone, Debug, PartialEq)]
 pub struct GovernanceError {
     pub error_type: i32,
     pub error_message: String,

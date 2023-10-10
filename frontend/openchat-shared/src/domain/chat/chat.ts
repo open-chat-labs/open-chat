@@ -20,6 +20,8 @@ import type {
     CommunityFrozen,
     NoChange,
     UserBlocked,
+    TransferFailed,
+    InternalError,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -29,7 +31,6 @@ export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
 export const HotOrNotGovernanceCanisterId = "6wcax-haaaa-aaaaq-aaava-cai";
 export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
 
-export type InternalError = { kind: "internal_error" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
 
@@ -46,12 +47,21 @@ export type MessageContent =
     | GiphyContent
     | ProposalContent
     | PrizeContent
+    | PrizeContentInitial
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
     | ReportedMessageContent
     | UserReferralCard
     | MemeFighterContent;
+
+export interface PrizeContentInitial {
+    kind: "prize_content_initial";
+    endDate: bigint;
+    caption?: string;
+    transfer: PendingCryptocurrencyTransfer;
+    prizes: bigint[];
+}
 
 export type CaptionedContent =
     | AttachmentContent
@@ -1418,6 +1428,7 @@ export type SendMessageResponse =
     | SendMessageTooLong
     | SendMessageEmpty
     | TransferCannotBeZero
+    | TransferCannotBeToSelf
     | SendMessageRecipientNotFound
     | TransferFailed
     | TransferLimitExceeded
@@ -1462,16 +1473,16 @@ export type CryptoCurrencyNotSupported = {
     kind: "cryptocurrency_not_supported";
 };
 
-export type TransferFailed = {
-    kind: "transfer_failed";
-};
-
 export type TransferLimitExceeded = {
     kind: "transfer_limit_exceeded";
 };
 
 export type TransferCannotBeZero = {
     kind: "transfer_cannot_be_zero";
+};
+
+export type TransferCannotBeToSelf = {
+    kind: "transfer_cannot_be_to_self";
 };
 
 export type SendMessageRecipientBlocked = {

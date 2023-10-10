@@ -168,6 +168,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         user_index_canister_id: state.data.user_index_canister_id,
         local_user_index_canister_id: state.env.canister_id(),
         notifications_canister_id: state.data.notifications_canister_id,
+        proposals_bot_canister_id: state.data.proposals_bot_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         display_name: args.display_name.clone(),
@@ -257,6 +258,7 @@ fn welcome_messages() -> Vec<String> {
             the future you'll be able to ask me questions or send me commands.",
         "Please join the [OpenChat](/community/dgegb-daaaa-aaaar-arlhq-cai) community to find out more about OpenChat, take \
             part in governance, request new features, report bugs or just chat.",
+        "To discover more communities click the \"Explore communities\" icon near the bottom of the navigation bar or [follow this link](/communities).",
     ];
 
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()

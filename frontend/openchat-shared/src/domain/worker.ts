@@ -96,6 +96,9 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
     SetDisplayNameResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    SubmitProposalResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -135,6 +138,8 @@ import type {
 } from "./community";
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
+import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
+import type { CandidateProposal } from "./proposals";
 /**
  * Worker request types
  */
@@ -240,6 +245,7 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | StakeNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
@@ -283,7 +289,19 @@ export type WorkerRequest =
     | GetCachePrimerTimestamps
     | SetCachePrimerTimestamp
     | FollowThread
+    | LoadSavedCryptoAccounts
+    | SaveCryptoAccount
+    | SubmitProposal
     | TipMessage;
+
+type LoadSavedCryptoAccounts = {
+    kind: "loadSavedCryptoAccounts";
+};
+
+type SaveCryptoAccount = {
+    kind: "saveCryptoAccount";
+    namedAccount: NamedAccount;
+};
 
 type TipMessage = {
     kind: "tipMessage";
@@ -871,6 +889,12 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type StakeNeuronForSubmittingProposals = {
+    governanceCanisterId: string;
+    stake: bigint;
+    kind: "stakeNeuronForSubmittingProposals";
+};
+
 type MarkSuspectedBot = {
     kind: "markSuspectedBot";
 };
@@ -1033,6 +1057,7 @@ export type WorkerResponseInner =
     | UpdatesResult
     | DeletedDirectMessageResponse
     | DeletedGroupMessageResponse
+    | StakeNeuronForSubmittingProposalsResponse
     | Map<string, Record<number, EventWrapper<Message>>>
     | PayForDiamondMembershipResponse
     | ClaimPrizeResponse
@@ -1065,6 +1090,9 @@ export type WorkerResponseInner =
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
     | TipMessageResponse
+    | NamedAccount[]
+    | SaveCryptoAccountResponse
+    | SubmitProposalResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1296,8 +1324,18 @@ type FollowThread = {
     kind: "followThread";
 };
 
+type SubmitProposal = {
+    governanceCanisterId: string;
+    proposal: CandidateProposal;
+    kind: "submitProposal";
+};
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
+    : T extends LoadSavedCryptoAccounts
+    ? NamedAccount[]
+    : T extends SaveCryptoAccount
+    ? SaveCryptoAccountResponse
     : T extends TipMessage
     ? TipMessageResponse
     : T extends UnpinMessage
@@ -1478,6 +1516,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends StakeNeuronForSubmittingProposals
+    ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
     ? Map<string, Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
@@ -1564,6 +1604,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteUserGroupsResponse
     : T extends SetMemberDisplayName
     ? SetMemberDisplayNameResponse
+    : T extends SubmitProposal
+    ? SubmitProposalResponse
     : T extends FollowThread
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps

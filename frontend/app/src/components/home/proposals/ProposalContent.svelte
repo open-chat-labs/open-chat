@@ -17,6 +17,7 @@
     import { toastStore } from "../../../stores/toast";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
+    import { NamedNeurons } from "../../../stores/namedNeurons";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
@@ -138,15 +139,18 @@
         }
     }
 
-    function truncatedProposerId(): string {
-        if (proposal.proposer.length < 12) {
-            return proposal.proposer;
+    function renderNeuronId(neuronId: string): string {
+        const name = NamedNeurons[neuronId];
+        if (name !== undefined) {
+            return name;
         }
 
-        return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
-            proposal.proposer.length - 4,
-            proposal.proposer.length
-        )}`;
+        const length = neuronId.length;
+        if (length < 12) {
+            return neuronId;
+        }
+
+        return `${neuronId.slice(0, 4)}..${neuronId.slice(length - 4, length)}`;
     }
 
     export function getProposalTopicLabel(
@@ -164,7 +168,7 @@
 {#if collapsed}
     <div on:click={onClick}>
         <em>{proposal.title}</em>
-        <ExpandIcon viewBox="0 -5 24 24" />
+        <ExpandIcon viewBox="0 -3 24 24" />
     </div>
 {:else}
     <div class="wrapper">
@@ -243,7 +247,7 @@
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
+            <a target="_blank" rel="noreferrer" href={proposerUrl}>{renderNeuronId(proposal.proposer)}</a>
         </div>
     </div>
 {/if}

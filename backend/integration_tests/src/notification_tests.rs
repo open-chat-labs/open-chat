@@ -133,11 +133,11 @@ fn group_message_notification_muted() {
         vec![(user2.user_id, user2.principal)],
     );
 
-    client::user::mute_notifications(
+    client::group::toggle_mute_notifications(
         env,
         user2.principal,
-        user2.user_id.into(),
-        &user_canister::mute_notifications::Args { chat_id: group_id },
+        group_id.into(),
+        &group_canister::toggle_mute_notifications::Args { mute: true },
     );
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);

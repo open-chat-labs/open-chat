@@ -5,7 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{Chat, ChatEvent, ChatId, MessageContent};
+use types::{Chat, ChatEvent, ChatId, MessageContent, MultiUserChat};
 
 #[test]
 fn new_platform_moderators_added_to_moderators_group() {
@@ -59,12 +59,12 @@ fn report_message_succeeds() {
 
     let group_id = client::user::happy_path::create_group(env, &user2, &random_string(), true, true);
 
-    client::local_user_index::report_message(
+    client::local_user_index::report_message_v2(
         env,
         user2.principal,
         canister_ids.local_user_index,
-        &local_user_index_canister::report_message::Args {
-            chat_id: group_id,
+        &local_user_index_canister::report_message_v2::Args {
+            chat_id: MultiUserChat::Group(group_id),
             thread_root_message_index: None,
             event_index: 10.into(),
             reason_code: 1,

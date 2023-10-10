@@ -41,7 +41,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .data
                 .chat
                 .events
-                .events_reader(EventIndex::default(), args.thread_root_message_index, now)
+                .events_reader(EventIndex::default(), args.thread_root_message_index)
                 .and_then(|r| {
                     r.message_event_internal(args.message_id.into())
                         .map(|e| (e.event.message_index, e.index))

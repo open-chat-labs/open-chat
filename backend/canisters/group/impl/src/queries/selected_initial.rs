@@ -16,7 +16,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
 
         Success(SuccessResult {
             timestamp: now,
-            latest_event_index: chat.events.main_events_reader(now).latest_event_index().unwrap_or_default(),
+            latest_event_index: chat.events.main_events_reader().latest_event_index().unwrap_or_default(),
             participants: chat.members.iter().map(|p| p.into()).collect(),
             blocked_users: chat.members.blocked(),
             invited_users: chat.invited_users.users(),

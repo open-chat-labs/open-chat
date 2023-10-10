@@ -127,7 +127,7 @@ export function getContentAsText(
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(formatter("giphyMessage"), content.caption);
-    } else if (content.kind === "prize_content") {
+    } else if (content.kind === "prize_content" || content.kind === "prize_content_initial") {
         text = captionedContent(formatter("prizeMessage"), content.caption);
     } else if (content.kind === "prize_winner_content") {
         text = "Prize winner message";
@@ -138,9 +138,9 @@ export function getContentAsText(
     } else if (content.kind === "user_referral_card") {
         text = formatter("referralHeader");
     } else if (content.kind === "reported_message_content") {
-        text = "reported message";
+        text = "Reported message";
     } else if (content.kind === "meme_fighter_content") {
-        text = "Meme fighter message";
+        text = "Meme Fighter message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -261,9 +261,13 @@ export function routeForChatIdentifier(scope: ChatListScope["kind"], id: ChatIde
 
 export function chatIdentifierToString(chatId: ChatIdentifier): string {
     switch (chatId.kind) {
-        case "direct_chat": return chatId.userId;
-        case "group_chat": return chatId.groupId;
-        case "channel": return `${chatId.communityId}_${chatId.channelId}`;
-        default: throw new UnsupportedValueError("Unknown chatId kind", chatId);
+        case "direct_chat":
+            return chatId.userId;
+        case "group_chat":
+            return chatId.groupId;
+        case "channel":
+            return `${chatId.communityId}_${chatId.channelId}`;
+        default:
+            throw new UnsupportedValueError("Unknown chatId kind", chatId);
     }
 }

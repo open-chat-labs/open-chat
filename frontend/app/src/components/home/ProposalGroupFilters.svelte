@@ -10,11 +10,13 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { proposalActionCategories, type ProposalActionCategory } from "../../stores/proposalSections";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import {
+        proposalActionCategories,
+        type ProposalActionCategory,
+    } from "../../stores/proposalSections";
 
     export let selectedChat: ChatSummary;
-
-    const OC_PROPOSALS_NAME = "OpenChat Proposals";
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 
@@ -38,7 +40,7 @@
     $: topics = [...$proposalTopicsStore];
     $: groupTopics =
         selectedChat.kind !== "direct_chat" &&
-        selectedChat.name === OC_PROPOSALS_NAME;
+        selectedChat.subtype?.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID;
 
     $: grouped = [
         ...client.groupBy(topics, ([id, _]) => {

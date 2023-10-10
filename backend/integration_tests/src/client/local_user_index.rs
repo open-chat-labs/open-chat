@@ -11,7 +11,7 @@ generate_update_call!(join_channel);
 generate_update_call!(join_community);
 generate_update_call!(join_group);
 generate_update_call!(register_user);
-generate_update_call!(report_message);
+generate_update_call!(report_message_v2);
 
 pub mod happy_path {
     use crate::rng::random_user_principal;

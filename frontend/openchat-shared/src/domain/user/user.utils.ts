@@ -36,7 +36,7 @@ export function userOrUserGroupId(u: UserOrUserGroup): string | undefined {
     switch (u.kind) {
         case "user":
         case "bot":
-            return u.username;                
+            return u.userId;                
         default: return undefined;
     }
 }

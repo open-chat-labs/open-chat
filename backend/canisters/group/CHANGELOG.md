@@ -5,10 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed `c2c_toggle_mute_notifications` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))
+
+## [[2.0.874](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.874-group)] - 2023-10-06
+
 ### Changed
 
 - Notifications for custom messages should use the sub-type ([#4465](https://github.com/open-chat-labs/open-chat/pull/4465))
 - Support prize messages in any token by getting fee from original transfer ([#4470](https://github.com/open-chat-labs/open-chat/pull/4470))
+- Refund any prize message balance once it has ended ([#4476](https://github.com/open-chat-labs/open-chat/pull/4476))
+- Switch crypto messages to only contain completed transactions ([#4489](https://github.com/open-chat-labs/open-chat/pull/4489))
 
 ## [[2.0.865](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.865-group)] - 2023-09-27
 
@@ -22,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
 - Simplify `inspect_message` ([#4436](https://github.com/open-chat-labs/open-chat/pull/4436))
+- Use canister timers to remove expired events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
 
 ### Fixed
 

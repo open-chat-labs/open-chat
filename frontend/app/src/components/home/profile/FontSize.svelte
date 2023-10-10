@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import { fontSizeScale, setFontScale } from "../../../stores/fontSize";
+    import Range from "../../Range.svelte";
 </script>
 
 <div class="grid">
@@ -10,9 +11,7 @@
     <div class="letter three" on:click={() => setFontScale(3)}>A</div>
     <div class="letter four" on:click={() => setFontScale(4)}>A</div>
     <div class="slider">
-        <input
-            class="range-input"
-            type="range"
+        <Range
             min={0}
             max={4}
             bind:value={$fontSizeScale}

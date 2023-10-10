@@ -78,8 +78,8 @@ impl DirectChat {
         self.unconfirmed_v2.retain(|m| m.message_id != message_id);
     }
 
-    pub fn to_summary(&self, my_user_id: UserId, now: TimestampMillis) -> DirectChatSummary {
-        let events_reader = self.events.main_events_reader(now);
+    pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
+        let events_reader = self.events.main_events_reader();
 
         DirectChatSummary {
             them: self.them,
@@ -98,17 +98,11 @@ impl DirectChat {
                 .unwrap_or_default(),
             archived: self.archived.value,
             events_ttl: self.events.get_events_time_to_live().value,
-            expired_messages: self.events.expired_messages(now),
         }
     }
 
-    pub fn to_summary_updates(
-        &self,
-        updates_since: TimestampMillis,
-        my_user_id: UserId,
-        now: TimestampMillis,
-    ) -> DirectChatSummaryUpdates {
-        let events_reader = self.events.main_events_reader(now);
+    pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
+        let events_reader = self.events.main_events_reader();
 
         let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
@@ -143,7 +137,6 @@ impl DirectChat {
                 .if_set_after(updates_since)
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-            newly_expired_messages: self.events.expired_messages_since(updates_since, now),
         }
     }
 }

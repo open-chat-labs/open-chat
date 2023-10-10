@@ -5,12 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.875](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.875-community)] - 2023-10-06
+
 ### Changed
 
 - All members can mention @everyone by default in private communities ([#4458](https://github.com/open-chat-labs/open-chat/pull/4458))
 - Notifications for custom messages should use the sub-type ([#4465](https://github.com/open-chat-labs/open-chat/pull/4465))
 - Join all community members to channels that are made public ([#4469](https://github.com/open-chat-labs/open-chat/pull/4469))
 - Support prize messages in any token by getting fee from original transfer ([#4470](https://github.com/open-chat-labs/open-chat/pull/4470))
+- Refund any prize message balance once it has ended ([#4476](https://github.com/open-chat-labs/open-chat/pull/4476))
+- Switch crypto messages to only contain completed transactions ([#4489](https://github.com/open-chat-labs/open-chat/pull/4489))
 
 ## [[2.0.864](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.864-community)] - 2023-09-27
 
@@ -23,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disable mentions for messages sent by the ProposalsBot ([#4424](https://github.com/open-chat-labs/open-chat/pull/4424))
+- Use canister timers to remove expired events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
 
 ### Fixed
 

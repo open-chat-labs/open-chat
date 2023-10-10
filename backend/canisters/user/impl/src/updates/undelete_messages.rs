@@ -39,7 +39,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
             .filter_map(|(message_id, result)| matches!(result, UndeleteMessageResult::Success).then_some(message_id))
             .collect();
 
-        let events_reader = chat.events.main_events_reader(now);
+        let events_reader = chat.events.main_events_reader();
 
         let messages: Vec<_> = deleted
             .iter()

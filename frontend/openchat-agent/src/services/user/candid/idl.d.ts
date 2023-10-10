@@ -28,6 +28,7 @@ import {
     ProposalContent,
     PrizeContent,
     PrizeWinnerContent,
+    PrizeContentInitial,
     MessageReminderCreated,
     MessageReminder,
     Proposal,
@@ -134,7 +135,11 @@ import {
     DeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse,
-    TipMessageResponse
+    TipMessageResponse,
+    SavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse,
+    NamedAccount,
+    SubmitProposalResponse
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -205,6 +210,7 @@ export {
     WithdrawCryptoResponse as ApiWithdrawCryptoResponse,
     PrizeContent as ApiPrizeContent,
     PrizeWinnerContent as ApiPrizeWinnerContent,
+    PrizeContentInitial as ApiPrizeCotentInitial,
     GiphyContent as ApiGiphyContent,
     GiphyImageVariant as ApiGiphyImageVariant,
     ChatMetrics as ApiChatMetrics,
@@ -271,7 +277,11 @@ export {
     DeleteCommunityResponse as ApiDeleteCommunityResponse,
     ArchiveUnarchiveChatsResponse as ApiArchiveUnarchiveChatsResponse,
     SetCommunityIndexesResponse as ApiSetCommunityIndexesResponse,
-    TipMessageResponse as ApiTipMessageResponse
+    TipMessageResponse as ApiTipMessageResponse,
+    SubmitProposalResponse as ApiSubmitProposalResponse,
+    SavedCryptoAccountsResponse as ApiSavedCryptoAccountsResponse,
+    SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
+    NamedAccount as ApiNamedAccount
 };
 
 export const idlFactory: IDL.InterfaceFactory;

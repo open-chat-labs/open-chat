@@ -5,11 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed calls to `c2c_toggle_mute_notifications` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))
+
+## [[2.0.871](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.871-user)] - 2023-10-05
+
+### Added
+
+- Support submitting proposals from within OpenChat ([#4486](https://github.com/open-chat-labs/open-chat/pull/4486))
+
 ### Changed
 
 - Notifications for custom messages should use the sub-type ([#4465](https://github.com/open-chat-labs/open-chat/pull/4465))
 - Support prize messages in any token by getting fee from original transfer ([#4470](https://github.com/open-chat-labs/open-chat/pull/4470))
 - Prevent transfers to yourself ([#4471](https://github.com/open-chat-labs/open-chat/pull/4471))
+- Retry sending tip if c2c call fails ([#4482](https://github.com/open-chat-labs/open-chat/pull/4482))
+- Store `proposals_bot_canister_id` in user canisters ([#4485](https://github.com/open-chat-labs/open-chat/pull/4485))
+- Switch crypto messages to only contain completed transactions ([#4489](https://github.com/open-chat-labs/open-chat/pull/4489))
 
 ## [[2.0.867](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.867-user)] - 2023-09-27
 
@@ -20,6 +33,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement notifications for message tips ([#4427](https://github.com/open-chat-labs/open-chat/pull/4427))
 - Add `followed_by_me` to the thread summary returned in GroupChatSummary ([#4431](https://github.com/open-chat-labs/open-chat/pull/4431))
 - Allow users to save named cryptocurrency accounts ([#4434](https://github.com/open-chat-labs/open-chat/pull/4434))
+
+### Changed
+
+- Use canister timers to remove expired events ([#4447](https://github.com/open-chat-labs/open-chat/pull/4447))
 
 ## [[2.0.852](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.852-user)] - 2023-09-18
 

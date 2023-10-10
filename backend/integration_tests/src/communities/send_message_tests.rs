@@ -1,14 +1,17 @@
+use crate::client::icrc1::happy_path::balance_of;
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::utils::now_nanos;
+use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use ic_ledger_types::Tokens;
 use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{
-    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
-    OptionUpdate, TextContent, UpdatedRules, Version,
+    CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
+    MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
 };
 
 #[test]
@@ -96,8 +99,85 @@ fn send_crypto_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
         assert_eq!(user2_balance, 10000);
+    } else {
+        panic!("{send_message_result:?}")
+    }
+}
+
+#[test]
+fn send_prize_in_channel() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2: _,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller);
+
+    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+    let fee = 10000;
+    let prizes = vec![Tokens::from_e8s(100000)];
+    let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+
+    let transfer_to: CanisterId = community_id.into();
+    let send_message_result = client::user::send_message_with_transfer_to_channel(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_with_transfer_to_channel::Args {
+            community_id,
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_message_id(),
+            content: MessageContentInitial::Prize(PrizeContentInitial {
+                transfer: CryptoTransaction::Pending(create_pending_transaction(
+                    Cryptocurrency::InternetComputer,
+                    canister_ids.icp_ledger,
+                    total,
+                    fee,
+                    transfer_to.into(),
+                    now_nanos(env),
+                )),
+                caption: None,
+                prizes,
+                end_date: now_millis(env) + 1000,
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+        },
+    );
+
+    if matches!(
+        send_message_result,
+        user_canister::send_message_with_transfer_to_channel::Response::Success(_)
+    ) {
+        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        assert_eq!(user1_balance_after_sending_prize, inital_user1_balance - total - fee);
+
+        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        assert_eq!(community_balance_after_sending_prize, total);
+
+        env.advance_time(Duration::from_secs(2));
+        tick_many(env, 5);
+
+        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        assert_eq!(user1_balance_after_refund, inital_user1_balance - 2 * fee);
+
+        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        assert_eq!(community_balance_after_refund, 0);
     } else {
         panic!("{send_message_result:?}")
     }
@@ -121,7 +201,7 @@ fn send_message_with_community_rules_not_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
@@ -151,7 +231,7 @@ fn send_message_with_channel_rules_not_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, None);
 
@@ -178,7 +258,7 @@ fn send_message_with_community_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
@@ -205,7 +285,7 @@ fn send_message_with_channel_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -232,8 +312,8 @@ fn send_message_with_community_rules_but_not_channel_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, Some(Version::from(1)), None);
 
@@ -260,8 +340,8 @@ fn send_message_with_channel_rules_but_not_community_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -291,8 +371,8 @@ fn send_message_with_community_rules_and_channel_rules_accepted_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     let response = send_dummy_message_with_rules(
         env,
@@ -326,8 +406,8 @@ fn send_message_with_previously_accepted_rules_succeeds() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
 
     send_dummy_message_with_rules(
         env,
@@ -363,8 +443,8 @@ fn send_message_with_old_community_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_community_rules(env, &user1, community_id, "No heavy petting".to_string());
-    set_community_rules(env, &user1, community_id, "No heavy petting or pets".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting".to_string());
+    set_community_rules(env, user1.principal, community_id, "No heavy petting or pets".to_string());
 
     let response = send_dummy_message_with_rules(
         env,
@@ -401,8 +481,14 @@ fn send_message_with_old_channel_rules_accepted_fails() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    set_channel_rules(env, &user1, community_id, channel_id, "No running".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No running or jumping".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No running".to_string());
+    set_channel_rules(
+        env,
+        user1.principal,
+        community_id,
+        channel_id,
+        "No running or jumping".to_string(),
+    );
 
     let response = send_dummy_message_with_rules(env, &user2, community_id, channel_id, None, Some(Version::from(1)));
 
@@ -452,8 +538,8 @@ fn send_message_with_rules_leads_to_expected_summary_and_selected_states() {
         }
     );
 
-    set_community_rules(env, &user1, community_id, "No running".to_string());
-    set_channel_rules(env, &user1, community_id, channel_id, "No jumping".to_string());
+    set_community_rules(env, user1.principal, community_id, "No running".to_string());
+    set_channel_rules(env, user1.principal, community_id, channel_id, "No jumping".to_string());
 
     let community_rules = get_community_rules(env, &user2, community_id);
     let channel_rules = get_channel_rules(env, &user2, community_id, channel_id);
@@ -591,7 +677,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     }
 }
 
-fn set_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityId, text: String) {
+fn set_community_rules(env: &mut PocketIc, sender: Principal, community_id: CommunityId, text: String) {
     let args = community_canister::update_community::Args {
         name: None,
         description: None,
@@ -608,10 +694,16 @@ fn set_community_rules(env: &mut PocketIc, user: &User, community_id: CommunityI
         primary_language: None,
     };
 
-    client::community::happy_path::update_community(env, user.principal, community_id, &args);
+    client::community::happy_path::update_community(env, sender, community_id, &args);
 }
 
-fn set_channel_rules(env: &mut PocketIc, user: &User, community_id: CommunityId, channel_id: ChannelId, text: String) {
+fn set_channel_rules(
+    env: &mut PocketIc,
+    sender: Principal,
+    community_id: CommunityId,
+    channel_id: ChannelId,
+    text: String,
+) {
     let args = community_canister::update_channel::Args {
         name: None,
         description: None,
@@ -622,12 +714,13 @@ fn set_channel_rules(env: &mut PocketIc, user: &User, community_id: CommunityId,
         }),
         avatar: OptionUpdate::NoChange,
         permissions: None,
+        events_ttl: OptionUpdate::NoChange,
         gate: OptionUpdate::NoChange,
         public: None,
         channel_id,
     };
 
-    client::community::happy_path::update_channel(env, user, community_id, &args);
+    client::community::happy_path::update_channel(env, sender, community_id, &args);
 }
 
 struct TestData {
