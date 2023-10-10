@@ -37,6 +37,7 @@
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
+    const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text: \n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
@@ -74,6 +75,8 @@
     $: showFullSummary = proposal.summary.length < 400;
     $: payload =
         content.proposal.kind === "sns" ? content.proposal.payloadTextRendering : undefined;
+    $: payloadEmpty =
+        payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0;
 
     $: {
         if (collapsed) {
@@ -204,7 +207,7 @@
                     </div>
                 </div>
             {/if}
-            {#if payload !== undefined}
+            {#if !payloadEmpty}
                 <div on:click={() => (showPayload = true)} class="payload">
                     <span>{$_("proposal.details")}</span>
                     <OpenInNew color="var(--icon-txt)" />
@@ -247,7 +250,8 @@
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            <a target="_blank" rel="noreferrer" href={proposerUrl}>{renderNeuronId(proposal.proposer)}</a>
+            <a target="_blank" rel="noreferrer" href={proposerUrl}
+                >{renderNeuronId(proposal.proposer)}</a>
         </div>
     </div>
 {/if}
@@ -266,12 +270,12 @@
     </Overlay>
 {/if}
 
-{#if showPayload && payload !== undefined}
+{#if showPayload && !payloadEmpty}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
             <div slot="header">{$_("proposal.details")}</div>
             <div class="payload-body" slot="body">
-                <Markdown text={payload} inline={false} />
+                <Markdown text={payload ?? ""} inline={false} />
             </div>
         </ModalContent>
     </Overlay>
