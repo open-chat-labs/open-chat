@@ -25,11 +25,11 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-echo "Test PocketIC download starting"
-curl -sO https://download.dfinity.systems/ic/6529a74eea03c55c1e093cc262e1237150b3a93f/openssl-static-binaries/x86_64-$PLATFORM/pocket-ic.gz
-gzip -df pocket-ic.gz
-chmod +x pocket-ic
-echo "Test PocketIC download completed"
+# echo "Test PocketIC download starting"
+# curl -sO https://download.dfinity.systems/ic/7756800cb5b44aa4bf05a49ef8de9096f509ce46/binaries/x86_64-$PLATFORM/pocket-ic.gz
+# gzip -df pocket-ic.gz
+# chmod +x pocket-ic
+# echo "Test PocketIC download completed"
 cd ../../..
 
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
@@ -37,4 +37,4 @@ cd ../../..
 ./scripts/download-nns-canister-wasm.sh sns_wasm sns-wasm-canister
 ./scripts/download-nns-canister-wasm.sh icrc1_ledger ic-icrc1-ledger
 
-cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS
+cargo test --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS --nocapture

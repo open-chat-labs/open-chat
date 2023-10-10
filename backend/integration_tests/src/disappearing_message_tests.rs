@@ -1,9 +1,6 @@
 use crate::env::ENV;
 use crate::rng::random_string;
-use crate::{client, CanisterIds, TestEnv, User};
-use candid::Principal;
-use itertools::Itertools;
-use pocket_ic::PocketIc;
+use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use types::OptionUpdate;

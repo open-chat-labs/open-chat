@@ -1,6 +1,6 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::utils::{local_bin, tick_many};
+use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
