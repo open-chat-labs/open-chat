@@ -1934,7 +1934,7 @@ impl From<AccessRulesInternal> for VersionedRules {
 }
 
 lazy_static! {
-    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap();
+    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\],.;-])").unwrap();
 }
 
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
