@@ -1062,5 +1062,6 @@
     "followThreadFailed": "Échec du suivi du fil de discussion",
     "unfollowThreadFailed": "Échec de l'abandon du suivi du fil de discussion",
     "doubleClickReply": "Double-cliquez sur le message pour répondre/modifier",
-    "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier"
+    "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier",
+    "minimumAmount": "Minimum: {amount} {symbol}"
 }

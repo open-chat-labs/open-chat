@@ -1060,5 +1060,6 @@
     "followThreadFailed": "שרשור המעקב נכשל",
     "unfollowThreadFailed": "ביטול המעקב נכשל",
     "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
-    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך"
+    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
+    "minimumAmount": "מינימום: {amount} {symbol}"
 }
