@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Retry submitting proposal if looking up user fails ([#4543](https://github.com/open-chat-labs/open-chat/pull/4543))
+
+## [[2.0.881](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-10
+
+### Changed
+
 - Add logging around submitting proposals ([#4538](https://github.com/open-chat-labs/open-chat/pull/4538))
 
 ## [[2.0.879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-09
