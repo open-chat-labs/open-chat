@@ -1063,5 +1063,6 @@
     "followThreadFailed": "スレッドのフォローに失敗しました",
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
     "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
-    "doubleTapReply": "メッセージをダブルタップして返信/編集します"
+    "doubleTapReply": "メッセージをダブルタップして返信/編集します",
+    "minimumAmount": "最小値: {amount} {symbol}"
 }
