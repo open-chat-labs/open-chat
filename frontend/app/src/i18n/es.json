@@ -1064,5 +1064,6 @@
     "followThreadFailed": "Error al seguir el hilo",
     "unfollowThreadFailed": "Error al dejar de seguir el hilo",
     "doubleClickReply": "Haga doble clic en el mensaje para responder/editar",
-    "doubleTapReply": "Toca dos veces el mensaje para responder/editar"
+    "doubleTapReply": "Toca dos veces el mensaje para responder/editar",
+    "minimumAmount": "Mínimo: {amount} {symbol}"
 }
