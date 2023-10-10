@@ -139,20 +139,18 @@
         }
     }
 
-    function truncatedProposerId(): string {
-        const name = NamedNeurons[proposal.proposer];
+    function renderNeuronId(neuronId: string): string {
+        const name = NamedNeurons[neuronId];
         if (name !== undefined) {
             return name;
         }
 
-        if (proposal.proposer.length < 12) {
-            return proposal.proposer;
+        const length = neuronId.length;
+        if (length < 12) {
+            return neuronId;
         }
 
-        return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
-            proposal.proposer.length - 4,
-            proposal.proposer.length
-        )}`;
+        return `${neuronId.slice(0, 4)}..${neuronId.slice(length - 4, length)}`;
     }
 
     export function getProposalTopicLabel(
@@ -249,7 +247,7 @@
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
+            <a target="_blank" rel="noreferrer" href={proposerUrl}>{renderNeuronId(proposal.proposer)}</a>
         </div>
     </div>
 {/if}
