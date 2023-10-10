@@ -71,7 +71,7 @@
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
-    $: amountE8s = Number(amount) * Number(Math.pow(tokenDetails.decimals, 10));
+    $: amountE8s = Number(amount) * Number(Math.pow(10, tokenDetails.decimals));
     $: amountValid = amountE8s >= transferFee;
     $: recipientValid = isPrincipalValid(recipient);
     $: valid =
