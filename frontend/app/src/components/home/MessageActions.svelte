@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    // import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -55,10 +55,10 @@
         drawOpen = false;
     }
 
-    // function createPrizeMessage() {
-    //     dispatch("createPrizeMessage");
-    //     drawOpen = false;
-    // }
+    function createPrizeMessage() {
+        dispatch("createPrizeMessage");
+        drawOpen = false;
+    }
 
     function toggleEmojiPicker() {
         toggleAction("emoji");
@@ -151,11 +151,11 @@
                 </HoverIcon>
             </div>
         {/if}
-        <!-- <div class="prize" on:click|stopPropagation={createPrizeMessage}>
+        <div class="prize" on:click|stopPropagation={createPrizeMessage}>
             <HoverIcon title={"Create prize"}>
                 <Gift size={$iconSize} color={iconColour} />
             </HoverIcon>
-        </div> -->
+        </div>
     {/if}
 </div>
 
