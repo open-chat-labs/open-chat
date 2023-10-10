@@ -88,7 +88,6 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
-    $: threadSummary = threadRootMessage?.thread ?? msg.thread;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
     $: isFollowedByMe = threadRootMessage !== undefined && ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
     $: canFollow = threadRootMessage !== undefined && !isFollowedByMe;
