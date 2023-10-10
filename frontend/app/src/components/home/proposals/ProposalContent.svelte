@@ -37,7 +37,7 @@
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
-    const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text: \n\n";
+    const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
