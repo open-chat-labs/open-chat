@@ -46,10 +46,7 @@ import type {
     UpdatedRules,
     FollowThreadResponse,
 } from "openchat-shared";
-import {
-    CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
@@ -85,42 +82,8 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
     }
 }
 
-export function claimPrizeResponse(candid: ApiClaimPrizeResponse): ClaimPrizeResponse {
-    if ("PrizeFullyClaimed" in candid) {
-        return { kind: "prize_fully_claimed" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    if ("AlreadyClaimed" in candid) {
-        return { kind: "already_claimed" };
-    }
-    if ("Success" in candid) {
-        return { kind: "success" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("PrizeEnded" in candid) {
-        return { kind: "prize_ended" };
-    }
-    if ("FailedAfterTransfer" in candid) {
-        return { kind: "failed_after_transfer" };
-    }
-    if ("TransferFailed" in candid) {
-        return { kind: "transfer_failed" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiClaimPrizeResponse type received", candid);
-}
-
 export function summaryResponse(
-    candid: ApiGroupCanisterSummaryResponse
+    candid: ApiGroupCanisterSummaryResponse,
 ): GroupCanisterSummaryResponse {
     if ("Success" in candid) {
         return groupChatSummary(candid.Success.summary);
@@ -130,7 +93,7 @@ export function summaryResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGroupCanisterSummaryResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -167,7 +130,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
 }
 
 export function summaryUpdatesResponse(
-    candid: ApiGroupCanisterSummaryUpdatesResponse
+    candid: ApiGroupCanisterSummaryUpdatesResponse,
 ): GroupCanisterSummaryUpdatesResponse {
     if ("Success" in candid) {
         return groupChatSummaryUpdates(candid.Success.updates);
@@ -180,12 +143,12 @@ export function summaryUpdatesResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
-        candid
+        candid,
     );
 }
 
 function groupChatSummaryUpdates(
-    candid: ApiGroupCanisterGroupChatSummaryUpdates
+    candid: ApiGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -219,7 +182,7 @@ function groupChatSummaryUpdates(
 function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     [] | [number],
     number,
-    bigint
+    bigint,
 ]): UpdatedEvent {
     return {
         eventIndex,
@@ -229,7 +192,7 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 }
 
 export function apiOptionalGroupPermissions(
-    permissions: Partial<ChatPermissions>
+    permissions: Partial<ChatPermissions>,
 ): OptionalGroupPermissions {
     return {
         block_users: [],
@@ -369,7 +332,7 @@ export async function getMessagesByMessageIndexResponse(
     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
     threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined
+    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
@@ -379,7 +342,7 @@ export async function getMessagesByMessageIndexResponse(
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,
-            latestEventIndex
+            latestEventIndex,
         );
 
         return {
@@ -401,12 +364,12 @@ export async function getMessagesByMessageIndexResponse(
         throw ReplicaNotUpToDateError.byEventIndex(
             candid.ReplicaNotUpToDate,
             latestClientEventIndexPreRequest ?? -1,
-            false
+            false,
         );
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -423,7 +386,7 @@ export async function getEventsResponse(
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
     threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined
+    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<GroupChatEvent>> {
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
@@ -433,7 +396,7 @@ export async function getEventsResponse(
             chatId,
             threadRootMessageIndex,
             latestClientEventIndexPreRequest,
-            latestEventIndex
+            latestEventIndex,
         );
 
         return {
@@ -445,7 +408,7 @@ export async function getEventsResponse(
         throw ReplicaNotUpToDateError.byEventIndex(
             candid.ReplicaNotUpToDate,
             latestClientEventIndexPreRequest ?? -1,
-            false
+            false,
         );
     }
     console.warn("GetGroupChatEvents failed with ", candid);
@@ -660,7 +623,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
 }
 
 export function convertToCommunityReponse(
-    candid: ApiConvertIntoCommunityResponse
+    candid: ApiConvertIntoCommunityResponse,
 ): ConvertToCommunityResponse {
     if ("Success" in candid) {
         return {
@@ -681,11 +644,13 @@ export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
-        new_version: rules.newVersion,  
+        new_version: rules.newVersion,
     };
 }
 
-export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+export function followThreadResponse(
+    candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
+): FollowThreadResponse {
     if ("Success" in candid) {
         return "success";
     }

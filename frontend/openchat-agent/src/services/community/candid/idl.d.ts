@@ -74,6 +74,7 @@ import {
     VersionedRules,
     FollowThreadResponse,
     UnfollowThreadResponse
+    ClaimPrizeResponse
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -149,6 +150,7 @@ export {
     SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
     FollowThreadResponse as ApiFollowThreadResponse,
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
+    ClaimPrizeResponse as ApiClaimPrizeResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

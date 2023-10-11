@@ -36,7 +36,7 @@
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
-        if (e.isTrusted && chatId.kind === "group_chat" && !me) {
+        if (e.isTrusted && chatId.kind !== "direct_chat" && !me) {
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
