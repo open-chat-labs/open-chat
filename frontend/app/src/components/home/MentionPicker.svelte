@@ -20,6 +20,7 @@
     export let border = false;
     export let mentionSelf = false;
     export let supportsUserGroups = false;
+    export let usersOnly = false;
 
     let index = 0;
     let usersAndGroups: UserOrUserGroup[] = [];
@@ -37,11 +38,16 @@
         switch (userOrGroup.kind) {
             case "user_group":
                 return (
-                    prefixLower === undefined ||
-                    (supportsUserGroups && userOrGroup.name.toLowerCase().startsWith(prefixLower))
+                    !usersOnly &&
+                    (prefixLower === undefined ||
+                        (supportsUserGroups &&
+                            userOrGroup.name.toLowerCase().startsWith(prefixLower)))
                 );
             case "everyone": {
-                return prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower);
+                return (
+                    !usersOnly &&
+                    (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
+                );
             }
             default:
                 return (
