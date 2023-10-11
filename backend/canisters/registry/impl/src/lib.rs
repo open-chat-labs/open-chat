@@ -1,8 +1,8 @@
-use crate::model::nervous_systems::{NervousSystemDetails, NervousSystems};
-use crate::model::tokens::Tokens;
+use crate::model::nervous_systems::{NervousSystemDetails, NervousSystemMetrics, NervousSystems};
+use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use registry_canister::{NervousSystem, TokenDetails};
+use registry_canister::NervousSystem;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -48,8 +48,8 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            tokens: self.data.tokens.get_all().to_vec(),
-            nervous_systems: self.data.nervous_systems.get_all().to_vec(),
+            tokens: self.data.tokens.get_all().iter().map(|t| t.into()).collect(),
+            nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
                 sns_wasm: self.data.sns_wasm_canister_id,
@@ -134,7 +134,7 @@ impl Data {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -142,13 +142,13 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
-    pub tokens: Vec<TokenDetails>,
-    pub nervous_systems: Vec<NervousSystemDetails>,
+    pub tokens: Vec<TokenMetrics>,
+    pub nervous_systems: Vec<NervousSystemMetrics>,
     pub failed_sns_launches: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize)]
 pub struct CanisterIds {
     pub sns_wasm: CanisterId,
     pub cycles_dispenser: CanisterId,
