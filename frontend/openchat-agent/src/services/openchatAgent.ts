@@ -1665,7 +1665,7 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
-        credential?: string,
+        _credential?: string,
     ): Promise<JoinGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -1691,7 +1691,7 @@ export class OpenChatAgent extends EventTarget {
 
     async joinCommunity(
         id: CommunityIdentifier,
-        credential?: string,
+        _credential?: string,
     ): Promise<JoinCommunityResponse> {
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
