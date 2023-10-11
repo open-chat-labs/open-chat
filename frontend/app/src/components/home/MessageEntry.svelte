@@ -530,6 +530,7 @@
                 {attachment}
                 {mode}
                 {pollsAllowed}
+                {isMultiUser}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:createPrizeMessage

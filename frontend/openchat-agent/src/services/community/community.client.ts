@@ -62,6 +62,7 @@ import {
     disableInviteCodeResponse,
     enableInviteCodeResponse,
     registerProposalVoteResponse,
+    claimPrizeResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -126,6 +127,7 @@ import type {
     UpdatedRules,
     FollowThreadResponse,
     OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -178,6 +180,16 @@ export class CommunityClient extends CandidService {
         inviteCode: string | undefined,
     ): CommunityClient {
         return new CommunityClient(communityId, identity, config, db, inviteCode);
+    }
+
+    claimPrize(channelId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.handleResponse(
+            this.service.claim_prize({
+                channel_id: BigInt(channelId),
+                message_id: messageId,
+            }),
+            claimPrizeResponse,
+        );
     }
 
     addMembersToChannel(
