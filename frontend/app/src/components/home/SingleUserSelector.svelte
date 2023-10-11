@@ -52,7 +52,8 @@
             on:close={() => (showMentionPicker = false)}
             on:mention={selectReceiver}
             border
-            prefix={textValue} />
+            usersOnly
+            prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
         <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
