@@ -75,7 +75,7 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
 async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSystemDetails> {
     let metadata = sns_governance_canister_c2c_client::get_metadata(sns.governance_canister_id.unwrap(), &Empty {}).await?;
     let parameters =
-        sns_governance_canister_c2c_client::get_nervous_system_parameters(sns.governance_canister_id.unwrap()).await?;
+        sns_governance_canister_c2c_client::get_nervous_system_parameters(sns.governance_canister_id.unwrap(), &()).await?;
 
     let now = read_state(|state| state.env.now());
 
