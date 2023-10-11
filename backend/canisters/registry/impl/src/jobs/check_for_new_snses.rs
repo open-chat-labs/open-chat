@@ -1,8 +1,8 @@
-use crate::model::nervous_systems::NervousSystemDetails;
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister::main::CanisterId;
+use registry_canister::NervousSystemDetails;
 use sns_wasm_canister::list_deployed_snses::DeployedSns;
 use std::collections::HashSet;
 use std::time::Duration;
@@ -107,6 +107,7 @@ fn build_nervous_system_details(
         url: metadata.url,
         logo: metadata.logo?,
         description: metadata.description,
+        transaction_fee: parameters.transaction_fee_e8s?,
         min_dissolve_delay_to_vote: parameters.neuron_minimum_dissolve_delay_to_vote_seconds?,
         min_neuron_stake: parameters.neuron_minimum_stake_e8s?,
         proposal_rejection_fee: parameters.reject_cost_e8s?,

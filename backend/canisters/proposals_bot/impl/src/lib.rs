@@ -51,12 +51,13 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.metrics(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
+            registry_synced_up_to: self.data.registry_synced_up_to,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
+                registry: self.data.registry_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
-                sns_wasm: self.data.sns_wasm_canister_id,
             },
         }
     }
@@ -70,11 +71,16 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
-    pub sns_wasm_canister_id: CanisterId,
+    #[serde(default = "registry_canister_id")]
+    pub registry_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub failed_sns_launches: HashSet<CanisterId>,
+    pub registry_synced_up_to: TimestampMillis,
     pub test_mode: bool,
+}
+
+fn registry_canister_id() -> CanisterId {
+    CanisterId::from_text("cpi5u-yiaaa-aaaar-aqw5a-cai").unwrap()
 }
 
 impl Data {
@@ -84,7 +90,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
-        sns_wasm_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -94,10 +100,10 @@ impl Data {
             group_index_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
-            sns_wasm_canister_id,
+            registry_canister_id,
             finished_proposals_to_process: VecDeque::new(),
             timer_jobs: TimerJobs::default(),
-            failed_sns_launches: HashSet::default(),
+            registry_synced_up_to: 0,
             test_mode,
         }
     }
@@ -113,6 +119,7 @@ pub struct Metrics {
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,
     pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
+    pub registry_synced_up_to: TimestampMillis,
     pub canister_ids: CanisterIds,
 }
 
@@ -134,9 +141,9 @@ pub struct NervousSystemMetrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub registry: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
-    pub sns_wasm: CanisterId,
 }
 
 // Deterministically generate each MessageId so that there is never any chance of a proposal

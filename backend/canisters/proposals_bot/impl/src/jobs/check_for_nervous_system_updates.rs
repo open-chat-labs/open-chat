@@ -1,0 +1,100 @@
+use crate::{mutate_state, read_state};
+use registry_canister::NervousSystemDetails;
+use std::fmt::Write;
+use std::time::Duration;
+use tracing::{error, info};
+use types::{
+    CanisterId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat, Rules,
+};
+use utils::time::HOUR_IN_MS;
+
+pub fn start_job() {
+    ic_cdk_timers::set_timer_interval(Duration::from_millis(HOUR_IN_MS), run);
+    ic_cdk_timers::set_timer(Duration::ZERO, run);
+}
+
+fn run() {
+    ic_cdk::spawn(run_async());
+}
+
+async fn run_async() {
+    let (registry_canister_id, registry_synced_up_to) =
+        read_state(|state| (state.data.registry_canister_id, state.data.registry_synced_up_to));
+
+    if let Ok(registry_canister::c2c_nervous_systems::Response::Success(result)) =
+        registry_canister_c2c_client::c2c_nervous_systems(
+            registry_canister_id,
+            &registry_canister::c2c_nervous_systems::Args {
+                updates_since: Some(registry_synced_up_to),
+            },
+        )
+        .await
+    {
+        mutate_state(|state| {
+            for sns in result.nervous_systems {
+                if state.data.nervous_systems.exists(&sns.governance_canister_id) {
+                    state.data.nervous_systems.update_from_registry(sns);
+                } else {
+                    ic_cdk::spawn(create_group(sns, state.data.group_index_canister_id));
+                }
+            }
+            state.data.registry_synced_up_to = result.last_updated;
+        });
+    }
+}
+
+async fn create_group(sns: NervousSystemDetails, group_index_canister_id: CanisterId) {
+    let governance_canister_id = sns.governance_canister_id;
+
+    let create_group_args = group_index_canister::c2c_create_group::Args {
+        is_public: true,
+        name: format!("{} Proposals", sns.name),
+        description: default_description(&sns.name),
+        rules: Rules::default(),
+        subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
+            governance_canister_id,
+            is_nns: sns.is_nns,
+        })),
+        avatar: None,
+        history_visible_to_new_joiners: true,
+        permissions: Some(GroupPermissions {
+            create_polls: GroupPermissionRole::Admins,
+            send_messages: GroupPermissionRole::Admins,
+            ..Default::default()
+        }),
+        events_ttl: None,
+        gate: None,
+    };
+
+    match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
+        Ok(group_index_canister::c2c_create_group::Response::Success(result)) => {
+            mutate_state(|state| {
+                state.data.nervous_systems.add(
+                    governance_canister_id,
+                    sns.ledger_canister_id,
+                    MultiUserChat::Group(result.chat_id),
+                    sns.transaction_fee,
+                    sns.min_dissolve_delay_to_vote,
+                    sns.min_neuron_stake,
+                    sns.proposal_rejection_fee,
+                );
+            });
+            info!(%governance_canister_id, name = sns.name.as_str(), "Proposals group created");
+        }
+        response => error!(?response, %governance_canister_id, name = sns.name.as_str(), "Failed to create proposals group"),
+    }
+}
+
+fn default_description(name: &str) -> String {
+    let mut description = String::new();
+    writeln!(&mut description, "Join this group to view and vote on {name} proposals.").unwrap();
+    writeln!(&mut description).unwrap();
+    writeln!(
+        &mut description,
+        "To vote on proposals you must add your user id as a hotkey to any {name} neurons you wish to vote with."
+    )
+    .unwrap();
+    writeln!(&mut description).unwrap();
+    writeln!(&mut description, "Your OpenChat user id is {{userId}}.").unwrap();
+    description
+}

@@ -1,8 +1,8 @@
-use crate::model::nervous_systems::{NervousSystemDetails, NervousSystemMetrics, NervousSystems};
+use crate::model::nervous_systems::{NervousSystemMetrics, NervousSystems};
 use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use registry_canister::NervousSystem;
+use registry_canister::{NervousSystem, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -107,6 +107,7 @@ impl Data {
             url: Some("https://internetcomputer.org".to_string()),
             logo: IC_LOGO.to_string(),
             description: None,
+            transaction_fee: 10_000,
             min_dissolve_delay_to_vote: 15778800, // 6 months
             min_neuron_stake: 100_000_000,
             proposal_rejection_fee: 1_000_000_000,

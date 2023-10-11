@@ -1,10 +1,10 @@
 use crate::guards::caller_is_governance_principal;
-use crate::model::nervous_systems::NervousSystemDetails;
 use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
+use registry_canister::NervousSystemDetails;
 use tracing::{error, info};
 use types::CanisterId;
 
