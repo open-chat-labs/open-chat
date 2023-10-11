@@ -73,7 +73,7 @@ import {
     SetMemberDisplayNameResponse,
     VersionedRules,
     FollowThreadResponse,
-    UnfollowThreadResponse
+    UnfollowThreadResponse,
     ClaimPrizeResponse
 } from "./types";
 export {
