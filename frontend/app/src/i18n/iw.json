@@ -279,7 +279,7 @@
         "voting_q": "איך אני מצביע על הצעות?",
         "voting_a": "הצטרף ל<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">קבוצת ההצעות של OpenChat</a> וקרא את <a href=\"/blog/governance\">פוסט הבלוג הזה</a> שנותן סקירה כללית של ממשל OpenChat ויש לו מדריך שלב אחר שלב להצבעה.",
         "buychat_q": "איך אני קונה אסימוני CHAT?",
-        "buychat_a": "כעת עליך תחילה <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">לקנות ICP</a> אשר לאחר מכן תוכל להחליף עבורו CHAT בבורסה מבוזרת (DEXes) שונות.<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY מוסיפים תמיכה עבור <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> עבור אסימוני ICRC1 (אשר כולל CHAT) מה שהופך אותם להרבה יותר קלים לשילוב עם חילופים מרכזיים (CEXes). ברגע שזה קרה, סביר להניח ש-CHAT יהיה זמין למסחר ב-CEXes עבור ICP או USDT.",
+        "buychat_a": "כעת עליך תחילה <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">לקנות ICP</a> אשר לאחר מכן תוכל להחליף עבורו CHAT בבורסה מבוזרת (DEXes) שונות.<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY מוסיפים תמיכה עבור <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> עבור אסימוני ICRC1 (אשר כולל CHAT) מה שהופך אותם להרבה יותר קלים לשילוב עם חילופים מרכזיים (CEXes). ברגע שזה קרה, סביר להניח ש-CHAT יהיה זמין למסחר ב-CEXes עבור ICP או USDT.",
         "shortcuts_q": "אילו פקודות קיצור זמינות?",
         "shortcuts_a": "ישנן מספר פקודות קיצור שבהן אתה יכול להשתמש מתיבת הזנת ההודעה. <br /><br /> `/poll` - כדי ליצור סקר חדש <br /> `/search xyz` - כדי לחפש בצ'אט הנוכחי את המונח \"xyz\" <br />`/gif kittens` - כדי חפש גיפים של חתלתולים <br />`/icp 0.1` - כדי לשלוח 0.1 ICP למישהו <br />`/faq question_id*` - כדי ליצור ולפרסם קישור מעוצב לשאלת שאלות נפוצות ספציפיות <br />`/diamond ` - כדי ליצור ולפרסם קישור מעוצב עם פרטי החברות ב-Diamond <br/> <br/>ניתן להשתמש בפקודות שמקבלות ארגומנט גם ללא הארגומנט.<br /><br />* מזהי שאלות נפוצות זמינים הם : airdrop, הצבעה, ארנק, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, אחסון, אבטחה, מפת דרכים, קיצורי דרך",
         "content_q": "איזה סוג תוכן מותר?",
@@ -449,7 +449,13 @@
         "chooseReceiver": "הזן את שם המשתמש של הנמען",
         "max": "מקסימום",
         "viewTransaction": "[עסקה]({url})",
-        "fee": "עמלות של {fee} {token} יתווספו"
+        "fee": "עמלות של {fee} {token} יתווספו",
+        "saveAccount": "להציל",
+        "saveAccountMessage": "האם תרצה לשמור חשבון זה לגישה קלה יותר בפעם הבאה?",
+        "enterAccountName": "הזן שם עבור חשבון זה",
+        "failedToSaveAccount": "מצטערים, לא הצלחנו לשמור את חשבונך",
+        "accountNameTaken": "כבר יש לך חשבון בשם זה",
+        "chooseAddress": "בחר אחת מהכתובות השמורות שלך"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",
@@ -584,7 +590,28 @@
         "unknownActionCategory": "פעולות אחרות",
         "notificationsAction": "פעולות אינדקס התראות",
         "registryAction": "פעולות הרישום",
-        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> ."
+        "noEligibleNeuronsMessage": "לא נמצאו נוירונים מתאימים או מקושרים. על מנת להצביע על הצעות מתוך OpenChat, עליך להוסיף תחילה את מזהה המשתמש שלך ב-OpenChat כמקש קיצור לכל נוירונים שאתה רוצה להצביע איתם.<br/><br/> מזהה המשתמש שלך ב-OpenChat הוא: {userId}.<br/><br/> למידע נוסף על הצבעה וממשל קרא <a target=\"_blank\" href=\"https://oc.app/blog/governance\">פוסט זה בבלוג</a> .",
+        "makeProposal": "תציע הצעה",
+        "maker": {
+            "header": "תציע הצעה",
+            "title": "כותרת",
+            "summary": "סיכום",
+            "url": "כתובת אתר",
+            "enterTitle": "הזן כותרת",
+            "enterSummary": "הזן סיכום",
+            "enterUrl": "הזן כתובת אתר אופציונלית",
+            "summaryRules": "תומך ב-markdown",
+            "urlRules": "קישור לפרטים משלימים",
+            "unexpectedError": "שגיאה לא צפויה בהגשת ההצעה",
+            "toPrincipal": "מנהל חשבון הנמען",
+            "enterToPrincipal": "הזן מנהל חשבון נמען",
+            "amount": "כמות",
+            "amountRules": "לפחות אסימון {token} אחד",
+            "enterAmount": "הזן כמות של {token} אסימונים",
+            "type": "סוג ההצעה",
+            "treasury": "אסימון להעברה מאוצר",
+            "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל."
+        }
     },
     "yes": "כן",
     "no": "לא",
@@ -1042,5 +1069,6 @@
     "followThreadFailed": "שרשור המעקב נכשל",
     "unfollowThreadFailed": "ביטול המעקב נכשל",
     "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
-    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך"
+    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
+    "minimumAmount": "מינימום: {amount} {symbol}"
 }

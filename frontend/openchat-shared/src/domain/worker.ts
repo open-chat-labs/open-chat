@@ -96,6 +96,9 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     ManageFavouritesResponse,
     SetDisplayNameResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    SubmitProposalResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -136,6 +139,7 @@ import type {
 import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
+import type { CandidateProposal } from "./proposals";
 /**
  * Worker request types
  */
@@ -285,7 +289,19 @@ export type WorkerRequest =
     | GetCachePrimerTimestamps
     | SetCachePrimerTimestamp
     | FollowThread
+    | LoadSavedCryptoAccounts
+    | SaveCryptoAccount
+    | SubmitProposal
     | TipMessage;
+
+type LoadSavedCryptoAccounts = {
+    kind: "loadSavedCryptoAccounts";
+};
+
+type SaveCryptoAccount = {
+    kind: "saveCryptoAccount";
+    namedAccount: NamedAccount;
+};
 
 type TipMessage = {
     kind: "tipMessage";
@@ -1076,6 +1092,9 @@ export type WorkerResponseInner =
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
     | TipMessageResponse
+    | NamedAccount[]
+    | SaveCryptoAccountResponse
+    | SubmitProposalResponse
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1127,7 +1146,7 @@ type DeleteFailedMessage = {
 };
 
 type ClaimPrize = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageId: bigint;
     kind: "claimPrize";
 };
@@ -1307,8 +1326,18 @@ type FollowThread = {
     kind: "followThread";
 };
 
+type SubmitProposal = {
+    governanceCanisterId: string;
+    proposal: CandidateProposal;
+    kind: "submitProposal";
+};
+
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
+    : T extends LoadSavedCryptoAccounts
+    ? NamedAccount[]
+    : T extends SaveCryptoAccount
+    ? SaveCryptoAccountResponse
     : T extends TipMessage
     ? TipMessageResponse
     : T extends UnpinMessage
@@ -1577,6 +1606,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteUserGroupsResponse
     : T extends SetMemberDisplayName
     ? SetMemberDisplayNameResponse
+    : T extends SubmitProposal
+    ? SubmitProposalResponse
     : T extends FollowThread
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps

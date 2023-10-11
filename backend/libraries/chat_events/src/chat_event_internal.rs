@@ -303,7 +303,6 @@ pub struct ProposalContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "CryptoContentCombined")]
 pub struct CryptoContentInternal {
     #[serde(rename = "r")]
     pub recipient: UserId,
@@ -311,35 +310,6 @@ pub struct CryptoContentInternal {
     pub transfer: CompletedCryptoTransaction,
     #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
-}
-
-// TODO remove this after next release cycle
-#[derive(Deserialize)]
-pub struct CryptoContentCombined {
-    #[serde(alias = "r")]
-    pub recipient: UserId,
-    #[serde(rename = "t", default)]
-    pub transfer: Option<CompletedCryptoTransaction>,
-    #[serde(alias = "c")]
-    pub caption: Option<String>,
-    #[serde(rename = "transfer", default)]
-    pub transfer_old: Option<CryptoTransaction>,
-}
-
-impl From<CryptoContentCombined> for CryptoContentInternal {
-    fn from(value: CryptoContentCombined) -> Self {
-        CryptoContentInternal {
-            recipient: value.recipient,
-            transfer: value.transfer.unwrap_or_else(|| {
-                if let Some(CryptoTransaction::Completed(t)) = value.transfer_old {
-                    t
-                } else {
-                    panic!("Transfer is not of type 'Completed'");
-                }
-            }),
-            caption: value.caption,
-        }
-    }
 }
 
 impl From<CryptoContentInternal> for CryptoContent {
@@ -369,7 +339,6 @@ impl TryFrom<CryptoContent> for CryptoContentInternal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "PrizeContentCombined")]
 pub struct PrizeContentInternal {
     #[serde(rename = "p")]
     pub prizes_remaining: Vec<Tokens>,
@@ -383,44 +352,6 @@ pub struct PrizeContentInternal {
     pub end_date: TimestampMillis,
     #[serde(rename = "c")]
     pub caption: Option<String>,
-}
-
-// TODO remove this after next release cycle
-#[derive(Deserialize)]
-pub struct PrizeContentCombined {
-    #[serde(alias = "p")]
-    pub prizes_remaining: Vec<Tokens>,
-    #[serde(alias = "r")]
-    pub reservations: HashSet<UserId>,
-    #[serde(alias = "w")]
-    pub winners: HashSet<UserId>,
-    #[serde(rename = "t")]
-    pub transaction: Option<CompletedCryptoTransaction>,
-    #[serde(alias = "e")]
-    pub end_date: TimestampMillis,
-    #[serde(alias = "c")]
-    pub caption: Option<String>,
-    #[serde(rename = "transaction")]
-    pub transaction_old: Option<CryptoTransaction>,
-}
-
-impl From<PrizeContentCombined> for PrizeContentInternal {
-    fn from(value: PrizeContentCombined) -> Self {
-        PrizeContentInternal {
-            prizes_remaining: value.prizes_remaining,
-            reservations: value.reservations,
-            winners: value.winners,
-            transaction: value.transaction.unwrap_or_else(|| {
-                if let Some(CryptoTransaction::Completed(t)) = value.transaction_old {
-                    t
-                } else {
-                    panic!("Transfer is not of type 'Completed'");
-                }
-            }),
-            end_date: value.end_date,
-            caption: value.caption,
-        }
-    }
 }
 
 impl From<&PrizeContentInternal> for PrizeContent {

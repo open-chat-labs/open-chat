@@ -205,7 +205,7 @@
         "voting_q": "Comment voter sur les propositions ?",
         "voting_a": "Rejoignez le <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">groupe de propositions OpenChat</a> et lisez <a href=\"/blog/governance\">cet article de blog</a> qui donne un aperçu de la gouvernance OpenChat et dispose d'un guide étape par étape sur le vote.",
         "buychat_q": "Comment acheter des jetons CHAT ?",
-        "buychat_a": "À l'heure actuelle, vous devez d'abord <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acheter ICP</a> que vous pouvez ensuite échanger contre CHAT sur divers échanges décentralisés (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY ajoute la prise en charge de l'<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> pour les jetons ICRC1 (qui comprend CHAT), ce qui les rend beaucoup plus faciles à intégrer aux échanges centralisés (CEX). Une fois que cela s'est produit, il est probable que CHAT sera disponible pour négocier sur les CEX contre ICP ou USDT.",
+        "buychat_a": "À l'heure actuelle, vous devez d'abord <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acheter ICP</a> que vous pouvez ensuite échanger contre CHAT sur divers échanges décentralisés (DEX).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY ajoute la prise en charge de l'<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> pour les jetons ICRC1 (qui comprend CHAT), ce qui les rend beaucoup plus faciles à intégrer aux échanges centralisés (CEX). Une fois que cela s'est produit, il est probable que CHAT sera disponible pour négocier sur les CEX contre ICP ou USDT.",
         "shortcuts_q": "Quelles commandes de raccourci sont disponibles ?",
         "shortcuts_a": "Il existe plusieurs commandes de raccourci que vous pouvez utiliser à partir de la zone de saisie de message. <br /><br /> `/poll` - pour créer un nouveau sondage <br /> `/search xyz` - pour rechercher dans le chat actuel le terme \"xyz\" <br />`/gif chatons` - pour rechercher des gifs chaton <br />`/icp 0.1` - pour envoyer 0.1 ICP à quelqu'un <br />`/faq question_id*` - pour créer et publier un lien formaté vers une question spécifique de la FAQ <br />`/diamond ` - pour créer et publier un lien formaté avec les détails de l'adhésion Diamond <br/> <br/>Les commandes qui acceptent un argument peuvent également être utilisées sans l'argument.<br /><br />* Les ID de question FAQ disponibles sont : airdrop, vote, portefeuille, buychat, send_tokens, diamant, ios_app, android_app, find_groups, style_messages, stockage, sécurité, feuille de route, raccourcis",
         "content_q": "Quel type de contenu est autorisé ?",
@@ -449,7 +449,13 @@
         "chooseReceiver": "entrer le nom d'utilisateur du destinataire",
         "max": "Max",
         "viewTransaction": "[Transaction]({url})",
-        "fee": "Des frais de {fee} {token} seront ajoutés"
+        "fee": "Des frais de {fee} {token} seront ajoutés",
+        "saveAccount": "Sauvegarder",
+        "saveAccountMessage": "Souhaitez-vous enregistrer ce compte pour y accéder plus facilement la prochaine fois ?",
+        "enterAccountName": "Entrez un nom pour ce compte",
+        "failedToSaveAccount": "Désolé, nous n'avons pas pu enregistrer votre compte",
+        "accountNameTaken": "Vous avez déjà un compte avec ce nom",
+        "chooseAddress": "Choisissez une de vos adresses enregistrées"
     },
     "cryptoAccount": {
         "manage": "Faire en sorte",
@@ -586,7 +592,28 @@
         "unknownActionCategory": "D'autres actions",
         "notificationsAction": "Notifications Index Actions",
         "registryAction": "Actions de registre",
-        "noEligibleNeuronsMessage": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre identifiant d&#39;utilisateur OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.<br/><br/> Votre identifiant OpenChat est : {userId}.<br/><br/> Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> ."
+        "noEligibleNeuronsMessage": "Aucun neurone éligible ou lié trouvé. Afin de voter sur les propositions depuis OpenChat, vous devez d&#39;abord ajouter votre identifiant d&#39;utilisateur OpenChat comme raccourci clavier pour tous les neurones avec lesquels vous souhaitez voter.<br/><br/> Votre identifiant OpenChat est : {userId}.<br/><br/> Pour plus d&#39;informations sur le vote et la gouvernance, lisez <a target=\"_blank\" href=\"https://oc.app/blog/governance\">cet article de blog</a> .",
+        "makeProposal": "Faire une proposition",
+        "maker": {
+            "header": "Faire une proposition",
+            "title": "Titre",
+            "summary": "Résumé",
+            "url": "URL",
+            "enterTitle": "Entrez un titre",
+            "enterSummary": "Entrez un résumé",
+            "enterUrl": "Entrez une URL facultative",
+            "summaryRules": "prend en charge la démarque",
+            "urlRules": "lien vers des détails supplémentaires",
+            "unexpectedError": "Erreur inattendue lors de la soumission de la proposition",
+            "toPrincipal": "Responsable du compte du destinataire",
+            "enterToPrincipal": "Saisissez le principal du compte du destinataire",
+            "amount": "Montant",
+            "amountRules": "au moins 1 jeton {token}",
+            "enterAmount": "Entrez une quantité de jetons {token}",
+            "type": "Type de proposition",
+            "treasury": "Jeton à transférer du trésor",
+            "message": "Un dépôt de jetons {cost} {token} (comprend deux séries de frais de transfert) est requis pour soumettre une proposition qui est remboursée si la proposition est adoptée."
+        }
     },
     "yes": "Oui",
     "no": "Non",
@@ -1044,5 +1071,6 @@
     "followThreadFailed": "Échec du suivi du fil de discussion",
     "unfollowThreadFailed": "Échec de l'abandon du suivi du fil de discussion",
     "doubleClickReply": "Double-cliquez sur le message pour répondre/modifier",
-    "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier"
+    "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier",
+    "minimumAmount": "Minimum: {amount} {symbol}"
 }

@@ -4,6 +4,7 @@ export * from "./chat";
 export * from "./logging";
 export * from "./rng";
 export * from "./map";
+export * from "./notifications";
 export * from "./set";
 export * from "./string";
 export * from "./promise";

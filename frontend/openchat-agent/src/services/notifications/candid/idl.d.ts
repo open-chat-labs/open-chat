@@ -9,6 +9,9 @@ import {
     ChannelReactionAddedNotification,
     DirectReactionAddedNotification,
     GroupReactionAddedNotification,
+    ChannelMessageTippedNotification,
+    DirectMessageTippedNotification,
+    GroupMessageTippedNotification,
     NotificationCryptoTransferDetails,
     SubscriptionExistsResponse,
 } from "./types";
@@ -22,6 +25,9 @@ export {
     ChannelReactionAddedNotification as ApiChannelReactionAddedNotification,
     DirectReactionAddedNotification as ApiDirectReactionAddedNotification,
     GroupReactionAddedNotification as ApiGroupReactionAddedNotification,
+    ChannelMessageTippedNotification as ApiChannelMessageTippedNotification,
+    DirectMessageTippedNotification as ApiDirectMessageTippedNotification,
+    GroupMessageTippedNotification as ApiGroupMessageTippedNotification,
     NotificationCryptoTransferDetails as ApiNotificationCryptoTransferDetails,
     SubscriptionExistsResponse as ApiSubscriptionExistsResponse,
 };

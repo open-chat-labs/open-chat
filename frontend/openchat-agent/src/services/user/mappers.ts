@@ -58,6 +58,9 @@ import type {
     ApiArchiveUnarchiveChatsResponse,
     ApiSendMessageWithTransferToChannelResponse,
     ApiTipMessageResponse,
+    ApiSavedCryptoAccountsResponse,
+    ApiSaveCryptoAccountResponse,
+    ApiSubmitProposalResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -114,6 +117,11 @@ import type {
     LeaveCommunityResponse,
     DeleteCommunityResponse,
     TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    CandidateProposalAction,
+    SubmitProposalResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -134,7 +142,30 @@ import {
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
-import type { Principal } from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
+import type { ProposalToSubmit, ProposalToSubmitAction } from "./candid/types";
+
+export function saveCryptoAccountResponse(
+    candid: ApiSaveCryptoAccountResponse,
+): SaveCryptoAccountResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else if ("NameTaken" in candid) {
+        return { kind: "name_taken" };
+    } else {
+        console.warn("saveCryptoAccountResponse failed with: ", candid);
+        return CommonResponses.failure();
+    }
+}
+
+export function savedCryptoAccountsResponse(
+    candid: ApiSavedCryptoAccountsResponse,
+): NamedAccount[] {
+    if ("Success" in candid) {
+        return candid.Success;
+    }
+    return [];
+}
 
 export function tipMessageResponse(candid: ApiTipMessageResponse): TipMessageResponse {
     if ("Success" in candid || "Retrying" in candid) {
@@ -376,7 +407,7 @@ export function sendMessageResponse(
     if ("RecipientNotFound" in candid) {
         return { kind: "recipient_not_found" };
     }
-    if ("TransferFailed" in candid) {
+    if ("TransferFailed" in candid || "TransferCannotBeToSelf" in candid) {
         return { kind: "transfer_failed" };
     }
     if ("TransferLimitExceeded" in candid) {
@@ -1022,4 +1053,58 @@ export function deleteCommunityResponse(
         console.warn("DeleteCommunity failed with", candid);
         return "failure";
     }
+}
+
+export function proposalToSubmit(proposal: CandidateProposal): ProposalToSubmit {
+    return {
+        title: proposal.title,
+        url: proposal.url ?? "",
+        summary: proposal.summary,
+        action: proposalAction(proposal.action),
+    };
+}
+
+function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction {
+    switch (action.kind) {
+        case "motion":
+            return { Motion: null };
+        case "transfer_sns_funds":
+            return { TransferSnsTreasuryFunds: {
+                to: {
+                    owner: Principal.fromText(action.toPrincipal),
+                    subaccount: []
+                },
+                amount: action.amount,
+                memo: [],
+                treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null }
+            }};
+    }
+}
+
+export function submitProposalResponse(candid: ApiSubmitProposalResponse): SubmitProposalResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("Retrying" in candid) {
+        return { kind: "retrying", error: candid.Retrying };
+    }
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed", error: candid.TransferFailed };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error", error: candid.InternalError };
+    }
+    if ("GovernanceCanisterNotSupported" in candid) {
+        return { kind: "governance_canister_not_supported" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+    if ("Unauthorized" in candid) {
+        return { kind: "not_authorized" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSubmitProposalResponse type received",
+        candid,
+    );
 }

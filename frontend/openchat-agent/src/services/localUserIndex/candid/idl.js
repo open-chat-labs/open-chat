@@ -694,17 +694,6 @@ export const idlFactory = ({ IDL }) => {
     'ReferralCodeInvalid' : IDL.Null,
     'CyclesBalanceTooLow' : IDL.Null,
   });
-  const ReportMessageArgs = IDL.Record({
-    'notes' : IDL.Opt(IDL.Text),
-    'chat_id' : ChatId,
-    'reason_code' : IDL.Nat32,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const ReportMessageResponse = IDL.Variant({
-    'Success' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
   const MultiUserChat = IDL.Variant({
     'Group' : ChatId,
     'Channel' : IDL.Tuple(CommunityId, ChannelId),
@@ -715,6 +704,10 @@ export const idlFactory = ({ IDL }) => {
     'reason_code' : IDL.Nat32,
     'event_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ReportMessageResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   return IDL.Service({
     'invite_users_to_channel' : IDL.Func(
@@ -740,11 +733,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
-    'report_message' : IDL.Func(
-        [ReportMessageArgs],
-        [ReportMessageResponse],
-        [],
-      ),
     'report_message_v2' : IDL.Func(
         [ReportMessageV2Args],
         [ReportMessageResponse],

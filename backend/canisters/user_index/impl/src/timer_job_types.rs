@@ -52,7 +52,7 @@ pub struct JoinUserToGroup {
 }
 
 impl Job for TimerJob {
-    fn execute(&self) {
+    fn execute(self) {
         match self {
             TimerJob::RecurringDiamondMembershipPayment(job) => job.execute(),
             TimerJob::SetUserSuspended(job) => job.execute(),
@@ -64,7 +64,7 @@ impl Job for TimerJob {
 }
 
 impl Job for RecurringDiamondMembershipPayment {
-    fn execute(&self) {
+    fn execute(self) {
         if let Some(duration) = read_state(|state| {
             let now = state.env.now();
             state
@@ -133,7 +133,7 @@ If you would like to extend your Diamond membership you will need to top up your
 }
 
 impl Job for SetUserSuspended {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(suspend_user(
             self.user_id,
             self.duration,
@@ -148,7 +148,7 @@ impl Job for SetUserSuspended {
 }
 
 impl Job for SetUserSuspendedInGroup {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(set_user_suspended_in_group(
             self.user_id,
             self.group,
@@ -182,7 +182,7 @@ impl Job for SetUserSuspendedInGroup {
 }
 
 impl Job for UnsuspendUser {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(unsuspend_user(self.user_id));
 
         async fn unsuspend_user(user_id: UserId) {
@@ -192,7 +192,7 @@ impl Job for UnsuspendUser {
 }
 
 impl Job for JoinUserToGroup {
-    fn execute(&self) {
+    fn execute(self) {
         if let Some(args) = read_state(|state| {
             state
                 .data

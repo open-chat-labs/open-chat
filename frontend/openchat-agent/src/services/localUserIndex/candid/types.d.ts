@@ -614,7 +614,6 @@ export interface GroupMatch {
   'name' : string,
   'description' : string,
   'avatar_id' : [] | [bigint],
-  'chat_id' : ChatId,
   'member_count' : number,
 }
 export interface GroupMessageNotification {
@@ -1204,13 +1203,6 @@ export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
-export interface ReportMessageArgs {
-  'notes' : [] | [string],
-  'chat_id' : ChatId,
-  'reason_code' : number,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type ReportMessageResponse = { 'Success' : null } |
   { 'InternalError' : string };
 export interface ReportMessageV2Args {
@@ -1383,7 +1375,6 @@ export interface _SERVICE {
   'join_community' : ActorMethod<[JoinCommunityArgs], JoinCommunityResponse>,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
-  'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
   'report_message_v2' : ActorMethod<
     [ReportMessageV2Args],
     ReportMessageResponse

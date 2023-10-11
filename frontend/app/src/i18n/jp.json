@@ -268,7 +268,7 @@
         "voting_q": "提案に投票するにはどうすればよいですか?",
         "voting_a": "<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat 提案グループ</a>に参加し、<a href=\"/blog/governance\">このブログ投稿</a>を読んで概要を説明しますOpenChat ガバナンスの説明と、投票に関するステップバイステップのガイドがあります。",
         "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
-        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
+        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
         "shortcuts_q": "どのショートカット コマンドを使用できますか?",
         "shortcuts_a": "メッセージ エントリ入力ボックスから使用できるショートカット コマンドがいくつかあります。 <br /><br /> `/poll` - 新しい投票を作成します <br /> `/search xyz` - 現在のチャットで用語「xyz」を検索します <br />`/gif 子猫` - に子猫の gif を検索する <br />`/icp 0.1` - 誰かに 0.1 ICP を送る <br />`/faq question_id*` - 特定の FAQ 質問への書式付きリンクを作成して投稿する <br />`/diamond ` - ダイヤモンド メンバーシップの詳細を含む書式付きリンクを作成して投稿する <br/> <br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /><br />* 利用可能な FAQ 質問 ID は次のとおりです。 : エアドロップ、投票、ウォレット、buychat、send_tokens、ダイヤモンド、ios_app、android_app、find_groups、style_messages、ストレージ、セキュリティ、ロードマップ、ショートカット",
         "content_q": "どのようなコンテンツが許可されますか?",
@@ -449,7 +449,13 @@
         "chooseReceiver": "受信者のユーザー名を入力します",
         "max": "最大",
         "viewTransaction": "[取引]({url})",
-        "fee": "{fee} {token}の料金が追加されます"
+        "fee": "{fee} {token}の料金が追加されます",
+        "saveAccount": "保存",
+        "saveAccountMessage": "次回簡単にアクセスできるように、このアカウントを保存しますか?",
+        "enterAccountName": "このアカウントの名前を入力してください",
+        "failedToSaveAccount": "申し訳ありませんが、アカウントを保存できませんでした",
+        "accountNameTaken": "その名前のアカウントはすでにお持ちです",
+        "chooseAddress": "保存したアドレスのいずれかを選択してください"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -586,7 +592,28 @@
         "unknownActionCategory": "その他のアクション",
         "notificationsAction": "通知インデックス アクション",
         "registryAction": "レジストリアクション",
-        "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。"
+        "noEligibleNeuronsMessage": "適格なニューロンまたはリンクされたニューロンが見つかりません。 OpenChat 内から提案に投票するには、まず OpenChat ユーザー ID をホットキーとして投票したいニューロンに追加する必要があります。<br/><br/>あなたの OpenChat ユーザー ID は: {userId} です。<br/><br/>投票とガバナンスの詳細については、<a target=\"_blank\" href=\"https://oc.app/blog/governance\">このブログ投稿を</a>参照してください。",
+        "makeProposal": "提案する",
+        "maker": {
+            "header": "提案をする",
+            "title": "タイトル",
+            "summary": "まとめ",
+            "url": "URL",
+            "enterTitle": "タイトルを入力してください",
+            "enterSummary": "概要を入力してください",
+            "enterUrl": "オプションの URL を入力してください",
+            "summaryRules": "マークダウンをサポート",
+            "urlRules": "補足詳細へのリンク",
+            "unexpectedError": "プロポーザル送信時の予期しないエラー",
+            "toPrincipal": "受信者のアカウント本人",
+            "enterToPrincipal": "受信者のアカウント プリンシパルを入力します",
+            "amount": "額",
+            "amountRules": "少なくとも 1 つの {token} トークン",
+            "enterAmount": "{token} トークンの数量を入力してください",
+            "type": "提案型",
+            "treasury": "財務省から送金するトークン",
+            "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。"
+        }
     },
     "yes": "はい",
     "no": "いいえ",
@@ -1045,5 +1072,6 @@
     "followThreadFailed": "スレッドのフォローに失敗しました",
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
     "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
-    "doubleTapReply": "メッセージをダブルタップして返信/編集します"
+    "doubleTapReply": "メッセージをダブルタップして返信/編集します",
+    "minimumAmount": "最小値: {amount} {symbol}"
 }

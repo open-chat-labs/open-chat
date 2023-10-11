@@ -80,6 +80,7 @@
     import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
+    import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
@@ -143,6 +144,7 @@
         VerifyCredential,
         HallOfFame,
         EditCommunity,
+        MakeProposal,
     }
 
     let modal = ModalType.None;
@@ -169,6 +171,14 @@
     $: currentCommunityRules = client.currentCommunityRules;
     $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
+    $: selectedMultiUserChat =
+        $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
+            ? $selectedChatStore
+            : undefined;
+    $: governanceCanisterId =
+        selectedMultiUserChat !== undefined
+            ? selectedMultiUserChat.subtype?.governanceCanisterId
+            : undefined;
 
     $: {
         document.title =
@@ -209,10 +219,7 @@
                 ) {
                     return client.isMessageRead(
                         {
-                            chatId:
-                                notification.kind === "direct_notification"
-                                    ? notification.sender
-                                    : notification.chatId,
+                            chatId: notification.chatId
                         },
                         notification.messageIndex,
                         undefined
@@ -702,6 +709,10 @@
         }
     }
 
+    function showMakeProposalModal() {
+        modal = ModalType.MakeProposal;
+    }
+
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
@@ -1024,6 +1035,7 @@
             on:replyPrivatelyTo={replyPrivatelyTo}
             on:showInviteGroupUsers={showInviteGroupUsers}
             on:showProposalFilters={showProposalFilters}
+            on:makeProposal={showMakeProposalModal}
             on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:upgrade={upgrade}
@@ -1088,7 +1100,9 @@
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Wallet}
+        dismissible={modal !== ModalType.SelectChat &&
+            modal !== ModalType.Wallet &&
+            modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.SelectChat}
@@ -1116,6 +1130,11 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
             <HallOfFame on:close={closeModal} />
+        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && governanceCanisterId !== undefined}
+            <MakeProposalModal
+                {selectedMultiUserChat}
+                {governanceCanisterId}
+                on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

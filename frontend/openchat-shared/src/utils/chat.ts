@@ -138,9 +138,9 @@ export function getContentAsText(
     } else if (content.kind === "user_referral_card") {
         text = formatter("referralHeader");
     } else if (content.kind === "reported_message_content") {
-        text = "reported message";
+        text = "Reported message";
     } else if (content.kind === "meme_fighter_content") {
-        text = "Meme fighter message";
+        text = "Meme Fighter message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

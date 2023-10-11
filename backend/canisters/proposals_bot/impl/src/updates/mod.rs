@@ -1,7 +1,5 @@
-mod add_governance_canister;
-mod appoint_admins;
-mod c2c_submit_proposal;
-mod import_proposals_group_into_community;
-mod remove_governance_canister;
-mod stake_neuron_for_submitting_proposals;
-mod wallet_receive;
+pub mod appoint_admins;
+pub mod c2c_submit_proposal;
+pub mod import_proposals_group_into_community;
+pub mod stake_neuron_for_submitting_proposals;
+pub mod wallet_receive;

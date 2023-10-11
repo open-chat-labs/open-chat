@@ -49,7 +49,7 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let validAmount: boolean = false;
+    let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -59,8 +59,17 @@
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: valid = error === undefined && validAmount && !tokenChanging;
+    $: minAmount = BigInt(100) * BigInt(numberOfWinners) * transferFees;
+    $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
+
+    $: {
+        if (tokenInputState === "too_low") {
+            error = $_("minimumAmount", { values: { amount: client.formatTokens(minAmount, 0, tokenDetails.decimals), symbol } });
+        } else {
+            error = undefined;
+        }
+    }
 
     function reset() {
         balanceWithRefresh.refresh();
@@ -227,8 +236,9 @@
                             {ledger}
                             label={"prizes.totalAmount"}
                             autofocus={!multiUserChat}
-                            bind:valid={validAmount}
+                            bind:state={tokenInputState}
                             transferFees={totalFees}
+                            {minAmount}
                             maxAmount={maxAmount(cryptoBalance)}
                             bind:amount={draftAmount} />
                     </div>

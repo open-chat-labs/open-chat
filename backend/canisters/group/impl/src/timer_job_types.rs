@@ -48,7 +48,7 @@ pub struct MakeTransferJob {
 pub struct RemoveExpiredEventsJob;
 
 impl Job for TimerJob {
-    fn execute(&self) {
+    fn execute(self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
@@ -61,7 +61,7 @@ impl Job for TimerJob {
 }
 
 impl Job for HardDeleteMessageContentJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| {
             if let Some(content) = state
                 .data
@@ -87,13 +87,13 @@ impl Job for HardDeleteMessageContentJob {
 }
 
 impl Job for DeleteFileReferencesJob {
-    fn execute(&self) {
+    fn execute(self) {
         ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
     }
 }
 
 impl Job for EndPollJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| {
             let now = state.env.now();
             state
@@ -108,7 +108,7 @@ impl Job for EndPollJob {
 }
 
 impl Job for RefundPrizeJob {
-    fn execute(&self) {
+    fn execute(self) {
         if let Some(pending_transaction) = read_state(|state| {
             state
                 .data
@@ -123,7 +123,7 @@ impl Job for RefundPrizeJob {
 }
 
 impl Job for MakeTransferJob {
-    fn execute(&self) {
+    fn execute(self) {
         let sender = read_state(|state| state.env.canister_id());
         let pending = self.pending_transaction.clone();
         ic_cdk::spawn(make_transfer(pending, sender));
@@ -145,7 +145,7 @@ impl Job for MakeTransferJob {
 }
 
 impl Job for RemoveExpiredEventsJob {
-    fn execute(&self) {
+    fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
     }
 }

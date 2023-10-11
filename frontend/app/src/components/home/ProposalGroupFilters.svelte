@@ -10,11 +10,13 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import LinkButton from "../LinkButton.svelte";
     import CollapsibleCard from "../CollapsibleCard.svelte";
-    import { proposalActionCategories, type ProposalActionCategory } from "../../stores/proposalSections";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
+    import {
+        proposalActionCategories,
+        type ProposalActionCategory,
+    } from "../../stores/proposalSections";
 
     export let selectedChat: ChatSummary;
-
-    const OC_GOVERNANCE_CANISTER_ID = "2jvtu-yqaaa-aaaaq-aaama-cai";
 
     type SectionLabels = Record<ProposalActionCategory, string>;
 

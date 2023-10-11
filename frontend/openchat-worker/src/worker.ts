@@ -1268,6 +1268,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "submitProposal":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.submitProposal(payload.governanceCanisterId, payload.proposal),
+                );
+                break;
+
             case "getCachePrimerTimestamps":
                 executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
                 break;
@@ -1291,6 +1299,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageId,
                         payload.transfer,
                     ),
+                );
+                break;
+
+            case "loadSavedCryptoAccounts":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.loadSavedCryptoAccounts(),
+                );
+                break;
+
+            case "saveCryptoAccount":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.userClient.saveCryptoAccount(payload.namedAccount),
                 );
                 break;
 

@@ -147,6 +147,7 @@ import type {
     UserGroupSummary,
     TipsReceived,
     PrizeContentInitial,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -190,6 +191,7 @@ import type {
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiGroupRegisterProposalVoteResponse,
+    ApiClaimPrizeResponse as ApiClaimGroupPrizeResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -223,6 +225,7 @@ import type {
     ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
     ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
+    ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -2220,4 +2223,15 @@ export function registerProposalVoteResponse(
         "Unexpected ApiRegisterProposalVoteResponse type received",
         candid,
     );
+}
+
+export function claimPrizeResponse(
+    candid: ApiClaimGroupPrizeResponse | ApiClaimChannelPrizeResponse,
+): ClaimPrizeResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else {
+        console.warn("ClaimPrize failed with ", candid);
+        return CommonResponses.failure();
+    }
 }

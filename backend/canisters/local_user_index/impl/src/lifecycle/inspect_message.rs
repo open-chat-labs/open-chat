@@ -22,7 +22,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "join_channel"
         | "join_community"
         | "join_group"
-        | "report_message" => state.is_caller_openchat_user(),
+        | "report_message_v2" => state.is_caller_openchat_user(),
         "register_user" => true,
         _ => false,
     };

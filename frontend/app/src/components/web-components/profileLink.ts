@@ -5,8 +5,6 @@ export type ProfileLinkClickedEvent = {
 };
 
 class ProfileLink extends HTMLElement {
-    private strong?: HTMLElement;
-
     constructor() {
         super();
     }
@@ -17,9 +15,7 @@ class ProfileLink extends HTMLElement {
 
     set text(value: string) {
         this.setAttribute("text", value);
-        if (this.strong) {
-            this.strong.textContent = `@${value}`;
-        }
+        this.textContent = `@${value}`;
     }
 
     get userId(): string {
@@ -43,10 +39,8 @@ class ProfileLink extends HTMLElement {
         const template = document.querySelector("#profile-link-template") as HTMLTemplateElement;
         const instance = document.importNode(template.content, true);
         this.appendChild(instance);
-        this.strong = this.querySelector("strong") as HTMLSpanElement;
-        if (this.strong) {
-            this.strong.textContent = `@${this.text}`;
-        }
+        this.setAttribute("style", template.style.cssText);
+        this.textContent = `@${this.text}`;
 
         // Add a click event listener to raise the custom event
         if (!this.suppressLinks) {

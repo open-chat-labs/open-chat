@@ -106,7 +106,6 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'chat_id' : ChatId,
     'member_count' : IDL.Nat32,
   });
   const ExploreGroupsSuccess = IDL.Record({

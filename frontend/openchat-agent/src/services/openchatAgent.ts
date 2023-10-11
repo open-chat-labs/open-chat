@@ -170,6 +170,8 @@ import type {
     SetMemberDisplayNameResponse,
     UpdatedRules,
     FollowThreadResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2353,8 +2355,16 @@ export class OpenChatAgent extends EventTarget {
         return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 
-    claimPrize(chatId: GroupChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
-        return this.getGroupClient(chatId.groupId).claimPrize(messageId);
+    claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
+        switch (chatId.kind) {
+            case "group_chat":
+                return this.getGroupClient(chatId.groupId).claimPrize(messageId);
+            case "channel":
+                return this.communityClient(chatId.communityId).claimPrize(
+                    chatId.channelId,
+                    messageId,
+                );
+        }
     }
 
     payForDiamondMembership(
@@ -2550,5 +2560,12 @@ export class OpenChatAgent extends EventTarget {
         } else {
             throw new Error("followThread not implemented for direct chats");
         }
+    }
+
+    submitProposal(
+        governanceCanisterId: string,
+        proposal: CandidateProposal,
+    ): Promise<SubmitProposalResponse> {
+        return this.userClient.submitProposal(governanceCanisterId, proposal);
     }
 }

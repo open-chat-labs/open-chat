@@ -266,7 +266,7 @@
         "voting_q": "我如何对提案进行投票？",
         "voting_a": "加入 <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat proposals group</a> 并阅读<a href=\"/blog/governance\">这篇博文</a>，其中给出了概述OpenChat 治理，并有一个关于投票的分步指南。",
         "buychat_q": "我如何购买 CHAT 代币？",
-        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
+        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
         "shortcuts_q": "有哪些快捷命令可用？",
         "shortcuts_a": "您可以从消息条目输入框中使用多个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif 图片<br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布特定常见问题解答问题的格式化链接<br />`/diamond ` - 创建和发布带有钻石会员详细信息的格式化链接<br/> <br/>接受参数的命令也可以在没有参数的情况下使用。<br /><br />*可用的常见问题 ID 是: airdrop, voting, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts",
         "content_q": "什么样的内容是允许的？",
@@ -448,7 +448,13 @@
         "chooseReceiver": "输入接收者的用户名",
         "max": "最大余额",
         "viewTransaction": "[交易]({url})",
-        "fee": "将添加 {fee} {token} 的费用"
+        "fee": "将添加 {fee} {token} 的费用",
+        "saveAccount": "节省",
+        "saveAccountMessage": "您想保存此帐户以便下次访问吗？",
+        "enterAccountName": "输入此帐户的名称",
+        "failedToSaveAccount": "抱歉，我们无法保存您的帐户",
+        "accountNameTaken": "您已有一个同名帐户",
+        "chooseAddress": "选择您保存的地址之一"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -586,7 +592,28 @@
         "unknownActionCategory": "其他行为",
         "notificationsAction": "通知索引操作",
         "registryAction": "注册表操作",
-        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。"
+        "noEligibleNeuronsMessage": "未找到合格或链接的神经元。为了在 OpenChat 内对提案进行投票，您必须首先将您的 OpenChat 用户 ID 作为热键添加到您想要投票的任何神经元。<br/><br/>您的 OpenChat 用户 ID 是：{userId}。<br/><br/>有关投票和治理的更多信息，请阅读<a target=\"_blank\" href=\"https://oc.app/blog/governance\">这篇博文</a>。",
+        "makeProposal": "提出建议",
+        "maker": {
+            "header": "提出建议",
+            "title": "标题",
+            "summary": "概括",
+            "url": "网址",
+            "enterTitle": "输入标题",
+            "enterSummary": "输入摘要",
+            "enterUrl": "输入可选网址",
+            "summaryRules": "支持降价",
+            "urlRules": "补充详细信息的链接",
+            "unexpectedError": "提交提案时出现意外错误",
+            "toPrincipal": "收款人账户本金",
+            "enterToPrincipal": "输入收件人帐户主体",
+            "amount": "数量",
+            "amountRules": "至少 1 个 {token} 令牌",
+            "enterAmount": "输入 {token} 代币的数量",
+            "type": "提案类型",
+            "treasury": "从金库转账的代币",
+            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。"
+        }
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",
@@ -1045,5 +1072,6 @@
     "followThreadFailed": "关注话题失败",
     "unfollowThreadFailed": "取消关注话题失败",
     "doubleClickReply": "双击消息即可回复/编辑",
-    "doubleTapReply": "双击消息即可回复/编辑"
+    "doubleTapReply": "双击消息即可回复/编辑",
+    "minimumAmount": "最小值：{amount} {symbol}"
 }

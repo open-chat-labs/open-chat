@@ -5,7 +5,6 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Import from "svelte-material-icons/Import.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
@@ -15,6 +14,7 @@
     import Bell from "svelte-material-icons/Bell.svelte";
     import BellOff from "svelte-material-icons/BellOff.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
+    import ChatQuestionIcon from "svelte-material-icons/ChatQuestion.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import Menu from "../Menu.svelte";
@@ -31,6 +31,7 @@
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import { OC_GOVERNANCE_CANISTER_ID } from "../../utils/sns";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -39,12 +40,15 @@
     export let blocked: boolean;
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
-    export let unreadMessages: number;
 
     $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
+    $: isChatProposalsGroup =
+        selectedChatSummary.kind !== "direct_chat" &&
+        selectedChatSummary.subtype?.kind === "governance_proposals" &&
+        selectedChatSummary.subtype.governanceCanisterId === OC_GOVERNANCE_CANISTER_ID;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them.userId : "";
     $: userStore = client.userStore;
     $: isBot = $userStore[userId]?.kind === "bot";
@@ -111,10 +115,6 @@
 
     function showGroupMembers() {
         dispatch("showGroupMembers", true);
-    }
-
-    function markAllRead() {
-        dispatch("markAllRead");
     }
 
     function blockUser() {
@@ -202,6 +202,10 @@
                 toastStore.showFailureToast("failedToUnsuspendUser");
             }
         });
+    }
+
+    function makeProposal() {
+        dispatch("makeProposal");
     }
 </script>
 
@@ -364,13 +368,16 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
-                        <CheckboxMultipleMarked
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("markAllRead")}</div>
-                    </MenuItem>
+
+                    {#if isChatProposalsGroup}
+                        <MenuItem on:click={makeProposal}>
+                            <ChatQuestionIcon
+                                size={$iconSize}
+                                color={"var(--icon-inverted-txt)"}
+                                slot="icon" />
+                            <div slot="text">{$_("proposal.makeProposal")}</div>
+                        </MenuItem>
+                    {/if}
 
                     {#if client.user.isPlatformModerator}
                         {#if client.isFrozen(selectedChatSummary.id)}
@@ -439,14 +446,6 @@
                             </MenuItem>
                         {/if}
                     {/if}
-                    <MenuItem disabled={unreadMessages === 0} on:click={markAllRead}>
-                        <CheckboxMultipleMarked
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("markAllRead")}</div>
-                    </MenuItem>
-
                     {#if blocked}
                         <MenuItem on:click={unblockUser}>
                             <CancelIcon

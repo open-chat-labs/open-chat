@@ -202,7 +202,7 @@
         "voting_q": "Làm cách nào để bỏ phiếu cho các đề xuất?",
         "voting_a": "Tham gia <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">Nhóm đề xuất OpenChat</a> và đọc <a href=\"/blog/governance\">bài đăng trên blog này</a> để biết tổng quan về quản trị OpenChat và có hướng dẫn từng bước về bỏ phiếu.",
         "buychat_q": "Làm cách nào để mua mã thông báo CHAT?",
-        "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> mà sau đó bạn có thể đổi lấy CHAT trên nhiều Sàn giao dịch phi tập trung (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY đang thêm hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> dành cho mã thông báo ICRC1 (mà bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn với Sàn giao dịch tập trung (CEXes). Khi điều này xảy ra, có khả năng CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
+        "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> mà sau đó bạn có thể đổi lấy CHAT trên nhiều Sàn giao dịch phi tập trung (DEX).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY đang thêm hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> dành cho mã thông báo ICRC1 (mà bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn với Sàn giao dịch tập trung (CEXes). Khi điều này xảy ra, có khả năng CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
         "shortcuts_q": "Có những lệnh tắt nào?",
         "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /><br /> `/poll` - để tạo một cuộc thăm dò mới <br /> `/search xyz` - để tìm kiếm cụm từ \"xyz\" <br />`/gif kitty` trong cuộc trò chuyện hiện tại tìm kiếm gif mèo con <br />`/icp 0.1` - để gửi 0,1 ICP cho ai đó <br />`/faq question_id*` - để tạo và đăng liên kết được định dạng tới một câu hỏi thường gặp cụ thể <br />`/diamond ` - để tạo và đăng một liên kết được định dạng với các chi tiết về tư cách thành viên Kim cương <br/> <br/>Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số.<br /><br />* ID câu hỏi thường gặp có sẵn là : airdrop, bỏ phiếu, ví, buychat, send_tokens, kim cương, ios_app, android_app, find_groups, style_messages, lưu trữ, bảo mật, lộ trình, phím tắt",
         "content_q": "Loại nội dung nào được phép?",
@@ -450,7 +450,13 @@
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "max": "tối đa",
         "viewTransaction": "[Giao dịch]({url})",
-        "fee": "Phí {fee} {token} sẽ được thêm vào"
+        "fee": "Phí {fee} {token} sẽ được thêm vào",
+        "saveAccount": "Cứu",
+        "saveAccountMessage": "Bạn có muốn lưu tài khoản này để truy cập dễ dàng hơn vào lần sau không?",
+        "enterAccountName": "Nhập tên cho tài khoản này",
+        "failedToSaveAccount": "Rất tiếc, chúng tôi không thể lưu tài khoản của bạn",
+        "accountNameTaken": "Bạn đã có tài khoản với tên đó",
+        "chooseAddress": "Chọn một trong những địa chỉ đã lưu của bạn"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -587,7 +593,28 @@
         "unknownActionCategory": "Hành động khác",
         "notificationsAction": "Thông báo Chỉ mục Hành động",
         "registryAction": "Hành động đăng ký",
-        "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> ."
+        "noEligibleNeuronsMessage": "Không tìm thấy tế bào thần kinh đủ điều kiện hoặc liên kết. Để bỏ phiếu cho các đề xuất từ bên trong OpenChat, trước tiên bạn phải thêm id người dùng OpenChat của mình làm phím nóng cho bất kỳ nơ-ron nào mà bạn muốn bỏ phiếu.<br/><br/> Id người dùng OpenChat của bạn là: {userId}.<br/><br/> Để biết thêm thông tin về bỏ phiếu và quản trị, hãy đọc <a target=\"_blank\" href=\"https://oc.app/blog/governance\">bài đăng trên blog này</a> .",
+        "makeProposal": "Đưa ra đề xuất",
+        "maker": {
+            "header": "Đưa ra đề xuất",
+            "title": "Tiêu đề",
+            "summary": "Bản tóm tắt",
+            "url": "Url",
+            "enterTitle": "Nhập tiêu đề",
+            "enterSummary": "Nhập tóm tắt",
+            "enterUrl": "Nhập url tùy chọn",
+            "summaryRules": "hỗ trợ đánh dấu",
+            "urlRules": "liên kết đến chi tiết bổ sung",
+            "unexpectedError": "Lỗi không mong đợi khi gửi đề xuất",
+            "toPrincipal": "Tiền gốc tài khoản người nhận",
+            "enterToPrincipal": "Nhập tiền gốc của tài khoản người nhận",
+            "amount": "Số lượng",
+            "amountRules": "ít nhất 1 mã thông báo {token}",
+            "enterAmount": "Nhập số lượng mã thông báo {token}",
+            "type": "Loại đề xuất",
+            "treasury": "Token để chuyển từ kho bạc",
+            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua."
+        }
     },
     "yes": "Đúng",
     "no": "Không",
@@ -1045,5 +1072,6 @@
     "followThreadFailed": "Theo dõi chủ đề không thành công",
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
     "doubleClickReply": "Nhấp đúp chuột vào tin nhắn để trả lời/chỉnh sửa",
-    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa"
+    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
+    "minimumAmount": "Tối thiểu: {amount} {symbol}"
 }

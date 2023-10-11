@@ -20,6 +20,8 @@ import type {
     CommunityFrozen,
     NoChange,
     UserBlocked,
+    TransferFailed,
+    InternalError,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -29,7 +31,6 @@ export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
 export const HotOrNotGovernanceCanisterId = "6wcax-haaaa-aaaaq-aaava-cai";
 export const KinicGovernanceCanisterId = "74ncn-fqaaa-aaaaq-aaasa-cai";
 
-export type InternalError = { kind: "internal_error" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
 export type CanisterNotFound = { kind: "canister_not_found" };
 
@@ -1472,10 +1473,6 @@ export type CryptoCurrencyNotSupported = {
     kind: "cryptocurrency_not_supported";
 };
 
-export type TransferFailed = {
-    kind: "transfer_failed";
-};
-
 export type TransferLimitExceeded = {
     kind: "transfer_limit_exceeded";
 };
@@ -1850,17 +1847,7 @@ export type SetCommunityModerationFlagsResponse =
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
-export type ClaimPrizeResponse =
-    | CallerNotInGroup
-    | { kind: "message_not_found" }
-    | { kind: "chat_frozen" }
-    | { kind: "already_claimed" }
-    | { kind: "success" }
-    | { kind: "user_suspended" }
-    | { kind: "prize_ended" }
-    | { kind: "prize_fully_claimed" }
-    | { kind: "failed_after_transfer" }
-    | { kind: "transfer_failed" };
+export type ClaimPrizeResponse = Success | Failure;
 
 export type ReportMessageResponse = "success" | "failure";
 

@@ -5,10 +5,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Retry submitting proposal if looking up user fails ([#4543](https://github.com/open-chat-labs/open-chat/pull/4543))
+- Store `ledger_canister_id` along with each `NervousSystem` ([#4551](https://github.com/open-chat-labs/open-chat/pull/4551))
+
+## [[2.0.881](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-10
+
+### Changed
+
+- Add logging around submitting proposals ([#4538](https://github.com/open-chat-labs/open-chat/pull/4538))
+
+## [[2.0.879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-09
+
+### Added
+
+- Automatically create proposals groups for new SNSes ([#4528](https://github.com/open-chat-labs/open-chat/pull/4528))
+
+### Removed
+
+- Remove `add_governance_canister` since it is now automated ([#4532](https://github.com/open-chat-labs/open-chat/pull/4532))
+
+## [[2.0.876](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.876-proposals_bot)] - 2023-10-09
+
 ### Added
 
 - Support submitting proposals from within OpenChat ([#4486](https://github.com/open-chat-labs/open-chat/pull/4486))
 - Make ProposalsBot able to stake neurons for submitting proposals ([#4493](https://github.com/open-chat-labs/open-chat/pull/4493))
+
+### Changed
+
+- Use canister timer rather than heartbeat to retrieve proposals ([#4504](https://github.com/open-chat-labs/open-chat/pull/4504))
+- Use canister timer rather than heartbeat to push proposals ([#4506](https://github.com/open-chat-labs/open-chat/pull/4506))
+- Use canister timer rather than heartbeat to update proposals ([#4507](https://github.com/open-chat-labs/open-chat/pull/4507))
+- Refund deposit if user submitted proposal is successful ([#4509](https://github.com/open-chat-labs/open-chat/pull/4509))
+- Top up neuron if user submitted proposal is rejected ([#4510](https://github.com/open-chat-labs/open-chat/pull/4510))
+- Add 'Submitted by @Username on OpenChat' suffix to proposals ([#4511](https://github.com/open-chat-labs/open-chat/pull/4511))
 
 ## [[2.0.843](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.843-proposals_bot)] - 2023-09-11
 

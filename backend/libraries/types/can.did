@@ -1471,7 +1471,6 @@ type CommunityMatch = record {
 
 type GroupMatch = record {
     id : ChatId;
-    chat_id : ChatId;
     name : text;
     description : text;
     avatar_id : opt nat;
