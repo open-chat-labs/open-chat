@@ -1,10 +1,13 @@
+use crate::model::nervous_systems::NervousSystemDetails;
 use crate::updates::add_token::add_sns_token;
 use crate::{mutate_state, read_state};
+use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister::main::CanisterId;
+use sns_wasm_canister::list_deployed_snses::DeployedSns;
 use std::collections::HashSet;
 use std::time::Duration;
-use tracing::info;
-use types::Empty;
+use tracing::{error, info};
+use types::{Empty, TimestampMillis};
 use utils::time::HOUR_IN_MS;
 
 const LIFECYCLE_COMMITTED: i32 = 3;
@@ -26,11 +29,10 @@ async fn run_async() {
         let unknown_snses: Vec<_> = read_state(|state| {
             let known_snses: HashSet<_> = state
                 .data
-                .tokens
+                .nervous_systems
                 .get_all()
                 .iter()
-                .flat_map(|t| t.nervous_system.as_ref())
-                .map(|ns| ns.root)
+                .map(|ns| ns.root_canister_id)
                 .chain(state.data.failed_sns_launches.iter().copied())
                 .collect();
 
@@ -46,12 +48,9 @@ async fn run_async() {
             info!(%root_canister_id, "Getting details of unknown SNS");
             if let Some(success) = is_successfully_launched(sns.swap_canister_id.unwrap()).await {
                 if success {
-                    add_sns_token(
-                        sns.ledger_canister_id.unwrap(),
-                        root_canister_id,
-                        sns.governance_canister_id.unwrap(),
-                    )
-                    .await;
+                    if let Ok(nervous_system) = get_nervous_system_details(sns).await {
+                        add_sns_token(nervous_system).await;
+                    }
                 } else {
                     info!(%root_canister_id, "Recording failed SNS launch");
                     mutate_state(|state| state.data.failed_sns_launches.insert(root_canister_id));
@@ -71,4 +70,48 @@ async fn is_successfully_launched(sns_swap_canister_id: CanisterId) -> Option<bo
         LIFECYCLE_ABORTED => Some(false),
         _ => None,
     }
+}
+
+async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSystemDetails> {
+    let metadata = sns_governance_canister_c2c_client::get_metadata(sns.governance_canister_id.unwrap(), &Empty {}).await?;
+    let parameters =
+        sns_governance_canister_c2c_client::get_nervous_system_parameters(sns.governance_canister_id.unwrap(), &()).await?;
+
+    let now = read_state(|state| state.env.now());
+
+    match build_nervous_system_details(&sns, metadata, parameters, now) {
+        Some(ns) => Ok(ns),
+        None => {
+            error!(?sns, "Unable to build NervousSystemDetails due to missing data");
+            Err((
+                RejectionCode::Unknown,
+                "Unable to build NervousSystemDetails due to missing data".to_string(),
+            ))
+        }
+    }
+}
+
+fn build_nervous_system_details(
+    sns: &DeployedSns,
+    metadata: sns_governance_canister::get_metadata::Response,
+    parameters: sns_governance_canister::get_nervous_system_parameters::Response,
+    now: TimestampMillis,
+) -> Option<NervousSystemDetails> {
+    Some(NervousSystemDetails {
+        root_canister_id: sns.root_canister_id?,
+        governance_canister_id: sns.governance_canister_id?,
+        swap_canister_id: sns.swap_canister_id?,
+        ledger_canister_id: sns.ledger_canister_id?,
+        index_canister_id: sns.index_canister_id?,
+        name: metadata.name?,
+        url: metadata.url,
+        logo: metadata.logo?,
+        description: metadata.description,
+        min_dissolve_delay_to_vote: parameters.neuron_minimum_dissolve_delay_to_vote_seconds?,
+        min_neuron_stake: parameters.neuron_minimum_stake_e8s?,
+        proposal_rejection_fee: parameters.reject_cost_e8s?,
+        is_nns: false,
+        added: now,
+        last_updated: now,
+    })
 }
