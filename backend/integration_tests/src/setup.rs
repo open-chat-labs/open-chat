@@ -6,6 +6,7 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_test_state_machine_client::StateMachine;
 use icrc1_ledger_canister::MetadataValue;
+use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::icrc1::Account;
@@ -26,12 +27,13 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..11).map(|_| create_canister(env, controller)).collect();
+    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
     let nns_governance_canister_id = nns_canister_ids[1];
     let nns_ledger_canister_id = nns_canister_ids[2];
     let nns_root_canister_id = nns_canister_ids[3];
     let cycles_minting_canister_id = nns_canister_ids[4];
     let sns_wasm_canister_id = nns_canister_ids[10];
+    let nns_index_canister_id = nns_canister_ids[11];
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -209,6 +211,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         nns_ledger_canister_id,
         nns_root_canister_id,
         nns_governance_canister_id,
+        nns_index_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),

@@ -1,12 +1,12 @@
 use crate::guards::caller_is_governance_principal;
+use crate::model::nervous_systems::NervousSystemDetails;
 use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
-use registry_canister::NervousSystem;
 use tracing::{error, info};
-use types::{CanisterId, Empty};
+use types::CanisterId;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -22,18 +22,10 @@ async fn add_token(args: Args) -> Response {
     .await
 }
 
-pub(crate) async fn add_sns_token(
-    ledger_canister_id: CanisterId,
-    root_canister_id: CanisterId,
-    governance_canister_id: CanisterId,
-) {
+pub(crate) async fn add_sns_token(nervous_system: NervousSystemDetails) {
     add_token_impl(
-        ledger_canister_id,
-        Some(NervousSystem {
-            is_nns: false,
-            root: root_canister_id,
-            governance: governance_canister_id,
-        }),
+        nervous_system.ledger_canister_id,
+        Some(nervous_system),
         None,
         None,
         None,
@@ -44,7 +36,7 @@ pub(crate) async fn add_sns_token(
 
 async fn add_token_impl(
     ledger_canister_id: CanisterId,
-    nervous_system: Option<NervousSystem>,
+    nervous_system: Option<NervousSystemDetails>,
     info_url: Option<String>,
     how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
@@ -67,7 +59,7 @@ async fn add_token_impl(
         icrc1_ledger_canister_c2c_client::icrc1_symbol(ledger_canister_id),
         icrc1_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
         icrc1_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
-        get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.governance)),
+        get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.logo.clone())),
     )
     .await
     {
@@ -78,6 +70,9 @@ async fn add_token_impl(
         }
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
+            if let Some(ns) = nervous_system.clone() {
+                state.data.nervous_systems.add(ns);
+            }
             if state.data.tokens.add(
                 ledger_canister_id,
                 name.clone(),
@@ -85,7 +80,7 @@ async fn add_token_impl(
                 decimals,
                 fee.0.try_into().unwrap(),
                 logo.unwrap(),
-                nervous_system,
+                nervous_system.map(|ns| ns.into()),
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
@@ -111,12 +106,12 @@ fn extract_urls(
     info_url: Option<String>,
     how_to_buy_url: Option<String>,
     transaction_url_format: Option<String>,
-    nervous_system: Option<&NervousSystem>,
+    nervous_system: Option<&NervousSystemDetails>,
 ) -> Result<Urls, &'static str> {
     let info_url = match info_url.or_else(|| {
         nervous_system
             .as_ref()
-            .map(|ns| ns.root)
+            .map(|ns| ns.root_canister_id)
             .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}"))
     }) {
         Some(url) => url,
@@ -137,7 +132,7 @@ fn extract_urls(
         nervous_system
             .as_ref()
             .filter(|ns| !ns.is_nns)
-            .map(|ns| ns.root)
+            .map(|ns| ns.root_canister_id)
             .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}/transaction/{{block_index}}"))
     }) {
         Some(url) => url,
@@ -154,7 +149,7 @@ fn extract_urls(
 async fn get_logo(
     logo: Option<String>,
     ledger_canister_id: CanisterId,
-    governance_canister_id: Option<CanisterId>,
+    governance_logo: Option<String>,
 ) -> Result<Option<String>, (RejectionCode, String)> {
     if logo.is_some() {
         return Ok(logo);
@@ -170,15 +165,5 @@ async fn get_logo(
         }
     });
 
-    if logo.is_some() {
-        return Ok(logo);
-    }
-
-    if let Some(canister_id) = governance_canister_id {
-        let governance_metadata = sns_governance_canister_c2c_client::get_metadata(canister_id, &Empty {}).await?;
-
-        Ok(governance_metadata.logo)
-    } else {
-        Ok(None)
-    }
+    Ok(logo.or(governance_logo))
 }
