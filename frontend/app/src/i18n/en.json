@@ -507,7 +507,7 @@
         "private": "Private",
         "gate": "Access gate",
         "initiateCredentialCheck": "Verify credential",
-        "credentialCheckMessage": "In order to join this {level} you are required to verify the \"{credential}\" credential from the issuer \"{issuer}\"",
+        "credentialCheckMessage": "In order to join this {level} you are required to verify the \"{credential}\" credential from the issuer {issuer}",
         "verify": "Verify",
         "credential": "Verified credential",
         "credentialGateInfo": "Only users who can supply the \"{credential}\" credential from \"{issuer}\" will be allowed to join",

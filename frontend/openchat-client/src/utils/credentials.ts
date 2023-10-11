@@ -1,11 +1,16 @@
 let reqId = 0;
 let iiWindow: Window | null | undefined;
 let eventHandler: ((event: MessageEvent) => void) | undefined;
+let closeHandler: (() => void) | undefined;
 
 function cleanUp() {
     if (eventHandler !== undefined) {
         window.removeEventListener("message", eventHandler);
     }
+    if (iiWindow && closeHandler !== undefined) {
+        iiWindow.removeEventListener("unload", closeHandler);
+    }
+    closeHandler = undefined;
     eventHandler = undefined;
     iiWindow?.close();
     iiWindow = undefined;
@@ -113,5 +118,14 @@ export function verifyCredential(
         window.addEventListener("message", eventHandler);
 
         iiWindow = window.open(url);
+        closeHandler = () => {
+            console.debug("VC: ii window closed - rejecting promise");
+            reject("VC: II window closed");
+        };
+
+        if (iiWindow) {
+            console.debug("VC: setting close handler on iiWindow");
+            iiWindow.addEventListener("unload", closeHandler);
+        }
     });
 }
