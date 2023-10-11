@@ -80,15 +80,10 @@ async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSyste
 
     let now = read_state(|state| state.env.now());
 
-    match build_nervous_system_details(&sns, &metadata, &parameters, now) {
+    match build_nervous_system_details(&sns, metadata, parameters, now) {
         Some(ns) => Ok(ns),
         None => {
-            error!(
-                ?sns,
-                ?metadata,
-                ?parameters,
-                "Unable to build NervousSystemDetails due to missing data"
-            );
+            error!(?sns, "Unable to build NervousSystemDetails due to missing data");
             Err((
                 RejectionCode::Unknown,
                 "Unable to build NervousSystemDetails due to missing data".to_string(),
@@ -99,8 +94,8 @@ async fn get_nervous_system_details(sns: DeployedSns) -> CallResult<NervousSyste
 
 fn build_nervous_system_details(
     sns: &DeployedSns,
-    metadata: &sns_governance_canister::get_metadata::Response,
-    parameters: &sns_governance_canister::get_nervous_system_parameters::Response,
+    metadata: sns_governance_canister::get_metadata::Response,
+    parameters: sns_governance_canister::get_nervous_system_parameters::Response,
     now: TimestampMillis,
 ) -> Option<NervousSystemDetails> {
     Some(NervousSystemDetails {
@@ -109,10 +104,10 @@ fn build_nervous_system_details(
         swap_canister_id: sns.swap_canister_id?,
         ledger_canister_id: sns.ledger_canister_id?,
         index_canister_id: sns.index_canister_id?,
-        name: metadata.name.clone()?,
-        url: metadata.url.clone(),
-        logo: metadata.logo.clone()?,
-        description: metadata.description.clone(),
+        name: metadata.name?,
+        url: metadata.url,
+        logo: metadata.logo?,
+        description: metadata.description,
         min_dissolve_delay_to_vote: parameters.neuron_minimum_dissolve_delay_to_vote_seconds?,
         min_neuron_stake: parameters.neuron_minimum_stake_e8s?,
         proposal_rejection_fee: parameters.reject_cost_e8s?,
