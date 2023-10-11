@@ -1,5 +1,3 @@
-use types::Empty;
-
-pub type Args = Empty;
+pub type Args = ();
 
 pub type Response = crate::types::NervousSystemParameters;
