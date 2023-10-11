@@ -1144,7 +1144,7 @@ type DeleteFailedMessage = {
 };
 
 type ClaimPrize = {
-    chatId: GroupChatIdentifier;
+    chatId: MultiUserChatIdentifier;
     messageId: bigint;
     kind: "claimPrize";
 };
