@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{BuildVersion, CanisterId, Cycles, MessageId, MultiUserChat, ProposalId, TimestampMillis, Timestamped};
+use types::{
+    BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, ProposalId, TimestampMillis, Timestamped,
+};
 use utils::env::Environment;
 
 mod governance_clients;
@@ -135,6 +137,10 @@ pub struct NervousSystemMetrics {
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
     pub neuron_for_submitting_proposals: Option<String>,
+    pub transaction_fee: u64,
+    pub min_neuron_stake: u64,
+    pub min_dissolve_delay_to_vote: Milliseconds,
+    pub proposal_rejection_fee: u64,
 }
 
 #[derive(Serialize, Debug)]

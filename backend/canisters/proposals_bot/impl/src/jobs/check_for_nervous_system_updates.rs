@@ -31,11 +31,11 @@ async fn run_async() {
         .await
     {
         mutate_state(|state| {
-            for sns in result.nervous_systems {
-                if state.data.nervous_systems.exists(&sns.governance_canister_id) {
-                    state.data.nervous_systems.update_from_registry(sns);
+            for ns in result.nervous_systems {
+                if state.data.nervous_systems.exists(&ns.governance_canister_id) {
+                    state.data.nervous_systems.update_from_registry(ns);
                 } else {
-                    ic_cdk::spawn(create_group(sns, state.data.group_index_canister_id));
+                    ic_cdk::spawn(create_group(ns, state.data.group_index_canister_id));
                 }
             }
             state.data.registry_synced_up_to = result.last_updated;
@@ -43,17 +43,18 @@ async fn run_async() {
     }
 }
 
-async fn create_group(sns: NervousSystemDetails, group_index_canister_id: CanisterId) {
-    let governance_canister_id = sns.governance_canister_id;
+async fn create_group(ns: NervousSystemDetails, group_index_canister_id: CanisterId) {
+    let governance_canister_id = ns.governance_canister_id;
+    let name = ns.name.clone();
 
     let create_group_args = group_index_canister::c2c_create_group::Args {
         is_public: true,
-        name: format!("{} Proposals", sns.name),
-        description: default_description(&sns.name),
+        name: format!("{} Proposals", name),
+        description: default_description(&name),
         rules: Rules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
             governance_canister_id,
-            is_nns: sns.is_nns,
+            is_nns: ns.is_nns,
         })),
         avatar: None,
         history_visible_to_new_joiners: true,
@@ -69,19 +70,11 @@ async fn create_group(sns: NervousSystemDetails, group_index_canister_id: Canist
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
         Ok(group_index_canister::c2c_create_group::Response::Success(result)) => {
             mutate_state(|state| {
-                state.data.nervous_systems.add(
-                    governance_canister_id,
-                    sns.ledger_canister_id,
-                    MultiUserChat::Group(result.chat_id),
-                    sns.transaction_fee,
-                    sns.min_dissolve_delay_to_vote,
-                    sns.min_neuron_stake,
-                    sns.proposal_rejection_fee,
-                );
+                state.data.nervous_systems.add(ns, MultiUserChat::Group(result.chat_id));
             });
-            info!(%governance_canister_id, name = sns.name.as_str(), "Proposals group created");
+            info!(%governance_canister_id, name = name.as_str(), "Proposals group created");
         }
-        response => error!(?response, %governance_canister_id, name = sns.name.as_str(), "Failed to create proposals group"),
+        response => error!(?response, %governance_canister_id, name = name.as_str(), "Failed to create proposals group"),
     }
 }
 
