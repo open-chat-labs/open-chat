@@ -105,6 +105,7 @@ pub struct CanisterIds {
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,
     pub nns_sns_wasm: CanisterId,
+    pub nns_index: CanisterId,
 }
 
 pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {

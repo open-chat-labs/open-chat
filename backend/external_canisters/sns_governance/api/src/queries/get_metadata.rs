@@ -4,7 +4,7 @@ use types::Empty;
 
 pub type Args = Empty;
 
-#[derive(CandidType, Deserialize, Serialize)]
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct Response {
     pub url: Option<String>,
     pub logo: Option<String>,
