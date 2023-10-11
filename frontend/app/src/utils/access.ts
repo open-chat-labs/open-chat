@@ -54,13 +54,13 @@ const nftGate: GateBinding = {
     cssClass: "nft",
 };
 
-const credentialGate: GateBinding = {
-    label: "access.credential",
-    key: "credential_gate",
-    gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
-    enabled: true,
-    cssClass: "credential",
-};
+// const credentialGate: GateBinding = {
+//     label: "access.credential",
+//     key: "credential_gate",
+//     gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
+//     enabled: true,
+//     cssClass: "credential",
+// };
 
 export function getGateBindings(
     cryptoLookup: Record<string, CryptocurrencyDetails>,
@@ -68,7 +68,7 @@ export function getGateBindings(
     return [
         noGate,
         diamondGate,
-        credentialGate,
+        // credentialGate,
         ...getSnsGateBindings(cryptoLookup),
         nnsGate,
         nftGate,

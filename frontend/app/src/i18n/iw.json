@@ -886,14 +886,14 @@
         "snsHolder": "מחזיק נוירון {token}",
         "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף",
         "initiateCredentialCheck": "אמת את האישור",
-        "credentialCheckMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לאמת את האישור \"{credential}\" מהמנפיק \"{issuer}\"",
         "verify": "תאשר",
         "credential": "אישור מאומת",
-        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-\"{issuer}\" יורשו להצטרף",
         "credentialParamIssuer": "מנפיק: {issuer}",
         "credentialParamCredential": "אישור: {credential}",
         "credentialIssuer": "מנפיק אישורים",
-        "requiredCredential": "אישור נדרש"
+        "requiredCredential": "אישור נדרש",
+        "credentialCheckMessage": "על מנת להצטרף ל-{level} הזה, עליך לאמת את האישור \"{credential}\" מהמנפיק {issuer}",
+        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",

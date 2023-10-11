@@ -888,14 +888,14 @@
         "snsHolder": "{token} 神经元支架",
         "snsHolderInfo": "仅允许 {token} 神经元的持有者加入",
         "initiateCredentialCheck": "验证凭证",
-        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者“{credential}”的“{issuer}”凭证",
         "verify": "核实",
         "credential": "已验证的凭证",
-        "credentialGateInfo": "仅允许提供“{credential}”中的“{issuer}”凭证的用户加入",
         "credentialParamIssuer": "发行人：{issuer}",
         "credentialParamCredential": "凭证：{credential}",
         "credentialIssuer": "凭证颁发者",
-        "requiredCredential": "所需凭证"
+        "requiredCredential": "所需凭证",
+        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者 {credential} 的“{issuer}”凭证",
+        "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入"
     },
     "communities": {
         "explore": "探索社区",

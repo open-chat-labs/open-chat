@@ -1,16 +1,13 @@
 let reqId = 0;
 let iiWindow: Window | null | undefined;
 let eventHandler: ((event: MessageEvent) => void) | undefined;
-let closeHandler: (() => void) | undefined;
+
+const INTERRUPT_CHECK_INTERVAL = 500;
 
 function cleanUp() {
     if (eventHandler !== undefined) {
         window.removeEventListener("message", eventHandler);
     }
-    if (iiWindow && closeHandler !== undefined) {
-        iiWindow.removeEventListener("unload", closeHandler);
-    }
-    closeHandler = undefined;
     eventHandler = undefined;
     iiWindow?.close();
     iiWindow = undefined;
@@ -83,6 +80,17 @@ function onError(reject: (err: unknown) => void): (err: unknown) => void {
     };
 }
 
+function checkInterruption(reject: (err: unknown) => void): void {
+    if (iiWindow) {
+        if (iiWindow.closed) {
+            reject("II reason was closed");
+            cleanUp();
+        } else {
+            window.setTimeout(() => checkInterruption(reject), INTERRUPT_CHECK_INTERVAL);
+        }
+    }
+}
+
 export function verifyCredential(
     iiUrl: string,
     principal: string,
@@ -118,14 +126,7 @@ export function verifyCredential(
         window.addEventListener("message", eventHandler);
 
         iiWindow = window.open(url);
-        closeHandler = () => {
-            console.debug("VC: ii window closed - rejecting promise");
-            reject("VC: II window closed");
-        };
 
-        if (iiWindow) {
-            console.debug("VC: setting close handler on iiWindow");
-            iiWindow.addEventListener("unload", closeHandler);
-        }
+        checkInterruption(reject);
     });
 }
