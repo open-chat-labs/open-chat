@@ -15,7 +15,7 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const mentionRegex = /@([\d\w_]*)$/;
+    const mentionRegex = /@(\w*)$/;
 
     let lastSearchTerm = "";
     let matches: MessageMatch[] = [];
@@ -111,17 +111,14 @@
         }
 
         let mentionedSet = new Set<string>();
-        let expandedText = text.replace(/@([\w\d_]*)/g, (match, p1) => {
+        let expandedText = text.replace(/@(\w*)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, true);
             if (userOrGroup !== undefined) {
                 mentionedSet.add(client.userOrUserGroupId(userOrGroup) ?? "");
                 return "";
             } else {
-                console.log(
-                    `Could not find the userId for user: ${p1}, this should not really happen`
-                );
+                return match;
             }
-            return match;
         });
 
         return [expandedText, Array.from(mentionedSet)];

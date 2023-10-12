@@ -62,3 +62,38 @@ impl Tokens {
         self.tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id)
     }
 }
+
+#[derive(Serialize)]
+pub struct TokenMetrics {
+    ledger_canister_id: CanisterId,
+    name: String,
+    symbol: String,
+    decimals: u8,
+    fee: u128,
+    logo_length: usize,
+    nervous_system: Option<NervousSystem>,
+    info_url: String,
+    how_to_buy_url: String,
+    transaction_url_format: String,
+    added: TimestampMillis,
+    last_updated: TimestampMillis,
+}
+
+impl From<&TokenDetails> for TokenMetrics {
+    fn from(value: &TokenDetails) -> Self {
+        TokenMetrics {
+            ledger_canister_id: value.ledger_canister_id,
+            name: value.name.clone(),
+            symbol: value.symbol.clone(),
+            decimals: value.decimals,
+            fee: value.fee,
+            logo_length: value.logo.len(),
+            nervous_system: value.nervous_system.clone(),
+            info_url: value.info_url.clone(),
+            how_to_buy_url: value.how_to_buy_url.clone(),
+            transaction_url_format: value.transaction_url_format.clone(),
+            added: value.added,
+            last_updated: value.last_updated,
+        }
+    }
+}

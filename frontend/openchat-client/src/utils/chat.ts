@@ -62,6 +62,7 @@ import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
+import { bigIntMax } from "./bigint";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1261,9 +1262,27 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
+        const current = message.thread ?? defaultThreadSummary();
+        const participantIds = new Set<string>([
+            ...current.participantIds,
+            ...(localUpdates.threadSummary.participantIds ?? []),
+        ]);
+
         message.thread = {
-            ...(message.thread ?? defaultThreadSummary()),
-            ...localUpdates.threadSummary,
+            participantIds,
+            followedByMe: localUpdates.threadSummary.followedByMe ?? current.followedByMe,
+            numberOfReplies: Math.max(
+                localUpdates.threadSummary.numberOfReplies ?? 0,
+                current.numberOfReplies,
+            ),
+            latestEventIndex: Math.max(
+                localUpdates.threadSummary.latestEventIndex ?? 0,
+                current.latestEventIndex,
+            ),
+            latestEventTimestamp: bigIntMax(
+                localUpdates.threadSummary.latestEventTimestamp ?? BigInt(0),
+                current.latestEventTimestamp,
+            ),
         };
     }
 

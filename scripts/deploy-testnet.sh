@@ -14,6 +14,8 @@ NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
 NNS_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 NNS_LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
 NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
+NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
+NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 user_index
@@ -41,4 +43,5 @@ dfx --identity $IDENTITY canister create --provisional-create-canister-effective
     $NNS_LEDGER_CANISTER_ID \
     $NNS_CMC_CANISTER_ID \
     $NNS_SNS_WASM_CANISTER_ID \
+    $NNS_INDEX_CANISTER_ID \
     true \

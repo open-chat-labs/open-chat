@@ -5133,6 +5133,7 @@ dependencies = [
  "registry_canister",
  "serde",
  "serializer",
+ "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "sns_swap_canister",
  "sns_swap_canister_c2c_client",

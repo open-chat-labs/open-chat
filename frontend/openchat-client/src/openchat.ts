@@ -4624,7 +4624,7 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    claimPrize(chatId: GroupChatIdentifier, messageId: bigint): Promise<boolean> {
+    claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<boolean> {
         return this.sendRequest({ kind: "claimPrize", chatId, messageId })
             .then((resp) => {
                 if (resp.kind !== "success") {
