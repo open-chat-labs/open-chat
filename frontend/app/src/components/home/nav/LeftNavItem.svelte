@@ -32,12 +32,12 @@
     .left-nav-item {
         display: flex;
         align-items: center;
-        gap: $sp4;
-        padding: $sp3 $sp4;
+        gap: toRem(16);
+        padding: toRem(8) toRem(16);
         cursor: pointer;
 
         @include mobile() {
-            padding: 6px 10px;
+            padding: toRem(6) toRem(10);
         }
 
         @media (hover: hover) {

@@ -626,8 +626,8 @@
 <style lang="scss">
     $size: 10px;
 
-    $avatar-width: 56px;
-    $avatar-width-mob: 43px;
+    $avatar-width: toRem(56);
+    $avatar-width-mob: toRem(43);
 
     @media (hover: hover) {
         :global(.message-bubble:hover .menu-icon) {

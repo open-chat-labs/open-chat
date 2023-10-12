@@ -1,6 +1,7 @@
 use crate::{mutate_state, ActiveUsers, RuntimeState};
 use std::time::Duration;
 use types::Milliseconds;
+use utils::canister_timers::run_now_then_interval;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 const ACTIVE_USERS_REFRESH_INTERVAL: Milliseconds = 5 * MINUTE_IN_MS;
@@ -11,7 +12,7 @@ const SEVEN_DAYS: Milliseconds = 7 * DAY_IN_MS;
 const THIRTY_DAYS: Milliseconds = 30 * DAY_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(ACTIVE_USERS_REFRESH_INTERVAL), run);
+    run_now_then_interval(Duration::from_millis(ACTIVE_USERS_REFRESH_INTERVAL), run);
 }
 
 fn run() {
