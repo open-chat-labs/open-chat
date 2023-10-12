@@ -864,6 +864,7 @@ export type Milliseconds = bigint;
 export type MultiUserChat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] };
 export interface NervousSystemSummary {
+  'root_canister_id' : CanisterId,
   'submitting_proposals_enabled' : boolean,
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
