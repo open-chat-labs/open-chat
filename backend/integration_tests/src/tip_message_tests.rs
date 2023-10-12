@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{Chat, ChatEvent, Cryptocurrency};
@@ -323,7 +323,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
     );
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
