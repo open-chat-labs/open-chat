@@ -1,7 +1,8 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
-export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
+export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
+  { 'SnsNeuron' : SnsNeuronGate } |
   { 'DiamondMember' : null };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -1396,6 +1397,10 @@ export interface UsersV2Args {
 export type UsersV2Response = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
+export interface VerifiedCredentialGate {
+  'credential' : string,
+  'issuer' : string,
+}
 export type Version = number;
 export interface VersionedRules {
   'text' : string,
