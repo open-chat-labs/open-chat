@@ -184,6 +184,10 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const EventIndex = IDL.Nat32;
+  const VerifiedCredentialGate = IDL.Record({
+    'credential' : IDL.Text,
+    'issuer' : IDL.Text,
+  });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -191,6 +195,7 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
   });
   const AccessGate = IDL.Variant({
+    'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });

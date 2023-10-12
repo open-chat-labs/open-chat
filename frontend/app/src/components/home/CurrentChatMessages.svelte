@@ -359,6 +359,9 @@
         {/if}
     {/each}
     {#if reverseScroll}
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
         {#if showAvatar}
             {#if $isProposalGroup}
                 <ProposalBot />
@@ -374,9 +377,6 @@
                         size={AvatarSize.Large} />
                 </div>
             {/if}
-        {/if}
-        {#if privatePreview}
-            <PrivatePreview />
         {/if}
     {/if}
 </ChatEventList>

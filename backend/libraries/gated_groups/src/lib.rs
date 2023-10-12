@@ -1,7 +1,7 @@
 use candid::Principal;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
-use types::{AccessGate, CanisterId, GateCheckFailedReason, SnsNeuronGate, UserId};
+use types::{AccessGate, CanisterId, GateCheckFailedReason, SnsNeuronGate, UserId, VerifiedCredentialGate};
 use user_index_canister_c2c_client::LookupUserError;
 
 pub enum CheckIfPassesGateResult {
@@ -16,6 +16,7 @@ pub async fn check_if_passes_gate(
     user_index_canister_id: CanisterId,
 ) -> CheckIfPassesGateResult {
     match gate {
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(g, user_id).await,
         AccessGate::DiamondMember => check_diamond_member_gate(user_id, user_index_canister_id).await,
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(g, user_id).await,
     }
@@ -33,6 +34,10 @@ async fn check_diamond_member_gate(user_id: UserId, user_index_canister_id: Cani
             CheckIfPassesGateResult::InternalError(msg)
         }
     }
+}
+
+async fn check_verified_credential_gate(_gate: &VerifiedCredentialGate, _user_id: UserId) -> CheckIfPassesGateResult {
+    CheckIfPassesGateResult::Success
 }
 
 async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {

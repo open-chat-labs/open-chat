@@ -684,11 +684,13 @@ type UpdateGroup = {
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
     kind: "joinGroup";
+    credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
     kind: "joinCommunity";
+    credential?: string;
 };
 
 type LeaveGroup = {

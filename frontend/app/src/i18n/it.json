@@ -886,7 +886,16 @@
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti.",
         "snsHolder": "{token} detentore di neuroni",
-        "snsHolderInfo": "Solo i possessori di {token} neuroni potranno partecipare"
+        "snsHolderInfo": "Solo i possessori di {token} neuroni potranno partecipare",
+        "initiateCredentialCheck": "Verifica credenziale",
+        "verify": "Verificare",
+        "credential": "Credenziale verificata",
+        "credentialParamIssuer": "Emittente: {issuer}",
+        "credentialParamCredential": "Credenziali: {credential}",
+        "credentialIssuer": "Emittente di credenziali",
+        "requiredCredential": "Credenziale richiesta",
+        "credentialCheckMessage": "Per aderire a questo {level} è necessario verificare le credenziali \"{credential}\" dell'emittente {issuer}",
+        "credentialGateInfo": "Solo gli utenti che possono fornire le credenziali \"{credential}\" da {issuer} potranno partecipare"
     },
     "communities": {
         "explore": "Esplora le comunità",

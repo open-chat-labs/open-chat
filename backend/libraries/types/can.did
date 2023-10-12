@@ -1382,6 +1382,7 @@ type DiamondMembershipPlanDuration = variant {
 
 type AccessGate = variant {
     DiamondMember;
+    VerifiedCredential: VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
 };
 
@@ -1394,6 +1395,11 @@ type AccessGateUpdate = variant {
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+};
+
+type VerifiedCredentialGate = record {
+    issuer: text;
+    credential: text;
 };
 
 type SnsNeuronGate = record {

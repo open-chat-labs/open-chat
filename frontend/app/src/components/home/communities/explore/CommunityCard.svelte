@@ -48,11 +48,9 @@
 <div class:header on:click class="card">
     <IntersectionObserver let:intersecting>
         <CommunityBanner {intersecting} square={header} {banner}>
-            {#if !header}
-                <div class="gate">
-                    <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
-                </div>
-            {/if}
+            <div class="gate">
+                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+            </div>
             <div class="avatar">
                 <Avatar
                     url={client.communityAvatarUrl(id, avatar)}
@@ -116,8 +114,8 @@
         }
 
         .content {
-            padding: $sp4;
-            padding-top: $sp5;
+            padding: toRem(16);
+            padding-top: toRem(24);
 
             .name {
                 @include font(bold, normal, fs-130);
