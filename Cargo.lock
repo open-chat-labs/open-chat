@@ -4957,6 +4957,7 @@ dependencies = [
  "canister_tracing_macros",
  "community_canister",
  "community_canister_c2c_client",
+ "fire_and_forget_handler",
  "group_canister",
  "group_canister_c2c_client",
  "group_index_canister",

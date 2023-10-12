@@ -40,6 +40,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_proposals_bot(&self) -> bool {
+        self.env.caller() == self.data.proposals_bot_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -52,6 +56,7 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
+                proposals_bot: self.data.proposals_bot_canister_id,
                 sns_wasm: self.data.sns_wasm_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -62,6 +67,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     governance_principals: HashSet<Principal>,
+    #[serde(default = "proposals_bot_canister_id")]
+    proposals_bot_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
@@ -71,15 +78,21 @@ struct Data {
     test_mode: bool,
 }
 
+fn proposals_bot_canister_id() -> CanisterId {
+    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
+        proposals_bot_canister_id: CanisterId,
         sns_wasm_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals,
+            proposals_bot_canister_id,
             sns_wasm_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
@@ -113,6 +126,7 @@ impl Data {
                 min_neuron_stake: 100_000_000,
                 proposal_rejection_fee: 1_000_000_000,
                 is_nns: true,
+                submitting_proposals_enabled: false,
                 added: now,
                 last_updated: now,
             },
@@ -154,6 +168,7 @@ pub struct Metrics {
 
 #[derive(Serialize)]
 pub struct CanisterIds {
+    pub proposals_bot: CanisterId,
     pub sns_wasm: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

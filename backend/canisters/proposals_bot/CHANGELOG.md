@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store whether submitting proposals is enabled or not in the Registry ([#4564](https://github.com/open-chat-labs/open-chat/pull/4564))
+
 ### Changed
 
 - Retry submitting proposal if looking up user fails ([#4543](https://github.com/open-chat-labs/open-chat/pull/4543))

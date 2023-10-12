@@ -112,6 +112,7 @@ fn build_nervous_system_details(
         min_neuron_stake: parameters.neuron_minimum_stake_e8s?,
         proposal_rejection_fee: parameters.reject_cost_e8s?,
         is_nns: false,
+        submitting_proposals_enabled: false,
         added: now,
         last_updated: now,
     })

@@ -30,6 +30,23 @@ impl NervousSystems {
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }
+
+    pub fn set_submitting_proposals_enabled(
+        &mut self,
+        governance_canister_id: CanisterId,
+        enabled: bool,
+        now: TimestampMillis,
+    ) {
+        if let Some(ns) = self
+            .nervous_systems
+            .iter_mut()
+            .find(|ns| ns.governance_canister_id == governance_canister_id)
+        {
+            ns.submitting_proposals_enabled = enabled;
+            ns.last_updated = now;
+            self.last_updated = now;
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -48,6 +65,7 @@ pub struct NervousSystemMetrics {
     min_dissolve_delay_to_vote: Milliseconds,
     proposal_rejection_fee: u64,
     is_nns: bool,
+    submitting_proposals_enabled: bool,
     added: TimestampMillis,
     last_updated: TimestampMillis,
 }
@@ -69,6 +87,7 @@ impl From<&NervousSystemDetails> for NervousSystemMetrics {
             min_dissolve_delay_to_vote: value.min_dissolve_delay_to_vote,
             proposal_rejection_fee: value.proposal_rejection_fee,
             is_nns: value.is_nns,
+            submitting_proposals_enabled: value.submitting_proposals_enabled,
             added: value.added,
             last_updated: value.last_updated,
         }

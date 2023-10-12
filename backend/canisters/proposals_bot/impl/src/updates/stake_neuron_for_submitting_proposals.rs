@@ -43,6 +43,15 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
                     .data
                     .nervous_systems
                     .set_neuron_id_for_submitting_proposals(&args.governance_canister_id, neuron_id);
+
+                state.data.fire_and_forget_handler.send(
+                    state.data.registry_canister_id,
+                    "c2c_set_submitting_proposals_enabled_msgpack".to_string(),
+                    msgpack::serialize_then_unwrap(registry_canister::c2c_set_submitting_proposals_enabled::Args {
+                        governance_canister_id: args.governance_canister_id,
+                        enabled: true,
+                    }),
+                );
             });
             Success(neuron_id)
         }
