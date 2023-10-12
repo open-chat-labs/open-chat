@@ -1663,7 +1663,10 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async joinGroup(chatId: MultiUserChatIdentifier): Promise<JoinGroupResponse> {
+    async joinGroup(
+        chatId: MultiUserChatIdentifier,
+        _credential?: string,
+    ): Promise<JoinGroupResponse> {
         switch (chatId.kind) {
             case "group_chat":
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
@@ -1686,7 +1689,10 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async joinCommunity(id: CommunityIdentifier): Promise<JoinCommunityResponse> {
+    async joinCommunity(
+        id: CommunityIdentifier,
+        _credential?: string,
+    ): Promise<JoinCommunityResponse> {
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(

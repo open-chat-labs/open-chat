@@ -90,6 +90,10 @@
 </div>
 
 <style lang="scss">
+    .info {
+        margin-bottom: $sp4;
+    }
+
     .details {
         margin: 0 $sp4;
         @include mobile() {

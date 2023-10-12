@@ -1352,6 +1352,7 @@ type PrizeContentInitial = record {
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
     caption : opt text;
+    diamond_only: bool;
 };
 
 type PrizeContent = record {
@@ -1382,6 +1383,7 @@ type DiamondMembershipPlanDuration = variant {
 
 type AccessGate = variant {
     DiamondMember;
+    VerifiedCredential: VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
 };
 
@@ -1394,6 +1396,11 @@ type AccessGateUpdate = variant {
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+};
+
+type VerifiedCredentialGate = record {
+    issuer: text;
+    credential: text;
 };
 
 type SnsNeuronGate = record {
