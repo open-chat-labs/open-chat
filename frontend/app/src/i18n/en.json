@@ -795,7 +795,10 @@
         "distribution": "How should prizes be distributed?",
         "equalDistribution": "Equal distribution",
         "randomDistribution": "Random distribution",
-        "creatingYourPrizeMessage": "Please wait while we create your prize message"
+        "creatingYourPrizeMessage": "Please wait while we create your prize message",
+        "whoCanWin": "Who can claim a share?",
+        "onlyDiamond": "Only Diamond users",
+        "anyone": "Any user"
     },
     "upgrade": {
         "button": "Upgrade",

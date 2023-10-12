@@ -402,6 +402,7 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         kind: "prize_content",
         prizesRemaining: candid.prizes_remaining,
         prizesPending: candid.prizes_pending,
+        diamondOnly: false, //TODO - fill this in once the backend is done
         winners: candid.winners.map((u) => u.toString()),
         token: token(candid.token),
         endDate: candid.end_date,
@@ -1313,8 +1314,8 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         caption: apiOptional(identity, domain.caption),
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
+        diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
-        diamond_only: false,
     };
 }
 
