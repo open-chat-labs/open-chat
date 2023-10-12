@@ -6,8 +6,8 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
 use std::mem;
 use types::{
-    CanisterId, MessageId, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, ProposalUpdate,
-    SnsNeuronId, TimestampMillis, UserId,
+    CanisterId, MessageId, Milliseconds, MultiUserChat, Proposal, ProposalDecisionStatus, ProposalId, ProposalRewardStatus,
+    ProposalUpdate, SnsNeuronId, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -16,11 +16,21 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn add(&mut self, governance_canister_id: CanisterId, ledger_canister_id: CanisterId, chat_id: MultiUserChat) {
+    pub fn add(&mut self, nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) {
         self.nervous_systems.insert(
-            governance_canister_id,
-            NervousSystem::new(governance_canister_id, ledger_canister_id, chat_id),
+            nervous_system.governance_canister_id,
+            NervousSystem::new(nervous_system, chat_id),
         );
+    }
+
+    pub fn update_from_registry(&mut self, from_registry: registry_canister::NervousSystemDetails) {
+        if let Some(ns) = self.nervous_systems.get_mut(&from_registry.governance_canister_id) {
+            ns.ledger_canister_id = from_registry.ledger_canister_id;
+            ns.transaction_fee = from_registry.transaction_fee;
+            ns.min_neuron_stake = from_registry.min_neuron_stake;
+            ns.min_dissolve_delay_to_vote = from_registry.transaction_fee;
+            ns.proposal_rejection_fee = from_registry.proposal_rejection_fee;
+        }
     }
 
     pub fn get(&self, governance_canister_id: &CanisterId) -> Option<&NervousSystem> {
@@ -34,12 +44,6 @@ impl NervousSystems {
     pub fn get_neuron_id_for_submitting_proposals(&self, governance_canister_id: &CanisterId) -> Option<SnsNeuronId> {
         self.get(governance_canister_id)
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
-    }
-
-    pub fn set_ledger_canister_id(&mut self, governance_canister_id: CanisterId, ledger_canister_id: CanisterId) {
-        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
-            ns.ledger_canister_id = ledger_canister_id;
-        }
     }
 
     pub fn set_neuron_id_for_submitting_proposals(
@@ -259,6 +263,14 @@ pub struct NervousSystem {
     sync_in_progress: bool,
     active_user_submitted_proposals: HashMap<ProposalId, UserId>,
     decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
+    #[serde(default)]
+    transaction_fee: u64,
+    #[serde(default)]
+    min_neuron_stake: u64,
+    #[serde(default)]
+    min_dissolve_delay_to_vote: Milliseconds,
+    #[serde(default)]
+    proposal_rejection_fee: u64,
 }
 
 fn anonymous_principal() -> CanisterId {
@@ -278,10 +290,10 @@ struct ProposalsToBeUpdated {
 }
 
 impl NervousSystem {
-    pub fn new(governance_canister_id: CanisterId, ledger_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
+    pub fn new(nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) -> NervousSystem {
         NervousSystem {
-            governance_canister_id,
-            ledger_canister_id,
+            governance_canister_id: nervous_system.governance_canister_id,
+            ledger_canister_id: nervous_system.ledger_canister_id,
             chat_id,
             latest_successful_sync: None,
             latest_failed_sync: None,
@@ -294,6 +306,10 @@ impl NervousSystem {
             sync_in_progress: false,
             active_user_submitted_proposals: HashMap::default(),
             decided_user_submitted_proposals: Vec::new(),
+            transaction_fee: nervous_system.transaction_fee,
+            min_neuron_stake: nervous_system.min_neuron_stake,
+            min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
+            proposal_rejection_fee: nervous_system.proposal_rejection_fee,
         }
     }
 
@@ -387,6 +403,10 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
             neuron_for_submitting_proposals: ns.neuron_id_for_submitting_proposals.map(hex::encode),
+            transaction_fee: ns.transaction_fee,
+            min_neuron_stake: ns.min_neuron_stake,
+            min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
+            proposal_rejection_fee: ns.proposal_rejection_fee,
         }
     }
 }
