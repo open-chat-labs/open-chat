@@ -345,9 +345,9 @@
                 (pathParams.kind === "selected_community_route" ||
                     pathParams.kind === "chat_list_route")
             ) {
-                const unarchived = $chatSummariesListStore.filter((c) => !c.membership.archived);
-                if (unarchived.length > 0) {
-                    page.redirect(routeForChatIdentifier($chatListScope.kind, unarchived[0].id));
+                const first = $chatSummariesListStore.find((c) => !c.membership.archived);
+                if (first !== undefined) {
+                    page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
                     return;
                 }
             }
