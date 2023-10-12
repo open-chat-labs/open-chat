@@ -18,14 +18,14 @@ pub mod happy_path {
     use crate::utils::principal_to_username;
     use crate::User;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId};
 
-    pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
+    pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
     }
 
-    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referral_code: Option<String>) -> User {
+    pub fn register_user_with_referrer(env: &mut PocketIc, canister_id: CanisterId, referral_code: Option<String>) -> User {
         let (principal, public_key) = random_user_principal();
 
         let response = super::register_user(
@@ -52,7 +52,7 @@ pub mod happy_path {
     }
 
     pub fn invite_users_to_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
@@ -75,7 +75,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn join_group(env: &mut StateMachine, sender: Principal, local_user_index_canister_id: CanisterId, chat_id: ChatId) {
+    pub fn join_group(env: &mut PocketIc, sender: Principal, local_user_index_canister_id: CanisterId, chat_id: ChatId) {
         let response = super::join_group(
             env,
             sender,
@@ -94,7 +94,7 @@ pub mod happy_path {
     }
 
     pub fn add_users_to_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         group_id: ChatId,
@@ -116,7 +116,7 @@ pub mod happy_path {
     }
 
     pub fn invite_users_to_community(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
@@ -136,7 +136,7 @@ pub mod happy_path {
     }
 
     pub fn invite_users_to_channel(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
@@ -161,7 +161,7 @@ pub mod happy_path {
     }
 
     pub fn join_community(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
@@ -183,7 +183,7 @@ pub mod happy_path {
     }
 
     pub fn join_channel(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
@@ -208,7 +208,7 @@ pub mod happy_path {
     }
 
     pub fn add_users_to_community(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,

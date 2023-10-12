@@ -4,7 +4,7 @@ use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::ChatId;
 
@@ -231,7 +231,7 @@ fn delete_frozen_group() {
     assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_diamond_user(env, canister_ids, controller);
 

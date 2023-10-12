@@ -2,8 +2,8 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use test_case::test_case;
 use types::CommunityId;
@@ -73,7 +73,7 @@ fn create_channel_succeeds(is_public: bool) {
 }
 
 fn init_test_data(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     canister_ids: &CanisterIds,
     controller: Principal,
     public: bool,

@@ -14,7 +14,7 @@ generate_update_call!(upload_chunk_v2);
 pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use serde_bytes::ByteBuf;
     use types::{CanisterId, FileId, TimestampMillis};
     use utils::hasher::hash_bytes;
@@ -22,7 +22,7 @@ pub mod happy_path {
     const DEFAULT_MIME_TYPE: &str = "test_mime_type";
 
     pub fn upload_file(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         canister_id: CanisterId,
         file_id: FileId,
@@ -62,7 +62,7 @@ pub mod happy_path {
     }
 
     pub fn file_info(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: Principal,
         canister_id: CanisterId,
         file_id: FileId,
@@ -81,7 +81,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn file_exists(env: &StateMachine, sender: Principal, canister_id: CanisterId, file_id: FileId) -> bool {
+    pub fn file_exists(env: &PocketIc, sender: Principal, canister_id: CanisterId, file_id: FileId) -> bool {
         let response = super::file_info(
             env,
             sender,
