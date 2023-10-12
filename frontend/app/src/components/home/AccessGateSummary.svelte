@@ -19,7 +19,7 @@
             <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
                 <p>{$_("access.diamondMember")}</p>
-            {:else if isSnsGate(gate)}
+            {:else if isSnsGate(gate) || gate.kind === "credential_gate"}
                 <AccessGateParameters {gate} />
             {/if}
         </div>

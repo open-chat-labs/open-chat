@@ -82,12 +82,17 @@ export const idlFactory = ({ IDL }) => {
     'create_private_channel' : CommunityPermissionRole,
   });
   const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const VerifiedCredentialGate = IDL.Record({
+    'credential' : IDL.Text,
+    'issuer' : IDL.Text,
+  });
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
   const AccessGate = IDL.Variant({
+    'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });

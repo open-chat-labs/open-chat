@@ -5,7 +5,14 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum AccessGate {
     DiamondMember,
+    VerifiedCredential(VerifiedCredentialGate),
     SnsNeuron(SnsNeuronGate),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct VerifiedCredentialGate {
+    pub issuer: String,
+    pub credential: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

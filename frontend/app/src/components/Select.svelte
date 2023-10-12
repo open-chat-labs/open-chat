@@ -2,7 +2,7 @@
     import { rtlStore } from "../stores/rtl";
     import MenuDown from "svelte-material-icons/MenuDown.svelte";
 
-    export let value: unknown = "";
+    export let value: unknown;
     export let invalid: boolean = false;
     export let disabled: boolean = false;
     export let margin: boolean = true;
