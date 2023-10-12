@@ -343,12 +343,13 @@
             if (
                 !$mobileWidth &&
                 (pathParams.kind === "selected_community_route" ||
-                    pathParams.kind === "chat_list_route") &&
-                $chatSummariesListStore.length > 0
+                    pathParams.kind === "chat_list_route")
             ) {
-                const first = $chatSummariesListStore[0];
-                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                return;
+                const unarchived = $chatSummariesListStore.filter((c) => !c.membership.archived);
+                if (unarchived.length > 0) {
+                    page.redirect(routeForChatIdentifier($chatListScope.kind, unarchived[0].id));
+                    return;
+                }
             }
 
             if (pathParams.kind === "home_route") {
