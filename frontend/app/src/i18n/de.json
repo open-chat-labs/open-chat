@@ -1064,5 +1064,6 @@
     "followThreadFailed": "Dem Thread folgen ist fehlgeschlagen",
     "unfollowThreadFailed": "Das Entfolgen des Threads ist fehlgeschlagen",
     "doubleClickReply": "Doppelklicken Sie auf die Nachricht, um sie zu beantworten/zu bearbeiten",
-    "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten"
+    "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten",
+    "minimumAmount": "Minimum: {amount} {symbol}"
 }

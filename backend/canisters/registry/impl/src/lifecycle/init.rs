@@ -25,6 +25,7 @@ fn init(args: Args) {
         args.nns_ledger_canister_id,
         args.nns_root_canister_id,
         args.nns_governance_canister_id,
+        args.nns_index_canister_id,
         env.now(),
     );
 

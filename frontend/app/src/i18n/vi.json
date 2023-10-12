@@ -1063,5 +1063,6 @@
     "followThreadFailed": "Theo dõi chủ đề không thành công",
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
     "doubleClickReply": "Nhấp đúp chuột vào tin nhắn để trả lời/chỉnh sửa",
-    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa"
+    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
+    "minimumAmount": "Tối thiểu: {amount} {symbol}"
 }

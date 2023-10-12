@@ -119,6 +119,7 @@ pub struct Metrics {
 #[derive(CandidType, Serialize, Debug)]
 pub struct NervousSystemMetrics {
     pub governance_canister_id: CanisterId,
+    pub ledger_canister_id: CanisterId,
     pub chat_id: MultiUserChat,
     pub latest_successful_sync: Option<TimestampMillis>,
     pub latest_failed_sync: Option<TimestampMillis>,

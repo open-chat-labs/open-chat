@@ -1056,5 +1056,6 @@
     "followThread": "Follow this thread",
     "unfollowThread": "Unfollow this thread",
     "followThreadFailed": "Follow thread failed",
-    "unfollowThreadFailed": "Unfollow thread failed"
+    "unfollowThreadFailed": "Unfollow thread failed",
+    "minimumAmount": "Minimum: {amount} {symbol}"
 }

@@ -16,19 +16,30 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn add(&mut self, governance_canister_id: CanisterId, chat_id: MultiUserChat) {
-        self.nervous_systems
-            .insert(governance_canister_id, NervousSystem::new(governance_canister_id, chat_id));
+    pub fn add(&mut self, governance_canister_id: CanisterId, ledger_canister_id: CanisterId, chat_id: MultiUserChat) {
+        self.nervous_systems.insert(
+            governance_canister_id,
+            NervousSystem::new(governance_canister_id, ledger_canister_id, chat_id),
+        );
+    }
+
+    pub fn get(&self, governance_canister_id: &CanisterId) -> Option<&NervousSystem> {
+        self.nervous_systems.get(governance_canister_id)
     }
 
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<MultiUserChat> {
-        self.nervous_systems.get(governance_canister_id).map(|ns| ns.chat_id)
+        self.get(governance_canister_id).map(|ns| ns.chat_id)
     }
 
     pub fn get_neuron_id_for_submitting_proposals(&self, governance_canister_id: &CanisterId) -> Option<SnsNeuronId> {
-        self.nervous_systems
-            .get(governance_canister_id)
+        self.get(governance_canister_id)
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
+    }
+
+    pub fn set_ledger_canister_id(&mut self, governance_canister_id: CanisterId, ledger_canister_id: CanisterId) {
+        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
+            ns.ledger_canister_id = ledger_canister_id;
+        }
     }
 
     pub fn set_neuron_id_for_submitting_proposals(
@@ -234,6 +245,8 @@ impl NervousSystems {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NervousSystem {
     governance_canister_id: CanisterId,
+    #[serde(default = "anonymous_principal")]
+    ledger_canister_id: CanisterId,
     chat_id: MultiUserChat,
     latest_successful_sync: Option<TimestampMillis>,
     latest_failed_sync: Option<TimestampMillis>,
@@ -242,14 +255,14 @@ pub struct NervousSystem {
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
-    #[serde(default)]
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
-    #[serde(default)]
     sync_in_progress: bool,
-    #[serde(default)]
     active_user_submitted_proposals: HashMap<ProposalId, UserId>,
-    #[serde(default)]
     decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
+}
+
+fn anonymous_principal() -> CanisterId {
+    CanisterId::anonymous()
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -265,9 +278,10 @@ struct ProposalsToBeUpdated {
 }
 
 impl NervousSystem {
-    pub fn new(governance_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
+    pub fn new(governance_canister_id: CanisterId, ledger_canister_id: CanisterId, chat_id: MultiUserChat) -> NervousSystem {
         NervousSystem {
             governance_canister_id,
+            ledger_canister_id,
             chat_id,
             latest_successful_sync: None,
             latest_failed_sync: None,
@@ -364,6 +378,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
     fn from(ns: &NervousSystem) -> Self {
         NervousSystemMetrics {
             governance_canister_id: ns.governance_canister_id,
+            ledger_canister_id: ns.ledger_canister_id,
             chat_id: ns.chat_id,
             latest_successful_sync: ns.latest_successful_sync,
             latest_failed_sync: ns.latest_failed_sync,

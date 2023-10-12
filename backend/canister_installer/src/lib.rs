@@ -157,6 +157,7 @@ async fn install_service_canisters_impl(
         nns_governance_canister_id: canister_ids.nns_governance,
         nns_root_canister_id: canister_ids.nns_root,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
+        nns_index_canister_id: canister_ids.nns_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,

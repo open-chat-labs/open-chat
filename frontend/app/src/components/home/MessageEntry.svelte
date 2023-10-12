@@ -47,8 +47,8 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const mentionRegex = /@([\d\w_]*)$/;
-    const emojiRegex = /:([\w_]+):?$/;
+    const mentionRegex = /@(\w*)$/;
+    const emojiRegex = /:(\w+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = client.audioRecordingMimeType();
@@ -251,10 +251,10 @@
 
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
-    // if we don't have the mapping, just leave it as is (we *will* have the mapping)
+    // if we can't find the user or user group just leave it as is
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@(\S+)/g, (match, p1) => {
+        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -267,11 +267,8 @@
                         return `@UserId(${userOrGroup.userId})`;
                 }
             } else {
-                console.log(
-                    `Could not find the userId for user: ${p1}, this should not really happen`
-                );
+                return match;
             }
-            return match;
         });
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
@@ -533,6 +530,7 @@
                 {attachment}
                 {mode}
                 {pollsAllowed}
+                {isMultiUser}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:createPrizeMessage

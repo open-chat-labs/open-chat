@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    // import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -24,6 +24,7 @@
     export let attachment: AttachmentContent | undefined;
     export let mode: "thread" | "message" = "message";
     export let pollsAllowed: boolean;
+    export let isMultiUser: boolean;
 
     let drawOpen = false;
 
@@ -55,10 +56,10 @@
         drawOpen = false;
     }
 
-    // function createPrizeMessage() {
-    //     dispatch("createPrizeMessage");
-    //     drawOpen = false;
-    // }
+    function createPrizeMessage() {
+        dispatch("createPrizeMessage");
+        drawOpen = false;
+    }
 
     function toggleEmojiPicker() {
         toggleAction("emoji");
@@ -151,11 +152,13 @@
                 </HoverIcon>
             </div>
         {/if}
-        <!-- <div class="prize" on:click|stopPropagation={createPrizeMessage}>
-            <HoverIcon title={"Create prize"}>
-                <Gift size={$iconSize} color={iconColour} />
-            </HoverIcon>
-        </div> -->
+        {#if isMultiUser}
+            <div class="prize" on:click|stopPropagation={createPrizeMessage}>
+                <HoverIcon title={"Create prize"}>
+                    <Gift size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
     {/if}
 </div>
 
