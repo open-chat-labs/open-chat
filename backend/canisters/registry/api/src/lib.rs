@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use types::{CanisterId, TimestampMillis};
+use types::{CanisterId, Milliseconds, TimestampMillis};
 
 mod lifecycle;
 mod queries;
@@ -30,11 +30,41 @@ pub struct TokenDetails {
     pub last_updated: TimestampMillis,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NervousSystemDetails {
+    pub root_canister_id: CanisterId,
+    pub governance_canister_id: CanisterId,
+    pub swap_canister_id: CanisterId,
+    pub ledger_canister_id: CanisterId,
+    pub index_canister_id: CanisterId,
+    pub name: String,
+    pub url: Option<String>,
+    pub logo: String,
+    pub description: Option<String>,
+    pub transaction_fee: u64,
+    pub min_neuron_stake: u64,
+    pub min_dissolve_delay_to_vote: Milliseconds,
+    pub proposal_rejection_fee: u64,
+    pub is_nns: bool,
+    pub added: TimestampMillis,
+    pub last_updated: TimestampMillis,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NervousSystem {
     pub is_nns: bool,
     pub root: CanisterId,
     pub governance: CanisterId,
+}
+
+impl From<NervousSystemDetails> for NervousSystem {
+    fn from(value: NervousSystemDetails) -> Self {
+        NervousSystem {
+            is_nns: value.is_nns,
+            root: value.root_canister_id,
+            governance: value.governance_canister_id,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
