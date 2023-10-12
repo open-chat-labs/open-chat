@@ -46,7 +46,6 @@ pub struct NervousSystemDetails {
     pub min_dissolve_delay_to_vote: Milliseconds,
     pub proposal_rejection_fee: u64,
     pub is_nns: bool,
-    #[serde(default)]
     pub submitting_proposals_enabled: bool,
     pub added: TimestampMillis,
     pub last_updated: TimestampMillis,

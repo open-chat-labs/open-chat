@@ -67,19 +67,13 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     governance_principals: HashSet<Principal>,
-    #[serde(default = "proposals_bot_canister_id")]
     proposals_bot_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
-    #[serde(default)]
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
     test_mode: bool,
-}
-
-fn proposals_bot_canister_id() -> CanisterId {
-    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
 }
 
 impl Data {

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.884](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.884-proposals_bot)] - 2023-10-12
+
 ### Added
 
 - Store whether submitting proposals is enabled or not in the Registry ([#4564](https://github.com/open-chat-labs/open-chat/pull/4564))
@@ -15,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store `ledger_canister_id` along with each `NervousSystem` ([#4551](https://github.com/open-chat-labs/open-chat/pull/4551))
 - Get nervous system updates from the Registry ([#4557](https://github.com/open-chat-labs/open-chat/pull/4557))
 
-## [[2.0.881](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-10
+## [[2.0.881](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.881-proposals_bot)] - 2023-10-10
 
 ### Changed
 

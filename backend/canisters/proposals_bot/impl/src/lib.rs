@@ -74,19 +74,12 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
-    #[serde(default = "registry_canister_id")]
     pub registry_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     pub registry_synced_up_to: TimestampMillis,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub test_mode: bool,
-}
-
-fn registry_canister_id() -> CanisterId {
-    CanisterId::from_text("cpi5u-yiaaa-aaaar-aqw5a-cai").unwrap()
 }
 
 impl Data {
