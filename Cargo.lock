@@ -7020,6 +7020,7 @@ dependencies = [
  "cycles_dispenser_client",
  "getrandom",
  "ic-cdk",
+ "ic-cdk-timers",
  "itertools 0.11.0",
  "msgpack",
  "rand",

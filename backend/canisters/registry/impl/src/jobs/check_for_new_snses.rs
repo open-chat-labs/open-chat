@@ -8,14 +8,14 @@ use std::collections::HashSet;
 use std::time::Duration;
 use tracing::{error, info};
 use types::{Empty, TimestampMillis};
+use utils::canister_timers::run_now_then_interval;
 use utils::time::HOUR_IN_MS;
 
 const LIFECYCLE_COMMITTED: i32 = 3;
 const LIFECYCLE_ABORTED: i32 = 4;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(HOUR_IN_MS), run);
-    ic_cdk_timers::set_timer(Duration::ZERO, run);
+    run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);
 }
 
 fn run() {
