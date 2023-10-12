@@ -28,7 +28,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     .await
     {
         community_canister::c2c_join_community::Response::Success(_) => {
-            let response = join_channel_internal(args.channel_id, args.principal).await;
+            let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
             if matches!(response, Success(_) | AlreadyInChannel(_)) {
                 let summary = read_state(|state| {
                     let member = state.data.members.get_by_user_id(&args.user_id);
@@ -40,7 +40,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             }
         }
         community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-            join_channel_internal(args.channel_id, args.principal).await
+            check_gate_then_join_channel(args.channel_id, args.principal).await
         }
         community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
         community_canister::c2c_join_community::Response::NotInvited => NotInvited,
@@ -60,7 +60,7 @@ pub(crate) fn join_channel_auto(channel_id: ChannelId, user_principal: Principal
     mutate_state(|state| commit(channel_id, user_principal, state));
 }
 
-async fn join_channel_internal(channel_id: ChannelId, user_principal: Principal) -> Response {
+async fn check_gate_then_join_channel(channel_id: ChannelId, user_principal: Principal) -> Response {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
             match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
