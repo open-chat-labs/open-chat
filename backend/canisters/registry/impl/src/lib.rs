@@ -2,7 +2,7 @@ use crate::model::nervous_systems::{NervousSystemMetrics, NervousSystems};
 use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use registry_canister::{NervousSystem, NervousSystemDetails};
+use registry_canister::{NervousSystemDeprecated, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -139,7 +139,7 @@ impl Data {
             8,
             10_000,
             IC_LOGO.to_string(),
-            Some(NervousSystem {
+            Some(NervousSystemDeprecated {
                 is_nns: true,
                 root: root_canister_id,
                 governance: governance_canister_id,
