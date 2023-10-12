@@ -38,6 +38,7 @@ export type TokenDetails = {
 };
 
 export type NervousSystemSummary = {
+    rootCanisterId: string;
     governanceCanisterId: string;
     ledgerCanisterId: string;
     isNns: boolean;
