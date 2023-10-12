@@ -28,13 +28,7 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
-    import {
-        createEventDispatcher,
-        getContext,
-        onDestroy,
-        onMount,
-        tick,
-    } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import { dclickReply } from "../../stores/settings";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
@@ -632,8 +626,8 @@
 <style lang="scss">
     $size: 10px;
 
-    $avatar-width: 56px;
-    $avatar-width-mob: 43px;
+    $avatar-width: toRem(56);
+    $avatar-width-mob: toRem(43);
 
     @media (hover: hover) {
         :global(.message-bubble:hover .menu-icon) {

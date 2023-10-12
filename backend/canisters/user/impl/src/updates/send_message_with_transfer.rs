@@ -244,6 +244,7 @@ fn transform_content_with_completed_transaction(
             transfer: CryptoTransaction::Completed(completed_transaction),
             end_date: c.end_date,
             caption: c.caption,
+            diamond_only: c.diamond_only,
         }),
         _ => unreachable!("Message must include a crypto transfer"),
     }
