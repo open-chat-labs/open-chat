@@ -6,11 +6,11 @@ use tracing::{error, info, trace};
 use types::{
     CanisterId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat, Rules,
 };
+use utils::canister_timers::run_now_then_interval;
 use utils::time::HOUR_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(HOUR_IN_MS), run);
-    ic_cdk_timers::set_timer(Duration::ZERO, run);
+    run_now_then_interval(Duration::from_millis(HOUR_IN_MS), run);
 }
 
 fn run() {
