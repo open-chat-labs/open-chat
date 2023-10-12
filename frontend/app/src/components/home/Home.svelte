@@ -219,7 +219,7 @@
                 ) {
                     return client.isMessageRead(
                         {
-                            chatId: notification.chatId
+                            chatId: notification.chatId,
                         },
                         notification.messageIndex,
                         undefined
