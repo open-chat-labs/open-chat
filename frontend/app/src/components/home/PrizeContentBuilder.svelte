@@ -22,6 +22,7 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
+    import TextArea from "../TextArea.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -248,6 +249,15 @@
                             {minAmount}
                             maxAmount={maxAmount(cryptoBalance)}
                             bind:amount={draftAmount} />
+                    </div>
+                    <div class="message">
+                        <Legend label={$_("tokenTransfer.message")} />
+                        <TextArea
+                            maxlength={200}
+                            rows={3}
+                            autofocus={false}
+                            placeholder={$_("tokenTransfer.messagePlaceholder")}
+                            bind:value={message} />
                     </div>
                     <div class="winners">
                         <Legend
