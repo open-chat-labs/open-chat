@@ -1,19 +1,23 @@
-export type RegistryUpdatesResponse = RegistryUpdatesResponseSuccess | RegistryUpdatesResponseSuccessNoUpdates;
+export type RegistryUpdatesResponse =
+    | RegistryUpdatesResponseSuccess
+    | RegistryUpdatesResponseSuccessNoUpdates;
 
 export type RegistryValue = {
     lastUpdated: bigint;
-    tokenDetails: TokenDetails[],
-}
+    tokenDetails: TokenDetails[];
+    nervousSystemDetails: NervousSystemSummary[];
+};
 
 export type RegistryUpdatesResponseSuccess = {
     kind: "success";
     lastUpdated: bigint;
-    tokenDetails?: TokenDetails[];
-}
+    tokenDetails: TokenDetails[];
+    nervousSystemDetails: NervousSystemSummary[];
+};
 
 export type RegistryUpdatesResponseSuccessNoUpdates = {
     kind: "success_no_updates";
-}
+};
 
 export type TokenDetails = {
     ledgerCanisterId: string;
@@ -23,12 +27,20 @@ export type TokenDetails = {
     fee: bigint;
     logo: string;
     nervousSystem?: {
-        root: string
-        governance: string
+        root: string;
+        governance: string;
     };
     infoUrl: string;
     howToBuyUrl: string;
     transactionUrlFormat: string;
     added: bigint;
     lastUpdated: bigint;
-}
+};
+
+export type NervousSystemSummary = {
+    governanceCanisterId: string;
+    ledgerCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
+};

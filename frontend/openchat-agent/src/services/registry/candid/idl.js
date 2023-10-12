@@ -22,10 +22,18 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : IDL.Text,
     'transaction_url_format' : IDL.Text,
   });
+  const NervousSystemSummary = IDL.Record({
+    'submitting_proposals_enabled' : IDL.Bool,
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+    'proposal_rejection_fee' : IDL.Nat64,
+    'ledger_canister_id' : CanisterId,
+  });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
       'last_updated' : TimestampMillis,
       'token_details' : IDL.Opt(IDL.Vec(TokenDetails)),
+      'nervous_system_details' : IDL.Vec(NervousSystemSummary),
     }),
     'SuccessNoUpdates' : IDL.Null,
   });
