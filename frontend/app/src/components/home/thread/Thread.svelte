@@ -80,7 +80,8 @@
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: isFollowedByMe = $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
+    $: isFollowedByMe =
+        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -272,11 +273,9 @@
                             me={evt.event.sender === user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
-                            readByMe={
-                                evt.event.messageId === rootEvent.event.messageId ||
+                            readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                 !isFollowedByMe ||
-                                isReadByMe($messagesRead, evt)
-                            }
+                                isReadByMe($messagesRead, evt)}
                             readByThem
                             observer={messageObserver}
                             focused={evt.event.kind === "message" &&

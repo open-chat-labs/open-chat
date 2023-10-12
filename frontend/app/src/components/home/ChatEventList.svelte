@@ -73,7 +73,10 @@
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex: threadRootEvent?.event.messageIndex };
+    $: messageContext = {
+        chatId: chat.id,
+        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+    };
 
     const keyMeasurements = () => ({
         scrollHeight: messagesDiv!.scrollHeight,
@@ -414,6 +417,7 @@
                     $pathParams.kind === "selected_channel_route") &&
                 ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
             ) {
+                client.setFocusThreadMessageIndex(chat.id, $pathParams.threadMessageIndex);
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -605,7 +609,10 @@
         if (threadSummary !== undefined) {
             loadIndexThenScrollToBottom(messageContext, threadSummary.numberOfReplies - 1);
         } else {
-            loadIndexThenScrollToBottom(messageContext, chat.latestMessage?.event.messageIndex ?? -1);
+            loadIndexThenScrollToBottom(
+                messageContext,
+                chat.latestMessage?.event.messageIndex ?? -1
+            );
         }
     }
 
