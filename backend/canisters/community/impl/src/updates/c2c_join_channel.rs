@@ -51,7 +51,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     }
 }
 
-pub(crate) async fn join_channel_auto(channel_id: ChannelId, user_principal: Principal) {
+pub(crate) fn join_channel_auto(channel_id: ChannelId, user_principal: Principal) {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(None) => {}
         _ => return,

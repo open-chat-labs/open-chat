@@ -34,7 +34,9 @@ pub(crate) async fn join_community(args: Args) -> Response {
 
     match mutate_state(|state| join_community_impl(&args, state)) {
         Ok(public_channel_ids) => {
-            futures::future::join_all(public_channel_ids.into_iter().map(|c| join_channel_auto(c, args.principal))).await;
+            for c in public_channel_ids {
+                join_channel_auto(c, args.principal);
+            }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     let now = state.env.now();
