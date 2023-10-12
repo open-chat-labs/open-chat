@@ -1,10 +1,10 @@
 use crate::guards::caller_is_governance_principal;
-use crate::model::nervous_systems::NervousSystemDetails;
 use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
 use registry_canister::add_token::{Response::*, *};
+use registry_canister::NervousSystemDetails;
 use tracing::{error, info};
 use types::CanisterId;
 
@@ -71,7 +71,7 @@ async fn add_token_impl(
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
             if let Some(ns) = nervous_system.clone() {
-                state.data.nervous_systems.add(ns);
+                state.data.nervous_systems.add(ns, now);
             }
             if state.data.tokens.add(
                 ledger_canister_id,

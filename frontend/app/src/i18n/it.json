@@ -722,7 +722,10 @@
         "distribution": "Come dovrebbero essere distribuiti i premi?",
         "equalDistribution": "Equa distribuzione",
         "randomDistribution": "Distribuzione casuale",
-        "creatingYourPrizeMessage": "Ti preghiamo di attendere mentre creiamo il messaggio del tuo premio"
+        "creatingYourPrizeMessage": "Ti preghiamo di attendere mentre creiamo il messaggio del tuo premio",
+        "whoCanWin": "Chi può rivendicare una quota?",
+        "onlyDiamond": "Solo utenti Diamond",
+        "anyone": "Qualsiasi utente"
     },
     "upgrade": {
         "blurb": "Alcune funzionalità di OpenChat sono disponibili solo per gli account premium. Puoi aggiornare il tuo account verificando un numero di telefono tramite SMS o pagando una piccola commissione ICP.",
@@ -886,7 +889,16 @@
         "gateCheckFailed": "Cancello di accesso non rispettato",
         "cannotMakePublic": "Non puoi rendere pubblico un {level} privato in quanto ciò metterebbe a rischio la privacy dei membri esistenti.",
         "snsHolder": "{token} detentore di neuroni",
-        "snsHolderInfo": "Solo i possessori di {token} neuroni potranno partecipare"
+        "snsHolderInfo": "Solo i possessori di {token} neuroni potranno partecipare",
+        "initiateCredentialCheck": "Verifica credenziale",
+        "verify": "Verificare",
+        "credential": "Credenziale verificata",
+        "credentialParamIssuer": "Emittente: {issuer}",
+        "credentialParamCredential": "Credenziali: {credential}",
+        "credentialIssuer": "Emittente di credenziali",
+        "requiredCredential": "Credenziale richiesta",
+        "credentialCheckMessage": "Per aderire a questo {level} è necessario verificare le credenziali \"{credential}\" dell'emittente {issuer}",
+        "credentialGateInfo": "Solo gli utenti che possono fornire le credenziali \"{credential}\" da {issuer} potranno partecipare"
     },
     "communities": {
         "explore": "Esplora le comunità",

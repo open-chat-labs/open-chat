@@ -1,8 +1,8 @@
-use crate::model::nervous_systems::{NervousSystemDetails, NervousSystemMetrics, NervousSystems};
+use crate::model::nervous_systems::{NervousSystemMetrics, NervousSystems};
 use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
-use registry_canister::NervousSystem;
+use registry_canister::{NervousSystemDeprecated, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -40,6 +40,10 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn is_caller_proposals_bot(&self) -> bool {
+        self.env.caller() == self.data.proposals_bot_canister_id
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -52,6 +56,7 @@ impl RuntimeState {
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
+                proposals_bot: self.data.proposals_bot_canister_id,
                 sns_wasm: self.data.sns_wasm_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -62,6 +67,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     governance_principals: HashSet<Principal>,
+    #[serde(default = "proposals_bot_canister_id")]
+    proposals_bot_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
@@ -71,15 +78,21 @@ struct Data {
     test_mode: bool,
 }
 
+fn proposals_bot_canister_id() -> CanisterId {
+    CanisterId::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap()
+}
+
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
+        proposals_bot_canister_id: CanisterId,
         sns_wasm_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
             governance_principals,
+            proposals_bot_canister_id,
             sns_wasm_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
@@ -97,23 +110,28 @@ impl Data {
         index_canister_id: CanisterId,
         now: TimestampMillis,
     ) {
-        self.nervous_systems.add(NervousSystemDetails {
-            root_canister_id,
-            governance_canister_id,
-            swap_canister_id: CanisterId::anonymous(),
-            ledger_canister_id,
-            index_canister_id,
-            name: "Internet Computer".to_string(),
-            url: Some("https://internetcomputer.org".to_string()),
-            logo: IC_LOGO.to_string(),
-            description: None,
-            min_dissolve_delay_to_vote: 15778800, // 6 months
-            min_neuron_stake: 100_000_000,
-            proposal_rejection_fee: 1_000_000_000,
-            is_nns: true,
-            added: now,
-            last_updated: now,
-        });
+        self.nervous_systems.add(
+            NervousSystemDetails {
+                root_canister_id,
+                governance_canister_id,
+                swap_canister_id: CanisterId::anonymous(),
+                ledger_canister_id,
+                index_canister_id,
+                name: "Internet Computer".to_string(),
+                url: Some("https://internetcomputer.org".to_string()),
+                logo: IC_LOGO.to_string(),
+                description: None,
+                transaction_fee: 10_000,
+                min_dissolve_delay_to_vote: 15778800, // 6 months
+                min_neuron_stake: 100_000_000,
+                proposal_rejection_fee: 1_000_000_000,
+                is_nns: true,
+                submitting_proposals_enabled: false,
+                added: now,
+                last_updated: now,
+            },
+            now,
+        );
         self.tokens.add(
             ledger_canister_id,
             "Internet Computer".to_string(),
@@ -121,7 +139,7 @@ impl Data {
             8,
             10_000,
             IC_LOGO.to_string(),
-            Some(NervousSystem {
+            Some(NervousSystemDeprecated {
                 is_nns: true,
                 root: root_canister_id,
                 governance: governance_canister_id,
@@ -150,6 +168,7 @@ pub struct Metrics {
 
 #[derive(Serialize)]
 pub struct CanisterIds {
+    pub proposals_bot: CanisterId,
     pub sns_wasm: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

@@ -395,6 +395,7 @@ import type { Member } from "openchat-shared";
 import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
+import { verifyCredential } from "./utils/credentials";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -601,6 +602,7 @@ export class OpenChat extends OpenChatAgentWorker {
         );
         this.getCurrentUser()
             .then((user) => {
+                console.log("Loaded user: ", user);
                 switch (user.kind) {
                     case "unknown_user":
                         // TODO remove this once the principal migration can be done via the UI
@@ -1065,10 +1067,22 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    verifyAccessGate(gate: AccessGate): Promise<string | undefined> {
+        if (gate.kind !== "credential_gate") return Promise.resolve(undefined);
+
+        return verifyCredential(
+            this.config.internetIdentityUrl,
+            this._identity!.getPrincipal().toString(),
+            gate.issuerOrigin,
+            gate.credentialId,
+        );
+    }
+
     async joinGroup(
         chat: MultiUserChat,
+        credential?: string,
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        return this.sendRequest({ kind: "joinGroup", chatId: chat.id })
+        return this.sendRequest({ kind: "joinGroup", chatId: chat.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markAdded(resp.group);
@@ -2265,6 +2279,16 @@ export class OpenChat extends OpenChatAgentWorker {
             );
         }
         return false;
+    }
+
+    getTokenDetailsForSnsAccessGate(
+        gate: AccessGate,
+        cryptoLookup: Record<string, CryptocurrencyDetails>,
+    ): CryptocurrencyDetails | undefined {
+        if (gate.kind !== "sns_gate") return undefined;
+        return Object.values(cryptoLookup).find(
+            (td) => td.governanceCanister === gate.governanceCanister,
+        );
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
@@ -3651,6 +3675,7 @@ export class OpenChat extends OpenChatAgentWorker {
             displayName,
             referralCode: this._referralCode,
         }).then((res) => {
+            console.log("register user response: ", res);
             if (res.kind === "success") {
                 this.clearReferralCode();
             }
@@ -5114,12 +5139,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    joinCommunity(id: CommunityIdentifier): Promise<"success" | "failure" | "gate_check_failed"> {
-        return this.sendRequest({ kind: "joinCommunity", id })
+    async joinCommunity(
+        community: CommunitySummary,
+        credential?: string,
+    ): Promise<"success" | "failure" | "gate_check_failed"> {
+        return this.sendRequest({ kind: "joinCommunity", id: community.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
                     this.addCommunityLocally(resp.community);
-                    removeCommunityPreview(id);
+                    removeCommunityPreview(community.id);
                     this.loadCommunityDetails(resp.community);
                     messagesRead.batchUpdate(() => {
                         resp.community.channels.forEach((c) => {
@@ -5368,6 +5396,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Error creating community user group", err);
                 return CommonResponses.failure();
             });
+    }
+
+    getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
+        return this._liveState.communities.values().find((c) => {
+            return c.channels.findIndex((ch) => chatIdentifiersEqual(ch.id, id)) >= 0;
+        });
     }
 
     updateUserGroup(

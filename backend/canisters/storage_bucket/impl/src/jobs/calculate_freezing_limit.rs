@@ -3,15 +3,13 @@ use ic_cdk::api::management_canister::main::CanisterIdRecord;
 use std::time::Duration;
 use tracing::{info, trace};
 use types::{CanisterId, Cycles, Timestamped};
+use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 1 day
 const FREEZING_THRESHOLD_DAYS: u128 = 30;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(INTERVAL, run);
-
-    // Run the job now so that there is never a gap of more than 1 day.
-    ic_cdk_timers::set_timer(Duration::ZERO, run);
+    run_now_then_interval(INTERVAL, run);
 }
 
 fn run() {

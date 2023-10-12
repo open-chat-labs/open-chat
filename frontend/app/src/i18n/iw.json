@@ -720,7 +720,10 @@
         "distribution": "כיצד יש לחלק את הפרסים?",
         "equalDistribution": "חלוקה שווה",
         "randomDistribution": "הפצה אקראית",
-        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך"
+        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך",
+        "whoCanWin": "מי יכול לתבוע מניה?",
+        "onlyDiamond": "רק משתמשי Diamond",
+        "anyone": "כל משתמש"
     },
     "upgrade": {
         "blurb": "חלק מתכונות OpenChat זמינות רק לחשבונות פרימיום. אתה יכול לשדרג את חשבונך על ידי אימות מספר טלפון באמצעות SMS או על ידי תשלום עמלת ICP קטנה.",
@@ -884,7 +887,16 @@
         "gateCheckFailed": "שער הגישה לא נפגש",
         "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
         "snsHolder": "מחזיק נוירון {token}",
-        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף"
+        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף",
+        "initiateCredentialCheck": "אמת את האישור",
+        "verify": "תאשר",
+        "credential": "אישור מאומת",
+        "credentialParamIssuer": "מנפיק: {issuer}",
+        "credentialParamCredential": "אישור: {credential}",
+        "credentialIssuer": "מנפיק אישורים",
+        "requiredCredential": "אישור נדרש",
+        "credentialCheckMessage": "על מנת להצטרף ל-{level} הזה, עליך לאמת את האישור \"{credential}\" מהמנפיק {issuer}",
+        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",

@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `c2c_nervous_systems` ([#4557](https://github.com/open-chat-labs/open-chat/pull/4557))
+- Store whether submitting proposals is enabled or not in the Registry ([#4564](https://github.com/open-chat-labs/open-chat/pull/4564))
+- Return nervous system details when polling the Registry ([#4565](https://github.com/open-chat-labs/open-chat/pull/4565))
+
 ### Changed
 
 - Add `name` and `symbol` to rendering of 'Update token' proposals ([#4167](https://github.com/open-chat-labs/open-chat/pull/4167))

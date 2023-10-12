@@ -722,7 +722,10 @@
         "distribution": "Comment les prix doivent-ils être distribués ?",
         "equalDistribution": "Répartition égale",
         "randomDistribution": "Distribution aléatoire",
-        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense"
+        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense",
+        "whoCanWin": "Qui peut réclamer une part ?",
+        "onlyDiamond": "Uniquement les utilisateurs Diamond",
+        "anyone": "Tout utilisateur"
     },
     "upgrade": {
         "blurb": "Certaines fonctionnalités d'OpenChat ne sont disponibles que pour les comptes premium. Vous pouvez mettre à niveau votre compte soit en vérifiant un numéro de téléphone par SMS, soit en payant une petite redevance ICP.",
@@ -886,7 +889,16 @@
         "gateCheckFailed": "Porte d'accès non rencontrée",
         "cannotMakePublic": "Vous ne pouvez pas rendre public un {level} privé car cela mettrait en danger la vie privée des membres existants.",
         "snsHolder": "support de neurone {token}",
-        "snsHolderInfo": "Seuls les détenteurs de {token} neurones seront autorisés à rejoindre"
+        "snsHolderInfo": "Seuls les détenteurs de {token} neurones seront autorisés à rejoindre",
+        "initiateCredentialCheck": "Vérifier les informations d'identification",
+        "verify": "Vérifier",
+        "credential": "Titre vérifié",
+        "credentialParamIssuer": "Émetteur : {issuer}",
+        "credentialParamCredential": "Identifiant : {credential}",
+        "credentialIssuer": "Émetteur de titres de compétences",
+        "requiredCredential": "Titre requis",
+        "credentialCheckMessage": "Pour rejoindre ce {level}, vous devez vérifier les informations d'identification \"{credential}\" de l'émetteur {issuer}.",
+        "credentialGateInfo": "Seuls les utilisateurs pouvant fournir les identifiants « {credential} » de {issuer} seront autorisés à rejoindre"
     },
     "communities": {
         "explore": "Explorer les communautés",

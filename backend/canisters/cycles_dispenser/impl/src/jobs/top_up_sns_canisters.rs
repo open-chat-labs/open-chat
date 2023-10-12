@@ -3,15 +3,13 @@ use crate::read_state;
 use std::time::Duration;
 use types::{CanisterId, Cycles, Empty};
 use utils::canister::deposit_cycles;
+use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(24 * 60 * 60); // 1 day
 const T: Cycles = 1_000_000_000_000;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(INTERVAL, run);
-
-    // Run the job now so that there is never a gap of more than 1 day.
-    ic_cdk_timers::set_timer(Duration::ZERO, run);
+    run_now_then_interval(INTERVAL, run);
 }
 
 fn run() {

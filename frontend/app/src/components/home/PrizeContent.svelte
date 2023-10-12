@@ -4,7 +4,7 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
@@ -13,6 +13,7 @@
     import { claimsStore } from "../../stores/claims";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let content: PrizeContent;
     export let chatId: ChatIdentifier;
@@ -33,10 +34,16 @@
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now500, Number(content.endDate));
+    $: isDiamond = client.isDiamond;
+
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
         if (e.isTrusted && chatId.kind !== "direct_chat" && !me) {
+            if (!$isDiamond && content.diamondOnly) {
+                dispatch("upgrade");
+                return;
+            }
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)

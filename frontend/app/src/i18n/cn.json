@@ -722,7 +722,10 @@
         "distribution": "奖品应该如何分配？",
         "equalDistribution": "均等分配",
         "randomDistribution": "随机分布",
-        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候"
+        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",
+        "whoCanWin": "谁可以申请份额？",
+        "onlyDiamond": "仅限钻石用户",
+        "anyone": "任何用户"
     },
     "upgrade": {
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
@@ -886,7 +889,16 @@
         "gateCheckFailed": "未满足访问门禁",
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
         "snsHolder": "{token} 神经元支架",
-        "snsHolderInfo": "仅允许 {token} 神经元的持有者加入"
+        "snsHolderInfo": "仅允许 {token} 神经元的持有者加入",
+        "initiateCredentialCheck": "验证凭证",
+        "verify": "核实",
+        "credential": "已验证的凭证",
+        "credentialParamIssuer": "发行人：{issuer}",
+        "credentialParamCredential": "凭证：{credential}",
+        "credentialIssuer": "凭证颁发者",
+        "requiredCredential": "所需凭证",
+        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者 {credential} 的“{issuer}”凭证",
+        "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入"
     },
     "communities": {
         "explore": "探索社区",

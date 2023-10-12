@@ -1,4 +1,4 @@
-use crate::TokenDetails;
+use crate::{NervousSystemSummary, TokenDetails};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::TimestampMillis;
@@ -18,4 +18,5 @@ pub enum Response {
 pub struct SuccessResult {
     pub last_updated: TimestampMillis,
     pub token_details: Option<Vec<TokenDetails>>,
+    pub nervous_system_details: Vec<NervousSystemSummary>,
 }

@@ -724,7 +724,10 @@
         "distribution": "Wie sollen die Preise verteilt werden?",
         "equalDistribution": "Gleichmäßige Verteilung",
         "randomDistribution": "Zufällige Verteilung",
-        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen"
+        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen",
+        "whoCanWin": "Wer kann einen Anteil beanspruchen?",
+        "onlyDiamond": "Nur Diamond-Benutzer",
+        "anyone": "Jeder Benutzer"
     },
     "upgrade": {
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",
@@ -888,7 +891,16 @@
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
         "snsHolder": "{token} Neuronenhalter",
-        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten"
+        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten",
+        "initiateCredentialCheck": "Anmeldeinformationen überprüfen",
+        "verify": "Verifizieren",
+        "credential": "Verifizierter Berechtigungsnachweis",
+        "credentialParamIssuer": "Emittent: {issuer}",
+        "credentialParamCredential": "Anmeldedaten: {credential}",
+        "credentialIssuer": "Aussteller der Berechtigungsnachweise",
+        "requiredCredential": "Erforderlicher Ausweis",
+        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ vom Aussteller {issuer} überprüfen.",
+        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

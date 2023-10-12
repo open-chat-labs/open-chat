@@ -1,6 +1,6 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, read_state, Data};
+use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -8,7 +8,7 @@ use ic_stable_structures::reader::{BufferedReader, Reader};
 use proposals_bot_canister::post_upgrade::Args;
 use std::time::Duration;
 use tracing::info;
-use types::{CanisterId, Empty};
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -28,27 +28,19 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(fetch_ledger_canister_ids()));
+    // TODO Remove this after next upgrade
+    ic_cdk_timers::set_timer(Duration::ZERO, enable_submitting_oc_proposals);
 }
 
-async fn fetch_ledger_canister_ids() {
-    let sns_wasm_canister_id = read_state(|state| state.data.sns_wasm_canister_id);
-
-    if let Ok(response) = sns_wasm_canister_c2c_client::list_deployed_snses(sns_wasm_canister_id, &Empty {}).await {
-        mutate_state(|state| {
-            for sns in response.instances {
-                state
-                    .data
-                    .nervous_systems
-                    .set_ledger_canister_id(sns.governance_canister_id.unwrap(), sns.ledger_canister_id.unwrap());
-            }
-
-            let nns_governance_canister_id = CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap();
-            let nns_ledger_canister_id = CanisterId::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
-            state
-                .data
-                .nervous_systems
-                .set_ledger_canister_id(nns_governance_canister_id, nns_ledger_canister_id);
-        });
-    }
+fn enable_submitting_oc_proposals() {
+    mutate_state(|state| {
+        state.data.fire_and_forget_handler.send(
+            state.data.registry_canister_id,
+            "c2c_set_submitting_proposals_enabled_msgpack".to_string(),
+            msgpack::serialize_then_unwrap(registry_canister::c2c_set_submitting_proposals_enabled::Args {
+                governance_canister_id: CanisterId::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap(),
+                enabled: true,
+            }),
+        );
+    });
 }

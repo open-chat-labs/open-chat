@@ -11,6 +11,7 @@ canister_client = { path = "../canister_client" }
 cycles_dispenser_client = { path = "../cycles_dispenser_client" }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
 itertools = { workspace = true }
 msgpack = { path = "../msgpack" }
 rand = { workspace = true }

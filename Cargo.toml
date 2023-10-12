@@ -53,6 +53,7 @@ members = [
     "backend/canisters/proposals_bot/api",
     "backend/canisters/proposals_bot/impl",
     "backend/canisters/registry/api",
+    "backend/canisters/registry/c2c_client",
     "backend/canisters/registry/client",
     "backend/canisters/registry/impl",
     "backend/canisters/storage_bucket/api",
