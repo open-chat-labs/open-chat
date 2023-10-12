@@ -3,7 +3,7 @@ use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
-use ic_test_state_machine_client::{StateMachine, UserError, WasmResult};
+use pocket_ic::{PocketIc, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
@@ -26,13 +26,13 @@ pub mod user_index;
 
 const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
 
-pub fn create_canister(env: &mut StateMachine, controller: Principal) -> CanisterId {
+pub fn create_canister(env: &mut PocketIc, controller: Principal) -> CanisterId {
     let canister_id = env.create_canister_with_settings(None, Some(controller));
     env.add_cycles(canister_id, INIT_CYCLES_BALANCE);
     canister_id
 }
 
-pub fn start_canister(env: &mut StateMachine, sender: Principal, canister_id: CanisterId) {
+pub fn start_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId) {
     env.update_call(
         Principal::management_canister(),
         sender,
@@ -42,7 +42,7 @@ pub fn start_canister(env: &mut StateMachine, sender: Principal, canister_id: Ca
     .unwrap();
 }
 
-pub fn stop_canister(env: &mut StateMachine, sender: Principal, canister_id: CanisterId) {
+pub fn stop_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId) {
     env.update_call(
         Principal::management_canister(),
         sender,
@@ -53,7 +53,7 @@ pub fn stop_canister(env: &mut StateMachine, sender: Principal, canister_id: Can
 }
 
 pub fn install_canister<P: CandidType>(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     sender: Principal,
     canister_id: CanisterId,
     wasm: CanisterWasm,
@@ -74,7 +74,7 @@ pub fn install_canister<P: CandidType>(
 }
 
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
-    env: &StateMachine,
+    env: &PocketIc,
     sender: Principal,
     canister_id: CanisterId,
     method_name: &str,
@@ -84,7 +84,7 @@ pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
 }
 
 pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     sender: Principal,
     canister_id: CanisterId,
     method_name: &str,
@@ -94,7 +94,7 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
 }
 
 pub fn execute_update_no_response<P: CandidType>(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     sender: Principal,
     canister_id: CanisterId,
     method_name: &str,
@@ -104,7 +104,7 @@ pub fn execute_update_no_response<P: CandidType>(
         .unwrap();
 }
 
-pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> User {
+pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     icrc1::happy_path::transfer(
@@ -128,7 +128,7 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
     user
 }
 
-pub fn upgrade_user(user: &User, env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) {
+pub fn upgrade_user(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
     icrc1::happy_path::transfer(
         env,
         controller,

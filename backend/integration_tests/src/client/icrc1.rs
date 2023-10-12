@@ -26,11 +26,11 @@ pub mod happy_path {
     use super::*;
     use candid::Principal;
     use ic_ledger_types::BlockIndex;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::CanisterId;
 
     pub fn transfer(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         icp_ledger_canister_id: CanisterId,
         recipient: Principal,
@@ -55,7 +55,7 @@ pub mod happy_path {
         .unwrap()
     }
 
-    pub fn balance_of(env: &StateMachine, icp_ledger_canister_id: CanisterId, principal: Principal) -> u64 {
+    pub fn balance_of(env: &PocketIc, icp_ledger_canister_id: CanisterId, principal: Principal) -> u64 {
         icrc1_balance_of(
             env,
             Principal::anonymous(),
