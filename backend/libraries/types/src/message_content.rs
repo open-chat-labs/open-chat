@@ -570,6 +570,8 @@ pub struct PrizeContentInitial {
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
+    #[serde(default)]
+    pub diamond_only: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
