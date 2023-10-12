@@ -724,7 +724,10 @@
         "distribution": "Wie sollen die Preise verteilt werden?",
         "equalDistribution": "Gleichmäßige Verteilung",
         "randomDistribution": "Zufällige Verteilung",
-        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen"
+        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen",
+        "whoCanWin": "Wer kann einen Anteil beanspruchen?",
+        "onlyDiamond": "Nur Diamond-Benutzer",
+        "anyone": "Jeder Benutzer"
     },
     "upgrade": {
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",

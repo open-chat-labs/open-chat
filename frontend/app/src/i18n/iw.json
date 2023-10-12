@@ -720,7 +720,10 @@
         "distribution": "כיצד יש לחלק את הפרסים?",
         "equalDistribution": "חלוקה שווה",
         "randomDistribution": "הפצה אקראית",
-        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך"
+        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך",
+        "whoCanWin": "מי יכול לתבוע מניה?",
+        "onlyDiamond": "רק משתמשי Diamond",
+        "anyone": "כל משתמש"
     },
     "upgrade": {
         "blurb": "חלק מתכונות OpenChat זמינות רק לחשבונות פרימיום. אתה יכול לשדרג את חשבונך על ידי אימות מספר טלפון באמצעות SMS או על ידי תשלום עמלת ICP קטנה.",

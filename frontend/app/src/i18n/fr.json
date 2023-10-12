@@ -722,7 +722,10 @@
         "distribution": "Comment les prix doivent-ils être distribués ?",
         "equalDistribution": "Répartition égale",
         "randomDistribution": "Distribution aléatoire",
-        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense"
+        "creatingYourPrizeMessage": "Veuillez patienter pendant que nous créons votre message de récompense",
+        "whoCanWin": "Qui peut réclamer une part ?",
+        "onlyDiamond": "Uniquement les utilisateurs Diamond",
+        "anyone": "Tout utilisateur"
     },
     "upgrade": {
         "blurb": "Certaines fonctionnalités d'OpenChat ne sont disponibles que pour les comptes premium. Vous pouvez mettre à niveau votre compte soit en vérifiant un numéro de téléphone par SMS, soit en payant une petite redevance ICP.",

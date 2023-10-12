@@ -723,7 +723,10 @@
         "distribution": "賞品はどのように配布されるべきですか？",
         "equalDistribution": "均等配分",
         "randomDistribution": "ランダム配布",
-        "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください"
+        "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください",
+        "whoCanWin": "誰がシェアを請求できるのでしょうか?",
+        "onlyDiamond": "ダイヤモンドユーザーのみ",
+        "anyone": "任意のユーザー"
     },
     "upgrade": {
         "blurb": "一部のOpenChat機能は、プレミアムアカウントでのみ利用できます。 SMSで電話番号を確認するか、少額のICP料金を支払うことで、アカウントをアップグレードできます。",

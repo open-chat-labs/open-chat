@@ -722,7 +722,10 @@
         "distribution": "奖品应该如何分配？",
         "equalDistribution": "均等分配",
         "randomDistribution": "随机分布",
-        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候"
+        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",
+        "whoCanWin": "谁可以申请份额？",
+        "onlyDiamond": "仅限钻石用户",
+        "anyone": "任何用户"
     },
     "upgrade": {
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
