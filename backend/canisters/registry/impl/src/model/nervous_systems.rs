@@ -9,11 +9,12 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn add(&mut self, nervous_system: NervousSystemDetails) -> bool {
+    pub fn add(&mut self, nervous_system: NervousSystemDetails, now: TimestampMillis) -> bool {
         if self.exists(nervous_system.root_canister_id) {
             false
         } else {
             self.nervous_systems.push(nervous_system);
+            self.last_updated = now;
             true
         }
     }

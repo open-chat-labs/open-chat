@@ -19,15 +19,7 @@ impl NervousSystems {
     pub fn add(&mut self, nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) {
         self.nervous_systems.insert(
             nervous_system.governance_canister_id,
-            NervousSystem::new(
-                nervous_system.governance_canister_id,
-                nervous_system.ledger_canister_id,
-                chat_id,
-                nervous_system.transaction_fee,
-                nervous_system.min_dissolve_delay_to_vote,
-                nervous_system.min_neuron_stake,
-                nervous_system.proposal_rejection_fee,
-            ),
+            NervousSystem::new(nervous_system, chat_id),
         );
     }
 
@@ -298,18 +290,10 @@ struct ProposalsToBeUpdated {
 }
 
 impl NervousSystem {
-    pub fn new(
-        governance_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
-        chat_id: MultiUserChat,
-        transaction_fee: u64,
-        min_neuron_stake: u64,
-        min_dissolve_delay_to_vote: Milliseconds,
-        proposal_rejection_fee: u64,
-    ) -> NervousSystem {
+    pub fn new(nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) -> NervousSystem {
         NervousSystem {
-            governance_canister_id,
-            ledger_canister_id,
+            governance_canister_id: nervous_system.governance_canister_id,
+            ledger_canister_id: nervous_system.ledger_canister_id,
             chat_id,
             latest_successful_sync: None,
             latest_failed_sync: None,
@@ -322,10 +306,10 @@ impl NervousSystem {
             sync_in_progress: false,
             active_user_submitted_proposals: HashMap::default(),
             decided_user_submitted_proposals: Vec::new(),
-            transaction_fee,
-            min_neuron_stake,
-            min_dissolve_delay_to_vote,
-            proposal_rejection_fee,
+            transaction_fee: nervous_system.transaction_fee,
+            min_neuron_stake: nervous_system.min_neuron_stake,
+            min_dissolve_delay_to_vote: nervous_system.min_dissolve_delay_to_vote,
+            proposal_rejection_fee: nervous_system.proposal_rejection_fee,
         }
     }
 

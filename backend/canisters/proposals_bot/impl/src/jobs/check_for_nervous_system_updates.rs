@@ -2,7 +2,7 @@ use crate::{mutate_state, read_state};
 use registry_canister::NervousSystemDetails;
 use std::fmt::Write;
 use std::time::Duration;
-use tracing::{error, info};
+use tracing::{error, info, trace};
 use types::{
     CanisterId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat, Rules,
 };
@@ -21,25 +21,34 @@ async fn run_async() {
     let (registry_canister_id, registry_synced_up_to) =
         read_state(|state| (state.data.registry_canister_id, state.data.registry_synced_up_to));
 
-    if let Ok(registry_canister::c2c_nervous_systems::Response::Success(result)) =
-        registry_canister_c2c_client::c2c_nervous_systems(
-            registry_canister_id,
-            &registry_canister::c2c_nervous_systems::Args {
-                updates_since: Some(registry_synced_up_to),
-            },
-        )
-        .await
+    match registry_canister_c2c_client::c2c_nervous_systems(
+        registry_canister_id,
+        &registry_canister::c2c_nervous_systems::Args {
+            updates_since: Some(registry_synced_up_to),
+        },
+    )
+    .await
     {
-        mutate_state(|state| {
-            for ns in result.nervous_systems {
-                if state.data.nervous_systems.exists(&ns.governance_canister_id) {
-                    state.data.nervous_systems.update_from_registry(ns);
-                } else {
-                    ic_cdk::spawn(create_group(ns, state.data.group_index_canister_id));
+        Ok(registry_canister::c2c_nervous_systems::Response::Success(result)) => {
+            mutate_state(|state| {
+                for ns in result.nervous_systems {
+                    let governance_canister_id = ns.governance_canister_id;
+                    if state.data.nervous_systems.exists(&governance_canister_id) {
+                        info!(%governance_canister_id, "Updating nervous system");
+                        state.data.nervous_systems.update_from_registry(ns);
+                    } else {
+                        info!(%governance_canister_id, "Creating group for nervous system");
+                        ic_cdk::spawn(create_group(ns, state.data.group_index_canister_id));
+                    }
                 }
-            }
-            state.data.registry_synced_up_to = result.last_updated;
-        });
+                state.data.registry_synced_up_to = result.last_updated;
+                info!(synced_up_to = result.last_updated, "Registry sync complete");
+            });
+        }
+        Ok(registry_canister::c2c_nervous_systems::Response::SuccessNoUpdates) => {
+            trace!("No registry updates");
+        }
+        _ => {}
     }
 }
 

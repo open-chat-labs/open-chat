@@ -77,6 +77,7 @@ struct Data {
     pub registry_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
     pub registry_synced_up_to: TimestampMillis,
     pub test_mode: bool,
 }

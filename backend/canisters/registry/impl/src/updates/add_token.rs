@@ -71,7 +71,7 @@ async fn add_token_impl(
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
             if let Some(ns) = nervous_system.clone() {
-                state.data.nervous_systems.add(ns);
+                state.data.nervous_systems.add(ns, now);
             }
             if state.data.tokens.add(
                 ledger_canister_id,
