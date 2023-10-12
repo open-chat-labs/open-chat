@@ -137,6 +137,10 @@
         }
     }
 
+    .prize {
+        max-width: 400px;
+    }
+
     .top {
         position: relative;
         padding: 30px 0 30px 0;
@@ -178,17 +182,13 @@
         }
     }
 
-    .caption {
-        @include font(bold, normal, fs-100);
-        margin-bottom: $sp3;
-    }
-
     .number-claimed {
         @include font(bold, normal, fs-80);
         margin-bottom: $sp3;
     }
 
-    .click {
+    .click,
+    .caption {
         @include font(book, normal, fs-80);
         color: var(--txt);
         margin-bottom: $sp4;
