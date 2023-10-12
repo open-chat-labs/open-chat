@@ -57,6 +57,7 @@ export type MessageContent =
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
+    diamondOnly: boolean;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -256,6 +257,7 @@ export interface PrizeContent {
     kind: "prize_content";
     prizesRemaining: number;
     prizesPending: number;
+    diamondOnly: boolean;
     winners: string[];
     token: string;
     endDate: bigint;
