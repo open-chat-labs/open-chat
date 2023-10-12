@@ -4974,13 +4974,13 @@ dependencies = [
  "msgpack",
  "proposals_bot_canister",
  "rand",
+ "registry_canister",
+ "registry_canister_c2c_client",
  "serde",
  "serializer",
  "sha2 0.10.7",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
- "sns_swap_canister_c2c_client",
- "sns_wasm_canister_c2c_client",
  "tracing",
  "types",
  "user_index_canister_c2c_client",
@@ -5127,6 +5127,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "registry_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "ic-cdk",
+ "msgpack",
+ "registry_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "registry_canister_client"
 version = "0.1.0"
 dependencies = [
@@ -5155,6 +5167,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc1_ledger_canister",
  "icrc1_ledger_canister_c2c_client",
+ "msgpack",
  "registry_canister",
  "serde",
  "serializer",

@@ -24,6 +24,7 @@ ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
 icrc1_ledger_canister = { path = "../../../external_canisters/icrc1_ledger/api" }
 icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
+msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
