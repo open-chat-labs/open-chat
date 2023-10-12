@@ -40,6 +40,7 @@
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
     type Duration = "oneHour" | "oneDay" | "oneWeek";
     let selectedDuration: Duration = "oneDay";
+    let diamondOnly = true;
 
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -65,7 +66,12 @@
 
     $: {
         if (tokenInputState === "too_low") {
-            error = $_("minimumAmount", { values: { amount: client.formatTokens(minAmount, 0, tokenDetails.decimals), symbol } });
+            error = $_("minimumAmount", {
+                values: {
+                    amount: client.formatTokens(minAmount, 0, tokenDetails.decimals),
+                    symbol,
+                },
+            });
         } else {
             error = undefined;
         }
@@ -110,6 +116,7 @@
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
             endDate: getEndDate(),
+            diamondOnly,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -271,17 +278,34 @@
                             <div class="dist-label">{$_("prizes.equalDistribution")}</div>
                         </div>
                     </div>
-                    <div class="message">
-                        <Legend label={$_("prizes.duration")} />
-                        {#each durations as d}
+                    <div class="config">
+                        <div class="duration">
+                            <Legend label={$_("prizes.duration")} />
+                            {#each durations as d}
+                                <Radio
+                                    on:change={() => (selectedDuration = d)}
+                                    value={d}
+                                    checked={selectedDuration === d}
+                                    id={`duration_${d}`}
+                                    label={$_(`poll.${d}`)}
+                                    group={"prize_duration"} />
+                            {/each}
+                        </div>
+                        <div class="restrictions">
+                            <Legend label={$_("prizes.whoCanWin")} />
                             <Radio
-                                on:change={() => (selectedDuration = d)}
-                                value={d}
-                                checked={selectedDuration === d}
-                                id={`duration_${d}`}
-                                label={$_(`poll.${d}`)}
-                                group={"poll_duration"} />
-                        {/each}
+                                on:change={() => (diamondOnly = true)}
+                                checked={diamondOnly}
+                                id={`restricted_diamond`}
+                                label={$_(`prizes.onlyDiamond`)}
+                                group={"prize_restriction"} />
+                            <Radio
+                                on:change={() => (diamondOnly = false)}
+                                checked={!diamondOnly}
+                                id={`restricted_anyone`}
+                                label={$_(`prizes.anyone`)}
+                                group={"prize_restriction"} />
+                        </div>
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -371,6 +395,17 @@
 
         .dist-label {
             text-align: center;
+        }
+    }
+
+    .config {
+        display: flex;
+        gap: $sp5;
+        justify-content: space-between;
+
+        .restrictions,
+        .duration {
+            flex: 1;
         }
     }
 </style>
