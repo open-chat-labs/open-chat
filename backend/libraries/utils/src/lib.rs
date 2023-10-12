@@ -1,5 +1,6 @@
 pub mod canister;
 pub mod canister_event_sync_queue;
+pub mod canister_timers;
 pub mod case_insensitive_hash_map;
 pub mod consts;
 pub mod cycles;

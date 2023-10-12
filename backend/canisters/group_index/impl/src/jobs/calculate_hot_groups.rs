@@ -2,11 +2,12 @@ use crate::model::cached_hot_groups::CachedPublicGroupSummary;
 use crate::{mutate_state, RuntimeState, FIVE_MINUTES_IN_MS};
 use std::time::Duration;
 use types::{ChatId, Milliseconds};
+use utils::canister_timers::run_now_then_interval;
 
 const HOT_GROUPS_REFRESH_INTERVAL: Milliseconds = FIVE_MINUTES_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(HOT_GROUPS_REFRESH_INTERVAL), run);
+    run_now_then_interval(Duration::from_millis(HOT_GROUPS_REFRESH_INTERVAL), run);
 }
 
 fn run() {
