@@ -21,4 +21,5 @@ pub enum GateCheckFailedReason {
     NoSnsNeuronsFound,
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
+    CannotAutoJoin,
 }
