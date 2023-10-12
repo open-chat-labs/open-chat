@@ -25,7 +25,7 @@ import { LedgerClient } from "./ledger/ledger.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
-import { toRecord } from "../utils/list";
+import { distinctBy, toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
@@ -2484,7 +2484,14 @@ export class OpenChatAgent extends EventTarget {
         if (updates.kind === "success" && updates.tokenDetails !== undefined) {
             const updated = {
                 lastUpdated: updates.lastUpdated,
-                tokenDetails: updates.tokenDetails,
+                tokenDetails: distinctBy(
+                    [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
+                    (t) => t.ledgerCanisterId,
+                ),
+                nervousSystemDetails: distinctBy(
+                    [...updates.nervousSystemDetails, ...(current?.nervousSystemDetails ?? [])],
+                    (ns) => ns.governanceCanisterId,
+                ),
             };
             setCachedRegistry(updated);
             return updated;

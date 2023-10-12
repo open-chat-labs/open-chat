@@ -1085,6 +1085,7 @@ export function mergeSendMessageResponse(
                     token: msg.content.transfer.token,
                     endDate: msg.content.endDate,
                     caption: msg.content.caption,
+                    diamondOnly: msg.content.diamondOnly,
                 } as PrizeContent;
                 break;
         }

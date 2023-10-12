@@ -863,6 +863,13 @@ export interface MessagesSuccessResult {
 export type Milliseconds = bigint;
 export type MultiUserChat = { 'Group' : ChatId } |
   { 'Channel' : [CommunityId, ChannelId] };
+export interface NervousSystemSummary {
+  'submitting_proposals_enabled' : boolean,
+  'is_nns' : boolean,
+  'governance_canister_id' : CanisterId,
+  'proposal_rejection_fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+}
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
@@ -1206,6 +1213,7 @@ export type UpdatesResponse = {
     'Success' : {
       'last_updated' : TimestampMillis,
       'token_details' : [] | [Array<TokenDetails>],
+      'nervous_system_details' : Array<NervousSystemSummary>,
     }
   } |
   { 'SuccessNoUpdates' : null };

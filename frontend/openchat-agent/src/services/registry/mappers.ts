@@ -8,7 +8,14 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
         return {
             kind: "success",
             lastUpdated: candid.Success.last_updated,
-            tokenDetails: optional(candid.Success.token_details, (t) => t.map(tokenDetails)),
+            tokenDetails: optional(candid.Success.token_details, (t) => t.map(tokenDetails)) ?? [],
+            nervousSystemDetails: candid.Success.nervous_system_details.map((ns) => ({
+                governanceCanisterId: ns.governance_canister_id.toString(),
+                ledgerCanisterId: ns.ledger_canister_id.toString(),
+                isNns: ns.is_nns,
+                proposalRejectionFee: ns.proposal_rejection_fee,
+                submittingProposalsEnabled: ns.submitting_proposals_enabled,
+            })),
         };
     }
     if ("SuccessNoUpdates" in candid) {
