@@ -7,12 +7,13 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tracing::{error, info};
 use types::{CanisterId, Cycles, TimestampMillis};
+use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(300);
 const MEMO_TOP_UP_CANISTER: Memo = Memo(0x50555054); // == 'TPUP'
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(INTERVAL, run);
+    run_now_then_interval(INTERVAL, run);
 }
 
 fn run() {

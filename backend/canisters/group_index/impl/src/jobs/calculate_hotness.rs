@@ -2,12 +2,13 @@ use crate::{mutate_state, RuntimeState};
 use rand::RngCore;
 use std::time::Duration;
 use types::{Activity, Milliseconds, TimestampMillis};
+use utils::canister_timers::run_now_then_interval;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
 
 const INTERVAL: Milliseconds = 30 * MINUTE_IN_MS;
 
 pub fn start_job() {
-    ic_cdk_timers::set_timer_interval(Duration::from_millis(INTERVAL), run);
+    run_now_then_interval(Duration::from_millis(INTERVAL), run);
 }
 
 fn run() {
