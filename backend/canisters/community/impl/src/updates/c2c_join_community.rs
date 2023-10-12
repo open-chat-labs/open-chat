@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
-use crate::updates::c2c_join_channel::join_channel_impl;
+use crate::updates::c2c_join_channel::join_channel_auto;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -34,7 +34,9 @@ pub(crate) async fn join_community(args: Args) -> Response {
 
     match mutate_state(|state| join_community_impl(&args, state)) {
         Ok(public_channel_ids) => {
-            futures::future::join_all(public_channel_ids.into_iter().map(|c| join_channel_impl(c, args.principal))).await;
+            for c in public_channel_ids {
+                join_channel_auto(c, args.principal);
+            }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     let now = state.env.now();
