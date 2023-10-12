@@ -106,6 +106,7 @@ async fn install_service_canisters_impl(
         service_owner_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
+        registry_canister_id: canister_ids.registry,
         nns_governance_canister_id: canister_ids.nns_governance,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
@@ -153,6 +154,7 @@ async fn install_service_canisters_impl(
     let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![principal],
+        proposals_bot_canister_id: canister_ids.proposals_bot,
         nns_ledger_canister_id: canister_ids.nns_ledger,
         nns_governance_canister_id: canister_ids.nns_governance,
         nns_root_canister_id: canister_ids.nns_root,

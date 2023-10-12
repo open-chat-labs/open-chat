@@ -16,6 +16,7 @@ fn init(args: Args) {
     let env = init_env();
     let mut data = Data::new(
         args.governance_principals.into_iter().collect(),
+        args.proposals_bot_canister_id,
         args.sns_wasm_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,

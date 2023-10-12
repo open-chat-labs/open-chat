@@ -142,6 +142,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         service_owner_principals: vec![controller],
         user_index_canister_id,
         group_index_canister_id,
+        registry_canister_id,
         nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
@@ -207,6 +208,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![controller],
+        proposals_bot_canister_id,
         nns_ledger_canister_id,
         nns_root_canister_id,
         nns_governance_canister_id,
