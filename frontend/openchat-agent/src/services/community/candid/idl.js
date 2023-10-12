@@ -794,6 +794,7 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'prizes' : IDL.Vec(Tokens),
     'transfer' : CryptoTransaction,
+    'diamond_only' : IDL.Bool,
   });
   const MessageContentInitial = IDL.Variant({
     'Giphy' : GiphyContent,

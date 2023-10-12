@@ -182,6 +182,7 @@ async fn send_prize_message_to_group(
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,
         caption: None,
+        diamond_only: false,
     });
 
     let c2c_args = group_canister::send_message_v2::Args {

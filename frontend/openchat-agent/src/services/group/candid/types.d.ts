@@ -1212,6 +1212,7 @@ export interface PrizeContentInitial {
   'caption' : [] | [string],
   'prizes' : Array<Tokens>,
   'transfer' : CryptoTransaction,
+  'diamond_only' : boolean,
 }
 export interface PrizeWinnerContent {
   'transaction' : CompletedCryptoTransaction,
