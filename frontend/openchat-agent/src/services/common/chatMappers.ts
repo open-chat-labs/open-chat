@@ -1314,9 +1314,8 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         caption: apiOptional(identity, domain.caption),
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
-        // diamond_only: domain.diamondOnly, // TODO once the back end is available
+        diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
-        diamond_only: false,
     };
 }
 
