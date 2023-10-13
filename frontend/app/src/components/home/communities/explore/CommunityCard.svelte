@@ -128,6 +128,7 @@
                 margin-bottom: $sp4;
                 max-height: toRem(130);
                 @include nice-scrollbar();
+                overflow-wrap: anywhere;
 
                 &.fixed {
                     height: toRem(130);
