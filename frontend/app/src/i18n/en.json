@@ -581,7 +581,9 @@
         "sendFailed": "Failed to send {symbol}",
         "token": "Token",
         "scan": "Scan QR code",
-        "comingSoon": "(coming soon)"
+        "comingSoon": "(coming soon)",
+        "showZeroBalance": "Show empty accounts",
+        "hideZeroBalance": "Hide empty accounts"
     },
     "searchChat": "Search",
     "search": "Search...",

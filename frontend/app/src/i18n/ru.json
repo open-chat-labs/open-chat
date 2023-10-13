@@ -473,7 +473,9 @@
         "scan": "Сканировать QR-код",
         "receiveToken": "Получить {symbol}",
         "sendToken": "Отправить {symbol}",
-        "receive": "Получать"
+        "receive": "Получать",
+        "showZeroBalance": "Показать пустые аккаунты",
+        "hideZeroBalance": "Скрыть пустые аккаунты"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",

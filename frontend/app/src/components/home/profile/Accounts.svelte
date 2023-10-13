@@ -1,5 +1,6 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
+    import { dollarExchangeRates } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
@@ -8,13 +9,17 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
 
     const client = getContext<OpenChat>("client");
+    const defaultTokens = ["CHAT", "ICP", "ckBTC"];
 
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive";
     let selectedLedger: string | undefined = undefined;
+    let showZeroBalance = false;
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
+    $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
+    $: zeroCount = accounts.filter((a) => a.zero).length;
 
     function onBalanceRefreshed() {
         balanceError = undefined;
@@ -38,24 +43,52 @@
         manageMode = "send";
     }
 
-    $: crypto = Object.values($cryptoLookup).map((t) => ({
-        key: t.ledger,
-        ledger: t.ledger,
-        symbol: t.symbol,
-        balance: $cryptoBalance[t.ledger] ?? BigInt(0),
-        logo: t.logo,
-    }));
+    function buildAccountsList(
+        cryptoLookup: Record<string, CryptocurrencyDetails>,
+        cryptoBalance: Record<string, bigint>
+    ) {
+        const accounts = Object.values(cryptoLookup).map((t) => {
+            const balance = cryptoBalance[t.ledger] ?? BigInt(0);
+            const xr = dollarExchangeRates[t.symbol.toLowerCase()];
+            const dollarBalance = xr > 0 ? Number(balance) / xr : 0;
+            const zero = balance === BigInt(0) && !defaultTokens.includes(t.symbol);
+            return {
+                key: t.ledger,
+                ledger: t.ledger,
+                symbol: t.symbol,
+                balance,
+                logo: t.logo,
+                dollarBalance,
+                zero,
+            };
+        });
 
-    $: {
-        crypto.sort((a, b) => {
-            if (a.balance < b.balance) {
+        accounts.sort((a, b) => {
+            // Sort by $ balance
+            // Then by whether token is a default
+            // Then by default precedence
+            // Then alphabetically by symbol
+            if (a.dollarBalance < b.dollarBalance) {
                 return 1;
-            } else if (a.balance > b.balance) {
+            } else if (a.dollarBalance > b.dollarBalance) {
                 return -1;
             } else {
-                return 0;
+                const defA = defaultTokens.indexOf(a.symbol);
+                const defB = defaultTokens.indexOf(b.symbol);
+
+                if (defA >= 0 && defB >= 0) {
+                    return defA < defB ? 1 : -1;
+                } else if (defA >= 0) {
+                    return 1;
+                } else if (defB >= 0) {
+                    return -1;
+                } else {
+                    return a.symbol.localeCompare(b.symbol);
+                }
             }
         });
+
+        return accounts;
     }
 </script>
 
@@ -66,36 +99,50 @@
         on:close={hideManageModal} />
 {/if}
 
-<div class="accounts">
-    <div class="token-header">
-        {$_("cryptoAccount.token")}
-    </div>
-    <div class="balance-header">
-        {$_("cryptoAccount.shortBalanceLabel")}
-    </div>
-    <div />
-
-    {#each crypto as token}
-        <img class="icon" src={token.logo} />
-
-        <div class="token">
-            {token.symbol}
-        </div>
-        <div class="balance">
-            <BalanceWithRefresh
-                ledger={token.ledger}
-                value={token.balance}
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
-        </div>
-        <div class="manage">
-            <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
-                >{$_("cryptoAccount.send")}</LinkButton>
-            <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
-                >{$_("cryptoAccount.receive")}</LinkButton>
-        </div>
+<table>
+    <tr>
+        <th class="token-header">{$_("cryptoAccount.token")}</th>
+        <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
+        <th />
+    </tr>
+    {#each accounts as token}
+        <tr class:hidden={token.zero && !showZeroBalance}>
+            <td width="99%">
+                <div class="token">
+                    <img class="icon" src={token.logo} />
+                    <div>
+                        {token.symbol}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <BalanceWithRefresh
+                    ledger={token.ledger}
+                    value={token.balance}
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
+            </td>
+            <td>
+                <div class="manage">
+                    <LinkButton light underline={"hover"} on:click={() => showSend(token.key)}
+                        >{$_("cryptoAccount.send")}</LinkButton>
+                    <LinkButton light underline={"hover"} on:click={() => showReceive(token.key)}
+                        >{$_("cryptoAccount.receive")}</LinkButton>
+                </div>
+            </td>
+        </tr>
     {/each}
-</div>
+</table>
+
+{#if zeroCount > 0}
+    <div class="show-more">
+        <LinkButton light underline={"hover"} on:click={() => (showZeroBalance = !showZeroBalance)}
+            >{$_(
+                showZeroBalance ? "cryptoAccount.hideZeroBalance" : "cryptoAccount.showZeroBalance"
+            )}</LinkButton>
+    </div>
+{/if}
+
 {#if balanceError !== undefined}
     <ErrorMessage>{balanceError}</ErrorMessage>
 {/if}
@@ -109,35 +156,41 @@
         }
     }
 
-    .accounts {
-        display: grid;
-        grid-template-columns: 35px 1fr 1fr auto;
-        align-items: center;
-        row-gap: toRem(10);
-        margin-bottom: $sp4;
+    table {
+        width: 100%;
 
-        .token-header,
-        .balance-header {
+        tr.hidden {
+            display: none;
+        }
+
+        th {
             @include font(book, normal, fs-70);
+            padding-bottom: $sp4;
+            font-weight: 700;
+
+            &.token-header {
+                text-align: left;
+            }
+
+            &.balance-header {
+                padding-right: 28px;
+                text-align: right;
+            }
         }
 
-        .token-header {
-            font-weight: 700;
-            grid-column: 1 / span 2;
-            margin-bottom: $sp3;
+        td {
+            vertical-align: middle;
+            padding-bottom: $sp3;
         }
 
-        .balance-header {
-            padding-right: 28px;
-            text-align: right;
-            font-weight: 700;
-            grid-column: 3 / span 1;
-            margin-bottom: $sp3;
+        .token {
+            display: flex;
+            flex-direction: row;
+            gap: toRem(10);
         }
 
         .manage {
             @include font(light, normal, fs-70);
-            color: var(--txt-light);
             display: flex;
             padding-left: $sp3;
         }
@@ -150,5 +203,10 @@
             background-repeat: no-repeat;
             background-position: top;
         }
+    }
+
+    .show-more {
+        @include font(light, normal, fs-70);
+        margin-top: $sp4;
     }
 </style>
