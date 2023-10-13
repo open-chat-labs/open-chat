@@ -161,9 +161,9 @@
 
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
+    $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: chatsInitialised = client.chatsInitialised;
-    $: selectedChatStore = client.selectedChatStore;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
