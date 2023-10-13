@@ -22,7 +22,7 @@
 
     const sectionLabels: SectionLabels = {
         all: "",
-        unknown: "",
+        unknown: "proposal.unknownActionCategory",
         builtIn: "proposal.builtInAction",
         userIndex: "proposal.userIndexAction",
         groupIndex: "proposal.groupIndexAction",

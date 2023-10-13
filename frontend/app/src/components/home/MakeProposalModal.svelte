@@ -16,7 +16,7 @@
     import TextArea from "../TextArea.svelte";
     import Select from "../Select.svelte";
     import Radio from "../Radio.svelte";
-    import { isPrincipalValid } from "../../utils/sns";
+    import { isPrincipalValid, isSubAccountValid } from "../../utils/sns";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import Markdown from "./Markdown.svelte";
@@ -42,7 +42,8 @@
     let summary = "";
     let treasury: Treasury = "SNS";
     let amountText = "";
-    let recipient = "";
+    let recipientOwner = "";
+    let recipientSubaccount = "";
     let step = -1;
     let actualWidth = 0;
     let summaryPreview = false;
@@ -50,7 +51,6 @@
     let selectedProposalType: "motion" | "transfer_sns_funds" = "motion";
     let message = "";
     let error = true;
-    let recipientValid = false;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
     let refreshingBalance = false;
@@ -73,13 +73,16 @@
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
     $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
     $: amountValid = amount >= transferFee;
-    $: recipientValid = isPrincipalValid(recipient);
+    $: recipientOwnerValid = isPrincipalValid(recipientOwner);
+    $: recipientSubaccountValid =
+        recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
     $: valid =
         !insufficientFunds &&
         titleValid &&
         urlValid &&
         summaryValid &&
-        (selectedProposalType === "motion" || (amountValid && recipientValid));
+        (selectedProposalType === "motion" ||
+            (amountValid && recipientOwnerValid && recipientSubaccountValid));
     $: canSubmit = step === 2 || (step === 1 && selectedProposalType === "motion");
 
     $: {
@@ -117,7 +120,11 @@
                 ? { kind: selectedProposalType }
                 : {
                       kind: selectedProposalType,
-                      toPrincipal: recipient,
+                      recipient: {
+                          owner: recipientOwner,
+                          subaccount:
+                              recipientSubaccount.length > 0 ? recipientSubaccount : undefined,
+                      },
                       amount: BigInt(Math.floor(amount)),
                       treasury,
                   };
@@ -296,15 +303,24 @@
                             on:change={() => (treasury = "ICP")} />
                     </section>
                     <section>
-                        <Legend label={$_("proposal.maker.toPrincipal")} required />
+                        <Legend label={$_("proposal.maker.recipientOwner")} required />
                         <Input
                             disabled={busy}
-                            invalid={recipient.length > 0 && !recipientValid}
-                            bind:value={recipient}
-                            minlength={MIN_TITLE_LENGTH}
-                            maxlength={MAX_TITLE_LENGTH}
-                            countdown
-                            placeholder={$_("proposal.maker.enterToPrincipal")} />
+                            invalid={recipientOwner.length > 0 && !recipientOwnerValid}
+                            maxlength={63}
+                            bind:value={recipientOwner}
+                            placeholder={$_("proposal.maker.enterRecipientOwner")} />
+                    </section>
+                    <section>
+                        <Legend
+                            label={$_("proposal.maker.recipientSubaccount")}
+                            rules={$_("proposal.maker.recipientSubaccountRules")} />
+                        <Input
+                            disabled={busy}
+                            invalid={!recipientSubaccountValid}
+                            maxlength={64}
+                            bind:value={recipientSubaccount}
+                            placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
                     </section>
                     <section>
                         <Legend

@@ -127,6 +127,7 @@ import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat
 import {
     bytesToBigint,
     bytesToHexString,
+    hexStringToBytes,
     identity,
     optional,
     optionUpdate,
@@ -139,6 +140,7 @@ import {
     groupPermissions,
     message,
     messageContent,
+    apiOptional,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -1071,8 +1073,8 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
         case "transfer_sns_funds":
             return { TransferSnsTreasuryFunds: {
                 to: {
-                    owner: Principal.fromText(action.toPrincipal),
-                    subaccount: []
+                    owner: Principal.fromText(action.recipient.owner),
+                    subaccount: apiOptional((hex) => hexStringToBytes(hex), action.recipient.subaccount)
                 },
                 amount: action.amount,
                 memo: [],

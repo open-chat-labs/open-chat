@@ -609,14 +609,17 @@
             "summaryRules": "unterstützt Markdown",
             "urlRules": "Link zu ergänzenden Details",
             "unexpectedError": "Unerwarteter Fehler beim Senden des Angebots",
-            "toPrincipal": "Hauptkonto des Empfängers",
-            "enterToPrincipal": "Geben Sie einen Empfängerkontoprinzipal ein",
             "amount": "Menge",
             "amountRules": "mindestens 1 {token}-Token",
             "enterAmount": "Geben Sie eine Menge von {token} Token ein",
             "type": "Vorschlagstyp",
             "treasury": "Token zur Übertragung aus der Schatzkammer",
-            "message": "Um einen Vorschlag einzureichen, ist eine Anzahlung von {cost} {token} Token (einschließlich zweier Transfergebühren) erforderlich, die zurückerstattet wird, wenn der Vorschlag angenommen wird."
+            "message": "Um einen Vorschlag einzureichen, ist eine Anzahlung von {cost} {token} Token (einschließlich zweier Transfergebühren) erforderlich, die zurückerstattet wird, wenn der Vorschlag angenommen wird.",
+            "recipientOwner": "Hauptkonto des Empfängers",
+            "recipientSubaccount": "Unterkonto des Empfängers",
+            "recipientSubaccountRules": "muss eine Hex-Zeichenfolge sein",
+            "enterRecipientOwner": "Geben Sie den Kontoinhaber des Empfängers ein",
+            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein"
         }
     },
     "quoteReply": "Antwort zitieren",

@@ -607,14 +607,17 @@
             "summaryRules": "admite rebajas",
             "urlRules": "enlace a detalles complementarios",
             "unexpectedError": "Error inesperado al enviar la propuesta",
-            "toPrincipal": "Principal de la cuenta del destinatario",
-            "enterToPrincipal": "Introduzca el principal de la cuenta del destinatario",
             "amount": "Cantidad",
             "amountRules": "al menos 1 token {token}",
             "enterAmount": "Ingrese una cantidad de tokens {token}",
             "type": "Tipo de propuesta",
             "treasury": "Token para transferir desde tesorería",
-            "message": "Se requiere un depósito de tokens {cost} {token} (incluye dos conjuntos de tarifas de transferencia) para enviar una propuesta, que se reembolsa si se adopta."
+            "message": "Se requiere un depósito de tokens {cost} {token} (incluye dos conjuntos de tarifas de transferencia) para enviar una propuesta, que se reembolsa si se adopta.",
+            "recipientOwner": "Principal de la cuenta del destinatario",
+            "recipientSubaccount": "Subcuenta del destinatario",
+            "recipientSubaccountRules": "debe ser una cadena hexadecimal",
+            "enterRecipientOwner": "Ingrese el principal de la cuenta del destinatario",
+            "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional"
         }
     },
     "yes": "Sí",
