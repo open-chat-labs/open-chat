@@ -1,5 +1,9 @@
-import type { ApiTokenDetails, ApiUpdatesResponse } from "./candid/idl";
-import type { RegistryUpdatesResponse, TokenDetails } from "openchat-shared";
+import type { ApiNervousSystemSummary, ApiTokenDetails, ApiUpdatesResponse } from "./candid/idl";
+import type {
+    NervousSystemSummary,
+    RegistryUpdatesResponse,
+    RegistryTokenDetails,
+} from "openchat-shared";
 import { optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
 
@@ -8,15 +12,11 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
         return {
             kind: "success",
             lastUpdated: candid.Success.last_updated,
-            tokenDetails: optional(candid.Success.token_details, (t) => t.map(tokenDetails)) ?? [],
-            nervousSystemDetails: candid.Success.nervous_system_details.map((ns) => ({
-                rootCanisterId: ns.root_canister_id.toString(),
-                governanceCanisterId: ns.governance_canister_id.toString(),
-                ledgerCanisterId: ns.ledger_canister_id.toString(),
-                isNns: ns.is_nns,
-                proposalRejectionFee: ns.proposal_rejection_fee,
-                submittingProposalsEnabled: ns.submitting_proposals_enabled,
-            })),
+            tokenDetails:
+                optional(candid.Success.token_details, (tokens) =>
+                    tokens.map((t) => tokenDetails(t)),
+                ) ?? [],
+            nervousSystemDetails: candid.Success.nervous_system_details.map(nervousSystemSummary),
         };
     }
     if ("SuccessNoUpdates" in candid) {
@@ -27,22 +27,29 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
     throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
 }
 
-function tokenDetails(candid: ApiTokenDetails): TokenDetails {
+function tokenDetails(candid: ApiTokenDetails): RegistryTokenDetails {
     return {
-        ledgerCanisterId: candid.ledger_canister_id.toString(),
+        ledger: candid.ledger_canister_id.toString(),
         name: candid.name,
         symbol: candid.symbol,
         decimals: candid.decimals,
-        fee: candid.fee,
+        transferFee: candid.fee,
         logo: candid.logo,
-        nervousSystem: optional(candid.nervous_system, (ns) => ({
-            root: ns.root.toString(),
-            governance: ns.governance.toString(),
-        })),
         infoUrl: candid.info_url,
         howToBuyUrl: candid.how_to_buy_url,
         transactionUrlFormat: candid.transaction_url_format,
         added: candid.added,
         lastUpdated: candid.last_updated,
+    };
+}
+
+function nervousSystemSummary(candid: ApiNervousSystemSummary): NervousSystemSummary {
+    return {
+        rootCanisterId: candid.root_canister_id.toString(),
+        governanceCanisterId: candid.governance_canister_id.toString(),
+        ledgerCanisterId: candid.ledger_canister_id.toString(),
+        isNns: candid.is_nns,
+        proposalRejectionFee: candid.proposal_rejection_fee,
+        submittingProposalsEnabled: candid.submitting_proposals_enabled,
     };
 }

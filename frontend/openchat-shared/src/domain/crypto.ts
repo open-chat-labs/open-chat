@@ -21,9 +21,18 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
-    governanceCanister: string | undefined;
-    rootCanister: string | undefined;
+    nervousSystem: NervousSystemSummary | undefined;
+    added: bigint;
     lastUpdated: bigint;
+};
+
+export type NervousSystemSummary = {
+    rootCanisterId: string;
+    governanceCanisterId: string;
+    ledgerCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
 };
 
 // approximate dollar exchange rates - until we come up with something better

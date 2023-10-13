@@ -46,7 +46,7 @@
     let showPayload = false;
 
     $: tokenDetails = client.getTokenByGovernanceCanister(content.governanceCanisterId);
-    $: rootCanister = tokenDetails.rootCanister ?? "";
+    $: rootCanister = tokenDetails.nervousSystem?.rootCanisterId ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =

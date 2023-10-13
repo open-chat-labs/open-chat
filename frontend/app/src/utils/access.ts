@@ -10,16 +10,22 @@ export type GateBinding = {
 };
 
 function getSnsGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>): GateBinding[] {
-    return Object.values(cryptoLookup).map((v) => {
-        return {
-            label: "access.snsHolder",
-            gate: { kind: "sns_gate", governanceCanister: v.governanceCanister! },
-            key: "sns_gate",
-            enabled: true,
-            cssClass: v.symbol.toLowerCase(),
-            labelParams: { token: v.symbol },
-        };
-    });
+    return Object.values(cryptoLookup).reduce((gates, next) => {
+        if (next.nervousSystem !== undefined) {
+            gates.push({
+                label: "access.snsHolder",
+                gate: {
+                    kind: "sns_gate",
+                    governanceCanister: next.nervousSystem.governanceCanisterId,
+                },
+                key: "sns_gate",
+                enabled: true,
+                cssClass: next.symbol.toLowerCase(),
+                labelParams: { token: next.symbol },
+            });
+        }
+        return gates;
+    }, [] as GateBinding[]);
 }
 
 const noGate: GateBinding = {

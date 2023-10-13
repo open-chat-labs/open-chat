@@ -185,7 +185,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, keepMax, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, keepMax, toRecord, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -2283,12 +2283,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     getTokenDetailsForSnsAccessGate(
         gate: AccessGate,
-        cryptoLookup: Record<string, CryptocurrencyDetails>,
+        _cryptoLookup: Record<string, CryptocurrencyDetails>,
     ): CryptocurrencyDetails | undefined {
         if (gate.kind !== "sns_gate") return undefined;
-        return Object.values(cryptoLookup).find(
-            (td) => td.governanceCanister === gate.governanceCanister,
-        );
+        return this.tryGetTokenDetailsByGovernanceCanister(gate.governanceCanister);
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
@@ -3989,9 +3987,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getTokenByGovernanceCanister(governanceCanister: string): CryptocurrencyDetails {
-        const tokenDetails = Object.values(get(cryptoLookup)).find(
-            (t) => t.governanceCanister === governanceCanister,
-        );
+        const tokenDetails = this.tryGetTokenDetailsByGovernanceCanister(governanceCanister);
         if (tokenDetails === undefined) {
             throw new Error(`Unknown governance canister: ${governanceCanister}`);
         } else {
@@ -4917,32 +4913,37 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
+        const nervousSystemLookup = toRecord(
+            registry.nervousSystemDetails,
+            (ns) => ns.ledgerCanisterId,
+        );
+
         cryptoLookup.set(
-            toRecord2(
-                registry.tokenDetails,
-                (t) => t.ledgerCanisterId,
-                (t) => ({
-                    name: t.name,
-                    symbol: t.symbol,
-                    ledger: t.ledgerCanisterId,
-                    decimals: t.decimals,
-                    transferFee: t.fee,
-                    logo: t.logo,
-                    howToBuyUrl: t.howToBuyUrl,
-                    infoUrl: t.infoUrl,
-                    transactionUrlFormat: t.transactionUrlFormat,
-                    rootCanister: t.nervousSystem?.root,
-                    governanceCanister: t.nervousSystem?.governance,
-                    lastUpdated: t.lastUpdated,
-                }),
+            registry.tokenDetails.reduce(
+                (results, next) => {
+                    results[next.ledger] = {
+                        ...next,
+                        nervousSystem: nervousSystemLookup[next.ledger],
+                    };
+                    return results;
+                },
+                {} as Record<string, CryptocurrencyDetails>,
             ),
         );
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
+        return this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId)?.logo;
+    }
+
+    private tryGetTokenDetailsByGovernanceCanister(
+        governanceCanisterId: string,
+    ): CryptocurrencyDetails | undefined {
         return Object.values(get(cryptoLookup)).find(
-            (t) => t.governanceCanister === governanceCanisterId,
-        )?.logo;
+            (t) =>
+                t.nervousSystem !== undefined &&
+                t.nervousSystem.governanceCanisterId === governanceCanisterId,
+        );
     }
 
     // the key might be a username or it might be a user group name
