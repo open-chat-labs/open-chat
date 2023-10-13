@@ -11,8 +11,7 @@
     const client = getContext<OpenChat>("client");
 
     export let gate: SNSAccessGate | CredentialGate;
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
+    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
 </script>
 
 {#if gate.kind === "credential_gate"}

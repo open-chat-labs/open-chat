@@ -2281,10 +2281,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return false;
     }
 
-    getTokenDetailsForSnsAccessGate(
-        gate: AccessGate,
-        _cryptoLookup: Record<string, CryptocurrencyDetails>,
-    ): CryptocurrencyDetails | undefined {
+    getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind !== "sns_gate") return undefined;
         return this.tryGetTokenDetailsByGovernanceCanister(gate.governanceCanister);
     }

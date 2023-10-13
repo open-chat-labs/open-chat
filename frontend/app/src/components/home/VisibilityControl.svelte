@@ -83,7 +83,7 @@
     }
 
     function snsHolderParams(gate: SNSAccessGate): InterpolationValues {
-        const tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
+        const tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
 </script>
