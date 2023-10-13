@@ -349,12 +349,13 @@
             if (
                 !$mobileWidth &&
                 (pathParams.kind === "selected_community_route" ||
-                    pathParams.kind === "chat_list_route") &&
-                $chatSummariesListStore.length > 0
+                    pathParams.kind === "chat_list_route")
             ) {
-                const first = $chatSummariesListStore[0];
-                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                return;
+                const first = $chatSummariesListStore.find((c) => !c.membership.archived);
+                if (first !== undefined) {
+                    page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                    return;
+                }
             }
 
             if (pathParams.kind === "home_route") {
