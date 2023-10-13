@@ -123,7 +123,9 @@
                       recipient: {
                           owner: recipientOwner,
                           subaccount:
-                              recipientSubaccount.length > 0 ? recipientSubaccount : undefined,
+                              recipientSubaccount.length > 0
+                                  ? recipientSubaccount.padStart(64, "0")
+                                  : undefined,
                       },
                       amount: BigInt(Math.floor(amount)),
                       treasury,
