@@ -133,9 +133,11 @@
         </div>
     </div>
 
-    <div class="accounts">
-        <AccountSelector bind:targetAccount {accounts} />
-    </div>
+    {#if accounts.length > 0}
+        <div class="accounts">
+            <AccountSelector bind:targetAccount {accounts} />
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">
