@@ -49,8 +49,8 @@ impl RuntimeState {
         let this_canister_id = self.env.canister_id();
 
         vec![
-            ICPSwapClientFactory::new().build(this_canister_id, &input_token, &output_token),
-            SonicClientFactory::new().build(this_canister_id, &input_token, &output_token),
+            // self.build_icpswap_client(this_canister_id, &input_token, &output_token),
+            self.build_sonic_client(this_canister_id, &input_token, &output_token),
         ]
         .into_iter()
         .flatten()
@@ -66,8 +66,8 @@ impl RuntimeState {
         let this_canister_id = self.env.canister_id();
 
         match exchange_id {
-            ExchangeId::ICPSwap => ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token),
-            ExchangeId::Sonic => SonicClientFactory::new().build(this_canister_id, input_token, output_token),
+            ExchangeId::ICPSwap => self.build_icpswap_client(this_canister_id, input_token, output_token),
+            ExchangeId::Sonic => self.build_sonic_client(this_canister_id, input_token, output_token),
         }
     }
 
@@ -119,6 +119,26 @@ impl RuntimeState {
             },
         }
     }
+
+    fn build_icpswap_client(
+        &self,
+        this_canister_id: CanisterId,
+        input_token: &TokenInfo,
+        output_token: &TokenInfo,
+    ) -> Option<Box<dyn SwapClient>> {
+        ICPSwapClientFactory::new().build(this_canister_id, input_token, output_token)
+    }
+
+    fn build_sonic_client(
+        &self,
+        this_canister_id: CanisterId,
+        input_token: &TokenInfo,
+        output_token: &TokenInfo,
+    ) -> Option<Box<dyn SwapClient>> {
+        self.data
+            .sonic_subaccount
+            .and_then(|sa| SonicClientFactory::new(sa).build(this_canister_id, &input_token, &output_token))
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -137,6 +157,8 @@ struct Data {
     #[serde(default)]
     rng_seed: [u8; 32],
     test_mode: bool,
+    #[serde(default)]
+    sonic_subaccount: Option<[u8; 32]>,
 }
 
 impl Data {
@@ -161,6 +183,7 @@ impl Data {
             is_registered: false,
             rng_seed: [0; 32],
             test_mode,
+            sonic_subaccount: None,
         }
     }
 

@@ -1,12 +1,17 @@
 use candid::{Int, Nat};
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ledger_utils::convert_to_subaccount;
 use serde::{Deserialize, Serialize};
 use sonic_canister::SonicResult;
+use std::cell::Cell;
+use tracing::trace;
 use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
 
 const FEE_DECIMAL: f64 = 0.003; // 0.3%
+
+thread_local! {
+    static SUBACCOUNT: Cell<[u8; 32]> = Cell::default();
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct SonicClient {
@@ -15,6 +20,7 @@ pub struct SonicClient {
     token0: TokenInfo,
     token1: TokenInfo,
     zero_for_one: bool,
+    deposit_subaccount: [u8; 32],
 }
 
 impl SonicClient {
@@ -24,6 +30,7 @@ impl SonicClient {
         token0: TokenInfo,
         token1: TokenInfo,
         zero_for_one: bool,
+        deposit_subaccount: [u8; 32],
     ) -> Self {
         SonicClient {
             this_canister_id,
@@ -31,17 +38,18 @@ impl SonicClient {
             token0,
             token1,
             zero_for_one,
+            deposit_subaccount,
         }
     }
 
-    pub fn deposit_account(&self) -> (CanisterId, Account) {
-        (
+    pub async fn deposit_account(&self) -> CallResult<(CanisterId, Account)> {
+        Ok((
             self.input_token().ledger,
             Account {
                 owner: self.sonic_canister_id,
-                subaccount: Some(convert_to_subaccount(&self.this_canister_id).0),
+                subaccount: Some(self.deposit_subaccount),
             },
-        )
+        ))
     }
 
     pub fn input_token(&self) -> &TokenInfo {
@@ -109,13 +117,13 @@ impl SonicClient {
             Nat::from(0),
             vec![self.input_token().ledger.to_string(), self.output_token().ledger.to_string()],
             self.this_canister_id,
-            Int::from(0),
+            Int::from(u64::MAX),
         );
-        match sonic_canister_c2c_client::swap_exact_tokens_for_tokens(self.sonic_canister_id, args)
+        match sonic_canister_c2c_client::swap_exact_tokens_for_tokens(self.sonic_canister_id, args.clone())
             .await?
             .0
         {
-            SonicResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
+            SonicResult::Ok(tx_id) => {}
             SonicResult::Err(error) => Err(convert_error(error)),
         }
     }
@@ -123,8 +131,23 @@ impl SonicClient {
     pub async fn withdraw(&self, amount: u128) -> CallResult<u128> {
         let args = (self.output_token().ledger, amount.into());
         match sonic_canister_c2c_client::withdraw(self.sonic_canister_id, args).await?.0 {
-            SonicResult::Ok(amount_deposited) => Ok(nat_to_u128(amount_deposited)),
+            SonicResult::Ok(amount_withdrawn) => Ok(nat_to_u128(amount_withdrawn)),
             SonicResult::Err(error) => Err(convert_error(error)),
+        }
+    }
+}
+
+pub async fn retrieve_subaccount(sonic_canister_id: CanisterId) -> CallResult<[u8; 32]> {
+    let current = SUBACCOUNT.get();
+    if current != [0; 32] {
+        Ok(current)
+    } else {
+        match sonic_canister_c2c_client::initiate_icrc1_transfer(sonic_canister_id).await {
+            Ok(sa) => {
+                SUBACCOUNT.set(sa);
+                Ok(sa)
+            }
+            Err(error) => Err(error),
         }
     }
 }

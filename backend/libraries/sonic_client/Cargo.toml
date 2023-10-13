@@ -12,4 +12,5 @@ ledger_utils = { path = "../ledger_utils" }
 serde = { workspace = true }
 sonic_canister = { path = "../../external_canisters/sonic/api" }
 sonic_canister_c2c_client = { path = "../../external_canisters/sonic/c2c_client" }
+tracing = { workspace = true }
 types = { path = "../types" }

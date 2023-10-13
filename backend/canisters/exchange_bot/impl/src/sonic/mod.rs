@@ -6,14 +6,20 @@ use sonic_client::SonicClient;
 use types::icrc1::Account;
 use types::{CanisterId, Cryptocurrency, TokenInfo};
 
+pub fn sonic_canister_id() -> CanisterId {
+    CanisterId::from_text("3xwpq-ziaaa-aaaah-qcn4a-cai").unwrap()
+}
+
 pub struct SonicClientFactory {
     sonic_canister_id: CanisterId,
+    deposit_subaccount: [u8; 32],
 }
 
 impl SonicClientFactory {
-    pub fn new() -> SonicClientFactory {
+    pub fn new(deposit_subaccount: [u8; 32]) -> SonicClientFactory {
         SonicClientFactory {
-            sonic_canister_id: CanisterId::from_text("3xwpq-ziaaa-aaaah-qcn4a-cai").unwrap(),
+            sonic_canister_id: sonic_canister_id(),
+            deposit_subaccount,
         }
     }
 }
@@ -32,6 +38,7 @@ impl SwapClientFactory for SonicClientFactory {
                 input_token.clone(),
                 output_token.clone(),
                 true,
+                self.deposit_subaccount,
             ))),
             (Cryptocurrency::InternetComputer, Cryptocurrency::CHAT) => Some(Box::new(SonicClient::new(
                 this_canister_id,
@@ -39,6 +46,7 @@ impl SwapClientFactory for SonicClientFactory {
                 output_token.clone(),
                 input_token.clone(),
                 false,
+                self.deposit_subaccount,
             ))),
             _ => None,
         }
@@ -64,11 +72,11 @@ impl SwapClient for SonicClient {
     }
 
     async fn deposit_account(&self) -> CallResult<(CanisterId, Account)> {
-        Ok(self.deposit_account())
+        self.deposit_account().await
     }
 
     async fn deposit(&self, amount: u128) -> CallResult<()> {
-        self.deposit(amount).await.map(|_| ())
+        self.deposit(amount - self.input_token().fee).await.map(|_| ())
     }
 
     async fn swap(&self, amount: u128) -> CallResult<u128> {
