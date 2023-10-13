@@ -53,6 +53,7 @@ pub struct NervousSystemDetails {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct NervousSystemSummary {
+    pub root_canister_id: CanisterId,
     pub governance_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub is_nns: bool,
@@ -63,6 +64,7 @@ pub struct NervousSystemSummary {
 impl From<&NervousSystemDetails> for NervousSystemSummary {
     fn from(value: &NervousSystemDetails) -> Self {
         NervousSystemSummary {
+            root_canister_id: value.root_canister_id,
             governance_canister_id: value.governance_canister_id,
             ledger_canister_id: value.ledger_canister_id,
             is_nns: value.is_nns,

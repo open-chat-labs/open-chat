@@ -33,6 +33,7 @@ type TokenDetails = record {
 };
 
 type NervousSystemSummary = record {
+    root_canister_id : CanisterId;
     governance_canister_id : CanisterId;
     ledger_canister_id : CanisterId;
     is_nns : bool;
