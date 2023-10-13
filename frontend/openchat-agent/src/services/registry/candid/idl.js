@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
     'transaction_url_format' : IDL.Text,
   });
   const NervousSystemSummary = IDL.Record({
+    'root_canister_id' : CanisterId,
     'submitting_proposals_enabled' : IDL.Bool,
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
