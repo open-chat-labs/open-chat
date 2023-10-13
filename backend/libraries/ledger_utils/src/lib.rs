@@ -47,7 +47,10 @@ pub async fn process_transaction(
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
-        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender).await,
+        PendingCryptoTransaction::ICRC1(t) => match icrc1::process_transaction(t, sender).await {
+            Ok(c) => Ok(c.into()),
+            Err(f) => Err(f.into()),
+        },
     }
 }
 

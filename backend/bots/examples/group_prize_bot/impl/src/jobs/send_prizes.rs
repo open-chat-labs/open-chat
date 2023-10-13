@@ -159,6 +159,7 @@ async fn transfer_prize_funds_to_group(
 
     match icrc1::process_transaction(pending_transaction, group).await {
         Ok(completed_transaction) => mutate_state(|state| {
+            let completed_transaction = CompletedCryptoTransaction::from(completed_transaction);
             state.data.prizes_sent.push(Prize {
                 group,
                 transaction: completed_transaction.clone(),

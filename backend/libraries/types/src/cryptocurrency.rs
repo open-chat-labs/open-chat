@@ -451,4 +451,16 @@ pub mod icrc1 {
         pub created: TimestampNanos,
         pub error_message: String,
     }
+
+    impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransaction) -> Self {
+            super::CompletedCryptoTransaction::ICRC1(value)
+        }
+    }
+
+    impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
+        fn from(value: FailedCryptoTransaction) -> Self {
+            super::FailedCryptoTransaction::ICRC1(value)
+        }
+    }
 }
