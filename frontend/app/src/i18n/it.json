@@ -473,7 +473,9 @@
         "scan": "Scansiona il codice QR",
         "receiveToken": "Ricevi {symbol}",
         "sendToken": "Invia {symbol}",
-        "receive": "Ricevere"
+        "receive": "Ricevere",
+        "showZeroBalance": "Mostra conti vuoti",
+        "hideZeroBalance": "Nascondi gli account vuoti"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",

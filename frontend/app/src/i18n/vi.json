@@ -474,7 +474,9 @@
         "scan": "Quét mã QR",
         "receiveToken": "Nhận {symbol}",
         "sendToken": "Gửi {symbol}",
-        "receive": "Nhận được"
+        "receive": "Nhận được",
+        "showZeroBalance": "Hiển thị tài khoản trống",
+        "hideZeroBalance": "Ẩn tài khoản trống"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",

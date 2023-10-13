@@ -1,8 +1,9 @@
 <script lang="ts">
     export let underline: "never" | "always" | "hover" = "never";
+    export let light = false;
 </script>
 
-<span class={`link-button ${underline}`} class:hover={underline === "hover"} on:click>
+<span class={`link-button ${underline}`} class:hover={underline === "hover"} class:light on:click>
     <slot />
 </span>
 
@@ -11,6 +12,10 @@
         cursor: pointer;
         color: var(--txt);
         display: inline-block;
+
+        &.light {
+            color: var(--txt-light);
+        }
     }
 
     @media (hover: hover) {

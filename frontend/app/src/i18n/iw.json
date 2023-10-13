@@ -473,7 +473,9 @@
         "scan": "סרוק קוד QR",
         "receiveToken": "קבל {symbol}",
         "sendToken": "שלח {symbol}",
-        "receive": "לְקַבֵּל"
+        "receive": "לְקַבֵּל",
+        "showZeroBalance": "הצג חשבונות ריקים",
+        "hideZeroBalance": "הסתר חשבונות ריקים"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",
