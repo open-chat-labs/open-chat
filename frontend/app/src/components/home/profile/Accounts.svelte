@@ -1,5 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
+    import { dollarExchangeRates } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
@@ -38,19 +39,25 @@
         manageMode = "send";
     }
 
-    $: crypto = Object.values($cryptoLookup).map((t) => ({
-        key: t.ledger,
-        ledger: t.ledger,
-        symbol: t.symbol,
-        balance: $cryptoBalance[t.ledger] ?? BigInt(0),
-        logo: t.logo,
-    }));
+    $: crypto = Object.values($cryptoLookup).map((t) => {
+        const balance = $cryptoBalance[t.ledger] ?? BigInt(0);
+        const xr = dollarExchangeRates[t.symbol.toLowerCase()];
+        const dollarBalance = xr > 0 ? Number(balance) / xr : 0;
+        return {
+            key: t.ledger,
+            ledger: t.ledger,
+            symbol: t.symbol,
+            balance,
+            logo: t.logo,
+            dollarBalance,
+        };
+    });
 
     $: {
         crypto.sort((a, b) => {
-            if (a.balance < b.balance) {
+            if (a.dollarBalance < b.dollarBalance) {
                 return 1;
-            } else if (a.balance > b.balance) {
+            } else if (a.dollarBalance > b.dollarBalance) {
                 return -1;
             } else {
                 return 0;
