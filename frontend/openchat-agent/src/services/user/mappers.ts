@@ -1074,7 +1074,7 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
             return { TransferSnsTreasuryFunds: {
                 to: {
                     owner: Principal.fromText(action.recipient.owner),
-                    subaccount: apiOptional((hex) => hexStringToBytes(hex), action.recipient.subaccount)
+                    subaccount: apiOptional((hex) => hexStringToBytes(hex.padStart(64, '0')), action.recipient.subaccount)
                 },
                 amount: action.amount,
                 memo: [],
