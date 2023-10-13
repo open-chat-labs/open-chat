@@ -15,8 +15,7 @@
     const dispatch = createEventDispatcher();
 
     $: params = formatParams(gate);
-    $: cryptoLookup = client.cryptoLookup;
-    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate, $cryptoLookup);
+    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
 
     function formatParams(gate: AccessGate): string {
         const parts = [];

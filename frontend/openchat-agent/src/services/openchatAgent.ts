@@ -2481,12 +2481,12 @@ export class OpenChatAgent extends EventTarget {
 
         const updates = await this._registryClient.updates(current?.lastUpdated);
 
-        if (updates.kind === "success" && updates.tokenDetails !== undefined) {
+        if (updates.kind === "success") {
             const updated = {
                 lastUpdated: updates.lastUpdated,
                 tokenDetails: distinctBy(
                     [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
-                    (t) => t.ledgerCanisterId,
+                    (t) => t.ledger,
                 ),
                 nervousSystemDetails: distinctBy(
                     [...updates.nervousSystemDetails, ...(current?.nervousSystemDetails ?? [])],
