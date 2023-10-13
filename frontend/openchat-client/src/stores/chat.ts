@@ -244,7 +244,9 @@ export const selectedChatStore = derived(
     [chatSummariesStore, selectedChatId],
     ([$chatSummaries, $selectedChatId]) => {
         if ($selectedChatId === undefined) return undefined;
-        return $chatSummaries.get($selectedChatId);
+        const chat = $chatSummaries.get($selectedChatId);
+        console.log("Inside selected chat store: ", chat);
+        return chat;
     },
 );
 
