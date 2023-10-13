@@ -607,14 +607,17 @@
             "summaryRules": "マークダウンをサポート",
             "urlRules": "補足詳細へのリンク",
             "unexpectedError": "プロポーザル送信時の予期しないエラー",
-            "toPrincipal": "受信者のアカウント本人",
-            "enterToPrincipal": "受信者のアカウント プリンシパルを入力します",
             "amount": "額",
             "amountRules": "少なくとも 1 つの {token} トークン",
             "enterAmount": "{token} トークンの数量を入力してください",
             "type": "提案型",
             "treasury": "財務省から送金するトークン",
-            "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。"
+            "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。",
+            "recipientOwner": "受信者のアカウント本人",
+            "recipientSubaccount": "受信者のサブアカウント",
+            "recipientSubaccountRules": "16 進文字列である必要があります",
+            "enterRecipientOwner": "受信者のアカウントプリンシパルを入力してください",
+            "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します"
         }
     },
     "yes": "はい",

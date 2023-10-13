@@ -607,14 +607,17 @@
             "summaryRules": "prend en charge la démarque",
             "urlRules": "lien vers des détails supplémentaires",
             "unexpectedError": "Erreur inattendue lors de la soumission de la proposition",
-            "toPrincipal": "Responsable du compte du destinataire",
-            "enterToPrincipal": "Saisissez le principal du compte du destinataire",
             "amount": "Montant",
             "amountRules": "au moins 1 jeton {token}",
             "enterAmount": "Entrez une quantité de jetons {token}",
             "type": "Type de proposition",
             "treasury": "Jeton à transférer du trésor",
-            "message": "Un dépôt de jetons {cost} {token} (comprend deux séries de frais de transfert) est requis pour soumettre une proposition qui est remboursée si la proposition est adoptée."
+            "message": "Un dépôt de jetons {cost} {token} (comprend deux séries de frais de transfert) est requis pour soumettre une proposition qui est remboursée si la proposition est adoptée.",
+            "recipientOwner": "Principal du compte du destinataire",
+            "recipientSubaccount": "Sous-compte du destinataire",
+            "recipientSubaccountRules": "doit être une chaîne hexadécimale",
+            "enterRecipientOwner": "Saisissez le principal du compte du destinataire",
+            "enterRecipientSubaccount": "Saisissez un sous-compte de destinataire facultatif"
         }
     },
     "yes": "Oui",

@@ -607,14 +607,17 @@
             "summaryRules": "supporta il ribasso",
             "urlRules": "collegamento a dettagli supplementari",
             "unexpectedError": "Errore imprevisto durante l'invio della proposta",
-            "toPrincipal": "Entità dell'account del destinatario",
-            "enterToPrincipal": "Immettere un'entità account del destinatario",
             "amount": "Quantità",
             "amountRules": "almeno 1 token {token}",
             "enterAmount": "Inserisci una quantità di token {token}",
             "type": "Tipo di proposta",
             "treasury": "Gettone da trasferire dal tesoro",
-            "message": "Per presentare una proposta è richiesto un deposito di token {cost} {token} (include due serie di commissioni di trasferimento) che verrà rimborsato se la proposta viene adottata."
+            "message": "Per presentare una proposta è richiesto un deposito di token {cost} {token} (include due serie di commissioni di trasferimento) che verrà rimborsato se la proposta viene adottata.",
+            "recipientOwner": "Entità del conto del destinatario",
+            "recipientSubaccount": "Sottoconto del destinatario",
+            "recipientSubaccountRules": "deve essere una stringa esadecimale",
+            "enterRecipientOwner": "Inserisci l'entità del conto del destinatario",
+            "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo"
         }
     },
     "yes": "sì",

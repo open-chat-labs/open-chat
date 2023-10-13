@@ -607,14 +607,17 @@
             "summaryRules": "支持降价",
             "urlRules": "补充详细信息的链接",
             "unexpectedError": "提交提案时出现意外错误",
-            "toPrincipal": "收款人账户本金",
-            "enterToPrincipal": "输入收件人帐户主体",
             "amount": "数量",
             "amountRules": "至少 1 个 {token} 令牌",
             "enterAmount": "输入 {token} 代币的数量",
             "type": "提案类型",
             "treasury": "从金库转账的代币",
-            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。"
+            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。",
+            "recipientOwner": "收款人账户本金",
+            "recipientSubaccount": "收款人子账户",
+            "recipientSubaccountRules": "必须是十六进制字符串",
+            "enterRecipientOwner": "输入收件人的账户主体",
+            "enterRecipientSubaccount": "输入可选的收件人子帐户"
         }
     },
     "quoteReply": "引用",
