@@ -52,9 +52,7 @@
                 <Markdown
                     text={$_("prizes.winner", {
                         values: { recipient: winner, amount, token: symbol },
-                    })}
-                    oneLine
-                    suppressLinks />
+                    })} />
             </div>
             {#if transactionLinkText !== undefined}
                 <div class="link">
@@ -69,6 +67,7 @@
     .msg {
         cursor: pointer;
         text-align: center;
+        padding-top: $sp2;
     }
 
     .wrapper.other {
@@ -82,7 +81,7 @@
     }
 
     .label {
-        @include font(book, normal, fs-100, 28);
+        @include font(book, normal, fs-100);
     }
 
     .link {
