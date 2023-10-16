@@ -162,6 +162,7 @@ import {
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
+    isAccountIdentifierValid,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -1370,7 +1371,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): Api
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal,
 ): WithdrawCryptoArgs {
-    if (domain.token === ICP_SYMBOL) {
+    if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
         return {
             withdrawal: {
                 NNS: {

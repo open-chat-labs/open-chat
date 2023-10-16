@@ -9,6 +9,7 @@
         type OpenChat,
         type Treasury,
     } from "openchat-client";
+    import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -16,7 +17,6 @@
     import TextArea from "../TextArea.svelte";
     import Select from "../Select.svelte";
     import Radio from "../Radio.svelte";
-    import { isPrincipalValid, isSubAccountValid } from "../../utils/sns";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import Markdown from "./Markdown.svelte";
