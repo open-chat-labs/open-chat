@@ -475,8 +475,8 @@
         "receiveToken": "Recibir {symbol}",
         "sendToken": "Enviar {symbol}",
         "receive": "Recibir",
-        "showZeroBalance": "Mostrar cuentas vacías",
-        "hideZeroBalance": "Ocultar cuentas vacías"
+        "showZeroBalance": "mostrar más",
+        "hideZeroBalance": "Muestra menos"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",

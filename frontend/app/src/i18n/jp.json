@@ -474,8 +474,8 @@
         "receiveToken": "{symbol}を受け取る",
         "sendToken": "{symbol}を送る",
         "receive": "受け取る",
-        "showZeroBalance": "空のアカウントを表示する",
-        "hideZeroBalance": "空のアカウントを非表示にする"
+        "showZeroBalance": "もっと見せる",
+        "hideZeroBalance": "あまり見せない"
     },
     "searchChat": "検索",
     "search": "検索...",
