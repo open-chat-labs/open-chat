@@ -474,8 +474,8 @@
         "receiveToken": "קבל {symbol}",
         "sendToken": "שלח {symbol}",
         "receive": "לְקַבֵּל",
-        "showZeroBalance": "הצג חשבונות ריקים",
-        "hideZeroBalance": "הסתר חשבונות ריקים"
+        "showZeroBalance": "יותר",
+        "hideZeroBalance": "פָּחוֹת"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",

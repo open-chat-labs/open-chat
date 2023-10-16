@@ -476,8 +476,8 @@
         "receiveToken": "Erhalte {symbol}",
         "sendToken": "Senden Sie {symbol}",
         "receive": "Anfordern",
-        "showZeroBalance": "Leere Konten anzeigen",
-        "hideZeroBalance": "Leere Konten ausblenden"
+        "showZeroBalance": "mehr",
+        "hideZeroBalance": "weniger"
     },
     "searchChat": "Suche",
     "search": "Suche...",

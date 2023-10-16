@@ -475,8 +475,8 @@
         "receiveToken": "Nhận {symbol}",
         "sendToken": "Gửi {symbol}",
         "receive": "Nhận được",
-        "showZeroBalance": "Hiển thị tài khoản trống",
-        "hideZeroBalance": "Ẩn tài khoản trống"
+        "showZeroBalance": "hơn",
+        "hideZeroBalance": "ít hơn"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
