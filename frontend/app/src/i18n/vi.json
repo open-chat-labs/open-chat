@@ -475,8 +475,8 @@
         "receiveToken": "Nhận {symbol}",
         "sendToken": "Gửi {symbol}",
         "receive": "Nhận được",
-        "showZeroBalance": "hơn",
-        "hideZeroBalance": "ít hơn"
+        "showZeroBalance": "Cho xem nhiều hơn",
+        "hideZeroBalance": "hiện ít hơn"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
