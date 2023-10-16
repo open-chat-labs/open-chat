@@ -474,8 +474,8 @@
         "receiveToken": "Получить {symbol}",
         "sendToken": "Отправить {symbol}",
         "receive": "Получать",
-        "showZeroBalance": "более",
-        "hideZeroBalance": "меньше"
+        "showZeroBalance": "показать больше",
+        "hideZeroBalance": "показывай меньше"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",
