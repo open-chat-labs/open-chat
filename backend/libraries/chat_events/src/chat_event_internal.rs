@@ -8,13 +8,13 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    is_default, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat, ChatId, ChatMetrics,
-    CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, DeletedBy,
-    DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated, GroupDescriptionChanged,
-    GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
-    GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
-    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessagePinned,
-    MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
+    is_default, is_empty_hashset, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat,
+    ChatId, ChatMetrics, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
+    CustomContent, DeletedBy, DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated,
+    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
+    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded,
+    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
+    MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
     PollContentInternal, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
     ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis,
     Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
@@ -340,9 +340,9 @@ impl TryFrom<CryptoContent> for CryptoContentInternal {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInternal {
-    #[serde(rename = "p")]
+    #[serde(rename = "p", default, skip_serializing_if = "is_empty_slice")]
     pub prizes_remaining: Vec<Tokens>,
-    #[serde(rename = "r")]
+    #[serde(rename = "r", default, skip_serializing_if = "is_empty_hashset")]
     pub reservations: HashSet<UserId>,
     #[serde(rename = "w")]
     pub winners: HashSet<UserId>,
@@ -350,8 +350,10 @@ pub struct PrizeContentInternal {
     pub transaction: CompletedCryptoTransaction,
     #[serde(rename = "e")]
     pub end_date: TimestampMillis,
-    #[serde(rename = "c")]
+    #[serde(rename = "c", default, skip_serializing_if = "Option::is_none")]
     pub caption: Option<String>,
+    #[serde(rename = "d", default, skip_serializing_if = "is_default")]
+    pub diamond_only: bool,
 }
 
 impl From<&PrizeContentInternal> for PrizeContent {
@@ -363,6 +365,7 @@ impl From<&PrizeContentInternal> for PrizeContent {
             token: value.transaction.token(),
             end_date: value.end_date,
             caption: value.caption.clone(),
+            diamond_only: value.diamond_only,
         }
     }
 }
@@ -379,6 +382,7 @@ impl TryFrom<PrizeContentInitial> for PrizeContentInternal {
                 transaction,
                 end_date: value.end_date,
                 caption: value.caption,
+                diamond_only: value.diamond_only,
             })
         } else {
             Err(())
