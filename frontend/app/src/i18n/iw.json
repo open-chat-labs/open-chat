@@ -473,7 +473,9 @@
         "scan": "סרוק קוד QR",
         "receiveToken": "קבל {symbol}",
         "sendToken": "שלח {symbol}",
-        "receive": "לְקַבֵּל"
+        "receive": "לְקַבֵּל",
+        "showZeroBalance": "הצג חשבונות ריקים",
+        "hideZeroBalance": "הסתר חשבונות ריקים"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",
@@ -603,14 +605,17 @@
             "summaryRules": "תומך ב-markdown",
             "urlRules": "קישור לפרטים משלימים",
             "unexpectedError": "שגיאה לא צפויה בהגשת ההצעה",
-            "toPrincipal": "מנהל חשבון הנמען",
-            "enterToPrincipal": "הזן מנהל חשבון נמען",
             "amount": "כמות",
             "amountRules": "לפחות אסימון {token} אחד",
             "enterAmount": "הזן כמות של {token} אסימונים",
             "type": "סוג ההצעה",
             "treasury": "אסימון להעברה מאוצר",
-            "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל."
+            "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל.",
+            "recipientOwner": "מנהל החשבון של הנמען",
+            "recipientSubaccount": "חשבון המשנה של הנמען",
+            "recipientSubaccountRules": "חייב להיות מחרוזת משושה",
+            "enterRecipientOwner": "הזן את מנהל החשבון של הנמען",
+            "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען"
         }
     },
     "yes": "כן",

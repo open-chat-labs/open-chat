@@ -187,6 +187,12 @@
                 : "OpenChat";
     }
 
+    $: {
+        tick().then(() => {
+            routeChange($chatsInitialised, $pathParams);
+        });
+    }
+
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -443,10 +449,6 @@
                 page.replace(removeQueryStringParam("usergroup"));
             }
         }
-    }
-
-    $: {
-        routeChange($chatsInitialised, $pathParams);
     }
 
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive

@@ -1,3 +1,3 @@
-Website -> GroupIndex
+Website -> Registry
 
-Website before GroupIndex because the `chat_id` field has been removed from `GroupMatch`
+Website before Registry because `nervous_system` has been removed from `TokenDetails`

@@ -1,7 +1,7 @@
 use crate::nns::UserOrAccount;
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
-use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Tokens, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
 
 const ICP_FEE: u128 = 10_000;
@@ -461,6 +461,23 @@ pub mod icrc1 {
     impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
         fn from(value: FailedCryptoTransaction) -> Self {
             super::FailedCryptoTransaction::ICRC1(value)
+        }
+    }
+}
+
+impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
+    fn from(value: icrc1::PendingCryptoTransaction) -> Self {
+        nns::PendingCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
+            to: UserOrAccount::Account(AccountIdentifier::new(
+                &value.to.owner,
+                &Subaccount(value.to.subaccount.unwrap_or_default()),
+            )),
+            fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
+            memo: value.memo.map(|m| Memo(u64::from_be_bytes(m.0.as_ref().try_into().unwrap()))),
+            created: value.created,
         }
     }
 }

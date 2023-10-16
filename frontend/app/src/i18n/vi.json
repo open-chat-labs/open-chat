@@ -474,7 +474,9 @@
         "scan": "Quét mã QR",
         "receiveToken": "Nhận {symbol}",
         "sendToken": "Gửi {symbol}",
-        "receive": "Nhận được"
+        "receive": "Nhận được",
+        "showZeroBalance": "Hiển thị tài khoản trống",
+        "hideZeroBalance": "Ẩn tài khoản trống"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -606,14 +608,17 @@
             "summaryRules": "hỗ trợ đánh dấu",
             "urlRules": "liên kết đến chi tiết bổ sung",
             "unexpectedError": "Lỗi không mong đợi khi gửi đề xuất",
-            "toPrincipal": "Tiền gốc tài khoản người nhận",
-            "enterToPrincipal": "Nhập tiền gốc của tài khoản người nhận",
             "amount": "Số lượng",
             "amountRules": "ít nhất 1 mã thông báo {token}",
             "enterAmount": "Nhập số lượng mã thông báo {token}",
             "type": "Loại đề xuất",
             "treasury": "Token để chuyển từ kho bạc",
-            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua."
+            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua.",
+            "recipientOwner": "Tiền gốc tài khoản của người nhận",
+            "recipientSubaccount": "Tài khoản phụ của người nhận",
+            "recipientSubaccountRules": "phải là một chuỗi hex",
+            "enterRecipientOwner": "Nhập số tiền gốc tài khoản của người nhận",
+            "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn"
         }
     },
     "yes": "Đúng",

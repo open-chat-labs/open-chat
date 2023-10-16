@@ -70,7 +70,7 @@ async fn add_token_impl(
         }
         Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
             let now = state.env.now();
-            if let Some(ns) = nervous_system.clone() {
+            if let Some(ns) = nervous_system {
                 state.data.nervous_systems.add(ns, now);
             }
             if state.data.tokens.add(
@@ -80,7 +80,6 @@ async fn add_token_impl(
                 decimals,
                 fee.0.try_into().unwrap(),
                 logo.unwrap(),
-                nervous_system.map(|ns| ns.into()),
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,

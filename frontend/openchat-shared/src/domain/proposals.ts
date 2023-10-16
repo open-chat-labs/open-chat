@@ -15,7 +15,12 @@ export type TransferSnsFunds = {
     kind: "transfer_sns_funds",
     treasury: Treasury,
     amount: bigint,
-    toPrincipal: string;
+    recipient: Icrc1Account;
 }
 
+export type Icrc1Account = {
+    owner: string,
+    subaccount: string | undefined,
+}
+  
 export type Treasury = "SNS" | "ICP";

@@ -11,3 +11,8 @@ export function isPrincipalValid(text: string): boolean {
     }
 }
 
+const SUB_ACCOUNT_REGEX = new RegExp("^[A-Fa-f0-9]+$");
+
+export function isSubAccountValid(text: string): boolean {
+    return text.length <= 64 && SUB_ACCOUNT_REGEX.test(text);
+}

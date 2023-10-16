@@ -50,6 +50,8 @@ export const dollarExchangeRates: Record<string, number> = {
     cat: to2SigFigs(dollarToICP / 0.0068998),
     boom: to2SigFigs(dollarToICP / 0.00339),
     icx: to2SigFigs(dollarToICP / 0.0000001),
+    nua: to2SigFigs(dollarToICP / 0.0134),
+    sonic: to2SigFigs(dollarToICP / 0.0530),
 };
 
 function to2SigFigs(num: number): number {

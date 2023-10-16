@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support submitting proposals to any governance canister ([#4579](https://github.com/open-chat-labs/open-chat/pull/4579))
+- Support sending ICP to ICRC1 accounts ([#4583](https://github.com/open-chat-labs/open-chat/pull/4583))
 
 ### Removed
 
