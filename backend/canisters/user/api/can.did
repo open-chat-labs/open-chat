@@ -597,7 +597,7 @@ type ProposalToSubmitAction = variant {
 type SubmitProposalResponse = variant {
     Success;
     GovernanceCanisterNotSupported;
-    Unauthorized;
+    InsufficientPayment : nat;
     UserSuspended;
     TransferFailed : text;
     Retrying : text;
