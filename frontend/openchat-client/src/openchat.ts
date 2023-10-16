@@ -5001,7 +5001,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
-        const token = this.getTokenByGovernanceCanister(governanceCanisterId);
+        const token = this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId);
+        if (token === undefined) {
+            this._logger.error("Cannot find topken details for governanceCanisterId", governanceCanisterId);
+            return Promise.resolve(false);
+        }
 
         return this.sendRequest({
             kind: "submitProposal",
