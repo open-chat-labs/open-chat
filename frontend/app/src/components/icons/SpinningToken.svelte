@@ -12,7 +12,7 @@
     class:mirror
     style="--size: {size === 'large' ? '6rem' : size === 'small' ? '3.5rem' : '2.2rem'}">
     <div class="coin" class:spin>
-        <div class="back face">
+        <div class:flip={!spin} class="back face">
             <div style={`background-image: url(${logo})`} class="inner" />
         </div>
         {#if spin}
@@ -70,7 +70,7 @@
         box-shadow: inset 0 $shadow_size $shadow_size hsl(42, 30%, 50%);
     }
 
-    .back {
+    .back:not(.flip) {
         transform: scaleX(-1);
     }
 
