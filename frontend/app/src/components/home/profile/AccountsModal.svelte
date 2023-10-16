@@ -24,8 +24,8 @@
     </div>
     <div slot="footer">
         <div class="footer">
-            {#if zeroCount > 0}
-                <div class="show-more">
+            <div class="show-more">
+                {#if zeroCount > 0}
                     <LinkButton
                         light
                         underline={"hover"}
@@ -35,8 +35,8 @@
                                 ? "cryptoAccount.hideZeroBalance"
                                 : "cryptoAccount.showZeroBalance"
                         )}</LinkButton>
-                </div>
-            {/if}
+                {/if}
+            </div>
             <Button on:click={() => dispatch("close")} small={!$mobileWidth} tiny={$mobileWidth}>
                 {$_("close")}
             </Button>
