@@ -1329,6 +1329,10 @@ type FollowThread = {
 type SubmitProposal = {
     governanceCanisterId: string;
     proposal: CandidateProposal;
+    ledger: string;
+    token: string;
+    proposalRejectionFee: bigint;
+    transactionFee: bigint;
     kind: "submitProposal";
 };
 

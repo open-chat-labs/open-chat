@@ -1,3 +1,4 @@
+use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
 use crate::timer_job_types::{LookupUserThenSubmitProposalJob, SubmitProposalJob, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
@@ -9,7 +10,7 @@ use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds};
 use tracing::{error, info};
-use types::{CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
+use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use utils::time::SECOND_IN_MS;
 
@@ -23,7 +24,7 @@ async fn c2c_submit_proposal(args: Args) -> Response {
         user_index_canister_id,
         neuron_id,
         chat,
-    } = match read_state(|state| prepare(&args, state)) {
+    } = match read_state(|state| prepare(args.governance_canister_id, args.transaction, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -46,20 +47,25 @@ struct PrepareResult {
     chat: MultiUserChat,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let Some(neuron_id) = state
+fn prepare(
+    governance_canister_id: CanisterId,
+    transaction: icrc1::CompletedCryptoTransaction,
+    state: &RuntimeState,
+) -> Result<PrepareResult, Response> {
+    use ValidateSubmitProposalPaymentError as E;
+    match state
         .data
         .nervous_systems
-        .get_neuron_id_for_submitting_proposals(&args.governance_canister_id)
+        .validate_submit_proposal_payment(&governance_canister_id, transaction)
     {
-        Ok(PrepareResult {
+        Ok(neuron_id) => Ok(PrepareResult {
             caller: state.env.caller(),
             user_index_canister_id: state.data.user_index_canister_id,
             neuron_id,
-            chat: state.data.nervous_systems.get_chat_id(&args.governance_canister_id).unwrap(),
-        })
-    } else {
-        Err(GovernanceCanisterNotSupported)
+            chat: state.data.nervous_systems.get_chat_id(&governance_canister_id).unwrap(),
+        }),
+        Err(E::GovernanceCanisterNotSupported | E::IncorrectLedger) => Err(GovernanceCanisterNotSupported),
+        Err(E::InsufficientPayment(min)) => Err(InsufficientPayment(min.into())),
     }
 }
 

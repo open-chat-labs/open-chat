@@ -568,6 +568,10 @@ type SavedCryptoAccountsResponse = variant {
 type SubmitProposalArgs = record {
     governance_canister_id : CanisterId;
     proposal : ProposalToSubmit;
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    proposal_rejection_fee : nat;
+    transaction_fee : nat;
 };
 
 type ProposalToSubmit = record {
@@ -593,7 +597,7 @@ type ProposalToSubmitAction = variant {
 type SubmitProposalResponse = variant {
     Success;
     GovernanceCanisterNotSupported;
-    Unauthorized;
+    InsufficientPayment : nat;
     UserSuspended;
     TransferFailed : text;
     Retrying : text;

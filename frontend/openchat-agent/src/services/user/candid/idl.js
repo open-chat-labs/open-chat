@@ -1278,8 +1278,12 @@ export const idlFactory = ({ IDL }) => {
     'summary' : IDL.Text,
   });
   const SubmitProposalArgs = IDL.Record({
+    'token' : Cryptocurrency,
+    'transaction_fee' : IDL.Nat,
+    'ledger' : CanisterId,
     'governance_canister_id' : CanisterId,
     'proposal' : ProposalToSubmit,
+    'proposal_rejection_fee' : IDL.Nat,
   });
   const SubmitProposalResponse = IDL.Variant({
     'Retrying' : IDL.Text,

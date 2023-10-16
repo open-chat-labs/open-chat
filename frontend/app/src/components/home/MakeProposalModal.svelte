@@ -32,7 +32,6 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const user = client.user;
-    const proposalCost = BigInt(400000000);
 
     export let selectedMultiUserChat: MultiUserChat;
     export let governanceCanisterId: string;
@@ -63,6 +62,7 @@
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
+    $: proposalCost = tokenDetails.nervousSystem?.proposalRejectionFee ?? BigInt(0);
     $: requiredFunds = proposalCost + transferFee + transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
