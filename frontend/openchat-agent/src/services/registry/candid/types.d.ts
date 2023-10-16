@@ -1192,9 +1192,6 @@ export interface TokenDetails {
   'logo' : string,
   'name' : string,
   'last_updated' : TimestampMillis,
-  'nervous_system' : [] | [
-    { 'root' : CanisterId, 'is_nns' : boolean, 'governance' : CanisterId }
-  ],
   'ledger_canister_id' : CanisterId,
   'symbol' : string,
   'transaction_url_format' : string,

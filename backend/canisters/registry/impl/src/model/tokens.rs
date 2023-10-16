@@ -1,4 +1,4 @@
-use registry_canister::{NervousSystemDeprecated, TokenDetails};
+use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, TimestampMillis};
 
@@ -18,7 +18,6 @@ impl Tokens {
         decimals: u8,
         fee: u128,
         logo: String,
-        nervous_system: Option<NervousSystemDeprecated>,
         info_url: String,
         how_to_buy_url: String,
         transaction_url_format: String,
@@ -34,7 +33,6 @@ impl Tokens {
                 decimals,
                 fee,
                 logo,
-                nervous_system,
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
@@ -71,7 +69,6 @@ pub struct TokenMetrics {
     decimals: u8,
     fee: u128,
     logo_length: usize,
-    nervous_system: Option<NervousSystemDeprecated>,
     info_url: String,
     how_to_buy_url: String,
     transaction_url_format: String,
@@ -88,7 +85,6 @@ impl From<&TokenDetails> for TokenMetrics {
             decimals: value.decimals,
             fee: value.fee,
             logo_length: value.logo.len(),
-            nervous_system: value.nervous_system.clone(),
             info_url: value.info_url.clone(),
             how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),
