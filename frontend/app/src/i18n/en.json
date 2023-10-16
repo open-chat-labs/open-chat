@@ -582,8 +582,8 @@
         "token": "Token",
         "scan": "Scan QR code",
         "comingSoon": "(coming soon)",
-        "showZeroBalance": "Show empty accounts",
-        "hideZeroBalance": "Hide empty accounts"
+        "showZeroBalance": "more",
+        "hideZeroBalance": "less"
     },
     "searchChat": "Search",
     "search": "Search...",
