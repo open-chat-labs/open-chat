@@ -51,7 +51,10 @@ pub async fn process_transaction(
             if t.token == Cryptocurrency::InternetComputer {
                 nns::process_transaction(t.into(), sender).await
             } else {
-                icrc1::process_transaction(t, sender).await
+                match icrc1::process_transaction(t, sender).await {
+                    Ok(c) => Ok(c.into()),
+                    Err(f) => Err(f.into()),
+                }
             }
         }
     }

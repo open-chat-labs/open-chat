@@ -1637,8 +1637,12 @@ export interface SnsProposal {
   'proposer' : SnsNeuronId,
 }
 export interface SubmitProposalArgs {
+  'token' : Cryptocurrency,
+  'transaction_fee' : bigint,
+  'ledger' : CanisterId,
   'governance_canister_id' : CanisterId,
   'proposal' : ProposalToSubmit,
+  'proposal_rejection_fee' : bigint,
 }
 export type SubmitProposalResponse = { 'Retrying' : string } |
   { 'Success' : null } |

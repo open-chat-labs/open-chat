@@ -5001,10 +5001,16 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
+        const token = this.getTokenByGovernanceCanister(governanceCanisterId);
+
         return this.sendRequest({
             kind: "submitProposal",
             governanceCanisterId,
             proposal,
+            ledger: token.ledger,
+            token: token.symbol,
+            proposalRejectionFee: token.nervousSystem?.proposalRejectionFee ?? BigInt(0),
+            transactionFee: token.transferFee,
         })
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {

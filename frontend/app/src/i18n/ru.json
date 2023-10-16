@@ -474,8 +474,8 @@
         "receiveToken": "Получить {symbol}",
         "sendToken": "Отправить {symbol}",
         "receive": "Получать",
-        "showZeroBalance": "Показать пустые аккаунты",
-        "hideZeroBalance": "Скрыть пустые аккаунты"
+        "showZeroBalance": "показать больше",
+        "hideZeroBalance": "показывай меньше"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",
