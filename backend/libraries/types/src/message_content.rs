@@ -374,6 +374,7 @@ impl From<MessageContentInitial> for MessageContent {
                 end_date: c.end_date,
                 caption: c.caption,
                 prizes_pending: 0,
+                diamond_only: c.diamond_only,
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
@@ -582,6 +583,7 @@ pub struct PrizeContent {
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
+    pub diamond_only: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

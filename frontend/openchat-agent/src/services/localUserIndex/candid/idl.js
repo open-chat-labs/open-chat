@@ -240,6 +240,7 @@ export const idlFactory = ({ IDL }) => {
     'prizes_remaining' : IDL.Nat32,
     'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
+    'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
   });
   const CustomMessageContent = IDL.Record({
