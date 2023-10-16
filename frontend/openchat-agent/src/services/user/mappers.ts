@@ -1071,15 +1071,17 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
         case "motion":
             return { Motion: null };
         case "transfer_sns_funds":
-            return { TransferSnsTreasuryFunds: {
-                to: {
-                    owner: Principal.fromText(action.recipient.owner),
-                    subaccount: apiOptional(hexStringToBytes, action.recipient.subaccount)
+            return {
+                TransferSnsTreasuryFunds: {
+                    to: {
+                        owner: Principal.fromText(action.recipient.owner),
+                        subaccount: apiOptional(hexStringToBytes, action.recipient.subaccount),
+                    },
+                    amount: action.amount,
+                    memo: [],
+                    treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null },
                 },
-                amount: action.amount,
-                memo: [],
-                treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null }
-            }};
+            };
     }
 }
 
@@ -1102,11 +1104,8 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
-    if ("Unauthorized" in candid) {
-        return { kind: "not_authorized" };
+    if ("InsufficientPayment" in candid) {
+        return { kind: "insufficient_payment" };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSubmitProposalResponse type received",
-        candid,
-    );
+    throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", candid);
 }
