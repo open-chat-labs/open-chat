@@ -1035,6 +1035,7 @@ export interface PrizeContent {
   'prizes_remaining' : number,
   'prizes_pending' : number,
   'caption' : [] | [string],
+  'diamond_only' : boolean,
   'winners' : Array<UserId>,
 }
 export interface PrizeContentInitial {

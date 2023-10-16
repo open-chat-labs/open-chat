@@ -303,6 +303,7 @@ export const idlFactory = ({ IDL }) => {
     'prizes_remaining' : IDL.Nat32,
     'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
+    'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
   });
   const CustomMessageContent = IDL.Record({
@@ -1287,8 +1288,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const SubmitProposalResponse = IDL.Variant({
     'Retrying' : IDL.Text,
+    'InsufficientPayment' : IDL.Nat,
     'Success' : IDL.Null,
-    'Unauthorized' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'GovernanceCanisterNotSupported' : IDL.Null,
     'TransferFailed' : IDL.Text,
