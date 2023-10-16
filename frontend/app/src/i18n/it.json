@@ -474,8 +474,8 @@
         "receiveToken": "Ricevi {symbol}",
         "sendToken": "Invia {symbol}",
         "receive": "Ricevere",
-        "showZeroBalance": "Di più",
-        "hideZeroBalance": "meno"
+        "showZeroBalance": "mostra di più",
+        "hideZeroBalance": "mostra meno"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",
