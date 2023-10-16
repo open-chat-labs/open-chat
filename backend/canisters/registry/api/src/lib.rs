@@ -22,7 +22,6 @@ pub struct TokenDetails {
     pub decimals: u8,
     pub fee: u128,
     pub logo: String,
-    pub nervous_system: Option<NervousSystemDeprecated>,
     pub info_url: String,
     pub how_to_buy_url: String,
     pub transaction_url_format: String,
@@ -70,24 +69,6 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
             is_nns: value.is_nns,
             proposal_rejection_fee: value.proposal_rejection_fee,
             submitting_proposals_enabled: value.submitting_proposals_enabled,
-        }
-    }
-}
-
-// TODO Remove this after next release
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct NervousSystemDeprecated {
-    pub is_nns: bool,
-    pub root: CanisterId,
-    pub governance: CanisterId,
-}
-
-impl From<NervousSystemDetails> for NervousSystemDeprecated {
-    fn from(value: NervousSystemDetails) -> Self {
-        NervousSystemDeprecated {
-            is_nns: value.is_nns,
-            root: value.root_canister_id,
-            governance: value.governance_canister_id,
         }
     }
 }

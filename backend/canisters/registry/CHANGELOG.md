@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Include `root_canister_id` in `NervousSystemSummary` ([#4573](https://github.com/open-chat-labs/open-chat/pull/4573))
 
+### Removed
+
+- Remove deprecated `nervous_system` field from `TokenDetails` ([#4584](https://github.com/open-chat-labs/open-chat/pull/4584))
+
 ## [[2.0.883](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.883-registry)] - 2023-10-12
 
 ### Added
