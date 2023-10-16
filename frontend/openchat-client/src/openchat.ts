@@ -5002,8 +5002,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
         const token = this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId);
-        if (token === undefined) {
-            this._logger.error("Cannot find topken details for governanceCanisterId", governanceCanisterId);
+        const nervousSystem = this.tryGetNervousSystemByGovernanceCanister(governanceCanisterId);
+        if (token === undefined || nervousSystem === undefined) {
+            this._logger.error("Cannot find token details and nervous system for governanceCanisterId", governanceCanisterId);
             return Promise.resolve(false);
         }
 
@@ -5013,7 +5014,7 @@ export class OpenChat extends OpenChatAgentWorker {
             proposal,
             ledger: token.ledger,
             token: token.symbol,
-            proposalRejectionFee: token.nervousSystem?.proposalRejectionFee ?? BigInt(0),
+            proposalRejectionFee: nervousSystem.proposalRejectionFee,
             transactionFee: token.transferFee,
         })
             .then((resp) => {
