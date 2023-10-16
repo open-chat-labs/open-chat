@@ -1272,7 +1272,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.submitProposal(payload.governanceCanisterId, payload.proposal),
+                    agent.submitProposal(
+                        payload.governanceCanisterId,
+                        payload.proposal,
+                        payload.ledger,
+                        payload.token,
+                        payload.proposalRejectionFee,
+                        payload.transactionFee,
+                    ),
                 );
                 break;
 

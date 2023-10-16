@@ -32,7 +32,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const user = client.user;
-    const proposalCost = BigInt(400000000);
+    const proposalCost = BigInt(1000000000);
 
     export let selectedMultiUserChat: MultiUserChat;
     export let governanceCanisterId: string;
