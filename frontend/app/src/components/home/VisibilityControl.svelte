@@ -43,12 +43,13 @@
     $: invalidDissolveDelay = minDissolveDelay !== undefined && isNaN(minDissolveDelay);
     $: invalidMinStake = minStake !== undefined && isNaN(minStake);
     $: cryptoLookup = client.cryptoLookup;
+    $: nervousSystemLookup = client.nervousSystemLookup;
     $: isDiamond = client.isDiamond;
     $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
     onMount(() => {
-        gateBindings = getGateBindings($cryptoLookup);
+        gateBindings = getGateBindings($cryptoLookup, $nervousSystemLookup);
         selectedGateKey = gateBindings.find((g) => candidate.gate.kind === g.gate.kind)?.key;
     });
 

@@ -45,8 +45,9 @@
     let showNeuronInfo = false;
     let showPayload = false;
 
-    $: tokenDetails = client.getTokenByGovernanceCanister(content.governanceCanisterId);
-    $: rootCanister = tokenDetails.nervousSystem?.rootCanisterId ?? "";
+    $: rootCanister =
+        client.tryGetNervousSystemByGovernanceCanister(content.governanceCanisterId)
+            ?.rootCanisterId ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =

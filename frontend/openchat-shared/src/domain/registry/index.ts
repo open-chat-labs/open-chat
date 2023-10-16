@@ -6,18 +6,16 @@ export type RegistryUpdatesResponse =
 
 export type RegistryValue = {
     lastUpdated: bigint;
-    tokenDetails: RegistryTokenDetails[];
+    tokenDetails: CryptocurrencyDetails[];
     nervousSystemDetails: NervousSystemSummary[];
 };
 
 export type RegistryUpdatesResponseSuccess = {
     kind: "success";
     lastUpdated: bigint;
-    tokenDetails: RegistryTokenDetails[];
+    tokenDetails: CryptocurrencyDetails[];
     nervousSystemDetails: NervousSystemSummary[];
 };
-
-export type RegistryTokenDetails = Omit<CryptocurrencyDetails, "nervousSystem">;
 
 export type RegistryUpdatesResponseSuccessNoUpdates = {
     kind: "success_no_updates";

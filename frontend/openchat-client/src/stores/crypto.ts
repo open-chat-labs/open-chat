@@ -1,12 +1,13 @@
 import { writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import type { CryptocurrencyDetails } from "openchat-shared";
+import type { CryptocurrencyDetails, NervousSystemSummary } from "openchat-shared";
 
 type LedgerCanister = string;
 
 type BalanceByCrypto = Record<LedgerCanister, bigint>;
 
 export const cryptoLookup = writable<Record<LedgerCanister, CryptocurrencyDetails>>({});
+export const nervousSystemLookup = writable<Record<LedgerCanister, NervousSystemSummary>>({});
 const cryptoBalanceStore = writable<BalanceByCrypto>({});
 
 export const cryptoBalance = {

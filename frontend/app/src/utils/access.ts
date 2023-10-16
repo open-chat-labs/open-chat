@@ -1,4 +1,4 @@
-import type { AccessGate, CryptocurrencyDetails, InterpolationValues } from "openchat-client";
+import type { AccessGate, CryptocurrencyDetails, InterpolationValues, NervousSystemSummary } from "openchat-client";
 
 export type GateBinding = {
     key: AccessGate["kind"];
@@ -9,23 +9,24 @@ export type GateBinding = {
     labelParams?: InterpolationValues;
 };
 
-function getSnsGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>): GateBinding[] {
-    return Object.values(cryptoLookup).reduce((gates, next) => {
-        if (next.nervousSystem !== undefined) {
-            gates.push({
-                label: "access.snsHolder",
-                gate: {
-                    kind: "sns_gate",
-                    governanceCanister: next.nervousSystem.governanceCanisterId,
-                },
-                key: "sns_gate",
-                enabled: true,
-                cssClass: next.symbol.toLowerCase(),
-                labelParams: { token: next.symbol },
-            });
-        }
-        return gates;
-    }, [] as GateBinding[]);
+function getSnsGateBindings(
+    cryptoLookup: Record<string, CryptocurrencyDetails>, 
+    nervousSystemLookup: Record<string, NervousSystemSummary>)
+: GateBinding[] {
+    return Object.values(nervousSystemLookup).map((ns) => {
+        const crypto = cryptoLookup[ns.ledgerCanisterId];
+        return {
+            label: "access.snsHolder",
+            gate: {
+                kind: "sns_gate",
+                governanceCanister: ns.governanceCanisterId,
+            },
+            key: "sns_gate",
+            enabled: true,
+            cssClass: crypto.symbol.toLowerCase(),
+            labelParams: { token: crypto.symbol },
+        };
+    });
 }
 
 const noGate: GateBinding = {
@@ -70,12 +71,13 @@ const nftGate: GateBinding = {
 
 export function getGateBindings(
     cryptoLookup: Record<string, CryptocurrencyDetails>,
+    nervousSystemLookup: Record<string, NervousSystemSummary>,
 ): GateBinding[] {
     return [
         noGate,
         diamondGate,
         // credentialGate,
-        ...getSnsGateBindings(cryptoLookup),
+        ...getSnsGateBindings(cryptoLookup, nervousSystemLookup),
         nnsGate,
         nftGate,
     ];

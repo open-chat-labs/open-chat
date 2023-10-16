@@ -21,7 +21,6 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
-    nervousSystem: NervousSystemSummary | undefined;
     added: bigint;
     lastUpdated: bigint;
 };
