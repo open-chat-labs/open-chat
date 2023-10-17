@@ -473,8 +473,8 @@
         "receiveToken": "接收 {symbol}",
         "sendToken": "发送 {symbol}",
         "receive": "收到",
-        "showZeroBalance": "显示空帐户",
-        "hideZeroBalance": "隐藏空帐户"
+        "showZeroBalance": "展示更多",
+        "hideZeroBalance": "显示较少"
     },
     "searchChat": "搜索",
     "search": "搜索...",

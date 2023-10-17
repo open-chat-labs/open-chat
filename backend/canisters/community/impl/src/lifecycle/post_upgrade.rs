@@ -1,7 +1,7 @@
 use crate::jobs::import_groups::finalize_group_import;
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
-use crate::memory::get_upgrades_memory;
-use crate::{read_state, Data};
+use crate::memory::{get_upgrades_memory, reset_memory_manager};
+use crate::{init_instruction_counts_log, mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use community_canister::post_upgrade::Args;
@@ -29,6 +29,9 @@ fn post_upgrade(args: Args) {
     for group_id in completed_imports {
         finalize_group_import(group_id);
     }
+
+    reset_memory_manager();
+    mutate_state(|state| state.data.instruction_counts_log = init_instruction_counts_log());
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 

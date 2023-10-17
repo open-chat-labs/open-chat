@@ -8,6 +8,7 @@
     import { rtlStore } from "../stores/rtl";
     import { mobileWidth } from "../stores/screenDimensions";
     import { menuStore } from "../stores/menu";
+    import { currentTheme } from "../theme/themes";
 
     const dispatch = createEventDispatcher();
 
@@ -86,6 +87,7 @@
     class:square
     class:large
     class:overflows
+    class:halloween={$currentTheme.name === "halloween"}
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
@@ -130,6 +132,13 @@
         border-radius: $sp4;
         position: relative;
         max-height: 100%;
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 4px;
+            left: 4px;
+            transform: scaleY(-1) scaleX(-1);
+        }
 
         &.square {
             border-radius: $sp3;

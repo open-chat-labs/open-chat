@@ -65,7 +65,7 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     CandidateProposal,
-    SubmitProposalResponse
+    SubmitProposalResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -1121,11 +1121,22 @@ export class UserClient extends CandidService {
         );
     }
 
-    submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<SubmitProposalResponse> {
+    submitProposal(
+        governanceCanisterId: string,
+        proposal: CandidateProposal,
+        ledger: string,
+        token: string,
+        proposalRejectionFee: bigint,
+        transactionFee: bigint,
+    ): Promise<SubmitProposalResponse> {
         return this.handleResponse(
             this.userService.submit_proposal({
-                governance_canister_id : Principal.fromText(governanceCanisterId),
-                proposal : proposalToSubmit(proposal),
+                governance_canister_id: Principal.fromText(governanceCanisterId),
+                proposal: proposalToSubmit(proposal),
+                ledger: Principal.fromText(ledger),
+                token: apiToken(token),
+                proposal_rejection_fee: proposalRejectionFee,
+                transaction_fee: transactionFee,
             }),
             submitProposalResponse,
         );

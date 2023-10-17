@@ -17,9 +17,10 @@ pub fn create_pending_transaction(
     amount: u128,
     fee: u128,
     user_id: UserId,
+    memo: Option<&[u8]>,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
-    match token {
+    let transaction = match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
             ledger,
             token,
@@ -38,6 +39,11 @@ pub fn create_pending_transaction(
             memo: None,
             created: now_nanos,
         }),
+    };
+    if let Some(memo) = memo {
+        transaction.set_memo(memo)
+    } else {
+        transaction
     }
 }
 
@@ -51,7 +57,10 @@ pub async fn process_transaction(
             if t.token == Cryptocurrency::InternetComputer {
                 nns::process_transaction(t.into(), sender).await
             } else {
-                icrc1::process_transaction(t, sender).await
+                match icrc1::process_transaction(t, sender).await {
+                    Ok(c) => Ok(c.into()),
+                    Err(f) => Err(f.into()),
+                }
             }
         }
     }

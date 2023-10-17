@@ -2488,8 +2488,8 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                     (t) => t.ledger,
                 ),
-                nervousSystemDetails: distinctBy(
-                    [...updates.nervousSystemDetails, ...(current?.nervousSystemDetails ?? [])],
+                nervousSystemSummary: distinctBy(
+                    [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
             };
@@ -2572,7 +2572,18 @@ export class OpenChatAgent extends EventTarget {
     submitProposal(
         governanceCanisterId: string,
         proposal: CandidateProposal,
+        ledger: string,
+        token: string,
+        proposalRejectionFee: bigint,
+        transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        return this.userClient.submitProposal(governanceCanisterId, proposal);
+        return this.userClient.submitProposal(
+            governanceCanisterId,
+            proposal,
+            ledger,
+            token,
+            proposalRejectionFee,
+            transactionFee,
+        );
     }
 }

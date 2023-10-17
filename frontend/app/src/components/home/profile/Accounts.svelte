@@ -11,15 +11,20 @@
     const client = getContext<OpenChat>("client");
     const defaultTokens = ["CHAT", "ICP", "ckBTC"];
 
+    export let showZeroBalance = false;
+    export let zeroCount = 0;
+
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive";
     let selectedLedger: string | undefined = undefined;
-    let showZeroBalance = false;
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
     $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
-    $: zeroCount = accounts.filter((a) => a.zero).length;
+
+    $: {
+        zeroCount = accounts.filter((a) => a.zero).length;
+    }
 
     function onBalanceRefreshed() {
         balanceError = undefined;
@@ -134,15 +139,6 @@
     {/each}
 </table>
 
-{#if zeroCount > 0}
-    <div class="show-more">
-        <LinkButton light underline={"hover"} on:click={() => (showZeroBalance = !showZeroBalance)}
-            >{$_(
-                showZeroBalance ? "cryptoAccount.hideZeroBalance" : "cryptoAccount.showZeroBalance"
-            )}</LinkButton>
-    </div>
-{/if}
-
 {#if balanceError !== undefined}
     <ErrorMessage>{balanceError}</ErrorMessage>
 {/if}
@@ -193,6 +189,7 @@
             @include font(light, normal, fs-70);
             display: flex;
             padding-left: $sp3;
+            text-wrap: nowrap;
         }
 
         .icon {
@@ -203,10 +200,5 @@
             background-repeat: no-repeat;
             background-position: top;
         }
-    }
-
-    .show-more {
-        @include font(light, normal, fs-70);
-        margin-top: $sp4;
     }
 </style>

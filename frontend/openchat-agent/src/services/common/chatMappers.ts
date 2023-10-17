@@ -403,7 +403,7 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         kind: "prize_content",
         prizesRemaining: candid.prizes_remaining,
         prizesPending: candid.prizes_pending,
-        diamondOnly: false, //TODO - fill this in once the backend is done
+        diamondOnly: candid.diamond_only,
         winners: candid.winners.map((u) => u.toString()),
         token: token(candid.token),
         endDate: candid.end_date,

@@ -303,6 +303,7 @@ export const idlFactory = ({ IDL }) => {
     'prizes_remaining' : IDL.Nat32,
     'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
+    'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
   });
   const CustomMessageContent = IDL.Record({
@@ -1278,13 +1279,17 @@ export const idlFactory = ({ IDL }) => {
     'summary' : IDL.Text,
   });
   const SubmitProposalArgs = IDL.Record({
+    'token' : Cryptocurrency,
+    'transaction_fee' : IDL.Nat,
+    'ledger' : CanisterId,
     'governance_canister_id' : CanisterId,
     'proposal' : ProposalToSubmit,
+    'proposal_rejection_fee' : IDL.Nat,
   });
   const SubmitProposalResponse = IDL.Variant({
     'Retrying' : IDL.Text,
+    'InsufficientPayment' : IDL.Nat,
     'Success' : IDL.Null,
-    'Unauthorized' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'GovernanceCanisterNotSupported' : IDL.Null,
     'TransferFailed' : IDL.Text,

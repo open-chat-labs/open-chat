@@ -301,7 +301,7 @@
                                     group={"prize_duration"} />
                             {/each}
                         </div>
-                        <!-- <div class="restrictions">
+                        <div class="restrictions">
                             <Legend label={$_("prizes.whoCanWin")} />
                             <Radio
                                 on:change={() => (diamondOnly = true)}
@@ -315,7 +315,7 @@
                                 id={`restricted_anyone`}
                                 label={$_(`prizes.anyone`)}
                                 group={"prize_restriction"} />
-                        </div> -->
+                        </div>
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
