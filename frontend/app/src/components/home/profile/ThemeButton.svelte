@@ -46,7 +46,7 @@
         </div>
         <span slot="menu">
             <Menu>
-                {#each otherThemes as theme}
+                {#each otherThemes.sort() as theme}
                     <MenuItem on:click={() => onSelect(theme.name)}>
                         <div class="theme-item" slot="text">
                             <div class="label">{theme.label}</div>
