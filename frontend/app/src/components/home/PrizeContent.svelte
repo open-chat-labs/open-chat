@@ -59,7 +59,7 @@
 
 <div class={`prize ${content.token}`}>
     <div class="top">
-        <div class="countdown" class:rtl={$rtlStore}>
+        <div class:diamond={content.diamondOnly} class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if allClaimed && !finished}
@@ -168,6 +168,10 @@
         &.rtl {
             left: unset;
             right: 10px;
+        }
+
+        &.diamond::after {
+            content: "💎";
         }
     }
 
