@@ -198,6 +198,22 @@ impl PendingCryptoTransaction {
             }
         }
     }
+
+    pub fn set_memo(mut self, memo: &[u8]) -> Self {
+        match &mut self {
+            PendingCryptoTransaction::NNS(t) => {
+                assert!(memo.len() <= 8);
+                let mut u64_bytes = [0u8; 8];
+                u64_bytes[(8 - memo.len())..].copy_from_slice(memo);
+                t.memo = Some(Memo(u64::from_be_bytes(u64_bytes)));
+            }
+            PendingCryptoTransaction::ICRC1(t) => {
+                assert!(memo.len() <= 32);
+                t.memo = Some(memo.to_vec().into());
+            }
+        }
+        self
+    }
 }
 
 impl CompletedCryptoTransaction {
