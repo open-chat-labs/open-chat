@@ -6,6 +6,7 @@
     "scripts": {
         "build": "rollup -c",
         "dev": "rollup -cw",
+        "typecheck": "tsc --noEmit",
         "wait": "rm -f lib/push_sw.js && wait-on lib/push_sw.js",
         "lint": "eslint ./src --fix"
     },
