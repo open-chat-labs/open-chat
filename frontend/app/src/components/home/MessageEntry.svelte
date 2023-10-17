@@ -293,7 +293,6 @@
             window.setTimeout(() => {
                 document.body.classList.remove("witch");
             }, 2000);
-            console.log("WITCH");
             return false;
         }
 
