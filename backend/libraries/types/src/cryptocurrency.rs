@@ -202,10 +202,7 @@ impl PendingCryptoTransaction {
     pub fn set_memo(mut self, memo: &[u8]) -> Self {
         match &mut self {
             PendingCryptoTransaction::NNS(t) => {
-                assert!(memo.len() <= 8);
-                let mut u64_bytes = [0u8; 8];
-                u64_bytes[(8 - memo.len())..].copy_from_slice(memo);
-                t.memo = Some(Memo(u64::from_be_bytes(u64_bytes)));
+                t.memo = Some(Memo(u64_from_bytes(memo)));
             }
             PendingCryptoTransaction::ICRC1(t) => {
                 assert!(memo.len() <= 32);
@@ -492,8 +489,15 @@ impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
                 &Subaccount(value.to.subaccount.unwrap_or_default()),
             )),
             fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
-            memo: value.memo.map(|m| Memo(u64::from_be_bytes(m.0.as_ref().try_into().unwrap()))),
+            memo: value.memo.map(|m| Memo(u64_from_bytes(m.0.as_slice()))),
             created: value.created,
         }
     }
+}
+
+fn u64_from_bytes(bytes: &[u8]) -> u64 {
+    assert!(bytes.len() <= 8);
+    let mut u64_bytes = [0u8; 8];
+    u64_bytes[(8 - bytes.len())..].copy_from_slice(bytes);
+    u64::from_be_bytes(u64_bytes)
 }
