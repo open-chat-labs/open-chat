@@ -6861,6 +6861,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
+ "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "ledger_utils",
