@@ -1,5 +1,6 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
+    import { currentTheme } from "../theme/themes";
 
     export let flush: boolean = false;
     export let shadow: boolean = false;
@@ -18,6 +19,7 @@
     class:entry
     class:gap
     class:slim
+    class:halloween={$currentTheme.name === "halloween"}
     class:rtl={$rtlStore}
     bind:clientHeight={height}>
     <slot />
@@ -35,6 +37,19 @@
         background-color: var(--section-bg);
         @include z-index("section-header");
         flex: 0 0 toRem(80);
+
+        &.halloween::before {
+            @include cobweb();
+            top: 100%;
+            left: 0;
+            transform: scaleX(-1);
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            top: 100%;
+            right: 0;
+        }
 
         @include mobile() {
             padding: $sp3 toRem(10);

@@ -3,6 +3,7 @@
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
     import { navOpen } from "../stores/layout";
+    import { currentTheme } from "../theme/themes";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -22,6 +23,7 @@
     class:middle
     class:modal
     class:hovering={$navOpen}
+    class:halloween={$currentTheme.name === "halloween"}
     class:empty>
     <slot />
 </section>
@@ -144,6 +146,13 @@
             &.empty {
                 background: transparent;
             }
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 0;
+            right: 0;
+            transform: scaleY(-1);
         }
     }
 </style>

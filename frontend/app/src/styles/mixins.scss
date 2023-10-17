@@ -293,6 +293,7 @@ $z-indexed-items: (
         "features",
         "phone",
         "phone-image",
+        "spider",
         "landing-page-menu",
         "left-nav",
         "footer-overlay",
@@ -548,4 +549,17 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     .details h4 {
         @include font(book, normal, fs-120);
     }
+}
+
+@mixin cobweb() {
+    content: "";
+    display: block;
+    background-image: url("/assets/cobweb.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    @include z-index("spider");
+    pointer-events: none;
 }
