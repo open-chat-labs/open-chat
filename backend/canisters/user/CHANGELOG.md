@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch user canisters over to using `MemoryManager` ([#4600](https://github.com/open-chat-labs/open-chat/pull/4600))
+- Set memo based on transaction type ([#4603](https://github.com/open-chat-labs/open-chat/pull/4603))
 
 ### Removed
 

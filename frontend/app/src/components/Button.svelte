@@ -1,4 +1,7 @@
 <script lang="ts">
+    import { onMount } from "svelte";
+    import { currentTheme } from "../theme/themes";
+
     export let cls = "";
     export let loading: boolean = false;
     export let disabled: boolean = false;
@@ -9,11 +12,27 @@
     export let hollow: boolean = false;
     export let title: string | undefined = undefined;
     export let square: boolean = false;
+
+    function rand(a: number, b: number) {
+        const r = Math.random();
+        return a + r * (b - a);
+    }
+
+    let height = "100px";
+    let width = "50px";
+
+    onMount(() => {
+        const h = rand(50, 150);
+        height = `${h}px`;
+        width = `${h / 2}px`;
+    });
 </script>
 
 <button
+    style={`--height: ${height}; --width: ${width}`}
     on:click|stopPropagation
     class={cls}
+    class:halloween={$currentTheme.name === "halloween"}
     class:loading
     class:disabled
     class:small
@@ -97,6 +116,21 @@
         &.fill {
             width: 100%;
             height: 100%;
+        }
+
+        &.halloween::after {
+            content: "";
+            display: block;
+            background-image: url("/assets/spider.svg");
+            background-repeat: no-repeat;
+            background-size: contain;
+            width: var(--width);
+            height: var(--height);
+            position: absolute;
+            top: calc(100% - 1px);
+            left: calc(50% - var(--width) / 2);
+            @include z-index("spider");
+            pointer-events: none;
         }
     }
 </style>

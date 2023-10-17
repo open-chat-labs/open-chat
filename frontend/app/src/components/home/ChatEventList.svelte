@@ -35,6 +35,7 @@
         reverseScroll,
     } from "../../stores/scrollPos";
     import TimelineDate from "./TimelineDate.svelte";
+    import { currentTheme } from "../../theme/themes";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
@@ -640,6 +641,7 @@
 <div
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
+    class:halloween={$currentTheme.name === "halloween"}
     on:scroll={onUserScroll}
     class:interrupt
     class:reverse={reverseScroll}
@@ -691,6 +693,13 @@
 
         &.interrupt {
             overflow-y: hidden;
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 0;
+            right: 0;
+            transform: scaleY(-1);
         }
     }
 
