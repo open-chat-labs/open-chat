@@ -6,3 +6,4 @@ generate_query_call!(updates);
 
 // Updates
 generate_update_call!(add_token);
+generate_update_call!(update_token);
