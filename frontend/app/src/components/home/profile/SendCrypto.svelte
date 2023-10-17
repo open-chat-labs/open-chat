@@ -11,6 +11,7 @@
     import Scanner from "./Scanner.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import AccountSelector from "./AccountSelector.svelte";
+    import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
 
     export let ledger: string;
     export let amountToSend: bigint;
@@ -36,11 +37,10 @@
     $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
     $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
-    $: validSend =
-        validAmount &&
-        amountToSend > BigInt(0) &&
-        targetAccount !== "" &&
-        targetAccount !== account;
+    $: targetAccountValid = targetAccount.length > 0 &&
+        targetAccount !== account &&
+        (isPrincipalValid(targetAccount) || (symbol === "ICP" && isAccountIdentifierValid(targetAccount)))
+    $: validSend = validAmount && targetAccountValid;
     $: {
         valid = capturingAccount ? validAccountName : validSend;
     }
@@ -126,6 +126,7 @@
             bind:value={targetAccount}
             countdown={false}
             maxlength={100}
+            invalid={targetAccount.length > 0 && !targetAccountValid}
             placeholder={$_("cryptoAccount.sendTarget")} />
 
         <div class="qr" on:click={scan}>
