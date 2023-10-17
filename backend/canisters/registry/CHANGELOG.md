@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Set `last_updated` after updating token details ([#4596](https://github.com/open-chat-labs/open-chat/pull/4596))
+
+## [[2.0.885](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.885-registry)] - 2023-10-13
+
 ### Changed
 
 - Include `root_canister_id` in `NervousSystemSummary` ([#4573](https://github.com/open-chat-labs/open-chat/pull/4573))

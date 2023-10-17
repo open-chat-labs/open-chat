@@ -44,8 +44,36 @@ impl Tokens {
         }
     }
 
-    pub fn get_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
-        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+    pub fn update(&mut self, args: registry_canister::update_token::Args, now: TimestampMillis) -> bool {
+        if let Some(token) = self
+            .tokens
+            .iter_mut()
+            .find(|t| t.ledger_canister_id == args.ledger_canister_id)
+        {
+            if let Some(name) = args.name {
+                token.name = name;
+            }
+            if let Some(symbol) = args.symbol {
+                token.symbol = symbol;
+            }
+            if let Some(info_url) = args.info_url {
+                token.info_url = info_url;
+            }
+            if let Some(how_to_buy_url) = args.how_to_buy_url {
+                token.how_to_buy_url = how_to_buy_url;
+            }
+            if let Some(transaction_url_format) = args.transaction_url_format {
+                token.transaction_url_format = transaction_url_format;
+            }
+            if let Some(logo) = args.logo {
+                token.logo = logo;
+            }
+            token.last_updated = now;
+            self.last_updated = now;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

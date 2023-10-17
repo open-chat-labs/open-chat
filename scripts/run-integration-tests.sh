@@ -25,11 +25,11 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-echo "Test PocketIC download starting"
-curl -sO https://download.dfinity.systems/ic/307d5847c1d2fe1f5e19181c7d0fcec23f4658b3/binaries/x86_64-$PLATFORM/pocket-ic.gz
+echo "PocketIC download starting"
+curl -sO https://download.dfinity.systems/ic/307d5847c1d2fe1f5e19181c7d0fcec23f4658b3/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz
 chmod +x pocket-ic
-echo "Test PocketIC download completed"
+echo "PocketIC download completed"
 cd ../../..
 
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method

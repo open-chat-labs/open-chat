@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support sending ICP to ICRC1 accounts ([#4583](https://github.com/open-chat-labs/open-chat/pull/4583))
 - Add optional `diamond_only` filter to prize messages ([#4587](https://github.com/open-chat-labs/open-chat/pull/4587))
 
+### Changed
+
+- Switch user canisters over to using `MemoryManager` ([#4600](https://github.com/open-chat-labs/open-chat/pull/4600))
+
 ### Removed
 
 - Removed calls to `c2c_toggle_mute_notifications` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))
