@@ -285,6 +285,18 @@
      * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
+        if (txt.indexOf("witch") >= 0) {
+            const laugh = new Audio("/assets/scream.mp3");
+            document.body.classList.add("witch");
+            laugh.currentTime = 0;
+            laugh.play();
+            window.setTimeout(() => {
+                document.body.classList.remove("witch");
+            }, 2000);
+            console.log("WITCH");
+            return false;
+        }
+
         if (isMultiUser && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;

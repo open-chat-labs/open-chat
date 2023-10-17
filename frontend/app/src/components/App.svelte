@@ -584,6 +584,40 @@
             @media (hover: none) {
                 @include no_user_select();
             }
+
+            &.witch {
+                background-color: black;
+                background-image: url("/assets/witch.jpg");
+                background-repeat: no-repeat;
+                background-size: cover;
+                animation: shake 100ms linear infinite;
+            }
+
+            @keyframes shake {
+                0% {
+                    background-position: -5px;
+                }
+                50% {
+                    background-position: 5px;
+                }
+                100% {
+                    background-position: -5px;
+                }
+            }
+
+            @include mobile() {
+                @keyframes shake {
+                    0% {
+                        background-position: 48%;
+                    }
+                    50% {
+                        background-position: 52%;
+                    }
+                    100% {
+                        background-position: 48%;
+                    }
+                }
+            }
         }
 
         h1,
