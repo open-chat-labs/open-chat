@@ -131,6 +131,20 @@
             left: calc(50% - var(--width) / 2);
             @include z-index("spider");
             pointer-events: none;
+            animation: pulse 3s linear infinite;
+            transform-origin: top;
+        }
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(0.95);
         }
     }
 </style>
