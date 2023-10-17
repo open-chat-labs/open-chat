@@ -4,7 +4,7 @@ use crate::take_state;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use ic_stable_structures::writer::{BufferedWriter, Writer};
-// use instruction_counts_log::InstructionCountFunctionId;
+use instruction_counts_log::InstructionCountFunctionId;
 use tracing::info;
 
 #[pre_upgrade]
@@ -23,8 +23,8 @@ fn pre_upgrade() {
 
     serializer::serialize(stable_state, writer).unwrap();
 
-    // let now = state.env.now();
-    // state
-    //     .data
-    //     .record_instructions_count(InstructionCountFunctionId::PreUpgrade, now);
+    let now = state.env.now();
+    state
+        .data
+        .record_instructions_count(InstructionCountFunctionId::PreUpgrade, now);
 }
