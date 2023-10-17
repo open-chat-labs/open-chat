@@ -16,7 +16,7 @@ use types::{
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
@@ -52,7 +52,7 @@ async fn send_message_v2(mut args: Args) -> Response {
             return InvalidRequest("Cannot send crypto to yourself".to_string());
         }
         let mut pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone(),
+            CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
             _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
         };
         if !pending_transaction.validate_recipient(args.recipient) {

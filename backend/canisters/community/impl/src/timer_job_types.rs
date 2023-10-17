@@ -6,6 +6,7 @@ use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction};
+use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -165,10 +166,12 @@ impl Job for RefundPrizeJob {
     fn execute(self) {
         if let Some(pending_transaction) = read_state(|state| {
             if let Some(channel) = state.data.channels.get(&self.channel_id) {
-                channel
-                    .chat
-                    .events
-                    .prize_refund(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+                channel.chat.events.prize_refund(
+                    self.thread_root_message_index,
+                    self.message_index,
+                    &MEMO_PRIZE_REFUND,
+                    state.env.now_nanos(),
+                )
             } else {
                 None
             }

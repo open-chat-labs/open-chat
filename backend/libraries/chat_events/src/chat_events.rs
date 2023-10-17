@@ -405,6 +405,7 @@ impl ChatEvents {
         &self,
         thread_root_message_index: Option<MessageIndex>,
         message_index: MessageIndex,
+        memo: &[u8],
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
         if let Some(message) = self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into()) {
@@ -418,6 +419,7 @@ impl ChatEvents {
                         unclaimed - fee,
                         fee,
                         message.sender,
+                        Some(memo),
                         now_nanos,
                     ));
                 }

@@ -8,6 +8,7 @@ use ic_cdk_macros::update;
 use serde::Serialize;
 use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};
+use utils::consts::MEMO_TIP;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -25,7 +26,7 @@ async fn tip_message(args: Args) -> Response {
         amount: args.amount,
         to: Principal::from(args.recipient).into(),
         fee: args.fee,
-        memo: None,
+        memo: Some(MEMO_TIP.to_vec().into()),
         created: now_nanos,
     });
     // Make the crypto transfer
