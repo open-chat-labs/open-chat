@@ -179,6 +179,7 @@
         selectedMultiUserChat !== undefined
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
+    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
 
     $: {
         document.title =
@@ -713,7 +714,9 @@
     }
 
     function showMakeProposalModal() {
-        modal = ModalType.MakeProposal;
+        if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
+            modal = ModalType.MakeProposal;
+        }
     }
 
     async function joinGroup(
@@ -1133,11 +1136,8 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
             <HallOfFame on:close={closeModal} />
-        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && governanceCanisterId !== undefined}
-            <MakeProposalModal
-                {selectedMultiUserChat}
-                {governanceCanisterId}
-                on:close={closeModal} />
+        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
+            <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

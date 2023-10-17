@@ -133,7 +133,7 @@ import {
     selectedMessageContext,
     staleThreadsCount,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -323,6 +323,7 @@ import type {
     SaveCryptoAccountResponse,
     CandidateProposal,
     GroupSubtype,
+    NervousSystemDetails,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -2282,8 +2283,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
-        if (gate.kind !== "sns_gate") return undefined;
-        return this.tryGetTokenDetailsByGovernanceCanister(gate.governanceCanister);
+        if (gate.kind === "sns_gate") {
+            return this.tryGetNervousSystem(gate.governanceCanister)?.token;            
+        }
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
@@ -3983,15 +3985,6 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getTokenByGovernanceCanister(governanceCanister: string): CryptocurrencyDetails {
-        const tokenDetails = this.tryGetTokenDetailsByGovernanceCanister(governanceCanister);
-        if (tokenDetails === undefined) {
-            throw new Error(`Unknown governance canister: ${governanceCanister}`);
-        } else {
-            return tokenDetails;
-        }
-    }
-
     async threadPreviews(
         _chatId: ChatIdentifier | undefined,
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
@@ -4910,37 +4903,33 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
-        const nervousSystemLookup = toRecord(
-            registry.nervousSystemDetails,
-            (ns) => ns.ledgerCanisterId,
+        const cryptoRecord = toRecord(
+            registry.tokenDetails,
+            (t) => t.ledger,
         );
 
-        cryptoLookup.set(
-            registry.tokenDetails.reduce(
-                (results, next) => {
-                    results[next.ledger] = {
-                        ...next,
-                        nervousSystem: nervousSystemLookup[next.ledger],
-                    };
-                    return results;
-                },
-                {} as Record<string, CryptocurrencyDetails>,
-            ),
-        );
+        nervousSystemLookup.set(toRecord(
+            registry.nervousSystemSummary.map((ns) => ({
+                ...ns,
+                token: cryptoRecord[ns.ledgerCanisterId]
+            })),
+            (ns) => ns.governanceCanisterId,
+        ));
+
+        cryptoLookup.set(cryptoRecord);
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
-        return this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId)?.logo;
+        return this.tryGetNervousSystem(governanceCanisterId)?.token.logo;
     }
 
-    private tryGetTokenDetailsByGovernanceCanister(
-        governanceCanisterId: string,
-    ): CryptocurrencyDetails | undefined {
-        return Object.values(get(cryptoLookup)).find(
-            (t) =>
-                t.nervousSystem !== undefined &&
-                t.nervousSystem.governanceCanisterId === governanceCanisterId,
-        );
+    tryGetNervousSystem(governanceCanisterId: string | undefined): NervousSystemDetails | undefined {
+        if (governanceCanisterId !== undefined) {
+            const nsLookup = get(nervousSystemLookup);
+            if (governanceCanisterId in nsLookup) {
+                return nsLookup[governanceCanisterId];
+            }    
+        }
     }
 
     // the key might be a username or it might be a user group name
@@ -5009,16 +4998,20 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
-        const token = this.getTokenByGovernanceCanister(governanceCanisterId);
+        const nervousSystem = this.tryGetNervousSystem(governanceCanisterId);
+        if (nervousSystem === undefined) {
+            this._logger.error("Cannot find NervousSystemDetails for governanceCanisterId", governanceCanisterId);
+            return Promise.resolve(false);
+        }
 
         return this.sendRequest({
             kind: "submitProposal",
             governanceCanisterId,
             proposal,
-            ledger: token.ledger,
-            token: token.symbol,
-            proposalRejectionFee: token.nervousSystem?.proposalRejectionFee ?? BigInt(0),
-            transactionFee: token.transferFee,
+            ledger: nervousSystem.token.ledger,
+            token: nervousSystem.token.symbol,
+            proposalRejectionFee: nervousSystem.proposalRejectionFee,
+            transactionFee: nervousSystem.token.transferFee,
         })
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {
@@ -5486,6 +5479,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;
