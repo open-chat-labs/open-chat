@@ -2488,8 +2488,8 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
                     (t) => t.ledger,
                 ),
-                nervousSystemDetails: distinctBy(
-                    [...updates.nervousSystemDetails, ...(current?.nervousSystemDetails ?? [])],
+                nervousSystemSummary: distinctBy(
+                    [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
             };

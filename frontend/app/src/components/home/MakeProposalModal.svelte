@@ -8,6 +8,7 @@
         type MultiUserChat,
         type OpenChat,
         type Treasury,
+        type NervousSystemDetails,
     } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
@@ -34,7 +35,7 @@
     const user = client.user;
 
     export let selectedMultiUserChat: MultiUserChat;
-    export let governanceCanisterId: string;
+    export let nervousSystem: NervousSystemDetails;
 
     let title = "";
     let url = "";
@@ -55,14 +56,14 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
 
-    $: tokenDetails = client.getTokenByGovernanceCanister(governanceCanisterId);
+    $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFee = tokenDetails.transferFee;
-    $: proposalCost = tokenDetails.nervousSystem?.proposalRejectionFee ?? BigInt(0);
+    $: proposalCost = nervousSystem.proposalRejectionFee;
     $: requiredFunds = proposalCost + transferFee + transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
@@ -132,7 +133,7 @@
                   };
 
         client
-            .submitProposal(governanceCanisterId, {
+            .submitProposal(nervousSystem.governanceCanisterId, {
                 title,
                 url: url === "" ? undefined : url,
                 summary,

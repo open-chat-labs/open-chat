@@ -2,7 +2,7 @@ import type { ApiNervousSystemSummary, ApiTokenDetails, ApiUpdatesResponse } fro
 import type {
     NervousSystemSummary,
     RegistryUpdatesResponse,
-    RegistryTokenDetails,
+    CryptocurrencyDetails,
 } from "openchat-shared";
 import { optional } from "../../utils/mapping";
 import { UnsupportedValueError } from "openchat-shared";
@@ -16,7 +16,7 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
                 optional(candid.Success.token_details, (tokens) =>
                     tokens.map((t) => tokenDetails(t)),
                 ) ?? [],
-            nervousSystemDetails: candid.Success.nervous_system_details.map(nervousSystemSummary),
+            nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
         };
     }
     if ("SuccessNoUpdates" in candid) {
@@ -27,7 +27,7 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
     throw new UnsupportedValueError("Unexpected ApiUpdatesResponse type received", candid);
 }
 
-function tokenDetails(candid: ApiTokenDetails): RegistryTokenDetails {
+function tokenDetails(candid: ApiTokenDetails): CryptocurrencyDetails {
     return {
         ledger: candid.ledger_canister_id.toString(),
         name: candid.name,

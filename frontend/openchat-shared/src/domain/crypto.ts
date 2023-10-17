@@ -21,7 +21,6 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
-    nervousSystem: NervousSystemSummary | undefined;
     added: bigint;
     lastUpdated: bigint;
 };
@@ -33,6 +32,15 @@ export type NervousSystemSummary = {
     isNns: boolean;
     proposalRejectionFee: bigint;
     submittingProposalsEnabled: boolean;
+};
+
+export type NervousSystemDetails = {
+    governanceCanisterId: string;
+    rootCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
+    token: CryptocurrencyDetails;
 };
 
 // approximate dollar exchange rates - until we come up with something better
