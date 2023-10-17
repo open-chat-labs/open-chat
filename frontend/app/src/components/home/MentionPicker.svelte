@@ -112,49 +112,53 @@
     }
 </script>
 
-<div
-    class="mention-picker"
-    class:up={direction === "up"}
-    class:down={direction === "down"}
-    class:border
-    {style}>
-    <Menu fit>
-        <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
-            <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
-                <div class="avatar" slot="icon">
-                    {#if item.kind === "user_group" || item.kind === "everyone"}
-                        <div class="group-icon">
-                            <AccountMultiple color={"var(--menu-disabled-txt)"} size={$iconSize} />
-                        </div>
-                    {:else}
-                        <Avatar
-                            url={client.userAvatarUrl($userStore[item.userId])}
-                            userId={item.userId}
-                            size={AvatarSize.Small} />
-                    {/if}
-                </div>
-                <div slot="text">
-                    {#if item.kind === "user_group"}
-                        <span class="display-name">
-                            {item.name}
-                        </span>
-                    {:else if item.kind === "everyone"}
-                        <span class="display-name">
-                            {"everyone"}
-                        </span>
-                    {:else}
-                        <span class="display-name">
-                            {client.getDisplayName(item, $communityMembers)}
-                        </span>
-                        <span class="username">
-                            @{item.username}
-                        </span>
-                    {/if}
-                </div>
-            </MenuItem>
-        </VirtualList>
-    </Menu>
-</div>
+{#if filtered.length > 0}
+    <div
+        class="mention-picker"
+        class:up={direction === "up"}
+        class:down={direction === "down"}
+        class:border
+        {style}>
+        <Menu fit>
+            <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
+                <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
+                    <div class="avatar" slot="icon">
+                        {#if item.kind === "user_group" || item.kind === "everyone"}
+                            <div class="group-icon">
+                                <AccountMultiple
+                                    color={"var(--menu-disabled-txt)"}
+                                    size={$iconSize} />
+                            </div>
+                        {:else}
+                            <Avatar
+                                url={client.userAvatarUrl($userStore[item.userId])}
+                                userId={item.userId}
+                                size={AvatarSize.Small} />
+                        {/if}
+                    </div>
+                    <div slot="text">
+                        {#if item.kind === "user_group"}
+                            <span class="display-name">
+                                {item.name}
+                            </span>
+                        {:else if item.kind === "everyone"}
+                            <span class="display-name">
+                                {"everyone"}
+                            </span>
+                        {:else}
+                            <span class="display-name">
+                                {client.getDisplayName(item, $communityMembers)}
+                            </span>
+                            <span class="username">
+                                @{item.username}
+                            </span>
+                        {/if}
+                    </div>
+                </MenuItem>
+            </VirtualList>
+        </Menu>
+    </div>
+{/if}
 
 <svelte:body on:keydown={onKeyDown} />
 

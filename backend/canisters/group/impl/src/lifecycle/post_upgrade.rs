@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
-use crate::memory::get_upgrades_memory;
+use crate::memory::{get_upgrades_memory, reset_memory_manager};
 use crate::{read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -22,6 +22,8 @@ fn post_upgrade(args: Args) {
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
     init_state(env, data, args.wasm_version);
+
+    reset_memory_manager();
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+
 ### Removed
 
 - Removed `filter_groups` and `c2c_filter_groups` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))
