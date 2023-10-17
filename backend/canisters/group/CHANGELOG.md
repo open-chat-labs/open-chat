@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Allow @everyone to be followed by some punctuation ([#4553](https://github.com/open-chat-labs/open-chat/pull/4553))
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
 
 ### Removed
 

@@ -1,5 +1,5 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
-use crate::memory::get_upgrades_memory;
+use crate::memory::{get_upgrades_memory, reset_memory_manager};
 use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -35,6 +35,8 @@ fn post_upgrade(args: Args) {
             .data
             .add_icp_token_details(ledger, root, governance, index, state.env.now())
     });
+
+    reset_memory_manager();
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
