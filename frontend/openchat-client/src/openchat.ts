@@ -4909,11 +4909,11 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         nervousSystemLookup.set(toRecord(
-            registry.nervousSystemDetails.map((ns) => ({
+            registry.nervousSystemSummary.map((ns) => ({
                 ...ns,
                 token: cryptoRecord[ns.ledgerCanisterId]
             })),
-            (ns) => ns.ledgerCanisterId,
+            (ns) => ns.governanceCanisterId,
         ));
 
         cryptoLookup.set(cryptoRecord);
