@@ -189,6 +189,7 @@
             @include font(light, normal, fs-70);
             display: flex;
             padding-left: $sp3;
+            text-wrap: nowrap;
         }
 
         .icon {
