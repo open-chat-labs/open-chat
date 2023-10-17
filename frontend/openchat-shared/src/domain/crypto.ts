@@ -34,6 +34,15 @@ export type NervousSystemSummary = {
     submittingProposalsEnabled: boolean;
 };
 
+export type NervousSystemDetails = {
+    governanceCanisterId: string;
+    rootCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
+    token: CryptocurrencyDetails;
+};
+
 // approximate dollar exchange rates - until we come up with something better
 const dollarToICP = 0.34;
 

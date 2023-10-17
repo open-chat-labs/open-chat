@@ -1,4 +1,4 @@
-import type { AccessGate, CryptocurrencyDetails, InterpolationValues, NervousSystemSummary } from "openchat-client";
+import type { AccessGate, InterpolationValues, NervousSystemDetails } from "openchat-client";
 
 export type GateBinding = {
     key: AccessGate["kind"];
@@ -9,12 +9,8 @@ export type GateBinding = {
     labelParams?: InterpolationValues;
 };
 
-function getSnsGateBindings(
-    cryptoLookup: Record<string, CryptocurrencyDetails>, 
-    nervousSystemLookup: Record<string, NervousSystemSummary>)
-: GateBinding[] {
+function getSnsGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
     return Object.values(nervousSystemLookup).map((ns) => {
-        const crypto = cryptoLookup[ns.ledgerCanisterId];
         return {
             label: "access.snsHolder",
             gate: {
@@ -23,8 +19,8 @@ function getSnsGateBindings(
             },
             key: "sns_gate",
             enabled: true,
-            cssClass: crypto.symbol.toLowerCase(),
-            labelParams: { token: crypto.symbol },
+            cssClass: ns.token.symbol.toLowerCase(),
+            labelParams: { token: ns.token.symbol },
         };
     });
 }
@@ -69,15 +65,12 @@ const nftGate: GateBinding = {
 //     cssClass: "credential",
 // };
 
-export function getGateBindings(
-    cryptoLookup: Record<string, CryptocurrencyDetails>,
-    nervousSystemLookup: Record<string, NervousSystemSummary>,
-): GateBinding[] {
+export function getGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
     return [
         noGate,
         diamondGate,
         // credentialGate,
-        ...getSnsGateBindings(cryptoLookup, nervousSystemLookup),
+        ...getSnsGateBindings(nervousSystemLookup),
         nnsGate,
         nftGate,
     ];

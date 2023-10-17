@@ -179,8 +179,7 @@
         selectedMultiUserChat !== undefined
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
-    $: nervousSystem = client.tryGetNervousSystemByGovernanceCanister(governanceCanisterId);
-    $: tokenDetails = client.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId);
+    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
 
     $: {
         document.title =
@@ -715,11 +714,7 @@
     }
 
     function showMakeProposalModal() {
-        if (
-            nervousSystem !== undefined &&
-            tokenDetails !== undefined &&
-            selectedMultiUserChat !== undefined
-        ) {
+        if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
             modal = ModalType.MakeProposal;
         }
     }
@@ -1141,12 +1136,8 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
             <HallOfFame on:close={closeModal} />
-        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined && tokenDetails !== undefined}
-            <MakeProposalModal
-                {selectedMultiUserChat}
-                {nervousSystem}
-                {tokenDetails}
-                on:close={closeModal} />
+        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
+            <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

@@ -323,7 +323,7 @@ import type {
     SaveCryptoAccountResponse,
     CandidateProposal,
     GroupSubtype,
-    NervousSystemSummary,
+    NervousSystemDetails,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -2283,8 +2283,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
-        if (gate.kind !== "sns_gate") return undefined;
-        return this.tryGetTokenDetailsByGovernanceCanister(gate.governanceCanister);
+        if (gate.kind === "sns_gate") {
+            return this.tryGetNervousSystem(gate.governanceCanister)?.token;            
+        }
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
@@ -4902,37 +4903,33 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
+        const cryptoRecord = toRecord(
+            registry.tokenDetails,
+            (t) => t.ledger,
+        );
+
         nervousSystemLookup.set(toRecord(
-            registry.nervousSystemDetails,
+            registry.nervousSystemDetails.map((ns) => ({
+                ...ns,
+                token: cryptoRecord[ns.ledgerCanisterId]
+            })),
             (ns) => ns.ledgerCanisterId,
         ));
 
-        cryptoLookup.set(toRecord(
-            registry.tokenDetails,
-            (t) => t.ledger,
-        ));
+        cryptoLookup.set(cryptoRecord);
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
-        return this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId)?.logo;
+        return this.tryGetNervousSystem(governanceCanisterId)?.token.logo;
     }
 
-    tryGetNervousSystemByGovernanceCanister(
-        governanceCanisterId: string | undefined,
-    ): NervousSystemSummary | undefined {
-        if (governanceCanisterId === undefined) return undefined;
-        return Object.values(get(nervousSystemLookup)).find(
-            (ns) => ns.governanceCanisterId === governanceCanisterId,
-        );
-    }
-
-    tryGetTokenDetailsByGovernanceCanister(
-        governanceCanisterId: string | undefined,
-    ): CryptocurrencyDetails | undefined {
-        if (governanceCanisterId === undefined) return undefined;
-        const ns = this.tryGetNervousSystemByGovernanceCanister(governanceCanisterId);
-        if (ns === undefined) return undefined; 
-        return get(cryptoLookup)[ns.ledgerCanisterId];
+    tryGetNervousSystem(governanceCanisterId: string | undefined): NervousSystemDetails | undefined {
+        if (governanceCanisterId !== undefined) {
+            const nsLookup = get(nervousSystemLookup);
+            if (governanceCanisterId in nsLookup) {
+                return nsLookup[governanceCanisterId];
+            }    
+        }
     }
 
     // the key might be a username or it might be a user group name
@@ -5001,10 +4998,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
-        const token = this.tryGetTokenDetailsByGovernanceCanister(governanceCanisterId);
-        const nervousSystem = this.tryGetNervousSystemByGovernanceCanister(governanceCanisterId);
-        if (token === undefined || nervousSystem === undefined) {
-            this._logger.error("Cannot find token details and nervous system for governanceCanisterId", governanceCanisterId);
+        const nervousSystem = this.tryGetNervousSystem(governanceCanisterId);
+        if (nervousSystem === undefined) {
+            this._logger.error("Cannot find NervousSystemDetails for governanceCanisterId", governanceCanisterId);
             return Promise.resolve(false);
         }
 
@@ -5012,10 +5008,10 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "submitProposal",
             governanceCanisterId,
             proposal,
-            ledger: token.ledger,
-            token: token.symbol,
+            ledger: nervousSystem.token.ledger,
+            token: nervousSystem.token.symbol,
             proposalRejectionFee: nervousSystem.proposalRejectionFee,
-            transactionFee: token.transferFee,
+            transactionFee: nervousSystem.token.transferFee,
         })
             .then((resp) => {
                 if (resp.kind === "success" || resp.kind === "retrying") {

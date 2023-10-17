@@ -46,8 +46,7 @@
     let showPayload = false;
 
     $: rootCanister =
-        client.tryGetNervousSystemByGovernanceCanister(content.governanceCanisterId)
-            ?.rootCanisterId ?? "";
+        client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =

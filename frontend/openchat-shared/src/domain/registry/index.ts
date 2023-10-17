@@ -7,14 +7,14 @@ export type RegistryUpdatesResponse =
 export type RegistryValue = {
     lastUpdated: bigint;
     tokenDetails: CryptocurrencyDetails[];
-    nervousSystemDetails: NervousSystemSummary[];
+    nervousSystemSummary: NervousSystemSummary[];
 };
 
 export type RegistryUpdatesResponseSuccess = {
     kind: "success";
     lastUpdated: bigint;
     tokenDetails: CryptocurrencyDetails[];
-    nervousSystemDetails: NervousSystemSummary[];
+    nervousSystemSummary: NervousSystemSummary[];
 };
 
 export type RegistryUpdatesResponseSuccessNoUpdates = {

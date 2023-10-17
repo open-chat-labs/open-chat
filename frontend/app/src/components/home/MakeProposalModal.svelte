@@ -5,11 +5,10 @@
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,
-        type CryptocurrencyDetails,
         type MultiUserChat,
         type OpenChat,
         type Treasury,
-        type NervousSystemSummary,
+        type NervousSystemDetails,
     } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
@@ -36,8 +35,7 @@
     const user = client.user;
 
     export let selectedMultiUserChat: MultiUserChat;
-    export let nervousSystem: NervousSystemSummary;
-    export let tokenDetails: CryptocurrencyDetails;
+    export let nervousSystem: NervousSystemDetails;
 
     let title = "";
     let url = "";
@@ -58,6 +56,7 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
 
+    $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
