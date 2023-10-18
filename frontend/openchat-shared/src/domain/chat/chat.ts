@@ -818,6 +818,7 @@ export type EventWrapper<T extends ChatEvent> = {
     event: T;
     timestamp: bigint;
     index: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type EventsSuccessResult<T extends ChatEvent> = {
@@ -1453,6 +1454,7 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type TransferSuccess = {
@@ -1461,6 +1463,7 @@ export type TransferSuccess = {
     messageIndex: number;
     eventIndex: number;
     transfer: CompletedCryptocurrencyTransfer;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type InvalidPoll = {

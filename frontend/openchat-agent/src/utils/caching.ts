@@ -30,7 +30,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 85;
+const CACHE_VERSION = 86;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -50,6 +50,7 @@ export interface ChatSchema extends DBSchema {
         value: EnhancedWrapper<ChatEvent>;
         indexes: {
             messageIdx: string;
+            expiresAt: number;
         };
     };
 
@@ -58,6 +59,7 @@ export interface ChatSchema extends DBSchema {
         value: EnhancedWrapper<ChatEvent>;
         indexes: {
             messageIdx: string;
+            expiresAt: number;
         };
     };
 
@@ -139,6 +141,7 @@ export function openCache(principal: Principal): Database {
             }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
+            chatEvents.createIndex("expiresAt", "expiresAt");
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
@@ -674,6 +677,7 @@ function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrappe
         },
         index: resp.eventIndex,
         timestamp: resp.timestamp,
+        expiresAt: resp.expiresAt,
     };
 }
 

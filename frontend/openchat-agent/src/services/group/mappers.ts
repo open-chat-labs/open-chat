@@ -6,7 +6,6 @@ import type {
     ApiSendMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
-    ApiMessageEventWrapper,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
@@ -58,6 +57,7 @@ import {
     messageEvent,
     threadDetails,
     mention,
+    expiresAt,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
@@ -280,6 +280,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -344,7 +345,7 @@ export async function getMessagesByMessageIndexResponse(
         );
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
+            events: candid.Success.messages.map(messageEvent),
             latestEventIndex,
         };
     }
@@ -369,14 +370,6 @@ export async function getMessagesByMessageIndexResponse(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
         candid,
     );
-}
-
-export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Message> {
-    return {
-        event: message(candid.event),
-        timestamp: candid.timestamp,
-        index: candid.index,
-    };
 }
 
 export async function getEventsResponse(
@@ -617,6 +610,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, expiresAt),
     };
 }
 
