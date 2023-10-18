@@ -562,4 +562,9 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     position: absolute;
     @include z-index("spider");
     pointer-events: none;
+
+    @include mobile {
+        width: 80px;
+        height: 80px;
+    }
 }
