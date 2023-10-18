@@ -29,7 +29,7 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { currentTheme } from "../../theme/themes";
+    import { preferredDarkThemeName, themeType } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
@@ -286,7 +286,10 @@
      * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (txt.indexOf("witch") >= 0 && $currentTheme.name === "halloween") {
+        const halloween = txt.match(/halloween|witch/i);
+        if (halloween) {
+            themeType.set("dark");
+            preferredDarkThemeName.set("halloween");
             const laugh = new Audio("/assets/scream.mp3");
             document.body.classList.add("witch");
             laugh.currentTime = 0;

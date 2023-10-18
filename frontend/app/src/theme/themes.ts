@@ -74,7 +74,7 @@ export function setModifiedTheme(
     }
 }
 
-const themeOverride = writable<string>(undefined);
+export const themeOverride = writable<string>(undefined);
 export const themeType = createLocalStorageStore("openchat_theme", "system");
 export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
 export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "light");
