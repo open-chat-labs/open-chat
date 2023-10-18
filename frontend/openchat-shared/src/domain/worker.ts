@@ -140,6 +140,7 @@ import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
+import type { OptionUpdate } from "./optionUpdate";
 /**
  * Worker request types
  */
@@ -676,6 +677,7 @@ type UpdateGroup = {
     rules?: UpdatedRules;
     permissions?: Partial<ChatPermissions>;
     avatar?: Uint8Array;
+    eventsTimeToLive?: OptionUpdate<bigint>;
     gate?: AccessGate;
     isPublic?: boolean;
     kind: "updateGroup";
