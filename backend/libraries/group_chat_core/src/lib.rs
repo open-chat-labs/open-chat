@@ -1474,7 +1474,7 @@ impl GroupChatCore {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
 
-                self.events.push_main_event(
+                events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                         updated_by: user_id,
                         new_gate: gate,
@@ -1495,12 +1495,11 @@ impl GroupChatCore {
                 };
 
                 let push_event_result =
-                    self.events
-                        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+                    events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
 
                 if self.is_public {
                     self.min_visible_indexes_for_new_members =
-                        Some((push_event_result.index, self.events.main_events_list().next_message_index()));
+                        Some((push_event_result.index, events.main_events_list().next_message_index()));
                     result.newly_public = true;
                 }
             }

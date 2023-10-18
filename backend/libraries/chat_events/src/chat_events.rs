@@ -909,7 +909,7 @@ impl ChatEvents {
             panic!("Event type is not valid: {event:?}");
         }
 
-        let expires_at = self.expiry_date(thread_root_message_index.is_some(), now);
+        let expires_at = self.expiry_date(&event, thread_root_message_index.is_some(), now);
 
         let events_list = if let Some(root_message_index) = thread_root_message_index {
             self.threads.get_mut(&root_message_index).unwrap()
@@ -936,6 +936,7 @@ impl ChatEvents {
 
     pub fn set_events_time_to_live(&mut self, user_id: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) {
         if events_ttl != self.events_ttl.value {
+            self.events_ttl = Timestamped::new(events_ttl, now);
             self.push_main_event(
                 ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,
@@ -944,7 +945,6 @@ impl ChatEvents {
                 0,
                 now,
             );
-            self.events_ttl = Timestamped::new(events_ttl, now);
         }
     }
 
@@ -1280,8 +1280,8 @@ impl ChatEvents {
             .and_then(|e| e.event.as_message())
     }
 
-    fn expiry_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
-        if is_thread_event {
+    fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
+        if is_thread_event || matches!(event, ChatEventInternal::EventsTimeToLiveUpdated(_)) {
             None
         } else {
             self.events_ttl.value.map(|d| now + d)
