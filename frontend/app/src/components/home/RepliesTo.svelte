@@ -75,6 +75,7 @@
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}
+                truncate
                 reply
                 myUserId={currentUser.userId}
                 content={repliesTo.content} />
