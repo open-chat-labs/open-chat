@@ -213,14 +213,15 @@
     function createGroup() {
         busy = true;
 
-        let isChannel = candidateGroup.id.kind === "channel";
+        const isChannel = candidateGroup.id.kind === "channel";
+        const level = candidateGroup.level;
 
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp, isChannel);
-                    if (err) toastStore.showFailureToast(interpolateError(err, isChannel ? "channel" : "group"));
+                    if (err) toastStore.showFailureToast(interpolateError(err, level));
                     step = 0;
                 } else if (!hideInviteUsers) {
                     return optionallyInviteUsers(resp.canisterId)
