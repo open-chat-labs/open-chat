@@ -402,6 +402,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rules,
                         payload.permissions,
                         payload.avatar,
+                        payload.eventsTimeToLive,
                         payload.gate,
                         payload.isPublic,
                     ),

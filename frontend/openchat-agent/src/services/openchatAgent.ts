@@ -82,6 +82,7 @@ import type {
     Message,
     MessageContent,
     MigrateUserPrincipalResponse,
+    OptionUpdate,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
     PinMessageResponse,
@@ -494,6 +495,7 @@ export class OpenChatAgent extends EventTarget {
         rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
+        eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
     ): Promise<UpdateGroupResponse> {
@@ -505,7 +507,7 @@ export class OpenChatAgent extends EventTarget {
                     rules,
                     permissions,
                     avatar,
-                    undefined,
+                    eventsTimeToLive,
                     gate,
                     isPublic,
                 );
@@ -517,7 +519,7 @@ export class OpenChatAgent extends EventTarget {
                     rules,
                     permissions,
                     avatar,
-                    undefined,
+                    eventsTimeToLive,
                     gate,
                     isPublic,
                 );

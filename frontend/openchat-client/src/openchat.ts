@@ -324,6 +324,7 @@ import type {
     CandidateProposal,
     GroupSubtype,
     NervousSystemDetails,
+    OptionUpdate,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1134,54 +1135,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Unable to join group", err);
                 return "failure";
-            });
-    }
-
-    updateGroupRules(chatId: MultiUserChatIdentifier, rules: UpdatedRules): Promise<boolean> {
-        return this.sendRequest({ kind: "updateGroup", chatId, rules })
-            .then((resp) => {
-                if (resp.kind === "success" && resp.rulesVersion !== undefined) {
-                    chatStateStore.setProp(chatId, "rules", {
-                        text: rules.text,
-                        enabled: rules.enabled,
-                        version: resp.rulesVersion,
-                    });
-                    return true;
-                } else {
-                    this._logger.error("Update group rules failed: ", resp.kind);
-                    return false;
-                }
-            })
-            .catch((err) => {
-                this._logger.error("Update group rules failed: ", err);
-                return false;
-            });
-    }
-
-    updateGroupPermissions(
-        chatId: MultiUserChatIdentifier,
-        originalPermissions: ChatPermissions,
-        updatedPermissions: ChatPermissions,
-    ): Promise<boolean> {
-        const optionalPermissions = this.mergeKeepingOnlyChanged(
-            originalPermissions,
-            updatedPermissions,
-        );
-
-        return this.sendRequest({ kind: "updateGroup", chatId, permissions: optionalPermissions })
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    return false;
-                }
-                localChatSummaryUpdates.markUpdated(chatId, {
-                    kind: "group_chat",
-                    permissions: optionalPermissions,
-                });
-                return true;
-            })
-            .catch((err) => {
-                this._logger.error("Update permissions failed: ", err);
-                return false;
             });
     }
 
@@ -2256,7 +2209,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     clearSelectedChat = clearSelectedChat;
-    private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile(file: File): Promise<AttachmentContent> {
         return messageContentFromFile(file, this._liveState.isDiamond);
     }
@@ -2284,7 +2237,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
         if (gate.kind === "sns_gate") {
-            return this.tryGetNervousSystem(gate.governanceCanister)?.token;            
+            return this.tryGetNervousSystem(gate.governanceCanister)?.token;
         }
     }
 
@@ -4166,6 +4119,7 @@ export class OpenChat extends OpenChatAgentWorker {
         rules?: UpdatedRules,
         permissions?: Partial<ChatPermissions>,
         avatar?: Uint8Array,
+        eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,
         isPublic?: boolean,
     ): Promise<UpdateGroupResponse> {
@@ -4177,6 +4131,7 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             permissions,
             avatar,
+            eventsTimeToLive,
             gate,
             isPublic,
         }).then((resp) => {
@@ -4188,6 +4143,16 @@ export class OpenChat extends OpenChatAgentWorker {
                     permissions,
                     gate,
                 });
+
+                if (rules !== undefined && resp.rulesVersion !== undefined) {
+                    chatStateStore.setProp(chatId, "rules", {
+                        text: rules.text,
+                        enabled: rules.enabled,
+                        version: resp.rulesVersion,
+                    });
+                }
+            } else {
+                this._logger.error("Update group rules failed: ", resp.kind);
             }
             return resp;
         });
@@ -4903,18 +4868,17 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
-        const cryptoRecord = toRecord(
-            registry.tokenDetails,
-            (t) => t.ledger,
-        );
+        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
-        nervousSystemLookup.set(toRecord(
-            registry.nervousSystemSummary.map((ns) => ({
-                ...ns,
-                token: cryptoRecord[ns.ledgerCanisterId]
-            })),
-            (ns) => ns.governanceCanisterId,
-        ));
+        nervousSystemLookup.set(
+            toRecord(
+                registry.nervousSystemSummary.map((ns) => ({
+                    ...ns,
+                    token: cryptoRecord[ns.ledgerCanisterId],
+                })),
+                (ns) => ns.governanceCanisterId,
+            ),
+        );
 
         cryptoLookup.set(cryptoRecord);
     }
@@ -4923,12 +4887,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.tryGetNervousSystem(governanceCanisterId)?.token.logo;
     }
 
-    tryGetNervousSystem(governanceCanisterId: string | undefined): NervousSystemDetails | undefined {
+    tryGetNervousSystem(
+        governanceCanisterId: string | undefined,
+    ): NervousSystemDetails | undefined {
         if (governanceCanisterId !== undefined) {
             const nsLookup = get(nervousSystemLookup);
             if (governanceCanisterId in nsLookup) {
                 return nsLookup[governanceCanisterId];
-            }    
+            }
         }
     }
 
@@ -5000,7 +4966,10 @@ export class OpenChat extends OpenChatAgentWorker {
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
         const nervousSystem = this.tryGetNervousSystem(governanceCanisterId);
         if (nervousSystem === undefined) {
-            this._logger.error("Cannot find NervousSystemDetails for governanceCanisterId", governanceCanisterId);
+            this._logger.error(
+                "Cannot find NervousSystemDetails for governanceCanisterId",
+                governanceCanisterId,
+            );
             return Promise.resolve(false);
         }
 
