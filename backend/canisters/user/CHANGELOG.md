@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Push `EventsTimeToLiveUpdated` event with the previous time to live ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
+
 ### Fixed
 
 - Add `serde(default)` attribute to fix a few failed upgrades ([#4610](https://github.com/open-chat-labs/open-chat/pull/4610))
