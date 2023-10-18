@@ -1402,6 +1402,16 @@ function applyTranslation(content: MessageContent, translation: string): Message
             };
         }
 
+        case "proposal_content": {
+            return {
+                ...content,
+                proposal: {
+                    ...content.proposal,
+                    summary: translation,
+                },
+            };
+        }
+
         default:
             return content;
     }
@@ -1561,6 +1571,9 @@ export function getMessageText(content: MessageContent): string | undefined {
 
         case "poll_content":
             return content.config.text;
+
+        case "proposal_content":
+            return content.proposal.summary;
 
         default:
             return undefined;
