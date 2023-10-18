@@ -26,7 +26,7 @@ jobs:
       - name: Cache Turborepo files
         uses: actions/cache@v3
         with:
-          path: ~/node_modules/.cache/turbo
+          path: ~/.turbo
           key: ${{ runner.os }}-turbo-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-turbo-
