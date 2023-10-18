@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Push `EventsTimeToLiveUpdated` event with the previous time to live ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
+- Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
 
 ### Fixed
 
