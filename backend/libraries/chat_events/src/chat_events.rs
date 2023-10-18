@@ -936,7 +936,6 @@ impl ChatEvents {
 
     pub fn set_events_time_to_live(&mut self, user_id: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) {
         if events_ttl != self.events_ttl.value {
-            self.events_ttl = Timestamped::new(events_ttl, now);
             self.push_main_event(
                 ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,
@@ -945,6 +944,7 @@ impl ChatEvents {
                 0,
                 now,
             );
+            self.events_ttl = Timestamped::new(events_ttl, now);
         }
     }
 

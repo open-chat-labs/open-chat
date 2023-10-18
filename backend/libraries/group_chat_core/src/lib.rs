@@ -1470,12 +1470,6 @@ impl GroupChatCore {
             );
         }
 
-        if let Some(new_events_ttl) = events_ttl.expand() {
-            if new_events_ttl != events.get_events_time_to_live().value {
-                events.set_events_time_to_live(user_id, new_events_ttl, now);
-            }
-        }
-
         if let Some(gate) = gate.expand() {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
@@ -1509,6 +1503,12 @@ impl GroupChatCore {
                         Some((push_event_result.index, self.events.main_events_list().next_message_index()));
                     result.newly_public = true;
                 }
+            }
+        }
+
+        if let Some(new_events_ttl) = events_ttl.expand() {
+            if new_events_ttl != events.get_events_time_to_live().value {
+                events.set_events_time_to_live(user_id, new_events_ttl, now);
             }
         }
 
