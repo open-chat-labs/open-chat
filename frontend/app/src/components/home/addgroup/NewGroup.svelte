@@ -98,7 +98,7 @@
 
     function groupUpdateErrorMessage(
         resp: UpdateGroupResponse,
-        isChannel: boolean
+        level: Level,
     ): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "unchanged") return undefined;
@@ -106,8 +106,8 @@
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "desc_too_long") return "groupDescTooLong";
-        if (resp.kind === "name_taken" && isChannel) return "channelAlreadyExists";
-        if (resp.kind === "name_taken") return "groupAlreadyExists";
+        if (resp.kind === "name_taken" && level === "group") return "groupAlreadyExists";
+        if (resp.kind === "name_taken") return "channelAlreadyExists";
         if (resp.kind === "not_in_group") return "userNotInGroup";
         if (resp.kind === "internal_error") return "groupUpdateFailed";
         if (resp.kind === "not_authorized") return "groupUpdateFailed";
@@ -122,7 +122,7 @@
 
     function groupCreationErrorMessage(
         resp: CreateGroupResponse,
-        isChannel: boolean
+        level: Level
     ): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "internal_error") return "groupCreationFailed";
@@ -130,8 +130,8 @@
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "description_too_long") return "groupDescTooLong";
-        if (resp.kind === "group_name_taken" && isChannel) return "channelAlreadyExists";
-        if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+        if (resp.kind === "group_name_taken" && level === "group") return "groupAlreadyExists";
+        if (resp.kind === "group_name_taken") return "channelAlreadyExists";
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
         if (resp.kind === "throttled") return "groupCreationFailed";
@@ -197,8 +197,7 @@
             if (resp.kind === "success") {
                 originalGroup = updatedGroup;
             } else {
-                const isChannel = updatedGroup.id.kind === "channel";
-                const err = groupUpdateErrorMessage(resp, isChannel);
+                const err = groupUpdateErrorMessage(resp, updatedGroup.level);
                 if (err) {
                     toastStore.showFailureToast(interpolateError(err, updatedGroup.level));
                 }
@@ -213,14 +212,13 @@
     function createGroup() {
         busy = true;
 
-        const isChannel = candidateGroup.id.kind === "channel";
         const level = candidateGroup.level;
 
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const err = groupCreationErrorMessage(resp, isChannel);
+                    const err = groupCreationErrorMessage(resp, level);
                     if (err) toastStore.showFailureToast(interpolateError(err, level));
                     step = 0;
                 } else if (!hideInviteUsers) {
