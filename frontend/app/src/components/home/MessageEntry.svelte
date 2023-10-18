@@ -277,6 +277,15 @@
         return [expandedText, mentioned];
     }
 
+    function spookyTime(date: Date): boolean {
+        const time = date.getTime();
+        const halloween = new Date(date.getFullYear(), 9, 31).getTime();
+        const week = 7 * 24 * 60 * 60 * 1000;
+        const start = halloween - week;
+        const end = halloween + week;
+        return time >= start && time <= end;
+    }
+
     /**
      * Check the message content for special commands
      * * /poll - creates a poll
@@ -286,18 +295,22 @@
      * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        const halloween = txt.match(/halloween|witch/i);
-        if (halloween) {
-            themeType.set("dark");
-            preferredDarkThemeName.set("halloween");
-            const laugh = new Audio("/assets/scream.mp3");
-            document.body.classList.add("witch");
-            laugh.currentTime = 0;
-            laugh.play();
-            window.setTimeout(() => {
-                document.body.classList.remove("witch");
-            }, 2000);
-            return false;
+        if (spookyTime(new Date())) {
+            const halloween = txt.match(
+                /pumpkin|zombie|skeleton|cauldron|halloween|witch|spooky|ghost/i
+            );
+            if (halloween) {
+                themeType.set("dark");
+                preferredDarkThemeName.set("halloween");
+                const laugh = new Audio("/assets/scream.mp3");
+                document.body.classList.add("witch");
+                laugh.currentTime = 0;
+                laugh.play();
+                window.setTimeout(() => {
+                    document.body.classList.remove("witch");
+                }, 2000);
+                return false;
+            }
         }
 
         if (isMultiUser && /^\/poll$/.test(txt)) {
