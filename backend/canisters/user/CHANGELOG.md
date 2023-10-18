@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.887](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.887-user)] - 2023-10-18
+
 ### Added
 
 - Support submitting proposals to any governance canister ([#4579](https://github.com/open-chat-labs/open-chat/pull/4579))
