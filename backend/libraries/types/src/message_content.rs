@@ -583,6 +583,7 @@ pub struct PrizeContent {
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
+    #[serde(default)]
     pub diamond_only: bool,
 }
 
