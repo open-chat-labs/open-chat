@@ -474,7 +474,7 @@ type RefreshAccountBalance = {
 };
 
 type GetAccountTransactions = {
-    ledger: string;
+    ledgerIndex: string;
     principal: string;
     kind: "getAccountTransactions";
 };

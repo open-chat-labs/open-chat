@@ -704,7 +704,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getAccountTransactions(payload.ledger, payload.principal),
+                    agent.getAccountTransactions(payload.ledgerIndex, payload.principal),
                 );
                 break;
 

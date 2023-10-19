@@ -5,6 +5,8 @@ import type { AgentConfig } from "../../config";
 import { Principal } from "@dfinity/principal";
 import { accountTransactions } from "./mappers";
 import type { AccountTransactionResult } from "openchat-shared";
+import { apiOptional } from "../common/chatMappers";
+import { identity } from "../../utils/mapping";
 
 export class LedgerIndexClient extends CandidService {
     private service: LedgerIndexService;
@@ -19,11 +21,11 @@ export class LedgerIndexClient extends CandidService {
         return new LedgerIndexClient(identity, config, canisterId);
     }
 
-    getAccountTransactions(principal: string): Promise<AccountTransactionResult> {
+    getAccountTransactions(principal: string, fromId?: bigint): Promise<AccountTransactionResult> {
         return this.handleResponse(
             this.service.get_account_transactions({
                 max_results: 100n,
-                start: [0n],
+                start: apiOptional(identity, fromId),
                 account: { owner: Principal.fromText(principal), subaccount: [] },
             }),
             accountTransactions,

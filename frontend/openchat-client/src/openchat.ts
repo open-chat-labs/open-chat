@@ -3939,11 +3939,11 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
-    getAccountTransactions(ledger: string): Promise<AccountTransactionResult> {
+    getAccountTransactions(ledgerIndex: string): Promise<AccountTransactionResult> {
         return this.sendRequest({
             kind: "getAccountTransactions",
-            ledger,
-            principal: this.user.cryptoAccount,
+            ledgerIndex: ledgerIndex,
+            principal: this.user.userId,
         });
     }
 

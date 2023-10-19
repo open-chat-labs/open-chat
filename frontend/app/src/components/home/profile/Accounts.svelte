@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ViewList from "svelte-material-icons/ViewList.svelte";
     import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
     import { dollarExchangeRates } from "openchat-client";
     import { getContext } from "svelte";
@@ -7,6 +8,7 @@
     import { _ } from "svelte-i18n";
     import LinkButton from "../../LinkButton.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import { iconSize } from "../../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     const defaultTokens = ["CHAT", "ICP", "ckBTC"];
@@ -46,6 +48,13 @@
     function showSend(ledger: string) {
         selectedLedger = ledger;
         manageMode = "send";
+    }
+
+    function loadTransactions() {
+        const ledgerIndex = "2awyi-oyaaa-aaaaq-aaanq-cai"; // TODO this is hard-coded to OpenChat for now
+        client.getAccountTransactions(ledgerIndex).then((result) => {
+            console.log("Account transactions: ", result);
+        });
     }
 
     function buildAccountsList(
@@ -118,6 +127,11 @@
                     <div>
                         {token.symbol}
                     </div>
+                    {#if token.symbol.toLowerCase() === "chat"}
+                        <div on:click={() => loadTransactions()} class="trans">
+                            <ViewList size={$iconSize} color={"var(--txt)"} />
+                        </div>
+                    {/if}
                 </div>
             </td>
             <td>
