@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::{get_upgrades_memory, reset_memory_manager};
-use crate::Data;
+use crate::model::orders_log::OrdersLog;
+use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -24,7 +25,14 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
+    let orders_made: Vec<_> = read_state(|state| state.data.orders_log.iter().collect());
+
     reset_memory_manager();
+
+    mutate_state(|state| {
+        state.data.orders_log = OrdersLog::default();
+        state.data.orders_log.bulk_insert(orders_made.into_iter());
+    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
