@@ -15,6 +15,7 @@ pub struct Args {
     pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<GroupPermissionsPrevious>,
+    #[serde(default)]
     pub permissions_v2: Option<GroupPermissions>,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,

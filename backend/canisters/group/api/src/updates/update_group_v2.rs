@@ -12,6 +12,7 @@ pub struct Args {
     pub rules: Option<UpdatedRules>,
     pub avatar: OptionUpdate<Document>,
     pub permissions: Option<OptionalGroupPermissionsPrevious>,
+    #[serde(default)]
     pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,

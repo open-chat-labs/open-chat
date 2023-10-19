@@ -14,6 +14,7 @@ pub struct Args {
     pub avatar: OptionUpdate<Document>,
     // TODO: remove this after the website starts using permissions_v2
     pub permissions: Option<OptionalGroupPermissionsPrevious>,
+    #[serde(default)]
     pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,

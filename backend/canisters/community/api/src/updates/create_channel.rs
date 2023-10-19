@@ -16,6 +16,7 @@ pub struct Args {
     pub history_visible_to_new_joiners: bool,
     // TODO: remove this after the website starts using permissions_v2
     pub permissions: Option<GroupPermissionsPrevious>,
+    #[serde(default)]
     pub permissions_v2: Option<GroupPermissions>,
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
