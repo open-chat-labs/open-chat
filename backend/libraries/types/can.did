@@ -262,7 +262,8 @@ type GroupChatSummary = record {
     participant_count : nat32;
     role : GroupRole;
     mentions : vec Mention;
-    permissions : GroupPermissions;
+    permissions : GroupPermissionsPrevious;
+    permissions_v2 : GroupPermissions;
     metrics : ChatMetrics;
     my_metrics : ChatMetrics;
     latest_threads : vec ThreadSyncDetails;
@@ -293,7 +294,8 @@ type GroupCanisterGroupChatSummary = record {
     participant_count : nat32;
     role : GroupRole;
     mentions : vec Mention;
-    permissions : GroupPermissions;
+    permissions : GroupPermissionsPrevious;
+    permissions_v2 : GroupPermissions;
     notifications_muted : bool;
     metrics : ChatMetrics;
     my_metrics : ChatMetrics;
@@ -318,7 +320,8 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     participant_count : opt nat32;
     role : opt GroupRole;
     mentions : vec Mention;
-    permissions : opt GroupPermissions;
+    permissions : opt GroupPermissionsPrevious;
+    permissions_v2 : opt GroupPermissions;
     updated_events : vec record { opt nat32; nat32; nat64 };
     metrics : opt ChatMetrics;
     my_metrics : opt ChatMetrics;
@@ -382,7 +385,8 @@ type CommunityCanisterChannelSummary = record {
     latest_message_sender_display_name : opt text;
     latest_event_index : EventIndex;
     member_count : nat32;
-    permissions : GroupPermissions;
+    permissions : GroupPermissionsPrevious;
+    permissions_v2 : GroupPermissions;
     metrics : ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
@@ -441,7 +445,8 @@ type CommunityCanisterChannelSummaryUpdates = record {
     latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
     member_count : opt nat32;
-    permissions : opt GroupPermissions;
+    permissions : opt GroupPermissionsPrevious;
+    permissions_v2 : opt GroupPermissions;
     updated_events : vec record { opt nat32; nat32; nat64 };
     metrics : opt ChatMetrics;
     date_last_pinned : opt TimestampMillis;
@@ -1186,7 +1191,7 @@ type User = record {
     username : text;
 };
 
-type GroupPermissions = record {
+type GroupPermissionsPrevious = record {
     change_permissions : PermissionRole;
     change_roles : PermissionRole;
     add_members : PermissionRole;
@@ -1203,7 +1208,7 @@ type GroupPermissions = record {
     mention_all_members : PermissionRole;
 };
 
-type OptionalGroupPermissions = record {
+type OptionalGroupPermissionsPrevious = record {
     change_permissions : opt PermissionRole;
     change_roles : opt PermissionRole;
     remove_members : opt PermissionRole;
@@ -1219,7 +1224,69 @@ type OptionalGroupPermissions = record {
     mention_all_members : opt PermissionRole;
 };
 
+type GroupPermissions = record {
+    change_roles : PermissionRole;
+    add_members : PermissionRole;
+    remove_members : PermissionRole;
+    delete_messages : PermissionRole;
+    update_group : PermissionRole;
+    pin_messages : PermissionRole;
+    invite_users : PermissionRole;
+    react_to_messages : PermissionRole;
+    mention_all_members : PermissionRole;
+    message_permissions : MessagePermissions;
+    thread_permissions : opt MessagePermissions;
+};
+
+type MessagePermissions = record {
+    default : PermissionRole;
+    text : opt PermissionRole;
+    image : opt PermissionRole;
+    video : opt PermissionRole;
+    audio : opt PermissionRole;
+    file : opt PermissionRole;
+    poll : opt PermissionRole;
+    crypto : opt PermissionRole;
+    giphy : opt PermissionRole;
+    prize : opt PermissionRole;
+    custom : vec CustomPermission;
+};
+
+type CustomPermission = record {
+    subtype : text;
+    role : PermissionRole;
+};
+
+type OptionalGroupPermissions = record {
+    change_roles : opt PermissionRole;
+    remove_members : opt PermissionRole;
+    delete_messages : opt PermissionRole;
+    update_group : opt PermissionRole;
+    pin_messages : opt PermissionRole;
+    invite_users : opt PermissionRole;
+    react_to_messages : opt PermissionRole;
+    mention_all_members : opt PermissionRole;
+    message_permissions : opt OptionalMessagePermissions;
+    thread_permissions : OptionalMessagePermissionsUpdate;
+};
+
+type OptionalMessagePermissions = record {
+    default : opt PermissionRole;
+    text : PermissionRoleUpdate;
+    image : PermissionRoleUpdate;
+    video : PermissionRoleUpdate;
+    audio : PermissionRoleUpdate;
+    file : PermissionRoleUpdate;
+    poll : PermissionRoleUpdate;
+    crypto : PermissionRoleUpdate;
+    giphy : PermissionRoleUpdate;
+    prize : PermissionRoleUpdate;
+    custom_updated : vec CustomPermission;
+    custom_deleted : vec text;
+};
+
 type PermissionRole = variant {
+    None;
     Owner;
     Admins;
     Moderators;
@@ -1384,7 +1451,7 @@ type DiamondMembershipPlanDuration = variant {
 
 type AccessGate = variant {
     DiamondMember;
-    VerifiedCredential: VerifiedCredentialGate;
+    VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
 };
 
@@ -1400,8 +1467,8 @@ type GroupGateUpdated = record {
 };
 
 type VerifiedCredentialGate = record {
-    issuer: text;
-    credential: text;
+    issuer : text;
+    credential : text;
 };
 
 type SnsNeuronGate = record {
@@ -1500,4 +1567,16 @@ type CommunityMember = record {
     date_added : TimestampMillis;
     role : CommunityRole;
     display_name : opt text;
+};
+
+type PermissionRoleUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : PermissionRole;
+};
+
+type OptionalMessagePermissionsUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : OptionalMessagePermissions;
 };

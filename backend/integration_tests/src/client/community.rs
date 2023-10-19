@@ -65,6 +65,7 @@ pub mod happy_path {
                 avatar: None,
                 history_visible_to_new_joiners: is_public,
                 permissions: None,
+                permissions_v2: None,
                 events_ttl: None,
                 gate: None,
             },

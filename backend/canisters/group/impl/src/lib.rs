@@ -124,7 +124,8 @@ impl RuntimeState {
             participant_count: chat.members.len(),
             role: member.role.into(),
             mentions: member.most_recent_mentions(None, &chat.events),
-            permissions: chat.permissions.clone(),
+            permissions: chat.permissions.clone().into(),
+            permissions_v2: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
             metrics: chat.events.metrics().hydrate(),
             my_metrics: chat

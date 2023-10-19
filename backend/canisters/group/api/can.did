@@ -207,7 +207,8 @@ type UpdateGroupV2Args = record {
     description : opt text;
     rules : opt UpdatedRules;
     avatar : DocumentUpdate;
-    permissions : opt OptionalGroupPermissions;
+    permissions : opt OptionalGroupPermissionsPrevious;
+    permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;

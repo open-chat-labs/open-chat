@@ -1,6 +1,7 @@
 use crate::{
-    AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupCanisterThreadDetails, GroupPermissions, GroupRole,
-    GroupSubtype, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupCanisterThreadDetails, GroupPermissions,
+    GroupPermissionsPrevious, GroupRole, GroupSubtype, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate,
+    TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -21,7 +22,9 @@ pub struct CommunityCanisterChannelSummary {
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: EventIndex,
     pub member_count: u32,
-    pub permissions: GroupPermissions,
+    // TODO: remove this once the website is using permissions_v2
+    pub permissions: GroupPermissionsPrevious,
+    pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
@@ -53,7 +56,9 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: Option<EventIndex>,
     pub member_count: Option<u32>,
-    pub permissions: Option<GroupPermissions>,
+    // TODO: remove this once the website is using permissions_v2
+    pub permissions: Option<GroupPermissionsPrevious>,
+    pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,

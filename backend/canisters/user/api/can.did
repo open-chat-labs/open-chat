@@ -201,7 +201,8 @@ type CreateGroupArgs = record {
     description : text;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissions;
+    permissions : opt GroupPermissionsPrevious;
+    permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
@@ -584,7 +585,7 @@ type ProposalToSubmit = record {
 type ProposalToSubmitAction = variant {
     Motion;
     TransferSnsTreasuryFunds : record {
-        treasury: variant {
+        treasury : variant {
             ICP;
             SNS;
         };
