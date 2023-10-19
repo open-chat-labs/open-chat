@@ -35,13 +35,13 @@
     export let editing: boolean;
     export let history: boolean;
 
-    let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
-    let minStake = client.getMinStakeInTokens(original.gate);
+    let minDissolveDelay = client.getMinDissolveDelayDays(original.gate) ?? "";
+    let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let gateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
 
-    $: invalidDissolveDelay = minDissolveDelay !== undefined && isNaN(minDissolveDelay);
-    $: invalidMinStake = minStake !== undefined && isNaN(minStake);
+    $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
+    $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: isDiamond = client.isDiamond;
     $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
@@ -49,7 +49,11 @@
 
     onMount(() => {
         gateBindings = getGateBindings($nervousSystemLookup);
-        selectedGateKey = gateBindings.find((g) => candidate.gate.kind === g.gate.kind)?.key;
+        selectedGateKey = gateBindings.find((g) => {
+            return candidate.gate.kind === "sns_gate"
+                ? candidate.gate.governanceCanister === g.key
+                : candidate.gate.kind === g.gate.kind;
+        })?.key;
     });
 
     afterUpdate(() => {
@@ -58,10 +62,14 @@
                 ...candidate,
                 gate: {
                     ...candidate.gate,
-                    minDissolveDelay: !invalidDissolveDelay
-                        ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
-                        : undefined,
-                    minStakeE8s: !invalidMinStake ? Number(minStake) * E8S_PER_TOKEN : undefined,
+                    minDissolveDelay:
+                        minDissolveDelay !== "" && !invalidDissolveDelay
+                            ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
+                            : undefined,
+                    minStakeE8s:
+                        minStake !== "" && !invalidMinStake
+                            ? Number(minStake) * E8S_PER_TOKEN
+                            : undefined,
                 },
             };
         }
@@ -78,8 +86,8 @@
         candidate.gate = gateBindings.find((g) => g.key === selectedGateKey)?.gate ?? {
             kind: "no_gate",
         };
-        minDissolveDelay = undefined;
-        minStake = undefined;
+        minDissolveDelay = "";
+        minStake = "";
     }
 
     function snsHolderParams(gate: SNSAccessGate): InterpolationValues {

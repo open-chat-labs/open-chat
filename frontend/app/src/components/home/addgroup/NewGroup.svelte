@@ -96,10 +96,7 @@
         return interpolateLevel(error, level, true);
     }
 
-    function groupUpdateErrorMessage(
-        resp: UpdateGroupResponse,
-        level: Level,
-    ): string | undefined {
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse, level: Level): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "unchanged") return undefined;
         if (resp.kind === "name_too_short") return "groupNameTooShort";
@@ -180,33 +177,37 @@
 
         const updatedGroup = { ...candidateGroup };
 
-        return client.updateGroup(
-            updatedGroup.id,
-            nameDirty ? updatedGroup.name : undefined,
-            descDirty ? updatedGroup.description : undefined,
-            rulesDirty && rulesValid ? updatedGroup.rules : undefined,
-            permissionsDirty ? client.mergeKeepingOnlyChanged(
-                originalGroup.permissions,
-                updatedGroup.permissions,
-        ) : undefined,
-            avatarDirty ? updatedGroup.avatar?.blobData : undefined,
-            undefined,
-            gateDirty ? updatedGroup.gate : undefined,
-            visDirty ? updatedGroup.public : undefined,
-        ).then((resp) => {
-            if (resp.kind === "success") {
-                originalGroup = updatedGroup;
-            } else {
-                const err = groupUpdateErrorMessage(resp, updatedGroup.level);
-                if (err) {
-                    toastStore.showFailureToast(interpolateError(err, updatedGroup.level));
+        return client
+            .updateGroup(
+                updatedGroup.id,
+                nameDirty ? updatedGroup.name : undefined,
+                descDirty ? updatedGroup.description : undefined,
+                rulesDirty && rulesValid ? updatedGroup.rules : undefined,
+                permissionsDirty
+                    ? client.mergeKeepingOnlyChanged(
+                          originalGroup.permissions,
+                          updatedGroup.permissions
+                      )
+                    : undefined,
+                avatarDirty ? updatedGroup.avatar?.blobData : undefined,
+                undefined,
+                gateDirty ? updatedGroup.gate : undefined,
+                visDirty ? updatedGroup.public : undefined
+            )
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    originalGroup = updatedGroup;
+                } else {
+                    const err = groupUpdateErrorMessage(resp, updatedGroup.level);
+                    if (err) {
+                        toastStore.showFailureToast(interpolateError(err, updatedGroup.level));
+                    }
                 }
-            }
-        })
-        .finally(() => {
-            busy = false;
-            dispatch("close");
-        });
+            })
+            .finally(() => {
+                busy = false;
+                dispatch("close");
+            });
     }
 
     function createGroup() {
