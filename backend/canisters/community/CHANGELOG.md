@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
+
+## [[2.0.889](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.889-community)] - 2023-10-19
+
 ### Added
 
 - Add optional `diamond_only` filter to prize messages ([#4587](https://github.com/open-chat-labs/open-chat/pull/4587))
@@ -15,7 +21,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Don't auto-join gated channels ([#4561](https://github.com/open-chat-labs/open-chat/pull/4561))
 - Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
 - Set memo based on transaction type ([#4603](https://github.com/open-chat-labs/open-chat/pull/4603))
-- Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
 
 ## [[2.0.875](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.875-community)] - 2023-10-06
 
