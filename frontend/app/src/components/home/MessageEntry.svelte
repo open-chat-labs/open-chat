@@ -30,6 +30,7 @@
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
     import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
+    import { scream } from "../../utils/scream";
 
     const client = getContext<OpenChat>("client");
 
@@ -305,10 +306,9 @@
                     themeType.set("dark");
                     preferredDarkThemeName.set("halloween");
                 }
-                const laugh = new Audio("/assets/scream.mp3");
                 document.body.classList.add("witch");
-                laugh.currentTime = 0;
-                laugh.play();
+                scream.currentTime = 0;
+                scream.play();
                 window.setTimeout(() => {
                     document.body.classList.remove("witch");
                 }, 2000);
