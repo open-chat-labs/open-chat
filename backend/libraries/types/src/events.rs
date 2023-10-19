@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message,
-    MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
+    GroupPermissionsPrevious, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -158,8 +158,10 @@ pub struct MessageUnpinned {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PermissionsChanged {
-    pub old_permissions: GroupPermissions,
-    pub new_permissions: GroupPermissions,
+    pub old_permissions: GroupPermissionsPrevious,
+    pub new_permissions: GroupPermissionsPrevious,
+    pub old_permissions_v2: GroupPermissions,
+    pub new_permissions_v2: GroupPermissions,
     pub changed_by: UserId,
 }
 

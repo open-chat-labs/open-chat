@@ -849,8 +849,10 @@ type ParticipantsAdded = record {
 };
 
 type PermissionsChanged = record {
-    old_permissions : GroupPermissions;
-    new_permissions : GroupPermissions;
+    old_permissions : GroupPermissionsPrevious;
+    new_permissions : GroupPermissionsPrevious;
+    old_permissions_v2 : GroupPermissions;
+    new_permissions_v2 : GroupPermissions;
     changed_by : UserId;
 };
 

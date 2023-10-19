@@ -24,6 +24,7 @@ pub struct CommunityCanisterChannelSummary {
     pub member_count: u32,
     // TODO: remove this once the website is using permissions_v2
     pub permissions: GroupPermissionsPrevious,
+    #[serde(default)]
     pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub date_last_pinned: Option<TimestampMillis>,

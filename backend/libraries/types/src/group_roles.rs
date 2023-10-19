@@ -36,7 +36,7 @@ pub struct GroupPermissionsPrevious {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 // TODO: remove this serde attribute after communities and groups next released
-#[serde(from = "GroupPermissionsPrevious")]
+#[serde(from = "GroupPermissionsCombined")]
 pub struct GroupPermissions {
     pub change_roles: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
@@ -47,8 +47,41 @@ pub struct GroupPermissions {
     pub pin_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
+
     pub message_permissions: MessagePermissions,
     pub thread_permissions: Option<MessagePermissions>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupPermissionsCombined {
+    pub change_roles: GroupPermissionRole,
+    pub update_group: GroupPermissionRole,
+    pub add_members: GroupPermissionRole,
+    pub invite_users: GroupPermissionRole,
+    pub remove_members: GroupPermissionRole,
+    pub delete_messages: GroupPermissionRole,
+    pub pin_messages: GroupPermissionRole,
+    pub react_to_messages: GroupPermissionRole,
+    pub mention_all_members: GroupPermissionRole,
+
+    #[serde(default = "default_group_permission_role")]
+    pub change_permissions: GroupPermissionRole,
+    #[serde(default = "default_group_permission_role")]
+    pub block_users: GroupPermissionRole,
+    #[serde(default = "default_group_permission_role")]
+    pub create_polls: GroupPermissionRole,
+    #[serde(default = "default_group_permission_role")]
+    pub send_messages: GroupPermissionRole,
+    #[serde(default = "default_group_permission_role")]
+    pub reply_in_thread: GroupPermissionRole,
+    #[serde(default)]
+    pub message_permissions: MessagePermissions,
+    #[serde(default)]
+    pub thread_permissions: Option<MessagePermissions>,
+}
+
+fn default_group_permission_role() -> GroupPermissionRole {
+    GroupPermissionRole::None
 }
 
 // TODO: remove this after communities and groups next released
@@ -78,6 +111,49 @@ impl From<GroupPermissionsPrevious> for GroupPermissions {
                     ..Default::default()
                 })
             },
+        }
+    }
+}
+
+// TODO: remove this after communities and groups next released
+impl From<GroupPermissionsCombined> for GroupPermissions {
+    #[allow(deprecated)]
+    fn from(value: GroupPermissionsCombined) -> Self {
+        if value.create_polls.equals(&GroupPermissionRole::None) {
+            // GroupPermissionsPrevious will never have any permission roles == None
+            // so we reason the source type was in fact GroupPermissionsPrevious
+            let previous = GroupPermissionsPrevious {
+                change_permissions: value.change_permissions,
+                change_roles: value.change_roles,
+                update_group: value.update_group,
+                add_members: value.add_members,
+                invite_users: value.invite_users,
+                remove_members: value.remove_members,
+                block_users: value.block_users,
+                delete_messages: value.delete_messages,
+                pin_messages: value.pin_messages,
+                create_polls: value.create_polls,
+                send_messages: value.send_messages,
+                react_to_messages: value.react_to_messages,
+                reply_in_thread: value.reply_in_thread,
+                mention_all_members: value.mention_all_members,
+            };
+            previous.into()
+        } else {
+            // Otherwise we reason the source type was in fact GroupPermissions
+            GroupPermissions {
+                change_roles: value.change_roles,
+                update_group: value.update_group,
+                add_members: value.add_members,
+                invite_users: value.invite_users,
+                remove_members: value.remove_members,
+                delete_messages: value.delete_messages,
+                pin_messages: value.pin_messages,
+                react_to_messages: value.react_to_messages,
+                mention_all_members: value.mention_all_members,
+                message_permissions: value.message_permissions,
+                thread_permissions: value.thread_permissions,
+            }
         }
     }
 }

@@ -203,6 +203,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub wasm_version: BuildVersion,
     // TODO: remove this once the website is using permissions_v2
     pub permissions: GroupPermissionsPrevious,
+    #[serde(default)]
     pub permissions_v2: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
