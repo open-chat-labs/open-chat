@@ -49,7 +49,11 @@
 
     onMount(() => {
         gateBindings = getGateBindings($nervousSystemLookup);
-        selectedGateKey = gateBindings.find((g) => candidate.gate.kind === g.gate.kind)?.key;
+        selectedGateKey = gateBindings.find((g) => {
+            return candidate.gate.kind === "sns_gate"
+                ? candidate.gate.governanceCanister === g.key
+                : candidate.gate.kind === g.gate.kind;
+        })?.key;
     });
 
     afterUpdate(() => {
