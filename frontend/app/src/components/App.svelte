@@ -350,6 +350,8 @@
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />
 
+<div class="witch" />
+
 <style lang="scss">
     :global {
         html,
@@ -585,38 +587,8 @@
                 @include no_user_select();
             }
 
-            &.witch {
-                background-color: black;
-                background-image: url("/assets/witch.jpg");
-                background-repeat: no-repeat;
-                background-size: cover;
-                animation: shake 100ms linear infinite;
-            }
-
-            @keyframes shake {
-                0% {
-                    background-position: -5px;
-                }
-                50% {
-                    background-position: 5px;
-                }
-                100% {
-                    background-position: -5px;
-                }
-            }
-
-            @include mobile() {
-                @keyframes shake {
-                    0% {
-                        background-position: 48%;
-                    }
-                    50% {
-                        background-position: 52%;
-                    }
-                    100% {
-                        background-position: 48%;
-                    }
-                }
+            &.witch .witch {
+                display: block;
             }
         }
 
@@ -679,6 +651,44 @@
         @include mobile() {
             background-size: 800px;
             background-position: left 0 top toRem(150);
+        }
+    }
+
+    .witch {
+        display: none;
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        @include z-index("witch");
+        background-color: black;
+        background-image: url("/assets/witch.jpg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        animation: shake 100ms linear infinite;
+    }
+
+    @keyframes shake {
+        0% {
+            background-position: -10px;
+        }
+        50% {
+            background-position: 10px;
+        }
+        100% {
+            background-position: -10px;
+        }
+    }
+    @include mobile() {
+        @keyframes shake {
+            0% {
+                background-position: 48%;
+            }
+            50% {
+                background-position: 52%;
+            }
+            100% {
+                background-position: 48%;
+            }
         }
     }
 </style>
