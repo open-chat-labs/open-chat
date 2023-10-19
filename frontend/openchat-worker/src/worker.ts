@@ -700,6 +700,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getAccountTransactions":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getAccountTransactions(payload.ledger, payload.principal),
+                );
+                break;
+
             case "threadPreviews":
                 executeThenReply(
                     payload,

@@ -325,6 +325,7 @@ import type {
     GroupSubtype,
     NervousSystemDetails,
     OptionUpdate,
+    AccountTransactionResult,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -3936,6 +3937,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 return val;
             },
         );
+    }
+
+    getAccountTransactions(ledger: string): Promise<AccountTransactionResult> {
+        return this.sendRequest({
+            kind: "getAccountTransactions",
+            ledger,
+            principal: this.user.cryptoAccount,
+        });
     }
 
     async threadPreviews(

@@ -22,6 +22,7 @@ import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
 import { LedgerClient } from "./ledger/ledger.client";
+import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
@@ -173,6 +174,7 @@ import type {
     FollowThreadResponse,
     CandidateProposal,
     SubmitProposalResponse,
+    AccountTransactionResult,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -203,6 +205,7 @@ export class OpenChatAgent extends EventTarget {
     private _marketMakerClient: MarketMakerClient;
     private _registryClient: RegistryClient;
     private _ledgerClients: Record<string, LedgerClient>;
+    private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
     private _groupInvite: GroupInvite | undefined;
@@ -225,6 +228,7 @@ export class OpenChatAgent extends EventTarget {
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
         this._ledgerClients = {};
+        this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
     }
@@ -303,6 +307,17 @@ export class OpenChatAgent extends EventTarget {
             this._ledgerClients[ledger] = LedgerClient.create(this.identity, this.config, ledger);
         }
         return this._ledgerClients[ledger];
+    }
+
+    getLedgerIndexClient(ledgerIndex: string): LedgerIndexClient {
+        if (!this._ledgerIndexClients[ledgerIndex]) {
+            this._ledgerIndexClients[ledgerIndex] = LedgerIndexClient.create(
+                this.identity,
+                this.config,
+                ledgerIndex,
+            );
+        }
+        return this._ledgerIndexClients[ledgerIndex];
     }
 
     private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
@@ -1986,6 +2001,13 @@ export class OpenChatAgent extends EventTarget {
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
         return this.getLedgerClient(ledger).accountBalance(principal);
+    }
+
+    getAccountTransactions(
+        ledgerIndex: string,
+        principal: string,
+    ): Promise<AccountTransactionResult> {
+        return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal);
     }
 
     getGroupMessagesByMessageIndex(

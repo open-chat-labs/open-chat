@@ -1,3 +1,5 @@
+import type { Failure, Success } from "./response";
+
 export const E8S_PER_TOKEN = 100_000_000;
 
 export const CHAT_SYMBOL = "CHAT";
@@ -65,3 +67,50 @@ export const dollarExchangeRates: Record<string, number> = {
 function to2SigFigs(num: number): number {
     return parseFloat(num.toPrecision(2));
 }
+
+type AccountTransactionCommon = {
+    memo?: string;
+    createdAt?: bigint;
+    amount: bigint;
+};
+
+type AccountTransactionBurn = AccountTransactionCommon & {
+    from: string;
+    spender?: string;
+};
+
+type AccountTransactionMint = AccountTransactionCommon & {
+    to: string;
+};
+
+type AccountTransactionApprove = AccountTransactionCommon & {
+    fee?: bigint;
+    from: string;
+    expectedAllowance?: bigint;
+    expiredAt?: bigint;
+    spender?: string;
+};
+
+type AccountTransactionTransfer = AccountTransactionCommon & {
+    fee?: bigint;
+    to: string;
+    from: string;
+    spender?: string;
+};
+
+export type AccountTransaction = {
+    id: bigint;
+    burn?: AccountTransactionBurn;
+    kind: string;
+    mint?: AccountTransactionMint;
+    approve?: AccountTransactionApprove;
+    timestamp: bigint;
+    transfer?: AccountTransactionTransfer;
+};
+
+export type AccountTransactionResult =
+    | Failure
+    | (Success & {
+          transactions: AccountTransaction[];
+          oldestTransactionId?: bigint;
+      });
