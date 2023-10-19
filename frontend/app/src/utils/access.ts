@@ -1,7 +1,7 @@
 import type { AccessGate, InterpolationValues, NervousSystemDetails } from "openchat-client";
 
 export type GateBinding = {
-    key: AccessGate["kind"];
+    key: string;
     label: string;
     gate: AccessGate;
     enabled: boolean;
