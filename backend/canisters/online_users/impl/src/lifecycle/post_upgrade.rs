@@ -1,5 +1,7 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::{get_upgrades_memory, reset_memory_manager};
+use crate::model::last_online_dates::LastOnlineDates;
+use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use crate::{mutate_state, read_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
@@ -28,7 +30,11 @@ fn post_upgrade(args: Args) {
 
     reset_memory_manager();
 
-    mutate_state(|state| state.data.last_online_dates.bulk_update(last_online_dates.into_iter()));
+    mutate_state(|state| {
+        state.data.last_online_dates = LastOnlineDates::default();
+        state.data.principal_to_user_id_map = PrincipalToUserIdMap::default();
+        state.data.last_online_dates.bulk_update(last_online_dates.into_iter())
+    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
