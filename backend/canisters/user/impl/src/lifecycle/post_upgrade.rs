@@ -3,11 +3,8 @@ use crate::memory::get_upgrades_memory;
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
-use ic_cdk::api::stable::StableReader;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
-use stable_memory::deserialize_from_stable_memory;
-use std::io::Read;
 use tracing::info;
 use user_canister::post_upgrade::Args;
 
@@ -16,17 +13,10 @@ use user_canister::post_upgrade::Args;
 fn post_upgrade(args: Args) {
     let env = init_env();
 
-    let mut stable_reader = StableReader::default();
-    let mut magic = [0u8; 3];
-    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
-        if stable_reader.read_exact(&mut magic).is_ok() && magic == *b"MGR" {
-            let memory = get_upgrades_memory();
-            let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
+    let memory = get_upgrades_memory();
+    let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-            serializer::deserialize(reader).unwrap()
-        } else {
-            deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap()
-        };
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
