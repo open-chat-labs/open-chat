@@ -9,7 +9,9 @@ export type GateBinding = {
     labelParams?: InterpolationValues;
 };
 
-function getSnsGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
+function getSnsGateBindings(
+    nervousSystemLookup: Record<string, NervousSystemDetails>,
+): GateBinding[] {
     return Object.values(nervousSystemLookup).map((ns) => {
         return {
             label: "access.snsHolder",
@@ -17,7 +19,7 @@ function getSnsGateBindings(nervousSystemLookup: Record<string, NervousSystemDet
                 kind: "sns_gate",
                 governanceCanister: ns.governanceCanisterId,
             },
-            key: "sns_gate",
+            key: ns.governanceCanisterId,
             enabled: true,
             cssClass: ns.token.symbol.toLowerCase(),
             labelParams: { token: ns.token.symbol },
@@ -65,7 +67,9 @@ const nftGate: GateBinding = {
 //     cssClass: "credential",
 // };
 
-export function getGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
+export function getGateBindings(
+    nervousSystemLookup: Record<string, NervousSystemDetails>,
+): GateBinding[] {
     return [
         noGate,
         diamondGate,
