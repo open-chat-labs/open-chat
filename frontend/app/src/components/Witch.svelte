@@ -1,9 +1,14 @@
 <script lang="ts">
+    export let background = false;
 </script>
 
-<div class="witch" />
+<div class:background class="witch" />
 
 <style lang="scss">
+    :global(body.witch .witch) {
+        display: block;
+    }
+
     .witch {
         display: none;
         height: 100%;
@@ -15,6 +20,10 @@
         background-repeat: no-repeat;
         background-size: cover;
         animation: shake 100ms linear infinite;
+
+        &.background {
+            z-index: -1;
+        }
     }
 
     @keyframes shake {

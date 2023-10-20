@@ -30,6 +30,7 @@
     import { menuStore } from "../stores/menu";
     import { framed } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+    import Witch from "./Witch.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -332,6 +333,8 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
+<Witch background />
+
 {#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
@@ -584,10 +587,6 @@
 
             @media (hover: none) {
                 @include no_user_select();
-            }
-
-            &.witch .witch {
-                display: block;
             }
         }
 
