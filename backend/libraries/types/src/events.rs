@@ -1,6 +1,7 @@
 use crate::{
-    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions,
-    GroupPermissionsPrevious, GroupRole, Message, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissionRole,
+    GroupPermissions, GroupPermissionsPrevious, GroupRole, Message, MessageIndex, MessagePermissions, Milliseconds,
+    TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -157,12 +158,63 @@ pub struct MessageUnpinned {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PermissionsChangedCombined {
+    pub old_permissions: GroupPermissionsPrevious,
+    pub new_permissions: GroupPermissionsPrevious,
+    #[serde(default = "group_permissions_none")]
+    pub old_permissions_v2: GroupPermissions,
+    #[serde(default = "group_permissions_none")]
+    pub new_permissions_v2: GroupPermissions,
+    pub changed_by: UserId,
+}
+
+fn group_permissions_none() -> GroupPermissions {
+    GroupPermissions {
+        change_roles: GroupPermissionRole::None,
+        update_group: GroupPermissionRole::None,
+        add_members: GroupPermissionRole::None,
+        invite_users: GroupPermissionRole::None,
+        remove_members: GroupPermissionRole::None,
+        delete_messages: GroupPermissionRole::None,
+        pin_messages: GroupPermissionRole::None,
+        react_to_messages: GroupPermissionRole::None,
+        mention_all_members: GroupPermissionRole::None,
+        message_permissions: MessagePermissions::default(),
+        thread_permissions: None,
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "PermissionsChangedCombined")]
 pub struct PermissionsChanged {
     pub old_permissions: GroupPermissionsPrevious,
     pub new_permissions: GroupPermissionsPrevious,
     pub old_permissions_v2: GroupPermissions,
     pub new_permissions_v2: GroupPermissions,
     pub changed_by: UserId,
+}
+
+impl From<PermissionsChangedCombined> for PermissionsChanged {
+    #[allow(deprecated)]
+    fn from(value: PermissionsChangedCombined) -> Self {
+        if value.old_permissions_v2.change_roles.equals(&GroupPermissionRole::None) {
+            PermissionsChanged {
+                old_permissions: value.old_permissions.clone(),
+                new_permissions: value.new_permissions.clone(),
+                old_permissions_v2: value.old_permissions.into(),
+                new_permissions_v2: value.new_permissions.into(),
+                changed_by: value.changed_by,
+            }
+        } else {
+            PermissionsChanged {
+                old_permissions: value.old_permissions,
+                new_permissions: value.new_permissions,
+                old_permissions_v2: value.old_permissions_v2,
+                new_permissions_v2: value.new_permissions_v2,
+                changed_by: value.changed_by,
+            }
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
