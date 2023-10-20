@@ -94,7 +94,6 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         let permissions_prev = args.permissions.clone().map(|ps| ps.into());
         let permissions = args.permissions_v2.as_ref().or(permissions_prev.as_ref());
 
-        //.or(args.permissions.map(|ps| ps.into()));
         match state.data.chat.can_update(
             &member.user_id,
             &args.name,

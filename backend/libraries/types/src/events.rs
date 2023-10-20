@@ -197,7 +197,7 @@ pub struct PermissionsChanged {
 impl From<PermissionsChangedCombined> for PermissionsChanged {
     #[allow(deprecated)]
     fn from(value: PermissionsChangedCombined) -> Self {
-        if value.old_permissions_v2.change_roles.equals(&GroupPermissionRole::None) {
+        if value.old_permissions_v2.change_roles == GroupPermissionRole::None {
             PermissionsChanged {
                 old_permissions: value.old_permissions.clone(),
                 new_permissions: value.new_permissions.clone(),

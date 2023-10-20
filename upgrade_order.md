@@ -1,1 +1,1 @@
-(ProposalsBot, UserIndex, LocalUserIndex, GroupIndex, LocalGroupIndex, Community, Group, User) -> Website
+UserIndex, LocalUserIndex, GroupIndex, LocalGroupIndex, Community, Group, ProposalsBot, User

@@ -99,15 +99,15 @@ impl From<GroupPermissionsPrevious> for GroupPermissions {
             mention_all_members: value.mention_all_members,
             message_permissions: MessagePermissions {
                 default: value.send_messages,
-                poll: if !value.create_polls.equals(&value.send_messages) { Some(value.create_polls) } else { None },
+                poll: if value.create_polls != value.send_messages { Some(value.create_polls) } else { None },
                 ..Default::default()
             },
-            thread_permissions: if value.reply_in_thread.equals(&value.send_messages) {
+            thread_permissions: if value.reply_in_thread == value.send_messages {
                 None
             } else {
                 Some(MessagePermissions {
                     default: value.reply_in_thread,
-                    poll: if value.create_polls.gte(&value.reply_in_thread) { Some(value.create_polls) } else { None },
+                    poll: if value.create_polls < value.reply_in_thread { Some(value.create_polls) } else { None },
                     ..Default::default()
                 })
             },
@@ -119,7 +119,7 @@ impl From<GroupPermissionsPrevious> for GroupPermissions {
 impl From<GroupPermissionsCombined> for GroupPermissions {
     #[allow(deprecated)]
     fn from(value: GroupPermissionsCombined) -> Self {
-        if value.create_polls.equals(&GroupPermissionRole::None) {
+        if value.create_polls == GroupPermissionRole::None {
             // GroupPermissionsPrevious will never have any permission roles == None
             // so we reason the source type was in fact GroupPermissionsPrevious
             let previous = GroupPermissionsPrevious {
@@ -370,27 +370,13 @@ impl Default for GroupPermissionsPrevious {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum GroupPermissionRole {
     None,
     Owner,
     Admins,
     Moderators,
     Members,
-}
-
-impl GroupPermissionRole {
-    pub fn equals(&self, other: &GroupPermissionRole) -> bool {
-        std::mem::discriminant(self) == std::mem::discriminant(other)
-    }
-
-    pub fn gte(&self, other: &GroupPermissionRole) -> bool {
-        self.index() <= other.index()
-    }
-
-    fn index(&self) -> usize {
-        *self as usize
-    }
 }
 
 fn group_permission_role_owner() -> GroupPermissionRole {
