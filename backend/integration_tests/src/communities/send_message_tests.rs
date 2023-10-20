@@ -711,6 +711,7 @@ fn set_channel_rules(env: &mut PocketIc, sender: Principal, community_id: Commun
         }),
         avatar: OptionUpdate::NoChange,
         permissions: None,
+        permissions_v2: None,
         events_ttl: OptionUpdate::NoChange,
         gate: OptionUpdate::NoChange,
         public: None,

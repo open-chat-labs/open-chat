@@ -33,7 +33,7 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.proposals_bot_user_id,
         args.test_mode,
-        args.permissions,
+        args.permissions_v2.or(args.permissions.map(|ps| ps.into())),
         args.gate,
     );
 
