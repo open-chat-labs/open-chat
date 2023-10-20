@@ -31,6 +31,7 @@ type NervousSystemSummary = record {
     root_canister_id : CanisterId;
     governance_canister_id : CanisterId;
     ledger_canister_id : CanisterId;
+    index_canister_id : CanisterId;
     is_nns : bool;
     proposal_rejection_fee : nat64;
     submitting_proposals_enabled: bool;
