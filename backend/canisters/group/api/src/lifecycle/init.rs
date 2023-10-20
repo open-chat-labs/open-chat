@@ -1,6 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, BuildVersion, CanisterId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId};
+use types::{
+    AccessGate, BuildVersion, CanisterId, Document, GroupPermissions, GroupPermissionsPrevious, GroupSubtype, Milliseconds,
+    Rules, UserId,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -11,7 +14,9 @@ pub struct Args {
     pub subtype: Option<GroupSubtype>,
     pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
-    pub permissions: Option<GroupPermissions>,
+    pub permissions: Option<GroupPermissionsPrevious>,
+    #[serde(default)]
+    pub permissions_v2: Option<GroupPermissions>,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
     pub events_ttl: Option<Milliseconds>,

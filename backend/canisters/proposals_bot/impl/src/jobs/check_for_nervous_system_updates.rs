@@ -4,7 +4,8 @@ use std::fmt::Write;
 use std::time::Duration;
 use tracing::{error, info, trace};
 use types::{
-    CanisterId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MultiUserChat, Rules,
+    CanisterId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype, MessagePermissions,
+    MultiUserChat, Rules,
 };
 use utils::canister_timers::run_now_then_interval;
 use utils::time::HOUR_IN_MS;
@@ -67,9 +68,12 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
         })),
         avatar: None,
         history_visible_to_new_joiners: true,
-        permissions: Some(GroupPermissions {
-            create_polls: GroupPermissionRole::Admins,
-            send_messages: GroupPermissionRole::Admins,
+        permissions: None,
+        permissions_v2: Some(GroupPermissions {
+            message_permissions: MessagePermissions {
+                default: GroupPermissionRole::Admins,
+                ..Default::default()
+            },
             ..Default::default()
         }),
         events_ttl: None,

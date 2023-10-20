@@ -424,7 +424,8 @@ type CreateChannelArgs = record {
     subtype : opt GroupSubtype;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissions;
+    permissions : opt GroupPermissionsPrevious;
+    permissions_v2 : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
 };
@@ -811,7 +812,8 @@ type UpdateChannelArgs = record {
     description : opt text;
     rules : opt UpdatedRules;
     avatar : DocumentUpdate;
-    permissions : opt OptionalGroupPermissions;
+    permissions : opt OptionalGroupPermissionsPrevious;
+    permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
