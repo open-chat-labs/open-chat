@@ -29,6 +29,10 @@
 </section>
 
 <style lang="scss">
+    :global(body.witch section.right.empty) {
+        background: var(--panel-right-bg);
+    }
+
     $left-width: 40%;
     $right-width: 500px;
 

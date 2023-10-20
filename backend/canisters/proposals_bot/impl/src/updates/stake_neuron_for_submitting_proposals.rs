@@ -13,7 +13,6 @@ use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
 use types::icrc1::Account;
 use types::{icrc1, CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
-use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
 #[update]
 #[trace]
@@ -76,20 +75,21 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
         .get_neuron_id_for_submitting_proposals(&args.governance_canister_id)
     {
         Err(NeuronAlreadyExists(neuron_id))
-    } else if args.governance_canister_id != SNS_GOVERNANCE_CANISTER_ID {
-        Err(GovernanceCanisterNotSupported)
-    } else if args.stake < 4_0000_0000 {
-        // 4 CHAT
-        Err(StakeTooLow)
+    } else if let Some(ns) = state.data.nervous_systems.get(&args.governance_canister_id) {
+        if args.stake < u128::from(ns.proposal_rejection_fee()) {
+            Err(StakeTooLow)
+        } else {
+            Ok(PrepareResult {
+                caller: state.env.caller(),
+                this_canister_id: state.env.canister_id(),
+                user_index_canister_id: state.data.user_index_canister_id,
+                ledger_canister_id: ns.ledger_canister_id(),
+                nonce: state.env.rng().gen(),
+                dissolve_delay_seconds: (ns.min_dissolve_delay_to_vote() / 1000) as u32 + 1,
+            })
+        }
     } else {
-        Ok(PrepareResult {
-            caller: state.env.caller(),
-            this_canister_id: state.env.canister_id(),
-            user_index_canister_id: state.data.user_index_canister_id,
-            ledger_canister_id: SNS_LEDGER_CANISTER_ID,
-            nonce: state.env.rng().gen(),
-            dissolve_delay_seconds: 2_628_000, // Min for CHAT neurons
-        })
+        Err(GovernanceCanisterNotSupported)
     }
 }
 

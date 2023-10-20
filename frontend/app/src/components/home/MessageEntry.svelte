@@ -29,7 +29,8 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { preferredDarkThemeName, themeType } from "../../theme/themes";
+    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
+    import { scream } from "../../utils/scream";
 
     const client = getContext<OpenChat>("client");
 
@@ -295,17 +296,19 @@
      * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
-        if (spookyTime(new Date())) {
-            const halloween = txt.match(
+        const isHalloweenTheme = $currentThemeName === "halloween";
+        if (isHalloweenTheme || spookyTime(new Date())) {
+            const summonWitch = txt.match(
                 /pumpkin|zombie|skeleton|cauldron|halloween|witch|spooky|ghost/i
             );
-            if (halloween) {
-                themeType.set("dark");
-                preferredDarkThemeName.set("halloween");
-                const laugh = new Audio("/assets/scream.mp3");
+            if (summonWitch) {
+                if (!isHalloweenTheme) {
+                    themeType.set("dark");
+                    preferredDarkThemeName.set("halloween");
+                }
                 document.body.classList.add("witch");
-                laugh.currentTime = 0;
-                laugh.play();
+                scream.currentTime = 0;
+                scream.play();
                 window.setTimeout(() => {
                     document.body.classList.remove("witch");
                 }, 2000);

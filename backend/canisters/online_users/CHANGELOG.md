@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.901](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.901-online_users)] - 2023-10-20
+
 ### Changed
 
 - Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+- Maintain last online dates during `MemoryManager` reset ([#4622](https://github.com/open-chat-labs/open-chat/pull/4622)) 
 
 ## [[2.0.652](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.652-online_users)] - 2023-03-30
 

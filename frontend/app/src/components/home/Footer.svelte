@@ -136,6 +136,10 @@
 </div>
 
 <style lang="scss">
+    :global(body.witch .middle .footer) {
+        @include z-index("footer");
+    }
+
     .footer {
         position: relative;
         flex: 0 0 toRem(60);
