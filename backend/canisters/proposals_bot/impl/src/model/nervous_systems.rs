@@ -408,6 +408,18 @@ impl NervousSystem {
             }
         };
     }
+
+    pub fn ledger_canister_id(&self) -> CanisterId {
+        self.ledger_canister_id
+    }
+
+    pub fn min_dissolve_delay_to_vote(&self) -> Milliseconds {
+        self.min_dissolve_delay_to_vote
+    }
+
+    pub fn proposal_rejection_fee(&self) -> u64 {
+        self.proposal_rejection_fee
+    }
 }
 
 impl From<&NervousSystem> for NervousSystemMetrics {

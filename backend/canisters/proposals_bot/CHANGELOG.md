@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
 - Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
 
 ## [[2.0.891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.891-proposals_bot)] - 2023-10-19
