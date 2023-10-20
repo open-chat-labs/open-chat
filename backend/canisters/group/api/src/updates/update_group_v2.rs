@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     AccessGate, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate, OptionalGroupPermissions,
-    UpdatedRules, Version,
+    OptionalGroupPermissionsPrevious, UpdatedRules, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
@@ -11,7 +11,9 @@ pub struct Args {
     pub description: Option<String>,
     pub rules: Option<UpdatedRules>,
     pub avatar: OptionUpdate<Document>,
-    pub permissions: Option<OptionalGroupPermissions>,
+    pub permissions: Option<OptionalGroupPermissionsPrevious>,
+    #[serde(default)]
+    pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub public: Option<bool>,

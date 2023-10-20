@@ -1,3 +1,1 @@
-Website -> Registry
-
-Website before Registry because `nervous_system` has been removed from `TokenDetails`
+UserIndex, LocalUserIndex, GroupIndex, LocalGroupIndex, Community, Group, ProposalsBot, User
