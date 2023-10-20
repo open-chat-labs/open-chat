@@ -1,8 +1,6 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
-use crate::memory::{get_upgrades_memory, reset_memory_manager};
-use crate::model::last_online_dates::LastOnlineDates;
-use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
-use crate::{mutate_state, read_state, Data};
+use crate::memory::get_upgrades_memory;
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -25,16 +23,6 @@ fn post_upgrade(args: Args) {
 
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
-
-    let last_online_dates: Vec<_> = read_state(|state| state.data.last_online_dates.iter().collect());
-
-    reset_memory_manager();
-
-    mutate_state(|state| {
-        state.data.last_online_dates = LastOnlineDates::default();
-        state.data.principal_to_user_id_map = PrincipalToUserIdMap::default();
-        state.data.last_online_dates.bulk_update(last_online_dates.into_iter())
-    });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 }
