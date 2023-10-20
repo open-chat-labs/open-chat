@@ -26,6 +26,7 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import { reverseScroll } from "../../stores/scrollPos";
+    import Witch from "../Witch.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -265,6 +266,8 @@
         return earliestLoadedEventIndex <= indexRequired;
     }
 </script>
+
+<Witch />
 
 <ChatEventList
     bind:this={chatEventList}
