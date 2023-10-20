@@ -868,6 +868,7 @@ export interface NervousSystemSummary {
   'submitting_proposals_enabled' : boolean,
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
+  'index_canister_id' : CanisterId,
   'proposal_rejection_fee' : bigint,
   'ledger_canister_id' : CanisterId,
 }

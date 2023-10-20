@@ -22,6 +22,7 @@
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
+    $: nervousSystemLookup = client.nervousSystemLookup;
     $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
 
     $: {
@@ -50,11 +51,22 @@
         manageMode = "send";
     }
 
-    function loadTransactions() {
-        const ledgerIndex = "2awyi-oyaaa-aaaaq-aaanq-cai"; // TODO this is hard-coded to OpenChat for now
-        client.getAccountTransactions(ledgerIndex).then((result) => {
-            console.log("Account transactions: ", result);
-        });
+    function loadTransactions(ledger: string) {
+        const nervousSystem = Object.values($nervousSystemLookup).find(
+            (n) => n.ledgerCanisterId === ledger
+        );
+        const ledgerIndex = nervousSystem?.indexCanisterId;
+        if (ledgerIndex !== undefined) {
+            client.getAccountTransactions(ledgerIndex).then((result) => {
+                console.log("Account transactions: ", result);
+            });
+        } else {
+            console.debug(
+                "TRN: could not find ledger index for ledger",
+                ledger,
+                $nervousSystemLookup
+            );
+        }
     }
 
     function buildAccountsList(

@@ -31,6 +31,7 @@ export type NervousSystemSummary = {
     rootCanisterId: string;
     governanceCanisterId: string;
     ledgerCanisterId: string;
+    indexCanisterId: string;
     isNns: boolean;
     proposalRejectionFee: bigint;
     submittingProposalsEnabled: boolean;
@@ -39,6 +40,8 @@ export type NervousSystemSummary = {
 export type NervousSystemDetails = {
     governanceCanisterId: string;
     rootCanisterId: string;
+    ledgerCanisterId: string;
+    indexCanisterId: string;
     isNns: boolean;
     proposalRejectionFee: bigint;
     submittingProposalsEnabled: boolean;
