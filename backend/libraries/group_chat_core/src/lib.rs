@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
+use std::cmp::min;
 use std::collections::HashSet;
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex, EventWrapper,
@@ -643,7 +644,7 @@ impl GroupChatCore {
                     return UserSuspended;
                 }
                 if let Some(version) = rules_accepted {
-                    m.accept_rules(version, now);
+                    m.accept_rules(min(version, self.rules.text.version), now);
                 }
             }
             None => return UserNotInGroup,
@@ -1416,7 +1417,7 @@ impl GroupChatCore {
                 result.rules_version = Some(rules_version);
 
                 if let Some(member) = self.members.get_mut(&user_id) {
-                    member.rules_accepted = Some(Timestamped::new(rules_version, now))
+                    member.accept_rules(rules_version, now);
                 }
 
                 events.push_main_event(
