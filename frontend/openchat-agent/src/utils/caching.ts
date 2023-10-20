@@ -302,7 +302,7 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     );
 
     const [[backwardsEvents, backwardsMissing], [forwardsEvents, forwardsMissing]] =
-        await Promise.all([forwardsPromise, backwardsPromise]);
+        await Promise.all([backwardsPromise, forwardsPromise]);
 
     const events = backwardsEvents.concat(forwardsEvents);
     const missing = new Set([...backwardsMissing, ...forwardsMissing]);
