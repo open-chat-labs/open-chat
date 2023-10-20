@@ -22,12 +22,6 @@ impl LastOnlineDates {
     pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {
         self.map.iter()
     }
-
-    pub fn bulk_update(&mut self, iter: impl Iterator<Item = (Principal, TimestampMillis)>) {
-        for (user_id, ts) in iter {
-            self.map.insert(user_id, ts);
-        }
-    }
 }
 
 fn init_map() -> StableBTreeMap<Principal, TimestampMillis, Memory> {

@@ -30,12 +30,6 @@ impl OrdersLog {
         self.log.len()
     }
 
-    pub fn bulk_insert(&mut self, entries: impl Iterator<Item = LogEntry>) {
-        for entry in entries {
-            self.log.append(&entry).unwrap();
-        }
-    }
-
     fn log(&mut self, exchange_id: ExchangeId, action: Action, now: TimestampMillis) {
         self.log
             .append(&LogEntry {
