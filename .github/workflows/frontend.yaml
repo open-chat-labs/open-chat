@@ -1,6 +1,7 @@
 on:
   pull_request:
   merge_group:
+  push:
     branches:
       - master
 
@@ -13,18 +14,15 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
-      - name: Cache dependencies
-        uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - name: Restore dependencies from cache
+        uses: actions/cache/restore@v3
         with:
           path: ~/.npm
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
-      - name: Cache Turborepo files
-        uses: actions/cache@v3
+      - name: Restore Turborepo files from cache
+        uses: actions/cache/restore@v3
         with:
           path: frontend/.turbo
           key: ${{ runner.os }}-turbo-${{ github.sha }}
@@ -41,3 +39,15 @@ jobs:
           ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
           OPENCHAT_WEBSITE_VERSION: 1.0.0
           METERED_APIKEY: DUMMY_METERED_APIKEY
+      - name: Save dependencies to cache
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+      - name: Save Turborepo files to cache
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: actions/cache/save@v3
+        with:
+          path: frontend/.turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
