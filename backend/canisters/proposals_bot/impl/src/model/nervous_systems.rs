@@ -46,6 +46,12 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
+    pub fn set_ledger_id(&mut self, governance_canister_id: &CanisterId, ledger_canister_id: CanisterId) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.ledger_canister_id = ledger_canister_id;
+        }
+    }
+
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
