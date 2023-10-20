@@ -8,11 +8,12 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
-    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
-    InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex, EventWrapper,
+    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupPermissionsPrevious, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
     TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
@@ -233,7 +234,7 @@ impl GroupChatCore {
                 }
                 ChatEventInternal::PermissionsChanged(p) => {
                     if updates.permissions.is_none() {
-                        updates.permissions = Some(p.new_permissions.clone());
+                        updates.permissions = Some(p.new_permissions_v2.clone());
                     }
                 }
                 ChatEventInternal::GroupVisibilityChanged(v) => {
@@ -687,15 +688,10 @@ impl GroupChatCore {
 
         let permissions = &self.permissions;
 
-        if thread_root_message_index.is_some() {
-            if !member.role.can_reply_in_thread(permissions) {
-                return NotAuthorized;
-            }
-        } else if !member.role.can_send_messages(permissions) {
-            return NotAuthorized;
-        }
-
-        if matches!(content, MessageContentInitial::Poll(_)) && !member.role.can_create_polls(permissions) {
+        if !member
+            .role
+            .can_send_message(&content, thread_root_message_index.is_some(), permissions)
+        {
             return NotAuthorized;
         }
 
@@ -1282,7 +1278,7 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
-        match self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions, &public) {
+        match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
             Ok(_) => UpdateResult::Success(self.do_update(
                 user_id,
                 name,
@@ -1306,7 +1302,7 @@ impl GroupChatCore {
         description: &Option<String>,
         rules: &Option<UpdatedRules>,
         avatar: &OptionUpdate<Document>,
-        permissions: &Option<OptionalGroupPermissions>,
+        permissions: Option<&OptionalGroupPermissions>,
         public: &Option<bool>,
     ) -> Result<(), UpdateResult> {
         use UpdateResult::*;
@@ -1455,14 +1451,18 @@ impl GroupChatCore {
         }
 
         if let Some(permissions) = permissions {
-            let old_permissions = self.permissions.clone();
-            let new_permissions = GroupChatCore::merge_permissions(permissions, &old_permissions);
-            self.permissions = new_permissions.clone();
+            let old_permissions_v2 = self.permissions.clone();
+            let old_permissions: GroupPermissionsPrevious = old_permissions_v2.clone().into();
+            let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, self.permissions.clone());
+            let new_permissions: GroupPermissionsPrevious = new_permissions_v2.clone().into();
+            self.permissions = new_permissions_v2.clone();
 
             events.push_main_event(
                 ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
                     old_permissions,
                     new_permissions,
+                    old_permissions_v2,
+                    new_permissions_v2,
                     changed_by: user_id,
                 })),
                 0,
@@ -1617,24 +1617,67 @@ impl GroupChatCore {
             .map(|message| message.sender)
     }
 
-    fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> GroupPermissions {
-        #[allow(deprecated)]
+    fn merge_permissions(new: OptionalGroupPermissions, old: GroupPermissions) -> GroupPermissions {
+        let message_permissions = match new.message_permissions {
+            Some(mp) => GroupChatCore::merge_message_permissions(mp, old.message_permissions),
+            None => old.message_permissions,
+        };
+
+        let thread_permissions = match new.thread_permissions {
+            OptionUpdate::NoChange => old.thread_permissions,
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::SetToSome(mp) => Some(GroupChatCore::merge_message_permissions(
+                mp,
+                old.thread_permissions.unwrap_or_default(),
+            )),
+        };
+
         GroupPermissions {
-            change_permissions: GroupPermissionRole::Owner,
             change_roles: new.change_roles.unwrap_or(old.change_roles),
-            add_members: GroupPermissionRole::Owner,
             remove_members: new.remove_members.unwrap_or(old.remove_members),
-            block_users: GroupPermissionRole::Owner,
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
+            add_members: GroupPermissionRole::Owner,
             invite_users: new.invite_users.unwrap_or(old.invite_users),
-            create_polls: new.create_polls.unwrap_or(old.create_polls),
-            send_messages: new.send_messages.unwrap_or(old.send_messages),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
-            reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
+            message_permissions,
+            thread_permissions,
         }
+    }
+
+    fn merge_message_permissions(new: OptionalMessagePermissions, old: MessagePermissions) -> MessagePermissions {
+        MessagePermissions {
+            default: new.default.unwrap_or(old.default),
+            text: new.text.apply_to(old.text),
+            image: new.image.apply_to(old.image),
+            video: new.video.apply_to(old.video),
+            audio: new.audio.apply_to(old.audio),
+            file: new.file.apply_to(old.file),
+            poll: new.poll.apply_to(old.poll),
+            crypto: new.crypto.apply_to(old.crypto),
+            giphy: new.giphy.apply_to(old.giphy),
+            prize: new.prize.apply_to(old.prize),
+            custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
+        }
+    }
+
+    fn merge_custom_permissions(
+        updated: Vec<CustomPermission>,
+        removed: Vec<String>,
+        old: Vec<CustomPermission>,
+    ) -> Vec<CustomPermission> {
+        let mut new: Vec<CustomPermission> = old
+            .into_iter()
+            .map(|cp| match updated.iter().find(|up| up.subtype == cp.subtype) {
+                Some(np) => np.clone(),
+                None => cp,
+            })
+            .collect();
+
+        new.retain(|cp| removed.contains(&cp.subtype));
+        new
     }
 
     fn build_thread_preview(

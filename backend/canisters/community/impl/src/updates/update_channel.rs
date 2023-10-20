@@ -31,6 +31,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(member) = state.data.members.get(caller) {
             let now = state.env.now();
+            let permissions = args.permissions_v2.or(args.permissions.map(|ps| ps.into()));
 
             match channel.chat.update(
                 member.user_id,
@@ -38,7 +39,7 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 args.description,
                 args.rules,
                 args.avatar,
-                args.permissions,
+                permissions,
                 args.gate,
                 args.public,
                 args.events_ttl,

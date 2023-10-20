@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `permissions_v2` to cached `GroupChatSummary` and `create_group` ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
 ### Changed
 
 - Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
