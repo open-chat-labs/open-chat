@@ -25,6 +25,7 @@ export function getTheme(base: Theme): Theme {
     base.txt = txt;
     base["txt-light"] = txtLight;
     base.accent = green;
+    base.code = green;
 
     base.icon.txt = yellow;
     base.icon.selected = lightGreen;
@@ -56,7 +57,7 @@ export function getTheme(base: Theme): Theme {
     base.members.hv = darkBrown;
     base.placeholder = txtLight;
     base.entry.input.bg = lighterBrown;
-    base.entry.bg = darkBrown;
+    base.entry.bg = hexPercent(darkBrown, 80);
     base.entry.input.sh = `inset 0px 2px 4px rgba(0,0,0,0.8)`;
     base.input.bg = lighterBrown;
     base.input.sh = `inset 0px 2px 4px rgba(0,0,0,0.8)`;

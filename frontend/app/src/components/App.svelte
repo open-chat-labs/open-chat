@@ -4,6 +4,7 @@
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/i18n";
+    import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
@@ -29,6 +30,7 @@
     import { menuStore } from "../stores/menu";
     import { framed } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+    import Witch from "./Witch.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -331,6 +333,8 @@
     <meta name="viewport" content={viewPortContent} />
 </svelte:head>
 
+<Witch background />
+
 {#if isCanisterUrl}
     <SwitchDomain />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
@@ -349,8 +353,6 @@
 
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />
-
-<div class="witch" />
 
 <style lang="scss">
     :global {
@@ -586,10 +588,6 @@
             @media (hover: none) {
                 @include no_user_select();
             }
-
-            &.witch .witch {
-                display: block;
-            }
         }
 
         h1,
@@ -651,44 +649,6 @@
         @include mobile() {
             background-size: 800px;
             background-position: left 0 top toRem(150);
-        }
-    }
-
-    .witch {
-        display: none;
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        @include z-index("witch");
-        background-color: black;
-        background-image: url("/assets/witch.jpg");
-        background-repeat: no-repeat;
-        background-size: cover;
-        animation: shake 100ms linear infinite;
-    }
-
-    @keyframes shake {
-        0% {
-            background-position: -10px;
-        }
-        50% {
-            background-position: 10px;
-        }
-        100% {
-            background-position: -10px;
-        }
-    }
-    @include mobile() {
-        @keyframes shake {
-            0% {
-                background-position: 48%;
-            }
-            50% {
-                background-position: 52%;
-            }
-            100% {
-                background-position: 48%;
-            }
         }
     }
 </style>
