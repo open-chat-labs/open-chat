@@ -23,7 +23,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     match state.data.invite_users(args.caller, args.users, now) {
         InvitedUsersResult::Success(r) => {
-            if !state.data.chat.is_public {
+            if !state.data.chat.is_public.value {
                 handle_activity_notification(state);
             }
             Success(SuccessResult {

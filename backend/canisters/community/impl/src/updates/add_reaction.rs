@@ -42,7 +42,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                         push_notification(
                             args,
                             user_id,
-                            channel.chat.name.clone(),
+                            channel.chat.name.value.clone(),
                             channel.chat.avatar.as_ref().map(|d| d.id),
                             message,
                             member.display_name().value.clone(),

@@ -32,26 +32,107 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
+use utils::time::now_millis;
 
 #[derive(Serialize, Deserialize)]
+#[serde(from = "GroupChatCoreCombined")]
 pub struct GroupChatCore {
-    pub is_public: bool,
-    pub name: String,
-    pub description: String,
-    pub rules: AccessRulesInternal,
+    #[serde(rename = "is_public_v2")]
+    pub is_public: Timestamped<bool>,
+    #[serde(rename = "name_v2")]
+    pub name: Timestamped<String>,
+    #[serde(rename = "description_v2")]
+    pub description: Timestamped<String>,
+    #[serde(rename = "rules_v2")]
+    pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Document>,
+    #[serde(rename = "avatar_v2")]
+    pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
     pub pinned_messages: Vec<MessageIndex>,
-    pub permissions: GroupPermissions,
+    #[serde(rename = "permissions_v2")]
+    pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GroupChatCoreCombined {
+    #[serde(default)]
+    pub is_public: bool,
+    #[serde(default)]
+    pub is_public_v2: Timestamped<bool>,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub name_v2: Timestamped<String>,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub description_v2: Timestamped<String>,
+    #[serde(default)]
+    pub rules: AccessRulesInternal,
+    #[serde(default)]
+    pub rules_v2: Timestamped<AccessRulesInternal>,
+    pub subtype: Timestamped<Option<GroupSubtype>>,
+    #[serde(default)]
+    pub avatar: Option<Document>,
+    #[serde(default)]
+    pub avatar_v2: Timestamped<Option<Document>>,
+    pub history_visible_to_new_joiners: bool,
+    pub members: GroupMembers,
+    pub events: ChatEvents,
+    pub created_by: UserId,
+    pub date_created: TimestampMillis,
+    pub pinned_messages: Vec<MessageIndex>,
+    #[serde(default)]
+    pub permissions: GroupPermissions,
+    #[serde(default)]
+    pub permissions_v2: Timestamped<GroupPermissions>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub gate: Timestamped<Option<AccessGate>>,
+    pub invited_users: InvitedUsers,
+    pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+}
+
+impl From<GroupChatCoreCombined> for GroupChatCore {
+    fn from(value: GroupChatCoreCombined) -> Self {
+        let now = now_millis();
+
+        GroupChatCore {
+            is_public: to_timestamped(value.is_public_v2, value.is_public, now),
+            name: to_timestamped(value.name_v2, value.name, now),
+            description: to_timestamped(value.description_v2, value.description, now),
+            rules: to_timestamped(value.rules_v2, value.rules, now),
+            subtype: value.subtype,
+            avatar: to_timestamped(value.avatar_v2, value.avatar, now),
+            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
+            members: value.members,
+            events: value.events,
+            created_by: value.created_by,
+            date_created: value.date_created,
+            pinned_messages: value.pinned_messages,
+            permissions: to_timestamped(value.permissions_v2, value.permissions, now),
+            date_last_pinned: value.date_last_pinned,
+            gate: value.gate,
+            invited_users: value.invited_users,
+            min_visible_indexes_for_new_members: value.min_visible_indexes_for_new_members,
+        }
+    }
+}
+
+fn to_timestamped<T>(ts: Timestamped<T>, value: T, now: TimestampMillis) -> Timestamped<T> {
+    if ts.timestamp > 0 {
+        ts
+    } else {
+        Timestamped::new(value, now)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -75,19 +156,19 @@ impl GroupChatCore {
         let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
 
         GroupChatCore {
-            is_public,
-            name,
-            description,
-            rules: AccessRulesInternal::new(rules),
+            is_public: Timestamped::new(is_public, now),
+            name: Timestamped::new(name, now),
+            description: Timestamped::new(description, now),
+            rules: Timestamped::new(AccessRulesInternal::new(rules), now),
             subtype: Timestamped::new(subtype, now),
-            avatar,
+            avatar: Timestamped::new(avatar, now),
             history_visible_to_new_joiners,
             members,
             events,
             created_by,
             date_created: now,
             pinned_messages: Vec::new(),
-            permissions,
+            permissions: Timestamped::new(permissions, now),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
@@ -96,7 +177,7 @@ impl GroupChatCore {
     }
 
     pub fn is_accessible(&self, user_id: Option<UserId>) -> bool {
-        if self.is_public {
+        if self.is_public.value {
             true
         } else if let Some(user_id) = user_id {
             self.members.get(&user_id).is_some() || self.invited_users.get(&user_id).is_some()
@@ -108,7 +189,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public {
+        } else if self.is_public.value {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -136,7 +217,7 @@ impl GroupChatCore {
 
         let min_visible_event_index = if let Some(member) = member {
             member.min_visible_event_index()
-        } else if self.is_public {
+        } else if self.is_public.value {
             EventIndex::default()
         } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
             invited_user.min_visible_event_index
@@ -289,7 +370,7 @@ impl GroupChatCore {
             }
         }
 
-        let min_visible_event_index = if self.is_public {
+        let min_visible_event_index = if self.is_public.value {
             EventIndex::default()
         } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
             member.min_visible_event_index()
@@ -373,7 +454,7 @@ impl GroupChatCore {
                 }
                 ChatEventInternal::GroupRulesChanged(_) => {
                     if result.chat_rules.is_none() {
-                        result.chat_rules = Some(self.rules.clone().into());
+                        result.chat_rules = Some(self.rules.value.clone().into());
                     }
                 }
                 _ => {}
@@ -996,6 +1077,7 @@ impl GroupChatCore {
             &self.permissions,
             is_caller_platform_moderator,
             is_user_platform_moderator,
+            now,
         );
 
         if let ChangeRoleResult::Success(r) = &result {
@@ -1115,7 +1197,7 @@ impl GroupChatCore {
             }
 
             // The original caller must be authorized to invite other users
-            if !self.is_public && !member.role.can_invite_users(&self.permissions) {
+            if !self.is_public.value && !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1126,7 +1208,7 @@ impl GroupChatCore {
                 .copied()
                 .collect();
 
-            if !self.is_public && !invited_users.is_empty() {
+            if !self.is_public.value && !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
@@ -1174,7 +1256,7 @@ impl GroupChatCore {
 
             Success(InvitedUsersSuccess {
                 invited_users: user_ids,
-                group_name: self.name.clone(),
+                group_name: self.name.value.clone(),
             })
         } else {
             UserNotInGroup
@@ -1223,7 +1305,7 @@ impl GroupChatCore {
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
-                Some(m) => m.role,
+                Some(m) => m.role.value,
                 None if block => GroupRoleInternal::Member,
                 _ => return TargetUserNotInGroup,
             };
@@ -1311,7 +1393,7 @@ impl GroupChatCore {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
-            if let Err(error) = validate_group_name(name, self.is_public, self.subtype.value.as_ref()) {
+            if let Err(error) = validate_group_name(name, self.is_public.value, self.subtype.value.as_ref()) {
                 return Err(match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
@@ -1379,45 +1461,46 @@ impl GroupChatCore {
         let events = &mut self.events;
 
         if let Some(name) = name {
-            if self.name != name {
+            if self.name.value != name {
                 events.push_main_event(
                     ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                         new_name: name.clone(),
-                        previous_name: self.name.clone(),
+                        previous_name: self.name.value.clone(),
                         changed_by: user_id,
                     })),
                     0,
                     now,
                 );
 
-                self.name = name;
+                self.name = Timestamped::new(name, now);
             }
         }
 
         if let Some(description) = description {
-            if self.description != description {
+            if self.description.value != description {
                 events.push_main_event(
                     ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                         new_description: description.clone(),
-                        previous_description: self.description.clone(),
+                        previous_description: self.description.value.clone(),
                         changed_by: user_id,
                     })),
                     0,
                     now,
                 );
 
-                self.description = description;
+                self.description = Timestamped::new(description, now);
             }
         }
 
         if let Some(rules) = rules {
             let prev_enabled = self.rules.enabled;
 
-            if let Some(rules_version) = self.rules.update(rules) {
-                result.rules_version = Some(rules_version);
+            if self.rules.update(|r| r.update(rules, now).is_some(), now) {
+                let new_version = self.rules.value.text.version;
+                result.rules_version = Some(new_version);
 
                 if let Some(member) = self.members.get_mut(&user_id) {
-                    member.accept_rules(rules_version, now);
+                    member.accept_rules(new_version, now);
                 }
 
                 events.push_main_event(
@@ -1433,7 +1516,7 @@ impl GroupChatCore {
         }
 
         if let Some(avatar) = avatar.expand() {
-            let previous_avatar_id = Document::id(&self.avatar);
+            let previous_avatar_id = Document::id(&self.avatar.value);
             let new_avatar_id = Document::id(&avatar);
 
             if new_avatar_id != previous_avatar_id {
@@ -1447,16 +1530,16 @@ impl GroupChatCore {
                     now,
                 );
 
-                self.avatar = avatar;
+                self.avatar = Timestamped::new(avatar, now);
             }
         }
 
         if let Some(permissions) = permissions {
-            let old_permissions_v2 = self.permissions.clone();
+            let old_permissions_v2 = self.permissions.value.clone();
             let old_permissions: GroupPermissionsPrevious = old_permissions_v2.clone().into();
-            let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, self.permissions.clone());
+            let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, old_permissions_v2.clone());
             let new_permissions: GroupPermissionsPrevious = new_permissions_v2.clone().into();
-            self.permissions = new_permissions_v2.clone();
+            self.permissions = Timestamped::new(new_permissions_v2.clone(), now);
 
             events.push_main_event(
                 ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
@@ -1487,8 +1570,8 @@ impl GroupChatCore {
         }
 
         if let Some(public) = public {
-            if self.is_public != public {
-                self.is_public = public;
+            if self.is_public.value != public {
+                self.is_public = Timestamped::new(public, now);
 
                 let event = GroupVisibilityChanged {
                     now_public: public,
@@ -1498,7 +1581,7 @@ impl GroupChatCore {
                 let push_event_result =
                     events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
 
-                if self.is_public {
+                if self.is_public.value {
                     self.min_visible_indexes_for_new_members =
                         Some((push_event_result.index, events.main_events_list().next_message_index()));
                     result.newly_public = true;
@@ -1929,6 +2012,8 @@ pub struct SummaryUpdatesFromEvents {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
+    #[serde(default)]
+    pub version_last_updated: TimestampMillis,
 }
 
 impl AccessRulesInternal {
@@ -1936,13 +2021,17 @@ impl AccessRulesInternal {
         Self {
             text: Versioned::new(rules.text, Version::zero()),
             enabled: rules.enabled,
+            version_last_updated: 0,
         }
     }
 
-    pub fn update(&mut self, rules: UpdatedRules) -> Option<Version> {
+    pub fn update(&mut self, rules: UpdatedRules, now: TimestampMillis) -> Option<Version> {
         if rules.enabled != self.enabled || self.text.value != rules.text {
             if self.text.value != rules.text {
                 self.text.update(rules.text, rules.new_version);
+                if rules.new_version {
+                    self.version_last_updated = now;
+                }
             }
 
             self.enabled = rules.enabled;

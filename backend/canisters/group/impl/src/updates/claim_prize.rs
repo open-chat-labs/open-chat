@@ -117,7 +117,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                 thread_root_message_index: None,
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
-                group_name: state.data.chat.name.clone(),
+                group_name: state.data.chat.name.value.clone(),
                 sender: OPENCHAT_BOT_USER_ID,
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 sender_display_name: None,

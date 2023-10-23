@@ -105,7 +105,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
         min_visible_event_index,
         min_visible_message_index,
-        mute_notifications: state.data.chat.is_public,
+        mute_notifications: state.data.chat.is_public.value,
         is_bot: args.is_bot,
     }) {
         AddResult::Success(participant) => {

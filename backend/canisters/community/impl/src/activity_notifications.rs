@@ -58,7 +58,7 @@ pub(crate) fn extract_activity(now: TimestampMillis, data: &Data) -> PublicCommu
     for event in data
         .channels
         .iter()
-        .filter(|channel| channel.chat.is_public)
+        .filter(|channel| channel.chat.is_public.value)
         .flat_map(|channel| {
             channel
                 .chat
