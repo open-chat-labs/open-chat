@@ -5,7 +5,7 @@ use chat_events::{
 use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use std::collections::HashSet;
 use types::{
@@ -32,19 +32,21 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
+use utils::time::now_millis;
 
 #[derive(Serialize, Deserialize)]
+#[serde(from = "GroupChatCoreCombined")]
 pub struct GroupChatCore {
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "is_public_v2")]
     pub is_public: Timestamped<bool>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "name_v2")]
     pub name: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "description_v2")]
     pub description: Timestamped<String>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "rules_v2")]
     pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "avatar_v2")]
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
@@ -52,7 +54,7 @@ pub struct GroupChatCore {
     pub created_by: UserId,
     pub date_created: TimestampMillis,
     pub pinned_messages: Vec<MessageIndex>,
-    #[serde(deserialize_with = "deserialize_to_timestamped")]
+    #[serde(rename = "permissions_v2")]
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
@@ -60,14 +62,77 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
 }
 
-fn deserialize_to_timestamped<'de, D, T>(deserializer: D) -> Result<Timestamped<T>, D::Error>
-where
-    D: Deserializer<'de>,
-    T: Deserialize<'de>,
-{
-    let value = T::deserialize(deserializer)?;
+#[derive(Serialize, Deserialize)]
+pub struct GroupChatCoreCombined {
+    #[serde(default)]
+    pub is_public: bool,
+    #[serde(default)]
+    pub is_public_v2: Timestamped<bool>,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub name_v2: Timestamped<String>,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub description_v2: Timestamped<String>,
+    #[serde(default)]
+    pub rules: AccessRulesInternal,
+    #[serde(default)]
+    pub rules_v2: Timestamped<AccessRulesInternal>,
+    pub subtype: Timestamped<Option<GroupSubtype>>,
+    #[serde(default)]
+    pub avatar: Option<Document>,
+    #[serde(default)]
+    pub avatar_v2: Timestamped<Option<Document>>,
+    pub history_visible_to_new_joiners: bool,
+    pub members: GroupMembers,
+    pub events: ChatEvents,
+    pub created_by: UserId,
+    pub date_created: TimestampMillis,
+    pub pinned_messages: Vec<MessageIndex>,
+    #[serde(default)]
+    pub permissions: GroupPermissions,
+    #[serde(default)]
+    pub permissions_v2: Timestamped<GroupPermissions>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub gate: Timestamped<Option<AccessGate>>,
+    pub invited_users: InvitedUsers,
+    pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
+}
 
-    Ok(Timestamped::new(value, utils::time::now_millis()))
+impl From<GroupChatCoreCombined> for GroupChatCore {
+    fn from(value: GroupChatCoreCombined) -> Self {
+        let now = now_millis();
+
+        GroupChatCore {
+            is_public: to_timestamped(value.is_public_v2, value.is_public, now),
+            name: to_timestamped(value.name_v2, value.name, now),
+            description: to_timestamped(value.description_v2, value.description, now),
+            rules: to_timestamped(value.rules_v2, value.rules, now),
+            subtype: value.subtype,
+            avatar: to_timestamped(value.avatar_v2, value.avatar, now),
+            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
+            members: value.members,
+            events: value.events,
+            created_by: value.created_by,
+            date_created: value.date_created,
+            pinned_messages: value.pinned_messages,
+            permissions: to_timestamped(value.permissions_v2, value.permissions, now),
+            date_last_pinned: value.date_last_pinned,
+            gate: value.gate,
+            invited_users: value.invited_users,
+            min_visible_indexes_for_new_members: value.min_visible_indexes_for_new_members,
+        }
+    }
+}
+
+fn to_timestamped<T>(ts: Timestamped<T>, value: T, now: TimestampMillis) -> Timestamped<T> {
+    if ts.timestamp > 0 {
+        ts
+    } else {
+        Timestamped::new(value, now)
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
