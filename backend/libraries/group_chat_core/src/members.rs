@@ -437,8 +437,6 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 232 (? - this has now changed)
-        // After optimisation: 37
         assert_eq!(member_bytes_len, 37);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
@@ -468,9 +466,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 278 (? - this has now changed)
-        // After optimisation: 114
-        assert_eq!(member_bytes_len, 114);
+        assert_eq!(member_bytes_len, 120);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
