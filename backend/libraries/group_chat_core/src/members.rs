@@ -344,7 +344,13 @@ impl GroupMemberInternal {
     }
 
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
-        self.rules_accepted = Some(Timestamped::new(max(version, accepted.value), now));
+        let current_version = self
+            .rules_accepted
+            .as_ref()
+            .map(|accepted| accepted.value)
+            .unwrap_or_default();
+
+        self.rules_accepted = Some(Timestamped::new(max(version, current_version), now));
     }
 }
 
