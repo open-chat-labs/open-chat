@@ -4,6 +4,7 @@ use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::cmp::max;
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Formatter;
@@ -343,7 +344,13 @@ impl GroupMemberInternal {
     }
 
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
-        self.rules_accepted = Some(Timestamped::new(version, now));
+        let current_version = self
+            .rules_accepted
+            .as_ref()
+            .map(|accepted| accepted.value)
+            .unwrap_or_default();
+
+        self.rules_accepted = Some(Timestamped::new(max(version, current_version), now));
     }
 }
 
