@@ -60,10 +60,10 @@ pub struct GroupChatCore {
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
 }
 
-fn deserialize_to_timestamped<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+fn deserialize_to_timestamped<'de, D, T>(deserializer: D) -> Result<Timestamped<T>, D::Error>
 where
     D: Deserializer<'de>,
-    T: Deserialize,
+    T: Deserialize<'de>,
 {
     let value = T::deserialize(deserializer)?;
 
