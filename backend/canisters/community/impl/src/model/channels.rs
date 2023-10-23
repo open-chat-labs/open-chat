@@ -218,7 +218,7 @@ impl Channel {
 
         let membership = member.map(|m| ChannelMembership {
             joined: m.date_added,
-            role: m.role.into(),
+            role: m.role.value.into(),
             mentions: m.most_recent_mentions(None, &chat.events),
             notifications_muted: m.notifications_muted.value,
             my_metrics: chat
@@ -302,7 +302,7 @@ impl Channel {
             .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembershipUpdates {
-            role: updates_from_events.role_changed.then_some(m.role.into()),
+            role: updates_from_events.role_changed.then_some(m.role.value.into()),
             mentions: updates_from_events.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),

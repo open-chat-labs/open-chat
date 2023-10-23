@@ -71,7 +71,7 @@ fn prepare(user_to_remove: UserId, block: bool, state: &RuntimeState) -> Result<
                 Some(member_to_remove) => {
                     if member
                         .role
-                        .can_remove_members_with_role(member_to_remove.role, &state.data.chat.permissions)
+                        .can_remove_members_with_role(member_to_remove.role.value, &state.data.chat.permissions)
                     {
                         member_to_remove.role.is_owner()
                     } else {

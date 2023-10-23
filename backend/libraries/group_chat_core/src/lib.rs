@@ -1012,6 +1012,7 @@ impl GroupChatCore {
             &self.permissions,
             is_caller_platform_moderator,
             is_user_platform_moderator,
+            now,
         );
 
         if let ChangeRoleResult::Success(r) = &result {
@@ -1239,7 +1240,7 @@ impl GroupChatCore {
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
-                Some(m) => m.role,
+                Some(m) => m.role.value,
                 None if block => GroupRoleInternal::Member,
                 _ => return TargetUserNotInGroup,
             };
@@ -1429,7 +1430,7 @@ impl GroupChatCore {
         if let Some(rules) = rules {
             let prev_enabled = self.rules.enabled;
 
-            if self.rules.update(|r| r.update(rules).is_some(), now) {
+            if self.rules.update(|r| r.update(rules, now).is_some(), now) {
                 let new_version = self.rules.value.text.version;
                 result.rules_version = Some(new_version);
 
@@ -1946,6 +1947,8 @@ pub struct SummaryUpdatesFromEvents {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
+    #[serde(default)]
+    pub version_last_updated: TimestampMillis,
 }
 
 impl AccessRulesInternal {
@@ -1953,13 +1956,17 @@ impl AccessRulesInternal {
         Self {
             text: Versioned::new(rules.text, Version::zero()),
             enabled: rules.enabled,
+            version_last_updated: 0,
         }
     }
 
-    pub fn update(&mut self, rules: UpdatedRules) -> Option<Version> {
+    pub fn update(&mut self, rules: UpdatedRules, now: TimestampMillis) -> Option<Version> {
         if rules.enabled != self.enabled || self.text.value != rules.text {
             if self.text.value != rules.text {
                 self.text.update(rules.text, rules.new_version);
+                if rules.new_version {
+                    self.version_last_updated = now;
+                }
             }
 
             self.enabled = rules.enabled;
