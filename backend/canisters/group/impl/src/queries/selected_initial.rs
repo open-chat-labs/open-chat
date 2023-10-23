@@ -26,7 +26,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
                 .filter(|&m| *m >= min_visible_message_index)
                 .copied()
                 .collect(),
-            chat_rules: chat.rules.clone().into(),
+            chat_rules: chat.rules.value.clone().into(),
         })
     } else {
         CallerNotInGroup

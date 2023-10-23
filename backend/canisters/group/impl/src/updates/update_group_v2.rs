@@ -109,7 +109,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 Ok(PrepareResult {
                     my_user_id: member.user_id,
                     group_index_canister_id: state.data.group_index_canister_id,
-                    is_public: args.public.unwrap_or(state.data.chat.is_public),
+                    is_public: args.public.unwrap_or(state.data.chat.is_public.value),
                     chat_id: state.env.canister_id().into(),
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),

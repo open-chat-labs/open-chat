@@ -21,7 +21,7 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if !state.data.chat.is_public {
+    if !state.data.chat.is_public.value {
         GroupNotPublic
     } else if let Some(caller_member) = state.data.get_member(caller) {
         if caller_member.suspended.value {

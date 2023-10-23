@@ -318,7 +318,7 @@ impl Data {
     pub fn build_chat_metrics(&mut self, now: TimestampMillis) {
         let mut metrics = ChatMetricsInternal::default();
 
-        for channel in self.channels.iter().filter(|c| c.chat.is_public) {
+        for channel in self.channels.iter().filter(|c| c.chat.is_public.value) {
             metrics.merge(channel.chat.events.metrics());
         }
 

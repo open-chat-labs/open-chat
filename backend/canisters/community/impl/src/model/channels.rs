@@ -68,7 +68,7 @@ impl Channels {
     pub fn public_channel_ids(&self) -> Vec<ChannelId> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.chat.is_public)
+            .filter(|(_, c)| c.chat.is_public.value)
             .map(|(id, _)| id)
             .copied()
             .collect()
@@ -77,7 +77,7 @@ impl Channels {
     pub fn public_channels(&self) -> Vec<&Channel> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.chat.is_public)
+            .filter(|(_, c)| c.chat.is_public.value)
             .map(|(_, c)| c)
             .collect()
     }
@@ -111,7 +111,7 @@ impl Channels {
         let mut matches: Vec<_> = self
             .channels
             .values()
-            .filter(|c| c.chat.is_public)
+            .filter(|c| c.chat.is_public.value)
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -197,7 +197,7 @@ impl Channel {
 
         let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
             (member.min_visible_event_index(), member.min_visible_message_index())
-        } else if chat.is_public {
+        } else if chat.is_public.value {
             chat.min_visible_indexes_for_new_members.unwrap_or_default()
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
             (invitation.min_visible_event_index, invitation.min_visible_message_index)
@@ -242,11 +242,11 @@ impl Channel {
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
             last_updated: now,
-            name: chat.name.clone(),
-            description: chat.description.clone(),
+            name: chat.name.value.clone(),
+            description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
             avatar_id: types::Document::id(&chat.avatar),
-            is_public: chat.is_public,
+            is_public: chat.is_public.value,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
@@ -254,8 +254,8 @@ impl Channel {
             latest_message_sender_display_name,
             latest_event_index,
             member_count: chat.members.len(),
-            permissions: chat.permissions.clone().into(),
-            permissions_v2: chat.permissions.clone(),
+            permissions: chat.permissions.value.clone().into(),
+            permissions_v2: chat.permissions.value.clone(),
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: chat.events.get_events_time_to_live().value,
@@ -363,7 +363,7 @@ impl Channel {
     }
 
     fn can_view_latest_message(&self, is_channel_member: bool, is_community_member: bool, is_community_public: bool) -> bool {
-        is_channel_member || (self.chat.is_public && (is_community_member || is_community_public))
+        is_channel_member || (self.chat.is_public.value && (is_community_member || is_community_public))
     }
 }
 
@@ -376,8 +376,8 @@ impl From<&Channel> for ChannelMatch {
     fn from(channel: &Channel) -> Self {
         ChannelMatch {
             id: channel.id,
-            name: channel.chat.name.clone(),
-            description: channel.chat.description.clone(),
+            name: channel.chat.name.value.clone(),
+            description: channel.chat.description.value.clone(),
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
@@ -388,9 +388,11 @@ impl From<&Channel> for ChannelMatch {
 impl From<&Channel> for Document {
     fn from(channel: &Channel) -> Self {
         let mut document = Document::default();
-        document
-            .add_field(channel.chat.name.clone(), 5.0, true)
-            .add_field(channel.chat.description.clone(), 1.0, true);
+        document.add_field(channel.chat.name.value.clone(), 5.0, true).add_field(
+            channel.chat.description.value.clone(),
+            1.0,
+            true,
+        );
         document
     }
 }

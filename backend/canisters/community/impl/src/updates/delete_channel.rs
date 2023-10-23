@@ -37,7 +37,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
                     state.data.events.push_event(
                         CommunityEventInternal::ChannelDeleted(Box::new(ChannelDeleted {
                             channel_id,
-                            name: channel.chat.name,
+                            name: channel.chat.name.value,
                             deleted_by: user_id,
                         })),
                         now,

@@ -12,7 +12,7 @@ use user_canister::c2c_remove_from_group;
 #[update]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
-    if !read_state(|state| state.data.chat.is_public) {
+    if !read_state(|state| state.data.chat.is_public.value) {
         return group_canister::block_user::Response::GroupNotPublic;
     }
 
@@ -109,8 +109,8 @@ fn commit(user_to_remove: UserId, block: bool, removed_by: UserId, state: &mut R
                 user_to_remove,
                 removed_by,
                 block,
-                state.data.chat.name.clone(),
-                state.data.chat.is_public,
+                state.data.chat.name.value.clone(),
+                state.data.chat.is_public.value,
                 &mut state.data.fire_and_forget_handler,
             );
 
