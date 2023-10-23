@@ -39,8 +39,48 @@ pub enum ChatEvent {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsResponse {
     pub events: Vec<EventWrapper<ChatEvent>>,
+    pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
+    pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
     pub timestamp: TimestampMillis,
+}
+
+pub enum EventOrExpiredRange {
+    Event(EventWrapper<ChatEvent>),
+    ExpiredEventRange(EventIndex, EventIndex),
+    ExpiredMessageRange(MessageIndex, MessageIndex),
+}
+
+impl EventOrExpiredRange {
+    pub fn as_event(&self) -> Option<&EventWrapper<ChatEvent>> {
+        if let EventOrExpiredRange::Event(event) = self {
+            Some(event)
+        } else {
+            None
+        }
+    }
+}
+
+impl EventsResponse {
+    pub fn new(events: Vec<EventOrExpiredRange>, latest_event_index: EventIndex, now: TimestampMillis) -> EventsResponse {
+        let mut result = EventsResponse {
+            events: Vec::new(),
+            expired_event_ranges: Vec::new(),
+            expired_message_ranges: Vec::new(),
+            latest_event_index,
+            timestamp: now,
+        };
+
+        for event in events {
+            match event {
+                EventOrExpiredRange::Event(e) => result.events.push(e),
+                EventOrExpiredRange::ExpiredEventRange(from, to) => result.expired_event_ranges.push((from, to)),
+                EventOrExpiredRange::ExpiredMessageRange(from, to) => result.expired_message_ranges.push((from, to)),
+            }
+        }
+
+        result
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

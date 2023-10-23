@@ -406,11 +406,7 @@ impl GroupChatCore {
                     user_id,
                 );
 
-                Success(EventsResponse {
-                    events,
-                    latest_event_index,
-                    timestamp: now,
-                })
+                Success(EventsResponse::new(events, latest_event_index, now))
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
@@ -436,11 +432,7 @@ impl GroupChatCore {
 
                 let events = reader.get_by_indexes(&events, user_id);
 
-                Success(EventsResponse {
-                    events,
-                    latest_event_index,
-                    timestamp: now,
-                })
+                Success(EventsResponse::new(events, latest_event_index, now))
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
@@ -468,11 +460,7 @@ impl GroupChatCore {
 
                 let events = reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id);
 
-                Success(EventsResponse {
-                    events,
-                    latest_event_index,
-                    timestamp: now,
-                })
+                Success(EventsResponse::new(events, latest_event_index, now))
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,

@@ -10,14 +10,14 @@ use std::ops::{Deref, DerefMut};
 use types::{
     is_default, is_empty_hashset, is_empty_slice, AudioContent, AvatarChanged, BlobReference, CanisterId, ChannelId, Chat,
     ChatId, ChatMetrics, CommunityId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
-    CustomContent, DeletedBy, DirectChatCreated, EventIndex, EventsTimeToLiveUpdated, FileContent, GiphyContent, GroupCreated,
-    GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext,
-    GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined, MemberLeft, MembersAdded,
-    MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned, MultiUserChat, PermissionsChanged,
-    PollContentInternal, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, Reaction,
-    ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary, TimestampMillis,
-    Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
+    CustomContent, DeletedBy, DirectChatCreated, EventIndex, EventWrapperInternal, EventsTimeToLiveUpdated, FileContent,
+    GiphyContent, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
+    GroupNameChanged, GroupReplyContext, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, ImageContent, MemberJoined,
+    MemberLeft, MembersAdded, MembersAddedToDefaultChannel, MembersRemoved, Message, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, MessagePinned, MessageReminderContent, MessageReminderCreatedContent, MessageUnpinned,
+    MultiUserChat, PermissionsChanged, PollContentInternal, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal,
+    ProposalContent, Reaction, ReplyContext, ReportedMessage, ReportedMessageInternal, RoleChanged, TextContent, ThreadSummary,
+    TimestampMillis, Timestamped, Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked, VideoContent,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -131,6 +131,22 @@ impl ChatEventInternal {
     pub fn as_message_mut(&mut self) -> Option<&mut MessageInternal> {
         if let ChatEventInternal::Message(m) = self {
             Some(m.deref_mut())
+        } else {
+            None
+        }
+    }
+}
+
+pub enum EventOrExpiredRangeInternal<'a> {
+    Event(&'a EventWrapperInternal<ChatEventInternal>),
+    ExpiredEventRange(EventIndex, EventIndex),
+    ExpiredMessageRange(MessageIndex, MessageIndex),
+}
+
+impl<'a> EventOrExpiredRangeInternal<'a> {
+    pub fn as_event(self) -> Option<&'a EventWrapperInternal<ChatEventInternal>> {
+        if let EventOrExpiredRangeInternal::Event(event) = self {
+            Some(event)
         } else {
             None
         }

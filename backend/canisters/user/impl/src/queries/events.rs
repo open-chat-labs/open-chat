@@ -30,11 +30,7 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             Some(my_user_id),
         );
 
-        Success(EventsResponse {
-            events,
-            latest_event_index,
-            timestamp: now,
-        })
+        Success(EventsResponse::new(events, latest_event_index, now))
     } else {
         ChatNotFound
     }
