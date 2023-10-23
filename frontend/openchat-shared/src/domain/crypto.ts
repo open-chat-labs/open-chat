@@ -72,48 +72,47 @@ function to2SigFigs(num: number): number {
 }
 
 type AccountTransactionCommon = {
+    timestamp: Date;
+    id: bigint;
     memo?: string;
-    createdAt?: bigint;
+    createdAt?: Date;
     amount: bigint;
+    to?: string;
+    from?: string;
 };
 
 type AccountTransactionBurn = AccountTransactionCommon & {
-    from: string;
+    kind: "burn";
     spender?: string;
 };
 
 type AccountTransactionMint = AccountTransactionCommon & {
-    to: string;
+    kind: "mint";
 };
 
 type AccountTransactionApprove = AccountTransactionCommon & {
+    kind: "approve";
     fee?: bigint;
-    from: string;
     expectedAllowance?: bigint;
     expiredAt?: bigint;
     spender?: string;
 };
 
 type AccountTransactionTransfer = AccountTransactionCommon & {
+    kind: "transfer";
     fee?: bigint;
-    to: string;
-    from: string;
     spender?: string;
 };
 
-export type AccountTransaction = {
-    id: bigint;
-    burn?: AccountTransactionBurn;
-    kind: string;
-    mint?: AccountTransactionMint;
-    approve?: AccountTransactionApprove;
-    timestamp: bigint;
-    transfer?: AccountTransactionTransfer;
+export type AccountTransaction =
+    | AccountTransactionBurn
+    | AccountTransactionMint
+    | AccountTransactionTransfer
+    | AccountTransactionApprove;
+
+export type AccountTransactions = {
+    transactions: AccountTransaction[];
+    oldestTransactionId?: bigint;
 };
 
-export type AccountTransactionResult =
-    | Failure
-    | (Success & {
-          transactions: AccountTransaction[];
-          oldestTransactionId?: bigint;
-      });
+export type AccountTransactionResult = Failure | (Success & AccountTransactions);

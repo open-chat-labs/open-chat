@@ -30,56 +30,77 @@ function getTransactions(candid: ApiGetTransactions): AccountTransactionResult {
     };
 }
 
+function nanosToDate(n: bigint): Date {
+    return new Date(Number(n / 1_000_000n));
+}
+
 function transaction(candid: ApiTransactionWithId): AccountTransaction {
-    return {
-        id: candid.id,
-        kind: candid.transaction.kind,
-        timestamp: candid.transaction.timestamp,
-        burn: optional(candid.transaction.burn, (candid) => {
-            return {
-                memo: optional(candid.memo, memo),
-                createdAt: optional(candid.created_at_time, identity),
-                amount: candid.amount,
-                from: account(candid.from),
-                spender: optional(candid.spender, account),
-            };
-        }),
-        mint: optional(candid.transaction.mint, (candid) => {
-            return {
-                memo: optional(candid.memo, memo),
-                createdAt: optional(candid.created_at_time, identity),
-                amount: candid.amount,
-                to: account(candid.to),
-            };
-        }),
-        approve: optional(candid.transaction.approve, (candid) => {
-            return {
-                memo: optional(candid.memo, memo),
-                createdAt: optional(candid.created_at_time, identity),
-                amount: candid.amount,
-                fee: optional(candid.fee, identity),
-                from: account(candid.from),
-                expectedAllowance: optional(candid.expected_allowance, identity),
-                expiredAt: optional(candid.expires_at, identity),
-                spender: optional(candid.spender, account),
-            };
-        }),
-        transfer: optional(candid.transaction.transfer, (candid) => {
-            return {
-                memo: optional(candid.memo, memo),
-                createdAt: optional(candid.created_at_time, identity),
-                amount: candid.amount,
-                fee: optional(candid.fee, identity),
-                to: account(candid.to),
-                from: account(candid.from),
-                spender: optional(candid.spender, account),
-            };
-        }),
-    };
+    // the candid types are quite fuzzy here - the old "product type when it should be sum type" thing
+    if (candid.transaction.burn[0] !== undefined) {
+        const burn = candid.transaction.burn[0];
+        return {
+            id: candid.id,
+            kind: "burn",
+            timestamp: nanosToDate(candid.transaction.timestamp),
+            memo: optional(burn.memo, memo),
+            createdAt: optional(burn.created_at_time, nanosToDate),
+            amount: burn.amount,
+            from: account(burn.from),
+            spender: optional(burn.spender, account),
+        };
+    }
+
+    if (candid.transaction.mint[0] !== undefined) {
+        const mint = candid.transaction.mint[0];
+        return {
+            id: candid.id,
+            kind: "mint",
+            timestamp: nanosToDate(candid.transaction.timestamp),
+            memo: optional(mint.memo, memo),
+            createdAt: optional(mint.created_at_time, nanosToDate),
+            amount: mint.amount,
+            to: account(mint.to),
+        };
+    }
+
+    if (candid.transaction.approve[0] !== undefined) {
+        const approve = candid.transaction.approve[0];
+        return {
+            id: candid.id,
+            kind: "approve",
+            timestamp: nanosToDate(candid.transaction.timestamp),
+            memo: optional(approve.memo, memo),
+            createdAt: optional(approve.created_at_time, nanosToDate),
+            amount: approve.amount,
+            fee: optional(approve.fee, identity),
+            from: account(approve.from),
+            expectedAllowance: optional(approve.expected_allowance, identity),
+            expiredAt: optional(approve.expires_at, identity),
+            spender: optional(approve.spender, account),
+        };
+    }
+
+    if (candid.transaction.transfer[0] !== undefined) {
+        const transfer = candid.transaction.transfer[0];
+        return {
+            id: candid.id,
+            kind: "transfer",
+            timestamp: nanosToDate(candid.transaction.timestamp),
+            memo: optional(transfer.memo, memo),
+            createdAt: optional(transfer.created_at_time, nanosToDate),
+            amount: transfer.amount,
+            fee: optional(transfer.fee, identity),
+            to: account(transfer.to),
+            from: account(transfer.from),
+            spender: optional(transfer.spender, account),
+        };
+    }
+
+    throw new Error(`Unexpected transaction type received: ${candid.transaction}`);
 }
 
 function memo(candid: Uint8Array | number[]): string {
-    return candid.toString(); //TODO - decode this properly
+    return [...candid].map((n) => String.fromCharCode(n)).join("");
 }
 
 function account(candid: ApiAccount): string {

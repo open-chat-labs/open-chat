@@ -570,6 +570,7 @@
         "send": "Send",
         "receiveToken": "Receive {symbol}",
         "sendToken": "Send {symbol}",
+        "transactions": "Transactions",
         "manageHeader": "Manage {symbol} account",
         "topUp": "Top up",
         "topUpBlurb": "To top up, simply transfer some {token} into the account above.",
@@ -581,7 +582,17 @@
         "scan": "Scan QR code",
         "comingSoon": "(coming soon)",
         "showZeroBalance": "show more",
-        "hideZeroBalance": "show less"
+        "hideZeroBalance": "show less",
+        "transactionError": "Sorry we are unable to load your transactions",
+        "unknownTransactionType": "Unknown",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "Amount",
+            "kind": "Kind",
+            "timestamp": "Timestamp",
+            "from": "From",
+            "to": "To"
+        }
     },
     "searchChat": "Search",
     "search": "Search...",

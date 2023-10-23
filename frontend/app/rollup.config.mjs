@@ -106,8 +106,7 @@ function serve() {
         proxy: [
             {
                 from: "/api/*",
-                // to: `http://${dfxJson.networks.local.bind}`,
-                to: `https://172.67.177.35:80`,
+                to: `http://${dfxJson.networks.local.bind}`,
             },
         ],
         spa: "./index.html",

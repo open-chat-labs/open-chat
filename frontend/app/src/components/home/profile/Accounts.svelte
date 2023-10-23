@@ -1,14 +1,20 @@
 <script lang="ts">
-    import ViewList from "svelte-material-icons/ViewList.svelte";
     import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
     import { dollarExchangeRates } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
+    import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    import ViewList from "svelte-material-icons/ViewList.svelte";
     import { _ } from "svelte-i18n";
-    import LinkButton from "../../LinkButton.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import MenuIcon from "../../MenuIcon.svelte";
+    import Menu from "../../Menu.svelte";
+    import MenuItem from "../../MenuItem.svelte";
+    import AccountTransactions from "./AccountTransactions.svelte";
 
     const client = getContext<OpenChat>("client");
     const defaultTokens = ["CHAT", "ICP", "ckBTC"];
@@ -19,10 +25,10 @@
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive";
     let selectedLedger: string | undefined = undefined;
+    let transactionsLedger: string | undefined = undefined;
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
-    $: nervousSystemLookup = client.nervousSystemLookup;
     $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
 
     $: {
@@ -49,24 +55,6 @@
     function showSend(ledger: string) {
         selectedLedger = ledger;
         manageMode = "send";
-    }
-
-    function loadTransactions(ledger: string) {
-        const nervousSystem = Object.values($nervousSystemLookup).find(
-            (n) => n.ledgerCanisterId === ledger
-        );
-        const ledgerIndex = nervousSystem?.indexCanisterId;
-        if (ledgerIndex !== undefined) {
-            client.getAccountTransactions(ledgerIndex).then((result) => {
-                console.log("Account transactions: ", result);
-            });
-        } else {
-            console.debug(
-                "TRN: could not find ledger index for ledger",
-                ledger,
-                $nervousSystemLookup
-            );
-        }
     }
 
     function buildAccountsList(
@@ -139,11 +127,6 @@
                     <div>
                         {token.symbol}
                     </div>
-                    {#if token.symbol.toLowerCase() === "chat"}
-                        <div on:click={() => loadTransactions()} class="trans">
-                            <ViewList size={$iconSize} color={"var(--txt)"} />
-                        </div>
-                    {/if}
                 </div>
             </td>
             <td>
@@ -155,10 +138,41 @@
             </td>
             <td>
                 <div class="manage">
-                    <LinkButton light underline={"hover"} on:click={() => showSend(token.key)}
-                        >{$_("cryptoAccount.send")}</LinkButton>
-                    <LinkButton light underline={"hover"} on:click={() => showReceive(token.key)}
-                        >{$_("cryptoAccount.receive")}</LinkButton>
+                    <MenuIcon position="bottom" align="end">
+                        <span slot="icon" class="wallet-menu">
+                            <ChevronDown
+                                viewBox={"0 -3 24 24"}
+                                size={$iconSize}
+                                color={"var(--txt)"} />
+                        </span>
+                        <span slot="menu">
+                            <Menu>
+                                <MenuItem on:click={() => showSend(token.key)}>
+                                    <ArrowRightBoldCircle
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("cryptoAccount.send")}</div>
+                                </MenuItem>
+                                <MenuItem on:click={() => showReceive(token.key)}>
+                                    <ArrowLeftBoldCircle
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("cryptoAccount.receive")}</div>
+                                </MenuItem>
+                                {#if !["ckbtc"].includes(token.symbol.toLowerCase())}
+                                    <MenuItem on:click={() => (transactionsLedger = token.ledger)}>
+                                        <ViewList
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">{$_("cryptoAccount.transactions")}</div>
+                                    </MenuItem>
+                                {/if}
+                            </Menu>
+                        </span>
+                    </MenuIcon>
                 </div>
             </td>
         </tr>
@@ -169,6 +183,12 @@
     <ErrorMessage>{balanceError}</ErrorMessage>
 {/if}
 
+{#if transactionsLedger !== undefined}
+    <AccountTransactions
+        on:close={() => (transactionsLedger = undefined)}
+        ledger={transactionsLedger} />
+{/if}
+
 <style lang="scss">
     :global(.manage .link-button) {
         padding: 0 0 0 $sp3;
@@ -176,6 +196,10 @@
             border-right: 1px solid var(--txt-light);
             padding: 0 $sp3 0 0;
         }
+    }
+
+    .wallet-menu {
+        cursor: pointer;
     }
 
     table {
@@ -203,6 +227,11 @@
         td {
             vertical-align: middle;
             padding-bottom: $sp3;
+        }
+
+        .transactions {
+            cursor: pointer;
+            padding: 0 $sp2 0 0;
         }
 
         .token {
