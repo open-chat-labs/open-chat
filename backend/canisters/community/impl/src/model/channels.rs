@@ -290,11 +290,9 @@ impl Channel {
         }
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
-        let updates_from_events = chat.summary_updates_from_events(since, user_id);
+        let updates = chat.summary_updates(since, user_id);
 
-        let latest_message = can_view_latest_message
-            .then_some(updates_from_events.latest_message)
-            .flatten();
+        let latest_message = can_view_latest_message.then_some(updates.latest_message).flatten();
 
         let latest_message_sender_display_name = latest_message
             .as_ref()
@@ -302,8 +300,8 @@ impl Channel {
             .and_then(|m| m.display_name().value.clone());
 
         let membership = member.map(|m| ChannelMembershipUpdates {
-            role: updates_from_events.role_changed.then_some(m.role.value.into()),
-            mentions: updates_from_events.mentions,
+            role: updates.role_changed.then_some(m.role.value.into()),
+            mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
             latest_threads: self.chat.events.latest_threads(
@@ -320,29 +318,29 @@ impl Channel {
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
-                .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > since)
+                .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
             last_updated: now,
-            name: updates_from_events.name,
-            description: updates_from_events.description,
-            subtype: updates_from_events.subtype,
-            avatar_id: updates_from_events.avatar_id,
-            is_public: updates_from_events.is_public,
+            name: updates.name,
+            description: updates.description,
+            subtype: updates.subtype,
+            avatar_id: updates.avatar_id,
+            is_public: updates.is_public,
             latest_message,
             latest_message_sender_display_name,
-            latest_event_index: updates_from_events.latest_event_index,
-            member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
-            permissions: updates_from_events.permissions.clone().map(|ps| ps.into()),
-            permissions_v2: updates_from_events.permissions,
-            updated_events: updates_from_events.updated_events,
+            latest_event_index: updates.latest_event_index,
+            member_count: updates.member_count,
+            permissions: updates.permissions.clone().map(|ps| ps.into()),
+            permissions_v2: updates.permissions,
+            updated_events: updates.updated_events,
             metrics: Some(self.chat.events.metrics().hydrate()),
-            date_last_pinned: updates_from_events.date_last_pinned,
-            events_ttl: updates_from_events.events_ttl,
-            gate: updates_from_events.gate,
+            date_last_pinned: updates.date_last_pinned,
+            events_ttl: updates.events_ttl,
+            gate: updates.gate,
             membership,
         })
     }
