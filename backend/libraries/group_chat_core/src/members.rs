@@ -24,6 +24,8 @@ pub struct GroupMembers {
     pub moderator_count: u32,
     pub admin_count: u32,
     pub owner_count: u32,
+    #[serde(default = "now_millis")]
+    pub member_last_added_or_removed: TimestampMillis,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -51,6 +53,7 @@ impl GroupMembers {
             moderator_count: 0,
             admin_count: 0,
             owner_count: 1,
+            member_last_added_or_removed: now,
         }
     }
 
@@ -86,6 +89,7 @@ impl GroupMembers {
                         is_bot,
                     };
                     e.insert(member.clone());
+                    self.member_last_added_or_removed = now;
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInGroup,
@@ -93,7 +97,7 @@ impl GroupMembers {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
+    pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
         if let Some(member) = self.members.remove(&user_id) {
             match member.role.value {
                 GroupRoleInternal::Owner => self.owner_count -= 1,
@@ -102,6 +106,7 @@ impl GroupMembers {
                 _ => (),
             }
 
+            self.member_last_added_or_removed = now;
             Some(member)
         } else {
             None
