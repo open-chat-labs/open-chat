@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- added index_cansiter_id to `NervousSystemSummary` ([#4632](https://github.com/open-chat-labs/open-chat/pull/4632))
+- Added `index_canister_id` to `NervousSystemSummary` ([#4632](https://github.com/open-chat-labs/open-chat/pull/4632))
 
 ## [[2.0.892](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.892-registry)] - 2023-10-19
 
