@@ -23,6 +23,10 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
 
         let now = state.env.now();
         let chat = &channel.chat;
+        let min_visible_message_index = user_id
+            .and_then(|u| chat.members.get(&u))
+            .map(|m| m.min_visible_message_index())
+            .unwrap_or_default();
 
         Success(SuccessResult {
             timestamp: now,
@@ -30,7 +34,7 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             members: chat.members.iter().map(|m| m.into()).collect(),
             blocked_users: chat.members.blocked(),
             invited_users: chat.invited_users.users(),
-            pinned_messages: chat.pinned_messages.clone(),
+            pinned_messages: chat.pinned_messages(min_visible_message_index),
             chat_rules: chat.rules.value.clone().into(),
         })
     } else {

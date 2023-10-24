@@ -20,12 +20,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
             participants: chat.members.iter().map(|p| p.into()).collect(),
             blocked_users: chat.members.blocked(),
             invited_users: chat.invited_users.users(),
-            pinned_messages: chat
-                .pinned_messages
-                .iter()
-                .filter(|&m| *m >= min_visible_message_index)
-                .copied()
-                .collect(),
+            pinned_messages: chat.pinned_messages(min_visible_message_index),
             chat_rules: chat.rules.value.clone().into(),
         })
     } else {
