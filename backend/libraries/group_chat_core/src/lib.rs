@@ -296,33 +296,6 @@ impl GroupChatCore {
         since: TimestampMillis,
         user_id: Option<UserId>,
     ) -> Option<SelectedGroupUpdates> {
-        struct UserUpdatesHandler<'a> {
-            chat: &'a GroupChatCore,
-            users_updated: HashSet<UserId>,
-        }
-
-        impl<'a> UserUpdatesHandler<'a> {
-            pub fn mark_member_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, removed: bool) {
-                if self.users_updated.insert(user_id) {
-                    if removed {
-                        result.members_removed.push(user_id);
-                    } else if let Some(member) = self.chat.members.get(&user_id) {
-                        result.members_added_or_updated.push(member.into());
-                    }
-                }
-            }
-
-            pub fn mark_user_blocked_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, blocked: bool) {
-                if self.users_updated.insert(user_id) {
-                    if blocked {
-                        result.blocked_users_added.push(user_id);
-                    } else {
-                        result.blocked_users_removed.push(user_id);
-                    }
-                }
-            }
-        }
-
         let min_visible_event_index = if self.is_public.value {
             EventIndex::default()
         } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
@@ -348,19 +321,32 @@ impl GroupChatCore {
             ..Default::default()
         };
 
-        let mut user_updates_handler = UserUpdatesHandler {
-            chat: self,
-            users_updated: HashSet::new(),
-        };
-
+        let mut users_added_updated_or_removed = HashSet::new();
+        let mut users_blocked_or_unblocked = HashSet::new();
         for (user_id, update) in self.members.iter_latest_updates(since) {
             match update {
                 MemberUpdate::Added | MemberUpdate::RoleChanged => {
-                    user_updates_handler.mark_member_updated(&mut result, user_id, false)
+                    if users_added_updated_or_removed.insert(user_id) {
+                        if let Some(member) = self.members.get(&user_id) {
+                            result.members_added_or_updated.push(member.into());
+                        }
+                    }
                 }
-                MemberUpdate::Removed => user_updates_handler.mark_member_updated(&mut result, user_id, true),
-                MemberUpdate::Blocked => user_updates_handler.mark_user_blocked_updated(&mut result, user_id, true),
-                MemberUpdate::Unblocked => user_updates_handler.mark_user_blocked_updated(&mut result, user_id, false),
+                MemberUpdate::Removed => {
+                    if users_added_updated_or_removed.insert(user_id) {
+                        result.members_removed.push(user_id);
+                    }
+                }
+                MemberUpdate::Blocked => {
+                    if users_blocked_or_unblocked.insert(user_id) {
+                        result.blocked_users_added.push(user_id);
+                    }
+                }
+                MemberUpdate::Unblocked => {
+                    if users_blocked_or_unblocked.insert(user_id) {
+                        result.blocked_users_removed.push(user_id);
+                    }
+                }
             }
         }
 
