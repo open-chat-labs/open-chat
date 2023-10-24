@@ -583,7 +583,7 @@
         "comingSoon": "(coming soon)",
         "showZeroBalance": "show more",
         "hideZeroBalance": "show less",
-        "transactionError": "Sorry we are unable to load your transactions",
+        "transactionError": "Sorry we were unable to load your transactions",
         "unknownTransactionType": "Unknown",
         "loadMoreTransactions": "Load more",
         "transactionHeaders": {

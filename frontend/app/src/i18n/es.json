@@ -476,7 +476,7 @@
         "showZeroBalance": "mostrar más",
         "hideZeroBalance": "Muestra menos",
         "transactions": "Actas",
-        "transactionError": "Lo sentimos, no podemos cargar sus transacciones.",
+        "transactionError": "Lo sentimos, no pudimos cargar sus transacciones.",
         "unknownTransactionType": "Desconocido",
         "loadMoreTransactions": "Carga más",
         "transactionHeaders": {

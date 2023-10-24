@@ -475,7 +475,7 @@
         "showZeroBalance": "もっと見せる",
         "hideZeroBalance": "あまり見せない",
         "transactions": "取引",
-        "transactionError": "申し訳ありませんが、トランザクションを読み込むことができません",
+        "transactionError": "申し訳ありませんが、トランザクションを読み込むことができませんでした",
         "unknownTransactionType": "未知",
         "loadMoreTransactions": "もっと読み込む",
         "transactionHeaders": {

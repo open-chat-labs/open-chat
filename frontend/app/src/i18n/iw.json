@@ -475,7 +475,7 @@
         "showZeroBalance": "להראות יותר",
         "hideZeroBalance": "הראי פחות",
         "transactions": "עסקאות",
-        "transactionError": "מצטערים שאיננו יכולים לטעון את העסקאות שלך",
+        "transactionError": "מצטערים שלא הצלחנו לטעון את העסקאות שלך",
         "unknownTransactionType": "לא ידוע",
         "loadMoreTransactions": "טען עוד",
         "transactionHeaders": {

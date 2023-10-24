@@ -475,7 +475,7 @@
         "showZeroBalance": "показать больше",
         "hideZeroBalance": "показывай меньше",
         "transactions": "Транзакции",
-        "transactionError": "К сожалению, мы не можем загрузить ваши транзакции",
+        "transactionError": "К сожалению, нам не удалось загрузить ваши транзакции",
         "unknownTransactionType": "Неизвестный",
         "loadMoreTransactions": "Загрузи больше",
         "transactionHeaders": {

@@ -475,7 +475,7 @@
         "showZeroBalance": "mostra di più",
         "hideZeroBalance": "mostra meno",
         "transactions": "Transazioni",
-        "transactionError": "Siamo spiacenti, non siamo in grado di caricare le tue transazioni",
+        "transactionError": "Siamo spiacenti, non siamo riusciti a caricare le tue transazioni",
         "unknownTransactionType": "Sconosciuto",
         "loadMoreTransactions": "Carica di più",
         "transactionHeaders": {
