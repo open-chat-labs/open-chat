@@ -45,6 +45,7 @@ pub struct EventsResponse {
     pub timestamp: TimestampMillis,
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum EventOrExpiredRange {
     Event(EventWrapper<ChatEvent>),
     ExpiredEventRange(EventIndex, EventIndex),

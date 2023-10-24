@@ -503,7 +503,7 @@ fn get_value_or_neighbours<K: Copy + Ord, V>(map: &BTreeMap<K, V>, key: K) -> Re
         None => None,
     };
 
-    let previous_key = map.range(..key).rev().next().map(|(k, _)| *k);
+    let previous_key = map.range(..key).next_back().map(|(k, _)| *k);
 
     Err((previous_key, next_key))
 }
