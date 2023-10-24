@@ -28,13 +28,13 @@ import {
     MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
-import { toRecord } from "./list";
+import { iterateCachedEvents } from "./cachedEventsIterator";
 
 const CACHE_VERSION = 85;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
-type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
+export type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     chatId: ChatIdentifier;
     messageKey: string | undefined;
 };
@@ -207,241 +207,28 @@ export async function setCachedChats(
     await tx.done;
 }
 
-export async function getCachedEventsWindow<T extends ChatEvent>(
-    db: Database,
-    eventIndexRange: IndexRange,
-    chatId: ChatIdentifier,
-    messageIndex: number,
-    threadRootMessageIndex?: number,
-): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
-    console.debug("CACHE: window: ", eventIndexRange, messageIndex);
-    const start = Date.now();
-    const [events, missing, totalMiss] = await aggregateEventsWindow<T>(
-        db,
-        eventIndexRange,
-        chatId,
-        messageIndex,
-        threadRootMessageIndex,
-    );
-
-    if (!totalMiss && missing.size === 0) {
-        console.debug("CACHE: hit: ", events.length, Date.now() - start);
-    }
-
-    return [{ events, latestEventIndex: undefined }, missing, totalMiss];
-}
-
-async function aggregateEventsWindow<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: ChatIdentifier,
-    middleMessageIndex: number,
-    threadRootMessageIndex?: number,
-): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    const resolvedDb = await db;
-
-    const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
-
-    const middleEvent = await resolvedDb.getFromIndex(
-        store,
-        "messageIdx",
-        createCacheKey({ chatId, threadRootMessageIndex }, middleMessageIndex),
-    );
-    const midpoint = middleEvent?.index;
-
-    if (midpoint === undefined) {
-        console.debug(
-            "CACHE: total miss: could not even find the starting event index for the message window",
-        );
-        return [[], new Set<number>(), true];
-    }
-
-    if (min > midpoint) {
-        min = midpoint;
-    }
-    if (max < midpoint) {
-        max = midpoint;
-    }
-
-    const half = MAX_EVENTS / 2;
-    const lowerBound = Math.max(min, midpoint - half);
-    const upperBound = Math.min(max, midpoint + half);
-
-    console.debug("CACHE: aggregate events window: events from ", lowerBound, " to ", upperBound);
-
-    const range = IDBKeyRange.bound(
-        createCacheKey({ chatId, threadRootMessageIndex }, lowerBound),
-        createCacheKey({ chatId, threadRootMessageIndex }, upperBound),
-    );
-
-    const result = await resolvedDb.getAll(store, range);
-
-    return processCachedEventsWindow(lowerBound, upperBound, midpoint, result, MAX_MESSAGES) as [
-        EventWrapper<T>[],
-        Set<number>,
-        boolean,
-    ];
-}
-
-export function processCachedEventsWindow(
-    lowerbound: number,
-    upperbound: number,
-    midpoint: number,
-    cachedEvents: { index: number; event: { kind: string } }[],
-    maxMessages: number = MAX_MESSAGES,
-): [{ index: number; event: { kind: string } }[], Set<number>, false] {
-    const events: { index: number; event: { kind: string } }[] = [];
-    const missing = new Set<number>();
-    let messageCount = 0;
-
-    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
-
-    function inBounds(idx: number): boolean {
-        return idx >= lowerbound && idx <= upperbound;
-    }
-
-    function processIndex(idx: number) {
-        const cachedEvent = cachedEventsMap[idx];
-        if (cachedEvent === undefined) {
-            if (inBounds(idx)) {
-                missing.add(idx);
-            }
-        } else {
-            if (cachedEvent.event.kind === "message") {
-                messageCount += 1;
-            }
-            events.push(cachedEvent);
-        }
-    }
-
-    function loop(forwardIndex: number, backwardIndex: number): undefined {
-        processIndex(forwardIndex);
-        processIndex(backwardIndex);
-        if (messageCount < maxMessages) {
-            if (forwardIndex < upperbound || backwardIndex > lowerbound) {
-                return loop(forwardIndex + 1, backwardIndex - 1);
-            }
-        }
-    }
-
-    loop(midpoint, midpoint - 1);
-
-    return [events.sort((a, b) => a.index - b.index), missing, false];
-}
-
-// why is this extracted like this with slightly odd looking types?
-// to make it easier to unit test
-export function processCachedEvents(
-    lowerbound: number,
-    upperbound: number,
-    ascending: boolean,
-    cachedEvents: { index: number; event: { kind: string } }[],
-    maxMessages: number = MAX_MESSAGES,
-): [{ index: number; event: { kind: string } }[], Set<number>] {
-    const events: { index: number; event: { kind: string } }[] = [];
-    const missing = new Set<number>();
-    let messageCount = 0;
-
-    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
-
-    function loop(idx: number): undefined {
-        const cachedEvent = cachedEventsMap[idx];
-        if (cachedEvent === undefined) {
-            missing.add(idx);
-        } else {
-            if (cachedEvent.event.kind === "message") {
-                messageCount += 1;
-            }
-            events.push(cachedEvent);
-        }
-        if (messageCount < maxMessages) {
-            if (ascending ? idx < upperbound : idx > lowerbound) {
-                return loop(ascending ? idx + 1 : idx - 1);
-            }
-        }
-    }
-
-    loop(ascending ? lowerbound : upperbound);
-
-    return [events.sort((a, b) => a.index - b.index), missing];
-}
-
-async function aggregateEvents<T extends ChatEvent>(
-    db: Database,
-    [min, max]: IndexRange,
-    chatId: ChatIdentifier,
-    startIndex: number,
-    ascending: boolean,
-    threadRootMessageIndex?: number,
-): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    const resolvedDb = await db;
-    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_EVENTS);
-    const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
-
-    const range = IDBKeyRange.bound(
-        createCacheKey({ chatId, threadRootMessageIndex }, lowerBound),
-        createCacheKey({ chatId, threadRootMessageIndex }, upperBound),
-    );
-
-    const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
-
-    const result = await resolvedDb.getAll(store, range);
-
-    return processCachedEvents(lowerBound, upperBound, ascending, result) as [
-        EnhancedWrapper<T>[],
-        Set<number>,
-    ];
-}
-
-export async function getCachedMessageByIndex<T extends ChatEvent>(
-    db: Database,
-    eventIndex: number,
-    chatId: ChatIdentifier,
-    threadRootMessageIndex?: number,
-): Promise<EventWrapper<T> | undefined> {
-    const key = createCacheKey({ chatId, threadRootMessageIndex }, eventIndex);
-    const store = threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
-    return (await db).get(store, key) as Promise<EventWrapper<T> | undefined>;
-}
-
-export async function getCachedEventsByIndex<T extends ChatEvent>(
-    db: Database,
-    eventIndexes: number[],
-    chatId: ChatIdentifier,
-    threadRootMessageIndex?: number,
-): Promise<[EventsSuccessResult<T>, Set<number>]> {
-    const missing = new Set<number>();
-    const returnedEvents = await Promise.all(
-        eventIndexes.map((idx) => {
-            return getCachedMessageByIndex(db, idx, chatId, threadRootMessageIndex).then((evt) => {
-                if (evt === undefined) {
-                    missing.add(idx);
-                }
-                return evt;
-            });
-        }),
-    );
-    const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
-    return [{ events, latestEventIndex: undefined }, missing];
-}
-
 export async function getCachedEvents<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
-    chatId: ChatIdentifier,
+    context: MessageContext,
     startIndex: number,
     ascending: boolean,
-    threadRootMessageIndex?: number,
+    maxEvents = MAX_EVENTS,
+    maxMessages = MAX_MESSAGES,
+    maxMissing = 50,
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
-    console.debug("CACHE: ", eventIndexRange, startIndex, ascending);
+    console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
-    const [events, missing] = await aggregateEvents<T>(
-        db,
+
+    const [events, missing] = await iterateCachedEvents(
+        await db,
         eventIndexRange,
-        chatId,
+        context,
         startIndex,
         ascending,
-        threadRootMessageIndex,
+        maxEvents,
+        maxMessages,
+        maxMissing,
     );
 
     if (missing.size === 0) {
@@ -450,7 +237,141 @@ export async function getCachedEvents<T extends ChatEvent>(
         console.debug("CACHE: miss: ", missing);
     }
 
+    return [{ events: events as EventWrapper<T>[], latestEventIndex: undefined }, missing];
+}
+
+export async function getCachedEventsWindowByMessageIndex<T extends ChatEvent>(
+    db: Database,
+    eventIndexRange: IndexRange,
+    context: MessageContext,
+    messageIndex: number,
+    maxEvents = MAX_EVENTS,
+    maxMessages = MAX_MESSAGES,
+    maxMissing = 50,
+): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
+    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    if (eventIndex === undefined) {
+        return [{ events: [], latestEventIndex: undefined }, new Set(), true];
+    }
+
+    const [events, missing] = await getCachedEventsWindow<T>(
+        db,
+        eventIndexRange,
+        context,
+        eventIndex,
+        maxEvents,
+        maxMessages,
+        maxMissing,
+    );
+
+    return [events, missing, false];
+}
+
+export async function getCachedEventsWindow<T extends ChatEvent>(
+    db: Database,
+    eventIndexRange: IndexRange,
+    context: MessageContext,
+    startIndex: number,
+    maxEvents = MAX_EVENTS,
+    maxMessages = MAX_MESSAGES,
+    maxMissing = 50,
+): Promise<[EventsSuccessResult<T>, Set<number>]> {
+    console.debug("CACHE: window: ", eventIndexRange, startIndex);
+    const start = Date.now();
+    const resolvedDb = await db;
+
+    const backwardsPromise = iterateCachedEvents(
+        resolvedDb,
+        eventIndexRange,
+        context,
+        startIndex - 1,
+        false,
+        maxEvents / 2,
+        maxMessages / 2,
+        maxMissing / 2,
+    );
+    const forwardsPromise = iterateCachedEvents(
+        resolvedDb,
+        eventIndexRange,
+        context,
+        startIndex,
+        true,
+        maxEvents / 2,
+        maxMessages / 2,
+        maxMissing / 2,
+    );
+
+    const [[backwardsEvents, backwardsMissing], [forwardsEvents, forwardsMissing]] =
+        await Promise.all([backwardsPromise, forwardsPromise]);
+
+    const events = backwardsEvents.concat(forwardsEvents);
+    const missing = new Set([...backwardsMissing, ...forwardsMissing]);
+
+    if (missing.size === 0) {
+        console.debug("CACHE: hit: ", events.length, Date.now() - start);
+    }
+
+    return [{ events: events as EventWrapper<T>[], latestEventIndex: undefined }, missing];
+}
+
+export async function getCachedEventByIndex<T extends ChatEvent>(
+    db: IDBPDatabase<ChatSchema>,
+    eventIndex: number,
+    context: MessageContext,
+): Promise<EventWrapper<T> | undefined> {
+    const storeName =
+        context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
+    const key = createCacheKey(context, eventIndex);
+
+    const event = await db.get(storeName, IDBKeyRange.lowerBound(key));
+
+    if (event === undefined || event.index === eventIndex) {
+        return event as EventWrapper<T> | undefined;
+    }
+    return undefined;
+}
+
+export async function getCachedEventsByIndex<T extends ChatEvent>(
+    db: Database,
+    eventIndexes: number[],
+    context: MessageContext,
+): Promise<[EventsSuccessResult<T>, Set<number>]> {
+    const resolvedDb = await db;
+    const events: EventWrapper<T>[] = [];
+    const missing = new Set<number>();
+    await Promise.all(
+        eventIndexes.map(async (idx) => {
+            const evt = await getCachedEventByIndex(resolvedDb, idx, context);
+            if (evt !== undefined) {
+                events.push(evt as EventWrapper<T>);
+            } else {
+                missing.add(idx);
+            }
+        }),
+    );
     return [{ events, latestEventIndex: undefined }, missing];
+}
+
+export async function getCachedEventIndexByMessageIndex(
+    db: Database,
+    context: MessageContext,
+    messageIndex: number,
+): Promise<number | undefined> {
+    const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
+    const cacheKey = createCacheKey(context, messageIndex);
+
+    const value = await (
+        await db
+    ).getFromIndex(store, "messageIdx", IDBKeyRange.lowerBound(cacheKey));
+
+    if (
+        value !== undefined &&
+        value.event.kind === "message" &&
+        value.event.messageIndex === messageIndex
+    ) {
+        return value.index;
+    }
+    return undefined;
 }
 
 export function mergeSuccessResponses<T extends ChatEvent>(

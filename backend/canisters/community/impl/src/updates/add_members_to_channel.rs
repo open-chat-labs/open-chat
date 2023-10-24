@@ -158,7 +158,7 @@ fn commit(
                 now,
                 min_visible_event_index,
                 min_visible_message_index,
-                channel.chat.is_public,
+                channel.chat.is_public.value,
                 is_bot,
             ) {
                 AddResult::Success(_) => {
@@ -198,7 +198,7 @@ fn commit(
             community_id: state.env.canister_id().into(),
             community_name: state.data.name.clone(),
             channel_id,
-            channel_name: channel.chat.name.clone(),
+            channel_name: channel.chat.name.value.clone(),
             added_by,
             added_by_name,
             added_by_display_name,

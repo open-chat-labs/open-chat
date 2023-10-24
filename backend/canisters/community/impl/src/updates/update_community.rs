@@ -225,7 +225,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         let enabled = new_rules.enabled;
         let prev_enabled = state.data.rules.enabled;
 
-        if let Some(rules_version) = state.data.rules.update(new_rules) {
+        if let Some(rules_version) = state.data.rules.update(new_rules, now) {
             result.rules_version = Some(rules_version);
 
             if let Some(member) = state.data.members.get_by_user_id_mut(&my_user_id) {

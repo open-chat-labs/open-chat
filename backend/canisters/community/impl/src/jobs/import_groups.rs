@@ -239,7 +239,7 @@ pub(crate) async fn process_channel_members(group_id: ChatId, channel_id: Channe
 fn add_community_members_to_channel_if_public(channel_id: ChannelId, state: &mut RuntimeState) {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
         // If this is a public channel, add all community members to it
-        if channel.chat.is_public && channel.chat.gate.is_none() {
+        if channel.chat.is_public.value && channel.chat.gate.value.is_none() {
             let now = state.env.now();
             for member in state.data.members.iter_mut() {
                 join_channel_unchecked(channel, member, true, now);
@@ -267,7 +267,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
                     latest_message_index: channel.chat.events.main_events_list().latest_message_index(),
                 },
                 group_id,
-                group_name: channel.chat.name.clone(),
+                group_name: channel.chat.name.value.clone(),
                 members: channel.chat.members.iter().map(|m| m.user_id).collect(),
                 other_public_channels: state
                     .data

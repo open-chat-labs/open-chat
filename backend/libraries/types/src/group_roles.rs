@@ -119,7 +119,7 @@ impl From<GroupPermissionsPrevious> for GroupPermissions {
 impl From<GroupPermissionsCombined> for GroupPermissions {
     #[allow(deprecated)]
     fn from(value: GroupPermissionsCombined) -> Self {
-        if value.create_polls == GroupPermissionRole::None {
+        if value.create_polls != GroupPermissionRole::None {
             // GroupPermissionsPrevious will never have any permission roles == None
             // so we reason the source type was in fact GroupPermissionsPrevious
             let previous = GroupPermissionsPrevious {

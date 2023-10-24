@@ -106,7 +106,7 @@ import {
     type Database,
     getCachedEvents,
     getCachedEventsByIndex,
-    getCachedEventsWindow,
+    getCachedEventsWindowByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
     removeFailedMessage,
@@ -334,12 +334,10 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(
-            this.db,
-            eventIndexes,
+        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
-        ).then((res) =>
+        }).then((res) =>
             this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex),
         );
     }
@@ -369,12 +367,13 @@ export class UserClient extends CandidService {
         messageIndex: number,
         latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
-            this.db,
-            eventIndexRange,
-            chatId,
-            messageIndex,
-        );
+        const [cachedEvents, missing, totalMiss] =
+            await getCachedEventsWindowByMessageIndex<DirectChatEvent>(
+                this.db,
+                eventIndexRange,
+                { chatId },
+                messageIndex,
+            );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -429,10 +428,9 @@ export class UserClient extends CandidService {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
             eventIndexRange,
-            chatId,
+            { chatId, threadRootMessageIndex },
             startIndex,
             ascending,
-            threadRootMessageIndex,
         );
 
         // we may or may not have all of the requested events
