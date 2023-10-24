@@ -2507,6 +2507,7 @@ dependencies = [
  "regex-lite",
  "search",
  "serde",
+ "serde_repr",
  "types",
  "utils",
 ]

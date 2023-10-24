@@ -85,7 +85,7 @@ fn handle_notification(
                         thread_root_message_index,
                         message_index: message_event.event.message_index,
                         message_event_index: message_event.index,
-                        group_name: state.data.chat.name.clone(),
+                        group_name: state.data.chat.name.value.clone(),
                         added_by: user_id,
                         added_by_name: username,
                         added_by_display_name: display_name,

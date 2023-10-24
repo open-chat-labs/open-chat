@@ -54,7 +54,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         thread_root_message_index: args.thread_root_message_index,
                         message_index,
                         message_event_index,
-                        group_name: state.data.chat.name.clone(),
+                        group_name: state.data.chat.name.value.clone(),
                         tipped_by: user_id,
                         tipped_by_name: args.username,
                         tipped_by_display_name: args.display_name,

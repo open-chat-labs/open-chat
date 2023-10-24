@@ -110,11 +110,11 @@ impl RuntimeState {
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: now,
-            name: chat.name.clone(),
-            description: chat.description.clone(),
+            name: chat.name.value.clone(),
+            description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
             avatar_id: Document::id(&chat.avatar),
-            is_public: chat.is_public,
+            is_public: chat.is_public.value,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
@@ -122,10 +122,10 @@ impl RuntimeState {
             latest_event_index,
             joined: member.date_added,
             participant_count: chat.members.len(),
-            role: member.role.into(),
+            role: member.role.value.into(),
             mentions: member.most_recent_mentions(None, &chat.events),
-            permissions: chat.permissions.clone().into(),
-            permissions_v2: chat.permissions.clone(),
+            permissions: chat.permissions.value.clone().into(),
+            permissions_v2: chat.permissions.value.clone(),
             notifications_muted: member.notifications_muted.value,
             metrics: chat.events.metrics().hydrate(),
             my_metrics: chat
@@ -240,7 +240,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: group_chat_core.is_public,
+            public: group_chat_core.is_public.value,
             date_created: group_chat_core.date_created,
             members: group_chat_core.members.len(),
             moderators: group_chat_core.members.moderator_count(),
@@ -403,7 +403,7 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.chat.is_public
+        self.chat.is_public.value
             || self.get_member(caller).is_some()
             || self.get_invitation(caller).is_some()
             || self.is_invite_code_valid(invite_code)

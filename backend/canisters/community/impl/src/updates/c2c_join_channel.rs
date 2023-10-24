@@ -103,7 +103,7 @@ fn is_permitted_to_join(
                         )
                         .unwrap(),
                 )))
-            } else if !channel.chat.is_public && channel.chat.invited_users.get(&member.user_id).is_none() {
+            } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
                 Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
@@ -187,7 +187,7 @@ pub(crate) fn join_channel_unchecked(
         AddResult::Success(_) => {
             let invitation = channel.chat.invited_users.remove(&member.user_id, now);
 
-            if channel.chat.is_public {
+            if channel.chat.is_public.value {
                 channel.chat.events.mark_member_added_to_public_channel(member.user_id, now);
             } else {
                 channel.chat.events.push_main_event(

@@ -48,7 +48,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
             Ok(PrepareResult {
                 group_index_canister_id: state.data.group_index_canister_id,
                 deleted_by: member.user_id,
-                group_name: state.data.chat.name.clone(),
+                group_name: state.data.chat.name.value.clone(),
                 members: state.data.chat.members.iter().map(|m| m.user_id).collect(),
             })
         }
