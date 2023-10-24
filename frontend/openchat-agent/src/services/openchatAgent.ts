@@ -2006,8 +2006,9 @@ export class OpenChatAgent extends EventTarget {
     getAccountTransactions(
         ledgerIndex: string,
         principal: string,
+        fromId?: bigint,
     ): Promise<AccountTransactionResult> {
-        return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal);
+        return this.getLedgerIndexClient(ledgerIndex).getAccountTransactions(principal, fromId);
     }
 
     getGroupMessagesByMessageIndex(

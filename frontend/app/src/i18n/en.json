@@ -585,6 +585,7 @@
         "hideZeroBalance": "show less",
         "transactionError": "Sorry we are unable to load your transactions",
         "unknownTransactionType": "Unknown",
+        "loadMoreTransactions": "Load more",
         "transactionHeaders": {
             "id": "ID",
             "amount": "Amount",

@@ -16,6 +16,11 @@
     import MenuItem from "../../MenuItem.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
 
+    type TransactionsFor = {
+        ledger: string;
+        urlFormat: string;
+    };
+
     const client = getContext<OpenChat>("client");
     const defaultTokens = ["CHAT", "ICP", "ckBTC"];
 
@@ -25,7 +30,7 @@
     let balanceError: string | undefined;
     let manageMode: "none" | "send" | "receive";
     let selectedLedger: string | undefined = undefined;
-    let transactionsLedger: string | undefined = undefined;
+    let transactionsFor: TransactionsFor | undefined = undefined;
 
     $: cryptoLookup = client.cryptoLookup;
     $: cryptoBalance = client.cryptoBalance;
@@ -74,6 +79,7 @@
                 logo: t.logo,
                 dollarBalance,
                 zero,
+                urlFormat: t.transactionUrlFormat,
             };
         });
 
@@ -161,8 +167,8 @@
                                         slot="icon" />
                                     <div slot="text">{$_("cryptoAccount.receive")}</div>
                                 </MenuItem>
-                                {#if !["ckbtc"].includes(token.symbol.toLowerCase())}
-                                    <MenuItem on:click={() => (transactionsLedger = token.ledger)}>
+                                {#if !["ckbtc", "icp"].includes(token.symbol.toLowerCase())}
+                                    <MenuItem on:click={() => (transactionsFor = token)}>
                                         <ViewList
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -183,10 +189,11 @@
     <ErrorMessage>{balanceError}</ErrorMessage>
 {/if}
 
-{#if transactionsLedger !== undefined}
+{#if transactionsFor !== undefined}
     <AccountTransactions
-        on:close={() => (transactionsLedger = undefined)}
-        ledger={transactionsLedger} />
+        on:close={() => (transactionsFor = undefined)}
+        ledger={transactionsFor.ledger}
+        urlFormat={transactionsFor.urlFormat} />
 {/if}
 
 <style lang="scss">

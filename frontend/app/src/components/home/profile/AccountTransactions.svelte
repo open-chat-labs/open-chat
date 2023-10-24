@@ -1,7 +1,11 @@
 <script lang="ts">
-    import ViewList from "svelte-material-icons/ViewList.svelte";
-    import { E8S_PER_TOKEN, type AccountTransactions, type OpenChat } from "openchat-client";
-    import type { RemoteData } from "../../../utils/remoteData";
+    import {
+        E8S_PER_TOKEN,
+        type AccountTransactions,
+        type OpenChat,
+        type NamedAccount,
+    } from "openchat-client";
+    import type { RemoteData as RD } from "../../../utils/remoteData";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import { _ } from "svelte-i18n";
@@ -11,33 +15,88 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import Overlay from "../../Overlay.svelte";
     import TransactionEndpoint from "./TransactionEndpoint.svelte";
+    import FancyLoader from "../../icons/FancyLoader.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let ledger: string;
+    export let urlFormat: string;
 
-    let transationData: RemoteData<AccountTransactions, string> = { kind: "loading" };
+    type LoadingMore<T> = { kind: "loading_more"; data: T };
+    type RemoteData = RD<AccountTransactions, string> | LoadingMore<AccountTransactions>;
+
+    let transationData: RemoteData = { kind: "loading" };
+    let accounts: NamedAccount[] = [];
 
     $: nervousSystemLookup = client.nervousSystemLookup;
+    $: moreAvailable = moreTransactionsAvailable(transationData);
 
-    onMount(showTransactions);
+    function moreTransactionsAvailable(trans: RemoteData): boolean {
+        if (trans.kind !== "success") return false;
+        if (trans.data.oldestTransactionId === undefined) return false;
+        const lastLoaded = trans.data.transactions[trans.data.transactions.length - 1];
+        return lastLoaded.id > trans.data.oldestTransactionId;
+    }
 
-    function showTransactions() {
+    onMount(async () => {
+        accounts = await client.loadSavedCryptoAccounts();
+        loadTransations();
+    });
+
+    function url(id: bigint): string {
+        return urlFormat.replace("{block_index}", id.toString()).replace("{transaction_hash}", "");
+    }
+
+    function openDashboard(id: bigint) {
+        window.open(url(id), "_blank");
+    }
+
+    function ledgerSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
+        transationData = { kind: "idle" };
+        ledger = ev.detail.ledger;
+        urlFormat = ev.detail.urlFormat;
+        loadTransations();
+    }
+
+    function loadTransations() {
         const nervousSystem = Object.values($nervousSystemLookup).find(
             (n) => n.ledgerCanisterId === ledger
         );
         const ledgerIndex = nervousSystem?.indexCanisterId;
         if (ledgerIndex !== undefined) {
-            transationData = { kind: "loading" };
+            let start = undefined;
+            if (transationData.kind === "success") {
+                start =
+                    transationData.data.transactions[transationData.data.transactions.length - 1]
+                        .id - 1n;
+                transationData = { kind: "loading_more", data: transationData.data };
+            } else {
+                transationData = { kind: "loading" };
+            }
             client
-                .getAccountTransactions(ledgerIndex)
+                .getAccountTransactions(ledgerIndex, start)
                 .then((result) => {
                     if (result.kind === "failure") {
                         transationData = { kind: "idle" };
                         toastStore.showFailureToast($_("cryptoAccount.transactionError"));
                     } else {
-                        transationData = { kind: "success", data: result };
+                        if (transationData.kind === "loading") {
+                            transationData = { kind: "success", data: result };
+                        }
+                        if (transationData.kind === "loading_more") {
+                            transationData = {
+                                kind: "success",
+                                data: {
+                                    oldestTransactionId: result.oldestTransactionId,
+                                    transactions: [
+                                        ...transationData.data.transactions,
+                                        ...result.transactions,
+                                    ],
+                                },
+                            };
+                        }
                     }
                 })
                 .catch((err) => {
@@ -60,13 +119,20 @@
 </script>
 
 <Overlay dismissible on:close={() => dispatch("close")}>
-    <ModalContent fitToContent closeIcon on:close>
+    <ModalContent fitToContent={!$mobileWidth} closeIcon on:close>
         <div class="header" slot="header">
-            <ViewList size={"1.2em"} color={"var(--txt)"} />
-            {$_("cryptoAccount.transactions")}
+            <div class="main-title">
+                <div>{$_("cryptoAccount.transactions")}</div>
+                <div>
+                    <CryptoSelector
+                        filter={(t) => !["ckbtc", "icp"].includes(t.symbol.toLowerCase())}
+                        on:select={ledgerSelected}
+                        {ledger} />
+                </div>
+            </div>
         </div>
-        <div slot="body">
-            {#if transationData.kind === "success"}
+        <div slot="body" class="table-container">
+            <div class="table-scroll">
                 <table class="data">
                     <thead>
                         <tr>
@@ -79,30 +145,46 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#each transationData.data.transactions as transaction}
-                            <tr>
-                                <td>{transaction.id}</td>
-                                <td>{fromE8s(transaction.amount)}</td>
-                                <td
-                                    >{transaction.memo ??
-                                        $_("cryptoAccount.unknownTransactionType")}</td>
-                                <td>{client.toDatetimeString(transaction.timestamp)}</td>
-                                <td>
-                                    <TransactionEndpoint address={transaction.from} />
-                                </td>
-                                <td>
-                                    <TransactionEndpoint address={transaction.to} />
-                                </td>
-                            </tr>
-                        {/each}
+                        {#if transationData.kind === "success"}
+                            {#each transationData.data.transactions as transaction}
+                                <tr on:click={() => openDashboard(transaction.id)}>
+                                    <td>{transaction.id}</td>
+                                    <td>{fromE8s(transaction.amount)}</td>
+                                    <td
+                                        >{transaction.memo ??
+                                            $_("cryptoAccount.unknownTransactionType")}</td>
+                                    <td>{client.toDatetimeString(transaction.timestamp)}</td>
+                                    <td class="truncate">
+                                        <TransactionEndpoint
+                                            {accounts}
+                                            address={transaction.from} />
+                                    </td>
+                                    <td class="truncate">
+                                        <TransactionEndpoint {accounts} address={transaction.to} />
+                                    </td>
+                                </tr>
+                            {/each}
+                        {:else if transationData.kind === "loading"}
+                            <div class="loading">
+                                <FancyLoader />
+                            </div>
+                        {/if}
                     </tbody>
                 </table>
-            {/if}
+            </div>
         </div>
         <div slot="footer">
             <div class="footer">
                 <ButtonGroup>
-                    <Button>cancel</Button>
+                    <Button
+                        secondary
+                        on:click={() => loadTransations()}
+                        disabled={!moreAvailable}
+                        loading={transationData.kind === "loading"}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}>
+                        {$_("cryptoAccount.loadMoreTransactions")}
+                    </Button>
                     <Button
                         on:click={() => dispatch("close")}
                         small={!$mobileWidth}
@@ -116,15 +198,39 @@
 </Overlay>
 
 <style lang="scss">
+    .table-container {
+        height: 400px;
+        overflow: hidden;
+        border: 1px solid var(--bd);
+    }
+    .table-scroll {
+        overflow-y: auto;
+        height: 100%;
+    }
+    tbody {
+        position: relative;
+    }
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
     table {
         width: 100%;
         border-collapse: collapse;
+        min-width: 600px; // this will scroll horizontally on mobile
     }
-    table,
-    th,
-    td {
-        border: 1px solid var(--bd);
+    tr {
+        border-bottom: 1px solid var(--bd);
     }
+    td,
+    th {
+        border-right: 1px solid var(--bd);
+        &:last-child {
+            border-right: none;
+        }
+    }
+
     th,
     td {
         padding: 8px;
@@ -134,6 +240,9 @@
         background-color: var(--button-bg);
         color: var(--button-txt);
     }
+    tr {
+        cursor: pointer;
+    }
     tr:hover {
         background-color: rgba(255, 255, 255, 0.1);
     }
@@ -141,7 +250,26 @@
     th:nth-child(2) {
         text-align: right;
     }
-    tr td:last-child {
-        border-bottom: 1px solid var(--bd);
+    .truncate {
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .loading {
+        width: 80px;
+        height: 80px;
+        top: 140px;
+        left: 50%;
+        transform: translateX(-50%);
+        position: absolute;
+    }
+    .main-title {
+        flex: auto;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        @include font(bold, normal, fs-120);
     }
 </style>
