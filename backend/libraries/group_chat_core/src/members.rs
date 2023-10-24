@@ -31,11 +31,11 @@ pub struct GroupMembers {
 #[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum MemberUpdate {
-    Added,
-    Removed,
-    RoleChanged,
-    Blocked,
-    Unblocked,
+    Added = 1,
+    Removed = 2,
+    RoleChanged = 3,
+    Blocked = 4,
+    Unblocked = 5,
 }
 
 #[allow(clippy::too_many_arguments)]
