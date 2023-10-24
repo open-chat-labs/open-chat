@@ -486,15 +486,6 @@
             "from": "От",
             "to": "К",
             "type": "Тип"
-        },
-        "transactionType": {
-            "message": "СООБЩЕНИЕ",
-            "transfer": "ПЕРЕДАЧА",
-            "tip": "КОНЧИК",
-            "prize": "ПРИЗ",
-            "prizeClaim": "ПОЛУЧЕНИЕ ПРИЗА",
-            "prizeRefund": "ВОЗВРАТ ПРИЗА",
-            "deposit": "ДЕПОЗИТ"
         }
     },
     "searchChat": "Поиск",

@@ -65,17 +65,17 @@
     function translateMemo(trans: AccountTransaction): string {
         switch (trans.memo) {
             case "OC_MSG":
-                return $_("cryptoAccount.transactionType.message");
+                return "MESSAGE";
             case "OC_SEND":
-                return $_("cryptoAccount.transactionType.transfer");
+                return "SEND";
             case "OC_TIP":
-                return $_("cryptoAccount.transactionType.tip");
+                return "TIP";
             case "OC_PRZ":
-                return $_("cryptoAccount.transactionType.prize");
+                return "PRIZE";
             case "OC_PRZCL":
-                return $_("cryptoAccount.transactionType.prizeClaim");
+                return "PRIZE CLAIM";
             case "OC_PRZRF":
-                return $_("cryptoAccount.transactionType.prizeRefund");
+                return "PRIZE REFUND";
 
             default:
                 return $_("cryptoAccount.unknownTransactionType");

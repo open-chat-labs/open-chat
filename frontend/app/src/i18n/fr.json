@@ -486,15 +486,6 @@
             "from": "Depuis",
             "to": "À",
             "type": "Taper"
-        },
-        "transactionType": {
-            "message": "MESSAGE",
-            "transfer": "TRANSFERT",
-            "tip": "CONSEIL",
-            "prize": "PRIX",
-            "prizeClaim": "RÉCLAMATION DE PRIX",
-            "prizeRefund": "REMBOURSEMENT DU PRIX",
-            "deposit": "DÉPÔT"
         }
     },
     "searchChat": "Rechercher",

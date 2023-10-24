@@ -485,15 +485,6 @@
             "from": "从",
             "to": "到",
             "type": "类型"
-        },
-        "transactionType": {
-            "message": "信息",
-            "transfer": "转移",
-            "tip": "提示",
-            "prize": "奖",
-            "prizeClaim": "领奖",
-            "prizeRefund": "奖金退款",
-            "deposit": "订金"
         }
     },
     "searchChat": "搜索",

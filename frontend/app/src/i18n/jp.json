@@ -486,15 +486,6 @@
             "from": "から",
             "to": "に",
             "type": "タイプ"
-        },
-        "transactionType": {
-            "message": "メッセージ",
-            "transfer": "移行",
-            "tip": "ヒント",
-            "prize": "賞",
-            "prizeClaim": "賞品の受け取り",
-            "prizeRefund": "賞品の払い戻し",
-            "deposit": "デポジット"
         }
     },
     "searchChat": "検索",

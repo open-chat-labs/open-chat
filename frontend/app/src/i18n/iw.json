@@ -486,15 +486,6 @@
             "from": "מ",
             "to": "ל",
             "type": "סוּג"
-        },
-        "transactionType": {
-            "message": "הוֹדָעָה",
-            "transfer": "לְהַעֲבִיר",
-            "tip": "עֵצָה",
-            "prize": "פרס",
-            "prizeClaim": "תביעת פרס",
-            "prizeRefund": "החזר פרס",
-            "deposit": "לְהַפְקִיד"
         }
     },
     "searchChat": "לחפש",
