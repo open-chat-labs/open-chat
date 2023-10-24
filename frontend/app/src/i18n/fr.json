@@ -473,7 +473,19 @@
         "sendToken": "Envoyer {symbol}",
         "receive": "Recevoir",
         "showZeroBalance": "montre plus",
-        "hideZeroBalance": "Montrer moins"
+        "hideZeroBalance": "Montrer moins",
+        "transactions": "Transactions",
+        "transactionError": "Désolé, nous ne pouvons pas charger vos transactions",
+        "unknownTransactionType": "Inconnu",
+        "loadMoreTransactions": "Charger plus",
+        "transactionHeaders": {
+            "id": "IDENTIFIANT",
+            "amount": "Montant",
+            "kind": "Gentil",
+            "timestamp": "Horodatage",
+            "from": "Depuis",
+            "to": "À"
+        }
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",

@@ -4,6 +4,7 @@
         type AccountTransactions,
         type OpenChat,
         type NamedAccount,
+        toRecord,
     } from "openchat-client";
     import type { RemoteData as RD } from "../../../utils/remoteData";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -29,7 +30,7 @@
 
     let transationData: RemoteData = { kind: "loading" };
     let accounts: NamedAccount[] = [];
-
+    $: accountLookup = toRecord(accounts, (a) => a.account);
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: moreAvailable = moreTransactionsAvailable(transationData);
 
@@ -156,11 +157,13 @@
                                     <td>{client.toDatetimeString(transaction.timestamp)}</td>
                                     <td class="truncate">
                                         <TransactionEndpoint
-                                            {accounts}
+                                            accounts={accountLookup}
                                             address={transaction.from} />
                                     </td>
                                     <td class="truncate">
-                                        <TransactionEndpoint {accounts} address={transaction.to} />
+                                        <TransactionEndpoint
+                                            accounts={accountLookup}
+                                            address={transaction.to} />
                                     </td>
                                 </tr>
                             {/each}

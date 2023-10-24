@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, type NamedAccount, toRecord } from "openchat-client";
+    import { AvatarSize, OpenChat, type NamedAccount } from "openchat-client";
     import { getContext } from "svelte";
     import Avatar from "../../Avatar.svelte";
 
     const client = getContext<OpenChat>("client");
     export let address: string | undefined;
-    export let accounts: NamedAccount[];
+    export let accounts: Record<string, NamedAccount>;
 
     $: userStore = client.userStore;
     $: user = address ? $userStore[address] : undefined;
-    $: accountLookup = toRecord(accounts, (a) => a.account);
 </script>
 
 {#if address !== undefined}
@@ -25,8 +24,8 @@
                 {client.getDisplayName(user)}
             </div>
         </div>
-    {:else if accountLookup[address] !== undefined}
-        <div class="account" title={accountLookup[address].name}>{accountLookup[address].name}</div>
+    {:else if accounts[address] !== undefined}
+        <div class="account" title={accounts[address].name}>{accounts[address].name}</div>
     {:else}
         <div class="raw" title={address}>{address}</div>
     {/if}

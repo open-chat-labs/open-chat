@@ -473,7 +473,19 @@
         "sendToken": "Отправить {symbol}",
         "receive": "Получать",
         "showZeroBalance": "показать больше",
-        "hideZeroBalance": "показывай меньше"
+        "hideZeroBalance": "показывай меньше",
+        "transactions": "Транзакции",
+        "transactionError": "К сожалению, мы не можем загрузить ваши транзакции",
+        "unknownTransactionType": "Неизвестный",
+        "loadMoreTransactions": "Загрузи больше",
+        "transactionHeaders": {
+            "id": "ИДЕНТИФИКАТОР",
+            "amount": "Количество",
+            "kind": "Добрый",
+            "timestamp": "Временная метка",
+            "from": "От",
+            "to": "К"
+        }
     },
     "searchChat": "Поиск",
     "search": "Поиск...",

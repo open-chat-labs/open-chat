@@ -473,7 +473,19 @@
         "sendToken": "שלח {symbol}",
         "receive": "לְקַבֵּל",
         "showZeroBalance": "להראות יותר",
-        "hideZeroBalance": "הראי פחות"
+        "hideZeroBalance": "הראי פחות",
+        "transactions": "עסקאות",
+        "transactionError": "מצטערים שאיננו יכולים לטעון את העסקאות שלך",
+        "unknownTransactionType": "לא ידוע",
+        "loadMoreTransactions": "טען עוד",
+        "transactionHeaders": {
+            "id": "תְעוּדַת זֶהוּת",
+            "amount": "כמות",
+            "kind": "סוג",
+            "timestamp": "חותמת זמן",
+            "from": "מ",
+            "to": "ל"
+        }
     },
     "searchChat": "לחפש",
     "search": "לחפש...",

@@ -475,7 +475,19 @@
         "sendToken": "Senden Sie {symbol}",
         "receive": "Anfordern",
         "showZeroBalance": "Zeig mehr",
-        "hideZeroBalance": "zeige weniger"
+        "hideZeroBalance": "zeige weniger",
+        "transactions": "Transaktionen",
+        "transactionError": "Leider können wir Ihre Transaktionen nicht laden",
+        "unknownTransactionType": "Unbekannt",
+        "loadMoreTransactions": "Mehr laden",
+        "transactionHeaders": {
+            "id": "AUSWEIS",
+            "amount": "Menge",
+            "kind": "Art",
+            "timestamp": "Zeitstempel",
+            "from": "Aus",
+            "to": "Zu"
+        }
     },
     "searchChat": "Suche",
     "search": "Suche...",

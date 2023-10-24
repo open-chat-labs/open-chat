@@ -473,7 +473,19 @@
         "sendToken": "{symbol}を送る",
         "receive": "受け取る",
         "showZeroBalance": "もっと見せる",
-        "hideZeroBalance": "あまり見せない"
+        "hideZeroBalance": "あまり見せない",
+        "transactions": "取引",
+        "transactionError": "申し訳ありませんが、トランザクションを読み込むことができません",
+        "unknownTransactionType": "未知",
+        "loadMoreTransactions": "もっと読み込む",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "額",
+            "kind": "親切",
+            "timestamp": "タイムスタンプ",
+            "from": "から",
+            "to": "に"
+        }
     },
     "searchChat": "検索",
     "search": "検索...",
