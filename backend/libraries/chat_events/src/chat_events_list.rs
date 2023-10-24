@@ -91,11 +91,7 @@ impl ChatEventsList {
         event_key: EventKey,
         min_visible_event_index: EventIndex,
     ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        if let Some(EventOrExpiredRangeInternal::Event(event)) = self.get(event_key, min_visible_event_index) {
-            Some(event)
-        } else {
-            None
-        }
+        self.get(event_key, min_visible_event_index).and_then(|e| e.as_event())
     }
 
     pub(crate) fn get_event_mut(
