@@ -95,7 +95,14 @@ class EventsIterator {
         bound: number,
     ): Promise<EventsIterator> {
         if ((ascending && startIndex > bound) || (!ascending && startIndex < bound)) {
-            return new EventsIterator();
+            throw new Error(
+                `Start index exceeds bound. ${JSON.stringify({
+                    messageContext,
+                    startIndex,
+                    ascending,
+                    bound,
+                })}`,
+            );
         }
 
         const storeName =
