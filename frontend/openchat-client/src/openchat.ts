@@ -325,6 +325,7 @@ import type {
     GroupSubtype,
     NervousSystemDetails,
     OptionUpdate,
+    AccountTransactionResult,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -354,6 +355,7 @@ import {
     userOrUserGroupId,
     extractUserIdsFromMentions,
     isMessageNotification,
+    userIdsFromTransactions,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3936,6 +3938,24 @@ export class OpenChat extends OpenChatAgentWorker {
                 return val;
             },
         );
+    }
+
+    async getAccountTransactions(
+        ledgerIndex: string,
+        fromId?: bigint,
+    ): Promise<AccountTransactionResult> {
+        return this.sendRequest({
+            kind: "getAccountTransactions",
+            ledgerIndex: ledgerIndex,
+            fromId,
+            principal: this.user.userId,
+        }).then(async (resp) => {
+            if (resp.kind === "success") {
+                const userIds = userIdsFromTransactions(resp.transactions);
+                await this.getMissingUsers(userIds);
+            }
+            return resp;
+        });
     }
 
     async threadPreviews(

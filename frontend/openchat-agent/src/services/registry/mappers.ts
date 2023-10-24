@@ -48,6 +48,7 @@ function nervousSystemSummary(candid: ApiNervousSystemSummary): NervousSystemSum
         rootCanisterId: candid.root_canister_id.toString(),
         governanceCanisterId: candid.governance_canister_id.toString(),
         ledgerCanisterId: candid.ledger_canister_id.toString(),
+        indexCanisterId: candid.index_canister_id.toString(),
         isNns: candid.is_nns,
         proposalRejectionFee: candid.proposal_rejection_fee,
         submittingProposalsEnabled: candid.submitting_proposals_enabled,

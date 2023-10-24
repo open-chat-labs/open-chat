@@ -81,7 +81,7 @@ async function generateLanguage(lang, code) {
                     agg[k] = v;
                     return agg;
                 }, {});
-            })
+            }),
         );
 
         const merged = translated.reduce((agg, chunk) => {

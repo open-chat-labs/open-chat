@@ -20,6 +20,7 @@ export const idlFactory = ({ IDL }) => {
     'submitting_proposals_enabled' : IDL.Bool,
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
+    'index_canister_id' : CanisterId,
     'proposal_rejection_fee' : IDL.Nat64,
     'ledger_canister_id' : CanisterId,
   });
