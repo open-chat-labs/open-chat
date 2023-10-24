@@ -1281,10 +1281,29 @@ impl ChatEvents {
     }
 
     fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
-        if is_thread_event || matches!(event, ChatEventInternal::EventsTimeToLiveUpdated(_)) {
-            None
+        if let Some(ttl) = self.events_ttl.value {
+            if is_thread_event
+                || matches!(
+                    event,
+                    ChatEventInternal::DirectChatCreated(_)
+                        | ChatEventInternal::GroupChatCreated(_)
+                        | ChatEventInternal::GroupNameChanged(_)
+                        | ChatEventInternal::GroupDescriptionChanged(_)
+                        | ChatEventInternal::GroupRulesChanged(_)
+                        | ChatEventInternal::AvatarChanged(_)
+                        | ChatEventInternal::GroupVisibilityChanged(_)
+                        | ChatEventInternal::GroupGateUpdated(_)
+                        | ChatEventInternal::ChatFrozen(_)
+                        | ChatEventInternal::ChatUnfrozen(_)
+                        | ChatEventInternal::EventsTimeToLiveUpdated(_)
+                )
+            {
+                None
+            } else {
+                Some(now + ttl)
+            }
         } else {
-            self.events_ttl.value.map(|d| now + d)
+            None
         }
     }
 }
