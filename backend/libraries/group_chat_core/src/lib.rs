@@ -7,7 +7,7 @@ use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex, EventWrapper,
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
@@ -53,7 +53,10 @@ pub struct GroupChatCore {
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
-    pub pinned_messages: Vec<MessageIndex>,
+    #[serde(rename = "pinned_messages_v2")]
+    pub pinned_messages: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(default)]
+    pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     #[serde(rename = "permissions_v2")]
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
@@ -90,7 +93,12 @@ pub struct GroupChatCoreCombined {
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
+    #[serde(default)]
     pub pinned_messages: Vec<MessageIndex>,
+    #[serde(default)]
+    pub pinned_messages_v2: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(default)]
+    pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
     #[serde(default)]
     pub permissions: GroupPermissions,
     #[serde(default)]
@@ -104,6 +112,7 @@ pub struct GroupChatCoreCombined {
 impl From<GroupChatCoreCombined> for GroupChatCore {
     fn from(value: GroupChatCoreCombined) -> Self {
         let now = now_millis();
+        let date_last_pinned = value.date_last_pinned.unwrap_or(now);
 
         GroupChatCore {
             is_public: to_timestamped(value.is_public_v2, value.is_public, now),
@@ -117,7 +126,12 @@ impl From<GroupChatCoreCombined> for GroupChatCore {
             events: value.events,
             created_by: value.created_by,
             date_created: value.date_created,
-            pinned_messages: value.pinned_messages,
+            pinned_messages: if !value.pinned_messages.is_empty() {
+                value.pinned_messages.into_iter().map(|m| (date_last_pinned, m)).collect()
+            } else {
+                value.pinned_messages_v2
+            },
+            pinned_messages_removed: value.pinned_messages_removed,
             permissions: to_timestamped(value.permissions_v2, value.permissions, now),
             date_last_pinned: value.date_last_pinned,
             gate: value.gate,
@@ -167,7 +181,8 @@ impl GroupChatCore {
             events,
             created_by,
             date_created: now,
-            pinned_messages: Vec::new(),
+            pinned_messages: BTreeSet::new(),
+            pinned_messages_removed: BTreeSet::new(),
             permissions: Timestamped::new(permissions, now),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
@@ -291,11 +306,7 @@ impl GroupChatCore {
         }
     }
 
-    pub fn selected_group_updates_from_events(
-        &self,
-        since: TimestampMillis,
-        user_id: Option<UserId>,
-    ) -> Option<SelectedGroupUpdates> {
+    pub fn selected_group_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> Option<SelectedGroupUpdates> {
         let min_visible_event_index = if self.is_public.value {
             EventIndex::default()
         } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
@@ -317,6 +328,20 @@ impl GroupChatCore {
             timestamp: latest_event_timestamp,
             latest_event_index,
             invited_users,
+            pinned_messages_added: self
+                .pinned_messages
+                .iter()
+                .rev()
+                .take_while(|(ts, _)| *ts > since)
+                .map(|(_, m)| *m)
+                .collect(),
+            pinned_messages_removed: self
+                .pinned_messages_removed
+                .iter()
+                .rev()
+                .take_while(|(ts, _)| *ts > since)
+                .map(|(_, m)| *m)
+                .collect(),
             chat_rules: self.rules.if_set_after(since).map(|r| r.clone().into()),
             ..Default::default()
         };
@@ -347,23 +372,6 @@ impl GroupChatCore {
                         result.blocked_users_removed.push(user_id);
                     }
                 }
-            }
-        }
-
-        // Iterate through the new events starting from most recent
-        for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
-            match &event_wrapper.event {
-                ChatEventInternal::MessagePinned(p) => {
-                    if !result.pinned_messages_removed.contains(&p.message_index) {
-                        result.pinned_messages_added.push(p.message_index);
-                    }
-                }
-                ChatEventInternal::MessageUnpinned(u) => {
-                    if !result.pinned_messages_added.contains(&u.message_index) {
-                        result.pinned_messages_removed.push(u.message_index);
-                    }
-                }
-                _ => {}
             }
         }
 
@@ -897,8 +905,8 @@ impl GroupChatCore {
                         .map(|m| m.message_index)
                     {
                         // If the message being deleted is pinned, unpin it
-                        if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
-                            self.pinned_messages.remove(index);
+                        if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
+                            self.pinned_messages.remove(&entry);
 
                             self.events.push_main_event(
                                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
@@ -1019,9 +1027,7 @@ impl GroupChatCore {
                 return MessageNotFound;
             }
 
-            if let Err(index) = self.pinned_messages.binary_search(&message_index) {
-                self.pinned_messages.insert(index, message_index);
-
+            if self.add_pinned_message(message_index, now) {
                 let push_event_result = self.events.push_main_event(
                     ChatEventInternal::MessagePinned(Box::new(MessagePinned {
                         message_index,
@@ -1066,9 +1072,7 @@ impl GroupChatCore {
 
             let user_id = member.user_id;
 
-            if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
-                self.pinned_messages.remove(index);
-
+            if self.remove_pinned_message(message_index, now) {
                 let push_event_result = self.events.push_main_event(
                     ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                         message_index,
@@ -1089,6 +1093,34 @@ impl GroupChatCore {
             }
         } else {
             UserNotInGroup
+        }
+    }
+
+    pub fn pinned_messages(&self, min_visible_message_index: MessageIndex) -> Vec<MessageIndex> {
+        self.pinned_messages
+            .iter()
+            .map(|(_, m)| *m)
+            .filter(|m| *m >= min_visible_message_index)
+            .collect()
+    }
+
+    fn add_pinned_message(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if !self.pinned_messages.iter().any(|(_, m)| *m == message_index) {
+            self.pinned_messages_removed.retain(|(_, m)| *m != message_index);
+            self.pinned_messages.insert((now, message_index));
+            true
+        } else {
+            false
+        }
+    }
+
+    fn remove_pinned_message(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
+            self.pinned_messages.remove(&entry);
+            self.pinned_messages_removed.insert((now, message_index));
+            true
+        } else {
+            false
         }
     }
 

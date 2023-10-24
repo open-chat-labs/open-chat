@@ -23,7 +23,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let updates = state
         .data
         .chat
-        .selected_group_updates_from_events(args.updates_since, Some(user_id))
+        .selected_group_updates(args.updates_since, Some(user_id))
         .unwrap();
 
     if updates.has_updates() {
