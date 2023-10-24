@@ -485,7 +485,8 @@
             "kind": "Amable",
             "timestamp": "Marca de tiempo",
             "from": "De",
-            "to": "A"
+            "to": "A",
+            "type": "Tipo"
         }
     },
     "searchChat": "Búsqueda",

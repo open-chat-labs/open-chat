@@ -486,7 +486,8 @@
             "kind": "Art",
             "timestamp": "Zeitstempel",
             "from": "Aus",
-            "to": "Zu"
+            "to": "Zu",
+            "type": "Typ"
         }
     },
     "searchChat": "Suche",

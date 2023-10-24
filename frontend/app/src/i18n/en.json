@@ -589,7 +589,7 @@
         "transactionHeaders": {
             "id": "ID",
             "amount": "Amount",
-            "kind": "Kind",
+            "type": "Type",
             "timestamp": "Timestamp",
             "from": "From",
             "to": "To"

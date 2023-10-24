@@ -485,7 +485,8 @@
             "kind": "Loại",
             "timestamp": "Dấu thời gian",
             "from": "Từ",
-            "to": "ĐẾN"
+            "to": "ĐẾN",
+            "type": "Kiểu"
         }
     },
     "searchChat": "Tìm kiếm",
