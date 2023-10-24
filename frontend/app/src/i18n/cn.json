@@ -483,7 +483,8 @@
             "kind": "种类",
             "timestamp": "时间戳",
             "from": "从",
-            "to": "到"
+            "to": "到",
+            "type": "类型"
         }
     },
     "searchChat": "搜索",

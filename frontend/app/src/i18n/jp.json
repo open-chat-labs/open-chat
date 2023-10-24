@@ -484,7 +484,8 @@
             "kind": "親切",
             "timestamp": "タイムスタンプ",
             "from": "から",
-            "to": "に"
+            "to": "に",
+            "type": "タイプ"
         }
     },
     "searchChat": "検索",

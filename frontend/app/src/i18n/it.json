@@ -484,7 +484,8 @@
             "kind": "Tipo",
             "timestamp": "Timestamp",
             "from": "Da",
-            "to": "A"
+            "to": "A",
+            "type": "Tipo"
         }
     },
     "searchChat": "Ricerca",
