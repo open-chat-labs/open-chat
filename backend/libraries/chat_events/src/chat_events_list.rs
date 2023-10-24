@@ -64,8 +64,8 @@ impl ChatEventsList {
                     Ok(e) => *e,
                     Err((prev, next)) => {
                         return Some(EventOrExpiredRangeInternal::ExpiredMessageRange(
-                            prev.unwrap_or_default(),
-                            next.or(self.latest_message_index).unwrap_or_default(),
+                            prev.map_or(MessageIndex::default(), |i| i.incr()),
+                            next.map_or(self.latest_message_index.unwrap_or_default(), |i| i.decr()),
                         ));
                     }
                 }
@@ -77,8 +77,8 @@ impl ChatEventsList {
             match get_value_or_neighbours(&self.events_map, event_index) {
                 Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
                 Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
-                    prev.unwrap_or_default(),
-                    next.or(self.latest_event_index).unwrap_or_default(),
+                    prev.map_or(EventIndex::default(), |i| i.incr()),
+                    next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
                 )),
             }
         } else {
@@ -313,8 +313,14 @@ pub trait Reader {
         max_events: usize,
         my_user_id: Option<UserId>,
     ) -> Vec<EventOrExpiredRange> {
-        let start_event_index = match self.event_index(start) {
-            Some(e) => e,
+        let start_event_index = match self.get(start) {
+            Some(EventOrExpiredRangeInternal::Event(e)) => e.index,
+            Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
+                return vec![EventOrExpiredRange::ExpiredEventRange(from, to)]
+            }
+            Some(EventOrExpiredRangeInternal::ExpiredMessageRange(from, to)) => {
+                return vec![EventOrExpiredRange::ExpiredMessageRange(from, to)]
+            }
             // If we can't access the starting event, return empty
             _ => return vec![],
         };

@@ -7,7 +7,11 @@ pub struct MessageIndex(u32);
 
 impl MessageIndex {
     pub fn incr(&self) -> MessageIndex {
-        MessageIndex(self.0 + 1)
+        MessageIndex(self.0.saturating_add(1))
+    }
+
+    pub fn decr(&self) -> MessageIndex {
+        MessageIndex(self.0.saturating_sub(1))
     }
 }
 

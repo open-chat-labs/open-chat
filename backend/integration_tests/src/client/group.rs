@@ -4,6 +4,7 @@ use group_canister::*;
 // Queries
 generate_query_call!(events);
 generate_query_call!(events_by_index);
+generate_query_call!(events_window);
 generate_query_call!(public_summary);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates_v2);
@@ -144,6 +145,33 @@ pub mod happy_path {
         match response {
             group_canister::events_by_index::Response::Success(result) => result,
             response => panic!("'events_by_index' error: {response:?}"),
+        }
+    }
+
+    pub fn events_window(
+        env: &PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        mid_point: MessageIndex,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events_window(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events_window::Args {
+                thread_root_message_index: None,
+                mid_point,
+                max_messages,
+                max_events,
+                latest_client_event_index: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_window' error: {response:?}"),
         }
     }
 

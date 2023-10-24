@@ -643,7 +643,7 @@ impl ChatEvents {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
-                if content.reservations.remove(&winner) {
+                return if content.reservations.remove(&winner) {
                     // Add the user to winners list
                     content.winners.insert(winner);
                     message.last_updated = Some(now);
@@ -667,10 +667,10 @@ impl ChatEvents {
                         now,
                     });
 
-                    return ClaimPrizeResult::Success(message_event);
+                    ClaimPrizeResult::Success(message_event)
                 } else {
-                    return ClaimPrizeResult::ReservationNotFound;
-                }
+                    ClaimPrizeResult::ReservationNotFound
+                };
             }
         }
 
@@ -687,16 +687,16 @@ impl ChatEvents {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
-                if content.reservations.remove(&user_id) {
+                return if content.reservations.remove(&user_id) {
                     // Put the prize back
                     content.prizes_remaining.push(amount);
                     message.last_updated = Some(now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
-                    return UnreservePrizeResult::Success;
+                    UnreservePrizeResult::Success
                 } else {
-                    return UnreservePrizeResult::ReservationNotFound;
-                }
+                    UnreservePrizeResult::ReservationNotFound
+                };
             }
         }
 
