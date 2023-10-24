@@ -67,7 +67,7 @@
             case "OC_MSG":
                 return "MESSAGE";
             case "OC_SEND":
-                return "SEND";
+                return "TRANSFER";
             case "OC_TIP":
                 return "TIP";
             case "OC_PRZ":
