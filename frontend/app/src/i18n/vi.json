@@ -485,7 +485,17 @@
             "kind": "Loại",
             "timestamp": "Dấu thời gian",
             "from": "Từ",
-            "to": "ĐẾN"
+            "to": "ĐẾN",
+            "type": "Kiểu"
+        },
+        "transactionType": {
+            "message": "TIN NHẮN",
+            "transfer": "CHUYỂN KHOẢN",
+            "tip": "MẸO",
+            "prize": "PHẦN THƯỞNG",
+            "prizeClaim": "YÊU CẦU GIẢI THƯỞNG",
+            "prizeRefund": "HOÀN GIẢI THƯỞNG",
+            "deposit": "TIỀN GỬI"
         }
     },
     "searchChat": "Tìm kiếm",

@@ -484,7 +484,17 @@
             "kind": "Tipo",
             "timestamp": "Timestamp",
             "from": "Da",
-            "to": "A"
+            "to": "A",
+            "type": "Tipo"
+        },
+        "transactionType": {
+            "message": "MESSAGGIO",
+            "transfer": "TRASFERIMENTO",
+            "tip": "MANCIA",
+            "prize": "PREMIO",
+            "prizeClaim": "RICHIESTA PREMI",
+            "prizeRefund": "RIMBORSO PREMI",
+            "deposit": "DEPOSITARE"
         }
     },
     "searchChat": "Ricerca",

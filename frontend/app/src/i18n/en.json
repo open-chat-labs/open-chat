@@ -586,10 +586,19 @@
         "transactionError": "Sorry we were unable to load your transactions",
         "unknownTransactionType": "Unknown",
         "loadMoreTransactions": "Load more",
+        "transactionType": {
+            "message": "MESSAGE",
+            "transfer": "TRANSFER",
+            "tip": "TIP",
+            "prize": "PRIZE",
+            "prizeClaim": "PRIZE CLAIM",
+            "prizeRefund": "PRIZE REFUND",
+            "deposit": "DEPOSIT"
+        },
         "transactionHeaders": {
             "id": "ID",
             "amount": "Amount",
-            "kind": "Kind",
+            "type": "Type",
             "timestamp": "Timestamp",
             "from": "From",
             "to": "To"

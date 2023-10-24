@@ -5,6 +5,7 @@
         type OpenChat,
         type NamedAccount,
         toRecord,
+        type AccountTransaction,
     } from "openchat-client";
     import type { RemoteData as RD } from "../../../utils/remoteData";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -61,6 +62,26 @@
         loadTransations();
     }
 
+    function translateMemo(trans: AccountTransaction): string {
+        switch (trans.memo) {
+            case "OC_MSG":
+                return $_("cryptoAccount.transactionType.message");
+            case "OC_SEND":
+                return $_("cryptoAccount.transactionType.transfer");
+            case "OC_TIP":
+                return $_("cryptoAccount.transactionType.tip");
+            case "OC_PRZ":
+                return $_("cryptoAccount.transactionType.prize");
+            case "OC_PRZCL":
+                return $_("cryptoAccount.transactionType.prizeClaim");
+            case "OC_PRZRF":
+                return $_("cryptoAccount.transactionType.prizeRefund");
+
+            default:
+                return $_("cryptoAccount.unknownTransactionType");
+        }
+    }
+
     function loadTransations() {
         const nervousSystem = Object.values($nervousSystemLookup).find(
             (n) => n.ledgerCanisterId === ledger
@@ -106,11 +127,9 @@
                     toastStore.showFailureToast($_("cryptoAccount.transactionError"));
                 });
         } else {
-            console.debug(
-                "TRN: could not find ledger index for ledger",
-                ledger,
-                $nervousSystemLookup
-            );
+            toastStore.showFailureToast($_("cryptoAccount.transactionError"));
+            transationData = { kind: "idle" };
+            console.warn("Could not find ledger index for ledger", ledger, $nervousSystemLookup);
         }
     }
 
@@ -139,7 +158,7 @@
                         <tr>
                             <th>{$_("cryptoAccount.transactionHeaders.id")}</th>
                             <th>{$_("cryptoAccount.transactionHeaders.amount")}</th>
-                            <th>{$_("cryptoAccount.transactionHeaders.kind")}</th>
+                            <th>{$_("cryptoAccount.transactionHeaders.type")}</th>
                             <th>{$_("cryptoAccount.transactionHeaders.timestamp")}</th>
                             <th>{$_("cryptoAccount.transactionHeaders.from")}</th>
                             <th>{$_("cryptoAccount.transactionHeaders.to")}</th>
@@ -151,9 +170,7 @@
                                 <tr on:click={() => openDashboard(transaction.id)}>
                                     <td>{transaction.id}</td>
                                     <td>{fromE8s(transaction.amount)}</td>
-                                    <td
-                                        >{transaction.memo ??
-                                            $_("cryptoAccount.unknownTransactionType")}</td>
+                                    <td class="truncate">{translateMemo(transaction)}</td>
                                     <td>{client.toDatetimeString(transaction.timestamp)}</td>
                                     <td class="truncate">
                                         <TransactionEndpoint

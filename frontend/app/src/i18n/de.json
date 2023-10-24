@@ -486,7 +486,17 @@
             "kind": "Art",
             "timestamp": "Zeitstempel",
             "from": "Aus",
-            "to": "Zu"
+            "to": "Zu",
+            "type": "Typ"
+        },
+        "transactionType": {
+            "message": "NACHRICHT",
+            "transfer": "ÜBERWEISEN",
+            "tip": "TIPP",
+            "prize": "PREIS",
+            "prizeClaim": "GEWINNANSPRUCH",
+            "prizeRefund": "PREISRÜCKERSTATTUNG",
+            "deposit": "KAUTION"
         }
     },
     "searchChat": "Suche",

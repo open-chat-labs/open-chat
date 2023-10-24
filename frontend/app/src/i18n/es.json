@@ -485,7 +485,17 @@
             "kind": "Amable",
             "timestamp": "Marca de tiempo",
             "from": "De",
-            "to": "A"
+            "to": "A",
+            "type": "Tipo"
+        },
+        "transactionType": {
+            "message": "MENSAJE",
+            "transfer": "TRANSFERIR",
+            "tip": "CONSEJO",
+            "prize": "PREMIO",
+            "prizeClaim": "RECLAMACIÓN DEL PREMIO",
+            "prizeRefund": "REEMBOLSO DEL PREMIO",
+            "deposit": "DEPÓSITO"
         }
     },
     "searchChat": "Búsqueda",

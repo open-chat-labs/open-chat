@@ -484,7 +484,17 @@
             "kind": "Добрый",
             "timestamp": "Временная метка",
             "from": "От",
-            "to": "К"
+            "to": "К",
+            "type": "Тип"
+        },
+        "transactionType": {
+            "message": "СООБЩЕНИЕ",
+            "transfer": "ПЕРЕДАЧА",
+            "tip": "КОНЧИК",
+            "prize": "ПРИЗ",
+            "prizeClaim": "ПОЛУЧЕНИЕ ПРИЗА",
+            "prizeRefund": "ВОЗВРАТ ПРИЗА",
+            "deposit": "ДЕПОЗИТ"
         }
     },
     "searchChat": "Поиск",
