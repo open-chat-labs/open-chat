@@ -1,3 +1,5 @@
+import type { Failure, Success } from "./response";
+
 export const E8S_PER_TOKEN = 100_000_000;
 
 export const CHAT_SYMBOL = "CHAT";
@@ -29,6 +31,7 @@ export type NervousSystemSummary = {
     rootCanisterId: string;
     governanceCanisterId: string;
     ledgerCanisterId: string;
+    indexCanisterId: string;
     isNns: boolean;
     proposalRejectionFee: bigint;
     submittingProposalsEnabled: boolean;
@@ -37,6 +40,8 @@ export type NervousSystemSummary = {
 export type NervousSystemDetails = {
     governanceCanisterId: string;
     rootCanisterId: string;
+    ledgerCanisterId: string;
+    indexCanisterId: string;
     isNns: boolean;
     proposalRejectionFee: bigint;
     submittingProposalsEnabled: boolean;
@@ -65,3 +70,49 @@ export const dollarExchangeRates: Record<string, number> = {
 function to2SigFigs(num: number): number {
     return parseFloat(num.toPrecision(2));
 }
+
+type AccountTransactionCommon = {
+    timestamp: Date;
+    id: bigint;
+    memo?: string;
+    createdAt?: Date;
+    amount: bigint;
+    to?: string;
+    from?: string;
+};
+
+type AccountTransactionBurn = AccountTransactionCommon & {
+    kind: "burn";
+    spender?: string;
+};
+
+type AccountTransactionMint = AccountTransactionCommon & {
+    kind: "mint";
+};
+
+type AccountTransactionApprove = AccountTransactionCommon & {
+    kind: "approve";
+    fee?: bigint;
+    expectedAllowance?: bigint;
+    expiredAt?: bigint;
+    spender?: string;
+};
+
+type AccountTransactionTransfer = AccountTransactionCommon & {
+    kind: "transfer";
+    fee?: bigint;
+    spender?: string;
+};
+
+export type AccountTransaction =
+    | AccountTransactionBurn
+    | AccountTransactionMint
+    | AccountTransactionTransfer
+    | AccountTransactionApprove;
+
+export type AccountTransactions = {
+    transactions: AccountTransaction[];
+    oldestTransactionId?: bigint;
+};
+
+export type AccountTransactionResult = Failure | (Success & AccountTransactions);

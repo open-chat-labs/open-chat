@@ -473,7 +473,19 @@
         "sendToken": "Invia {symbol}",
         "receive": "Ricevere",
         "showZeroBalance": "mostra di più",
-        "hideZeroBalance": "mostra meno"
+        "hideZeroBalance": "mostra meno",
+        "transactions": "Transazioni",
+        "transactionError": "Siamo spiacenti, non siamo riusciti a caricare le tue transazioni",
+        "unknownTransactionType": "Sconosciuto",
+        "loadMoreTransactions": "Carica di più",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "Quantità",
+            "kind": "Tipo",
+            "timestamp": "Timestamp",
+            "from": "Da",
+            "to": "A"
+        }
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",

@@ -83,7 +83,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     // Unblock "platform moderator" if necessary
     let mut new_event = false;
     if args.is_platform_moderator && state.data.chat.members.is_blocked(&args.user_id) {
-        state.data.chat.members.unblock(&args.user_id);
+        state.data.chat.members.unblock(args.user_id, now);
 
         let event = UsersUnblocked {
             user_ids: vec![args.user_id],
@@ -105,7 +105,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         now,
         min_visible_event_index,
         min_visible_message_index,
-        mute_notifications: state.data.chat.is_public,
+        mute_notifications: state.data.chat.is_public.value,
         is_bot: args.is_bot,
     }) {
         AddResult::Success(participant) => {

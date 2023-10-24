@@ -472,7 +472,19 @@
         "sendToken": "发送 {symbol}",
         "receive": "收到",
         "showZeroBalance": "展示更多",
-        "hideZeroBalance": "显示较少"
+        "hideZeroBalance": "显示较少",
+        "transactions": "交易",
+        "transactionError": "抱歉，我们无法加载您的交易",
+        "unknownTransactionType": "未知",
+        "loadMoreTransactions": "装载更多",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "数量",
+            "kind": "种类",
+            "timestamp": "时间戳",
+            "from": "从",
+            "to": "到"
+        }
     },
     "searchChat": "搜索",
     "search": "搜索...",

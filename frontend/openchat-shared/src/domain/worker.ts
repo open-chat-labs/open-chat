@@ -141,6 +141,7 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
+import type { AccountTransactionResult } from "./crypto";
 /**
  * Worker request types
  */
@@ -212,6 +213,7 @@ export type WorkerRequest =
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
+    | GetAccountTransactions
     | GetThreadPreviews
     | GetUser
     | GetPublicProfile
@@ -469,6 +471,13 @@ type RefreshAccountBalance = {
     ledger: string;
     principal: string;
     kind: "refreshAccountBalance";
+};
+
+type GetAccountTransactions = {
+    ledgerIndex: string;
+    fromId?: bigint;
+    principal: string;
+    kind: "getAccountTransactions";
 };
 
 type SearchDirectChat = {
@@ -1097,6 +1106,7 @@ export type WorkerResponseInner =
     | NamedAccount[]
     | SaveCryptoAccountResponse
     | SubmitProposalResponse
+    | AccountTransactionResult
     | Record<string, bigint>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1472,6 +1482,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SearchDirectChatResponse
     : T extends RefreshAccountBalance
     ? bigint
+    : T extends GetAccountTransactions
+    ? AccountTransactionResult
     : T extends GetThreadPreviews
     ? ThreadPreview[]
     : T extends GetUser

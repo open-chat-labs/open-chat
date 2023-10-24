@@ -143,7 +143,7 @@ import {
     getCachedCommunityDetails,
     getCachedEvents,
     getCachedEventsByIndex,
-    getCachedEventsWindow,
+    getCachedEventsWindowByMessageIndex,
     getCachedGroupDetails,
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
@@ -380,10 +380,9 @@ export class CommunityClient extends CandidService {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
             eventIndexRange,
-            chatId,
+            { chatId, threadRootMessageIndex },
             startIndex,
             ascending,
-            threadRootMessageIndex,
         );
 
         // we may or may not have all of the requested events
@@ -443,12 +442,10 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
-        return getCachedEventsByIndex<GroupChatEvent>(
-            this.db,
-            eventIndexes,
+        return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
-        ).then((res) =>
+        }).then((res) =>
             this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex),
         );
     }
@@ -486,13 +483,13 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
-            this.db,
-            eventIndexRange,
-            chatId,
-            messageIndex,
-            threadRootMessageIndex,
-        );
+        const [cachedEvents, missing, totalMiss] =
+            await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
+                this.db,
+                eventIndexRange,
+                { chatId, threadRootMessageIndex },
+                messageIndex,
+            );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(

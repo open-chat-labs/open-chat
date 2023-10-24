@@ -17,7 +17,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         return NotAuthorized;
     }
 
-    let is_public = state.data.chat.is_public;
+    let is_public = state.data.chat.is_public.value;
     let data = &state.data;
     let events_reader = data.chat.events.main_events_reader();
     let latest_event_timestamp = events_reader.latest_event_timestamp().unwrap_or_default();
@@ -33,8 +33,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let summary = PublicGroupSummary {
         chat_id: state.env.canister_id().into(),
         last_updated: latest_event_timestamp,
-        name: data.chat.name.clone(),
-        description: data.chat.description.clone(),
+        name: data.chat.name.value.clone(),
+        description: data.chat.description.value.clone(),
         subtype: data.chat.subtype.value.clone(),
         history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
         avatar_id: Document::id(&data.chat.avatar),

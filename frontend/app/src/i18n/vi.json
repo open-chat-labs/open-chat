@@ -474,7 +474,19 @@
         "sendToken": "Gửi {symbol}",
         "receive": "Nhận được",
         "showZeroBalance": "Cho xem nhiều hơn",
-        "hideZeroBalance": "hiện ít hơn"
+        "hideZeroBalance": "hiện ít hơn",
+        "transactions": "Giao dịch",
+        "transactionError": "Rất tiếc, chúng tôi không thể tải giao dịch của bạn",
+        "unknownTransactionType": "không xác định",
+        "loadMoreTransactions": "Tải thêm",
+        "transactionHeaders": {
+            "id": "NHẬN DẠNG",
+            "amount": "Số lượng",
+            "kind": "Loại",
+            "timestamp": "Dấu thời gian",
+            "from": "Từ",
+            "to": "ĐẾN"
+        }
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",

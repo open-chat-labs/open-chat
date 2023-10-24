@@ -11,9 +11,23 @@ import type {
     ChatListScope,
     CryptocurrencyDetails,
     VersionedRules,
+    AccountTransaction,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
+
+export function userIdsFromTransactions(transactions: AccountTransaction[]): Set<string> {
+    return transactions.reduce<Set<string>>((userIds, t) => {
+        // these are not necessarily userIds, but they *might* be
+        if (t.from !== undefined) {
+            userIds.add(t.from);
+        }
+        if (t.to !== undefined) {
+            userIds.add(t.to);
+        }
+        return userIds;
+    }, new Set<string>());
+}
 
 export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
     const fakeFormatter = (k: string) => k;

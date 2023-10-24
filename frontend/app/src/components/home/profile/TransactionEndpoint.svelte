@@ -1,0 +1,44 @@
+<script lang="ts">
+    import { AvatarSize, OpenChat, type NamedAccount } from "openchat-client";
+    import { getContext } from "svelte";
+    import Avatar from "../../Avatar.svelte";
+
+    const client = getContext<OpenChat>("client");
+    export let address: string | undefined;
+    export let accounts: Record<string, NamedAccount>;
+
+    $: userStore = client.userStore;
+    $: user = address ? $userStore[address] : undefined;
+</script>
+
+{#if address !== undefined}
+    {#if user}
+        <div class="user">
+            <div class="avatar">
+                <Avatar
+                    url={client.userAvatarUrl(user)}
+                    userId={user.userId}
+                    size={AvatarSize.Tiny} />
+            </div>
+            <div class="name">
+                {client.getDisplayName(user)}
+            </div>
+        </div>
+    {:else if accounts[address] !== undefined}
+        <div class="account" title={accounts[address].name}>{accounts[address].name}</div>
+    {:else}
+        <div class="raw" title={address}>{address}</div>
+    {/if}
+{/if}
+
+<style lang="scss">
+    .user {
+        display: flex;
+        align-items: center;
+        gap: $sp2;
+    }
+    .raw,
+    .account {
+        @include ellipsis();
+    }
+</style>

@@ -33,59 +33,60 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let now = state.env.now();
-    let updates_from_events = chat.summary_updates_from_events(updates_since, Some(member.user_id));
+    let updates = chat.summary_updates(updates_since, Some(member.user_id));
 
-    let updates = GroupCanisterGroupChatSummaryUpdates {
-        chat_id: state.env.canister_id().into(),
-        last_updated: now,
-        name: updates_from_events.name,
-        description: updates_from_events.description,
-        subtype: updates_from_events.subtype,
-        avatar_id: updates_from_events.avatar_id,
-        latest_message: updates_from_events.latest_message,
-        latest_event_index: updates_from_events.latest_event_index,
-        participant_count: updates_from_events.members_changed.then_some(chat.members.len()),
-        role: updates_from_events.role_changed.then_some(member.role.into()),
-        mentions: updates_from_events.mentions,
-        permissions: updates_from_events.permissions.clone().map(|ps| ps.into()),
-        permissions_v2: updates_from_events.permissions,
-        updated_events: updates_from_events.updated_events,
-        metrics: Some(chat.events.metrics().hydrate()),
-        my_metrics: state
-            .data
-            .chat
-            .events
-            .user_metrics(&member.user_id, Some(args.updates_since))
-            .map(|m| m.hydrate()),
-        is_public: updates_from_events.is_public,
-        latest_threads: chat.events.latest_threads(
-            member.min_visible_event_index(),
-            member.threads.iter(),
-            Some(args.updates_since),
-            MAX_THREADS_IN_SUMMARY,
-            member.user_id,
-        ),
-        unfollowed_threads: chat.events.unfollowed_threads_since(
-            member.unfollowed_threads.iter(),
-            args.updates_since,
-            member.user_id,
-        ),
-        notifications_muted: member.notifications_muted.if_set_after(args.updates_since).cloned(),
-        frozen: state
-            .data
-            .frozen
-            .if_set_after(args.updates_since)
-            .cloned()
-            .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-        wasm_version: None,
-        date_last_pinned: updates_from_events.date_last_pinned,
-        events_ttl: updates_from_events.events_ttl,
-        gate: updates_from_events.gate,
-        rules_accepted: member
-            .rules_accepted
-            .as_ref()
-            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
-            .map(|accepted| accepted.value >= chat.rules.text.version),
-    };
-    Success(SuccessResult { updates })
+    Success(SuccessResult {
+        updates: GroupCanisterGroupChatSummaryUpdates {
+            chat_id: state.env.canister_id().into(),
+            last_updated: now,
+            name: updates.name,
+            description: updates.description,
+            subtype: updates.subtype,
+            avatar_id: updates.avatar_id,
+            latest_message: updates.latest_message,
+            latest_event_index: updates.latest_event_index,
+            participant_count: updates.member_count,
+            role: updates.role_changed.then_some(member.role.value.into()),
+            mentions: updates.mentions,
+            permissions: updates.permissions.clone().map(|ps| ps.into()),
+            permissions_v2: updates.permissions,
+            updated_events: updates.updated_events,
+            metrics: Some(chat.events.metrics().hydrate()),
+            my_metrics: state
+                .data
+                .chat
+                .events
+                .user_metrics(&member.user_id, Some(args.updates_since))
+                .map(|m| m.hydrate()),
+            is_public: updates.is_public,
+            latest_threads: chat.events.latest_threads(
+                member.min_visible_event_index(),
+                member.threads.iter(),
+                Some(args.updates_since),
+                MAX_THREADS_IN_SUMMARY,
+                member.user_id,
+            ),
+            unfollowed_threads: chat.events.unfollowed_threads_since(
+                member.unfollowed_threads.iter(),
+                args.updates_since,
+                member.user_id,
+            ),
+            notifications_muted: member.notifications_muted.if_set_after(args.updates_since).cloned(),
+            frozen: state
+                .data
+                .frozen
+                .if_set_after(args.updates_since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            wasm_version: None,
+            date_last_pinned: updates.date_last_pinned,
+            events_ttl: updates.events_ttl,
+            gate: updates.gate,
+            rules_accepted: member
+                .rules_accepted
+                .as_ref()
+                .filter(|accepted| updates.rules_changed || accepted.timestamp > args.updates_since)
+                .map(|accepted| accepted.value >= chat.rules.text.version),
+        },
+    })
 }
