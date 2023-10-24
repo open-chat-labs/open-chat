@@ -4,9 +4,10 @@ use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::cmp::max;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
     is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
@@ -24,8 +25,17 @@ pub struct GroupMembers {
     pub moderator_count: u32,
     pub admin_count: u32,
     pub owner_count: u32,
-    #[serde(default = "now_millis")]
-    pub member_last_added_or_removed: TimestampMillis,
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum MemberUpdate {
+    Added = 1,
+    Removed = 2,
+    RoleChanged = 3,
+    Blocked = 4,
+    Unblocked = 5,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -53,7 +63,7 @@ impl GroupMembers {
             moderator_count: 0,
             admin_count: 0,
             owner_count: 1,
-            member_last_added_or_removed: now,
+            updates: BTreeSet::new(),
         }
     }
 
@@ -89,7 +99,7 @@ impl GroupMembers {
                         is_bot,
                     };
                     e.insert(member.clone());
-                    self.member_last_added_or_removed = now;
+                    self.updates.insert((now, user_id, MemberUpdate::Added));
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInGroup,
@@ -106,33 +116,29 @@ impl GroupMembers {
                 _ => (),
             }
 
-            self.member_last_added_or_removed = now;
+            self.updates.insert((now, user_id, MemberUpdate::Removed));
             Some(member)
         } else {
             None
         }
     }
 
-    pub fn try_undo_remove(&mut self, member: GroupMemberInternal) {
-        let user_id = member.user_id;
-        let role = member.role.value;
-        if let Vacant(e) = self.members.entry(user_id) {
-            e.insert(member);
-            match role {
-                GroupRoleInternal::Owner => self.owner_count += 1,
-                GroupRoleInternal::Admin => self.admin_count += 1,
-                GroupRoleInternal::Moderator => self.moderator_count += 1,
-                _ => (),
-            }
+    pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.insert(user_id) {
+            self.updates.insert((now, user_id, MemberUpdate::Blocked));
+            true
+        } else {
+            false
         }
     }
 
-    pub fn block(&mut self, user_id: UserId) -> bool {
-        self.blocked.insert(user_id)
-    }
-
-    pub fn unblock(&mut self, user_id: &UserId) -> bool {
-        self.blocked.remove(user_id)
+    pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.remove(&user_id) {
+            self.updates.insert((now, user_id, MemberUpdate::Unblocked));
+            true
+        } else {
+            false
+        }
     }
 
     pub fn blocked(&self) -> Vec<UserId> {
@@ -247,6 +253,7 @@ impl GroupMembers {
         self.owner_count = owner_count;
         self.admin_count = admin_count;
         self.moderator_count = moderator_count;
+        self.updates.insert((now, user_id, MemberUpdate::RoleChanged));
 
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
@@ -267,6 +274,19 @@ impl GroupMembers {
         if let Some(p) = self.get_mut(user_id) {
             p.threads.insert(root_message_index);
         }
+    }
+
+    pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
+        self.iter_latest_updates(since)
+            .any(|(_, u)| matches!(u, MemberUpdate::Added | MemberUpdate::Removed))
+    }
+
+    pub fn iter_latest_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (UserId, MemberUpdate)> + '_ {
+        self.updates
+            .iter()
+            .rev()
+            .take_while(move |(ts, _, _)| *ts > since)
+            .map(|(_, user_id, update)| (*user_id, *update))
     }
 }
 

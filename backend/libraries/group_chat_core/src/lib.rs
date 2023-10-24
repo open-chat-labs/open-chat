@@ -269,7 +269,7 @@ impl GroupChatCore {
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
             latest_event_index: events_reader.latest_event_index(),
             latest_message,
-            member_count: if self.members.member_last_added_or_removed > since { Some(self.members.len()) } else { None },
+            member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
             role_changed: member.map(|m| m.role.timestamp > since).unwrap_or_default(),
             mentions,
             permissions: self.permissions.if_set_after(since).cloned(),
@@ -315,7 +315,6 @@ impl GroupChatCore {
             pub fn mark_user_blocked_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, blocked: bool) {
                 if self.users_updated.insert(user_id) {
                     if blocked {
-                        result.members_removed.push(user_id);
                         result.blocked_users_added.push(user_id);
                     } else {
                         result.blocked_users_removed.push(user_id);
@@ -345,6 +344,7 @@ impl GroupChatCore {
             timestamp: latest_event_timestamp,
             latest_event_index,
             invited_users,
+            chat_rules: self.rules.if_set_after(since).map(|r| r.clone().into()),
             ..Default::default()
         };
 
@@ -353,49 +353,20 @@ impl GroupChatCore {
             users_updated: HashSet::new(),
         };
 
+        for (user_id, update) in self.members.iter_latest_updates(since) {
+            match update {
+                MemberUpdate::Added | MemberUpdate::RoleChanged => {
+                    user_updates_handler.mark_member_updated(&mut result, user_id, false)
+                }
+                MemberUpdate::Removed => user_updates_handler.mark_member_updated(&mut result, user_id, true),
+                MemberUpdate::Blocked => user_updates_handler.mark_user_blocked_updated(&mut result, user_id, true),
+                MemberUpdate::Unblocked => user_updates_handler.mark_user_blocked_updated(&mut result, user_id, false),
+            }
+        }
+
         // Iterate through the new events starting from most recent
         for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
             match &event_wrapper.event {
-                ChatEventInternal::ParticipantsAdded(p) => {
-                    for user_id in p.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                    }
-                    for user_id in p.unblocked.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                    }
-                }
-                ChatEventInternal::ParticipantsRemoved(p) => {
-                    for user_id in p.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
-                    }
-                }
-                ChatEventInternal::ParticipantJoined(p) => {
-                    user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
-                }
-                ChatEventInternal::ParticipantLeft(p) => {
-                    user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
-                }
-                ChatEventInternal::MembersAddedToPublicChannel(m) => {
-                    for user_id in m.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                    }
-                }
-                ChatEventInternal::RoleChanged(rc) => {
-                    for user_id in rc.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                    }
-                }
-                ChatEventInternal::UsersBlocked(ub) => {
-                    for user_id in ub.user_ids.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
-                    }
-                }
-                ChatEventInternal::UsersUnblocked(ub) => {
-                    for user_id in ub.user_ids.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                    }
-                }
                 ChatEventInternal::MessagePinned(p) => {
                     if !result.pinned_messages_removed.contains(&p.message_index) {
                         result.pinned_messages_added.push(p.message_index);
@@ -404,11 +375,6 @@ impl GroupChatCore {
                 ChatEventInternal::MessageUnpinned(u) => {
                     if !result.pinned_messages_added.contains(&u.message_index) {
                         result.pinned_messages_removed.push(u.message_index);
-                    }
-                }
-                ChatEventInternal::GroupRulesChanged(_) => {
-                    if result.chat_rules.is_none() {
-                        result.chat_rules = Some(self.rules.value.clone().into());
                     }
                 }
                 _ => {}
@@ -1271,7 +1237,7 @@ impl GroupChatCore {
                 // Remove the user from the group
                 self.members.remove(target_user_id, now);
 
-                if block && !self.members.block(target_user_id) {
+                if block && !self.members.block(target_user_id, now) {
                     // Return Success if the user was already blocked
                     return Success;
                 }
