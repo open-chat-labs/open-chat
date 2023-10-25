@@ -672,7 +672,9 @@
         "label": "プロフィール",
         "communities": "コミュニティ",
         "selectCommunity": "コミュニティを選択してください",
-        "global": "グローバル"
+        "global": "グローバル",
+        "block": "ブロック",
+        "unblock": "ブロックを解除する"
     },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",

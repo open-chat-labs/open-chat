@@ -76,8 +76,6 @@
         $currentCommunityBlockedUsers
     );
 
-    $: console.log("BLOCK: ", canBlock, canUnblock, $selectedCommunity);
-
     onMount(async () => {
         try {
             const task1 = client.getPublicProfile(userId);

@@ -671,7 +671,9 @@
         "label": "个人资料",
         "communities": "社区",
         "selectCommunity": "选择一个社区",
-        "global": "全球的"
+        "global": "全球的",
+        "block": "堵塞",
+        "unblock": "解锁"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
