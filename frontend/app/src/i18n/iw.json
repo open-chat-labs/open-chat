@@ -669,7 +669,9 @@
         "label": "פּרוֹפִיל",
         "communities": "קהילות",
         "selectCommunity": "בחר קהילה",
-        "global": "גלוֹבָּלִי"
+        "global": "גלוֹבָּלִי",
+        "block": "לַחסוֹם",
+        "unblock": "בטל את החסימה"
     },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",

@@ -671,7 +671,9 @@
         "label": "Профиль",
         "communities": "Сообщества",
         "selectCommunity": "Выберите сообщество",
-        "global": "Глобальный"
+        "global": "Глобальный",
+        "block": "Блокировать",
+        "unblock": "Разблокировать"
     },
     "undeleteMessage": "Восстановить",
     "undeletingMessage": "Восстановление сообщения от {username} на {timestamp}",

@@ -45,8 +45,8 @@
         .map((userId) => $userStore[userId])
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
     $: publicCollection = collection.public;
-    $: showBlocked = publicCollection && blocked.size > 0;
-    $: showInvited = !publicCollection && invited.size > 0;
+    $: showBlocked = publicCollection && blockedUsers.length > 0;
+    $: showInvited = !publicCollection && invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
 
     let searchTerm = "";

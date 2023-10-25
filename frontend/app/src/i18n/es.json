@@ -673,7 +673,9 @@
         "label": "Perfil",
         "communities": "Comunidades",
         "selectCommunity": "Seleccione una comunidad",
-        "global": "Global"
+        "global": "Global",
+        "block": "Bloquear",
+        "unblock": "Desatascar"
     },
     "undeleteMessage": "recuperar",
     "undeletingMessage": "Recuperando mensaje de {username} en {timestamp}",

@@ -672,7 +672,9 @@
         "label": "Hồ sơ",
         "communities": "Cộng đồng",
         "selectCommunity": "Chọn một cộng đồng",
-        "global": "Toàn cầu"
+        "global": "Toàn cầu",
+        "block": "Khối",
+        "unblock": "Mở khóa"
     },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
