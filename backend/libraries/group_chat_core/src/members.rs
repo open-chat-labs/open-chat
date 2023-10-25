@@ -25,6 +25,7 @@ pub struct GroupMembers {
     pub moderator_count: u32,
     pub admin_count: u32,
     pub owner_count: u32,
+    #[serde(default)]
     updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
 }
 
