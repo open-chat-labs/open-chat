@@ -10,13 +10,41 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize, Default)]
+#[serde(from = "ChatEventsListCombined")]
 pub struct ChatEventsList {
     events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
-    message_index_map: BTreeMap<MessageIndex, EventIndex>,
+    message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
-    latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct ChatEventsListCombined {
+    events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
+    message_id_map: HashMap<MessageId, EventIndex>,
+    #[serde(default)]
+    message_index_map: BTreeMap<MessageIndex, EventIndex>,
+    #[serde(default)]
+    message_event_indexes: Vec<EventIndex>,
+    latest_event_index: Option<EventIndex>,
+    latest_event_timestamp: Option<TimestampMillis>,
+}
+
+impl From<ChatEventsListCombined> for ChatEventsList {
+    fn from(value: ChatEventsListCombined) -> Self {
+        ChatEventsList {
+            events_map: value.events_map,
+            message_id_map: value.message_id_map,
+            message_event_indexes: if !value.message_event_indexes.is_empty() {
+                value.message_event_indexes
+            } else {
+                value.message_index_map.values().copied().collect()
+            },
+            latest_event_index: value.latest_event_index,
+            latest_event_timestamp: value.latest_event_timestamp,
+        }
+    }
 }
 
 impl ChatEventsList {
@@ -33,8 +61,8 @@ impl ChatEventsList {
                 Vacant(e) => e.insert(event_index),
                 _ => panic!("MessageId already used: {:?}", m.message_id),
             };
-            self.message_index_map.insert(m.message_index, event_index);
-            self.latest_message_index = Some(m.message_index);
+            assert_eq!(self.message_event_indexes.len(), usize::from(m.message_index));
+            self.message_event_indexes.push(event_index);
         }
 
         self.events_map.insert(
@@ -137,14 +165,7 @@ impl ChatEventsList {
     }
 
     pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        let event = self.events_map.remove(&event_index)?;
-
-        if let ChatEventInternal::Message(m) = &event.event {
-            self.message_index_map.remove(&m.message_index);
-            self.message_id_map.remove(&m.message_id);
-        }
-
-        Some(event)
+        self.events_map.remove(&event_index)
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {
@@ -152,7 +173,11 @@ impl ChatEventsList {
     }
 
     pub fn latest_message_index(&self) -> Option<MessageIndex> {
-        self.latest_message_index
+        if self.message_event_indexes.is_empty() {
+            None
+        } else {
+            Some(MessageIndex::from(self.message_event_indexes.len() as u32 - 1))
+        }
     }
 
     pub fn latest_event_timestamp(&self) -> Option<TimestampMillis> {
@@ -164,7 +189,7 @@ impl ChatEventsList {
     }
 
     pub fn next_message_index(&self) -> MessageIndex {
-        self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
+        MessageIndex::from(self.message_event_indexes.len() as u32)
     }
 
     pub fn last(&self) -> Option<&EventWrapperInternal<ChatEventInternal>> {
@@ -186,7 +211,7 @@ impl ChatEventsList {
     fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
         match event_key {
             EventKey::EventIndex(e) => Some(e),
-            EventKey::MessageIndex(m) => self.message_index_map.get(&m).copied(),
+            EventKey::MessageIndex(m) => self.message_event_indexes.get(usize::from(m)).copied(),
             EventKey::MessageId(m) => self.message_id_map.get(&m).copied(),
         }
     }
@@ -414,10 +439,10 @@ impl<'r> Reader for ChatEventsListReader<'r> {
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
         Box::new(
             self.events_list
-                .message_index_map
-                .values()
-                .copied()
+                .message_event_indexes
+                .iter()
                 .rev()
+                .copied()
                 .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
