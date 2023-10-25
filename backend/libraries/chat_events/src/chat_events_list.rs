@@ -158,8 +158,35 @@ impl ChatEventsList {
         }
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values()
+    pub fn convert_to_message_ranges(&self, event_ranges: &[(EventIndex, EventIndex)]) -> Vec<(MessageIndex, MessageIndex)> {
+        let mut ranges: Vec<(MessageIndex, MessageIndex)> = Vec::new();
+        for range in event_ranges
+            .iter()
+            .sorted()
+            .filter_map(|(from, to)| self.convert_to_message_range(*from, *to))
+        {
+            // If this range is contiguous with the previous one, expand the previous one
+            if let Some(previous) = ranges.last_mut().filter(|(_, to)| to.incr() >= range.0) {
+                previous.1 = range.1
+            } else {
+                ranges.push(range);
+            }
+        }
+        ranges
+    }
+
+    fn convert_to_message_range(&self, from: EventIndex, to: EventIndex) -> Option<(MessageIndex, MessageIndex)> {
+        let from_message_index = self.message_event_indexes.partition_point(|&e| e < from);
+        let to_message_index = self.message_event_indexes.partition_point(|&e| e <= to).checked_sub(1)?;
+
+        if from_message_index <= to_message_index {
+            Some((
+                MessageIndex::from(from_message_index as u32),
+                MessageIndex::from(to_message_index as u32),
+            ))
+        } else {
+            None
+        }
     }
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {

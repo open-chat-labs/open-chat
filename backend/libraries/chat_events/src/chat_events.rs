@@ -1223,6 +1223,10 @@ impl ChatEvents {
         self.main.latest_event_timestamp()
     }
 
+    pub fn convert_to_message_ranges(&self, event_ranges: &[(EventIndex, EventIndex)]) -> Vec<(MessageIndex, MessageIndex)> {
+        self.main.convert_to_message_ranges(event_ranges)
+    }
+
     pub fn main_events_list(&self) -> &ChatEventsList {
         &self.main
     }

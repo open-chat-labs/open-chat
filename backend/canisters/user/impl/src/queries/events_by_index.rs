@@ -23,11 +23,12 @@ fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
         let my_user_id = state.env.canister_id().into();
         let (events, expired_event_ranges) =
             EventOrExpiredRange::split(events_reader.get_by_indexes(&args.events, Some(my_user_id)));
+        let expired_message_ranges = chat.events.convert_to_message_ranges(&expired_event_ranges);
 
         Success(EventsResponse {
             events,
             expired_event_ranges,
-            expired_message_ranges: Vec::new(),
+            expired_message_ranges,
             latest_event_index,
             timestamp: now,
         })

@@ -406,11 +406,12 @@ impl GroupChatCore {
                     max_events as usize,
                     user_id,
                 ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
                     expired_event_ranges,
-                    expired_message_ranges: Vec::new(),
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })
@@ -438,11 +439,12 @@ impl GroupChatCore {
                 }
 
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
                     expired_event_ranges,
-                    expired_message_ranges: Vec::new(),
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })
@@ -477,11 +479,12 @@ impl GroupChatCore {
                     max_events as usize,
                     user_id,
                 ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
                     expired_event_ranges,
-                    expired_message_ranges: Vec::new(),
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })
