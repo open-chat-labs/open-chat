@@ -54,35 +54,14 @@ impl ChatEventsList {
     }
 
     pub(crate) fn get(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> Option<EventOrExpiredRangeInternal> {
-        let event_index = match event_key {
-            EventKey::EventIndex(e) => e,
-            EventKey::MessageIndex(m) => {
-                if Some(m) > self.latest_message_index {
-                    return None;
-                }
-                match get_value_or_neighbours(&self.message_index_map, m) {
-                    Ok(e) => *e,
-                    Err((prev, next)) => {
-                        return Some(EventOrExpiredRangeInternal::ExpiredMessageRange(
-                            prev.map_or(MessageIndex::default(), |i| i.incr()),
-                            next.map_or(self.latest_message_index.unwrap_or_default(), |i| i.decr()),
-                        ));
-                    }
-                }
-            }
-            EventKey::MessageId(m) => self.message_id_map.get(&m).copied()?,
-        };
+        let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
 
-        if event_index >= min_visible_event_index {
-            match get_value_or_neighbours(&self.events_map, event_index) {
-                Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
-                Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
-                    prev.map_or(EventIndex::default(), |i| i.incr()),
-                    next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
-                )),
-            }
-        } else {
-            None
+        match get_value_or_neighbours(&self.events_map, event_index) {
+            Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
+            Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
+                prev.map_or(EventIndex::default(), |i| i.incr()),
+                next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
+            )),
         }
     }
 
@@ -182,14 +161,7 @@ impl ChatEventsList {
     }
 
     pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        let event = self.events_map.remove(&event_index)?;
-
-        if let ChatEventInternal::Message(m) = &event.event {
-            self.message_index_map.remove(&m.message_index);
-            self.message_id_map.remove(&m.message_id);
-        }
-
-        Some(event)
+        self.events_map.remove(&event_index)
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {
@@ -268,6 +240,8 @@ impl<'r> ChatEventsListReader<'r> {
 
 pub trait Reader {
     fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal>;
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex>;
+
     fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_>;
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
 
@@ -281,10 +255,6 @@ pub trait Reader {
 
     fn get_event(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.get(event_key).and_then(|e| e.as_event())
-    }
-
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
-        self.get_event(event_key).map(|e| e.index)
     }
 
     fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
@@ -313,17 +283,7 @@ pub trait Reader {
         max_events: usize,
         my_user_id: Option<UserId>,
     ) -> Vec<EventOrExpiredRange> {
-        let start_event_index = match self.get(start) {
-            Some(EventOrExpiredRangeInternal::Event(e)) => e.index,
-            Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
-                return vec![EventOrExpiredRange::ExpiredEventRange(from, to)]
-            }
-            Some(EventOrExpiredRangeInternal::ExpiredMessageRange(from, to)) => {
-                return vec![EventOrExpiredRange::ExpiredMessageRange(from, to)]
-            }
-            // If we can't access the starting event, return empty
-            _ => return vec![],
-        };
+        let start_event_index = if let Some(e) = self.event_index(start) { e } else { return vec![] };
 
         // Handle EventIndex::default() as a special case so that in all other cases we can safely
         // decrement the event index
@@ -379,7 +339,6 @@ pub trait Reader {
         match event_or_expired_range {
             EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user_id)),
             EventOrExpiredRangeInternal::ExpiredEventRange(from, to) => EventOrExpiredRange::ExpiredEventRange(from, to),
-            EventOrExpiredRangeInternal::ExpiredMessageRange(from, to) => EventOrExpiredRange::ExpiredMessageRange(from, to),
         }
     }
 
@@ -449,11 +408,8 @@ pub trait Reader {
             .take(max_events)
             .take_while(move |e| {
                 if message_count < max_messages {
-                    if let EventOrExpiredRangeInternal::Event(event_wrapper) = e {
-                        let is_message = matches!(event_wrapper.event, ChatEventInternal::Message(_));
-                        if is_message {
-                            message_count += 1;
-                        }
+                    if e.is_message() {
+                        message_count += 1;
                     }
                     true
                 } else {
@@ -468,6 +424,10 @@ pub trait Reader {
 impl<'r> Reader for ChatEventsListReader<'r> {
     fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal> {
         self.events_list.get(event_key, self.min_visible_event_index)
+    }
+
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+        self.events_list.event_index(event_key)
     }
 
     fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {

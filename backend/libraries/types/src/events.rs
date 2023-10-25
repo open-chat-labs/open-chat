@@ -49,7 +49,6 @@ pub struct EventsResponse {
 pub enum EventOrExpiredRange {
     Event(EventWrapper<ChatEvent>),
     ExpiredEventRange(EventIndex, EventIndex),
-    ExpiredMessageRange(MessageIndex, MessageIndex),
 }
 
 impl EventOrExpiredRange {
@@ -60,27 +59,21 @@ impl EventOrExpiredRange {
             None
         }
     }
-}
 
-impl EventsResponse {
-    pub fn new(events: Vec<EventOrExpiredRange>, latest_event_index: EventIndex, now: TimestampMillis) -> EventsResponse {
-        let mut result = EventsResponse {
-            events: Vec::new(),
-            expired_event_ranges: Vec::new(),
-            expired_message_ranges: Vec::new(),
-            latest_event_index,
-            timestamp: now,
-        };
+    pub fn split(
+        events_and_expired_ranges: Vec<EventOrExpiredRange>,
+    ) -> (Vec<EventWrapper<ChatEvent>>, Vec<(EventIndex, EventIndex)>) {
+        let mut events = Vec::new();
+        let mut expired_ranges = Vec::new();
 
-        for event in events {
-            match event {
-                EventOrExpiredRange::Event(e) => result.events.push(e),
-                EventOrExpiredRange::ExpiredEventRange(from, to) => result.expired_event_ranges.push((from, to)),
-                EventOrExpiredRange::ExpiredMessageRange(from, to) => result.expired_message_ranges.push((from, to)),
+        for event_or_expired_range in events_and_expired_ranges {
+            match event_or_expired_range {
+                EventOrExpiredRange::Event(e) => events.push(e),
+                EventOrExpiredRange::ExpiredEventRange(from, to) => expired_ranges.push((from, to)),
             }
         }
 
-        result
+        (events, expired_ranges)
     }
 }
 

@@ -117,6 +117,10 @@ impl ChatEventInternal {
     }
 
     pub fn is_valid_for_thread(&self) -> bool {
+        self.is_message()
+    }
+
+    pub fn is_message(&self) -> bool {
         matches!(self, ChatEventInternal::Message(_))
     }
 
@@ -140,7 +144,6 @@ impl ChatEventInternal {
 pub enum EventOrExpiredRangeInternal<'a> {
     Event(&'a EventWrapperInternal<ChatEventInternal>),
     ExpiredEventRange(EventIndex, EventIndex),
-    ExpiredMessageRange(MessageIndex, MessageIndex),
 }
 
 impl<'a> EventOrExpiredRangeInternal<'a> {
@@ -149,6 +152,14 @@ impl<'a> EventOrExpiredRangeInternal<'a> {
             Some(event)
         } else {
             None
+        }
+    }
+
+    pub fn is_message(&self) -> bool {
+        if let EventOrExpiredRangeInternal::Event(event) = self {
+            event.event.is_message()
+        } else {
+            false
         }
     }
 }

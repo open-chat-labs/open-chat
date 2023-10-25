@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use ic_cdk_macros::query;
-use types::EventsResponse;
+use types::{EventOrExpiredRange, EventsResponse};
 use user_canister::events::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -22,15 +22,21 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
 
-        let events: Vec<_> = events_reader.scan(
+        let (events, expired_event_ranges) = EventOrExpiredRange::split(events_reader.scan(
             Some(args.start_index.into()),
             args.ascending,
             args.max_messages as usize,
             args.max_events as usize,
             Some(my_user_id),
-        );
+        ));
 
-        Success(EventsResponse::new(events, latest_event_index, now))
+        Success(EventsResponse {
+            events,
+            expired_event_ranges,
+            expired_message_ranges: Vec::new(),
+            latest_event_index,
+            timestamp: now,
+        })
     } else {
         ChatNotFound
     }

@@ -9,10 +9,6 @@ impl MessageIndex {
     pub fn incr(&self) -> MessageIndex {
         MessageIndex(self.0.saturating_add(1))
     }
-
-    pub fn decr(&self) -> MessageIndex {
-        MessageIndex(self.0.saturating_sub(1))
-    }
 }
 
 impl From<u32> for MessageIndex {

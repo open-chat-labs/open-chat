@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use types::{EventIndex, MessageIndex, OptionUpdate};
+use types::{EventIndex, OptionUpdate};
 
 #[test]
 fn disappearing_messages_in_group_chats() {
@@ -53,12 +53,12 @@ fn disappearing_messages_in_group_chats() {
 
     let events_window_response =
         client::group::happy_path::events_window(env, &user, group_id, send_message_response1.message_index, 10, 10);
-    assert!(events_window_response.events.first().is_none());
+    assert!(!events_window_response.events.is_empty());
     assert_eq!(
-        *events_window_response.expired_message_ranges.first().unwrap(),
+        *events_window_response.expired_event_ranges.first().unwrap(),
         (
-            send_message_response1.message_index,
-            MessageIndex::from(u32::from(send_message_response1.message_index) + 5)
+            send_message_response1.event_index,
+            EventIndex::from(u32::from(send_message_response1.event_index) + 5)
         )
     );
 
