@@ -130,6 +130,35 @@ pub mod happy_path {
         }
     }
 
+    pub fn events(
+        env: &PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events::Args {
+                thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_client_event_index: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_window' error: {response:?}"),
+        }
+    }
+
     pub fn events_by_index(env: &PocketIc, sender: &User, group_chat_id: ChatId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,

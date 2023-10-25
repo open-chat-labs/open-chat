@@ -73,6 +73,8 @@ impl EventOrExpiredRange {
             }
         }
 
+        expired_ranges.sort();
+
         (events, expired_ranges)
     }
 }

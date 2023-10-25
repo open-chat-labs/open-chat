@@ -130,7 +130,13 @@ impl ChatEventsList {
                         (min_visible_event_index, event_index.index)
                     }
                 }
-                Some(expired) => return Box::new(std::iter::once(expired)),
+                Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
+                    if ascending {
+                        (from, self.latest_event_index.unwrap_or_default())
+                    } else {
+                        (min_visible_event_index, to)
+                    }
+                }
                 None => return Box::new(std::iter::empty()),
             }
         } else {
@@ -158,11 +164,11 @@ impl ChatEventsList {
         }
     }
 
+    // The event ranges must be sorted before calling this method
     pub fn convert_to_message_ranges(&self, event_ranges: &[(EventIndex, EventIndex)]) -> Vec<(MessageIndex, MessageIndex)> {
         let mut ranges: Vec<(MessageIndex, MessageIndex)> = Vec::new();
         for range in event_ranges
             .iter()
-            .sorted()
             .filter_map(|(from, to)| self.convert_to_message_range(*from, *to))
         {
             // If this range is contiguous with the previous one, expand the previous one
@@ -561,19 +567,18 @@ impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterat
             if self.expected_next == self.end {
                 self.complete = true;
             } else if self.ascending {
-                self.expected_next = self.expected_next.incr();
+                self.expected_next = next.index.incr();
             } else {
-                self.expected_next = self.expected_next.decr();
+                self.expected_next = next.index.decr();
             }
 
             result
         } else {
             self.complete = true;
-
             if self.ascending {
-                EventOrExpiredRangeInternal::ExpiredEventRange(self.end, self.expected_next)
-            } else {
                 EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, self.end)
+            } else {
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.end, self.expected_next)
             }
         };
 
