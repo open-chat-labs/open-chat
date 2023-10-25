@@ -89,7 +89,9 @@
         "settings": "Settings",
         "communities": "Communities",
         "global": "Global",
-        "selectCommunity": "Select a community"
+        "selectCommunity": "Select a community",
+        "block": "Block",
+        "unblock": "Unblock"
     },
     "durationDays": "{duration} days",
     "oneHour": "1 hour",
