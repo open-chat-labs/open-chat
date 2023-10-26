@@ -1181,6 +1181,8 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     followThread(chatId: ChatIdentifier, message: Message, follow: boolean): Promise<boolean> {
+        const threadRootMessageIndex = message.messageIndex;
+
         // Assume it will succeed
         localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
             followedByMe: follow,
@@ -1189,7 +1191,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "followThread",
             chatId,
-            threadRootMessageIndex: message.messageIndex,
+            threadRootMessageIndex,
             follow,
         }).then((resp) => {
             if (resp === "failed") {
@@ -1197,9 +1199,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     followedByMe: !follow,
                 });
                 return false;
-            } else {
-                return true;
             }
+            if (message.thread !== undefined && message.thread.numberOfReplies > 0) {
+                const readUpTo = message.thread.numberOfReplies - 1;
+                this.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
+            }
+            return true;
         });
     }
 

@@ -158,7 +158,7 @@
         display: flex;
         gap: $sp2;
         align-items: center;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         top: 10px;
         left: 10px;
         background-color: rgba(0, 0, 0, 0.3);

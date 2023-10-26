@@ -57,7 +57,7 @@
         padding: $sp3 $sp3 $sp3 $sp4;
         color: var(--txt);
         box-shadow: var(--input-sh);
-        border-radius: $sp2;
+        border-radius: var(--rd);
         display: flex;
         justify-content: space-between;
         align-items: center;

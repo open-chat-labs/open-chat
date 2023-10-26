@@ -70,19 +70,11 @@
     </div>
     {#if isPlatformModerator}
         {#if isFrozen}
-            <Button
-                loading={freezingInProgress}
-                secondary
-                small
-                on:click={unfreezeGroup}>
+            <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
                 {$_("unfreezeGroup")}
             </Button>
         {:else}
-            <Button
-                loading={freezingInProgress}
-                secondary
-                small
-                on:click={freezeGroup}>
+            <Button loading={freezingInProgress} secondary small on:click={freezeGroup}>
                 {$_("freezeGroup")}
             </Button>
         {/if}

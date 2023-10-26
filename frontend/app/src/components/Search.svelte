@@ -66,8 +66,10 @@
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         box-shadow: var(--chatSearch-sh);
+        border: var(--bw) solid var(--chatSearch-bd);
+        border-radius: var(--chatSearch-rd);
 
         @include mobile() {
             margin: 0 $sp3;

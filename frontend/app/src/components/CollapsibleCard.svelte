@@ -52,10 +52,10 @@
 
 <style lang="scss">
     .card {
-        border-bottom: 1px solid var(--bd);
+        border-bottom: var(--bw) solid var(--bd);
 
         &.first {
-            border-top: 1px solid var(--bd);
+            border-top: var(--bw) solid var(--bd);
         }
     }
 
