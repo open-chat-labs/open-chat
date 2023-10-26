@@ -416,6 +416,7 @@ export const threadEvents = derived(
             $serverEvents,
             [...unconfirmed, ...failed],
             $localUpdates,
+            new DRange(),
             $proposalTallies,
             $translationStore,
         );
