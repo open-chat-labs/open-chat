@@ -27,27 +27,6 @@
 
 <button
     style={`--color: ${color}`}
-    class={cls}
-    class:loading
-    class:disabled
-    class:small
-    class:tiny
-    class:hollow
-    {disabled}
-    class:secondary
-    class:square
-    {title}
-    class:fill>
-    <div role="button" tabindex="0" on:click|stopPropagation class="fake-button">
-        <div class="content">
-            {#if !loading}
-                <slot />
-            {/if}
-        </div>
-    </div>
-</button>
-
-<!-- <button
     on:click|stopPropagation
     class={cls}
     class:loading
@@ -63,49 +42,58 @@
     {#if !loading}
         <slot />
     {/if}
-</button> -->
+</button>
 
 <style lang="scss">
     button {
-        border: none;
-        background-color: var(--color);
-        border: none;
+        transition: background ease-in-out 200ms, color ease-in-out 200ms;
+        background: white;
+        color: black;
+        padding: $sp3 $sp6;
+        border-radius: 0;
+        cursor: pointer;
+        border: var(--bw) solid var(--bd);
         min-height: 45px;
-        position: relative;
         min-width: 150px;
+        position: relative;
         @include font(book, normal, fs-100, 20);
         text-shadow: var(--button-txt-sh);
-        cursor: pointer;
+        box-shadow: 4px 4px 0 var(--color);
+
+        &.small {
+            padding: $sp2 $sp5;
+            height: 25px;
+            min-width: 100px;
+        }
+
+        &.tiny {
+            padding: $sp2 $sp5;
+            min-height: $sp6;
+            min-width: 100px;
+        }
+
+        &.loading {
+            @include loading-spinner(
+                1em,
+                0.5em,
+                var(--button-spinner),
+                "/assets/plain-spinner.svg"
+            );
+        }
+
+        &.disabled {
+            background: var(--button-disabled);
+            color: var(--button-disabled-txt);
+            cursor: not-allowed;
+        }
+
+        &.secondary {
+            color: var(--txt-light);
+        }
 
         &.fill {
             width: 100%;
             height: 100%;
         }
-    }
-
-    .fake-button {
-        background-color: white;
-        margin-top: -0.25rem;
-        margin-left: -0.25rem;
-        top: 0;
-        border: var(--bw) solid black;
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        transition: transform 200ms ease-in-out;
-        cursor: pointer;
-
-        &:hover {
-            transform: translate(0.25rem, 0.25rem);
-        }
-    }
-
-    .content {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 2.5rem;
-        text-align: center;
     }
 </style>
