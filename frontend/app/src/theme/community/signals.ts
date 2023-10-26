@@ -2,14 +2,13 @@ import type { Theme } from "../types";
 import { hexPercent } from "../utils";
 
 const black = "#000000";
-const textBox = "rgba(226,226,226,0.4)";
 const txt = "#242834";
 const txt70 = hexPercent(txt, 70);
 const txt60 = hexPercent(txt, 60);
 const disabledTxt = txt70;
 const white = "#ffffff";
 const powderBlue = "rgb(56, 183, 240)";
-const pink = "#F865B0";
+// const pink = "#F865B0";
 const yellow = "rgb(248, 255, 131)";
 const red = "rgb(227, 26, 62)";
 
