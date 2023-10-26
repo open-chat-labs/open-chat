@@ -643,7 +643,7 @@ impl ChatEvents {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
-                if content.reservations.remove(&winner) {
+                return if content.reservations.remove(&winner) {
                     // Add the user to winners list
                     content.winners.insert(winner);
                     message.last_updated = Some(now);
@@ -667,10 +667,10 @@ impl ChatEvents {
                         now,
                     });
 
-                    return ClaimPrizeResult::Success(message_event);
+                    ClaimPrizeResult::Success(message_event)
                 } else {
-                    return ClaimPrizeResult::ReservationNotFound;
-                }
+                    ClaimPrizeResult::ReservationNotFound
+                };
             }
         }
 
@@ -687,16 +687,16 @@ impl ChatEvents {
         if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into()) {
             if let MessageContentInternal::Prize(content) = &mut message.content {
                 // Remove the reservation
-                if content.reservations.remove(&user_id) {
+                return if content.reservations.remove(&user_id) {
                     // Put the prize back
                     content.prizes_remaining.push(amount);
                     message.last_updated = Some(now);
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
 
-                    return UnreservePrizeResult::Success;
+                    UnreservePrizeResult::Success
                 } else {
-                    return UnreservePrizeResult::ReservationNotFound;
-                }
+                    UnreservePrizeResult::ReservationNotFound
+                };
             }
         }
 
@@ -958,6 +958,7 @@ impl ChatEvents {
     ) -> Vec<MessageMatch> {
         self.visible_main_events_reader(min_visible_event_index)
             .iter(None, true)
+            .filter_map(|e| e.as_event())
             .filter_map(|e| e.event.as_message().filter(|m| m.deleted_by.is_none()).map(|m| (e, m)))
             .filter(|(_, m)| if query.users.is_empty() { true } else { query.users.contains(&m.sender) })
             .filter_map(|(e, m)| {
@@ -1063,7 +1064,7 @@ impl ChatEvents {
                     let latest_event = thread_events.latest_event_index()?;
                     let follower = self
                         .main
-                        .get((*root_message_index).into(), min_visible_event_index)?
+                        .get_event((*root_message_index).into(), min_visible_event_index)?
                         .event
                         .as_message()?
                         .thread_summary
@@ -1099,8 +1100,8 @@ impl ChatEvents {
     ) -> Vec<MessageIndex> {
         let mut unfollowed = Vec::new();
 
-        for message_index in root_message_indexes.rev() {
-            if let Some(wrapped_event) = self.main.get((*message_index).into(), EventIndex::default()) {
+        for message_index in root_message_indexes.rev().copied() {
+            if let Some(wrapped_event) = self.main.get_event(message_index.into(), EventIndex::default()) {
                 if let Some(message) = wrapped_event.event.as_message() {
                     if let Some(thread_summary) = message.thread_summary.as_ref() {
                         if let Some(follower) = thread_summary.get_follower(my_user_id) {
@@ -1109,7 +1110,7 @@ impl ChatEvents {
                             }
 
                             if !follower.value {
-                                unfollowed.push(*message_index);
+                                unfollowed.push(message_index);
                             }
                         }
                     }
@@ -1222,6 +1223,10 @@ impl ChatEvents {
         self.main.latest_event_timestamp()
     }
 
+    pub fn convert_to_message_ranges(&self, event_ranges: &[(EventIndex, EventIndex)]) -> Vec<(MessageIndex, MessageIndex)> {
+        self.main.convert_to_message_ranges(event_ranges)
+    }
+
     pub fn main_events_list(&self) -> &ChatEventsList {
         &self.main
     }
@@ -1265,7 +1270,7 @@ impl ChatEvents {
         event_key: EventKey,
     ) -> Option<(&mut MessageInternal, EventIndex)> {
         self.events_list_mut(min_visible_event_index, thread_root_message_index)
-            .and_then(|l| l.get_mut(event_key, min_visible_event_index))
+            .and_then(|l| l.get_event_mut(event_key, min_visible_event_index))
             .and_then(|e| e.event.as_message_mut().map(|m| (m, e.index)))
     }
 
@@ -1276,7 +1281,7 @@ impl ChatEvents {
         event_key: EventKey,
     ) -> Option<&MessageInternal> {
         self.events_list(min_visible_event_index, thread_root_message_index)
-            .and_then(|l| l.get(event_key, min_visible_event_index))
+            .and_then(|l| l.get_event(event_key, min_visible_event_index))
             .and_then(|e| e.event.as_message())
     }
 

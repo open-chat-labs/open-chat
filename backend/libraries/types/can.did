@@ -1401,6 +1401,8 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
+    expired_event_ranges: vec record { EventIndex; EventIndex };
+    expired_message_ranges: vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
     timestamp : TimestampMillis;
 };

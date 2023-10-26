@@ -673,7 +673,9 @@
         "label": "Profil",
         "communities": "Gemeinschaften",
         "selectCommunity": "Wählen Sie eine Community aus",
-        "global": "Global"
+        "global": "Global",
+        "block": "Block",
+        "unblock": "Entsperren"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
