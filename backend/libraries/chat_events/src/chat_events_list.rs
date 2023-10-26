@@ -1,12 +1,12 @@
-use crate::{ChatEventInternal, ChatInternal, EventKey, MessageInternal};
+use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message, MessageId, MessageIndex,
-    TimestampMillis, UserId,
+    ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
+    MessageId, MessageIndex, TimestampMillis, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -81,17 +81,27 @@ impl ChatEventsList {
         event_index
     }
 
-    pub(crate) fn get(
+    pub(crate) fn get(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> Option<EventOrExpiredRangeInternal> {
+        let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
+
+        match get_value_or_neighbours(&self.events_map, event_index) {
+            Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
+            Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
+                prev.map_or(EventIndex::default(), |i| i.incr()),
+                next.map_or(self.latest_event_index.unwrap_or_default(), |i| i.decr()),
+            )),
+        }
+    }
+
+    pub(crate) fn get_event(
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
     ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
-        self.event_index(event_key)
-            .filter(|e| *e >= min_visible_event_index)
-            .and_then(|e| self.events_map.get(&e))
+        self.get(event_key, min_visible_event_index).and_then(|e| e.as_event())
     }
 
-    pub(crate) fn get_mut(
+    pub(crate) fn get_event_mut(
         &mut self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
@@ -102,7 +112,7 @@ impl ChatEventsList {
     }
 
     pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
-        self.get(event_key, min_visible_event_index).is_some()
+        self.get_event(event_key, min_visible_event_index).is_some()
     }
 
     pub(crate) fn iter(
@@ -110,32 +120,79 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
-    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
-        let range = if let Some(start) = start {
-            if let Some(event_index) = self.get(start, min_visible_event_index).map(|e| e.index) {
-                if ascending {
-                    self.events_map.range(event_index..)
-                } else {
-                    self.events_map.range(min_visible_event_index..=event_index)
+    ) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
+        let (min, max) = if let Some(start) = start {
+            match self.get(start, min_visible_event_index) {
+                Some(EventOrExpiredRangeInternal::Event(event_index)) => {
+                    if ascending {
+                        (event_index.index, self.latest_event_index.unwrap_or_default())
+                    } else {
+                        (min_visible_event_index, event_index.index)
+                    }
                 }
-            } else {
-                return Box::new(std::iter::empty());
+                Some(EventOrExpiredRangeInternal::ExpiredEventRange(from, to)) => {
+                    if ascending {
+                        (from, self.latest_event_index.unwrap_or_default())
+                    } else {
+                        (min_visible_event_index, to)
+                    }
+                }
+                None => return Box::new(std::iter::empty()),
             }
         } else {
-            self.events_map.range(min_visible_event_index..)
+            (min_visible_event_index, self.latest_event_index.unwrap_or_default())
         };
 
-        let iter = range.map(|(_, e)| e);
+        let iter = self.events_map.range(min..=max).map(|(_, e)| e);
 
         if ascending {
-            Box::new(iter)
+            Box::new(ChatEventsListIterator {
+                inner: iter,
+                ascending: true,
+                expected_next: min,
+                end: max,
+                complete: false,
+            })
         } else {
-            Box::new(iter.rev())
+            Box::new(ChatEventsListIterator {
+                inner: iter.rev(),
+                ascending: false,
+                expected_next: max,
+                end: min,
+                complete: false,
+            })
         }
     }
 
-    pub fn values(&self) -> impl Iterator<Item = &EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.values()
+    // The event ranges must be sorted before calling this method
+    pub fn convert_to_message_ranges(&self, event_ranges: &[(EventIndex, EventIndex)]) -> Vec<(MessageIndex, MessageIndex)> {
+        let mut ranges: Vec<(MessageIndex, MessageIndex)> = Vec::new();
+        for range in event_ranges
+            .iter()
+            .filter_map(|(from, to)| self.convert_to_message_range(*from, *to))
+        {
+            // If this range is contiguous with the previous one, expand the previous one
+            if let Some(previous) = ranges.last_mut().filter(|(_, to)| to.incr() >= range.0) {
+                previous.1 = range.1
+            } else {
+                ranges.push(range);
+            }
+        }
+        ranges
+    }
+
+    fn convert_to_message_range(&self, from: EventIndex, to: EventIndex) -> Option<(MessageIndex, MessageIndex)> {
+        let from_message_index = self.message_event_indexes.partition_point(|&e| e < from);
+        let to_message_index = self.message_event_indexes.partition_point(|&e| e <= to).checked_sub(1)?;
+
+        if from_message_index <= to_message_index {
+            Some((
+                MessageIndex::from(from_message_index as u32),
+                MessageIndex::from(to_message_index as u32),
+            ))
+        } else {
+            None
+        }
     }
 
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal) -> Vec<EventIndex> {
@@ -247,23 +304,29 @@ impl<'r> ChatEventsListReader<'r> {
 }
 
 pub trait Reader {
-    fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>>;
-    fn iter(
+    fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal>;
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex>;
+
+    fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_>;
+    fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
+
+    fn iter_events(
         &self,
         start: Option<EventKey>,
         ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_>;
-    fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
-
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
-        self.get(event_key).map(|e| e.index)
+    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
+        Box::new(self.iter(start, ascending).filter_map(|e| e.as_event()))
     }
 
-    fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
+    fn get_event(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
+        self.get(event_key).and_then(|e| e.as_event())
+    }
+
+    fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
         event_indexes
             .iter()
             .filter_map(|&e| self.get(e.into()))
-            .map(|e| self.hydrate_event(e, my_user_id))
+            .map(|e| self.hydrate(e, my_user_id))
             .collect()
     }
 
@@ -274,7 +337,7 @@ pub trait Reader {
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
-    ) -> Vec<EventWrapper<ChatEvent>> {
+    ) -> Vec<EventOrExpiredRange> {
         self.cap_then_hydrate_events(self.iter(start, ascending), max_messages, max_events, my_user_id)
     }
 
@@ -284,12 +347,8 @@ pub trait Reader {
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
-    ) -> Vec<EventWrapper<ChatEvent>> {
-        let start_event_index = match self.event_index(start) {
-            Some(e) => e,
-            // If we can't access the starting event, return empty
-            _ => return vec![],
-        };
+    ) -> Vec<EventOrExpiredRange> {
+        let start_event_index = if let Some(e) = self.event_index(start) { e } else { return vec![] };
 
         // Handle EventIndex::default() as a special case so that in all other cases we can safely
         // decrement the event index
@@ -301,13 +360,11 @@ pub trait Reader {
         let backwards_iter = self.iter(Some(start_event_index.decr().into()), false);
         let combined = forwards_iter.interleave(backwards_iter);
 
-        let mut events = self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id);
-        events.sort_unstable_by_key(|e| e.index);
-        events
+        self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id)
     }
 
     fn message_internal(&self, event_key: EventKey) -> Option<&MessageInternal> {
-        self.get(event_key).and_then(|e| e.event.as_message())
+        self.get_event(event_key).and_then(|e| e.event.as_message())
     }
 
     fn message(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<Message> {
@@ -315,7 +372,7 @@ pub trait Reader {
     }
 
     fn message_event_internal(&self, event_key: EventKey) -> Option<EventWrapper<&MessageInternal>> {
-        self.get(event_key)
+        self.get_event(event_key)
             .and_then(|e| e.event.as_message().map(|m| (e, m)))
             .map(|(e, m)| EventWrapper {
                 index: e.index,
@@ -327,7 +384,7 @@ pub trait Reader {
     }
 
     fn message_event(&self, event_key: EventKey, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
-        self.get(event_key).and_then(|e| try_into_message_event(e, my_user_id))
+        self.get_event(event_key).and_then(|e| try_into_message_event(e, my_user_id))
     }
 
     fn latest_message_event(&self, my_user_id: Option<UserId>) -> Option<EventWrapper<Message>> {
@@ -341,6 +398,13 @@ pub trait Reader {
     ) -> Option<EventWrapper<Message>> {
         self.latest_message_event(my_user_id)
             .filter(|m| m.event.last_updated.unwrap_or(m.timestamp) > since)
+    }
+
+    fn hydrate(&self, event_or_expired_range: EventOrExpiredRangeInternal, my_user_id: Option<UserId>) -> EventOrExpiredRange {
+        match event_or_expired_range {
+            EventOrExpiredRangeInternal::Event(event) => EventOrExpiredRange::Event(self.hydrate_event(event, my_user_id)),
+            EventOrExpiredRangeInternal::ExpiredEventRange(from, to) => EventOrExpiredRange::ExpiredEventRange(from, to),
+        }
     }
 
     fn hydrate_event(
@@ -399,18 +463,17 @@ pub trait Reader {
 
     fn cap_then_hydrate_events<'a>(
         &self,
-        iterator: impl Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>,
+        iterator: impl Iterator<Item = EventOrExpiredRangeInternal<'a>>,
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
-    ) -> Vec<EventWrapper<ChatEvent>> {
+    ) -> Vec<EventOrExpiredRange> {
         let mut message_count = 0;
         iterator
             .take(max_events)
             .take_while(move |e| {
                 if message_count < max_messages {
-                    let is_message = matches!(e.event, ChatEventInternal::Message(_));
-                    if is_message {
+                    if e.is_message() {
                         message_count += 1;
                     }
                     true
@@ -418,21 +481,21 @@ pub trait Reader {
                     false
                 }
             })
-            .map(|e| self.hydrate_event(e, my_user_id))
+            .map(|e| self.hydrate(e, my_user_id))
             .collect()
     }
 }
 
 impl<'r> Reader for ChatEventsListReader<'r> {
-    fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
+    fn get(&self, event_key: EventKey) -> Option<EventOrExpiredRangeInternal> {
         self.events_list.get(event_key, self.min_visible_event_index)
     }
 
-    fn iter(
-        &self,
-        start: Option<EventKey>,
-        ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+        self.events_list.event_index(event_key)
+    }
+
+    fn iter(&self, start: Option<EventKey>, ascending: bool) -> Box<dyn Iterator<Item = EventOrExpiredRangeInternal> + '_> {
         self.events_list.iter(start, ascending, self.min_visible_event_index)
     }
 
@@ -443,7 +506,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .iter()
                 .rev()
                 .copied()
-                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index))
+                .map_while(|e| self.events_list.get_event(e.into(), self.min_visible_event_index))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
@@ -462,6 +525,65 @@ fn try_into_message_event(
         expires_at: event.expires_at,
         event: message.hydrate(my_user_id),
     })
+}
+
+fn get_value_or_neighbours<K: Copy + Ord, V>(map: &BTreeMap<K, V>, key: K) -> Result<&V, (Option<K>, Option<K>)> {
+    let next_key = match map.range(key..).next() {
+        Some((k, v)) if *k == key => return Ok(v),
+        Some((k, _)) => Some(*k),
+        None => None,
+    };
+
+    let previous_key = map.range(..key).next_back().map(|(k, _)| *k);
+
+    Err((previous_key, next_key))
+}
+
+struct ChatEventsListIterator<I> {
+    inner: I,
+    ascending: bool,
+    expected_next: EventIndex,
+    end: EventIndex,
+    complete: bool,
+}
+
+impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterator for ChatEventsListIterator<I> {
+    type Item = EventOrExpiredRangeInternal<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.complete {
+            return None;
+        }
+
+        let result = if let Some(next) = self.inner.next() {
+            let result = if next.index == self.expected_next {
+                EventOrExpiredRangeInternal::Event(next)
+            } else if self.ascending {
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, next.index.decr())
+            } else {
+                EventOrExpiredRangeInternal::ExpiredEventRange(next.index.incr(), self.expected_next)
+            };
+
+            if self.expected_next == self.end {
+                self.complete = true;
+            } else if self.ascending {
+                self.expected_next = next.index.incr();
+            } else {
+                self.expected_next = next.index.decr();
+            }
+
+            result
+        } else {
+            self.complete = true;
+            if self.ascending {
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.expected_next, self.end)
+            } else {
+                EventOrExpiredRangeInternal::ExpiredEventRange(self.end, self.expected_next)
+            }
+        };
+
+        Some(result)
+    }
 }
 
 #[cfg(test)]
@@ -483,10 +605,10 @@ mod tests {
         let events = setup_events(None);
         let events_reader = events.main_events_reader();
 
-        let event_by_message_index = events_reader.get(EventKey::MessageIndex(10.into())).unwrap();
-        let event_by_event_index = events_reader.get(event_by_message_index.index.into()).unwrap();
+        let event_by_message_index = events_reader.get_event(EventKey::MessageIndex(10.into())).unwrap();
+        let event_by_event_index = events_reader.get_event(event_by_message_index.index.into()).unwrap();
         let event_by_message_id = events_reader
-            .get(event_by_message_index.event.as_message().unwrap().message_id.into())
+            .get_event(event_by_message_index.event.as_message().unwrap().message_id.into())
             .unwrap();
 
         assert_eq!(event_by_message_index.index, event_by_event_index.index);
@@ -498,8 +620,8 @@ mod tests {
         let events = setup_events(None);
         let events_reader = events.visible_main_events_reader(10.into());
 
-        assert!(events_reader.get(EventKey::EventIndex(10.into())).is_some());
-        assert!(events_reader.get(EventKey::EventIndex(9.into())).is_none());
+        assert!(events_reader.get_event(EventKey::EventIndex(10.into())).is_some());
+        assert!(events_reader.get_event(EventKey::EventIndex(9.into())).is_none());
     }
 
     #[test]
@@ -509,7 +631,7 @@ mod tests {
 
         let results = events_reader.scan(None, true, usize::MAX, usize::MAX, None);
 
-        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
         assert_eq!(event_indexes, (0..events_reader.len()).collect_vec());
     }
@@ -521,7 +643,7 @@ mod tests {
 
         let results = events_reader.scan(None, false, usize::MAX, usize::MAX, None);
 
-        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
         assert_eq!(event_indexes, (0..events_reader.len()).rev().collect_vec());
     }
@@ -535,7 +657,7 @@ mod tests {
 
         let results = events_reader.scan(Some(EventKey::MessageIndex(start)), true, usize::MAX, usize::MAX, None);
 
-        let first = results.first().unwrap();
+        let first = &results.first().unwrap().as_event().unwrap();
 
         if let ChatEvent::Message(m) = &first.event {
             assert_eq!(start, m.message_index);
@@ -543,7 +665,7 @@ mod tests {
             panic!();
         }
 
-        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
         assert_eq!(event_indexes, (first.index.into()..events_reader.len()).collect_vec());
     }
@@ -557,7 +679,7 @@ mod tests {
 
         let results = events_reader.scan(Some(EventKey::MessageIndex(start)), false, usize::MAX, usize::MAX, None);
 
-        let first = results.first().unwrap();
+        let first = &results.first().unwrap().as_event().unwrap();
 
         if let ChatEvent::Message(m) = &first.event {
             assert_eq!(start, m.message_index);
@@ -565,7 +687,7 @@ mod tests {
             panic!();
         }
 
-        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.as_event().unwrap().index.into()).collect();
 
         assert_eq!(event_indexes, (0..=first.index.into()).rev().collect_vec());
     }
@@ -581,7 +703,8 @@ mod tests {
 
         let messages: Vec<_> = results
             .iter()
-            .filter_map(|e| if let ChatEvent::Message(m) = &e.event { Some(m.message_index) } else { None })
+            .filter_map(|e| if let ChatEvent::Message(m) = &e.as_event().unwrap().event { Some(m.message_index) } else { None })
+            .sorted()
             .collect();
 
         assert_eq!(messages, (28..=32).map(|i| i.into()).collect_vec());
@@ -596,7 +719,7 @@ mod tests {
 
         let results = events_reader.window(EventKey::EventIndex(start), usize::MAX, 15, None);
 
-        let event_indexes: Vec<_> = results.into_iter().map(|e| e.index).collect();
+        let event_indexes: Vec<_> = results.into_iter().map(|e| e.as_event().unwrap().index).sorted().collect();
 
         assert_eq!(event_indexes, (33..=47).map(|i| i.into()).collect_vec());
     }
@@ -610,7 +733,7 @@ mod tests {
 
         let results = events_reader.window(EventKey::EventIndex(start), usize::MAX, 25, None);
 
-        let event_indexes: Vec<_> = results.into_iter().map(|e| e.index).collect();
+        let event_indexes: Vec<_> = results.into_iter().map(|e| e.as_event().unwrap().index).sorted().collect();
 
         assert_eq!(event_indexes, (46..=70).map(|i| i.into()).collect_vec());
     }

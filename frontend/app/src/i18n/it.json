@@ -671,7 +671,9 @@
         "label": "Profilo",
         "communities": "Comunità",
         "selectCommunity": "Seleziona una comunità",
-        "global": "Globale"
+        "global": "Globale",
+        "block": "Bloccare",
+        "unblock": "Sbloccare"
     },
     "undeleteMessage": "Annulla cancellazione",
     "undeletingMessage": "Annullamento dell'eliminazione del messaggio di {username} su {timestamp}",

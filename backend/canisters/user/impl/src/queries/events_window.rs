@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use ic_cdk_macros::query;
-use types::EventsResponse;
+use types::{EventOrExpiredRange, EventsResponse};
 use user_canister::events_window::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -21,15 +21,19 @@ fn events_window_impl(args: Args, state: &RuntimeState) -> Response {
 
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
-        let events = events_reader.window(
+
+        let (events, expired_event_ranges) = EventOrExpiredRange::split(events_reader.window(
             args.mid_point.into(),
             args.max_messages as usize,
             args.max_events as usize,
             Some(my_user_id),
-        );
+        ));
+        let expired_message_ranges = chat.events.convert_to_message_ranges(&expired_event_ranges);
 
         Success(EventsResponse {
             events,
+            expired_event_ranges,
+            expired_message_ranges,
             latest_event_index,
             timestamp: now,
         })
