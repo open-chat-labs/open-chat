@@ -49,6 +49,7 @@ import {
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
+import DRange from "drange";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -1105,10 +1106,12 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     localUpdates: MessageMap<LocalMessageUpdates>,
+    expiredEventRanges: DRange,
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
 ): EventWrapper<ChatEvent>[] {
-    const eventIndexes = new Set<number>();
+    const eventIndexes = new DRange();
+    eventIndexes.add(expiredEventRanges);
 
     function processEvent(e: EventWrapper<ChatEvent>) {
         eventIndexes.add(e.index);
@@ -1169,10 +1172,10 @@ export function mergeEventsAndLocalUpdates(
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
             if (
-                (eventIndexes.size === 0 && message.index <= 1) ||
-                eventIndexes.has(message.index - 1) ||
-                eventIndexes.has(message.index) ||
-                eventIndexes.has(message.index + 1)
+                (eventIndexes.length === 0 && message.index <= 1) ||
+                eventIndexes
+                    .subranges()
+                    .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1)
             ) {
                 merged.push(processEvent(message));
                 anyAdded = true;

@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
@@ -1137,9 +1138,11 @@ export type ChatSpecificState = {
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
+    confirmedEventIndexesLoaded: DRange;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
+    expiredEventRanges: DRange;
 };
 
 export type GroupChatDetailsUpdates = {

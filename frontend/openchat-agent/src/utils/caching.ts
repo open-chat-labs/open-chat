@@ -591,14 +591,40 @@ export async function setCachedEvents<T extends ChatEvent>(
         durability: "relaxed",
     });
     const eventStore = tx.objectStore(store);
-    await Promise.all(
-        (resp.events as EventWrapper<T>[]).map((event) => {
-            eventStore.put(
+    const promises: Promise<void>[] = resp.events.map((event) =>
+        eventStore
+            .put(
                 makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey({ chatId, threadRootMessageIndex }, event.index),
-            );
-        }),
+            )
+            .then((_) => {}),
     );
+
+    // If there are any expired event ranges, insert the range details at either end of the range and delete all
+    // cache entries within the range
+    if (resp.expiredEventRanges.length > 0) {
+        for (const range of resp.expiredEventRanges) {
+            const boundaryKeys = [createCacheKey({ chatId, threadRootMessageIndex }, range.start)];
+            if (range.start !== range.end) {
+                boundaryKeys.push(createCacheKey({ chatId, threadRootMessageIndex }, range.end));
+            }
+
+            promises.push(...boundaryKeys.map((k) => eventStore.put(range, k).then((_) => {})));
+
+            if (range.start < range.end - 1) {
+                // Delete all cache entries within the range
+                promises.push(
+                    eventStore.delete(
+                        IDBKeyRange.bound(
+                            createCacheKey({ chatId, threadRootMessageIndex }, range.start + 1),
+                            createCacheKey({ chatId, threadRootMessageIndex }, range.end - 1),
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    await Promise.all(promises);
     await tx.done;
 }
 
