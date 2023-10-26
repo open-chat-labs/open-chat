@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { onMount } from "svelte";
     import { currentTheme } from "../theme/themes";
+    import SignalsButton from "./SignalsButton.svelte";
+    import StandardButton from "./StandardButton.svelte";
 
     export let cls = "";
     export let loading: boolean = false;
@@ -12,139 +13,14 @@
     export let hollow: boolean = false;
     export let title: string | undefined = undefined;
     export let square: boolean = false;
-
-    function rand(a: number, b: number) {
-        const r = Math.random();
-        return a + r * (b - a);
-    }
-
-    let height = "100px";
-    let width = "50px";
-
-    onMount(() => {
-        const h = rand(50, 150);
-        height = `${h}px`;
-        width = `${h / 2}px`;
-    });
 </script>
 
-<button
-    style={`--height: ${height}; --width: ${width}`}
-    on:click|stopPropagation
-    class={cls}
-    class:halloween={$currentTheme.name === "halloween"}
-    class:loading
-    class:disabled
-    class:small
-    class:tiny
-    class:hollow
-    {disabled}
-    class:secondary
-    class:square
-    {title}
-    class:fill>
-    {#if !loading}
+{#if $currentTheme.name === "signals"}
+    <SignalsButton on:click {...$$props}>
         <slot />
-    {/if}
-</button>
-
-<style lang="scss">
-    button {
-        transition: background ease-in-out 200ms, color ease-in-out 200ms;
-        background: var(--button-bg);
-        color: var(--button-txt);
-        padding: $sp3 $sp6;
-        border-radius: $sp2;
-        cursor: pointer;
-        border: none;
-        min-height: 45px;
-        min-width: 150px;
-        position: relative;
-        @include font(book, normal, fs-100, 20);
-        text-shadow: var(--button-txt-sh);
-
-        &.square {
-            border-radius: 0;
-        }
-
-        &.small {
-            padding: $sp2 $sp5;
-            height: 25px;
-            min-width: 100px;
-        }
-
-        &.tiny {
-            padding: $sp2 $sp5;
-            min-height: $sp6;
-            min-width: 100px;
-        }
-
-        @media (hover: hover) {
-            &:hover {
-                background: var(--button-hv);
-                color: var(--button-hv-txt);
-            }
-        }
-
-        &.loading {
-            @include loading-spinner(
-                1em,
-                0.5em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
-        }
-
-        &.hollow {
-            background-color: transparent;
-            color: var(--txt);
-            border: 1px solid var(--bd);
-        }
-
-        &.disabled {
-            background: var(--button-disabled);
-            color: var(--button-disabled-txt);
-            cursor: not-allowed;
-        }
-
-        &.secondary {
-            background: none;
-            color: var(--txt-light);
-            border: 1px solid var(--bd);
-        }
-
-        &.fill {
-            width: 100%;
-            height: 100%;
-        }
-
-        &.halloween::after {
-            content: "";
-            display: block;
-            background-image: url("/assets/spider.svg");
-            background-repeat: no-repeat;
-            background-size: contain;
-            width: var(--width);
-            height: var(--height);
-            position: absolute;
-            top: calc(100% - 1px);
-            left: calc(50% - var(--width) / 2);
-            @include z-index("spider");
-            pointer-events: none;
-            animation: pulse 3s linear infinite;
-            transform-origin: top;
-        }
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: scale(0.95);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-        100% {
-            transform: scale(0.95);
-        }
-    }
-</style>
+    </SignalsButton>
+{:else}
+    <StandardButton on:click {...$$props}>
+        <slot />
+    </StandardButton>
+{/if}

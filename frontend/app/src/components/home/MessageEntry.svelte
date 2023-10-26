@@ -594,7 +594,7 @@
         align-items: center;
         background-color: var(--entry-bg);
         padding: $sp3;
-        border-top: 1px solid var(--bd);
+        border-top: var(--bw) solid var(--bd);
         min-height: toRem(60);
 
         &.editing {
@@ -609,7 +609,7 @@
         margin: 0 $sp3;
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
-        border-radius: $sp3;
+        border-radius: var(--entry-input-rd);
         outline: none;
         border: 0;
         max-height: 100px;
@@ -619,7 +619,7 @@
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-        border: 1px solid transparent;
+        border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
 
         &:empty:before {
@@ -630,7 +630,7 @@
         }
 
         &.dragging {
-            border: 1px dashed var(--txt);
+            border: var(--bw) dashed var(--txt);
         }
 
         &.recording {

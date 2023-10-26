@@ -73,12 +73,12 @@
 
         &.left {
             position: relative;
-            border-right: 1px solid var(--bd);
+            border-right: var(--bw) solid var(--bd);
             background: var(--panel-left-bg);
 
             &.rtl {
                 border-right: none;
-                border-left: 1px solid var(--bd);
+                border-left: var(--bw) solid var(--bd);
             }
 
             @include mobile() {
@@ -101,13 +101,13 @@
             background: var(--panel-left-bg);
             background: var(--panel-right-modal);
             padding: $sp2 0;
-            border-right: 1px solid var(--bd);
+            border-right: var(--bw) solid var(--bd);
             @include z-index("left-nav");
             transition: width 250ms ease-in-out;
 
             &.rtl {
                 border-right: none;
-                border-left: 1px solid var(--bd);
+                border-left: var(--bw) solid var(--bd);
             }
 
             @include mobile() {
@@ -128,7 +128,7 @@
         &.right {
             // background: var(--panel-right-bg);
             padding: 0px;
-            border-left: 1px solid var(--bd);
+            border-left: var(--bw) solid var(--bd);
             background: var(--panel-right-bg);
 
             &.modal.right {

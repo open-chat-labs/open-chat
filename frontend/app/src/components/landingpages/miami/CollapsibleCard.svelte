@@ -38,7 +38,7 @@
         padding: 8px 16px;
         @include font(bold, normal, fs-100, 28);
         background-color: var(--input-bg);
-        border-radius: $sp2;
+        border-radius: var(--rd);
         border-top: 1px solid $ckbtc;
         color: var(--txt);
         font-weight: 700;

@@ -126,7 +126,7 @@
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
-        border-radius: $sp2;
+        border-radius: var(--rd);
 
         &.add {
             margin: 0;
