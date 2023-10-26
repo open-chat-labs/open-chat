@@ -85,6 +85,7 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
+    expiresAt,
     groupPermissions,
     groupSubtype,
     memberRole,
@@ -98,7 +99,6 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
@@ -234,7 +234,9 @@ export async function messagesByMessageIndexResponse(
         );
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex,
         };
     }
@@ -298,6 +300,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     } else if ("RulesNotAccepted" in candid) {
         return { kind: "rules_not_accepted" };
@@ -728,7 +731,9 @@ export function setMemberDisplayNameResponse(
     );
 }
 
-export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+export function followThreadResponse(
+    candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
+): FollowThreadResponse {
     if ("Success" in candid) {
         return "success";
     }

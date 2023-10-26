@@ -33,7 +33,7 @@ import type {
     ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
-import { accessGate } from "../common/chatMappers";
+import { accessGate, expiresAt } from "../common/chatMappers";
 
 export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
     return {
@@ -58,7 +58,7 @@ export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGro
 }
 
 export function recommendedGroupsResponse(
-    candid: ApiRecommendedGroupsResponse
+    candid: ApiRecommendedGroupsResponse,
 ): GroupChatSummary[] {
     if ("Success" in candid) {
         return candid.Success.groups.map(publicGroupSummary);
@@ -67,7 +67,7 @@ export function recommendedGroupsResponse(
 }
 
 export function lookupChannelResponse(
-    candid: ApiLookupChannelByGroupIdResponse
+    candid: ApiLookupChannelByGroupIdResponse,
 ): ChannelIdentifier | undefined {
     if ("Success" in candid) {
         return {
@@ -81,7 +81,7 @@ export function lookupChannelResponse(
 }
 
 export function exploreCommunitiesResponse(
-    candid: ApiExploreCommunitiesResponse
+    candid: ApiExploreCommunitiesResponse,
 ): ExploreCommunitiesResponse {
     if ("Success" in candid) {
         return {
@@ -120,6 +120,7 @@ export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroup
             },
             timestamp: candid.Success.timestamp,
             index: candid.Success.index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     }
     if ("ChatAlreadyFrozen" in candid) {
@@ -146,6 +147,7 @@ export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): Unfreez
             },
             timestamp: candid.Success.timestamp,
             index: candid.Success.index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     }
     if ("ChatNotFrozen" in candid) {
@@ -164,7 +166,7 @@ export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): Unfreez
 }
 
 export function deleteFrozenGroupResponse(
-    candid: ApiDeleteFrozenGroupResponse
+    candid: ApiDeleteFrozenGroupResponse,
 ): DeleteFrozenGroupResponse {
     if ("Success" in candid) {
         return "success";
@@ -186,12 +188,12 @@ export function deleteFrozenGroupResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDeleteFrozenGroupResponse type received",
-        candid
+        candid,
     );
 }
 
 export function addHotGroupExclusionResponse(
-    candid: ApiAddHotGroupExclusionResponse
+    candid: ApiAddHotGroupExclusionResponse,
 ): AddHotGroupExclusionResponse {
     if ("Success" in candid) {
         return "success";
@@ -210,12 +212,12 @@ export function addHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddHotGroupExclusionResponse type received",
-        candid
+        candid,
     );
 }
 
 export function removeHotGroupExclusionResponse(
-    candid: ApiRemoveHotGroupExclusionResponse
+    candid: ApiRemoveHotGroupExclusionResponse,
 ): RemoveHotGroupExclusionResponse {
     if ("Success" in candid) {
         return "success";
@@ -234,12 +236,12 @@ export function removeHotGroupExclusionResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiRemoveHotGroupExclusionResponse type received",
-        candid
+        candid,
     );
 }
 
 export function setUpgradeConcurrencyResponse(
-    candid: ApiSetUpgradeConcurrencyResponse
+    candid: ApiSetUpgradeConcurrencyResponse,
 ): SetGroupUpgradeConcurrencyResponse {
     if ("Success" in candid) {
         return "success";
@@ -252,7 +254,7 @@ export function setUpgradeConcurrencyResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetUpgradeConcurrencyResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -276,7 +278,7 @@ export function setCommunityModerationFlagsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiSetCommunityModerationFlagsResponse type received",
-        candid
+        candid,
     );
 }
 

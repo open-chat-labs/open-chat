@@ -818,10 +818,13 @@ export type EventWrapper<T extends ChatEvent> = {
     event: T;
     timestamp: bigint;
     index: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
+    expiredEventRanges: ExpiredEventsRange[];
+    expiredMessageRanges: ExpiredMessagesRange[];
     latestEventIndex: number | undefined;
 };
 
@@ -870,6 +873,9 @@ export type DirectChatsInitial = {
 
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
+
+export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
+export type ExpiredMessagesRange = { kind: "expired_messages_range"; start: number; end: number };
 
 export function messageContextsEqual(
     a: MessageContext | undefined,
@@ -1453,6 +1459,7 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type TransferSuccess = {
@@ -1461,6 +1468,7 @@ export type TransferSuccess = {
     messageIndex: number;
     eventIndex: number;
     transfer: CompletedCryptocurrencyTransfer;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type InvalidPoll = {

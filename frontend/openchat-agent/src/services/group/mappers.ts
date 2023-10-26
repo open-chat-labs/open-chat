@@ -6,7 +6,6 @@ import type {
     ApiSendMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
-    ApiMessageEventWrapper,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
@@ -16,6 +15,8 @@ import type {
     ApiUpdatedRules,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
+    ApiBlockUserResponse,
+    ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -58,9 +59,11 @@ import {
     messageEvent,
     threadDetails,
     mention,
+    expiresAt,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
@@ -280,6 +283,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -344,7 +348,9 @@ export async function getMessagesByMessageIndexResponse(
         );
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex,
         };
     }
@@ -371,14 +377,6 @@ export async function getMessagesByMessageIndexResponse(
     );
 }
 
-export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Message> {
-    return {
-        event: message(candid.event),
-        timestamp: candid.timestamp,
-        index: candid.index,
-    };
-}
-
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
@@ -399,6 +397,8 @@ export async function getEventsResponse(
 
         return {
             events: candid.Success.events.map(event),
+            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
             latestEventIndex,
         };
     }
@@ -617,6 +617,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, expiresAt),
     };
 }
 

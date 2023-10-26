@@ -3355,6 +3355,8 @@ export class OpenChat extends OpenChatAgentWorker {
         }).then((m) => {
             this.handleEventsResponse(serverChat, {
                 events: [m],
+                expiredEventRanges: [],
+                expiredMessageRanges: [],
                 latestEventIndex: undefined,
             });
         });

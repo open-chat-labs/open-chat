@@ -141,6 +141,10 @@ import {
     message,
     messageContent,
     apiOptional,
+    messageEvent,
+    expiresAt,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -340,6 +344,7 @@ export function sendMessageWithTransferToChannelResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -359,6 +364,7 @@ export function sendMessageWithTransferToGroupResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -377,6 +383,7 @@ export function sendMessageResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, expiresAt),
         };
     }
     if ("TransferSuccessV2" in candid) {
@@ -386,6 +393,7 @@ export function sendMessageResponse(
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
+            expiresAt: optional(candid.TransferSuccessV2.expires_at, expiresAt),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -462,6 +470,8 @@ export async function getEventsResponse(
 
         return {
             events: candid.Success.events.map(event),
+            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
             latestEventIndex,
         };
     }
@@ -484,6 +494,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
         event: directChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, expiresAt),
     };
 }
 
@@ -763,11 +774,7 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         lastUpdated: candid.last_updated,
-        latestMessage: optional(candid.latest_message, (ev) => ({
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        })),
+        latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
         notificationsMuted: optional(candid.notifications_muted, identity),
         updatedEvents: candid.updated_events.map(updatedEvent),
@@ -810,11 +817,7 @@ function mention(candid: ApiMention): Mention {
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         kind: "group_chat",
@@ -871,11 +874,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
         id: { kind: "direct_chat", userId: candid.them.toString() },
         kind: "direct_chat",
-        latestMessage: {
-            index: candid.latest_message.index,
-            timestamp: candid.latest_message.timestamp,
-            event: message(candid.latest_message.event),
-        },
+        latestMessage: messageEvent(candid.latest_message),
         them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
         lastUpdated: candid.last_updated,

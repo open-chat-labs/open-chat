@@ -148,6 +148,8 @@ import type {
     TipsReceived,
     PrizeContentInitial,
     ClaimPrizeResponse,
+    ExpiredEventsRange,
+    ExpiredMessagesRange,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -1435,11 +1437,7 @@ function apiICP(amountE8s: bigint): ApiICP {
 }
 
 export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         kind: "group_chat",
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -1540,11 +1538,7 @@ export function communityChannelSummary(
     candid: ApiCommunityCanisterChannelSummary,
     communityId: string,
 ): ChannelSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         kind: "channel",
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
@@ -1643,6 +1637,7 @@ export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Messa
         event: message(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, expiresAt),
     };
 }
 
@@ -1661,6 +1656,22 @@ export function mention(candid: ApiMention): Mention {
         messageIndex: candid.message_index,
         eventIndex: candid.event_index,
         mentionedBy: candid.mentioned_by.toString(),
+    };
+}
+
+export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {
+    return {
+        kind: "expired_events_range",
+        start,
+        end,
+    };
+}
+
+export function expiredMessagesRange([start, end]: [number, number]): ExpiredMessagesRange {
+    return {
+        kind: "expired_messages_range",
+        start,
+        end,
     };
 }
 
@@ -2237,4 +2248,8 @@ export function claimPrizeResponse(
         console.warn("ClaimPrize failed with ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function expiresAt(value: bigint): number {
+    return Number(value / BigInt(1000));
 }
