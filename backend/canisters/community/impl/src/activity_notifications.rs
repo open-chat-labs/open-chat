@@ -1,5 +1,5 @@
 use crate::{Data, RuntimeState};
-use chat_events::ChatEventInternal;
+use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_community_active;
 use msgpack::serialize_then_unwrap;
@@ -55,42 +55,38 @@ pub(crate) fn extract_activity(now: TimestampMillis, data: &Data) -> PublicCommu
     let mut message_unique_users = HashSet::new();
     let mut reaction_unique_users = HashSet::new();
 
-    for event in data
-        .channels
-        .iter()
-        .filter(|channel| channel.chat.is_public.value)
-        .flat_map(|channel| {
-            channel
-                .chat
-                .events
-                .main_events_list()
-                .values()
-                .take_while(|e| e.timestamp >= one_day_ago)
-        })
-    {
-        let within_last_hour = event.timestamp >= one_hour_ago;
+    for channel in data.channels.iter().filter(|channel| channel.chat.is_public.value) {
+        for event in channel
+            .chat
+            .events
+            .main_events_reader()
+            .iter_events(None, false)
+            .take_while(|e| e.timestamp >= one_day_ago)
+        {
+            let within_last_hour = event.timestamp >= one_hour_ago;
 
-        if let ChatEventInternal::Message(m) = &event.event {
-            activity.last_day.messages += 1;
-            activity.last_day.reactions += m.reactions.len() as u32;
+            if let ChatEventInternal::Message(m) = &event.event {
+                activity.last_day.messages += 1;
+                activity.last_day.reactions += m.reactions.len() as u32;
 
-            if within_last_hour {
-                activity.last_hour.messages += 1;
-                activity.last_hour.reactions += m.reactions.len() as u32
-            }
-
-            if message_unique_users.insert(m.sender) {
-                activity.last_day.message_unique_users += 1;
                 if within_last_hour {
-                    activity.last_hour.message_unique_users += 1;
+                    activity.last_hour.messages += 1;
+                    activity.last_hour.reactions += m.reactions.len() as u32
                 }
-            }
 
-            for user_id in m.reactions.iter().flat_map(|(_, u)| u.iter()).copied() {
-                if reaction_unique_users.insert(user_id) {
-                    activity.last_day.reaction_unique_users += 1;
+                if message_unique_users.insert(m.sender) {
+                    activity.last_day.message_unique_users += 1;
                     if within_last_hour {
-                        activity.last_hour.reaction_unique_users += 1;
+                        activity.last_hour.message_unique_users += 1;
+                    }
+                }
+
+                for user_id in m.reactions.iter().flat_map(|(_, u)| u.iter()).copied() {
+                    if reaction_unique_users.insert(user_id) {
+                        activity.last_day.reaction_unique_users += 1;
+                        if within_last_hour {
+                            activity.last_hour.reaction_unique_users += 1;
+                        }
                     }
                 }
             }

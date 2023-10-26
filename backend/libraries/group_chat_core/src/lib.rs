@@ -9,14 +9,15 @@ use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex, EventWrapper,
-    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
-    GroupPermissionRole, GroupPermissions, GroupPermissionsPrevious, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
+    EventOrExpiredRange, EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupPermissionsPrevious, GroupReplyContext,
+    GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft,
+    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions,
+    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
+    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
+    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
+    Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -398,16 +399,19 @@ impl GroupChatCore {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
-                let events = reader.scan(
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
                     Some(start_index.into()),
                     ascending,
                     max_messages as usize,
                     max_events as usize,
                     user_id,
-                );
+                ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })
@@ -434,10 +438,13 @@ impl GroupChatCore {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
-                let events = reader.get_by_indexes(&events, user_id);
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })
@@ -466,10 +473,18 @@ impl GroupChatCore {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
-                let events = reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id);
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
+                    mid_point.into(),
+                    max_messages as usize,
+                    max_events as usize,
+                    user_id,
+                ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
                     timestamp: now,
                 })

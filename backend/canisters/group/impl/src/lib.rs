@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{ChatEventInternal, Reader};
+use chat_events::Reader;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
@@ -221,12 +221,10 @@ impl RuntimeState {
         let now = self.env.now();
         let messages_in_last_hour = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| e.is_message()) as u64;
         let messages_in_last_day = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| e.is_message()) as u64;
         let events_in_last_hour = group_chat_core
             .events
             .event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;

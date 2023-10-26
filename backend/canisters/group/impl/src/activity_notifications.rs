@@ -39,7 +39,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
             .chat
             .events
             .main_events_reader()
-            .iter(None, false)
+            .iter_events(None, false)
             .take_while(|e| e.timestamp >= one_day_ago)
         {
             let within_last_hour = event.timestamp >= one_hour_ago;
