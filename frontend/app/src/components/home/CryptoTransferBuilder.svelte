@@ -261,7 +261,7 @@
         display: flex;
         align-items: flex-start;
         gap: $sp3;
-        border-radius: $sp2;
+        border-radius: var(--rd);
 
         .alert {
             flex: 0 0 25px;

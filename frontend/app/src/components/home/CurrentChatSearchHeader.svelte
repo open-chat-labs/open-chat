@@ -284,19 +284,16 @@
 
 <style lang="scss">
     .wrapper {
-        border-radius: 18px;
-        padding: $sp3 $sp4;
-        background-color: var(--chatSearch-bg);
-        box-shadow: var(--chatSearch-sh);
         width: 100%;
         margin: 0 5px;
         flex: 1;
         display: flex;
         gap: 4px;
-
-        @include mobile() {
-            border-radius: $sp4;
-        }
+        @include input();
+        background-color: var(--chatSearch-bg);
+        box-shadow: var(--chatSearch-sh);
+        border: var(--bw) solid var(--chatSearch-bd);
+        border-radius: var(--chatSearch-rd);
     }
 
     input {

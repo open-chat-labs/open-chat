@@ -91,8 +91,9 @@
     .card {
         cursor: pointer;
         background-color: var(--recommended-bg);
-        border: 1px solid var(--bd);
-        border-radius: $sp3;
+        border: var(--bw) solid var(--bd);
+        border-radius: var(--card-rd);
+        box-shadow: var(--card-sh);
 
         .avatar {
             width: toRem(48);
@@ -149,7 +150,7 @@
                     .channels {
                         background-color: var(--input-bg);
                         padding: $sp1 $sp3;
-                        border-radius: $sp2;
+                        border-radius: var(--rd);
                         .number {
                             font-weight: 500;
                         }
@@ -171,7 +172,7 @@
                 .flag {
                     background-color: var(--primary);
                     padding: $sp1 $sp3;
-                    border-radius: $sp2;
+                    border-radius: var(--rd);
                 }
             }
         }

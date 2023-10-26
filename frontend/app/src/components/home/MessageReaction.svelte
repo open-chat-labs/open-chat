@@ -83,7 +83,7 @@
 <style lang="scss">
     .message-reaction {
         @include pop();
-        border-radius: $sp2;
+        border-radius: var(--rd);
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         cursor: pointer;

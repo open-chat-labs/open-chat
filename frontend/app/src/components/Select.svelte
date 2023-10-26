@@ -52,18 +52,19 @@
         margin: 0;
         border: none;
         box-shadow: var(--input-sh);
-        border-radius: $sp2;
+        border-radius: var(--rd);
         -moz-appearance: none;
         -webkit-appearance: none;
         appearance: none;
         background-color: var(--input-bg);
+        border: var(--bw) solid var(--input-bd);
 
         &.margin {
             margin-bottom: $sp4;
         }
 
         &.invalid {
-            border: 1px solid var(--error);
+            border: var(--bw) solid var(--error);
             box-shadow: 0 0 5px 1px var(--error);
         }
     }

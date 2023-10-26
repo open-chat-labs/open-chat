@@ -1142,7 +1142,7 @@
     </Overlay>
 {/if}
 
-{#if $currentTheme.name !== "white"}
+{#if $currentTheme.logo}
     <BackgroundLogo
         width={`${bgHeight}px`}
         bottom={"unset"}

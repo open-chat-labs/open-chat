@@ -8,12 +8,15 @@ export interface Theme {
     name: string;
     label: string;
     burst: boolean;
+    logo: boolean;
     mode: "light" | "dark"; // pick the one that makes the most sense for your theme
 
     bg: string;
     txt: string;
     "txt-light": string;
     bd: string;
+    rd: string;
+    bw: string;
 
     error: string;
     warn: string;
@@ -84,6 +87,7 @@ export interface Theme {
 
     input: {
         bg: string;
+        bd: string;
         sh: string;
         accent: string;
     };
@@ -97,6 +101,8 @@ export interface Theme {
         input: {
             bg: string;
             sh: string;
+            rd: string;
+            bd: string;
         };
     };
 
@@ -122,6 +128,8 @@ export interface Theme {
     chatSearch: {
         bg: string;
         sh: string;
+        rd: string;
+        bd: string;
     };
 
     chatSummary: {
@@ -154,6 +162,9 @@ export interface Theme {
         spinner: string;
         "disabled-txt": string;
         "disabled-bd": string;
+        rd: string;
+        sh: string;
+        "hv-sh": string;
     };
 
     link: {
@@ -164,6 +175,8 @@ export interface Theme {
         filter: string;
         bg: string;
         bd: string;
+        rd: string;
+        sh: string;
     };
 
     modalPage: {
@@ -190,6 +203,8 @@ export interface Theme {
             txt: string;
             inert: string;
             sh: string;
+            r1: string;
+            r2: string;
 
             me: {
                 bg: string;
@@ -269,6 +284,11 @@ export interface Theme {
             bright: string;
             muted: string;
         };
+    };
+
+    card: {
+        rd: string;
+        sh: string;
     };
 
     landing: {

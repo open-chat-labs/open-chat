@@ -262,7 +262,7 @@
             padding: $sp4;
             .launch-wrapper {
                 width: 230px;
-                border-radius: $sp2;
+                border-radius: var(--rd);
                 text-align: center;
                 bottom: -36px;
                 margin: toRem(30) 0 toRem(10) 0;
