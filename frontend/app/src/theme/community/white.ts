@@ -15,6 +15,7 @@ export function getTheme(base: Theme): Theme {
     base.label = "White";
     base.bg = white;
     base.burst = true;
+    base.logo = false;
     base.txt = txt;
     base["txt-light"] = txt70;
     base.bd = "#ededed";

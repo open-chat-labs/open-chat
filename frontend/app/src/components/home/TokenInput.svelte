@@ -117,7 +117,7 @@
             background: var(--button-bg);
             color: var(--button-txt);
             padding: 0 $sp3;
-            border-radius: $sp2;
+            border-radius: var(--rd);
             cursor: pointer;
             border: none;
             @include font(book, normal, fs-50, 20);

@@ -90,7 +90,7 @@
     }
     .tip-wrapper {
         @include pop();
-        border-radius: $sp2;
+        border-radius: var(--rd);
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         padding: 3px $sp2;

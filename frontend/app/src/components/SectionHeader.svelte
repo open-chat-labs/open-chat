@@ -61,7 +61,7 @@
         }
 
         &.border {
-            border-bottom: 1px solid var(--bd);
+            border-bottom: var(--bw) solid var(--bd);
         }
 
         &.entry {

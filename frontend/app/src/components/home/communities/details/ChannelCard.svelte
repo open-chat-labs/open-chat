@@ -1,7 +1,12 @@
 <script lang="ts">
     import Avatar from "../../../Avatar.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
-    import { AvatarSize, type ChannelMatch, type OpenChat, routeForChatIdentifier } from "openchat-client";
+    import {
+        AvatarSize,
+        type ChannelMatch,
+        type OpenChat,
+        routeForChatIdentifier,
+    } from "openchat-client";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { getContext } from "svelte";
     import page from "page";
@@ -97,7 +102,7 @@
             .members {
                 background-color: var(--input-bg);
                 padding: $sp1 $sp3;
-                border-radius: $sp2;
+                border-radius: var(--rd);
                 .number {
                     font-weight: 500;
                 }

@@ -50,7 +50,7 @@
         display: inline-flex;
         padding: $sp2 $sp3;
         align-items: center;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         gap: $sp2;
         @include box-shadow(1);
 
