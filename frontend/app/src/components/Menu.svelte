@@ -19,8 +19,8 @@
         width: toRem(250);
         background-color: var(--menu-bg);
         box-shadow: var(--menu-sh);
-        border-radius: $sp2;
-        border: 1px solid var(--menu-bd);
+        border-radius: var(--rd);
+        border: var(--bw) solid var(--menu-bd);
         max-height: 80vh;
         overflow-y: auto;
 

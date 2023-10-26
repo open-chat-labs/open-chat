@@ -295,7 +295,7 @@
     .answer-text {
         flex: 1;
         padding: $sp3 $sp4;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         margin-bottom: $sp3;
         position: relative;
         border: 1px solid var(--bd);

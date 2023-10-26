@@ -76,7 +76,7 @@
             height: 8px;
             background-color: rgba(255, 255, 255, 0.05);
             margin-bottom: $sp3;
-            border-radius: $sp2;
+            border-radius: var(--rd);
             &:last-child {
                 width: 50%;
             }

@@ -303,7 +303,7 @@
                 }
             }
             .status {
-                border-radius: $sp2;
+                border-radius: var(--rd);
                 padding: toRem(1) toRem(6);
                 height: fit-content;
                 color: white;

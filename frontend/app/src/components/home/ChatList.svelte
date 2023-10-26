@@ -429,8 +429,8 @@
         align-items: center;
         justify-content: space-between;
         height: toRem(80);
-        border-top: 1px solid var(--bd);
-        border-bottom: 1px solid var(--bd);
+        border-top: var(--bw) solid var(--bd);
+        border-bottom: var(--bw) solid var(--bd);
         padding: $sp4;
         gap: toRem(12);
         cursor: pointer;
