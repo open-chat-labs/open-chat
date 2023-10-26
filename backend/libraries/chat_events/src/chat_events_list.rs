@@ -2,7 +2,7 @@ use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeIntern
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     ChatEvent, EventIndex, EventOrExpiredRange, EventWrapper, EventWrapperInternal, HydratedMention, Mention, Message,
@@ -323,9 +323,17 @@ pub trait Reader {
     }
 
     fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventOrExpiredRange> {
+        let mut expired_event_ranges = HashSet::new();
         event_indexes
             .iter()
             .filter_map(|&e| self.get(e.into()))
+            .filter(|e| {
+                if let EventOrExpiredRangeInternal::ExpiredEventRange(from, to) = e {
+                    expired_event_ranges.insert((*from, *to))
+                } else {
+                    true
+                }
+            })
             .map(|e| self.hydrate(e, my_user_id))
             .collect()
     }
