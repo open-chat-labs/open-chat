@@ -1011,14 +1011,50 @@ function processEventExpiry(
     event: EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined,
     now: number,
 ): EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined {
-    return event === undefined ||
+    if (
+        event === undefined ||
         event.kind === "expired_events_range" ||
         event.expiresAt === undefined ||
         event.expiresAt > now / 1000
-        ? event
-        : {
-              kind: "expired_events_range",
-              start: event.index,
-              end: event.index,
-          };
+    ) {
+        return event;
+    }
+
+    tryStartExpiredEventSweeper();
+
+    return {
+        kind: "expired_events_range",
+        start: event.index,
+        end: event.index,
+    };
+}
+
+let expiredEventSweeperJob: NodeJS.Timeout | undefined;
+
+function tryStartExpiredEventSweeper() {
+    if (expiredEventSweeperJob !== undefined) return;
+
+    expiredEventSweeperJob = setTimeout(runExpiredEventSweeper, 5000);
+}
+
+// TODO we can improve this by replacing these events with expired event ranges
+async function runExpiredEventSweeper() {
+    if (db === undefined) return;
+    const transaction = (await db).transaction(["chat_events"], "readwrite");
+    const store = transaction.objectStore("chat_events");
+    const index = store.index("expiresAt");
+    const batchSize = 100;
+    const expiredKeys = await index.getAllKeys(
+        IDBKeyRange.upperBound(Date.now() / 1000),
+        batchSize,
+    );
+
+    await Promise.all(expiredKeys.map((k) => store.delete(k)));
+
+    expiredEventSweeperJob = undefined;
+
+    // If the batch was full, run the job again
+    if (expiredKeys.length === batchSize) {
+        tryStartExpiredEventSweeper();
+    }
 }
