@@ -16,7 +16,14 @@ const FRAME_ANCESTORS = [
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
 ];
 
-type XFrameMessage = UpdateTheme | ChangeRoute;
+type XFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings;
+
+type OverrideSettings = {
+    kind: "override_settings";
+    settings: {
+        disableLeftNav: boolean;
+    };
+};
 
 type UpdateTheme = {
     kind: "update_theme";
@@ -31,6 +38,7 @@ type ChangeRoute = {
 };
 
 export const framed = writable(false);
+export const disableLeftNav = writable(false);
 
 export function init() {
     if (window.self !== window.top) {
@@ -67,6 +75,13 @@ function externalMessage(ev: MessageEvent) {
         try {
             const payload = ev.data as XFrameMessage;
             switch (payload.kind) {
+                case "override_settings":
+                    console.debug(
+                        "XFRAME_TARGET: overriding settings",
+                        payload.settings.disableLeftNav,
+                    );
+                    disableLeftNav.set(Boolean(payload.settings.disableLeftNav));
+                    break;
                 case "change_route":
                     if (isRouterReady) {
                         console.debug("XFRAME_TARGET: changing path to ", payload.path);
