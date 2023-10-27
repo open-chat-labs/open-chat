@@ -22,6 +22,11 @@ TAG=v$VERSION-$CANISTER_NAME
 COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
 URL="https://github.com/open-chat-labs/open-chat/releases/tag/$TAG"
 
+echo "TITLE: $TITLE"
+echo "TAG: $TAG"
+echo "COMMIT_ID: $COMMIT_ID"
+echo "URL: $URL"
+
 # Download the canister WASM at the given commit
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID || exit 1
 
