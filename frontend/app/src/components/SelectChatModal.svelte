@@ -24,6 +24,7 @@
     import { now } from "../stores/time";
     import MessageOutline from "svelte-material-icons/MessageOutline.svelte";
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
+    import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Search from "./Search.svelte";
     import { compareBigints } from "../utils/bigints";
 
@@ -33,6 +34,7 @@
     type ShareTo = {
         directChats: ShareChat[];
         groupChats: ShareChat[];
+        favourites: ShareChat[];
         communities: ShareCommunity[];
     };
     type ShareChat = {
@@ -59,6 +61,7 @@
     let targets: ShareTo = {
         directChats: [],
         groupChats: [],
+        favourites: [],
         communities: [],
     };
 
@@ -127,25 +130,25 @@
         let targets: ShareTo = {
             directChats: [],
             groupChats: [],
+            favourites: [],
             communities: [],
         };
+        const direct = global.directChats.values();
+        const group = global.groupChats.values();
+        const channels = global.communities.values().flatMap((c) => c.channels);
+        const all = [...group, ...direct, ...channels];
+        const favs = all.filter((c) => global.favourites.has(c.id));
         try {
-            const directChats = await targetsFromChatList(
-                now,
-                global.directChats.values(),
-                selectedChatId
-            );
-            const groupChats = await targetsFromChatList(
-                now,
-                global.groupChats.values(),
-                selectedChatId
-            );
+            const directChats = await targetsFromChatList(now, direct, selectedChatId);
+            const groupChats = await targetsFromChatList(now, group, selectedChatId);
+            const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
                 global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c))
             );
             return {
                 directChats: chatMatchesSearch(directChats, searchTerm),
                 groupChats: chatMatchesSearch(groupChats, searchTerm),
+                favourites: chatMatchesSearch(favourites, searchTerm),
                 communities: communityMatchesSearch(communities, searchTerm),
             };
         } catch (err) {}
@@ -321,6 +324,39 @@
                         </div>
                     </div>
                     {#each targets.groupChats as target}
+                        <div
+                            role="button"
+                            tabindex="0"
+                            class="row"
+                            class:rtl={$rtlStore}
+                            on:click={() => selectChat(target.id)}>
+                            <div class="avatar">
+                                <Avatar url={target.avatarUrl} size={AvatarSize.Default} />
+                            </div>
+                            <div class="details">
+                                <div class="name">{target.name}</div>
+                                <div class="description">{target.description}</div>
+                            </div>
+                        </div>
+                    {/each}
+                </CollapsibleCard>
+            {/if}
+            {#if targets.favourites.length > 0}
+                <CollapsibleCard
+                    transition={false}
+                    open={searchTerm !== ""}
+                    headerText={$_("communities.favourites")}>
+                    <div slot="titleSlot" class="card-header">
+                        <div class="avatar">
+                            <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                        </div>
+                        <div class="details">
+                            <h4 class="title">
+                                {$_("communities.favourites")}
+                            </h4>
+                        </div>
+                    </div>
+                    {#each targets.favourites as target}
                         <div
                             role="button"
                             tabindex="0"

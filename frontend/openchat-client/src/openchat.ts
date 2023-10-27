@@ -377,6 +377,7 @@ import {
     currentCommunityMembers,
     currentCommunityRules,
     currentCommunityUserGroups,
+    nextCommunityIndex,
     removeCommunityPreview,
     selectedCommunity,
     userGroupSummaries,
@@ -5097,8 +5098,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 communityId: id.communityId,
             });
             if ("id" in resp) {
+                // Make the community appear at the top of the list
+                resp.membership.index = nextCommunityIndex();
                 community = resp;
-                addCommunityPreview(resp);
+                addCommunityPreview(community);
             } else {
                 // if we get here it means we're not a member of the community and we can't look it up
                 // it may be private and we may not be invited.
@@ -5152,6 +5155,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "joinCommunity", id: community.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
+                    // Make the community appear at the top of the list
+                    resp.community.membership.index = nextCommunityIndex();
                     this.addCommunityLocally(resp.community);
                     removeCommunityPreview(community.id);
                     this.loadCommunityDetails(resp.community);
