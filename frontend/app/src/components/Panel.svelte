@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { fullWidth } from "../stores/layout";
+    import { fullWidth, layoutStore } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
     import { navOpen } from "../stores/layout";
@@ -22,6 +22,7 @@
     class:right
     class:middle
     class:modal
+    class:offset={$layoutStore.showNav}
     class:hovering={$navOpen}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
@@ -42,7 +43,7 @@
         overflow-x: hidden;
 
         // whichever panel is the 2nd panel should be nudged right to accommodate the nav
-        &:nth-child(2) {
+        &.offset:nth-child(2) {
             margin-inline-start: toRem(80);
             @include mobile() {
                 margin-inline-start: toRem(60);

@@ -39,61 +39,67 @@
     class:square
     {title}
     class:fill>
-    {#if !loading}
-        <slot />
-    {/if}
+    <div class:disabled class:loading class="fake-button">
+        <div class="button-content">
+            {#if !loading}
+                <slot />
+            {:else}
+                {"Working ..."}
+            {/if}
+        </div>
+    </div>
 </button>
 
 <style lang="scss">
     button {
-        transition: background ease-in-out 200ms, color ease-in-out 200ms;
-        background: white;
-        color: black;
-        padding: $sp3 $sp6;
-        border-radius: 0;
-        cursor: pointer;
-        border: var(--bw) solid var(--bd);
         min-height: 45px;
         min-width: 150px;
         position: relative;
+        z-index: 10;
+        border-radius: 0;
         @include font(book, normal, fs-100, 20);
-        text-shadow: var(--button-txt-sh);
-        box-shadow: 4px 4px 0 var(--color);
-
-        &.small {
-            padding: $sp2 $sp5;
-            height: 25px;
-            min-width: 100px;
-        }
-
-        &.tiny {
-            padding: $sp2 $sp5;
-            min-height: $sp6;
-            min-width: 100px;
-        }
-
-        &.loading {
-            @include loading-spinner(
-                1em,
-                0.5em,
-                var(--button-spinner),
-                "/assets/plain-spinner.svg"
-            );
-        }
-
-        &.disabled {
-            background: var(--button-disabled);
-            color: var(--button-disabled-txt);
-            cursor: not-allowed;
-        }
-
-        &.secondary {
-            color: var(--txt-light);
-        }
+        border: none;
+        background-color: var(--color);
 
         &.fill {
             width: 100%;
             height: 100%;
         }
+    }
+
+    .fake-button {
+        position: absolute;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        margin-left: -4px;
+        margin-top: -4px;
+        top: 0;
+        left: 0;
+        background-color: white;
+        border: 2px solid black;
+        transition: transform 200ms ease-in-out;
+
+        &:not(.disabled):hover {
+            transform: translate(4px, 4px);
+        }
+    }
+
+    button.fill .fake-button {
+        margin-left: 0;
+        margin-top: 0;
+        &:hover {
+            transform: none;
+        }
+    }
+
+    .button-content {
+        min-height: 45px;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transform: translateY(-2px);
     }
 </style>
