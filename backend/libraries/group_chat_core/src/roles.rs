@@ -110,7 +110,7 @@ impl GroupRoleInternal {
             MessageContentInitial::Crypto(_) => ps.crypto.unwrap_or(ps.default),
             MessageContentInitial::Deleted(_) => GroupPermissionRole::None,
             MessageContentInitial::Giphy(_) => ps.giphy.unwrap_or(ps.default),
-            MessageContentInitial::GovernanceProposal(_) => GroupPermissionRole::None,
+            MessageContentInitial::GovernanceProposal(_) => GroupPermissionRole::Owner,
             MessageContentInitial::Prize(_) => ps.prize.unwrap_or(ps.default),
             MessageContentInitial::MessageReminderCreated(_) => GroupPermissionRole::None,
             MessageContentInitial::MessageReminder(_) => GroupPermissionRole::Members,
