@@ -46,12 +46,6 @@ impl NervousSystems {
             .and_then(|ns| ns.neuron_id_for_submitting_proposals)
     }
 
-    pub fn set_ledger_id(&mut self, governance_canister_id: &CanisterId, ledger_canister_id: CanisterId) {
-        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
-            ns.ledger_canister_id = ledger_canister_id;
-        }
-    }
-
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
@@ -275,7 +269,6 @@ impl NervousSystems {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NervousSystem {
     governance_canister_id: CanisterId,
-    #[serde(default = "anonymous_principal")]
     ledger_canister_id: CanisterId,
     chat_id: MultiUserChat,
     latest_successful_sync: Option<TimestampMillis>,
@@ -284,24 +277,15 @@ pub struct NervousSystem {
     latest_failed_proposals_update: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
-    #[serde(skip_deserializing)]
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
     sync_in_progress: bool,
     active_user_submitted_proposals: HashMap<ProposalId, UserId>,
     decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
-    #[serde(default)]
     transaction_fee: u64,
-    #[serde(default)]
     min_neuron_stake: u64,
-    #[serde(default)]
     min_dissolve_delay_to_vote: Milliseconds,
-    #[serde(default)]
     proposal_rejection_fee: u64,
-}
-
-fn anonymous_principal() -> CanisterId {
-    CanisterId::anonymous()
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
