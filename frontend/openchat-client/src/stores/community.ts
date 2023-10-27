@@ -1,4 +1,4 @@
-import { type Writable, derived, writable } from "svelte/store";
+import { type Writable, derived, writable, get } from "svelte/store";
 import { setsAreEqual } from "../utils/set";
 import {
     type CommunitySpecificState,
@@ -108,6 +108,6 @@ export const selectedCommunity = derived(
     },
 );
 
-export function setSelectedCommunity(id: CommunityIdentifier): void {
-    chatListScopeStore.set({ kind: "community", id });
+export function nextCommunityIndex(): number {
+    return (get(communitiesList)[0]?.membership.index ?? -1) + 1;
 }
