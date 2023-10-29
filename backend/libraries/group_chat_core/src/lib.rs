@@ -9,14 +9,14 @@ use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex, EventWrapper,
-    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
-    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
-    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
-    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
-    PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
-    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
+    EventOrExpiredRange, EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
