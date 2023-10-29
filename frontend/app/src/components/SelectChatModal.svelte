@@ -234,7 +234,9 @@
         selectedChatId: ChatIdentifier | undefined
     ): ChatSummary[] {
         return chats.filter(
-            (c) => !chatIdentifiersEqual(selectedChatId, c.id) && client.canSendMessages(c.id)
+            (c) =>
+                !chatIdentifiersEqual(selectedChatId, c.id) &&
+                client.canSendMessage(c.id, false, "text")
         );
     }
 

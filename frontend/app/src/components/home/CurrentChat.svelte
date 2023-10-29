@@ -76,12 +76,12 @@
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
 
-    $: canSend = client.canSendMessages(chat.id);
+    $: canSendAny = client.canSendAnyMessages(chat.id, false);
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
     $: canBlockUser = client.canBlockUsers(chat.id);
     $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
-    $: canReplyInThread = client.canReplyInThread(chat.id);
+    $: canReplyInThread = client.canSendAnyMessages(chat.id, true);
     $: canReact = client.canReactToMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
@@ -130,7 +130,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat.id)) return;
+        if (!client.canSendMessage(chat.id, false, "poll")) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -192,7 +192,7 @@
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        if (!canSend) return;
+        if (!canSendAny) return;
         let [text, mentioned] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
             client
@@ -315,7 +315,7 @@
         {canBlockUser}
         {canDelete}
         {canReplyInThread}
-        {canSend}
+        {canSendAny}
         {canReact}
         {canInvite}
         {readonly}

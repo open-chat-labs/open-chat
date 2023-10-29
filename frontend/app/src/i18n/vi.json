@@ -330,7 +330,9 @@
         "admin": "Quản trị viên",
         "member": "Các thành viên",
         "moderator": "người điều hành",
-        "owner": "Những chủ sở hữu"
+        "owner": "Những chủ sở hữu",
+        "default": "Mặc định",
+        "none": "Không ai"
     },
     "permissions": {
         "whoCan": "Ai có thể",
@@ -355,7 +357,38 @@
         "createPublicChannel": "tạo các kênh công cộng",
         "createPrivateChannel": "tạo kênh riêng",
         "manageUserGroups": "quản lý nhóm người dùng",
-        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})"
+        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})",
+        "nobody": "Không ai có thể",
+        "general": "Tổng quan",
+        "message": "Tin nhắn",
+        "thread": "chủ đề",
+        "overrideChatMessages": "Ghi đè quyền tin nhắn trò chuyện",
+        "messagePermissions": {
+            "default": "gửi tin nhắn theo mặc định",
+            "text": "gửi tin nhắn văn bản",
+            "image": "gửi tin nhắn hình ảnh",
+            "video": "gửi tin nhắn video",
+            "audio": "gửi tin nhắn âm thanh",
+            "file": "gửi tin nhắn tập tin",
+            "poll": "tạo tin nhắn thăm dò ý kiến",
+            "crypto": "gửi tin nhắn mật mã",
+            "giphy": "gửi tin nhắn giphy",
+            "prize": "gửi tin nhắn trúng thưởng",
+            "memeFighter": "gửi tin nhắn Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "gửi tin nhắn theo chủ đề theo mặc định",
+            "text": "gửi tin nhắn văn bản trong chủ đề",
+            "image": "gửi tin nhắn hình ảnh trong chủ đề",
+            "video": "gửi tin nhắn video trong chủ đề",
+            "audio": "gửi tin nhắn âm thanh trong chủ đề",
+            "file": "gửi tin nhắn tập tin trong chủ đề",
+            "poll": "tạo tin nhắn thăm dò ý kiến trong chủ đề",
+            "crypto": "gửi tin nhắn mật mã trong chuỗi",
+            "giphy": "gửi tin nhắn giphy trong chủ đề",
+            "prize": "gửi tin nhắn giải thưởng trong chủ đề",
+            "memeFighter": "gửi tin nhắn Meme Fighter trong chủ đề"
+        }
     },
     "rules": {
         "enable": "Bật quy tắc",
@@ -1094,5 +1127,6 @@
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
     "doubleClickReply": "Nhấp đúp chuột vào tin nhắn để trả lời/chỉnh sửa",
     "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
-    "minimumAmount": "Tối thiểu: {amount} {symbol}"
+    "minimumAmount": "Tối thiểu: {amount} {symbol}",
+    "sendTextDisabled": "Tin nhắn văn bản bị vô hiệu hóa"
 }

@@ -21,7 +21,6 @@ import {
     canBlockUsers,
     canChangePermissions,
     canChangeRoles,
-    canCreatePolls,
     canDeleteGroup,
     canDeleteOtherUsersMessages,
     canEditGroupDetails,
@@ -32,9 +31,10 @@ import {
     canPinMessages,
     canReactToMessages,
     canRemoveMembers,
-    canReplyInThread,
     canMentionAllMembers,
-    canSendMessages,
+    canSendMessage,
+    canSendAnyMessages,
+    permittedMessages,
     canUnblockUsers,
     containsReaction,
     createMessage,
@@ -60,6 +60,7 @@ import {
     buildIdenticonUrl,
     isEventKindHidden,
     getMessageText,
+    diffGroupPermissions,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -326,6 +327,8 @@ import type {
     NervousSystemDetails,
     OptionUpdate,
     AccountTransactionResult,
+    MessagePermission,
+    OptionalChatPermissions,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1268,8 +1271,23 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canCreatePolls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canCreatePolls);
+    canSendMessage(chatId: ChatIdentifier, inThread: boolean, permission: MessagePermission): boolean {
+        return this.chatPredicate(chatId, (chat) => canSendMessage(chat, inThread, permission));
+    }
+
+    permittedMessages(chatId: ChatIdentifier, inThread: boolean): Map<MessagePermission, boolean> {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat !== undefined) {
+            return permittedMessages(chat, inThread);
+        } else {
+            return new Map();
+        }
+    }
+
+    canSendAnyMessages(chatId: ChatIdentifier, inThread: boolean): boolean {
+        return this.chatPredicate(chatId, (chat) =>
+            canSendAnyMessages(chat, inThread, this._liveState.userStore, this.config.proposalBotCanister),
+        );
     }
 
     canDeleteOtherUsersMessages(chatId: ChatIdentifier): boolean {
@@ -1284,18 +1302,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.chatPredicate(chatId, canReactToMessages);
     }
 
-    canReplyInThread(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canReplyInThread);
-    }
-
     canMentionAllMembers(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canMentionAllMembers);
-    }
-
-    canSendMessages(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, (chat) =>
-            canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister),
-        );
     }
 
     canChangeRoles(
@@ -2217,18 +2225,20 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     clearSelectedChat = clearSelectedChat;
-    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    diffGroupPermissions = diffGroupPermissions;
+
     messageContentFromFile(file: File): Promise<AttachmentContent> {
         return messageContentFromFile(file, this._liveState.isDiamond);
     }
     formatFileSize = formatFileSize;
 
-    havePermissionsChanged(
-        p1: ChatPermissions | CommunityPermissions,
-        p2: ChatPermissions | CommunityPermissions,
-    ): boolean {
-        const args = this.mergeKeepingOnlyChanged(p1, p2);
+    haveCommunityPermissionsChanged(p1: CommunityPermissions, p2: CommunityPermissions): boolean {
+        const args = mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
+    }
+
+    haveGroupPermissionsChanged(p1: ChatPermissions, p2: ChatPermissions): boolean {
+        return this.diffGroupPermissions(p1, p2) !== undefined;
     }
 
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
@@ -4143,7 +4153,7 @@ export class OpenChat extends OpenChatAgentWorker {
         name?: string,
         desc?: string,
         rules?: UpdatedRules,
-        permissions?: Partial<ChatPermissions>,
+        permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,

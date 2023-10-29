@@ -34,7 +34,8 @@
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.id);
-    $: canSend = client.canSendMessages(chat.id) || client.canReplyInThread(chat.id);
+    $: canSend =
+        client.canSendAnyMessages(chat.id, false) || client.canSendAnyMessages(chat.id, true);
     $: canInvite = client.canInviteUsers(chat.id) && (chat.kind === "group_chat" || chat.public);
     $: avatarSrc = client.groupAvatarUrl(chat);
 

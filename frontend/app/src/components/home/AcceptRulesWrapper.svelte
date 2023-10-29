@@ -45,7 +45,10 @@
 
     export let messageContext: MessageContext;
 
-    $: canSend = client.canSendMessages(messageContext.chatId);
+    $: canSendAny = client.canSendAnyMessages(
+        messageContext.chatId,
+        messageContext.threadRootMessageIndex !== undefined
+    );
 
     let showAcceptRulesModal = false;
     let sendMessageContext: ConfirmedActionEvent | undefined = undefined;
@@ -85,7 +88,7 @@
     }
 
     function forwardMessage(ev: CustomEvent<Message>) {
-        if (!canSend || !client.canForward(ev.detail.content)) return;
+        if (!canSendAny || !client.canForward(ev.detail.content)) return;
 
         if (client.rulesNeedAccepting()) {
             showAcceptRulesModal = true;
