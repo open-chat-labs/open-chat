@@ -101,9 +101,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
         } else {
             let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
-            let permissions = args
-                .permissions_v2
-                .unwrap_or(args.permissions.map(|ps| ps.into()).unwrap_or_default());
+            let permissions = args.permissions_v2.unwrap_or_default();
 
             let chat = GroupChatCore::new(
                 member.user_id,

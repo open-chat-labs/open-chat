@@ -201,7 +201,6 @@ type CreateGroupArgs = record {
     description : text;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissionsPrevious;
     permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;

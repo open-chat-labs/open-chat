@@ -68,7 +68,6 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
         })),
         avatar: None,
         history_visible_to_new_joiners: true,
-        permissions: None,
         permissions_v2: Some(GroupPermissions {
             message_permissions: MessagePermissions {
                 default: GroupPermissionRole::Admins,
