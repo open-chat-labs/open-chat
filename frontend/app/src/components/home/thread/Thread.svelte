@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import type {
@@ -11,6 +12,7 @@
         OpenChat,
         User,
         TimelineItem,
+        MessagePermission,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
@@ -151,7 +153,16 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
+        const content = ev.detail;
+        let type = content.kind.slice(0, -7) as MessagePermission;
+        if (client.canSendMessage(chat.id, true, type)) {
+            draftThreadMessages.setAttachment(threadRootMessageIndex, content);
+        } else {
+            const errorMessage = $_("permissions.notPermitted", {
+                values: { permission: $_(`permissions.threadPermissions.${type}`) },
+            });
+            toastStore.showFailureToast(errorMessage);
+        }
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {

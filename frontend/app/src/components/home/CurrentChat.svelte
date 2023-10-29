@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
@@ -21,6 +22,7 @@
         type CommunitySummary,
         type AttachmentContent,
         LEDGER_CANISTER_ICP,
+        type MessagePermission,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -150,7 +152,16 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        currentChatDraftMessage.setAttachment(chat.id, ev.detail);
+        const content = ev.detail;
+        let type = content.kind.slice(0, -7) as MessagePermission;
+        if (client.canSendMessage(chat.id, false, type)) {
+            currentChatDraftMessage.setAttachment(chat.id, content);
+        } else {
+            const errorMessage = $_("permissions.notPermitted", {
+                values: { permission: $_(`permissions.messagePermissions.${type}`) },
+            });
+            toastStore.showFailureToast(errorMessage);
+        }
     }
 
     function attachGif(ev: CustomEvent<string>) {
