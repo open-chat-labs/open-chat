@@ -23,7 +23,7 @@
 
     function onOverrideChatMessagesChanged() {
         permissions.threadPermissions = overrideChatMessages
-            ? permissions.messagePermissions
+            ? structuredClone(permissions.messagePermissions)
             : undefined;
     }
 </script>
