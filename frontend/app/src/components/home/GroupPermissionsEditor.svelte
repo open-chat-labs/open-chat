@@ -22,7 +22,9 @@
     }
 
     function onOverrideChatMessagesChanged() {
-        permissions.threadPermissions = overrideChatMessages ? { default: "member" } : undefined;
+        permissions.threadPermissions = overrideChatMessages
+            ? permissions.messagePermissions
+            : undefined;
     }
 </script>
 
