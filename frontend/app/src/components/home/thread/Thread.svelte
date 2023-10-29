@@ -154,7 +154,7 @@
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
         const content = ev.detail;
-        let type = content.kind.slice(0, -7) as MessagePermission;
+        let type = content.kind.slice(0, -8) as MessagePermission;
         if (client.canSendMessage(chat.id, true, type)) {
             draftThreadMessages.setAttachment(threadRootMessageIndex, content);
         } else {
