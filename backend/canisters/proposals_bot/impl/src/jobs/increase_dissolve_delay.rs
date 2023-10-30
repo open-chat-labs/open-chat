@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::IncreaseDissolveDelay;
@@ -64,4 +64,7 @@ async fn increase_dissolve_delay(
                 .mark_neuron_dissolve_delay_increased(&governance_canister_id, additional_dissolve_delay_seconds as u64 * 1000)
         });
     }
+
+    TIMER_ID.set(None);
+    read_state(start_job_if_required);
 }
