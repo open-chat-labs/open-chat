@@ -8,8 +8,9 @@ use rand::Rng;
 use sha2::{Digest, Sha256};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
-use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, Configure, IncreaseDissolveDelay};
+use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
 use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
+use sns_governance_canister_c2c_client::configure_neuron;
 use types::icrc1::Account;
 use types::{icrc1, CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
@@ -38,10 +39,11 @@ async fn stake_neuron_for_submitting_proposals(args: Args) -> Response {
     match stake_neuron_impl(&args, this_canister_id, ledger_canister_id, nonce, dissolve_delay_seconds).await {
         Ok(Success(neuron_id)) => {
             mutate_state(|state| {
-                state
-                    .data
-                    .nervous_systems
-                    .set_neuron_id_for_submitting_proposals(&args.governance_canister_id, neuron_id);
+                state.data.nervous_systems.set_neuron_id_for_submitting_proposals(
+                    &args.governance_canister_id,
+                    neuron_id,
+                    dissolve_delay_seconds as u64 * 1000,
+                );
 
                 state.data.fire_and_forget_handler.send(
                     state.data.registry_canister_id,
@@ -123,7 +125,14 @@ async fn stake_neuron_impl(
 
     let neuron_id = claim_neuron(this_canister_id, args.governance_canister_id, nonce).await?;
 
-    increase_dissolve_delay(args.governance_canister_id, neuron_id, dissolve_delay_seconds).await?;
+    configure_neuron(
+        args.governance_canister_id,
+        neuron_id,
+        Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
+            additional_dissolve_delay_seconds: dissolve_delay_seconds,
+        }),
+    )
+    .await?;
 
     Ok(Success(neuron_id))
 }
@@ -143,29 +152,6 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
 
     match response.command.unwrap() {
         manage_neuron_response::Command::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
-        manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
-        _ => unreachable!(),
-    }
-}
-
-async fn increase_dissolve_delay(
-    governance_canister_id: CanisterId,
-    neuron_id: SnsNeuronId,
-    dissolve_delay_seconds: u32,
-) -> CallResult<()> {
-    let args = ManageNeuron {
-        subaccount: neuron_id.to_vec(),
-        command: Some(Command::Configure(Configure {
-            operation: Some(Operation::IncreaseDissolveDelay(IncreaseDissolveDelay {
-                additional_dissolve_delay_seconds: dissolve_delay_seconds,
-            })),
-        })),
-    };
-
-    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
-
-    match response.command.unwrap() {
-        manage_neuron_response::Command::Configure(_) => Ok(()),
         manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
         _ => unreachable!(),
     }
