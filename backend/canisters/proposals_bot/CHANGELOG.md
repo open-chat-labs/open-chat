@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support submitting proposals of type `UpgradeSnsToNextVersion` ([#4670](https://github.com/open-chat-labs/open-chat/pull/4670))
 - Support submitting proposals of type `UpgradeSnsControlledCanister` ([#4672](https://github.com/open-chat-labs/open-chat/pull/4672))
 
+### Changed
+
+- Refund deposit if proposal fails to be submitted ([#4676](https://github.com/open-chat-labs/open-chat/pull/4676))
+
 ## [[2.0.916](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.916-proposals_bot)] - 2023-10-30
 
 ### Fixed
