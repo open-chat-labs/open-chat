@@ -1286,6 +1286,15 @@ export const idlFactory = ({ IDL }) => {
       'amount' : IDL.Nat,
       'treasury' : IDL.Variant({ 'ICP' : IDL.Null, 'SNS' : IDL.Null }),
     }),
+    'UpgradeSnsControlledCanister' : IDL.Record({
+      'new_canister_wasm' : IDL.Vec(IDL.Nat8),
+      'mode' : IDL.Variant({
+        'Upgrade' : IDL.Null,
+        'Install' : IDL.Null,
+        'Reinstall' : IDL.Null,
+      }),
+      'canister_id' : CanisterId,
+    }),
     'Motion' : IDL.Null,
   });
   const ProposalToSubmit = IDL.Record({

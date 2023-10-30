@@ -1,13 +1,5 @@
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
+use crate::types::governance::SnsMetadata;
 use types::Empty;
 
 pub type Args = Empty;
-
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
-pub struct Response {
-    pub url: Option<String>,
-    pub logo: Option<String>,
-    pub name: Option<String>,
-    pub description: Option<String>,
-}
+pub type Response = SnsMetadata;

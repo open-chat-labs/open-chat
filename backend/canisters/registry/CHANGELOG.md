@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement job to update SNS metadata and parameters ([#4674](https://github.com/open-chat-labs/open-chat/pull/4674))
+
 ## [[2.0.904](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.904-registry)] - 2023-10-24
 
 ### Changed

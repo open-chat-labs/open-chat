@@ -4906,6 +4906,7 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "serde",
+ "serde_bytes",
  "types",
 ]
 
