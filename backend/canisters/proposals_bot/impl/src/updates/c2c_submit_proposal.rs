@@ -171,7 +171,7 @@ pub(crate) async fn submit_proposal(
                         let job = ProcessUserRefundJob {
                             user_id,
                             ledger_canister_id: payment.ledger,
-                            amount: payment.amount,
+                            amount: payment.amount - payment.fee,
                             fee: payment.fee,
                         };
                         job.execute();
