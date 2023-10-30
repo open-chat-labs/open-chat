@@ -1380,6 +1380,15 @@ export type ProposalToSubmitAction = { 'UpgradeSnsToNextVersion' : null } |
         { 'SNS' : null },
     }
   } |
+  {
+    'UpgradeSnsControlledCanister' : {
+      'new_canister_wasm' : Uint8Array | number[],
+      'mode' : { 'Upgrade' : null } |
+        { 'Install' : null } |
+        { 'Reinstall' : null },
+      'canister_id' : CanisterId,
+    }
+  } |
   { 'Motion' : null };
 export interface PublicGroupSummary {
   'is_public' : boolean,
