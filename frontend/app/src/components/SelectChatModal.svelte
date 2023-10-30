@@ -236,7 +236,7 @@
         return chats.filter(
             (c) =>
                 !chatIdentifiersEqual(selectedChatId, c.id) &&
-                client.canSendMessage(c.id, false, "text")
+                client.canSendMessage(c.id, "message", "text")
         );
     }
 

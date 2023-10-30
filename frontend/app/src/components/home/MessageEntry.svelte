@@ -81,8 +81,8 @@
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
 
-    $: canSendAny = client.canSendAnyMessages(chat.id, mode === "thread");
-    $: permittedMessages = client.permittedMessages(chat.id, mode === "thread");
+    $: canSendAny = client.canSendMessage(chat.id, mode);
+    $: permittedMessages = client.permittedMessages(chat.id, mode);
     $: canEnterText =
         (permittedMessages.get("text") ?? false) ||
         editingEvent !== undefined ||

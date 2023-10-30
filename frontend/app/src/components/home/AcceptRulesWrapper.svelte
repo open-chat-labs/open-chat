@@ -45,9 +45,9 @@
 
     export let messageContext: MessageContext;
 
-    $: canSendAny = client.canSendAnyMessages(
+    $: canSendAny = client.canSendMessage(
         messageContext.chatId,
-        messageContext.threadRootMessageIndex !== undefined
+        messageContext.threadRootMessageIndex !== undefined ? "thread" : "message"
     );
 
     let showAcceptRulesModal = false;

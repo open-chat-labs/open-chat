@@ -32,9 +32,6 @@ import {
     canReactToMessages,
     canRemoveMembers,
     canMentionAllMembers,
-    canSendMessage,
-    canSendAnyMessages,
-    permittedMessages,
     canUnblockUsers,
     containsReaction,
     createMessage,
@@ -61,6 +58,10 @@ import {
     isEventKindHidden,
     getMessageText,
     diffGroupPermissions,
+    canSendDirectMessage,
+    canSendGroupMessage,
+    permittedMessagesInDirectChat,
+    permittedMessagesInGroup,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -359,6 +360,7 @@ import {
     extractUserIdsFromMentions,
     isMessageNotification,
     userIdsFromTransactions,
+    contentTypeToPermission,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1251,6 +1253,7 @@ export class OpenChat extends OpenChatAgentWorker {
     groupBy = groupBy;
     getTypingString = getTypingString;
     getMessageText = getMessageText;
+    contentTypeToPermission = contentTypeToPermission;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -1271,23 +1274,35 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canSendMessage(chatId: ChatIdentifier, inThread: boolean, permission: MessagePermission): boolean {
-        return this.chatPredicate(chatId, (chat) => canSendMessage(chat, inThread, permission));
+    canSendMessage(chatId: ChatIdentifier, mode: "message" | "thread" | "any", permission?: MessagePermission): boolean {
+        return this.chatPredicate(chatId, (chat) => {
+            if (chat.kind === "direct_chat") {
+                const recipient = this._liveState.userStore[chat.them.userId];
+                if (recipient !== undefined) {
+                    return canSendDirectMessage(recipient, mode, this.config.proposalBotCanister, permission);
+                } else {
+                    return false;
+                }
+            } else {
+                return canSendGroupMessage(chat, mode, permission);
+            }
+        });
     }
 
-    permittedMessages(chatId: ChatIdentifier, inThread: boolean): Map<MessagePermission, boolean> {
+    permittedMessages(chatId: ChatIdentifier, mode: "message" | "thread"): Map<MessagePermission, boolean> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat !== undefined) {
-            return permittedMessages(chat, inThread);
-        } else {
-            return new Map();
+            if (chat.kind === "direct_chat") {
+                const recipient = this._liveState.userStore[chat.them.userId];
+                if (recipient !== undefined) {
+                    return permittedMessagesInDirectChat(recipient, mode, this.config.proposalBotCanister);
+                }
+            } else {
+                return permittedMessagesInGroup(chat, mode);
+            }
         }
-    }
 
-    canSendAnyMessages(chatId: ChatIdentifier, inThread: boolean): boolean {
-        return this.chatPredicate(chatId, (chat) =>
-            canSendAnyMessages(chat, inThread, this._liveState.userStore, this.config.proposalBotCanister),
-        );
+        return new Map();
     }
 
     canDeleteOtherUsersMessages(chatId: ChatIdentifier): boolean {

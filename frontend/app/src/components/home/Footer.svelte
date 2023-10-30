@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
@@ -49,7 +50,19 @@
         if (file) {
             client
                 .messageContentFromFile(file)
-                .then((content) => dispatch("fileSelected", content))
+                .then((content) => {
+                    let permission = client.contentTypeToPermission(content.kind);
+                    if (client.canSendMessage(chat.id, mode, permission)) {
+                        dispatch("fileSelected", content);
+                    } else {
+                        const errorMessage = $_("permissions.notPermitted", {
+                            values: {
+                                permission: $_(`permissions.threadPermissions.${permission}`),
+                            },
+                        });
+                        toastStore.showFailureToast(errorMessage);
+                    }
+                })
                 .catch((err) => toastStore.showFailureToast(err));
         }
     }

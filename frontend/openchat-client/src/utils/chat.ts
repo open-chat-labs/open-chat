@@ -73,7 +73,7 @@ import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
 import { bigIntMax } from "./bigint";
-import { messagePermissions } from "openchat-shared";
+import { messagePermissionsList } from "openchat-shared";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -979,45 +979,60 @@ export function canInviteUsers(chat: ChatSummary): boolean {
     );
 }
 
-export function canSendMessage(chat: ChatSummary, inThread: boolean, permission: MessagePermission): boolean {
-    if (chat.kind === "direct_chat") {
-        return !inThread && permission !== "poll" && permission !== "prize";
+export function permittedMessagesInGroup(
+    chat: MultiUserChat, 
+    mode: "message" | "thread")
+: Map<MessagePermission, boolean> {
+    return new Map(messagePermissionsList.map((m: MessagePermission) => [m, canSendGroupMessage(chat, mode, m)]));
+}
+
+export function canSendGroupMessage(
+    chat: MultiUserChat, 
+    mode: "message" | "thread" | "any", 
+    permission?: MessagePermission)
+: boolean {
+    if (mode === "any") {
+        return canSendGroupMessage(chat, "message", permission) || canSendGroupMessage(chat, "thread", permission);
     }
 
-    const messagePermissions = inThread 
+    if (permission === undefined) {
+        return messagePermissionsList.some((mp: MessagePermission) => canSendGroupMessage(chat, mode, mp as MessagePermission));
+    }
+
+    const messagePermissions = mode === "thread" 
         ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions 
         : chat.permissions.messagePermissions;
 
     return !chat.frozen && isPermitted(chat.membership.role, messagePermissions[permission] ?? messagePermissions.default);
 }
 
-export function permittedMessages(chat: ChatSummary, inThread: boolean): Map<MessagePermission, boolean> {
-    return new Map(messagePermissions.map((m: MessagePermission) => [m, canSendMessage(chat, inThread, m)]));
+export function permittedMessagesInDirectChat(
+    recipient: UserSummary, 
+    mode: "message" | "thread",
+    proposalsBotUserId: string)
+: Map<MessagePermission, boolean> {
+    return new Map(messagePermissionsList.map((m: MessagePermission) => [m, canSendDirectMessage(recipient, mode, proposalsBotUserId, m)]));
 }
 
-export function canSendAnyMessages(
-    chat: ChatSummary,
-    inThread: boolean,
-    userLookup: UserLookup,
-    proposalsBotUserId: string,
-): boolean {
-    if (chat.kind === "direct_chat") {
-        if (inThread) {
-            return false;
-        }
+export function canSendDirectMessage(
+    recipient: UserSummary, 
+    mode: "message" | "thread" | "any", 
+    proposalsBotUserId: string, 
+    permission?: MessagePermission)
+: boolean {
+    if (mode === "thread") {
+        return false;
+    }
 
-        const user = userLookup[chat.them.userId];
-        
-        if (user === undefined || user.suspended) {
-            return false;
-        }
+    if (recipient.suspended) {
+        return false;
+    }
 
-        if (user.kind === "bot" && user.userId === OPENCHAT_BOT_USER_ID || user.userId === proposalsBotUserId) {
-            return false;
-        }
-    } 
+    if (recipient.kind === "bot" && recipient.userId === OPENCHAT_BOT_USER_ID || recipient.userId === proposalsBotUserId) {
+        return false;
+    }
 
-    return messagePermissions.some((mp: MessagePermission) => canSendMessage(chat, inThread, mp as MessagePermission));
+    return permission !== "poll" && permission !== "prize";
 }
 
 export function canReactToMessages(chat: ChatSummary): boolean {

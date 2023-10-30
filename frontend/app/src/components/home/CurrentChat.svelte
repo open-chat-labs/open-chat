@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
@@ -22,7 +21,6 @@
         type CommunitySummary,
         type AttachmentContent,
         LEDGER_CANISTER_ICP,
-        type MessagePermission,
     } from "openchat-client";
     import PollBuilder from "./PollBuilder.svelte";
     import CryptoTransferBuilder from "./CryptoTransferBuilder.svelte";
@@ -78,12 +76,12 @@
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
 
-    $: canSendAny = client.canSendAnyMessages(chat.id, false);
+    $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
     $: canBlockUser = client.canBlockUsers(chat.id);
     $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
-    $: canReplyInThread = client.canSendAnyMessages(chat.id, true);
+    $: canReplyInThread = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
@@ -132,7 +130,7 @@
     }
 
     function createPoll() {
-        if (!client.canSendMessage(chat.id, false, "poll")) return;
+        if (!client.canSendMessage(chat.id, "message", "poll")) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -152,16 +150,7 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        const content = ev.detail;
-        let type = content.kind.slice(0, -8) as MessagePermission;
-        if (client.canSendMessage(chat.id, false, type)) {
-            currentChatDraftMessage.setAttachment(chat.id, content);
-        } else {
-            const errorMessage = $_("permissions.notPermitted", {
-                values: { permission: $_(`permissions.messagePermissions.${type}`) },
-            });
-            toastStore.showFailureToast(errorMessage);
-        }
+        currentChatDraftMessage.setAttachment(chat.id, ev.detail);
     }
 
     function attachGif(ev: CustomEvent<string>) {

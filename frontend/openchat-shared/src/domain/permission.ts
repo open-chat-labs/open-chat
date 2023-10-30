@@ -12,8 +12,8 @@ export type CommunityPermissionRole = CommunityRolesType[number];
 
 export type MemberRole = "admin" | "moderator" | "member" | "owner" | "none";
 
-export const messagePermissions = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter"] as const;
-type MessagePermissionsType = typeof messagePermissions;
+export const messagePermissionsList = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter"] as const;
+type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
 export type Permissioned<T> = {

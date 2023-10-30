@@ -12,7 +12,6 @@
         OpenChat,
         User,
         TimelineItem,
-        MessagePermission,
     } from "openchat-client";
     import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
@@ -67,7 +66,7 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: attachment = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSendAny = client.canSendAnyMessages(chat.id, true);
+    $: canSendAny = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
     $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
@@ -153,16 +152,7 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        const content = ev.detail;
-        let type = content.kind.slice(0, -8) as MessagePermission;
-        if (client.canSendMessage(chat.id, true, type)) {
-            draftThreadMessages.setAttachment(threadRootMessageIndex, content);
-        } else {
-            const errorMessage = $_("permissions.notPermitted", {
-                values: { permission: $_(`permissions.threadPermissions.${type}`) },
-            });
-            toastStore.showFailureToast(errorMessage);
-        }
+        draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
@@ -173,7 +163,7 @@
     }
 
     function createPoll() {
-        if (!client.canSendMessage(chat.id, true, "poll")) return;
+        if (!client.canSendMessage(chat.id, "thread", "poll")) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
