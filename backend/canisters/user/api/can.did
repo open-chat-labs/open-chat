@@ -593,6 +593,7 @@ type ProposalToSubmitAction = variant {
         to : Icrc1Account;
         memo : opt nat64;
     };
+    UpgradeSnsToNextVersion;
 };
 
 type SubmitProposalResponse = variant {
