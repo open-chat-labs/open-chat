@@ -70,7 +70,6 @@ import type {
     GroupChatEvent,
     GroupChatSummary,
     GroupInvite,
-    ChatPermissions,
     Rules,
     IndexRange,
     InviteCodeResponse,
@@ -175,6 +174,7 @@ import type {
     CandidateProposal,
     SubmitProposalResponse,
     AccountTransactionResult,
+    OptionalChatPermissions,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -182,9 +182,9 @@ import {
     chatIdentifiersEqual,
     DestinationInvalidError,
     CommonResponses,
+    applyOptionUpdate,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
-import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "openchat-shared";
 import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
@@ -508,7 +508,7 @@ export class OpenChatAgent extends EventTarget {
         name?: string,
         desc?: string,
         rules?: UpdatedRules,
-        permissions?: Partial<ChatPermissions>,
+        permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,

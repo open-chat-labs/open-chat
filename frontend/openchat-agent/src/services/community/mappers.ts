@@ -447,7 +447,7 @@ export function communityChannelUpdates(
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         public: optional(candid.is_public, identity),
-        permissions: optional(candid.permissions, groupPermissions),
+        permissions: optional(candid.permissions_v2, groupPermissions),
         metrics: optional(candid.metrics, chatMetrics),
         subtype: optionUpdate(candid.subtype, groupSubtype),
         dateLastPinned: optional(candid.date_last_pinned, identity),

@@ -60,28 +60,6 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const PermissionRole = IDL.Variant({
-    'Moderators' : IDL.Null,
-    'Owner' : IDL.Null,
-    'Admins' : IDL.Null,
-    'Members' : IDL.Null,
-  });
-  const GroupPermissions = IDL.Record({
-    'block_users' : PermissionRole,
-    'mention_all_members' : PermissionRole,
-    'change_permissions' : PermissionRole,
-    'delete_messages' : PermissionRole,
-    'send_messages' : PermissionRole,
-    'remove_members' : PermissionRole,
-    'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
-    'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
-    'create_polls' : PermissionRole,
-    'pin_messages' : PermissionRole,
-    'reply_in_thread' : PermissionRole,
-    'react_to_messages' : PermissionRole,
-  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -115,6 +93,43 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
+  const PermissionRole = IDL.Variant({
+    'None' : IDL.Null,
+    'Moderators' : IDL.Null,
+    'Owner' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const CustomPermission = IDL.Record({
+    'subtype' : IDL.Text,
+    'role' : PermissionRole,
+  });
+  const MessagePermissions = IDL.Record({
+    'audio' : IDL.Opt(PermissionRole),
+    'video' : IDL.Opt(PermissionRole),
+    'custom' : IDL.Vec(CustomPermission),
+    'file' : IDL.Opt(PermissionRole),
+    'poll' : IDL.Opt(PermissionRole),
+    'text' : IDL.Opt(PermissionRole),
+    'crypto' : IDL.Opt(PermissionRole),
+    'giphy' : IDL.Opt(PermissionRole),
+    'default' : PermissionRole,
+    'image' : IDL.Opt(PermissionRole),
+    'prize' : IDL.Opt(PermissionRole),
+  });
+  const GroupPermissions = IDL.Record({
+    'mention_all_members' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'message_permissions' : MessagePermissions,
+    'invite_users' : PermissionRole,
+    'thread_permissions' : IDL.Opt(MessagePermissions),
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'react_to_messages' : PermissionRole,
   });
   const EventIndex = IDL.Nat32;
   const VerifiedCredentialGate = IDL.Record({
@@ -506,9 +521,9 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
-    'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
+    'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
@@ -628,9 +643,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
-    'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
+    'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),

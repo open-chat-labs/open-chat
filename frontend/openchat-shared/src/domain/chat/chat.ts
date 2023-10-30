@@ -7,6 +7,7 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
+    OptionalChatPermissions,
     Permissioned,
 } from "../permission";
 import type { ChatListScope, HasLevel } from "../structure";
@@ -543,7 +544,7 @@ export type LocalChatSummaryUpdates = {
               name?: string;
               description?: string;
               public?: boolean;
-              permissions?: Partial<ChatPermissions>;
+              permissions?: OptionalChatPermissions;
               frozen?: boolean;
               gate?: AccessGate;
               notificationsMuted?: boolean;

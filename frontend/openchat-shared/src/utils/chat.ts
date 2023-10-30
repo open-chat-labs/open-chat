@@ -12,6 +12,8 @@ import type {
     CryptocurrencyDetails,
     VersionedRules,
     AccountTransaction,
+    AttachmentContent,
+    MessagePermission,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
@@ -283,5 +285,15 @@ export function chatIdentifierToString(chatId: ChatIdentifier): string {
             return `${chatId.communityId}_${chatId.channelId}`;
         default:
             throw new UnsupportedValueError("Unknown chatId kind", chatId);
+    }
+}
+
+export function contentTypeToPermission(contentType: AttachmentContent["kind"]): MessagePermission {
+    switch (contentType) {
+        case "image_content": return "image";
+        case "video_content": return "video";
+        case "audio_content": return "audio";
+        case "file_content": return "file";
+        default: throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }
 }

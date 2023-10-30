@@ -94,7 +94,7 @@
             "inputs": ["src/**/*.ts"]
         },
         "typecheck": {
-            "dependsOn": ["build"],
+            "dependsOn": ["^typecheck"],
             "outputs": [],
             "inputs": ["src/**/*.ts", "src/**/*.svelte"]
         },
