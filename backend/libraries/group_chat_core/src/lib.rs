@@ -11,13 +11,12 @@ use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
     EventOrExpiredRange, EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupPermissionsPrevious, GroupReplyContext,
-    GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft,
-    MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions,
-    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
-    OptionalMessagePermissions, PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules,
-    SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited,
-    Version, Versioned, VersionedRules,
+    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
+    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
+    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -1489,15 +1488,11 @@ impl GroupChatCore {
 
         if let Some(permissions) = permissions {
             let old_permissions_v2 = self.permissions.value.clone();
-            let old_permissions: GroupPermissionsPrevious = old_permissions_v2.clone().into();
             let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, old_permissions_v2.clone());
-            let new_permissions: GroupPermissionsPrevious = new_permissions_v2.clone().into();
             self.permissions = Timestamped::new(new_permissions_v2.clone(), now);
 
             events.push_main_event(
                 ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
-                    old_permissions,
-                    new_permissions,
                     old_permissions_v2,
                     new_permissions_v2,
                     changed_by: user_id,

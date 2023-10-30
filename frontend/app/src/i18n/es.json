@@ -330,7 +330,9 @@
         "admin": "administradores",
         "member": "miembros",
         "moderator": "Moderadores",
-        "owner": "Propietarios"
+        "owner": "Propietarios",
+        "default": "Por defecto",
+        "none": "Nadie"
     },
     "permissions": {
         "whoCan": "Quién puede",
@@ -355,7 +357,38 @@
         "createPublicChannel": "crear canales públicos",
         "createPrivateChannel": "crear canales privados",
         "manageUserGroups": "gestionar grupos de usuarios",
-        "mentionAllMembers": "mencionar a todos los miembros ({mention})"
+        "mentionAllMembers": "mencionar a todos los miembros ({mention})",
+        "nobody": "Nadie puede",
+        "general": "General",
+        "message": "Mensajes",
+        "thread": "Hilos",
+        "overrideChatMessages": "Anular los permisos de mensajes de chat",
+        "messagePermissions": {
+            "default": "enviar mensajes por defecto",
+            "text": "enviar mensajes de texto",
+            "image": "enviar mensajes de imagen",
+            "video": "enviar mensajes de vídeo",
+            "audio": "enviar mensajes de audio",
+            "file": "enviar mensajes de archivo",
+            "poll": "crear mensajes de encuesta",
+            "crypto": "enviar mensajes criptográficos",
+            "giphy": "enviar mensajes giphy",
+            "prize": "enviar mensajes de premio",
+            "memeFighter": "enviar mensajes de Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "enviar mensajes en hilos de forma predeterminada",
+            "text": "enviar mensajes de texto en hilos",
+            "image": "enviar mensajes con imágenes en hilos",
+            "video": "enviar mensajes de vídeo en hilos",
+            "audio": "enviar mensajes de audio en hilos",
+            "file": "enviar mensajes de archivos en hilos",
+            "poll": "crear mensajes de encuesta en hilos",
+            "crypto": "enviar mensajes criptográficos en hilos",
+            "giphy": "enviar mensajes giphy en hilos",
+            "prize": "enviar mensajes de premio en hilos",
+            "memeFighter": "enviar mensajes de Meme Fighter en hilos"
+        }
     },
     "rules": {
         "enable": "Habilitar reglas",
@@ -1095,5 +1128,6 @@
     "unfollowThreadFailed": "Error al dejar de seguir el hilo",
     "doubleClickReply": "Haga doble clic en el mensaje para responder/editar",
     "doubleTapReply": "Toca dos veces el mensaje para responder/editar",
-    "minimumAmount": "Mínimo: {amount} {symbol}"
+    "minimumAmount": "Mínimo: {amount} {symbol}",
+    "sendTextDisabled": "Los mensajes de texto están deshabilitados"
 }

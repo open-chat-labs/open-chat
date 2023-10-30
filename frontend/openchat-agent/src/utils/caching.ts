@@ -30,7 +30,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { iterateCachedEvents } from "./cachedEventsIterator";
 
-const CACHE_VERSION = 85;
+const CACHE_VERSION = 86;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 

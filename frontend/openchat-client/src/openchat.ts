@@ -21,7 +21,6 @@ import {
     canBlockUsers,
     canChangePermissions,
     canChangeRoles,
-    canCreatePolls,
     canDeleteGroup,
     canDeleteOtherUsersMessages,
     canEditGroupDetails,
@@ -32,9 +31,7 @@ import {
     canPinMessages,
     canReactToMessages,
     canRemoveMembers,
-    canReplyInThread,
     canMentionAllMembers,
-    canSendMessages,
     canUnblockUsers,
     containsReaction,
     createMessage,
@@ -60,6 +57,11 @@ import {
     buildIdenticonUrl,
     isEventKindHidden,
     getMessageText,
+    diffGroupPermissions,
+    canSendDirectMessage,
+    canSendGroupMessage,
+    permittedMessagesInDirectChat,
+    permittedMessagesInGroup,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -326,6 +328,8 @@ import type {
     NervousSystemDetails,
     OptionUpdate,
     AccountTransactionResult,
+    MessagePermission,
+    OptionalChatPermissions,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -356,6 +360,7 @@ import {
     extractUserIdsFromMentions,
     isMessageNotification,
     userIdsFromTransactions,
+    contentTypeToPermission,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1248,6 +1253,7 @@ export class OpenChat extends OpenChatAgentWorker {
     groupBy = groupBy;
     getTypingString = getTypingString;
     getMessageText = getMessageText;
+    contentTypeToPermission = contentTypeToPermission;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -1268,8 +1274,35 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canCreatePolls(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canCreatePolls);
+    canSendMessage(chatId: ChatIdentifier, mode: "message" | "thread" | "any", permission?: MessagePermission): boolean {
+        return this.chatPredicate(chatId, (chat) => {
+            if (chat.kind === "direct_chat") {
+                const recipient = this._liveState.userStore[chat.them.userId];
+                if (recipient !== undefined) {
+                    return canSendDirectMessage(recipient, mode, this.config.proposalBotCanister, permission);
+                } else {
+                    return false;
+                }
+            } else {
+                return canSendGroupMessage(chat, mode, permission);
+            }
+        });
+    }
+
+    permittedMessages(chatId: ChatIdentifier, mode: "message" | "thread"): Map<MessagePermission, boolean> {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") {
+                const recipient = this._liveState.userStore[chat.them.userId];
+                if (recipient !== undefined) {
+                    return permittedMessagesInDirectChat(recipient, mode, this.config.proposalBotCanister);
+                }
+            } else {
+                return permittedMessagesInGroup(chat, mode);
+            }
+        }
+
+        return new Map();
     }
 
     canDeleteOtherUsersMessages(chatId: ChatIdentifier): boolean {
@@ -1284,18 +1317,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.chatPredicate(chatId, canReactToMessages);
     }
 
-    canReplyInThread(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, canReplyInThread);
-    }
-
     canMentionAllMembers(chatId: ChatIdentifier): boolean {
         return this.chatPredicate(chatId, canMentionAllMembers);
-    }
-
-    canSendMessages(chatId: ChatIdentifier): boolean {
-        return this.chatPredicate(chatId, (chat) =>
-            canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister),
-        );
     }
 
     canChangeRoles(
@@ -2217,18 +2240,20 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     clearSelectedChat = clearSelectedChat;
-    mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
+    diffGroupPermissions = diffGroupPermissions;
+
     messageContentFromFile(file: File): Promise<AttachmentContent> {
         return messageContentFromFile(file, this._liveState.isDiamond);
     }
     formatFileSize = formatFileSize;
 
-    havePermissionsChanged(
-        p1: ChatPermissions | CommunityPermissions,
-        p2: ChatPermissions | CommunityPermissions,
-    ): boolean {
-        const args = this.mergeKeepingOnlyChanged(p1, p2);
+    haveCommunityPermissionsChanged(p1: CommunityPermissions, p2: CommunityPermissions): boolean {
+        const args = mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
+    }
+
+    haveGroupPermissionsChanged(p1: ChatPermissions, p2: ChatPermissions): boolean {
+        return this.diffGroupPermissions(p1, p2) !== undefined;
     }
 
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
@@ -4143,7 +4168,7 @@ export class OpenChat extends OpenChatAgentWorker {
         name?: string,
         desc?: string,
         rules?: UpdatedRules,
-        permissions?: Partial<ChatPermissions>,
+        permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLive?: OptionUpdate<bigint>,
         gate?: AccessGate,

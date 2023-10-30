@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
     AccessGate, ChannelId, Document, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
-    OptionalGroupPermissions, OptionalGroupPermissionsPrevious, UpdatedRules, Version,
+    OptionalGroupPermissions, UpdatedRules, Version,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -12,9 +12,6 @@ pub struct Args {
     pub description: Option<String>,
     pub rules: Option<UpdatedRules>,
     pub avatar: OptionUpdate<Document>,
-    // TODO: remove this after the website starts using permissions_v2
-    pub permissions: Option<OptionalGroupPermissionsPrevious>,
-    #[serde(default)]
     pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,

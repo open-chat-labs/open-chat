@@ -127,28 +127,6 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const PermissionRole = IDL.Variant({
-    'Moderators' : IDL.Null,
-    'Owner' : IDL.Null,
-    'Admins' : IDL.Null,
-    'Members' : IDL.Null,
-  });
-  const GroupPermissions = IDL.Record({
-    'block_users' : PermissionRole,
-    'mention_all_members' : PermissionRole,
-    'change_permissions' : PermissionRole,
-    'delete_messages' : PermissionRole,
-    'send_messages' : PermissionRole,
-    'remove_members' : PermissionRole,
-    'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
-    'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
-    'create_polls' : PermissionRole,
-    'pin_messages' : PermissionRole,
-    'reply_in_thread' : PermissionRole,
-    'react_to_messages' : PermissionRole,
-  });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
     'prize_winner_messages' : IDL.Nat64,
@@ -182,6 +160,43 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
+  const PermissionRole = IDL.Variant({
+    'None' : IDL.Null,
+    'Moderators' : IDL.Null,
+    'Owner' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const CustomPermission = IDL.Record({
+    'subtype' : IDL.Text,
+    'role' : PermissionRole,
+  });
+  const MessagePermissions = IDL.Record({
+    'audio' : IDL.Opt(PermissionRole),
+    'video' : IDL.Opt(PermissionRole),
+    'custom' : IDL.Vec(CustomPermission),
+    'file' : IDL.Opt(PermissionRole),
+    'poll' : IDL.Opt(PermissionRole),
+    'text' : IDL.Opt(PermissionRole),
+    'crypto' : IDL.Opt(PermissionRole),
+    'giphy' : IDL.Opt(PermissionRole),
+    'default' : PermissionRole,
+    'image' : IDL.Opt(PermissionRole),
+    'prize' : IDL.Opt(PermissionRole),
+  });
+  const GroupPermissions = IDL.Record({
+    'mention_all_members' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'message_permissions' : MessagePermissions,
+    'invite_users' : PermissionRole,
+    'thread_permissions' : IDL.Opt(MessagePermissions),
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'react_to_messages' : PermissionRole,
   });
   const EventIndex = IDL.Nat32;
   const VerifiedCredentialGate = IDL.Record({
@@ -567,9 +582,9 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Bool,
-    'permissions' : GroupPermissions,
     'metrics' : ChatMetrics,
     'subtype' : IDL.Opt(GroupSubtype),
+    'permissions_v2' : GroupPermissions,
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
@@ -629,9 +644,9 @@ export const idlFactory = ({ IDL }) => {
     'latest_message_sender_display_name' : IDL.Opt(IDL.Text),
     'channel_id' : ChannelId,
     'is_public' : IDL.Opt(IDL.Bool),
-    'permissions' : IDL.Opt(GroupPermissions),
     'metrics' : IDL.Opt(ChatMetrics),
     'subtype' : GroupSubtypeUpdate,
+    'permissions_v2' : IDL.Opt(GroupPermissions),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
@@ -681,8 +696,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateChannelArgs = IDL.Record({
     'is_public' : IDL.Bool,
-    'permissions' : IDL.Opt(GroupPermissions),
     'subtype' : IDL.Opt(GroupSubtype),
+    'permissions_v2' : IDL.Opt(GroupPermissions),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -889,8 +904,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const PermissionsChanged = IDL.Record({
     'changed_by' : UserId,
-    'old_permissions' : GroupPermissions,
-    'new_permissions' : GroupPermissions,
+    'old_permissions_v2' : GroupPermissions,
+    'new_permissions_v2' : GroupPermissions,
   });
   const MembersAddedToDefaultChannel = IDL.Record({ 'count' : IDL.Nat32 });
   const GroupFrozen = IDL.Record({
@@ -1570,19 +1585,40 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
   });
+  const PermissionRoleUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : PermissionRole,
+  });
+  const OptionalMessagePermissions = IDL.Record({
+    'custom_updated' : IDL.Vec(CustomPermission),
+    'audio' : PermissionRoleUpdate,
+    'video' : PermissionRoleUpdate,
+    'file' : PermissionRoleUpdate,
+    'poll' : PermissionRoleUpdate,
+    'text' : PermissionRoleUpdate,
+    'crypto' : PermissionRoleUpdate,
+    'giphy' : PermissionRoleUpdate,
+    'custom_deleted' : IDL.Vec(IDL.Text),
+    'default' : IDL.Opt(PermissionRole),
+    'image' : PermissionRoleUpdate,
+    'prize' : PermissionRoleUpdate,
+  });
+  const OptionalMessagePermissionsUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : OptionalMessagePermissions,
+  });
   const OptionalGroupPermissions = IDL.Record({
-    'block_users' : IDL.Opt(PermissionRole),
     'mention_all_members' : IDL.Opt(PermissionRole),
-    'change_permissions' : IDL.Opt(PermissionRole),
     'delete_messages' : IDL.Opt(PermissionRole),
-    'send_messages' : IDL.Opt(PermissionRole),
     'remove_members' : IDL.Opt(PermissionRole),
     'update_group' : IDL.Opt(PermissionRole),
+    'message_permissions' : IDL.Opt(OptionalMessagePermissions),
     'invite_users' : IDL.Opt(PermissionRole),
+    'thread_permissions' : OptionalMessagePermissionsUpdate,
     'change_roles' : IDL.Opt(PermissionRole),
-    'create_polls' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
-    'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
   const UpdatedRules = IDL.Record({
@@ -1597,7 +1633,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateChannelArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'permissions' : IDL.Opt(OptionalGroupPermissions),
+    'permissions_v2' : IDL.Opt(OptionalGroupPermissions),
     'gate' : AccessGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),

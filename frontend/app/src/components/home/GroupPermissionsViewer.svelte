@@ -1,23 +1,68 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import Check from "svelte-material-icons/Check.svelte";
-    import { type ChatPermissions, type ChatPermissionRole, chatRoles } from "openchat-client";
+    import {
+        type ChatPermissions,
+        type ChatPermissionRole,
+        type MessagePermissions,
+        type PermissionsByRole,
+    } from "openchat-client";
+    import GroupPermissionsPartitionViewer from "./GroupPermissionsPartitionViewer.svelte";
+    import TabHeader from "../TabHeader.svelte";
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
 
-    type PermissionsByRole = Record<ChatPermissionRole, Set<string>>;
+    let generalPartition: PermissionsByRole;
+    let messagePartition: PermissionsByRole;
+    let threadPartition: PermissionsByRole;
+    let selectedTab = 0;
+
+    $: {
+        generalPartition = partitionPermissions(
+            {
+                changeRoles: permissions.changeRoles,
+                updateGroup: permissions.updateGroup,
+                inviteUsers: permissions.inviteUsers,
+                removeMembers: permissions.removeMembers,
+                deleteMessages: permissions.deleteMessages,
+                pinMessages: permissions.pinMessages,
+                reactToMessages: permissions.reactToMessages,
+                mentionAllMembers: permissions.mentionAllMembers,
+            },
+            ""
+        );
+        messagePartition = partitionMessagePermissions(
+            permissions.messagePermissions,
+            "messagePermissions."
+        );
+        threadPartition = partitionMessagePermissions(
+            permissions.threadPermissions ?? permissions.messagePermissions,
+            "threadPermissions."
+        );
+    }
+
     type PermissionsEntry = [keyof ChatPermissions, ChatPermissionRole];
 
-    const roleLabels: Record<ChatPermissionRole, string> = {
-        owner: "permissions.ownerOnly",
-        admin: "permissions.ownerAndAdmins",
-        moderator: "permissions.ownerAndAdminsAndModerators",
-        member: "permissions.allMembers",
-        none: "",
-    };
-
-    $: partitioned = partitionPermissions(permissions);
+    function partitionMessagePermissions(
+        mps: MessagePermissions,
+        translationExt: string
+    ): PermissionsByRole {
+        return partitionPermissions(
+            {
+                text: mps.text ?? mps.default,
+                image: mps.image ?? mps.default,
+                video: mps.video ?? mps.default,
+                audio: mps.audio ?? mps.default,
+                file: mps.file ?? mps.default,
+                poll: mps.poll ?? mps.default,
+                crypto: mps.crypto ?? mps.default,
+                giphy: mps.giphy ?? mps.default,
+                prize: mps.prize ?? mps.default,
+                memeFighter: mps.memeFighter ?? mps.default,
+            },
+            translationExt
+        );
+    }
 
     function filterPermissions([key, _]: PermissionsEntry): boolean {
         if (isPublic && key === "inviteUsers") {
@@ -26,11 +71,14 @@
         return true;
     }
 
-    function partitionPermissions(permissions: ChatPermissions): PermissionsByRole {
+    function partitionPermissions(
+        permissions: Record<string, ChatPermissionRole>,
+        translationExt: string
+    ): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 const text = $_(
-                    `permissions.${String(key)}`,
+                    `permissions.${translationExt}${String(key)}`,
                     key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {}
                 );
 
@@ -48,41 +96,14 @@
     }
 </script>
 
-<ul>
-    {#each chatRoles as role}
-        {#if partitioned[role].size > 0}
-            <li class="section">
-                <div class="who-can">{$_(roleLabels[role])}</div>
-                <ul>
-                    {#each [...partitioned[role]] as perm}
-                        <li class="permission">
-                            <Check size={"1em"} color={"limegreen"} />
-                            {perm}
-                        </li>
-                    {/each}
-                </ul>
-            </li>
-        {/if}
-    {/each}
-</ul>
+<TabHeader
+    bind:selected={selectedTab}
+    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
 
-<style lang="scss">
-    ul {
-        list-style: none;
-    }
-
-    .section {
-        margin-bottom: $sp4;
-    }
-
-    .who-can {
-        @include font(bold, normal, fs-110);
-    }
-
-    .permission {
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        @include font(light, normal, fs-90);
-    }
-</style>
+{#if selectedTab === 0}
+    <GroupPermissionsPartitionViewer partition={generalPartition} />
+{:else if selectedTab === 1}
+    <GroupPermissionsPartitionViewer partition={messagePartition} />
+{:else if selectedTab === 2}
+    <GroupPermissionsPartitionViewer partition={threadPartition} />
+{/if}
