@@ -9,7 +9,8 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds, UpgradeSnsToNextVersion,
+    manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds, UpgradeSnsControlledCanister,
+    UpgradeSnsToNextVersion,
 };
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
@@ -204,6 +205,14 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
         }),
         ProposalToSubmitAction::UpgradeSnsToNextVersion => Action::UpgradeSnsToNextVersion(UpgradeSnsToNextVersion {}),
+        ProposalToSubmitAction::UpgradeSnsControlledCanister(u) => {
+            Action::UpgradeSnsControlledCanister(UpgradeSnsControlledCanister {
+                canister_id: Some(u.canister_id),
+                new_canister_wasm: u.new_canister_wasm.into_vec(),
+                mode: Some(u.mode.into()),
+                canister_upgrade_arg: None,
+            })
+        }
     }
 }
 
