@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix dissolve delay on neurons for submitting proposals ([#4668](https://github.com/open-chat-labs/open-chat/pull/4668))
+- Refund the user whose proposal submission failed due to a bug ([#4669](https://github.com/open-chat-labs/open-chat/pull/4669))
+
 ## [[2.0.915](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.915-proposals_bot)] - 2023-10-27
 
 ### Changed
