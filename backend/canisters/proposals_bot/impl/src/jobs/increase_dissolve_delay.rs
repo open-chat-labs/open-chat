@@ -36,7 +36,13 @@ pub fn run() {
             neuron.neuron_id,
             neuron.additional_dissolve_delay_seconds,
         ));
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+    } else {
+        stop_job();
+    }
+}
+
+fn stop_job() {
+    if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'increase_dissolve_delay' job stopped");
     }
@@ -65,6 +71,6 @@ async fn increase_dissolve_delay(
         });
     }
 
-    TIMER_ID.set(None);
+    stop_job();
     read_state(start_job_if_required);
 }

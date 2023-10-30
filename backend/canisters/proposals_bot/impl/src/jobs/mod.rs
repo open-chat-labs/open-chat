@@ -1,7 +1,7 @@
 use crate::RuntimeState;
 
 mod check_for_nervous_system_updates;
-mod increase_dissolve_delay;
+pub(crate) mod increase_dissolve_delay;
 mod push_proposals;
 mod retrieve_proposals;
 mod update_finished_proposals;
