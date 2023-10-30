@@ -6,7 +6,9 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
 use proposals_bot_canister::post_upgrade::Args;
+use std::time::Duration;
 use tracing::info;
+use types::icrc1::{Account, NumTokens, TransferArg};
 use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -68,4 +70,25 @@ fn post_upgrade(args: Args) {
         }
         crate::jobs::increase_dissolve_delay::start_job_if_required(state);
     });
+
+    ic_cdk_timers::set_timer(Duration::ZERO, || {
+        ic_cdk::spawn(refund_user_whose_proposal_submission_failed());
+    });
+}
+
+async fn refund_user_whose_proposal_submission_failed() {
+    let ledger = CanisterId::from_text("rffwt-piaaa-aaaaq-aabqq-cai").unwrap();
+    let user_id = CanisterId::from_text("ajjco-rqaaa-aaaaf-atdpa-cai").unwrap();
+    let _ = icrc1_ledger_canister_c2c_client::icrc1_transfer(
+        ledger,
+        &TransferArg {
+            from_subaccount: None,
+            to: Account::from(user_id),
+            fee: None,
+            created_at_time: None,
+            memo: None,
+            amount: NumTokens::from(1_000_000_000),
+        },
+    )
+    .await;
 }
