@@ -7,7 +7,8 @@ const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
 const txt = "#ffffff";
-const txtLight = hexPercent("#ffffff", 67);
+const txtLight = hexPercent(txt, 67);
+const txtMuted = hexPercent(txt, 30);
 const txtDark = "#242834";
 const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
@@ -26,6 +27,7 @@ export function lightTheme(): Theme {
         // bg: "#ffffff",
         txt,
         "txt-light": txtLight,
+        "txt-muted": txtMuted,
         bd: "rgba(255,255,255,0.1)",
         rd: "4px",
         bw: "1px",

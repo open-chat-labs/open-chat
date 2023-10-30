@@ -84,9 +84,8 @@
 
 <style lang="scss">
     .preview {
-        margin-top: $sp3;
-        border-top: 1px solid currentColor;
-        padding-top: $sp2;
+        margin-top: $sp4;
+        border-top: 1px solid var(--txt-muted);
     }
 
     .title {

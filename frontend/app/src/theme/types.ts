@@ -15,6 +15,7 @@ export interface Theme {
     bg: string;
     txt: string;
     "txt-light": string;
+    "txt-muted": string;
     bd: string;
     rd: string;
     bw: string;
