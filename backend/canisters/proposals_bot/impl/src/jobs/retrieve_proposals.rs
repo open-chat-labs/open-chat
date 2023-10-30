@@ -2,14 +2,14 @@ use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES,
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
 use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
 use crate::jobs::{push_proposals, update_proposals};
-use crate::timer_job_types::{ProcessUserSubmittedProposalAdoptedJob, TopUpNeuronJob};
+use crate::timer_job_types::{ProcessUserRefundJob, TopUpNeuronJob};
 use crate::{governance_clients, mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use ic_cdk::api::call::CallResult;
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
-use types::{CanisterId, Cryptocurrency, Milliseconds, Proposal};
+use types::{CanisterId, Milliseconds, Proposal};
 use utils::time::MINUTE_IN_MS;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
@@ -144,34 +144,33 @@ fn handle_proposals_response<R: RawProposal>(governance_canister_id: CanisterId,
                     .take_newly_decided_user_submitted_proposals(governance_canister_id);
 
                 let now = state.env.now();
-                for proposal in decided_user_submitted_proposals {
-                    let ledger_canister_id = Cryptocurrency::CHAT.ledger_canister_id().unwrap();
-                    let fee = Cryptocurrency::CHAT.fee().unwrap();
-                    let amount = 4_0000_0000 - fee;
-
-                    if proposal.adopted {
-                        let job = ProcessUserSubmittedProposalAdoptedJob {
-                            governance_canister_id,
-                            proposal_id: proposal.proposal_id,
-                            user_id: proposal.user_id,
-                            ledger_canister_id,
-                            refund_amount: amount,
-                            fee,
-                        };
-                        job.execute();
-                    } else if let Some(neuron_id) = state
-                        .data
-                        .nervous_systems
-                        .get_neuron_id_for_submitting_proposals(&governance_canister_id)
-                    {
-                        let job = TopUpNeuronJob {
-                            governance_canister_id,
-                            ledger_canister_id,
-                            neuron_id,
-                            amount,
-                            fee,
-                        };
-                        job.execute();
+                if let Some(ns) = state.data.nervous_systems.get(&governance_canister_id) {
+                    let ledger_canister_id = ns.ledger_canister_id();
+                    let amount = ns.proposal_rejection_fee().into();
+                    let fee = ns.transaction_fee().into();
+                    for proposal in decided_user_submitted_proposals {
+                        if proposal.adopted {
+                            let job = ProcessUserRefundJob {
+                                user_id: proposal.user_id,
+                                ledger_canister_id,
+                                amount,
+                                fee,
+                            };
+                            job.execute();
+                        } else if let Some(neuron_id) = state
+                            .data
+                            .nervous_systems
+                            .get_neuron_id_for_submitting_proposals(&governance_canister_id)
+                        {
+                            let job = TopUpNeuronJob {
+                                governance_canister_id,
+                                ledger_canister_id,
+                                neuron_id,
+                                amount,
+                                fee,
+                            };
+                            job.execute();
+                        }
                     }
                 }
 
