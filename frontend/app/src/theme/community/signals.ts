@@ -13,6 +13,7 @@ const yellow = "rgb(248, 255, 131)";
 const red = "rgb(227, 26, 62)";
 
 export function getTheme(base: Theme): Theme {
+    base.hidden = true;
     base.author = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
     base.name = "signals";
     base.label = "Signals";

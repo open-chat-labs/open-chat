@@ -14,6 +14,7 @@ pub struct ProposalToSubmit {
 pub enum ProposalToSubmitAction {
     Motion,
     TransferSnsTreasuryFunds(TransferSnsTreasuryFunds),
+    UpgradeSnsToNextVersion,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
