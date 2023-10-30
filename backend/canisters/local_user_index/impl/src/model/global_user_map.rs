@@ -60,8 +60,4 @@ impl GlobalUserMap {
     pub fn len(&self) -> usize {
         self.user_id_to_principal.len()
     }
-
-    pub fn bots(&self) -> &HashSet<UserId> {
-        &self.bots
-    }
 }

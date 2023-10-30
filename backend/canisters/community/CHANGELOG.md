@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.913](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.913-community)] - 2023-10-27
+
+### Fixed
+
+- Fix sending of proposal messages ([#4662](https://github.com/open-chat-labs/open-chat/pull/4662))
+
+## [[2.0.909](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.909-community)] - 2023-10-27
+
 ### Added
 
 - Add `permissions_v2` in and out of APIs ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
