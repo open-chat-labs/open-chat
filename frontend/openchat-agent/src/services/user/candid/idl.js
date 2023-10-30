@@ -1279,6 +1279,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
   });
   const ProposalToSubmitAction = IDL.Variant({
+    'UpgradeSnsToNextVersion' : IDL.Null,
     'TransferSnsTreasuryFunds' : IDL.Record({
       'to' : Icrc1Account,
       'memo' : IDL.Opt(IDL.Nat64),

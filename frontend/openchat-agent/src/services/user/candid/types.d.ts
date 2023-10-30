@@ -1402,7 +1402,8 @@ export interface ProposalToSubmit {
   'action' : ProposalToSubmitAction,
   'summary' : string,
 }
-export type ProposalToSubmitAction = {
+export type ProposalToSubmitAction = { 'UpgradeSnsToNextVersion' : null } |
+  {
     'TransferSnsTreasuryFunds' : {
       'to' : Icrc1Account,
       'memo' : [] | [bigint],
