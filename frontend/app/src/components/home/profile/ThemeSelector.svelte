@@ -26,6 +26,8 @@
 
     onMount(() => {
         partitionedThemes = Object.values(themes).reduce((p, theme) => {
+            if (theme.hidden) return p;
+
             if (theme.mode === "light") {
                 p.light.push(theme);
             }
