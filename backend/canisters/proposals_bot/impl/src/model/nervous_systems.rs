@@ -59,7 +59,7 @@ impl NervousSystems {
     pub fn validate_submit_proposal_payment(
         &self,
         governance_canister_id: &CanisterId,
-        payment: icrc1::CompletedCryptoTransaction,
+        payment: &icrc1::CompletedCryptoTransaction,
     ) -> Result<SnsNeuronId, ValidateSubmitProposalPaymentError> {
         use ValidateSubmitProposalPaymentError::*;
         if let Some(ns) = self.nervous_systems.get(governance_canister_id) {
@@ -311,7 +311,6 @@ pub struct NervousSystem {
     proposals_to_be_updated: ProposalsToBeUpdated,
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
-    #[serde(default)]
     neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
     sync_in_progress: bool,
     active_user_submitted_proposals: HashMap<ProposalId, UserId>,
@@ -441,6 +440,10 @@ impl NervousSystem {
 
     pub fn min_dissolve_delay_to_vote(&self) -> Milliseconds {
         self.min_dissolve_delay_to_vote
+    }
+
+    pub fn transaction_fee(&self) -> u64 {
+        self.transaction_fee
     }
 
     pub fn proposal_rejection_fee(&self) -> u64 {
