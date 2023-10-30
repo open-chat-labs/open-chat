@@ -68,7 +68,7 @@ export function setModifiedTheme(
     newName: string,
     overrides: Partial<Theme>,
 ): void {
-    const base = themes[baseName];
+    const base = themes[newName] ?? themes[baseName];
     if (base) {
         const overridden = deepMerge(base, overrides);
         themes[newName] = overridden;
