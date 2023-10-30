@@ -31,7 +31,7 @@
         return {
             title,
             description,
-            image,
+            image: image ? new URL(image, url).toString() : undefined,
         };
     }
 </script>
@@ -59,28 +59,36 @@
     });
 </script>
 
-<div bind:this={previewsWrapper} class="previews">
+<div bind:this={previewsWrapper}>
     {#each previews as preview}
-        {#if preview !== undefined}
-            {#if preview.title}
-                <h3 class="title">{preview.title}</h3>
-            {/if}
-            {#if preview.description}
-                <p class="desc">{preview.description}</p>
-            {/if}
-            {#if preview.image}
-                <img
-                    on:load={imageLoaded}
-                    on:error={imageLoaded}
-                    class="image"
-                    src={preview.image}
-                    alt="link preview image" />
-            {/if}
+        {#if preview?.title !== undefined || preview?.description !== undefined || preview?.image !== undefined}
+            <div class="preview">
+                {#if preview.title}
+                    <h3 class="title">{preview.title}</h3>
+                {/if}
+                {#if preview.description}
+                    <p class="desc">{preview.description}</p>
+                {/if}
+                {#if preview.image}
+                    <img
+                        on:load={imageLoaded}
+                        on:error={imageLoaded}
+                        class="image"
+                        src={preview.image}
+                        alt="link preview image" />
+                {/if}
+            </div>
         {/if}
     {/each}
 </div>
 
 <style lang="scss">
+    .preview {
+        margin-top: $sp3;
+        border-top: 1px solid currentColor;
+        padding-top: $sp2;
+    }
+
     .title {
         @include font(bold, normal, fs-120);
         margin: $sp3 0 $sp2 0;
