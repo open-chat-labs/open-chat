@@ -461,6 +461,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
             neuron_for_submitting_proposals: ns.neuron_id_for_submitting_proposals.map(hex::encode),
+            neuron_for_submitting_proposals_dissolve_delay: ns.neuron_for_submitting_proposals_dissolve_delay,
             transaction_fee: ns.transaction_fee,
             min_neuron_stake: ns.min_neuron_stake,
             min_dissolve_delay_to_vote: ns.min_dissolve_delay_to_vote,
