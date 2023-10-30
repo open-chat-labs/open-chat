@@ -23,16 +23,6 @@ impl NervousSystems {
         );
     }
 
-    pub fn set_min_dissolve_delay_to_vote(
-        &mut self,
-        governance_canister_id: &CanisterId,
-        min_dissolve_delay_to_vote: Milliseconds,
-    ) {
-        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
-            ns.min_dissolve_delay_to_vote = min_dissolve_delay_to_vote;
-        }
-    }
-
     pub fn update_from_registry(&mut self, from_registry: registry_canister::NervousSystemDetails) {
         if let Some(ns) = self.nervous_systems.get_mut(&from_registry.governance_canister_id) {
             ns.ledger_canister_id = from_registry.ledger_canister_id;
