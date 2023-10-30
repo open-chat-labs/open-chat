@@ -50,7 +50,7 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canSendAny: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
     export let canReplyInThread: boolean;
@@ -138,7 +138,7 @@
             {canPin}
             {canBlockUser}
             {canDelete}
-            canQuoteReply={canSend}
+            canQuoteReply={canSendAny}
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}

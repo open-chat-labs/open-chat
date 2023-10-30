@@ -62,6 +62,7 @@ import type {
     ApiLeaveGroupResponse,
     ApiChat,
     ApiPrizeCotentInitial,
+    ApiMessagePermissions,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -148,6 +149,7 @@ import type {
     TipsReceived,
     PrizeContentInitial,
     ClaimPrizeResponse,
+    MessagePermissions,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -848,11 +850,27 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         removeMembers: permissionRole(candid.remove_members),
         deleteMessages: permissionRole(candid.delete_messages),
         pinMessages: permissionRole(candid.pin_messages),
-        createPolls: permissionRole(candid.create_polls),
-        sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
-        replyInThread: permissionRole(candid.reply_in_thread),
         mentionAllMembers: permissionRole(candid.mention_all_members),
+        messagePermissions: messagePermissions(candid.message_permissions),
+        threadPermissions: optional(candid.thread_permissions, messagePermissions),
+    };
+}
+
+function messagePermissions(candid: ApiMessagePermissions): MessagePermissions {
+    const mf = candid.custom.find((cp) => cp.subtype === "meme_fighter")?.role;
+    return {
+        default: permissionRole(candid.default),
+        text: optional(candid.text, permissionRole),
+        image: optional(candid.image, permissionRole),
+        video: optional(candid.video, permissionRole),
+        audio: optional(candid.audio, permissionRole),
+        file: optional(candid.file, permissionRole),
+        poll: optional(candid.poll, permissionRole),
+        crypto: optional(candid.crypto, permissionRole),
+        giphy: optional(candid.giphy, permissionRole),
+        prize: optional(candid.prize, permissionRole),
+        memeFighter: mf !== undefined ? permissionRole(mf) : undefined,
     };
 }
 
@@ -906,25 +924,42 @@ export function apiCommunityPermissionRole(
 
 export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermissions {
     return {
-        change_permissions: apiPermissionRole("owner"), // TODO remove this
         change_roles: apiPermissionRole(permissions.changeRoles),
         update_group: apiPermissionRole(permissions.updateGroup),
         invite_users: apiPermissionRole(permissions.inviteUsers),
         remove_members: apiPermissionRole(permissions.removeMembers),
-        block_users: apiPermissionRole("owner"), // TODO remove this
         delete_messages: apiPermissionRole(permissions.deleteMessages),
         pin_messages: apiPermissionRole(permissions.pinMessages),
-        create_polls: apiPermissionRole(permissions.createPolls),
-        send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
-        reply_in_thread: apiPermissionRole(permissions.replyInThread),
-        add_members: apiPermissionRole("owner"), // TODO remove this
+        add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
+        message_permissions: apiMessagePermissions(permissions.messagePermissions),
+        thread_permissions: apiOptional(apiMessagePermissions, permissions.threadPermissions),
+    };
+}
+
+function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermissions {
+    return {
+        default: apiPermissionRole(permissions.default),
+        text: apiOptional(apiPermissionRole, permissions.text),
+        image: apiOptional(apiPermissionRole, permissions.image),
+        video: apiOptional(apiPermissionRole, permissions.video),
+        audio: apiOptional(apiPermissionRole, permissions.audio),
+        file: apiOptional(apiPermissionRole, permissions.file),
+        poll: apiOptional(apiPermissionRole, permissions.poll),
+        crypto: apiOptional(apiPermissionRole, permissions.crypto),
+        giphy: apiOptional(apiPermissionRole, permissions.giphy),
+        prize: apiOptional(apiPermissionRole, permissions.prize),
+        custom: permissions.memeFighter !== undefined 
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }] 
+            : []
     };
 }
 
 export function apiPermissionRole(permissionRole: PermissionRole): ApiPermissionRole {
     switch (permissionRole) {
+        case "none":
+            return { None: null };
         case "owner":
             return { Owner: null };
         case "admin":
@@ -940,6 +975,7 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
 }
 
 export function permissionRole(candid: ApiPermissionRole): PermissionRole {
+    if ("None" in candid) return "none";
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admin";
     if ("Moderators" in candid) return "moderator";
@@ -1457,7 +1493,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             canisterId: candid.chat_id.toString(),
         })),
         memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: false,
@@ -1562,7 +1598,7 @@ export function communityChannelSummary(
             canisterId: communityId,
         })),
         memberCount: candid.member_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         frozen: false, // TODO - doesn't exist

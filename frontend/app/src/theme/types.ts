@@ -4,6 +4,7 @@ export type Themes = Record<string, Theme> & {
 };
 
 export interface Theme {
+    hidden: boolean; // can this theme be selected
     author?: string;
     name: string;
     label: string;

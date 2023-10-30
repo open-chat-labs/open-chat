@@ -37,7 +37,6 @@
     export let chat: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
-    export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: MultiUserChat | undefined;
     export let attachment: AttachmentContent | undefined;
@@ -75,16 +74,19 @@
 
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
-    $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
-    $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
-    $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
     $: cryptoLookup = client.cryptoLookup;
     $: tokens = Object.values($cryptoLookup)
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
+
+    $: canSendAny = client.canSendMessage(chat.id, mode);
+    $: permittedMessages = client.permittedMessages(chat.id, mode);
+    $: canEnterText =
+        (permittedMessages.get("text") ?? false) ||
+        editingEvent !== undefined ||
+        attachment !== undefined;
 
     $: {
         if (inp) {
@@ -130,12 +132,13 @@
         }
     }
 
-    $: placeholder =
-        attachment !== undefined
-            ? $_("enterCaption")
-            : dragging
-            ? $_("dropFile")
-            : $_("enterMessage");
+    $: placeholder = !canEnterText
+        ? $_("sendTextDisabled")
+        : attachment !== undefined
+        ? $_("enterCaption")
+        : dragging
+        ? $_("dropFile")
+        : $_("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -316,7 +319,7 @@
             }
         }
 
-        if (isMultiUser && /^\/poll$/.test(txt)) {
+        if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }
@@ -333,10 +336,12 @@
             return true;
         }
 
-        const gifMatch = txt.match(/^\/gif( *(.*))$/);
-        if (gifMatch && gifMatch[2] !== undefined) {
-            dispatch("attachGif", gifMatch[2]);
-            return true;
+        if (permittedMessages.get("giphy")) {
+            const gifMatch = txt.match(/^\/gif( *(.*))$/);
+            if (gifMatch && gifMatch[2] !== undefined) {
+                dispatch("attachGif", gifMatch[2]);
+                return true;
+            }
         }
 
         const faqMatch = txt.match(/^\/faq( *(.*))$/);
@@ -356,20 +361,24 @@
             return true;
         }
 
-        const tokenMatch = txt.match(tokenMatchRegex);
-        if (tokenMatch && tokenMatch[2] !== undefined) {
-            const token = tokenMatch[1];
-            const tokenDetails = Object.values($cryptoLookup).find(
-                (t) => t.symbol.toLowerCase() === token
-            );
-            if (tokenDetails !== undefined) {
-                dispatch("tokenTransfer", {
-                    ledger: tokenDetails.ledger,
-                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).amount,
-                });
+        if (permittedMessages.get("crypto")) {
+            const tokenMatch = txt.match(tokenMatchRegex);
+            if (tokenMatch && tokenMatch[2] !== undefined) {
+                const token = tokenMatch[1];
+                const tokenDetails = Object.values($cryptoLookup).find(
+                    (t) => t.symbol.toLowerCase() === token
+                );
+                if (tokenDetails !== undefined) {
+                    dispatch("tokenTransfer", {
+                        ledger: tokenDetails.ledger,
+                        amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals)
+                            .amount,
+                    });
+                }
+                return true;
             }
-            return true;
         }
+
         return false;
     }
 
@@ -508,7 +517,7 @@
         </div>
     {:else if preview && chat.kind !== "direct_chat"}
         <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
-    {:else if !canSend}
+    {:else if !canSendAny}
         <div class="disabled">
             {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
         </div>
@@ -518,27 +527,33 @@
                 <Progress percent={percentRecorded} />
             </div>
         {/if}
-        {#key textboxId}
-            <div
-                tabindex={0}
-                bind:this={inp}
-                on:blur={saveSelection}
-                class="textbox"
-                class:recording
-                class:dragging
-                contenteditable
-                on:paste
+        {#if canEnterText}
+            {#key textboxId}
+                <div
+                    tabindex={0}
+                    bind:this={inp}
+                    on:blur={saveSelection}
+                    class="textbox"
+                    class:recording
+                    class:dragging
+                    contenteditable
+                    on:paste
+                    {placeholder}
+                    spellcheck
+                    on:dragover={() => (dragging = true)}
+                    on:dragenter={() => (dragging = true)}
+                    on:dragleave={() => (dragging = false)}
+                    on:drop={onDrop}
+                    on:input={onInput}
+                    on:keypress={keyPress} />
+            {/key}
+        {:else}
+            <div class="textbox light">
                 {placeholder}
-                spellcheck
-                on:dragover={() => (dragging = true)}
-                on:dragenter={() => (dragging = true)}
-                on:dragleave={() => (dragging = false)}
-                on:drop={onDrop}
-                on:input={onInput}
-                on:keypress={keyPress} />
-        {/key}
+            </div>
+        {/if}
         {#if editingEvent === undefined}
-            {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
+            {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
                 <div class="record">
                     <AudioAttacher
                         mimeType={audioMimeType}
@@ -547,7 +562,7 @@
                         bind:supported={audioSupported}
                         on:audioCaptured />
                 </div>
-            {:else}
+            {:else if canEnterText}
                 <div class="send" on:click={sendMessage}>
                     <HoverIcon title={$_("sendMessage")}>
                         <Send size={$iconSize} color={"var(--icon-txt)"} />
@@ -558,10 +573,9 @@
             <MessageActions
                 bind:this={messageActions}
                 bind:messageAction
+                {permittedMessages}
                 {attachment}
                 {mode}
-                {pollsAllowed}
-                {isMultiUser}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:createPrizeMessage
@@ -635,6 +649,10 @@
 
         &.recording {
             display: none;
+        }
+
+        &.light {
+            color: var(--txt-light);
         }
     }
 

@@ -42,11 +42,12 @@ const defaultGroupChat: GroupChatSummary = {
         updateGroup: "admin",
         pinMessages: "admin",
         inviteUsers: "admin",
-        createPolls: "member",
-        sendMessages: "member",
         reactToMessages: "member",
-        replyInThread: "member",
         mentionAllMembers: "member",
+        messagePermissions: {
+            default: "member"
+        },
+        threadPermissions: undefined
     },
     metrics: emptyChatMetrics(),
     subtype: undefined,
