@@ -10,41 +10,12 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "ChatEventsListCombined")]
 pub struct ChatEventsList {
     events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct ChatEventsListCombined {
-    events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
-    message_id_map: HashMap<MessageId, EventIndex>,
-    #[serde(default)]
-    message_index_map: BTreeMap<MessageIndex, EventIndex>,
-    #[serde(default)]
-    message_event_indexes: Vec<EventIndex>,
-    latest_event_index: Option<EventIndex>,
-    latest_event_timestamp: Option<TimestampMillis>,
-}
-
-impl From<ChatEventsListCombined> for ChatEventsList {
-    fn from(value: ChatEventsListCombined) -> Self {
-        ChatEventsList {
-            events_map: value.events_map,
-            message_id_map: value.message_id_map,
-            message_event_indexes: if !value.message_event_indexes.is_empty() {
-                value.message_event_indexes
-            } else {
-                value.message_index_map.values().copied().collect()
-            },
-            latest_event_index: value.latest_event_index,
-            latest_event_timestamp: value.latest_event_timestamp,
-        }
-    }
 }
 
 impl ChatEventsList {
