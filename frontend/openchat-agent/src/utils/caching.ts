@@ -1,5 +1,12 @@
 import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
-import { openDB, type DBSchema, type IDBPDatabase, type StoreNames, type StoreValue } from "idb";
+import {
+    openDB,
+    type DBSchema,
+    type IDBPCursorWithValue,
+    type IDBPDatabase,
+    type StoreNames,
+    type StoreValue,
+} from "idb";
 import type {
     ChatEvent,
     ChatIdentifier,
@@ -8,6 +15,8 @@ import type {
     EventsResponse,
     EventsSuccessResult,
     EventWrapper,
+    ExpiredEventsRange,
+    ExpiredMessagesRange,
     GroupChatDetails,
     IndexRange,
     Message,
@@ -28,13 +37,13 @@ import {
     MessageContextMap,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
-import { iterateCachedEvents } from "./cachedEventsIterator";
 
 const CACHE_VERSION = 86;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
 export type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
+    kind: "event";
     chatId: ChatIdentifier;
     messageKey: string | undefined;
 };
@@ -47,9 +56,10 @@ export interface ChatSchema extends DBSchema {
 
     chat_events: {
         key: string;
-        value: EnhancedWrapper<ChatEvent>;
+        value: EnhancedWrapper<ChatEvent> | ExpiredEventsRange;
         indexes: {
             messageIdx: string;
+            expiresAt: number;
         };
     };
 
@@ -58,7 +68,13 @@ export interface ChatSchema extends DBSchema {
         value: EnhancedWrapper<ChatEvent>;
         indexes: {
             messageIdx: string;
+            expiresAt: number;
         };
+    };
+
+    expiredMessageRanges: {
+        key: string;
+        value: ExpiredMessagesRange;
     };
 
     group_details: {
@@ -119,6 +135,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("thread_events")) {
                 db.deleteObjectStore("thread_events");
             }
+            if (db.objectStoreNames.contains("expiredMessageRanges")) {
+                db.deleteObjectStore("expiredMessageRanges");
+            }
             if (db.objectStoreNames.contains("chats")) {
                 db.deleteObjectStore("chats");
             }
@@ -139,6 +158,7 @@ export function openCache(principal: Principal): Database {
             }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
+            chatEvents.createIndex("expiresAt", "expiresAt");
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
             db.createObjectStore("chats");
@@ -220,7 +240,7 @@ export async function getCachedEvents<T extends ChatEvent>(
     console.debug("CACHE: ", context, eventIndexRange, startIndex, ascending);
     const start = Date.now();
 
-    const [events, missing] = await iterateCachedEvents(
+    const [events, expiredEventRanges, missing] = await iterateCachedEvents(
         await db,
         eventIndexRange,
         context,
@@ -237,7 +257,15 @@ export async function getCachedEvents<T extends ChatEvent>(
         console.debug("CACHE: miss: ", missing);
     }
 
-    return [{ events: events as EventWrapper<T>[], latestEventIndex: undefined }, missing];
+    return [
+        {
+            events: events as EventWrapper<ChatEvent>[] as EventWrapper<T>[],
+            expiredEventRanges,
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        },
+        missing,
+    ];
 }
 
 export async function getCachedEventsWindowByMessageIndex<T extends ChatEvent>(
@@ -251,7 +279,16 @@ export async function getCachedEventsWindowByMessageIndex<T extends ChatEvent>(
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
     const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
     if (eventIndex === undefined) {
-        return [{ events: [], latestEventIndex: undefined }, new Set(), true];
+        return [
+            {
+                events: [],
+                expiredEventRanges: [],
+                expiredMessageRanges: [],
+                latestEventIndex: undefined,
+            },
+            new Set(),
+            true,
+        ];
     }
 
     const [events, missing] = await getCachedEventsWindow<T>(
@@ -301,32 +338,45 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
         maxMissing / 2,
     );
 
-    const [[backwardsEvents, backwardsMissing], [forwardsEvents, forwardsMissing]] =
+    const [[bEvents, bExpiredEventRanges, bMissing], [fEvents, fExpiredEventRanges, fMissing]] =
         await Promise.all([backwardsPromise, forwardsPromise]);
 
-    const events = backwardsEvents.concat(forwardsEvents);
-    const missing = new Set([...backwardsMissing, ...forwardsMissing]);
+    const events = bEvents.concat(fEvents);
+    const expiredEventRanges = bExpiredEventRanges.concat(fExpiredEventRanges);
+    const missing = new Set([...bMissing, ...fMissing]);
 
     if (missing.size === 0) {
         console.debug("CACHE: hit: ", events.length, Date.now() - start);
     }
 
-    return [{ events: events as EventWrapper<T>[], latestEventIndex: undefined }, missing];
+    return [
+        {
+            events: events as EnhancedWrapper<T>[],
+            expiredEventRanges,
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        },
+        missing,
+    ];
 }
 
 export async function getCachedEventByIndex<T extends ChatEvent>(
     db: IDBPDatabase<ChatSchema>,
     eventIndex: number,
     context: MessageContext,
-): Promise<EventWrapper<T> | undefined> {
+    now: number = Date.now(),
+): Promise<EnhancedWrapper<T> | ExpiredEventsRange | undefined> {
     const storeName =
         context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
     const key = createCacheKey(context, eventIndex);
 
-    const event = await db.get(storeName, IDBKeyRange.lowerBound(key));
+    const event = processEventExpiry(await db.get(storeName, IDBKeyRange.lowerBound(key)), now);
 
-    if (event === undefined || event.index === eventIndex) {
-        return event as EventWrapper<T> | undefined;
+    if (
+        (event?.kind === "event" && event.index === eventIndex) ||
+        (event?.kind === "expired_events_range" && event.start <= eventIndex)
+    ) {
+        return event as EnhancedWrapper<T> | ExpiredEventsRange;
     }
     return undefined;
 }
@@ -336,20 +386,32 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
     eventIndexes: number[],
     context: MessageContext,
 ): Promise<[EventsSuccessResult<T>, Set<number>]> {
-    const resolvedDb = await db;
-    const events: EventWrapper<T>[] = [];
+    const events: EnhancedWrapper<ChatEvent>[] = [];
+    const expiredEventRanges: ExpiredEventsRange[] = [];
     const missing = new Set<number>();
+    const resolvedDb = await db;
+    const now = Date.now();
     await Promise.all(
         eventIndexes.map(async (idx) => {
-            const evt = await getCachedEventByIndex(resolvedDb, idx, context);
-            if (evt !== undefined) {
-                events.push(evt as EventWrapper<T>);
-            } else {
+            const evt = await getCachedEventByIndex(resolvedDb, idx, context, now);
+            if (evt === undefined) {
                 missing.add(idx);
+            } else if (evt.kind === "event") {
+                events.push(evt);
+            } else {
+                expiredEventRanges.push(evt);
             }
         }),
     );
-    return [{ events, latestEventIndex: undefined }, missing];
+    return [
+        {
+            events: events as EventWrapper<ChatEvent>[] as EventWrapper<T>[],
+            expiredEventRanges,
+            expiredMessageRanges: [],
+            latestEventIndex: undefined,
+        },
+        missing,
+    ];
 }
 
 export async function getCachedEventIndexByMessageIndex(
@@ -359,13 +421,17 @@ export async function getCachedEventIndexByMessageIndex(
 ): Promise<number | undefined> {
     const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const cacheKey = createCacheKey(context, messageIndex);
+    const resolvedDb = await db;
 
-    const value = await (
-        await db
-    ).getFromIndex(store, "messageIdx", IDBKeyRange.lowerBound(cacheKey));
+    const value = await resolvedDb.getFromIndex(
+        store,
+        "messageIdx",
+        IDBKeyRange.lowerBound(cacheKey),
+    );
 
     if (
         value !== undefined &&
+        value.kind === "event" &&
         value.event.kind === "message" &&
         value.event.messageIndex === messageIndex
     ) {
@@ -379,12 +445,19 @@ export function mergeSuccessResponses<T extends ChatEvent>(
     b: EventsSuccessResult<T>,
 ): EventsSuccessResult<T> {
     return {
-        events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
+        events: [...a.events, ...b.events].sort((a, b) => getIndex(a) - getIndex(b)),
+        expiredEventRanges: [...a.expiredEventRanges, ...b.expiredEventRanges],
+        expiredMessageRanges: [...a.expiredMessageRanges, ...b.expiredMessageRanges],
         latestEventIndex:
             a.latestEventIndex === undefined && b.latestEventIndex === undefined
                 ? undefined
                 : Math.max(a.latestEventIndex ?? -1, b.latestEventIndex ?? -1),
     };
+}
+
+function getIndex(event: EventWrapper<ChatEvent> | ExpiredEventsRange): number {
+    if ("index" in event) return event.index;
+    return event.start;
 }
 
 // we need to strip out the blobData promise from any media content because that cannot be serialised
@@ -394,10 +467,12 @@ function makeSerialisable<T extends ChatEvent>(
     removeBlobs: boolean,
     threadRootMessageIndex?: number,
 ): EnhancedWrapper<T> {
-    if (ev.event.kind !== "message") return { ...ev, chatId: { ...chatId }, messageKey: undefined };
+    if (ev.event.kind !== "message")
+        return { ...ev, kind: "event", chatId: { ...chatId }, messageKey: undefined };
 
     return {
         ...ev,
+        kind: "event",
         chatId: { ...chatId },
         messageKey: createCacheKey({ chatId, threadRootMessageIndex }, ev.event.messageIndex),
         event: {
@@ -523,14 +598,40 @@ export async function setCachedEvents<T extends ChatEvent>(
         durability: "relaxed",
     });
     const eventStore = tx.objectStore(store);
-    await Promise.all(
-        resp.events.map((event) => {
-            eventStore.put(
+    const promises: Promise<void>[] = resp.events.map((event) =>
+        eventStore
+            .put(
                 makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey({ chatId, threadRootMessageIndex }, event.index),
-            );
-        }),
+            )
+            .then((_) => {}),
     );
+
+    // If there are any expired event ranges, insert the range details at either end of the range and delete all
+    // cache entries within the range
+    if (resp.expiredEventRanges.length > 0) {
+        for (const range of resp.expiredEventRanges) {
+            const boundaryKeys = [createCacheKey({ chatId, threadRootMessageIndex }, range.start)];
+            if (range.start !== range.end) {
+                boundaryKeys.push(createCacheKey({ chatId, threadRootMessageIndex }, range.end));
+            }
+
+            promises.push(...boundaryKeys.map((k) => eventStore.put(range, k).then((_) => {})));
+
+            if (range.start < range.end - 1) {
+                // Delete all cache entries within the range
+                promises.push(
+                    eventStore.delete(
+                        IDBKeyRange.bound(
+                            createCacheKey({ chatId, threadRootMessageIndex }, range.start + 1),
+                            createCacheKey({ chatId, threadRootMessageIndex }, range.end - 1),
+                        ),
+                    ),
+                );
+            }
+        }
+    }
+    await Promise.all(promises);
     await tx.done;
 }
 
@@ -595,6 +696,7 @@ function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrappe
         },
         index: resp.eventIndex,
         timestamp: resp.timestamp,
+        expiresAt: resp.expiresAt,
     };
 }
 
@@ -662,7 +764,7 @@ export async function loadMessagesByMessageIndex(
                 "messageIdx",
                 createCacheKey({ chatId }, msgIdx),
             );
-            if (evt?.event.kind === "message") {
+            if (evt?.kind === "event" && evt.event.kind === "message") {
                 messages.push(evt as EventWrapper<Message>);
                 return evt.event;
             }
@@ -716,4 +818,240 @@ async function readAll<Name extends StoreNames<ChatSchema>>(
         }
     }
     return values;
+}
+
+async function iterateCachedEvents(
+    db: IDBPDatabase<ChatSchema>,
+    eventIndexRange: IndexRange,
+    context: MessageContext,
+    startIndex: number,
+    ascending: boolean,
+    maxEvents: number,
+    maxMessages: number,
+    maxMissing: number,
+): Promise<[EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>]> {
+    const bound = ascending ? eventIndexRange[1] : eventIndexRange[0];
+    const iterator = await EventsIterator.create(db, context, startIndex, ascending, bound);
+
+    const events: EnhancedWrapper<ChatEvent>[] = [];
+    const expiredEventRanges: ExpiredEventsRange[] = [];
+    const missing = new Set<number>();
+    let messageCount = 0;
+    let expectedNextIndex: number = startIndex;
+
+    while (events.length < maxEvents) {
+        const next = await iterator.getNext();
+        if (next === undefined) {
+            let remainingMissingCount = Math.min(
+                maxMessages - messageCount,
+                maxEvents - events.length,
+            );
+            if (ascending) {
+                for (let i = expectedNextIndex; i <= bound; i++) {
+                    missing.add(i);
+                    if (--remainingMissingCount === 0) break;
+                }
+            } else {
+                for (let i = expectedNextIndex; i >= bound; i--) {
+                    missing.add(i);
+                    if (--remainingMissingCount === 0) break;
+                }
+            }
+            break;
+        }
+
+        if (ascending) {
+            const [startIndex, endIndex] =
+                next.kind === "event" ? [next.index, next.index] : [next.start, next.end];
+
+            for (let i = expectedNextIndex; i < startIndex; i++) {
+                missing.add(i);
+                if (missing.size > maxMissing) {
+                    break;
+                }
+            }
+
+            expectedNextIndex = endIndex + 1;
+        } else {
+            const [startIndex, endIndex] =
+                next.kind === "event" ? [next.index, next.index] : [next.end, next.start];
+
+            for (let i = expectedNextIndex; i > startIndex; i--) {
+                missing.add(i);
+                if (missing.size > maxMissing) {
+                    break;
+                }
+            }
+
+            expectedNextIndex = endIndex - 1;
+        }
+
+        if (next.kind === "event") {
+            events.push(next);
+
+            if (next.event.kind === "message") {
+                if (++messageCount == maxMessages) {
+                    break;
+                }
+            }
+        } else {
+            expiredEventRanges.push(next);
+        }
+    }
+
+    return [events, expiredEventRanges, missing];
+}
+
+function mergeRanges(left: ExpiredEventsRange, right: ExpiredEventsRange): ExpiredEventsRange {
+    return {
+        kind: "expired_events_range",
+        start: Math.min(left.start, right.start),
+        end: Math.max(left.end, right.end),
+    };
+}
+
+function isContiguous(left: ExpiredEventsRange, right: ExpiredEventsRange): boolean {
+    if (left.start <= right.start) {
+        return right.start >= left.end + 1;
+    } else {
+        return left.start <= right.end + 1;
+    }
+}
+
+class EventsIterator {
+    private readonly now: number;
+    private current: EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined;
+
+    private constructor(
+        private cursor?: IDBPCursorWithValue<
+            ChatSchema,
+            ("chat_events" | "thread_events")[],
+            "chat_events" | "thread_events"
+        > | null,
+        private onComplete?: () => Promise<void>,
+    ) {
+        this.now = Date.now();
+        this.current = processEventExpiry(cursor?.value, this.now);
+    }
+
+    static async create(
+        db: IDBPDatabase<ChatSchema>,
+        messageContext: MessageContext,
+        startIndex: number,
+        ascending: boolean,
+        bound: number,
+    ): Promise<EventsIterator> {
+        if ((ascending && startIndex > bound) || (!ascending && startIndex < bound)) {
+            throw new Error(
+                `Start index exceeds bound. ${JSON.stringify({
+                    messageContext,
+                    startIndex,
+                    ascending,
+                    bound,
+                })}`,
+            );
+        }
+
+        const storeName =
+            messageContext.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
+        const transaction = db.transaction([storeName]);
+        const store = transaction.objectStore(storeName);
+        const startKey = createCacheKey(messageContext, startIndex);
+        const [lower, upper] = ascending
+            ? [startKey, createCacheKey(messageContext, bound)]
+            : [createCacheKey(messageContext, bound), startKey];
+
+        const cursor = await store.openCursor(
+            IDBKeyRange.bound(lower, upper),
+            ascending ? "next" : "prev",
+        );
+
+        return new EventsIterator(cursor, () => transaction.done);
+    }
+
+    async getNext(): Promise<EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined> {
+        const current = this.current;
+        if (current === undefined) {
+            return undefined;
+        }
+
+        await this.advance();
+
+        const next = processEventExpiry(this.cursor?.value, this.now);
+
+        // If this value matches the previous value, skip it, and yield the next value instead
+        if (
+            next?.kind === "expired_events_range" &&
+            current?.kind === "expired_events_range" &&
+            isContiguous(current, next)
+        ) {
+            this.current = mergeRanges(current, next);
+            return await this.getNext();
+        }
+
+        this.current = next;
+        return current;
+    }
+
+    private async advance(): Promise<boolean> {
+        try {
+            await this.cursor?.advance(1);
+            return true;
+        } catch {
+            this.cursor = undefined;
+            if (this.onComplete !== undefined) {
+                await this.onComplete();
+            }
+            return false;
+        }
+    }
+}
+
+function processEventExpiry(
+    event: EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined,
+    now: number,
+): EnhancedWrapper<ChatEvent> | ExpiredEventsRange | undefined {
+    if (
+        event === undefined ||
+        event.kind === "expired_events_range" ||
+        event.expiresAt === undefined ||
+        event.expiresAt > now
+    ) {
+        return event;
+    }
+
+    tryStartExpiredEventSweeper();
+
+    return {
+        kind: "expired_events_range",
+        start: event.index,
+        end: event.index,
+    };
+}
+
+let expiredEventSweeperJob: NodeJS.Timeout | undefined;
+
+function tryStartExpiredEventSweeper() {
+    if (expiredEventSweeperJob !== undefined) return;
+
+    expiredEventSweeperJob = setTimeout(runExpiredEventSweeper, 5000);
+}
+
+// TODO we can improve this by replacing these events with expired event ranges
+async function runExpiredEventSweeper() {
+    if (db === undefined) return;
+    const transaction = (await db).transaction(["chat_events"], "readwrite");
+    const store = transaction.objectStore("chat_events");
+    const index = store.index("expiresAt");
+    const batchSize = 100;
+    const expiredKeys = await index.getAllKeys(IDBKeyRange.upperBound(Date.now()), batchSize);
+
+    await Promise.all(expiredKeys.map((k) => store.delete(k)));
+
+    expiredEventSweeperJob = undefined;
+
+    // If the batch was full, run the job again
+    if (expiredKeys.length === batchSize) {
+        tryStartExpiredEventSweeper();
+    }
 }

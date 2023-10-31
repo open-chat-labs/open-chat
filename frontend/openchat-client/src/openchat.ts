@@ -3,6 +3,7 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
+import DRange from "drange";
 import {
     canChangeRoles as canChangeCommunityRoles,
     canBlockUsers as canBlockCommunityUsers,
@@ -202,7 +203,11 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
-import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
+import {
+    formatDisappearingMessageTime,
+    formatRelativeTime,
+    formatTimeRemaining,
+} from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
@@ -330,6 +335,7 @@ import type {
     AccountTransactionResult,
     MessagePermission,
     OptionalChatPermissions,
+    ExpiredEventsRange,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -1274,12 +1280,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canSendMessage(chatId: ChatIdentifier, mode: "message" | "thread" | "any", permission?: MessagePermission): boolean {
+    canSendMessage(
+        chatId: ChatIdentifier,
+        mode: "message" | "thread" | "any",
+        permission?: MessagePermission,
+    ): boolean {
         return this.chatPredicate(chatId, (chat) => {
             if (chat.kind === "direct_chat") {
                 const recipient = this._liveState.userStore[chat.them.userId];
                 if (recipient !== undefined) {
-                    return canSendDirectMessage(recipient, mode, this.config.proposalBotCanister, permission);
+                    return canSendDirectMessage(
+                        recipient,
+                        mode,
+                        this.config.proposalBotCanister,
+                        permission,
+                    );
                 } else {
                     return false;
                 }
@@ -1289,13 +1304,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    permittedMessages(chatId: ChatIdentifier, mode: "message" | "thread"): Map<MessagePermission, boolean> {
+    permittedMessages(
+        chatId: ChatIdentifier,
+        mode: "message" | "thread",
+    ): Map<MessagePermission, boolean> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 const recipient = this._liveState.userStore[chat.them.userId];
                 if (recipient !== undefined) {
-                    return permittedMessagesInDirectChat(recipient, mode, this.config.proposalBotCanister);
+                    return permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        this.config.proposalBotCanister,
+                    );
                 }
             } else {
                 return permittedMessagesInGroup(chat, mode);
@@ -1850,14 +1872,12 @@ export class OpenChat extends OpenChatAgentWorker {
         if (!keepCurrentEvents) {
             clearServerEvents(chat.id);
             chatStateStore.setProp(chat.id, "userGroupKeys", new Set<string>());
-        } else if (!isContiguous(chat.id, resp.events)) {
-            return false;
         }
 
         const userIds = userIdsFromEvents(resp.events);
         await this.updateUserStore(chat.id, userIds);
 
-        this.addServerEventsToStores(chat.id, resp.events, undefined);
+        this.addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
         makeRtcConnections(
             this.user.userId,
@@ -2032,6 +2052,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.blockUserLocally(chatId, userId);
                 return false;
             });
+    }
+
+    formatDisappearingMessageTime(milliseconds: number): string {
+        return formatDisappearingMessageTime(milliseconds, this.config.i18nFormatter);
     }
 
     nullUser = nullUser;
@@ -2213,7 +2237,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const context = { chatId, threadRootMessageIndex };
 
-        this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex);
+        this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 
         for (const event of resp.events) {
             if (event.event.kind === "message") {
@@ -2760,7 +2784,7 @@ export class OpenChat extends OpenChatAgentWorker {
         threadRootMessageIndex: number | undefined,
     ) {
         const event = mergeSendMessageResponse(msg, resp);
-        this.addServerEventsToStores(chatId, [event], threadRootMessageIndex);
+        this.addServerEventsToStores(chatId, [event], threadRootMessageIndex, []);
         if (threadRootMessageIndex === undefined) {
             updateSummaryWithConfirmedMessage(chatId, event);
         }
@@ -2770,12 +2794,16 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: ChatIdentifier,
         newEvents: EventWrapper<ChatEvent>[],
         threadRootMessageIndex: number | undefined,
+        expiredEventRanges: ExpiredEventsRange[],
     ): void {
-        if (newEvents.length === 0) {
+        if (newEvents.length === 0 && expiredEventRanges.length === 0) {
             return;
         }
 
-        if (threadRootMessageIndex === undefined && !isContiguous(chatId, newEvents)) {
+        if (
+            threadRootMessageIndex === undefined &&
+            !isContiguous(chatId, newEvents, expiredEventRanges)
+        ) {
             return;
         }
 
@@ -2826,6 +2854,15 @@ export class OpenChat extends OpenChatAgentWorker {
             }
         } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
             threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
+        }
+
+        if (expiredEventRanges.length > 0) {
+            chatStateStore.updateProp(chatId, "expiredEventRanges", (ranges) => {
+                const merged = new DRange();
+                merged.add(ranges);
+                expiredEventRanges.forEach((r) => merged.add(r.start, r.end));
+                return merged;
+            });
         }
     }
 
@@ -3386,6 +3423,8 @@ export class OpenChat extends OpenChatAgentWorker {
         }).then((m) => {
             this.handleEventsResponse(serverChat, {
                 events: [m],
+                expiredEventRanges: [],
+                expiredMessageRanges: [],
                 latestEventIndex: undefined,
             });
         });
@@ -4370,7 +4409,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         } else {
             localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
-            this.addServerEventsToStores(chatId, [event], undefined);
+            this.addServerEventsToStores(chatId, [event], undefined, []);
         }
     }
 

@@ -1128,5 +1128,9 @@
     "doubleClickReply": "双击消息即可回复/编辑",
     "doubleTapReply": "双击消息即可回复/编辑",
     "minimumAmount": "最小值：{amount} {symbol}",
-    "sendTextDisabled": "短信已禁用"
+    "sendTextDisabled": "短信已禁用",
+    "disappearingMessageTimeUpdated": "{changedBy} 将消息消失时间设置为 {duration}",
+    "disappearingMessagesDisabled": "{changedBy} 禁用消失消息",
+    "durationMinutes": "{duration} 分钟",
+    "oneMinute": "1分钟"
 }

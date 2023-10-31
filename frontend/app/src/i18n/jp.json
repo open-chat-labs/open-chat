@@ -1128,5 +1128,9 @@
     "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
     "doubleTapReply": "メッセージをダブルタップして返信/編集します",
     "minimumAmount": "最小値: {amount} {symbol}",
-    "sendTextDisabled": "テキストメッセージが無効になっています"
+    "sendTextDisabled": "テキストメッセージが無効になっています",
+    "disappearingMessageTimeUpdated": "{changedBy} はメッセージが消える時間を {duration} に設定します",
+    "disappearingMessagesDisabled": "{changedBy} は消えるメッセージを無効にしました",
+    "durationMinutes": "{duration}分",
+    "oneMinute": "1分"
 }

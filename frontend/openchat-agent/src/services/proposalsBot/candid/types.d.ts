@@ -439,9 +439,11 @@ export type DocumentUpdate = { 'NoChange' : null } |
 export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsSuccessResult {
+  'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'events' : Array<ChatEventWrapper>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : number,
+  'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |

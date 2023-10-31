@@ -560,11 +560,15 @@ export class CommunityClient extends CandidService {
                 ? resp
                 : {
                       events: [...fromCache.messageEvents, ...resp.events],
+                      expiredEventRanges: [],
+                      expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
                   };
         }
         return {
             events: fromCache.messageEvents,
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex: undefined,
         };
     }
