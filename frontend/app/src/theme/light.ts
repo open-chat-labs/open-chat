@@ -8,7 +8,6 @@ const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
 const txt = "#ffffff";
 const txtLight = hexPercent(txt, 67);
-const txtMuted = hexPercent(txt, 30);
 const txtDark = "#242834";
 const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
@@ -27,7 +26,6 @@ export function lightTheme(): Theme {
         // bg: "#ffffff",
         txt,
         "txt-light": txtLight,
-        "txt-muted": txtMuted,
         bd: "rgba(255,255,255,0.1)",
         rd: "4px",
         bw: "1px",
@@ -220,12 +218,14 @@ export function lightTheme(): Theme {
                 sh: "none",
                 r1: "8px",
                 r2: "4px",
+                separator: "rgba(255,255,255,0.2)",
 
                 me: {
                     bg: hexPercent(primary, 50),
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
                     bd: "rgba(255,255,255,0.3)",
+                    separator: "rgba(255,255,255,0.2)",
                 },
             },
         },

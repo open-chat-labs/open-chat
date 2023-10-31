@@ -15,7 +15,6 @@ export interface Theme {
     bg: string;
     txt: string;
     "txt-light": string;
-    "txt-muted": string;
     bd: string;
     rd: string;
     bw: string;
@@ -207,12 +206,14 @@ export interface Theme {
             sh: string;
             r1: string;
             r2: string;
+            separator: string;
 
             me: {
                 bg: string;
                 muted: string;
                 txt: string;
                 bd: string;
+                separator: string;
             };
         };
     };

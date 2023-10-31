@@ -40,6 +40,7 @@
     const dispatch = createEventDispatcher();
 
     export let previews: (LinkInfo | undefined)[] = [];
+    export let me: boolean;
 
     let previewsWrapper: HTMLElement;
     let numberOfImagesLoaded = 0;
@@ -62,7 +63,7 @@
 <div bind:this={previewsWrapper}>
     {#each previews as preview}
         {#if preview?.title !== undefined || preview?.description !== undefined || preview?.image !== undefined}
-            <div class="preview">
+            <div class="preview" class:me>
                 {#if preview.title}
                     <h3 class="title">{preview.title}</h3>
                 {/if}
@@ -85,7 +86,11 @@
 <style lang="scss">
     .preview {
         margin-top: $sp4;
-        border-top: 1px solid var(--txt-muted);
+        border-top: 1px solid var(--currentChat-msg-separator);
+
+        &.me {
+            border-color: var(--currentChat-msg-me-separator);
+        }
     }
 
     .title {
