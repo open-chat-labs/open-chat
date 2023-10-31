@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    ProposalContent, TimestampMillis, TotalVotes, User, UserId, VoteOperation,
+    ProposalContent, TimestampMillis, TotalVotes, User, UserId,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -472,85 +472,6 @@ impl PollContent {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PollContentInternal {
-    pub config: PollConfig,
-    pub votes: HashMap<u32, Vec<UserId>>,
-    pub ended: bool,
-}
-
-impl PollContentInternal {
-    pub fn hydrate(&self, my_user_id: Option<UserId>) -> PollContent {
-        let user_votes = if let Some(user_id) = my_user_id {
-            self.votes
-                .iter()
-                .filter(|(_, v)| v.contains(&user_id))
-                .map(|(k, _)| *k)
-                .collect()
-        } else {
-            Vec::new()
-        };
-
-        let total_votes: TotalVotes;
-        let hide_votes = self.config.end_date.is_some() && !self.ended && !self.config.show_votes_before_end_date;
-        if hide_votes {
-            total_votes = TotalVotes::Hidden(self.votes.values().map(|v| v.len() as u32).sum());
-        } else if self.config.anonymous {
-            total_votes = TotalVotes::Anonymous(self.votes.iter().map(|(k, v)| (*k, v.len() as u32)).collect());
-        } else {
-            total_votes = TotalVotes::Visible(self.votes.clone());
-        }
-
-        PollContent {
-            config: self.config.clone(),
-            votes: PollVotes {
-                total: total_votes,
-                user: user_votes,
-            },
-            ended: self.ended,
-        }
-    }
-
-    pub fn register_vote(&mut self, user_id: UserId, option_index: u32, operation: VoteOperation) -> RegisterVoteResult {
-        if self.ended {
-            RegisterVoteResult::PollEnded
-        } else if option_index > (self.config.options.len() as u32) + 1 {
-            RegisterVoteResult::OptionIndexOutOfRange
-        } else {
-            match operation {
-                VoteOperation::RegisterVote => {
-                    let votes = self.votes.entry(option_index).or_default();
-                    if votes.contains(&user_id) {
-                        return RegisterVoteResult::SuccessNoChange;
-                    }
-                    votes.push(user_id);
-                    let mut existing_vote_removed = false;
-                    if !self.config.allow_multiple_votes_per_user {
-                        // If the user has already left a vote, remove it
-                        for (_, votes) in self.votes.iter_mut().filter(|(&o, _)| o != option_index) {
-                            if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
-                                votes.remove(index);
-                                existing_vote_removed = true;
-                                break;
-                            }
-                        }
-                    }
-                    RegisterVoteResult::Success(existing_vote_removed)
-                }
-                VoteOperation::DeleteVote => {
-                    if let Some(votes) = self.votes.get_mut(&option_index) {
-                        if let Some((index, _)) = votes.iter().enumerate().find(|(_, &u)| u == user_id) {
-                            votes.remove(index);
-                            return RegisterVoteResult::Success(true);
-                        }
-                    }
-                    RegisterVoteResult::SuccessNoChange
-                }
-            }
-        }
-    }
-}
-
 pub enum RegisterVoteResult {
     Success(bool), // The bool specifies if an existing vote was removed or not
     SuccessNoChange,
@@ -571,7 +492,6 @@ pub struct PrizeContentInitial {
     pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
-    #[serde(default)]
     pub diamond_only: bool,
 }
 
@@ -583,7 +503,6 @@ pub struct PrizeContent {
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
-    #[serde(default)]
     pub diamond_only: bool,
 }
 
@@ -612,11 +531,6 @@ pub struct MessageReminderContent {
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
     pub count: u32,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ReportedMessageInternal {
-    pub reports: Vec<MessageReport>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
