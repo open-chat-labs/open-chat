@@ -24,6 +24,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
@@ -269,6 +270,8 @@
         user={userSummary}
         event={event.event}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "events_ttl_updated"}
+    <DisappearingMessageTimeUpdated user={userSummary} changedBy={event.event.updatedBy} newTimeToLive={event.event.newTimeToLive} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_frozen"}
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}

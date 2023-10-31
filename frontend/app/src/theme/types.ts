@@ -206,12 +206,14 @@ export interface Theme {
             sh: string;
             r1: string;
             r2: string;
+            separator: string;
 
             me: {
                 bg: string;
                 muted: string;
                 txt: string;
                 bd: string;
+                separator: string;
             };
         };
     };

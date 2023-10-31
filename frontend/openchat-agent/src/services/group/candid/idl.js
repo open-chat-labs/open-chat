@@ -722,9 +722,11 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const EventsSuccessResult = IDL.Record({
+    'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'events' : IDL.Vec(ChatEventWrapper),
     'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
+    'expired_event_ranges' : IDL.Vec(IDL.Tuple(EventIndex, EventIndex)),
   });
   const EventsResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
