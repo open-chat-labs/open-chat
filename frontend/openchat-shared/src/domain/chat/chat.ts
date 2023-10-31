@@ -818,6 +818,7 @@ export type EventWrapper<T extends ChatEvent> = {
     event: T;
     timestamp: bigint;
     index: number;
+    expiresAt?: number;
 };
 
 export type EventsSuccessResult<T extends ChatEvent> = {

@@ -11,10 +11,13 @@
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { currentTheme } from "../../theme/themes";
+    import DisappearsAt from "./DisappearsAt.svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let timestamp: bigint;
+    export let expiresAt: number | undefined;
+    export let percentageExpired: number;
     export let confirmed: boolean;
     export let failed: boolean;
     export let chatType: ChatType;
@@ -61,6 +64,9 @@
         {/if}
         {#if pinned}
             <Pin size={"0.9em"} color={pinnedColor} />
+        {/if}
+        {#if expiresAt !== undefined}
+            <DisappearsAt {percentageExpired} {expiresAt} />
         {/if}
     {/if}
 </div>

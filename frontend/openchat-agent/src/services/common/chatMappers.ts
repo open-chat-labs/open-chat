@@ -1643,6 +1643,7 @@ export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Messa
         event: message(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: Number(candid.timestamp) + 1000 * 60 * 2,
     };
 }
 

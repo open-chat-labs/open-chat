@@ -161,6 +161,7 @@
             on:deleteFailedMessage={deleteFailedMessage}
             eventIndex={event.index}
             timestamp={event.timestamp}
+            expiresAt={event.expiresAt}
             msg={event.event} />
     {/if}
 {:else if event.event.kind === "group_chat_created"}

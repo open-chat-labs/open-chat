@@ -617,6 +617,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: Number(candid.timestamp) + 1000 * 60 * 5,
     };
 }
 

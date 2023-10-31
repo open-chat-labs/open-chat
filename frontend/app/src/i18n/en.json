@@ -1086,5 +1086,11 @@
     "unfollowThread": "Unfollow this thread",
     "followThreadFailed": "Follow thread failed",
     "unfollowThreadFailed": "Unfollow thread failed",
-    "minimumAmount": "Minimum: {amount} {symbol}"
+    "minimumAmount": "Minimum: {amount} {symbol}",
+    "disappearingMessages": {
+        "label": "Disappearing messages",
+        "hours": "Hour(s)",
+        "minutes": "Minute(s)",
+        "days": "Day(s)"
+    }
 }

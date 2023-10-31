@@ -5,14 +5,12 @@
     import Checkbox from "../Checkbox.svelte";
     import {
         E8S_PER_TOKEN,
-        type AccessControlled,
         type OpenChat,
-        type Permissioned,
-        type HasLevel,
-        type HasMembershipRole,
         isSnsGate,
         type InterpolationValues,
         type SNSAccessGate,
+        type CandidateGroupChat,
+        type CommunitySummary,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
@@ -24,14 +22,15 @@
     import Input from "../Input.svelte";
     import { getGateBindings, type GateBinding } from "../../utils/access";
     import { fade } from "svelte/transition";
+    import DisappearingMessages from "./DisappearingMessages.svelte";
 
     type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: AccessControlled & HasLevel & Permissioned<T> & HasMembershipRole;
-    export let original: AccessControlled;
+    export let candidate: CandidateGroupChat | CommunitySummary;
+    export let original: CandidateGroupChat | CommunitySummary;
     export let editing: boolean;
     export let history: boolean;
 
@@ -39,6 +38,7 @@
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let gateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
+    let disappearingMessages = false;
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
@@ -157,6 +157,23 @@
         </Checkbox>
     </div>
 {/if}
+
+<div class="section">
+    <Checkbox
+        id="disappearing-messages"
+        disabled={false}
+        on:change={() => (disappearingMessages = !disappearingMessages)}
+        label={$_("disappearingMessages.label")}
+        align={"start"}
+        checked={disappearingMessages}>
+        <div class="section-title">{$_("disappearingMessages.label")}</div>
+        <div class="info">
+            {#if disappearingMessages}
+                <DisappearingMessages />
+            {/if}
+        </div>
+    </Checkbox>
+</div>
 
 {#if !requiresUpgrade}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">

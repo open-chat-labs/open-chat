@@ -2,6 +2,7 @@
 
 <script lang="ts">
     import Link from "../Link.svelte";
+    import { fade } from "svelte/transition";
     import {
         AvatarSize,
         type CreatedUser,
@@ -61,6 +62,7 @@
     export let me: boolean;
     export let eventIndex: number;
     export let timestamp: bigint;
+    export let expiresAt: number | undefined;
     export let first: boolean;
     export let last: boolean;
     export let confirmed: boolean;
@@ -100,6 +102,7 @@
     let showReport = false;
     let messageMenu: ChatMessageMenu;
     let tipping: string | undefined = undefined;
+    let percentageExpired = 100;
 
     $: canTip = !me && confirmed && !inert && !failed;
     $: chatListScope = client.chatListScope;
@@ -151,6 +154,14 @@
                         // Only allow viewing of your own message for 5 minutes after deleting it
                         (msg.content.deletedBy !== msg.sender ||
                             t - Number(msg.content.timestamp) < 5 * 60 * 1000)));
+
+            if (expiresAt !== undefined) {
+                const ttl = expiresAt ? expiresAt - Number(timestamp) : 0;
+                const age = $now - Number(timestamp);
+                const expired = age > ttl;
+                percentageExpired = expired ? 100 : (age / ttl) * 100;
+                console.log("PercentageExpired: ", percentageExpired);
+            }
         });
     });
 
@@ -395,233 +406,238 @@
         on:close={() => (showReport = false)} />
 {/if}
 
-<div class="message-wrapper" class:last>
-    <div
-        bind:this={msgElement}
-        class="message"
-        class:me
-        data-index={failed ? "" : msg.messageIndex}
-        data-id={failed ? "" : msg.messageId}
-        id={failed ? "" : `event-${eventIndex}`}>
-        {#if showAvatar}
-            <div class="avatar-col">
-                {#if first}
-                    <div class="avatar" on:click={openUserProfile}>
-                        <Avatar
-                            url={client.userAvatarUrl(sender)}
-                            userId={msg.sender}
-                            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
-                    </div>
-                {/if}
-            </div>
-        {/if}
-
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
+{#if expiresAt === undefined || percentageExpired < 100}
+    <div transition:fade|local={{ duration: 300 }} class="message-wrapper" class:last>
         <div
-            bind:this={msgBubbleElement}
-            style={msgBubbleCalculatedWidth !== undefined
-                ? `width: ${msgBubbleCalculatedWidth}px`
-                : undefined}
-            on:dblclick={doubleClickMessage}
-            use:longpress={() => messageMenu?.showMenu()}
-            class="message-bubble"
-            class:focused
-            class:editing
-            class:fill={fill && !inert}
+            bind:this={msgElement}
+            class="message"
             class:me
-            class:inert
-            class:collapsed
-            class:first
-            class:last
-            class:readByMe
-            class:crypto
-            class:failed
-            class:prizeWinner={isPrizeWinner}
-            class:proposal={isProposal && !inert}
-            class:thread={inThread}
-            class:rtl={$rtlStore}>
-            {#if first && !isProposal && !isPrize}
-                <div class="sender" class:fill class:rtl={$rtlStore}>
-                    <Link underline={"never"} on:click={openUserProfile}>
-                        <h4
-                            class="username"
-                            class:fill
-                            class:crypto
-                            class:diamond={sender?.diamond}>
-                            {senderDisplayName}
-                        </h4>
-                    </Link>
-                    {#if senderTyping}
-                        <span class="typing">
-                            <Typing />
-                        </span>
+            data-index={failed ? "" : msg.messageIndex}
+            data-id={failed ? "" : msg.messageId}
+            id={failed ? "" : `event-${eventIndex}`}>
+            {#if showAvatar}
+                <div class="avatar-col">
+                    {#if first}
+                        <div class="avatar" on:click={openUserProfile}>
+                            <Avatar
+                                url={client.userAvatarUrl(sender)}
+                                userId={msg.sender}
+                                size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                        </div>
                     {/if}
                 </div>
             {/if}
-            {#if msg.forwarded}
-                <div class="forwarded">
-                    <div>
-                        <ForwardIcon
-                            size={$iconSize}
-                            color={me
-                                ? "var(--currentChat-msg-me-muted)"
-                                : "var(--currentChat-msg-muted)"} />
+
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div
+                bind:this={msgBubbleElement}
+                style={msgBubbleCalculatedWidth !== undefined
+                    ? `width: ${msgBubbleCalculatedWidth}px`
+                    : undefined}
+                on:dblclick={doubleClickMessage}
+                use:longpress={() => messageMenu?.showMenu()}
+                class="message-bubble"
+                class:focused
+                class:editing
+                class:fill={fill && !inert}
+                class:me
+                class:inert
+                class:collapsed
+                class:first
+                class:last
+                class:readByMe
+                class:crypto
+                class:failed
+                class:prizeWinner={isPrizeWinner}
+                class:proposal={isProposal && !inert}
+                class:thread={inThread}
+                class:rtl={$rtlStore}>
+                {#if first && !isProposal && !isPrize}
+                    <div class="sender" class:fill class:rtl={$rtlStore}>
+                        <Link underline={"never"} on:click={openUserProfile}>
+                            <h4
+                                class="username"
+                                class:fill
+                                class:crypto
+                                class:diamond={sender?.diamond}>
+                                {senderDisplayName}
+                            </h4>
+                        </Link>
+                        {#if senderTyping}
+                            <span class="typing">
+                                <Typing />
+                            </span>
+                        {/if}
                     </div>
-                    <div class="text">{"Forwarded"}</div>
-                </div>
-            {/if}
-            {#if msg.repliesTo !== undefined && !inert}
-                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                    <RepliesTo
-                        messageId={msg.messageId}
-                        {readonly}
-                        {chatId}
-                        on:goToMessageIndex
-                        repliesTo={msg.repliesTo} />
-                {:else}
-                    <UnresolvedReply />
                 {/if}
-            {/if}
+                {#if msg.forwarded}
+                    <div class="forwarded">
+                        <div>
+                            <ForwardIcon
+                                size={$iconSize}
+                                color={me
+                                    ? "var(--currentChat-msg-me-muted)"
+                                    : "var(--currentChat-msg-muted)"} />
+                        </div>
+                        <div class="text">{"Forwarded"}</div>
+                    </div>
+                {/if}
+                {#if msg.repliesTo !== undefined && !inert}
+                    {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                        <RepliesTo
+                            messageId={msg.messageId}
+                            {readonly}
+                            {chatId}
+                            on:goToMessageIndex
+                            repliesTo={msg.repliesTo} />
+                    {:else}
+                        <UnresolvedReply />
+                    {/if}
+                {/if}
 
-            <ChatMessageContent
-                senderId={msg.sender}
-                {readonly}
-                {fill}
-                {me}
-                {chatId}
-                {collapsed}
-                {undeleting}
-                messageIndex={msg.messageIndex}
-                messageId={msg.messageId}
-                myUserId={user.userId}
-                content={msg.content}
-                edited={msg.edited}
-                height={mediaCalculatedHeight}
-                on:registerVote={registerVote}
-                on:goToMessageIndex
-                on:upgrade
-                on:expandMessage />
-
-            {#if !inert && !isPrize}
-                <TimeAndTicks
-                    {pinned}
+                <ChatMessageContent
+                    senderId={msg.sender}
+                    {readonly}
                     {fill}
-                    {timestamp}
                     {me}
-                    {confirmed}
-                    {failed}
-                    deleted={msg.deleted}
-                    {undeleting}
-                    {readByThem}
-                    {crypto}
-                    {chatType}
-                    {dateFormatter} />
-            {/if}
-
-            {#if debug}
-                <pre>EventIdx: {eventIndex}</pre>
-                <pre>MsgIdx: {msg.messageIndex}</pre>
-                <pre>MsgId: {msg.messageId}</pre>
-                <pre>Confirmed: {confirmed}</pre>
-                <pre>ReadByThem: {readByThem}</pre>
-                <pre>ReadByUs: {readByMe}</pre>
-                <pre>Pinned: {pinned}</pre>
-                <pre>edited: {msg.edited}</pre>
-                <pre>failed: {failed}</pre>
-                <pre>timestamp: {timestamp}</pre>
-                <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-            {/if}
-
-            {#if showChatMenu}
-                <ChatMessageMenu
-                    bind:this={messageMenu}
                     {chatId}
-                    {isProposal}
-                    inert={msg.deleted || collapsed}
-                    {publicGroup}
-                    {confirmed}
-                    {failed}
-                    canShare={canShare()}
-                    {me}
-                    {canPin}
-                    {canTip}
-                    {pinned}
-                    {supportsReply}
-                    {canQuoteReply}
-                    {threadRootMessage}
-                    {canStartThread}
-                    {multiUserChat}
-                    {msg}
-                    canForward={client.canForward(msg.content)}
-                    {canBlockUser}
-                    {canEdit}
-                    {canDelete}
-                    {canUndelete}
-                    {canRevealDeleted}
-                    {crypto}
-                    translatable={(client.getMessageText(msg.content) ?? "").length > 0}
-                    {translated}
-                    on:collapseMessage
-                    on:forward
-                    on:reply={reply}
-                    on:retrySend
+                    {collapsed}
+                    {undeleting}
+                    messageIndex={msg.messageIndex}
+                    messageId={msg.messageId}
+                    myUserId={user.userId}
+                    content={msg.content}
+                    edited={msg.edited}
+                    height={mediaCalculatedHeight}
+                    on:registerVote={registerVote}
+                    on:goToMessageIndex
                     on:upgrade
-                    on:initiateThread
-                    on:deleteFailedMessage
-                    on:replyPrivately={replyPrivately}
-                    on:editMessage={editMessage}
-                    on:tipMessage={tipMessage}
-                    on:reportMessage={() => (showReport = true)}
-                    on:cancelReminder={cancelReminder}
-                    on:remindMe={() => (showRemindMe = true)} />
+                    on:expandMessage />
+
+                {#if !inert && !isPrize}
+                    <TimeAndTicks
+                        {pinned}
+                        {fill}
+                        {timestamp}
+                        {expiresAt}
+                        {percentageExpired}
+                        {me}
+                        {confirmed}
+                        {failed}
+                        deleted={msg.deleted}
+                        {undeleting}
+                        {readByThem}
+                        {crypto}
+                        {chatType}
+                        {dateFormatter} />
+                {/if}
+
+                {#if debug}
+                    <pre>EventIdx: {eventIndex}</pre>
+                    <pre>MsgIdx: {msg.messageIndex}</pre>
+                    <pre>MsgId: {msg.messageId}</pre>
+                    <pre>Confirmed: {confirmed}</pre>
+                    <pre>ReadByThem: {readByThem}</pre>
+                    <pre>ReadByUs: {readByMe}</pre>
+                    <pre>Pinned: {pinned}</pre>
+                    <pre>edited: {msg.edited}</pre>
+                    <pre>failed: {failed}</pre>
+                    <pre>timestamp: {timestamp}</pre>
+                    <pre>expiresAt: {expiresAt}</pre>
+                    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                {/if}
+
+                {#if showChatMenu}
+                    <ChatMessageMenu
+                        bind:this={messageMenu}
+                        {chatId}
+                        {isProposal}
+                        inert={msg.deleted || collapsed}
+                        {publicGroup}
+                        {confirmed}
+                        {failed}
+                        canShare={canShare()}
+                        {me}
+                        {canPin}
+                        {canTip}
+                        {pinned}
+                        {supportsReply}
+                        {canQuoteReply}
+                        {threadRootMessage}
+                        {canStartThread}
+                        {multiUserChat}
+                        {msg}
+                        canForward={client.canForward(msg.content)}
+                        {canBlockUser}
+                        {canEdit}
+                        {canDelete}
+                        {canUndelete}
+                        {canRevealDeleted}
+                        {crypto}
+                        translatable={(client.getMessageText(msg.content) ?? "").length > 0}
+                        {translated}
+                        on:collapseMessage
+                        on:forward
+                        on:reply={reply}
+                        on:retrySend
+                        on:upgrade
+                        on:initiateThread
+                        on:deleteFailedMessage
+                        on:replyPrivately={replyPrivately}
+                        on:editMessage={editMessage}
+                        on:tipMessage={tipMessage}
+                        on:reportMessage={() => (showReport = true)}
+                        on:cancelReminder={cancelReminder}
+                        on:remindMe={() => (showRemindMe = true)} />
+                {/if}
+            </div>
+
+            {#if !collapsed && !msg.deleted && canReact && !failed}
+                <div class="actions">
+                    <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                        <HoverIcon>
+                            <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </div>
+                </div>
             {/if}
         </div>
 
-        {#if !collapsed && !msg.deleted && canReact && !failed}
-            <div class="actions">
-                <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                    <HoverIcon>
-                        <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
-                    </HoverIcon>
-                </div>
+        {#if threadSummary !== undefined && !inThread}
+            <ThreadSummary
+                {chatId}
+                threadRootMessageIndex={msg.messageIndex}
+                selected={($pathParams.kind === "global_chat_selected_route" ||
+                    $pathParams.kind === "selected_channel_route") &&
+                    msg.messageIndex === $pathParams.messageIndex &&
+                    $pathParams.open}
+                {threadSummary}
+                indent={showAvatar}
+                {me}
+                url={msgUrl} />
+        {/if}
+
+        {#if msg.reactions.length > 0 && !inert}
+            <div class="message-reactions" class:me class:indent={showAvatar}>
+                {#each msg.reactions as { reaction, userIds } (reaction)}
+                    <MessageReaction
+                        on:click={() => toggleReaction(reaction)}
+                        {reaction}
+                        {userIds}
+                        myUserId={user?.userId} />
+                {/each}
+            </div>
+        {/if}
+
+        {#if tips.length > 0 && !inert}
+            <div class="tips" class:indent={showAvatar}>
+                {#each tips as [ledger, userTips]}
+                    <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
+                {/each}
             </div>
         {/if}
     </div>
-
-    {#if threadSummary !== undefined && !inThread}
-        <ThreadSummary
-            {chatId}
-            threadRootMessageIndex={msg.messageIndex}
-            selected={($pathParams.kind === "global_chat_selected_route" ||
-                $pathParams.kind === "selected_channel_route") &&
-                msg.messageIndex === $pathParams.messageIndex &&
-                $pathParams.open}
-            {threadSummary}
-            indent={showAvatar}
-            {me}
-            url={msgUrl} />
-    {/if}
-
-    {#if msg.reactions.length > 0 && !inert}
-        <div class="message-reactions" class:me class:indent={showAvatar}>
-            {#each msg.reactions as { reaction, userIds } (reaction)}
-                <MessageReaction
-                    on:click={() => toggleReaction(reaction)}
-                    {reaction}
-                    {userIds}
-                    myUserId={user?.userId} />
-            {/each}
-        </div>
-    {/if}
-
-    {#if tips.length > 0 && !inert}
-        <div class="tips" class:indent={showAvatar}>
-            {#each tips as [ledger, userTips]}
-                <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
-            {/each}
-        </div>
-    {/if}
-</div>
+{/if}
 
 <style lang="scss">
     $size: 10px;
