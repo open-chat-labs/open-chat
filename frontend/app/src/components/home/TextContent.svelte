@@ -15,6 +15,7 @@
     export let pinned: boolean = false;
     export let edited: boolean;
     export let fill: boolean;
+    export let me: boolean;
 
     $: expanded = !$lowBandwidth;
 
@@ -48,7 +49,13 @@
         </span>
     {:else}
         <IntersectionObserver unobserveOnIntersect={false} let:intersecting>
-            <LinkPreview {pinned} {fill} text={content.text} links={linkMatch} {intersecting} />
+            <LinkPreview
+                {me}
+                {pinned}
+                {fill}
+                text={content.text}
+                links={linkMatch}
+                {intersecting} />
         </IntersectionObserver>
     {/if}
 {/if}
