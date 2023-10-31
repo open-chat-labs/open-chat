@@ -224,12 +224,14 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 sh: "none",
                 r1: "8px",
                 r2: "4px",
+                separator: "rgba(255,255,255,0.2)",
 
                 me: {
                     bg: blueAccent,
                     muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
                     bd: "rgba(255,255,255,0.2)",
+                    separator: "rgba(255,255,255,0.2)",
                 },
             },
         },

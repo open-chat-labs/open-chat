@@ -14,6 +14,7 @@
     export let text: string;
     export let pinned: boolean;
     export let fill: boolean;
+    export let me: boolean;
 
     let rendered = false;
     let previewsPromise: Promise<LinkInfo[]> | undefined = undefined;
@@ -72,6 +73,6 @@
     <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
     {#await previewsPromise then previews}
-        <GenericPreview {previews} on:rendered={previewLoaded} />
+        <GenericPreview {me} {previews} on:rendered={previewLoaded} />
     {/await}
 {/if}
