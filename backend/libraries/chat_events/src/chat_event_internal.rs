@@ -570,11 +570,11 @@ impl ChatMetricsInternal {
 mod tests {
     use crate::{
         ChatEventInternal, ChatInternal, DeletedByInternal, MessageContentInternal, MessageInternal, ReplyContextInternal,
-        ThreadSummaryInternal,
+        TextContentInternal, ThreadSummaryInternal,
     };
     use candid::Principal;
     use std::collections::{HashMap, HashSet};
-    use types::{EventWrapperInternal, Reaction, TextContent, Tips};
+    use types::{EventWrapperInternal, Reaction, Tips};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -582,7 +582,7 @@ mod tests {
             message_index: 1.into(),
             message_id: 1.into(),
             sender: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
-            content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             replies_to: None,
             reactions: Vec::new(),
             tips: Tips::default(),
@@ -606,13 +606,8 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        // Before optimisation: 177
-        // After optimisation: 53
-        assert_eq!(message_bytes_len, 53);
-
-        // Before optimisation: 239
-        // After optimisation: 65
-        assert_eq!(event_bytes_len, 65);
+        assert_eq!(message_bytes_len, 50);
+        assert_eq!(event_bytes_len, message_bytes_len + 12);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }
@@ -626,7 +621,7 @@ mod tests {
             message_index: 1.into(),
             message_id: 1.into(),
             sender: principal.into(),
-            content: MessageContentInternal::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInternal::Text(TextContentInternal { text: "123".to_string() }),
             replies_to: Some(ReplyContextInternal {
                 chat_if_other: Some((ChatInternal::Group(principal.into()), Some(1.into()))),
                 event_index: 1.into(),
@@ -662,13 +657,8 @@ mod tests {
         let event_bytes = msgpack::serialize_then_unwrap(&event);
         let event_bytes_len = event_bytes.len();
 
-        // Before optimisation: 438
-        // After optimisation: 205
-        assert_eq!(message_bytes_len, 205);
-
-        // Before optimisation: 500
-        // After optimisation: 223
-        assert_eq!(event_bytes_len, 223);
+        assert_eq!(message_bytes_len, 202);
+        assert_eq!(event_bytes_len, message_bytes_len + 18);
 
         let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }

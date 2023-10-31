@@ -568,10 +568,10 @@ impl<'a, I: Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>> Iterat
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{ChatEvents, MessageContentInternal, PushMessageArgs};
+    use crate::{ChatEvents, MessageContentInternal, PushMessageArgs, TextContentInternal};
     use candid::Principal;
     use std::mem::size_of;
-    use types::{EventsTimeToLiveUpdated, Milliseconds, TextContent};
+    use types::{EventsTimeToLiveUpdated, Milliseconds};
 
     #[test]
     fn enum_size() {
@@ -734,8 +734,8 @@ mod tests {
                 sender: user_id,
                 thread_root_message_index: None,
                 message_id,
-                content: MessageContentInternal::Text(TextContent {
-                    text: "hello".to_owned(),
+                content: MessageContentInternal::Text(TextContentInternal {
+                    text: "hello".to_string(),
                 }),
                 mentioned: Vec::new(),
                 replies_to: None,
