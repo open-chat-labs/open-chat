@@ -39,12 +39,7 @@
     let step = 0;
     let actualWidth = 0;
     let detailsValid = true;
-    let originalGroup = {
-        ...candidateGroup,
-        rules: { ...candidateGroup.rules },
-        permissions: { ...candidateGroup.permissions },
-        gate: { ...candidateGroup.gate },
-    };
+    let originalGroup = structuredClone(candidateGroup);
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
@@ -53,7 +48,7 @@
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
     $: selectedCommunity = client.selectedCommunity;
 
-    $: permissionsDirty = client.havePermissionsChanged(
+    $: permissionsDirty = client.haveGroupPermissionsChanged(
         originalGroup.permissions,
         candidateGroup.permissions
     );
@@ -184,7 +179,7 @@
                 descDirty ? updatedGroup.description : undefined,
                 rulesDirty && rulesValid ? updatedGroup.rules : undefined,
                 permissionsDirty
-                    ? client.mergeKeepingOnlyChanged(
+                    ? client.diffGroupPermissions(
                           originalGroup.permissions,
                           updatedGroup.permissions
                       )

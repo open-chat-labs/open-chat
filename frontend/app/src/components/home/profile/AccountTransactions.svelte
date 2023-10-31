@@ -34,6 +34,7 @@
     $: accountLookup = toRecord(accounts, (a) => a.account);
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: moreAvailable = moreTransactionsAvailable(transationData);
+    $: loading = transationData.kind === "loading" || transationData.kind === "loading_more";
 
     function moreTransactionsAvailable(trans: RemoteData): boolean {
         if (trans.kind !== "success") return false;
@@ -165,8 +166,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {#if transationData.kind === "success"}
-                            {#each transationData.data.transactions as transaction}
+                        {#if transationData.kind === "success" || transationData.kind === "loading_more"}
+                            {#each transationData.data.transactions as transaction (transaction.id)}
                                 <tr on:click={() => openDashboard(transaction.id)}>
                                     <td>{transaction.id}</td>
                                     <td>{fromE8s(transaction.amount)}</td>
@@ -199,8 +200,8 @@
                     <Button
                         secondary
                         on:click={() => loadTransations()}
-                        disabled={!moreAvailable}
-                        loading={transationData.kind === "loading"}
+                        disabled={!moreAvailable && !loading}
+                        {loading}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}>
                         {$_("cryptoAccount.loadMoreTransactions")}

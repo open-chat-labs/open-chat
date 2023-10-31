@@ -3,6 +3,7 @@ import { ScreenWidth, screenWidth } from "./screenDimensions";
 import { mobileWidth } from "./screenDimensions";
 import { rightPanelHistory } from "./rightPanel";
 import { type RouteParams, pathParams } from "../routes";
+import { disableLeftNav } from "./xframe";
 
 export const navOpen = writable<boolean>(false);
 
@@ -30,13 +31,15 @@ function someHomeRoute(route: RouteParams["kind"]): boolean {
 
 // TODO - we really need some tests around this and now that it's out of the Home component we can do that easily
 export const layoutStore: Readable<Layout> = derived(
-    [rightPanelHistory, mobileWidth, pathParams, fullWidth],
-    ([$rightPanelHistory, $mobileWidth, $pathParams, $fullWidth]) => {
+    [rightPanelHistory, mobileWidth, pathParams, fullWidth, disableLeftNav],
+    ([$rightPanelHistory, $mobileWidth, $pathParams, $fullWidth, $disableLeftNav]) => {
         if ($mobileWidth) {
             const showRight = $rightPanelHistory.length > 0;
             const showMiddle = !someHomeRoute($pathParams.kind) && !showRight;
             const showLeft = !showMiddle && !showRight;
-            const showNav = showLeft || ($pathParams.kind === "communities_route" && !showRight);
+            const showNav =
+                !$disableLeftNav &&
+                (showLeft || ($pathParams.kind === "communities_route" && !showRight));
             return {
                 showNav,
                 showMiddle,
@@ -50,7 +53,7 @@ export const layoutStore: Readable<Layout> = derived(
             const showLeft = $pathParams.kind !== "communities_route";
 
             return {
-                showNav: true,
+                showNav: !$disableLeftNav,
                 showMiddle: true,
                 showLeft,
                 rightPanel: (showRight

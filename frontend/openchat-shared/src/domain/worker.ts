@@ -108,7 +108,7 @@ import type {
     ExploreChannelsResponse,
 } from "./search/search";
 import type { GroupInvite, CommunityInvite } from "./inviteCodes";
-import type { CommunityPermissions, MemberRole } from "./permission";
+import type { CommunityPermissions, MemberRole, OptionalChatPermissions } from "./permission";
 import type { AccessGate, Rules, UpdatedRules } from "./access";
 import type {
     AddMembersToChannelResponse,
@@ -136,7 +136,6 @@ import type {
     SetMemberDisplayNameResponse,
     FollowThreadResponse,
 } from "./community";
-import type { ChatPermissions } from "./permission";
 import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
@@ -684,7 +683,7 @@ type UpdateGroup = {
     name?: string;
     desc?: string;
     rules?: UpdatedRules;
-    permissions?: Partial<ChatPermissions>;
+    permissions?: OptionalChatPermissions;
     avatar?: Uint8Array;
     eventsTimeToLive?: OptionUpdate<bigint>;
     gate?: AccessGate;

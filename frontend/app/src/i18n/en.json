@@ -204,6 +204,7 @@
     "downloadFile": "Download {name}",
     "enterCaption": "Enter a caption",
     "enterMessage": "Enter a message...",
+    "sendTextDisabled": "Text messages are disabled",
     "dropFile": "Drop a file here",
     "cancel": "Cancel",
     "unknownUser": "Unknown User",
@@ -409,6 +410,8 @@
         "numVotesIncludingYours": "{votes} votes including yours"
     },
     "role": {
+        "default": "Default",
+        "none": "Nobody",
         "owner": "Owners",
         "admin": "Admins",
         "moderator": "Moderators",
@@ -417,11 +420,11 @@
     "permissions": {
         "whoCan": "Who can ",
         "permissions": "Permissons",
+        "nobody": "Nobody can",
         "ownerOnly": "Owners can",
         "ownerAndAdmins": "Owners and admins can",
         "ownerAndAdminsAndModerators": "Owners, admins and moderators can",
         "allMembers": "All members can",
-        "changePermissions": "change permissions",
         "changeRoles": "change member roles",
         "removeMembers": "remove/block members",
         "deleteMessages": "delete messages",
@@ -437,7 +440,37 @@
         "createPublicChannel": "create public channels",
         "createPrivateChannel": "create private channels",
         "manageUserGroups": "manage user groups",
-        "mentionAllMembers": "mention all members ({mention})"
+        "mentionAllMembers": "mention all members ({mention})",
+        "general": "General",
+        "message": "Messages",
+        "thread": "Threads",
+        "overrideChatMessages": "Override chat message permissions",
+        "messagePermissions": {
+            "default": "send messages by default",
+            "text": "send text messages",
+            "image": "send image messages",
+            "video": "send video messages",
+            "audio": "send audio messages",
+            "file": "send file messages",
+            "poll": "create poll messages",
+            "crypto": "send crypto messages",
+            "giphy": "send giphy messages",
+            "prize": "send prize mssages",
+            "memeFighter": "send Meme Fighter messages"
+        },
+        "threadPermissions": {
+            "default": "send messages in threads by default",
+            "text": "send text messages in threads",
+            "image": "send image messages in threads",
+            "video": "send video messages in threads",
+            "audio": "send audio messages in threads",
+            "file": "send file messages in threads",
+            "poll": "create poll messages in threads",
+            "crypto": "send crypto messages in threads",
+            "giphy": "send giphy messages in threads",
+            "prize": "send prize mssages in threads",
+            "memeFighter": "send Meme Fighter messages in threads"
+        }
     },
     "level": {
         "group": "Group",

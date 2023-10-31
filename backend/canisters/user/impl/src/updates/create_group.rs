@@ -97,7 +97,6 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             subtype: None,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,
-            permissions: args.permissions,
             permissions_v2: args.permissions_v2,
             events_ttl: args.events_ttl,
             gate: args.gate,

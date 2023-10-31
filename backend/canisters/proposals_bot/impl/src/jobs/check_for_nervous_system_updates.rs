@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state};
+use crate::{jobs, mutate_state, read_state};
 use registry_canister::NervousSystemDetails;
 use std::fmt::Write;
 use std::time::Duration;
@@ -44,6 +44,7 @@ async fn run_async() {
                 }
                 state.data.registry_synced_up_to = result.last_updated;
                 info!(synced_up_to = result.last_updated, "Registry sync complete");
+                jobs::increase_dissolve_delay::start_job_if_required(state);
             });
         }
         Ok(registry_canister::c2c_nervous_systems::Response::SuccessNoUpdates) => {
@@ -68,7 +69,6 @@ async fn create_group(ns: NervousSystemDetails, group_index_canister_id: Caniste
         })),
         avatar: None,
         history_visible_to_new_joiners: true,
-        permissions: None,
         permissions_v2: Some(GroupPermissions {
             message_permissions: MessagePermissions {
                 default: GroupPermissionRole::Admins,

@@ -23,9 +23,9 @@ import type {
     ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
-import { ChatMap } from "openchat-shared";
+import { ChatMap, applyOptionUpdate, mapOptionUpdate } from "openchat-shared";
 import { toRecord } from "./list";
-import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";
+import { identity } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";

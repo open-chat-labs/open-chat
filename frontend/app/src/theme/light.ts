@@ -14,6 +14,7 @@ const disabledTxt = txtLight;
 
 export function lightTheme(): Theme {
     return {
+        hidden: false,
         name: "light",
         label: "Default light",
         burst: false,

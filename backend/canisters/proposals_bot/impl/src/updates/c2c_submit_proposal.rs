@@ -1,14 +1,18 @@
 use crate::model::nervous_systems::ValidateSubmitProposalPaymentError;
-use crate::timer_job_types::{LookupUserThenSubmitProposalJob, SubmitProposalJob, TimerJob};
+use crate::timer_job_types::{LookupUserThenSubmitProposalJob, ProcessUserRefundJob, SubmitProposalJob, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
+use canister_timer_jobs::Job;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::c2c_submit_proposal::{Response::*, *};
 use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury};
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
-use sns_governance_canister::types::{manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds};
+use sns_governance_canister::types::{
+    manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds, UpgradeSnsControlledCanister,
+    UpgradeSnsToNextVersion,
+};
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
@@ -24,7 +28,7 @@ async fn c2c_submit_proposal(args: Args) -> Response {
         user_index_canister_id,
         neuron_id,
         chat,
-    } = match read_state(|state| prepare(args.governance_canister_id, args.transaction, state)) {
+    } = match read_state(|state| prepare(args.governance_canister_id, &args.transaction, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
@@ -36,6 +40,7 @@ async fn c2c_submit_proposal(args: Args) -> Response {
         chat,
         args.governance_canister_id,
         args.proposal,
+        args.transaction,
     )
     .await
 }
@@ -49,7 +54,7 @@ struct PrepareResult {
 
 fn prepare(
     governance_canister_id: CanisterId,
-    transaction: icrc1::CompletedCryptoTransaction,
+    transaction: &icrc1::CompletedCryptoTransaction,
     state: &RuntimeState,
 ) -> Result<PrepareResult, Response> {
     use ValidateSubmitProposalPaymentError as E;
@@ -100,6 +105,7 @@ pub(crate) async fn lookup_user_then_submit_proposal(
     chat: MultiUserChat,
     governance_canister_id: CanisterId,
     proposal: ProposalToSubmit,
+    payment: icrc1::CompletedCryptoTransaction,
 ) -> Response {
     let UserDetails { user_id, username, .. } = match lookup_user(caller, user_index_canister_id).await {
         Ok(u) => u,
@@ -115,6 +121,7 @@ pub(crate) async fn lookup_user_then_submit_proposal(
                         chat,
                         governance_canister_id,
                         proposal,
+                        payment,
                     }),
                     state,
                 )
@@ -125,7 +132,7 @@ pub(crate) async fn lookup_user_then_submit_proposal(
 
     let proposal = prepare_proposal(proposal, user_id, username, chat);
 
-    submit_proposal(user_id, governance_canister_id, neuron_id, proposal).await
+    submit_proposal(user_id, governance_canister_id, neuron_id, proposal, payment).await
 }
 
 pub(crate) async fn submit_proposal(
@@ -133,6 +140,7 @@ pub(crate) async fn submit_proposal(
     governance_canister_id: CanisterId,
     neuron_id: SnsNeuronId,
     proposal: ProposalToSubmit,
+    payment: icrc1::CompletedCryptoTransaction,
 ) -> Response {
     let make_proposal_args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
@@ -160,7 +168,14 @@ pub(crate) async fn submit_proposal(
                         Success
                     }
                     manage_neuron_response::Command::Error(error) => {
-                        error!(?error, %user_id, "Failed to submit proposal");
+                        let job = ProcessUserRefundJob {
+                            user_id,
+                            ledger_canister_id: payment.ledger,
+                            amount: payment.amount - payment.fee,
+                            fee: payment.fee,
+                        };
+                        job.execute();
+                        error!(?error, %user_id, "Failed to submit proposal, refunding user");
                         InternalError(format!("{error:?}"))
                     }
                     _ => unreachable!(),
@@ -177,6 +192,7 @@ pub(crate) async fn submit_proposal(
                         governance_canister_id,
                         neuron_id,
                         proposal,
+                        payment,
                     }),
                     state,
                 )
@@ -201,6 +217,15 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
             to_principal: Some(t.to.owner),
             to_subaccount: t.to.subaccount.map(|sa| Subaccount { subaccount: sa.to_vec() }),
         }),
+        ProposalToSubmitAction::UpgradeSnsToNextVersion => Action::UpgradeSnsToNextVersion(UpgradeSnsToNextVersion {}),
+        ProposalToSubmitAction::UpgradeSnsControlledCanister(u) => {
+            Action::UpgradeSnsControlledCanister(UpgradeSnsControlledCanister {
+                canister_id: Some(u.canister_id),
+                new_canister_wasm: u.new_canister_wasm.into_vec(),
+                mode: Some(u.mode.into()),
+                canister_upgrade_arg: None,
+            })
+        }
     }
 }
 

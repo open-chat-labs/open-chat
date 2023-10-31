@@ -7,6 +7,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Support submitting proposals of type `UpgradeSnsToNextVersion` ([#4670](https://github.com/open-chat-labs/open-chat/pull/4670))
+- Support submitting proposals of type `UpgradeSnsControlledCanister` ([#4672](https://github.com/open-chat-labs/open-chat/pull/4672))
+
+### Changed
+
+- Refund deposit if proposal fails to be submitted ([#4676](https://github.com/open-chat-labs/open-chat/pull/4676))
+
+## [[2.0.916](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.916-proposals_bot)] - 2023-10-30
+
+### Fixed
+
+- Fix dissolve delay on neurons for submitting proposals ([#4668](https://github.com/open-chat-labs/open-chat/pull/4668))
+- Refund the user whose proposal submission failed due to a bug ([#4669](https://github.com/open-chat-labs/open-chat/pull/4669))
+
+## [[2.0.915](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.915-proposals_bot)] - 2023-10-27
+
+### Changed
+
+- Retry sending proposal messages which originally failed ([#4663](https://github.com/open-chat-labs/open-chat/pull/4663))
+
+## [[2.0.911](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.911-proposals_bot)] - 2023-10-27
+
+### Added
+
 - Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
 
 ### Fixed
@@ -18,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
+- Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
 
 ## [[2.0.891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.891-proposals_bot)] - 2023-10-19
 

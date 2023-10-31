@@ -74,7 +74,6 @@ import type {
     EventWrapper,
     EventsResponse,
     GroupChatEvent,
-    ChatPermissions,
     MemberRole,
     Message,
     ToggleMuteCommunityNotificationsResponse,
@@ -128,6 +127,7 @@ import type {
     FollowThreadResponse,
     OptionUpdate,
     ClaimPrizeResponse,
+    OptionalChatPermissions,
 } from "openchat-shared";
 import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
@@ -283,7 +283,7 @@ export class CommunityClient extends CandidService {
                     },
                     channel.avatar?.blobData,
                 ),
-                permissions: [apiGroupPermissions(channel.permissions)],
+                permissions_v2: [apiGroupPermissions(channel.permissions)],
                 rules: channel.rules,
                 gate: apiMaybeAccessGate(channel.gate),
             }),
@@ -1121,7 +1121,7 @@ export class CommunityClient extends CandidService {
         name?: string,
         description?: string,
         rules?: UpdatedRules,
-        permissions?: Partial<ChatPermissions>,
+        permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
@@ -1132,7 +1132,7 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(chatId.channelId),
                 name: apiOptional(identity, name),
                 description: apiOptional(identity, description),
-                permissions: apiOptional(apiOptionalGroupPermissions, permissions),
+                permissions_v2: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 public: apiOptional(identity, isPublic),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),

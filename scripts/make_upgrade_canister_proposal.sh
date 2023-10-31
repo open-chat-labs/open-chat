@@ -14,11 +14,18 @@ set -o allexport; source .env; set +o allexport
 # Extract the args
 FUNCTION_ID=$1
 CANISTER_NAME=$2
-COMMIT_ID=$3
-VERSION=$4
-TITLE=$5
-URL=$6
-SUMMARY=$7
+VERSION=$3
+TITLE=$4
+SUMMARY=$5
+
+TAG=v$VERSION-$CANISTER_NAME
+COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
+URL="https://github.com/open-chat-labs/open-chat/releases/tag/$TAG"
+
+echo "TITLE: $TITLE"
+echo "TAG: $TAG"
+echo "COMMIT_ID: $COMMIT_ID"
+echo "URL: $URL"
 
 # Download the canister WASM at the given commit
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID || exit 1
