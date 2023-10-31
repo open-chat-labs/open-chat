@@ -66,7 +66,6 @@ import {
     expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
@@ -207,15 +206,24 @@ export function apiOptionalGroupPermissions(
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
-        message_permissions: apiOptional(apiOptionalMessagePermissions, permissions.messagePermissions),
-        thread_permissions: apiOptionUpdate(apiOptionalMessagePermissions, permissions.threadPermissions)
+        message_permissions: apiOptional(
+            apiOptionalMessagePermissions,
+            permissions.messagePermissions,
+        ),
+        thread_permissions: apiOptionUpdate(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
     };
 }
 
-function apiOptionalMessagePermissions(permissions: OptionalMessagePermissions): ApiOptionalMessagePermissions {
-    const custom_updated = permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
-        ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value)}]
-        : [];
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): ApiOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
     const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
     return {
         default: apiOptional(apiPermissionRole, permissions.default),
