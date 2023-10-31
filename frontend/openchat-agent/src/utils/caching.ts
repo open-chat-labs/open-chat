@@ -1015,7 +1015,7 @@ function processEventExpiry(
         event === undefined ||
         event.kind === "expired_events_range" ||
         event.expiresAt === undefined ||
-        event.expiresAt > now / 1000
+        event.expiresAt > now
     ) {
         return event;
     }
@@ -1044,10 +1044,7 @@ async function runExpiredEventSweeper() {
     const store = transaction.objectStore("chat_events");
     const index = store.index("expiresAt");
     const batchSize = 100;
-    const expiredKeys = await index.getAllKeys(
-        IDBKeyRange.upperBound(Date.now() / 1000),
-        batchSize,
-    );
+    const expiredKeys = await index.getAllKeys(IDBKeyRange.upperBound(Date.now()), batchSize);
 
     await Promise.all(expiredKeys.map((k) => store.delete(k)));
 

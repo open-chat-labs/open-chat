@@ -300,7 +300,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else if ("RulesNotAccepted" in candid) {
         return { kind: "rules_not_accepted" };

@@ -61,7 +61,6 @@ import {
     messageEvent,
     threadDetails,
     mention,
-    expiresAt,
     expiredEventsRange,
     expiredMessagesRange,
 } from "../common/chatMappers";
@@ -312,7 +311,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -646,7 +645,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, expiresAt),
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 

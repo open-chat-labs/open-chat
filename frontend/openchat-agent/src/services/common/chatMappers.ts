@@ -952,9 +952,10 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         crypto: apiOptional(apiPermissionRole, permissions.crypto),
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
-        custom: permissions.memeFighter !== undefined 
-            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }] 
-            : []
+        custom:
+            permissions.memeFighter !== undefined
+                ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
+                : [],
     };
 }
 
@@ -1673,7 +1674,7 @@ export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Messa
         event: message(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, expiresAt),
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 
@@ -2284,8 +2285,4 @@ export function claimPrizeResponse(
         console.warn("ClaimPrize failed with ", candid);
         return CommonResponses.failure();
     }
-}
-
-export function expiresAt(value: bigint): number {
-    return Number(value / BigInt(1000));
 }

@@ -142,7 +142,6 @@ import {
     messageContent,
     apiOptional,
     messageEvent,
-    expiresAt,
     expiredEventsRange,
     expiredMessagesRange,
 } from "../common/chatMappers";
@@ -344,7 +343,7 @@ export function sendMessageWithTransferToChannelResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -364,7 +363,7 @@ export function sendMessageWithTransferToGroupResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -383,7 +382,7 @@ export function sendMessageResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("TransferSuccessV2" in candid) {
@@ -393,7 +392,7 @@ export function sendMessageResponse(
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
-            expiresAt: optional(candid.TransferSuccessV2.expires_at, expiresAt),
+            expiresAt: optional(candid.TransferSuccessV2.expires_at, Number),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -494,7 +493,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
         event: directChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, expiresAt),
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 

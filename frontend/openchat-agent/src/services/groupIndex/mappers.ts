@@ -33,7 +33,7 @@ import type {
     ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
-import { accessGate, expiresAt } from "../common/chatMappers";
+import { accessGate } from "../common/chatMappers";
 
 export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
     return {
@@ -120,7 +120,7 @@ export function freezeGroupResponse(candid: ApiFreezeGroupResponse): FreezeGroup
             },
             timestamp: candid.Success.timestamp,
             index: candid.Success.index,
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("ChatAlreadyFrozen" in candid) {
@@ -147,7 +147,7 @@ export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): Unfreez
             },
             timestamp: candid.Success.timestamp,
             index: candid.Success.index,
-            expiresAt: optional(candid.Success.expires_at, expiresAt),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("ChatNotFrozen" in candid) {
