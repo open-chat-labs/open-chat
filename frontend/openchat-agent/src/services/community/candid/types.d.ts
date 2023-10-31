@@ -318,9 +318,9 @@ export interface CommunityCanisterChannelSummary {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : boolean,
-  'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
@@ -340,9 +340,9 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'latest_message_sender_display_name' : [] | [string],
   'channel_id' : ChannelId,
   'is_public' : [] | [boolean],
-  'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
@@ -449,8 +449,8 @@ export type CompletedCryptoTransaction = {
   { 'ICRC1' : Icrc1CompletedCryptoTransaction };
 export interface CreateChannelArgs {
   'is_public' : boolean,
-  'permissions' : [] | [GroupPermissions],
   'subtype' : [] | [GroupSubtype],
+  'permissions_v2' : [] | [GroupPermissions],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -501,6 +501,10 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
+}
+export interface CustomPermission {
+  'subtype' : string,
+  'role' : PermissionRole,
 }
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
@@ -685,9 +689,11 @@ export type EventsResponse = { 'ThreadNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'UserNotInCommunity' : null };
 export interface EventsSuccessResult {
+  'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'events' : Array<ChatEventWrapper>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : number,
+  'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -775,9 +781,9 @@ export interface GovernanceProposalsSubtype {
 }
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
-  'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
@@ -804,9 +810,9 @@ export interface GroupCanisterGroupChatSummary {
 }
 export interface GroupCanisterGroupChatSummaryUpdates {
   'is_public' : [] | [boolean],
-  'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'permissions_v2' : [] | [GroupPermissions],
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
@@ -842,9 +848,9 @@ export interface GroupChatCreated {
 }
 export interface GroupChatSummary {
   'is_public' : boolean,
-  'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'permissions_v2' : GroupPermissions,
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
@@ -930,19 +936,16 @@ export interface GroupNameChanged {
   'previous_name' : string,
 }
 export interface GroupPermissions {
-  'block_users' : PermissionRole,
   'mention_all_members' : PermissionRole,
-  'change_permissions' : PermissionRole,
   'delete_messages' : PermissionRole,
-  'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
+  'message_permissions' : MessagePermissions,
   'invite_users' : PermissionRole,
+  'thread_permissions' : [] | [MessagePermissions],
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
-  'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
-  'reply_in_thread' : PermissionRole,
   'react_to_messages' : PermissionRole,
 }
 export interface GroupReactionAddedNotification {
@@ -1135,6 +1138,19 @@ export interface MessageMatch {
   'score' : number,
   'message_index' : MessageIndex,
 }
+export interface MessagePermissions {
+  'audio' : [] | [PermissionRole],
+  'video' : [] | [PermissionRole],
+  'custom' : Array<CustomPermission>,
+  'file' : [] | [PermissionRole],
+  'poll' : [] | [PermissionRole],
+  'text' : [] | [PermissionRole],
+  'crypto' : [] | [PermissionRole],
+  'giphy' : [] | [PermissionRole],
+  'default' : PermissionRole,
+  'image' : [] | [PermissionRole],
+  'prize' : [] | [PermissionRole],
+}
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
@@ -1266,20 +1282,34 @@ export interface OptionalCommunityPermissions {
   'create_private_channel' : [] | [CommunityPermissionRole],
 }
 export interface OptionalGroupPermissions {
-  'block_users' : [] | [PermissionRole],
   'mention_all_members' : [] | [PermissionRole],
-  'change_permissions' : [] | [PermissionRole],
   'delete_messages' : [] | [PermissionRole],
-  'send_messages' : [] | [PermissionRole],
   'remove_members' : [] | [PermissionRole],
   'update_group' : [] | [PermissionRole],
+  'message_permissions' : [] | [OptionalMessagePermissions],
   'invite_users' : [] | [PermissionRole],
+  'thread_permissions' : OptionalMessagePermissionsUpdate,
   'change_roles' : [] | [PermissionRole],
-  'create_polls' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
-  'reply_in_thread' : [] | [PermissionRole],
   'react_to_messages' : [] | [PermissionRole],
 }
+export interface OptionalMessagePermissions {
+  'custom_updated' : Array<CustomPermission>,
+  'audio' : PermissionRoleUpdate,
+  'video' : PermissionRoleUpdate,
+  'file' : PermissionRoleUpdate,
+  'poll' : PermissionRoleUpdate,
+  'text' : PermissionRoleUpdate,
+  'crypto' : PermissionRoleUpdate,
+  'giphy' : PermissionRoleUpdate,
+  'custom_deleted' : Array<string>,
+  'default' : [] | [PermissionRole],
+  'image' : PermissionRoleUpdate,
+  'prize' : PermissionRoleUpdate,
+}
+export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : OptionalMessagePermissions };
 export interface PartialUserSummary {
   'username' : [] | [string],
   'diamond_member' : boolean,
@@ -1309,14 +1339,18 @@ export interface ParticipantsRemoved {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
-export type PermissionRole = { 'Moderators' : null } |
+export type PermissionRole = { 'None' : null } |
+  { 'Moderators' : null } |
   { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
+export type PermissionRoleUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : PermissionRole };
 export interface PermissionsChanged {
   'changed_by' : UserId,
-  'old_permissions' : GroupPermissions,
-  'new_permissions' : GroupPermissions,
+  'old_permissions_v2' : GroupPermissions,
+  'new_permissions_v2' : GroupPermissions,
 }
 export interface PinMessageArgs {
   'channel_id' : ChannelId,
@@ -1783,7 +1817,7 @@ export type UnfollowThreadResponse = { 'ThreadNotFound' : null } |
   { 'CommunityFrozen' : null };
 export interface UpdateChannelArgs {
   'channel_id' : ChannelId,
-  'permissions' : [] | [OptionalGroupPermissions],
+  'permissions_v2' : [] | [OptionalGroupPermissions],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],

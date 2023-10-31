@@ -21,7 +21,6 @@ import type {
     PinMessageResponse,
     UnpinMessageResponse,
     RegisterPollVoteResponse,
-    ChatPermissions,
     InviteCodeResponse,
     EnableInviteCodeResponse,
     DisableInviteCodeResponse,
@@ -46,6 +45,7 @@ import type {
     PublicGroupSummaryResponse,
     UpdatedRules,
     FollowThreadResponse,
+    OptionalChatPermissions,
 } from "openchat-shared";
 import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -469,7 +469,7 @@ export class GroupClient extends CandidService {
         name?: string,
         description?: string,
         rules?: UpdatedRules,
-        permissions?: Partial<ChatPermissions>,
+        permissions?: OptionalChatPermissions,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
         gate?: AccessGate,
@@ -490,7 +490,7 @@ export class GroupClient extends CandidService {
                                   data: avatar,
                               },
                           },
-                permissions: apiOptional(apiOptionalGroupPermissions, permissions),
+                permissions_v2: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiUpdatedRules, rules),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
@@ -675,11 +675,15 @@ export class GroupClient extends CandidService {
                 ? resp
                 : {
                       events: [...fromCache.messageEvents, ...resp.events],
+                      expiredEventRanges: [],
+                      expiredMessageRanges: [],
                       latestEventIndex: resp.latestEventIndex,
                   };
         }
         return {
             events: fromCache.messageEvents,
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex: undefined,
         };
     }

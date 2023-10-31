@@ -305,7 +305,7 @@
                 size={AvatarSize.Default} />
             {#if chat.expiring}
                 <div class="expires">
-                    <CameraTimer viewBox={"0 -2 24 24"} size={"0.9em"} color={"var(--txt)"} />
+                    <CameraTimer viewBox={"0 -2 24 24"} size={"1em"} color={"var(--txt)"} />
                 </div>
             {/if}
         </div>

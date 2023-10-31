@@ -15,16 +15,15 @@
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { AttachmentContent, MessageAction } from "openchat-client";
+    import type { AttachmentContent, MessageAction, MessagePermission } from "openchat-client";
 
     const dispatch = createEventDispatcher();
 
+    export let permittedMessages: Map<MessagePermission, boolean>;
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
     export let attachment: AttachmentContent | undefined;
     export let mode: "thread" | "message" = "message";
-    export let pollsAllowed: boolean;
-    export let isMultiUser: boolean;
 
     let drawOpen = false;
 
@@ -111,48 +110,58 @@
 {/if}
 
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
-    <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
-        {#if messageAction === "emoji"}
-            <HoverIcon title={$_("close")}>
-                <Close size={$iconSize} color={iconColour} />
-            </HoverIcon>
-        {:else}
-            <HoverIcon title={$_("pickEmoji")}>
-                <Smiley color={iconColour} />
-            </HoverIcon>
-        {/if}
-    </div>
+    {#if permittedMessages.get("text") || messageAction === "file"}
+        <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
+            {#if messageAction === "emoji"}
+                <HoverIcon title={$_("close")}>
+                    <Close size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            {:else}
+                <HoverIcon title={$_("pickEmoji")}>
+                    <Smiley color={iconColour} />
+                </HoverIcon>
+            {/if}
+        </div>
+    {/if}
     {#if !editing}
-        <div class="attach">
-            <FileAttacher
-                open={attachment !== undefined}
-                on:fileSelected
-                on:open={() => (messageAction = "file")}
-                on:close={close} />
-        </div>
-        <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
-            <HoverIcon title={"Send Crypto"}>
-                <Bitcoin size={$iconSize} color={iconColour} />
-            </HoverIcon>
-        </div>
-        <div class="gif" on:click|stopPropagation={sendGif}>
-            <HoverIcon title={"Attach gif"}>
-                <StickerEmoji size={$iconSize} color={iconColour} />
-            </HoverIcon>
-        </div>
-        <div class="meme" on:click|stopPropagation={makeMeme}>
-            <HoverIcon title={"Meme Fighter"}>
-                <MemeFighter size={$iconSize} color={iconColour} />
-            </HoverIcon>
-        </div>
-        {#if pollsAllowed}
+        {#if permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video")}
+            <div class="attach">
+                <FileAttacher
+                    open={attachment !== undefined}
+                    on:fileSelected
+                    on:open={() => (messageAction = "file")}
+                    on:close={close} />
+            </div>
+        {/if}
+        {#if permittedMessages.get("crypto")}
+            <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
+                <HoverIcon title={"Send Crypto"}>
+                    <Bitcoin size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
+        {#if permittedMessages.get("giphy")}
+            <div class="gif" on:click|stopPropagation={sendGif}>
+                <HoverIcon title={"Attach gif"}>
+                    <StickerEmoji size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
+        {#if permittedMessages.get("memeFighter")}
+            <div class="meme" on:click|stopPropagation={makeMeme}>
+                <HoverIcon title={"Meme Fighter"}>
+                    <MemeFighter size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
+        {#if permittedMessages.get("poll")}
             <div class="poll" on:click|stopPropagation={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
                     <Poll size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
             </div>
         {/if}
-        {#if isMultiUser}
+        {#if permittedMessages.get("prize")}
             <div class="prize" on:click|stopPropagation={createPrizeMessage}>
                 <HoverIcon title={"Create prize"}>
                     <Gift size={$iconSize} color={iconColour} />

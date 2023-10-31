@@ -13,8 +13,7 @@ import type {
     UserCanisterChannelSummary,
     UserGroupSummary,
 } from "openchat-shared";
-import { CommunityMap, ChatMap } from "openchat-shared";
-import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
+import { CommunityMap, ChatMap, mapOptionUpdate, applyOptionUpdate } from "openchat-shared";
 import { toRecord } from "./list";
 
 export function mergeCommunities(

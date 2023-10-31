@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
@@ -35,9 +36,6 @@
     let messageAction: MessageAction = undefined;
     let messageEntry: MessageEntry;
 
-    $: canSend =
-        mode === "thread" ? client.canReplyInThread(chat.id) : client.canSendMessages(chat.id);
-
     function fileFromDataTransferItems(items: DataTransferItem[]): File | undefined {
         return items.reduce<File | undefined>((res, item) => {
             if (item.kind === "file") {
@@ -52,7 +50,19 @@
         if (file) {
             client
                 .messageContentFromFile(file)
-                .then((content) => dispatch("fileSelected", content))
+                .then((content) => {
+                    let permission = client.contentTypeToPermission(content.kind);
+                    if (client.canSendMessage(chat.id, mode, permission)) {
+                        dispatch("fileSelected", content);
+                    } else {
+                        const errorMessage = $_("permissions.notPermitted", {
+                            values: {
+                                permission: $_(`permissions.threadPermissions.${permission}`),
+                            },
+                        });
+                        toastStore.showFailureToast(errorMessage);
+                    }
+                })
                 .catch((err) => toastStore.showFailureToast(err));
         }
     }
@@ -107,7 +117,6 @@
         on:paste={onPaste}
         on:drop={onDrop}
         {mode}
-        {canSend}
         {preview}
         {blocked}
         {joining}

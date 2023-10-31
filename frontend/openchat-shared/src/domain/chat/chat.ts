@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
@@ -7,6 +8,7 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
+    OptionalChatPermissions,
     Permissioned,
 } from "../permission";
 import type { ChatListScope, HasLevel } from "../structure";
@@ -543,7 +545,7 @@ export type LocalChatSummaryUpdates = {
               name?: string;
               description?: string;
               public?: boolean;
-              permissions?: Partial<ChatPermissions>;
+              permissions?: OptionalChatPermissions;
               frozen?: boolean;
               gate?: AccessGate;
               notificationsMuted?: boolean;
@@ -823,6 +825,8 @@ export type EventWrapper<T extends ChatEvent> = {
 
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
+    expiredEventRanges: ExpiredEventsRange[];
+    expiredMessageRanges: ExpiredMessagesRange[];
     latestEventIndex: number | undefined;
 };
 
@@ -871,6 +875,9 @@ export type DirectChatsInitial = {
 
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
+
+export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
+export type ExpiredMessagesRange = { kind: "expired_messages_range"; start: number; end: number };
 
 export function messageContextsEqual(
     a: MessageContext | undefined,
@@ -1132,9 +1139,11 @@ export type ChatSpecificState = {
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
+    confirmedEventIndexesLoaded: DRange;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
+    expiredEventRanges: DRange;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1454,6 +1463,7 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type TransferSuccess = {
@@ -1462,6 +1472,7 @@ export type TransferSuccess = {
     messageIndex: number;
     eventIndex: number;
     transfer: CompletedCryptocurrencyTransfer;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type InvalidPoll = {

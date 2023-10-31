@@ -6,7 +6,6 @@ import type {
     ApiSendMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
-    ApiMessageEventWrapper,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
@@ -16,6 +15,9 @@ import type {
     ApiUpdatedRules,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
+    ApiOptionalMessagePermissions,
+    ApiBlockUserResponse,
+    ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -32,7 +34,6 @@ import type {
     MemberRole,
     Message,
     GroupInviteCodeChange,
-    ChatPermissions,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
@@ -43,6 +44,8 @@ import type {
     ConvertToCommunityResponse,
     UpdatedRules,
     FollowThreadResponse,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -58,10 +61,11 @@ import {
     messageEvent,
     threadDetails,
     mention,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { identity, optional, optionUpdate } from "../../utils/mapping";
+import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
 
@@ -115,7 +119,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
@@ -163,7 +167,7 @@ function groupChatSummaryUpdates(
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
-        permissions: optional(candid.permissions, groupPermissions),
+        permissions: optional(candid.permissions_v2, groupPermissions),
         notificationsMuted: optional(candid.notifications_muted, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
@@ -190,22 +194,49 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 }
 
 export function apiOptionalGroupPermissions(
-    permissions: Partial<ChatPermissions>,
+    permissions: OptionalChatPermissions,
 ): OptionalGroupPermissions {
     return {
-        block_users: [],
-        change_permissions: [],
         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-        send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-        create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-        reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
+        message_permissions: apiOptional(
+            apiOptionalMessagePermissions,
+            permissions.messagePermissions,
+        ),
+        thread_permissions: apiOptionUpdate(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
+    };
+}
+
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): ApiOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
+    const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
+    return {
+        default: apiOptional(apiPermissionRole, permissions.default),
+        text: apiOptionUpdate(apiPermissionRole, permissions.text),
+        image: apiOptionUpdate(apiPermissionRole, permissions.image),
+        video: apiOptionUpdate(apiPermissionRole, permissions.video),
+        audio: apiOptionUpdate(apiPermissionRole, permissions.audio),
+        file: apiOptionUpdate(apiPermissionRole, permissions.file),
+        poll: apiOptionUpdate(apiPermissionRole, permissions.poll),
+        crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
+        giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
+        prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
+        custom_updated,
+        custom_deleted,
     };
 }
 
@@ -280,6 +311,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -344,7 +376,9 @@ export async function getMessagesByMessageIndexResponse(
         );
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex,
         };
     }
@@ -371,14 +405,6 @@ export async function getMessagesByMessageIndexResponse(
     );
 }
 
-export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Message> {
-    return {
-        event: message(candid.event),
-        timestamp: candid.timestamp,
-        index: candid.index,
-    };
-}
-
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
@@ -399,6 +425,8 @@ export async function getEventsResponse(
 
         return {
             events: candid.Success.events.map(event),
+            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
             latestEventIndex,
         };
     }
@@ -539,8 +567,8 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     if ("PermissionsChanged" in candid) {
         return {
             kind: "permissions_changed",
-            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions),
-            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions),
+            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions_v2),
+            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions_v2),
             changedBy: candid.PermissionsChanged.changed_by.toString(),
         };
     }
@@ -617,7 +645,7 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
-        expiresAt: Number(candid.timestamp) + 1000 * 60 * 5,
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 

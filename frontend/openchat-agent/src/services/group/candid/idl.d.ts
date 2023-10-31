@@ -66,7 +66,8 @@ import {
     DeclineInvitationResponse,
     ConvertIntoCommunityResponse,
     FollowThreadResponse,
-    UnfollowThreadResponse
+    UnfollowThreadResponse,
+    OptionalMessagePermissions
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -136,6 +137,7 @@ export {
     ConvertIntoCommunityResponse as ApiConvertIntoCommunityResponse,
     FollowThreadResponse as ApiFollowThreadResponse,
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
+    OptionalMessagePermissions as ApiOptionalMessagePermissions,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

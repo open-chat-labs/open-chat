@@ -24,6 +24,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import GroupVisibilityChangedEvent from "./GroupVisibilityChangedEvent.svelte";
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
+    import DisappearingMessageTimeUpdated from "./DisappearingMessageTimeUpdated.svelte";
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
@@ -50,7 +51,7 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canSendAny: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
     export let canReplyInThread: boolean;
@@ -138,7 +139,7 @@
             {canPin}
             {canBlockUser}
             {canDelete}
-            canQuoteReply={canSend}
+            canQuoteReply={canSendAny}
             {canReact}
             canStartThread={canReplyInThread}
             {publicGroup}
@@ -270,6 +271,8 @@
         user={userSummary}
         event={event.event}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "events_ttl_updated"}
+    <DisappearingMessageTimeUpdated user={userSummary} changedBy={event.event.updatedBy} newTimeToLive={event.event.newTimeToLive} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_frozen"}
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}

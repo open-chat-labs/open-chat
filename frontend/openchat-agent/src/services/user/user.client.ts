@@ -301,7 +301,7 @@ export class UserClient extends CandidService {
                     },
                     group.avatar?.blobData,
                 ),
-                permissions: [apiGroupPermissions(group.permissions)],
+                permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
                 events_ttl: [],

@@ -201,7 +201,6 @@ type CreateGroupArgs = record {
     description : text;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissionsPrevious;
     permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;
@@ -594,6 +593,15 @@ type ProposalToSubmitAction = variant {
         memo : opt nat64;
     };
     UpgradeSnsToNextVersion;
+    UpgradeSnsControlledCanister: record {
+        canister_id : CanisterId;
+        new_canister_wasm : blob;
+        mode : variant {
+            Install;
+            Reinstall;
+            Upgrade;
+        };
+    };
 };
 
 type SubmitProposalResponse = variant {

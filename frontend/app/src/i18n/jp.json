@@ -329,7 +329,9 @@
         "admin": "管理者",
         "member": "メンバー",
         "moderator": "モデレーター",
-        "owner": "所有者"
+        "owner": "所有者",
+        "default": "デフォルト",
+        "none": "誰でもない"
     },
     "permissions": {
         "whoCan": "誰ができますか",
@@ -354,7 +356,38 @@
         "createPublicChannel": "パブリックチャンネルを作成する",
         "createPrivateChannel": "プライベートチャンネルを作成する",
         "manageUserGroups": "ユーザーグループを管理する",
-        "mentionAllMembers": "すべてのメンバーに言及する ({mention})"
+        "mentionAllMembers": "すべてのメンバーに言及する ({mention})",
+        "nobody": "誰もできません",
+        "general": "一般的な",
+        "message": "メッセージ",
+        "thread": "スレッド",
+        "overrideChatMessages": "チャットメッセージの権限を上書きする",
+        "messagePermissions": {
+            "default": "デフォルトでメッセージを送信する",
+            "text": "テキストメッセージを送信する",
+            "image": "画像メッセージを送信する",
+            "video": "ビデオメッセージを送信する",
+            "audio": "音声メッセージを送信する",
+            "file": "ファイルメッセージを送信する",
+            "poll": "投票メッセージを作成する",
+            "crypto": "暗号メッセージを送信する",
+            "giphy": "giphy メッセージを送信する",
+            "prize": "賞品メッセージを送信する",
+            "memeFighter": "ミームファイターメッセージを送信する"
+        },
+        "threadPermissions": {
+            "default": "デフォルトでメッセージをスレッドに送信する",
+            "text": "スレッドでテキストメッセージを送信する",
+            "image": "スレッドで画像メッセージを送信する",
+            "video": "スレッドでビデオメッセージを送信する",
+            "audio": "スレッドで音声メッセージを送信する",
+            "file": "スレッドでファイルメッセージを送信する",
+            "poll": "スレッド内にポーリングメッセージを作成する",
+            "crypto": "スレッドで暗号メッセージを送信する",
+            "giphy": "スレッドで giphy メッセージを送信する",
+            "prize": "スレッドで賞品メッセージを送信する",
+            "memeFighter": "ミームファイターのメッセージをスレッドに送信する"
+        }
     },
     "rules": {
         "enable": "ルールを有効にする",
@@ -1094,5 +1127,10 @@
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
     "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
     "doubleTapReply": "メッセージをダブルタップして返信/編集します",
-    "minimumAmount": "最小値: {amount} {symbol}"
+    "minimumAmount": "最小値: {amount} {symbol}",
+    "sendTextDisabled": "テキストメッセージが無効になっています",
+    "disappearingMessageTimeUpdated": "{changedBy} はメッセージが消える時間を {duration} に設定します",
+    "disappearingMessagesDisabled": "{changedBy} は消えるメッセージを無効にしました",
+    "durationMinutes": "{duration}分",
+    "oneMinute": "1分"
 }
