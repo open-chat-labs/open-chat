@@ -85,7 +85,6 @@ import {
     communityChannelSummary,
     communityPermissions,
     communitySummary,
-    expiresAt,
     groupPermissions,
     groupSubtype,
     memberRole,
