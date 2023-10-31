@@ -48,7 +48,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             participant_count: updates.member_count,
             role: updates.role_changed.then_some(member.role.value.into()),
             mentions: updates.mentions,
-            permissions: updates.permissions.clone().map(|ps| ps.into()),
             permissions_v2: updates.permissions,
             updated_events: updates.updated_events,
             metrics: Some(chat.events.metrics().hydrate()),

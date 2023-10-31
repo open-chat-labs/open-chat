@@ -1,5 +1,7 @@
 use registry_canister::NervousSystemDetails;
 use serde::{Deserialize, Serialize};
+use sns_governance_canister::types::governance::SnsMetadata;
+use sns_governance_canister::types::NervousSystemParameters;
 use types::{CanisterId, Milliseconds, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -25,6 +27,66 @@ impl NervousSystems {
 
     pub fn exists(&self, root_canister_id: CanisterId) -> bool {
         self.nervous_systems.iter().any(|ns| ns.root_canister_id == root_canister_id)
+    }
+
+    pub fn update(
+        &mut self,
+        root_canister_id: CanisterId,
+        metadata: SnsMetadata,
+        parameters: NervousSystemParameters,
+        now: TimestampMillis,
+    ) -> bool {
+        let mut any_updates = false;
+        if let Some(ns) = self
+            .nervous_systems
+            .iter_mut()
+            .find(|ns| ns.root_canister_id == root_canister_id)
+        {
+            let name = metadata.name.unwrap_or_default();
+            if ns.name != name {
+                ns.name = name;
+                any_updates = true;
+            }
+            if ns.url != metadata.url {
+                ns.url = metadata.url;
+                any_updates = true;
+            }
+            let logo = metadata.logo.unwrap_or_default();
+            if ns.logo != logo {
+                ns.logo = logo;
+                any_updates = true;
+            }
+            if ns.description != metadata.description {
+                ns.description = metadata.description;
+                any_updates = true;
+            }
+            let transaction_fee = parameters.transaction_fee_e8s.unwrap_or_default();
+            if ns.transaction_fee != transaction_fee {
+                ns.transaction_fee = transaction_fee;
+                any_updates = true;
+            }
+            let min_neuron_stake = parameters.neuron_minimum_stake_e8s.unwrap_or_default();
+            if ns.min_neuron_stake != min_neuron_stake {
+                ns.min_neuron_stake = min_neuron_stake;
+                any_updates = true;
+            }
+            let min_dissolve_delay_to_vote = parameters.neuron_minimum_dissolve_delay_to_vote_seconds.unwrap_or_default();
+            if ns.min_dissolve_delay_to_vote != min_dissolve_delay_to_vote {
+                ns.min_dissolve_delay_to_vote = min_dissolve_delay_to_vote;
+                any_updates = true;
+            }
+            let proposal_rejection_fee = parameters.reject_cost_e8s.unwrap_or_default();
+            if ns.proposal_rejection_fee != proposal_rejection_fee {
+                ns.proposal_rejection_fee = proposal_rejection_fee;
+                any_updates = true;
+            }
+            if any_updates {
+                ns.last_updated = now;
+                self.last_updated = now;
+            }
+        }
+
+        any_updates
     }
 
     pub fn last_updated(&self) -> TimestampMillis {

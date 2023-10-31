@@ -9,14 +9,14 @@ use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
 use types::icrc1::{Account, TransferArg};
-use types::{CanisterId, MultiUserChat, ProposalId, SnsNeuronId, UserId};
+use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserId};
 use utils::time::SECOND_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     SubmitProposal(SubmitProposalJob),
     LookupUserThenSubmitProposal(LookupUserThenSubmitProposalJob),
-    ProcessUserSubmittedProposalAdopted(ProcessUserSubmittedProposalAdoptedJob),
+    ProcessUserRefund(ProcessUserRefundJob),
     TopUpNeuron(TopUpNeuronJob),
     RefreshNeuron(RefreshNeuronJob),
 }
@@ -27,6 +27,7 @@ pub struct SubmitProposalJob {
     pub user_id: UserId,
     pub neuron_id: SnsNeuronId,
     pub proposal: ProposalToSubmit,
+    pub payment: icrc1::CompletedCryptoTransaction,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -37,15 +38,14 @@ pub struct LookupUserThenSubmitProposalJob {
     pub neuron_id: SnsNeuronId,
     pub chat: MultiUserChat,
     pub proposal: ProposalToSubmit,
+    pub payment: icrc1::CompletedCryptoTransaction,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct ProcessUserSubmittedProposalAdoptedJob {
-    pub governance_canister_id: CanisterId,
-    pub proposal_id: ProposalId,
+pub struct ProcessUserRefundJob {
     pub user_id: UserId,
     pub ledger_canister_id: CanisterId,
-    pub refund_amount: u128,
+    pub amount: u128,
     pub fee: u128,
 }
 
@@ -69,7 +69,7 @@ impl Job for TimerJob {
         match self {
             TimerJob::SubmitProposal(job) => job.execute(),
             TimerJob::LookupUserThenSubmitProposal(job) => job.execute(),
-            TimerJob::ProcessUserSubmittedProposalAdopted(job) => job.execute(),
+            TimerJob::ProcessUserRefund(job) => job.execute(),
             TimerJob::TopUpNeuron(job) => job.execute(),
             TimerJob::RefreshNeuron(job) => job.execute(),
         }
@@ -79,7 +79,14 @@ impl Job for TimerJob {
 impl Job for SubmitProposalJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
-            submit_proposal(self.user_id, self.governance_canister_id, self.neuron_id, self.proposal).await;
+            submit_proposal(
+                self.user_id,
+                self.governance_canister_id,
+                self.neuron_id,
+                self.proposal,
+                self.payment,
+            )
+            .await;
         });
     }
 }
@@ -94,13 +101,14 @@ impl Job for LookupUserThenSubmitProposalJob {
                 self.chat,
                 self.governance_canister_id,
                 self.proposal,
+                self.payment,
             )
             .await;
         });
     }
 }
 
-impl Job for ProcessUserSubmittedProposalAdoptedJob {
+impl Job for ProcessUserRefundJob {
     fn execute(self) {
         let transfer_args = TransferArg {
             from_subaccount: None,
@@ -108,7 +116,7 @@ impl Job for ProcessUserSubmittedProposalAdoptedJob {
             fee: Some(self.fee.into()),
             created_at_time: None,
             memo: None,
-            amount: self.refund_amount.into(),
+            amount: self.amount.into(),
         };
         ic_cdk::spawn(async move {
             if icrc1_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args)
@@ -117,11 +125,10 @@ impl Job for ProcessUserSubmittedProposalAdoptedJob {
             {
                 mutate_state(|state| {
                     let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::ProcessUserSubmittedProposalAdopted(self),
-                        now + (10 * SECOND_IN_MS),
-                        now,
-                    )
+                    state
+                        .data
+                        .timer_jobs
+                        .enqueue_job(TimerJob::ProcessUserRefund(self), now + (10 * SECOND_IN_MS), now)
                 })
             }
         })

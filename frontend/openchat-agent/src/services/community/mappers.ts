@@ -98,7 +98,6 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
@@ -234,7 +233,9 @@ export async function messagesByMessageIndexResponse(
         );
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
             latestEventIndex,
         };
     }
@@ -298,6 +299,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else if ("RulesNotAccepted" in candid) {
         return { kind: "rules_not_accepted" };
@@ -447,7 +449,7 @@ export function communityChannelUpdates(
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         public: optional(candid.is_public, identity),
-        permissions: optional(candid.permissions, groupPermissions),
+        permissions: optional(candid.permissions_v2, groupPermissions),
         metrics: optional(candid.metrics, chatMetrics),
         subtype: optionUpdate(candid.subtype, groupSubtype),
         dateLastPinned: optional(candid.date_last_pinned, identity),
@@ -728,7 +730,9 @@ export function setMemberDisplayNameResponse(
     );
 }
 
-export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+export function followThreadResponse(
+    candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
+): FollowThreadResponse {
     if ("Success" in candid) {
         return "success";
     }

@@ -329,7 +329,9 @@
         "admin": "Amministratori",
         "member": "Membri",
         "moderator": "Moderatori",
-        "owner": "Proprietari"
+        "owner": "Proprietari",
+        "default": "Predefinito",
+        "none": "Nessuno"
     },
     "permissions": {
         "whoCan": "Chi può",
@@ -354,7 +356,38 @@
         "createPublicChannel": "creare canali pubblici",
         "createPrivateChannel": "creare canali privati",
         "manageUserGroups": "gestire i gruppi di utenti",
-        "mentionAllMembers": "menziona tutti i membri ({mention})"
+        "mentionAllMembers": "menziona tutti i membri ({mention})",
+        "nobody": "Nessuno può",
+        "general": "Generale",
+        "message": "Messaggi",
+        "thread": "Discussioni",
+        "overrideChatMessages": "Sostituisci le autorizzazioni per i messaggi di chat",
+        "messagePermissions": {
+            "default": "invia messaggi per impostazione predefinita",
+            "text": "inviare messaggi di testo",
+            "image": "inviare messaggi immagine",
+            "video": "inviare videomessaggi",
+            "audio": "inviare messaggi audio",
+            "file": "inviare messaggi di file",
+            "poll": "creare messaggi di sondaggio",
+            "crypto": "inviare messaggi crittografati",
+            "giphy": "inviare messaggi giphy",
+            "prize": "inviare messaggi premio",
+            "memeFighter": "inviare messaggi di Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "invia messaggi nei thread per impostazione predefinita",
+            "text": "inviare messaggi di testo nei thread",
+            "image": "inviare messaggi immagine nei thread",
+            "video": "inviare messaggi video nei thread",
+            "audio": "inviare messaggi audio nei thread",
+            "file": "inviare messaggi di file nei thread",
+            "poll": "creare messaggi di sondaggio nei thread",
+            "crypto": "inviare messaggi crittografati nei thread",
+            "giphy": "inviare messaggi giphy nei thread",
+            "prize": "inviare messaggi premio nei thread",
+            "memeFighter": "inviare messaggi di Meme Fighter nei thread"
+        }
     },
     "rules": {
         "enable": "Abilita regole",
@@ -1093,5 +1126,10 @@
     "unfollowThreadFailed": "Smetti di seguire il thread non riuscito",
     "doubleClickReply": "Fare doppio clic sul messaggio per rispondere/modificare",
     "doubleTapReply": "Tocca due volte il messaggio per rispondere/modificare",
-    "minimumAmount": "Minimo: {amount} {symbol}"
+    "minimumAmount": "Minimo: {amount} {symbol}",
+    "sendTextDisabled": "I messaggi di testo sono disabilitati",
+    "disappearingMessageTimeUpdated": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
+    "disappearingMessagesDisabled": "{changedBy} ha disabilitato i messaggi a scomparsa",
+    "durationMinutes": "{duration} minuti",
+    "oneMinute": "1 minuto"
 }

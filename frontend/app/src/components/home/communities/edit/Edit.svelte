@@ -47,7 +47,7 @@
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
     $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
-    $: permissionsDirty = client.havePermissionsChanged(
+    $: permissionsDirty = client.haveCommunityPermissionsChanged(
         original.permissions,
         candidate.permissions
     );

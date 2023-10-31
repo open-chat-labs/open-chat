@@ -4,7 +4,7 @@ import type {
     ApiPublicSummaryResponse,
 } from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
-import { apiGroupSubtype, accessGate, message } from "./chatMappers";
+import { apiGroupSubtype, accessGate, messageEvent } from "./chatMappers";
 import {
     nullMembership,
     type GroupChatSummary,
@@ -17,11 +17,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         kind: "group_chat",
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         latestEventIndex: candid.latest_event_index,
-        latestMessage: optional(candid.latest_message, (ev) => ({
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        })),
+        latestMessage: optional(candid.latest_message, messageEvent),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
@@ -35,17 +31,18 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             canisterId: candid.chat_id.toString(),
         })),
         permissions: {
-            changeRoles: "owner",
-            removeMembers: "owner",
-            deleteMessages: "owner",
-            updateGroup: "owner",
-            pinMessages: "owner",
-            inviteUsers: "owner",
-            createPolls: "owner",
-            sendMessages: "owner",
-            reactToMessages: "owner",
-            replyInThread: "owner",
-            mentionAllMembers: "owner",
+            changeRoles: "none",
+            removeMembers: "none",
+            deleteMessages: "none",
+            updateGroup: "none",
+            pinMessages: "none",
+            inviteUsers: "none",
+            reactToMessages: "none",
+            mentionAllMembers: "none",
+            messagePermissions: {
+                default: "none"
+            },
+            threadPermissions: undefined
         },
         metrics: emptyChatMetrics(),
         subtype: optional(candid.subtype, apiGroupSubtype),
@@ -60,7 +57,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
 }
 
 export function publicSummaryResponse(
-    candid: ApiPublicSummaryResponse
+    candid: ApiPublicSummaryResponse,
 ): PublicGroupSummaryResponse {
     if ("Success" in candid) {
         return {

@@ -337,7 +337,9 @@
         "admin": "מנהלי מערכת",
         "member": "חברים",
         "moderator": "מנחים",
-        "owner": "בעלים"
+        "owner": "בעלים",
+        "default": "בְּרִירַת מֶחדָל",
+        "none": "אף אחד"
     },
     "permissions": {
         "whoCan": "מי יכול",
@@ -362,7 +364,38 @@
         "createPublicChannel": "ליצור ערוצים ציבוריים",
         "createPrivateChannel": "ליצור ערוצים פרטיים",
         "manageUserGroups": "לנהל קבוצות משתמשים",
-        "mentionAllMembers": "ציין את כל החברים ({mention})"
+        "mentionAllMembers": "ציין את כל החברים ({mention})",
+        "nobody": "אף אחד לא יכול",
+        "general": "כללי",
+        "message": "הודעות",
+        "thread": "חוטים",
+        "overrideChatMessages": "ביטול הרשאות הודעת צ'אט",
+        "messagePermissions": {
+            "default": "לשלוח הודעות כברירת מחדל",
+            "text": "שלח הודעות טקסט",
+            "image": "לשלוח הודעות תמונה",
+            "video": "לשלוח הודעות וידאו",
+            "audio": "לשלוח הודעות שמע",
+            "file": "לשלוח הודעות קובץ",
+            "poll": "ליצור הודעות סקר",
+            "crypto": "לשלוח הודעות קריפטו",
+            "giphy": "לשלוח הודעות giphy",
+            "prize": "לשלוח הודעות פרס",
+            "memeFighter": "לשלוח הודעות Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "לשלוח הודעות בשרשורים כברירת מחדל",
+            "text": "לשלוח הודעות טקסט באשכולות",
+            "image": "לשלוח הודעות תמונה באשכולות",
+            "video": "לשלוח הודעות וידאו בשרשורים",
+            "audio": "לשלוח הודעות אודיו באשכולות",
+            "file": "לשלוח הודעות קבצים בשרשורים",
+            "poll": "ליצור הודעות סקר בשרשורים",
+            "crypto": "לשלוח הודעות קריפטו בשרשורים",
+            "giphy": "לשלוח הודעות giphy בשרשורים",
+            "prize": "שלח הודעות פרס בשרשורים",
+            "memeFighter": "שלח הודעות Meme Fighter בשרשורים"
+        }
     },
     "rules": {
         "enable": "אפשר כללים",
@@ -1091,5 +1124,10 @@
     "unfollowThreadFailed": "ביטול המעקב נכשל",
     "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
     "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
-    "minimumAmount": "מינימום: {amount} {symbol}"
+    "minimumAmount": "מינימום: {amount} {symbol}",
+    "sendTextDisabled": "הודעות טקסט מושבתות",
+    "disappearingMessageTimeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+    "disappearingMessagesDisabled": "{changedBy} השבית הודעות נעלמות",
+    "durationMinutes": "{duration} דקות",
+    "oneMinute": "דקה 1"
 }

@@ -1,7 +1,7 @@
 use crate::{
     AccessGate, BuildVersion, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions,
-    GroupPermissionsPrevious, GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
-    UserId, Version, MAX_RETURNED_MENTIONS,
+    GroupRole, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId, Version,
+    MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -31,45 +31,8 @@ impl DirectChatSummary {
     }
 }
 
-// TODO: remove this once users are upgraded
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryPrevious {
-    pub chat_id: ChatId,
-    pub last_updated: TimestampMillis,
-    pub name: String,
-    pub description: String,
-    pub subtype: Option<GroupSubtype>,
-    pub avatar_id: Option<u128>,
-    pub is_public: bool,
-    pub history_visible_to_new_joiners: bool,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
-    pub latest_message: Option<EventWrapper<Message>>,
-    pub latest_event_index: EventIndex,
-    pub joined: TimestampMillis,
-    pub read_by_me_up_to: Option<MessageIndex>,
-    pub notifications_muted: bool,
-    pub participant_count: u32,
-    pub role: GroupRole,
-    pub mentions: Vec<HydratedMention>,
-    pub wasm_version: BuildVersion,
-    pub permissions: GroupPermissionsPrevious,
-    pub metrics: ChatMetrics,
-    pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<ThreadSyncDetails>,
-    pub archived: bool,
-    pub frozen: Option<FrozenGroupInfo>,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub date_read_pinned: Option<TimestampMillis>,
-    pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<AccessGate>,
-    pub rules_accepted: bool,
-}
-
-#[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "GroupChatSummaryPrevious")]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -90,8 +53,6 @@ pub struct GroupChatSummary {
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: BuildVersion,
-    // TODO: remove this once the website is using permissions_v2
-    pub permissions: GroupPermissionsPrevious,
     pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
@@ -103,45 +64,6 @@ pub struct GroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-}
-
-impl From<GroupChatSummaryPrevious> for GroupChatSummary {
-    fn from(value: GroupChatSummaryPrevious) -> Self {
-        let permissions = value.permissions.clone();
-        GroupChatSummary {
-            chat_id: value.chat_id,
-            last_updated: value.last_updated,
-            name: value.name,
-            description: value.description,
-            subtype: value.subtype,
-            avatar_id: value.avatar_id,
-            is_public: value.is_public,
-            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
-            min_visible_event_index: value.min_visible_event_index,
-            min_visible_message_index: value.min_visible_message_index,
-            latest_message: value.latest_message,
-            latest_event_index: value.latest_event_index,
-            joined: value.joined,
-            read_by_me_up_to: value.read_by_me_up_to,
-            notifications_muted: value.notifications_muted,
-            participant_count: value.participant_count,
-            role: value.role,
-            mentions: value.mentions,
-            wasm_version: value.wasm_version,
-            permissions,
-            permissions_v2: value.permissions.into(),
-            metrics: value.metrics,
-            my_metrics: value.my_metrics,
-            latest_threads: value.latest_threads,
-            archived: value.archived,
-            frozen: value.frozen,
-            date_last_pinned: value.date_last_pinned,
-            date_read_pinned: value.date_read_pinned,
-            events_ttl: value.events_ttl,
-            gate: value.gate,
-            rules_accepted: value.rules_accepted,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -201,9 +123,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: BuildVersion,
-    // TODO: remove this once the website is using permissions_v2
-    pub permissions: GroupPermissionsPrevious,
-    #[serde(default)]
     pub permissions_v2: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
@@ -263,7 +182,6 @@ impl GroupCanisterGroupChatSummary {
             role: updates.role.unwrap_or(self.role),
             mentions,
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
-            permissions: updates.permissions.unwrap_or(self.permissions),
             permissions_v2: updates.permissions_v2.unwrap_or(self.permissions_v2),
             notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
@@ -292,8 +210,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: Option<BuildVersion>,
-    // TODO: remove this once the website is using permissions_v2
-    pub permissions: Option<GroupPermissionsPrevious>,
     pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,

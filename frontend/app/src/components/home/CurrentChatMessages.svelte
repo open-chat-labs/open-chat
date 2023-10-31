@@ -39,7 +39,7 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canSendAny: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
@@ -85,7 +85,7 @@
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        if (!canSend) return;
+        if (!canSendAny) return;
         dispatch("replyTo", ev.detail);
     }
 
@@ -334,7 +334,7 @@
                         {canPin}
                         {canBlockUser}
                         {canDelete}
-                        {canSend}
+                        {canSendAny}
                         {canReact}
                         {canInvite}
                         {canReplyInThread}

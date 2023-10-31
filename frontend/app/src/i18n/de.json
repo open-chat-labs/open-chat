@@ -331,7 +331,9 @@
         "admin": "Admins",
         "member": "Mitglieder",
         "moderator": "Moderatoren",
-        "owner": "Eigentümer"
+        "owner": "Eigentümer",
+        "default": "Standard",
+        "none": "Niemand"
     },
     "permissions": {
         "whoCan": "Wer kann",
@@ -356,7 +358,38 @@
         "createPublicChannel": "Erstellen Sie öffentliche Kanäle",
         "createPrivateChannel": "Erstellen Sie private Kanäle",
         "manageUserGroups": "Benutzergruppen verwalten",
-        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})"
+        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})",
+        "nobody": "Niemand kann",
+        "general": "Allgemein",
+        "message": "Mitteilungen",
+        "thread": "Themen",
+        "overrideChatMessages": "Chat-Nachrichtenberechtigungen überschreiben",
+        "messagePermissions": {
+            "default": "Senden Sie standardmäßig Nachrichten",
+            "text": "sende Textnachrichten",
+            "image": "Bildnachrichten senden",
+            "video": "Videonachrichten verschicken",
+            "audio": "Audionachrichten senden",
+            "file": "Dateinachrichten senden",
+            "poll": "Umfragenachrichten erstellen",
+            "crypto": "Krypto-Nachrichten senden",
+            "giphy": "Senden Sie Giphy-Nachrichten",
+            "prize": "Senden Sie Preisnachrichten",
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten"
+        },
+        "threadPermissions": {
+            "default": "Senden Sie Nachrichten standardmäßig in Threads",
+            "text": "Senden Sie Textnachrichten in Threads",
+            "image": "Senden Sie Bildnachrichten in Threads",
+            "video": "Senden Sie Videonachrichten in Threads",
+            "audio": "Senden Sie Audionachrichten in Threads",
+            "file": "Senden Sie Dateinachrichten in Threads",
+            "poll": "Erstellen Sie Umfragenachrichten in Threads",
+            "crypto": "Senden Sie Kryptonachrichten in Threads",
+            "giphy": "Senden Sie Giphy-Nachrichten in Threads",
+            "prize": "Versenden Sie Preisnachrichten in Threads",
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads"
+        }
     },
     "rules": {
         "enable": "Regeln aktivieren",
@@ -1095,5 +1128,10 @@
     "unfollowThreadFailed": "Das Entfolgen des Threads ist fehlgeschlagen",
     "doubleClickReply": "Doppelklicken Sie auf die Nachricht, um sie zu beantworten/zu bearbeiten",
     "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten",
-    "minimumAmount": "Minimum: {amount} {symbol}"
+    "minimumAmount": "Minimum: {amount} {symbol}",
+    "sendTextDisabled": "Textnachrichten sind deaktiviert",
+    "disappearingMessageTimeUpdated": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
+    "disappearingMessagesDisabled": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
+    "durationMinutes": "{duration} Minuten",
+    "oneMinute": "1 Minute"
 }
