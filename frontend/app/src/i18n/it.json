@@ -1127,5 +1127,9 @@
     "doubleClickReply": "Fare doppio clic sul messaggio per rispondere/modificare",
     "doubleTapReply": "Tocca due volte il messaggio per rispondere/modificare",
     "minimumAmount": "Minimo: {amount} {symbol}",
-    "sendTextDisabled": "I messaggi di testo sono disabilitati"
+    "sendTextDisabled": "I messaggi di testo sono disabilitati",
+    "disappearingMessageTimeUpdated": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
+    "disappearingMessagesDisabled": "{changedBy} ha disabilitato i messaggi a scomparsa",
+    "durationMinutes": "{duration} minuti",
+    "oneMinute": "1 minuto"
 }

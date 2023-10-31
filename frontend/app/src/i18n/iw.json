@@ -1125,5 +1125,9 @@
     "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
     "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
     "minimumAmount": "מינימום: {amount} {symbol}",
-    "sendTextDisabled": "הודעות טקסט מושבתות"
+    "sendTextDisabled": "הודעות טקסט מושבתות",
+    "disappearingMessageTimeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+    "disappearingMessagesDisabled": "{changedBy} השבית הודעות נעלמות",
+    "durationMinutes": "{duration} דקות",
+    "oneMinute": "דקה 1"
 }

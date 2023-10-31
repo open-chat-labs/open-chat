@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-export type CountdownData = {
+import type { MessageFormatter } from "./i18n";
+
+type DurationData = {
     total: number;
     days: number;
     hours: number;
@@ -7,15 +9,32 @@ export type CountdownData = {
     seconds: number;
 };
 
-export function startsInFromSeconds(totalSeconds: number): CountdownData {
-    return startsInFromMilliseconds(totalSeconds * 1000);
+export function formatDisappearingMessageTime(
+    milliseconds: number,
+    formatter: MessageFormatter,
+): string {
+    const duration = durationFromMilliseconds(milliseconds);
+
+    if (duration.days > 0)
+        return duration.days === 1
+            ? formatter("oneDay")
+            : formatter("durationDays", { values: { duration: duration.days } });
+
+    if (duration.hours > 0)
+        return duration.hours === 1
+            ? formatter("oneHour")
+            : formatter("durationHours", { values: { duration: duration.hours } });
+
+    return duration.minutes === 1
+        ? formatter("oneMinute")
+        : formatter("durationMinutes", { values: { duration: duration.minutes } });
 }
 
-export function startsIn(now: number, time: number): CountdownData {
-    return startsInFromMilliseconds(time - now);
+export function startsIn(now: number, time: number): DurationData {
+    return durationFromMilliseconds(time - now);
 }
 
-function startsInFromMilliseconds(total: number): CountdownData {
+export function durationFromMilliseconds(total: number): DurationData {
     const seconds = Math.floor((total / 1000) % 60);
     const minutes = Math.floor((total / 1000 / 60) % 60);
     const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
@@ -38,25 +57,6 @@ export function formatTimeRemaining(now: number, deadline: number): string {
     return `${pad(data.days)}:${pad(data.hours)}:${pad(data.minutes)}:${pad(data.seconds)}`;
 }
 
-export function startsInFormatted({
-    total,
-    days,
-    hours,
-    minutes,
-}: CountdownData): "days" | "hours" | "minutes" | "seconds" | "finished" {
-    if (total < 0) return "finished";
-    if (days > 0) {
-        return "days";
-    }
-    if (hours > 0) {
-        return "hours";
-    }
-    if (minutes > 0) {
-        return "minutes";
-    }
-    return "seconds";
-}
-
 const defaultFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
 
 const formatters: Record<string, Intl.RelativeTimeFormat> = {
@@ -76,7 +76,7 @@ const timeDivisions = [
 export function formatRelativeTime(
     now: number,
     locale: string | null | undefined,
-    expiry: bigint
+    expiry: bigint,
 ): string | undefined {
     let duration = (Number(expiry) - now) / 1000;
     for (let i = 0; i <= timeDivisions.length; i++) {

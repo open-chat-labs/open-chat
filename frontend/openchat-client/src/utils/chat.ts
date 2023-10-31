@@ -479,7 +479,10 @@ export function mergeUnconfirmedIntoSummary(
     }
 }
 
-function mergePermissions(current: ChatPermissions, updated?: OptionalChatPermissions): ChatPermissions {
+function mergePermissions(
+    current: ChatPermissions,
+    updated?: OptionalChatPermissions,
+): ChatPermissions {
     if (updated === undefined) {
         return current;
     }
@@ -493,12 +496,21 @@ function mergePermissions(current: ChatPermissions, updated?: OptionalChatPermis
         pinMessages: updated.pinMessages ?? current.pinMessages,
         reactToMessages: updated.reactToMessages ?? current.reactToMessages,
         mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
-        messagePermissions: mergeMessagePermissions(current.messagePermissions, updated.messagePermissions),
-        threadPermissions: mergeThreadPermissions(current.threadPermissions ?? { default: "member" }, updated.threadPermissions),
+        messagePermissions: mergeMessagePermissions(
+            current.messagePermissions,
+            updated.messagePermissions,
+        ),
+        threadPermissions: mergeThreadPermissions(
+            current.threadPermissions ?? { default: "member" },
+            updated.threadPermissions,
+        ),
     };
 }
 
-function mergeMessagePermissions(current: MessagePermissions, updated?: OptionalMessagePermissions): MessagePermissions {
+function mergeMessagePermissions(
+    current: MessagePermissions,
+    updated?: OptionalMessagePermissions,
+): MessagePermissions {
     if (updated === undefined) {
         return current;
     }
@@ -514,14 +526,14 @@ function mergeMessagePermissions(current: MessagePermissions, updated?: Optional
         crypto: applyOptionUpdate(current.crypto, updated.crypto),
         giphy: applyOptionUpdate(current.giphy, updated.giphy),
         prize: applyOptionUpdate(current.prize, updated.prize),
-        memeFighter: applyOptionUpdate(current.memeFighter, updated.memeFighter),    
+        memeFighter: applyOptionUpdate(current.memeFighter, updated.memeFighter),
     };
 }
 
 function mergeThreadPermissions(
-    current: MessagePermissions, 
-    updated: OptionUpdate<OptionalMessagePermissions>)
-: MessagePermissions | undefined {
+    current: MessagePermissions,
+    updated: OptionUpdate<OptionalMessagePermissions>,
+): MessagePermissions | undefined {
     if (updated === undefined) {
         return current;
     }
@@ -529,7 +541,7 @@ function mergeThreadPermissions(
     if (updated === "set_to_none") {
         return undefined;
     }
-    
+
     return mergeMessagePermissions(current, updated.value);
 }
 
@@ -604,7 +616,6 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
         case "message_pinned":
         case "message_unpinned":
         case "member_left":
-        case "events_ttl_updated":
         case "members_added_to_default_channel":
             return true;
 
@@ -981,46 +992,68 @@ export function canInviteUsers(chat: ChatSummary): boolean {
 }
 
 export function permittedMessagesInGroup(
-    chat: MultiUserChat, 
-    mode: "message" | "thread")
-: Map<MessagePermission, boolean> {
-    return new Map(messagePermissionsList.map((m: MessagePermission) => [m, canSendGroupMessage(chat, mode, m)]));
+    chat: MultiUserChat,
+    mode: "message" | "thread",
+): Map<MessagePermission, boolean> {
+    return new Map(
+        messagePermissionsList.map((m: MessagePermission) => [
+            m,
+            canSendGroupMessage(chat, mode, m),
+        ]),
+    );
 }
 
 export function canSendGroupMessage(
-    chat: MultiUserChat, 
-    mode: "message" | "thread" | "any", 
-    permission?: MessagePermission)
-: boolean {
+    chat: MultiUserChat,
+    mode: "message" | "thread" | "any",
+    permission?: MessagePermission,
+): boolean {
     if (mode === "any") {
-        return canSendGroupMessage(chat, "message", permission) || canSendGroupMessage(chat, "thread", permission);
+        return (
+            canSendGroupMessage(chat, "message", permission) ||
+            canSendGroupMessage(chat, "thread", permission)
+        );
     }
 
     if (permission === undefined) {
-        return messagePermissionsList.some((mp: MessagePermission) => canSendGroupMessage(chat, mode, mp as MessagePermission));
+        return messagePermissionsList.some((mp: MessagePermission) =>
+            canSendGroupMessage(chat, mode, mp as MessagePermission),
+        );
     }
 
-    const messagePermissions = mode === "thread" 
-        ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions 
-        : chat.permissions.messagePermissions;
+    const messagePermissions =
+        mode === "thread"
+            ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
+            : chat.permissions.messagePermissions;
 
-    return !chat.frozen && isPermitted(chat.membership.role, messagePermissions[permission] ?? messagePermissions.default);
+    return (
+        !chat.frozen &&
+        isPermitted(
+            chat.membership.role,
+            messagePermissions[permission] ?? messagePermissions.default,
+        )
+    );
 }
 
 export function permittedMessagesInDirectChat(
-    recipient: UserSummary, 
+    recipient: UserSummary,
     mode: "message" | "thread",
-    proposalsBotUserId: string)
-: Map<MessagePermission, boolean> {
-    return new Map(messagePermissionsList.map((m: MessagePermission) => [m, canSendDirectMessage(recipient, mode, proposalsBotUserId, m)]));
+    proposalsBotUserId: string,
+): Map<MessagePermission, boolean> {
+    return new Map(
+        messagePermissionsList.map((m: MessagePermission) => [
+            m,
+            canSendDirectMessage(recipient, mode, proposalsBotUserId, m),
+        ]),
+    );
 }
 
 export function canSendDirectMessage(
-    recipient: UserSummary, 
-    mode: "message" | "thread" | "any", 
-    proposalsBotUserId: string, 
-    permission?: MessagePermission)
-: boolean {
+    recipient: UserSummary,
+    mode: "message" | "thread" | "any",
+    proposalsBotUserId: string,
+    permission?: MessagePermission,
+): boolean {
     if (mode === "thread") {
         return false;
     }
@@ -1029,7 +1062,10 @@ export function canSendDirectMessage(
         return false;
     }
 
-    if (recipient.kind === "bot" && recipient.userId === OPENCHAT_BOT_USER_ID || recipient.userId === proposalsBotUserId) {
+    if (
+        (recipient.kind === "bot" && recipient.userId === OPENCHAT_BOT_USER_ID) ||
+        recipient.userId === proposalsBotUserId
+    ) {
         return false;
     }
 
@@ -1663,43 +1699,72 @@ export function getMessageText(content: MessageContent): string | undefined {
     }
 }
 
-export function diffGroupPermissions(original: ChatPermissions, updated: ChatPermissions): OptionalChatPermissions | undefined {
+export function diffGroupPermissions(
+    original: ChatPermissions,
+    updated: ChatPermissions,
+): OptionalChatPermissions | undefined {
     if (JSON.stringify(original) === JSON.stringify(updated)) {
         return undefined;
     }
 
     const diff: OptionalChatPermissions = defaultOptionalChatPermissions();
 
-    if (original.changeRoles !== updated.changeRoles) { diff.changeRoles = updated.changeRoles; }
-    if (original.updateGroup !== updated.updateGroup) { diff.updateGroup = updated.updateGroup; }
-    if (original.inviteUsers !== updated.inviteUsers) { diff.inviteUsers = updated.inviteUsers; }
-    if (original.removeMembers !== updated.removeMembers) { diff.removeMembers = updated.removeMembers; }
-    if (original.deleteMessages !== updated.deleteMessages) { diff.deleteMessages = updated.deleteMessages; }
-    if (original.pinMessages !== updated.pinMessages) { diff.pinMessages = updated.pinMessages; }
-    if (original.reactToMessages !== updated.reactToMessages) { diff.reactToMessages = updated.reactToMessages; }
-    if (original.mentionAllMembers !== updated.mentionAllMembers) { diff.mentionAllMembers = updated.mentionAllMembers; }
+    if (original.changeRoles !== updated.changeRoles) {
+        diff.changeRoles = updated.changeRoles;
+    }
+    if (original.updateGroup !== updated.updateGroup) {
+        diff.updateGroup = updated.updateGroup;
+    }
+    if (original.inviteUsers !== updated.inviteUsers) {
+        diff.inviteUsers = updated.inviteUsers;
+    }
+    if (original.removeMembers !== updated.removeMembers) {
+        diff.removeMembers = updated.removeMembers;
+    }
+    if (original.deleteMessages !== updated.deleteMessages) {
+        diff.deleteMessages = updated.deleteMessages;
+    }
+    if (original.pinMessages !== updated.pinMessages) {
+        diff.pinMessages = updated.pinMessages;
+    }
+    if (original.reactToMessages !== updated.reactToMessages) {
+        diff.reactToMessages = updated.reactToMessages;
+    }
+    if (original.mentionAllMembers !== updated.mentionAllMembers) {
+        diff.mentionAllMembers = updated.mentionAllMembers;
+    }
 
-    diff.messagePermissions = diffMessagePermissions(original.messagePermissions, updated.messagePermissions);
+    diff.messagePermissions = diffMessagePermissions(
+        original.messagePermissions,
+        updated.messagePermissions,
+    );
 
     if (original.threadPermissions === undefined && updated.threadPermissions === undefined) {
         diff.threadPermissions = undefined;
     } else if (updated.threadPermissions === undefined) {
         diff.threadPermissions = "set_to_none";
     } else {
-        const threadPermissionsDiff = diffMessagePermissions(original.threadPermissions ?? { default: "member" }, updated.threadPermissions);
-        diff.threadPermissions = threadPermissionsDiff === undefined ? undefined : { value: threadPermissionsDiff };
+        const threadPermissionsDiff = diffMessagePermissions(
+            original.threadPermissions ?? { default: "member" },
+            updated.threadPermissions,
+        );
+        diff.threadPermissions =
+            threadPermissionsDiff === undefined ? undefined : { value: threadPermissionsDiff };
     }
 
     return diff;
 }
 
-function diffMessagePermissions(original: MessagePermissions, updated: MessagePermissions): OptionalMessagePermissions | undefined {
+function diffMessagePermissions(
+    original: MessagePermissions,
+    updated: MessagePermissions,
+): OptionalMessagePermissions | undefined {
     if (JSON.stringify(original) === JSON.stringify(updated)) {
         return undefined;
     }
 
     const diff: OptionalMessagePermissions = defaultOptionalMessagePermissions();
-    
+
     diff.default = original.default !== updated.default ? updated.default : undefined;
     diff.text = updateFromOptions(original.text, updated.text);
     diff.image = updateFromOptions(original.image, updated.image);

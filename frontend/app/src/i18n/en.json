@@ -80,7 +80,7 @@
     "unresolvedReply": "Message content unavailable",
     "placeholderContent": "Please wait, your message will load shortly",
     "durationMins": "{duration} mins",
-    "durationHours": "{duration} hrs",
+    "durationHours": "{duration} hours",
     "removeChat": "Remove chat",
     "profile": {
         "label": "Profile",
@@ -1119,5 +1119,9 @@
     "unfollowThread": "Unfollow this thread",
     "followThreadFailed": "Follow thread failed",
     "unfollowThreadFailed": "Unfollow thread failed",
-    "minimumAmount": "Minimum: {amount} {symbol}"
+    "minimumAmount": "Minimum: {amount} {symbol}",
+    "disappearingMessageTimeUpdated": "{changedBy} set the disappearing message time to {duration}",
+    "disappearingMessagesDisabled": "{changedBy} disabled disappearing messages",
+    "durationMinutes": "{duration} minutes",
+    "oneMinute": "1 minute"
 }

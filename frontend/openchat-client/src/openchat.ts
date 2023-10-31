@@ -203,7 +203,11 @@ import {
 } from "./utils/media";
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
-import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
+import {
+    formatDisappearingMessageTime,
+    formatRelativeTime,
+    formatTimeRemaining,
+} from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
@@ -1276,12 +1280,21 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    canSendMessage(chatId: ChatIdentifier, mode: "message" | "thread" | "any", permission?: MessagePermission): boolean {
+    canSendMessage(
+        chatId: ChatIdentifier,
+        mode: "message" | "thread" | "any",
+        permission?: MessagePermission,
+    ): boolean {
         return this.chatPredicate(chatId, (chat) => {
             if (chat.kind === "direct_chat") {
                 const recipient = this._liveState.userStore[chat.them.userId];
                 if (recipient !== undefined) {
-                    return canSendDirectMessage(recipient, mode, this.config.proposalBotCanister, permission);
+                    return canSendDirectMessage(
+                        recipient,
+                        mode,
+                        this.config.proposalBotCanister,
+                        permission,
+                    );
                 } else {
                     return false;
                 }
@@ -1291,13 +1304,20 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    permittedMessages(chatId: ChatIdentifier, mode: "message" | "thread"): Map<MessagePermission, boolean> {
+    permittedMessages(
+        chatId: ChatIdentifier,
+        mode: "message" | "thread",
+    ): Map<MessagePermission, boolean> {
         const chat = this._liveState.allChats.get(chatId);
         if (chat !== undefined) {
             if (chat.kind === "direct_chat") {
                 const recipient = this._liveState.userStore[chat.them.userId];
                 if (recipient !== undefined) {
-                    return permittedMessagesInDirectChat(recipient, mode, this.config.proposalBotCanister);
+                    return permittedMessagesInDirectChat(
+                        recipient,
+                        mode,
+                        this.config.proposalBotCanister,
+                    );
                 }
             } else {
                 return permittedMessagesInGroup(chat, mode);
@@ -2032,6 +2052,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 this.blockUserLocally(chatId, userId);
                 return false;
             });
+    }
+
+    formatDisappearingMessageTime(milliseconds: number): string {
+        return formatDisappearingMessageTime(milliseconds, this.config.i18nFormatter);
     }
 
     nullUser = nullUser;
