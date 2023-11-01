@@ -33,18 +33,20 @@
     export let original: CandidateGroupChat | CommunitySummary;
     export let editing: boolean;
     export let history: boolean;
+    export let canEditDisappearingMessages: boolean;
 
     let minDissolveDelay = client.getMinDissolveDelayDays(original.gate) ?? "";
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let gateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
-    let disappearingMessages = false;
+    let disappearingMessages =
+        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: isDiamond = client.isDiamond;
-    $: requiresUpgrade = !$isDiamond && candidate.level !== "channel";
+    $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
 
     onMount(() => {
@@ -93,6 +95,12 @@
     function snsHolderParams(gate: SNSAccessGate): InterpolationValues {
         const tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
+    }
+
+    function toggleDisappearingMessages() {
+        if (candidate.kind === "community") return;
+        disappearingMessages = !disappearingMessages;
+        candidate.eventsTTL = disappearingMessages ? BigInt(1000 * 60 * 60) : undefined;
     }
 </script>
 
@@ -158,22 +166,26 @@
     </div>
 {/if}
 
-<div class="section">
-    <Checkbox
-        id="disappearing-messages"
-        disabled={false}
-        on:change={() => (disappearingMessages = !disappearingMessages)}
-        label={$_("disappearingMessages.label")}
-        align={"start"}
-        checked={disappearingMessages}>
-        <div class="section-title">{$_("disappearingMessages.label")}</div>
-        <div class="info">
-            {#if disappearingMessages}
-                <DisappearingMessages />
-            {/if}
-        </div>
-    </Checkbox>
-</div>
+{#if candidate.kind === "candidate_group_chat"}
+    <div class="section">
+        <Checkbox
+            id="disappearing-messages"
+            disabled={!canEditDisappearingMessages}
+            on:change={toggleDisappearingMessages}
+            label={$_("disappearingMessages.label")}
+            align={"start"}
+            checked={disappearingMessages}>
+            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
+            <div class="info">
+                {#if disappearingMessages}
+                    <DisappearingMessages
+                        {canEditDisappearingMessages}
+                        bind:ttl={candidate.eventsTTL} />
+                {/if}
+            </div>
+        </Checkbox>
+    </div>
+{/if}
 
 {#if !requiresUpgrade}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">
@@ -257,6 +269,7 @@
             max-width: unset;
         }
     }
+
     .section {
         margin-bottom: $sp6;
     }
@@ -282,6 +295,10 @@
         display: flex;
         gap: $sp3;
         align-items: center;
+
+        &.disappear {
+            margin-bottom: $sp2;
+        }
 
         .img {
             background-repeat: no-repeat;

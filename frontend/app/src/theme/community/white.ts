@@ -25,6 +25,11 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = txt70;
     base.time.txt = txt60;
+    base.time.icon = "rgba(0,0,0,0.3)";
+    base.time.bg = "rgba(0,0,0,0.1)";
+    base.time.me.txt = white;
+    base.time.me.icon = white;
+    base.time.me.bg = "rgba(255,255,255,0.2)";
     base.input.bg = textBox;
     base.entry.input.bg = white;
     base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";

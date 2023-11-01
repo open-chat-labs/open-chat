@@ -1124,7 +1124,8 @@
         "label": "Disappearing messages",
         "hours": "Hour(s)",
         "minutes": "Minute(s)",
-        "days": "Day(s)"
+        "days": "Day(s)",
+        "summary": "Messages will disappear after {duration}"
     },
     "disappearingMessageTimeUpdated": "{changedBy} set the disappearing message time to {duration}",
     "disappearingMessagesDisabled": "{changedBy} disabled disappearing messages",

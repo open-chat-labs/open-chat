@@ -463,6 +463,7 @@ export function communityChannelUpdates(
         latestEventIndex: optional(candid.latest_event_index, identity),
         memberCount: optional(candid.member_count, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
     };
 }
 

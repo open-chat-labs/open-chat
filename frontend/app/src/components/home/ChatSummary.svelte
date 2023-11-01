@@ -73,7 +73,7 @@
                         typing
                     ),
                     fav,
-                    expiring: false,
+                    eventsTTL: undefined,
                 };
             default:
                 return {
@@ -87,7 +87,7 @@
                         typing
                     ),
                     fav,
-                    expiring: true,
+                    eventsTTL: chatSummary.eventsTTL,
                 };
         }
     }
@@ -303,9 +303,9 @@
                 showStatus
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
-            {#if chat.expiring}
+            {#if chat.eventsTTL}
                 <div class="expires">
-                    <CameraTimer viewBox={"0 -2 24 24"} size={"1em"} color={"var(--txt)"} />
+                    <CameraTimer size={"1em"} color={"#fff"} />
                 </div>
             {/if}
         </div>
@@ -608,9 +608,7 @@
     }
 
     .expires {
-        position: absolute;
-        bottom: -2px;
-        right: 2px;
+        @include disappearing();
     }
 
     .details {

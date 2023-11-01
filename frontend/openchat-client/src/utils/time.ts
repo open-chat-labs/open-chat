@@ -48,13 +48,31 @@ export function durationFromMilliseconds(total: number): DurationData {
     };
 }
 
-export function formatTimeRemaining(now: number, deadline: number): string {
-    function pad(num: number): string {
-        return num.toString().padStart(2, "0");
-    }
+function pad(num: number): string {
+    return num.toString().padStart(2, "0");
+}
 
-    const data = startsIn(now, deadline);
-    return `${pad(data.days)}:${pad(data.hours)}:${pad(data.minutes)}:${pad(data.seconds)}`;
+export function formatDuration(ms: number): string {
+    const { days, hours, minutes, seconds } = durationFromMilliseconds(ms);
+    let result = "";
+    if (days > 0) {
+        result += `${pad(days)}d `;
+    }
+    if (hours > 0) {
+        result += `${hours}h `;
+    }
+    if (minutes > 0) {
+        result += `${minutes}m `;
+    }
+    if (seconds > 0) {
+        result += `${seconds}s `;
+    }
+    return result;
+}
+
+export function formatTimeRemaining(now: number, deadline: number): string {
+    const { days, hours, minutes, seconds } = startsIn(now, deadline);
+    return `${pad(days)}:${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
 const defaultFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });

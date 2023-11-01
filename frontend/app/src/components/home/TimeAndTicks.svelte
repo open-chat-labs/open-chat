@@ -30,11 +30,11 @@
     export let deleted: boolean;
     export let undeleting: boolean;
 
-    let iconColor = $currentTheme.time.icon;
+    let iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
-<div class="time-and-ticks" class:fill class:rtl={$rtlStore}>
+<div class="time-and-ticks" class:me class:fill class:rtl={$rtlStore}>
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
@@ -62,11 +62,11 @@
         {:else if !confirmed}
             <div class="confirming" />
         {/if}
+        {#if expiresAt !== undefined}
+            <DisappearsAt {me} {percentageExpired} {expiresAt} />
+        {/if}
         {#if pinned}
             <Pin size={"0.9em"} color={pinnedColor} />
-        {/if}
-        {#if expiresAt !== undefined}
-            <DisappearsAt {percentageExpired} {expiresAt} />
         {/if}
     {/if}
 </div>
@@ -85,6 +85,10 @@
         margin-top: 7px;
         pointer-events: none;
         color: var(--time-txt);
+
+        &.me {
+            color: var(--time-me-txt);
+        }
 
         @include mobile() {
             margin-top: 4px;

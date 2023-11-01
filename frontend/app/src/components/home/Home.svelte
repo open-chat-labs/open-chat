@@ -859,6 +859,7 @@
         modal = ModalType.NewGroup;
         candidateGroup = {
             id,
+            kind: "candidate_group_chat",
             name: "",
             description: "",
             historyVisible: true,
@@ -894,6 +895,7 @@
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         candidateGroup = {
             id: chat.id,
+            kind: "candidate_group_chat",
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisible,
@@ -909,6 +911,7 @@
             gate: chat.gate,
             level,
             membership: chat.membership,
+            eventsTTL: chat.eventsTTL,
         };
     }
 

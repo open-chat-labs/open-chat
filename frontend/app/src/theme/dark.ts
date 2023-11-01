@@ -239,6 +239,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
         time: {
             txt: "#ffffff",
             icon: "#ffffff",
+            bg: "rgba(255,255,255,0.2)",
+            me: {
+                txt: "#ffffff",
+                icon: "#ffffff",
+                bg: "rgba(255,255,255,0.2)",
+            },
         },
 
         icon: {

@@ -221,6 +221,12 @@ export interface Theme {
     time: {
         txt: string;
         icon: string;
+        bg: string;
+        me: {
+            txt: string;
+            icon: string;
+            bg: string;
+        };
     };
 
     icon: {

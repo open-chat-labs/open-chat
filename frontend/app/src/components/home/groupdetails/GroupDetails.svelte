@@ -23,6 +23,7 @@
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
+    import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -125,6 +126,7 @@
                     {/if}
                 {/if}
             </div>
+            <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             <AccessGateSummary gate={chat.gate} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}

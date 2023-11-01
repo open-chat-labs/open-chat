@@ -6,7 +6,6 @@
     import ChatSubtext from "./ChatSubtext.svelte";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
-    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import Avatar from "../Avatar.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import { createEventDispatcher, getContext } from "svelte";
@@ -72,7 +71,7 @@
                         typing
                     ),
                     username: "@" + them.username,
-                    expiring: false,
+                    eventsTTL: undefined,
                 };
             default:
                 return {
@@ -86,7 +85,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
-                    expiring: true,
+                    eventsTTL: chatSummary.eventsTTL,
                 };
         }
     }
@@ -130,12 +129,6 @@
             userId={chat.userId}
             url={chat.avatarUrl}
             size={AvatarSize.Default} />
-
-        {#if chat.expiring}
-            <div class="expires">
-                <CameraTimer viewBox={"0 -2 24 24"} size={"1em"} color={"var(--txt)"} />
-            </div>
-        {/if}
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>
@@ -208,17 +201,10 @@
 
     .avatar {
         flex: 0 0 55px;
-        position: relative;
 
         &.has-user-profile {
             cursor: pointer;
         }
-    }
-
-    .expires {
-        position: absolute;
-        bottom: -2px;
-        right: 2px;
     }
 
     .group-details {

@@ -1,15 +1,42 @@
 <script lang="ts">
+    import { getContext, onMount } from "svelte";
     import Input from "../Input.svelte";
     import Select from "../Select.svelte";
     import { _ } from "svelte-i18n";
+    import type { OpenChat } from "openchat-client";
+
+    const ONE_MINUTE = 1000 * 60;
+    const ONE_HOUR = ONE_MINUTE * 60;
+    const ONE_DAY = ONE_HOUR * 24;
+    const client = getContext<OpenChat>("client");
 
     export let valid = true;
-    export let ttl = 1000 * 60 * 60;
+    export let ttl: bigint | undefined;
+    export let canEditDisappearingMessages: boolean;
 
+    let initialised = false;
     let messageTTL = "1";
     let messageTTLUnit: "minutes" | "hours" | "days" = "hours";
 
+    onMount(() => {
+        if (ttl !== undefined) {
+            const duration = client.durationFromMilliseconds(Number(ttl));
+            if (duration.days > 0) {
+                messageTTL = duration.days.toString();
+                messageTTLUnit = "days";
+            } else if (duration.hours > 0) {
+                messageTTL = duration.hours.toString();
+                messageTTLUnit = "hours";
+            } else if (duration.minutes > 0) {
+                messageTTL = duration.minutes.toString();
+                messageTTLUnit = "minutes";
+            }
+        }
+        initialised = true;
+    });
+
     function updateTTL(messageTTL: string) {
+        if (!initialised) return;
         const ttlNum = Number(messageTTL);
         if (isNaN(ttlNum) || messageTTL === "") {
             valid = false;
@@ -18,17 +45,15 @@
         valid = true;
         switch (messageTTLUnit) {
             case "minutes":
-                ttl = 1000 * 60 * ttlNum;
+                ttl = BigInt(ONE_MINUTE * ttlNum);
                 break;
             case "hours":
-                ttl = 1000 * 60 * 60 * ttlNum;
+                ttl = BigInt(ONE_HOUR * ttlNum);
                 break;
             case "days":
-                ttl = 1000 * 60 * 60 * 24 * ttlNum;
+                ttl = BigInt(ONE_DAY * ttlNum);
                 break;
         }
-
-        console.log("TTL: ", ttl);
     }
 
     $: {
@@ -38,11 +63,20 @@
 
 <div class="form">
     <div class="ttl">
-        <Input invalid={!valid} maxlength={5} minlength={1} bind:value={messageTTL} />
+        <Input
+            disabled={!canEditDisappearingMessages}
+            invalid={!valid}
+            maxlength={5}
+            minlength={1}
+            bind:value={messageTTL} />
     </div>
 
     <div class="units">
-        <Select margin={false} on:change={() => updateTTL(messageTTL)} bind:value={messageTTLUnit}>
+        <Select
+            disabled={!canEditDisappearingMessages}
+            margin={false}
+            on:change={() => updateTTL(messageTTL)}
+            bind:value={messageTTLUnit}>
             <option value={"minutes"}>{$_("disappearingMessages.minutes")}</option>
             <option value={"hours"}>{$_("disappearingMessages.hours")}</option>
             <option value={"days"}>{$_("disappearingMessages.days")}</option>

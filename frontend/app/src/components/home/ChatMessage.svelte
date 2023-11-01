@@ -1,6 +1,7 @@
 <svelte:options immutable />
 
 <script lang="ts">
+    import page from "page";
     import Link from "../Link.svelte";
     import { fade } from "svelte/transition";
     import {
@@ -50,6 +51,8 @@
     import TipBuilder from "./TipBuilder.svelte";
     import TipThumbnail from "./TipThumbnail.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import { filterRightPanelHistory } from "../../stores/rightPanel";
+    import { removeQueryStringParam } from "../../utils/urls";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -160,7 +163,11 @@
                 const age = $now - Number(timestamp);
                 const expired = age > ttl;
                 percentageExpired = expired ? 100 : (age / ttl) * 100;
-                console.log("PercentageExpired: ", percentageExpired);
+                // if this message is the root of a thread, make sure that we close that thread when the message expires
+                if (percentageExpired >= 100 && msg.thread) {
+                    filterRightPanelHistory((panel) => panel.kind !== "message_thread_panel");
+                    page.replace(removeQueryStringParam("open"));
+                }
             }
         });
     });
@@ -407,7 +414,7 @@
 {/if}
 
 {#if expiresAt === undefined || percentageExpired < 100}
-    <div transition:fade|local={{ duration: 300 }} class="message-wrapper" class:last>
+    <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
         <div
             bind:this={msgElement}
             class="message"

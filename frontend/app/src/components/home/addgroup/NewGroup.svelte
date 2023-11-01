@@ -46,6 +46,9 @@
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
+    $: canEditDisappearingMessages = !editing
+        ? true
+        : client.hasOwnerRights(candidateGroup.membership.role);
     $: selectedCommunity = client.selectedCommunity;
 
     $: permissionsDirty = client.haveGroupPermissionsChanged(
@@ -63,7 +66,8 @@
     $: visDirty = editing && candidateGroup.public !== originalGroup.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
-    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
+    $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty || ttlDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
 
@@ -185,7 +189,11 @@
                       )
                     : undefined,
                 avatarDirty ? updatedGroup.avatar?.blobData : undefined,
-                undefined,
+                ttlDirty
+                    ? updatedGroup.eventsTTL === undefined
+                        ? "set_to_none"
+                        : { value: updatedGroup.eventsTTL }
+                    : undefined,
                 gateDirty ? updatedGroup.gate : undefined,
                 visDirty ? updatedGroup.public : undefined
             )
@@ -284,6 +292,7 @@
                         original={originalGroup}
                         {editing}
                         history
+                        {canEditDisappearingMessages}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
