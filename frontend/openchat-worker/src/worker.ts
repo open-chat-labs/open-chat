@@ -75,7 +75,7 @@ const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
         logger?.error("WORKER: sending error: ", error);
         if (payload !== undefined) {
-            console.error("WORKER: error caused by paylaod: ", payload);
+            console.error("WORKER: error caused by payload: ", payload);
         }
         postMessage({
             kind: "worker_error",
