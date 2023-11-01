@@ -33,6 +33,7 @@ sns_swap_canister = { path = "../../../external_canisters/sns_swap/api" }
 sns_swap_canister_c2c_client = { path = "../../../external_canisters/sns_swap/c2c_client" }
 sns_wasm_canister = { path = "../../../external_canisters/sns_wasm/api" }
 sns_wasm_canister_c2c_client = { path = "../../../external_canisters/sns_wasm/c2c_client" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 registry_canister = { path = "../api" }

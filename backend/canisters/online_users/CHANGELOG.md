@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+
 ## [[2.0.901](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.901-online_users)] - 2023-10-20
 
 ### Changed
