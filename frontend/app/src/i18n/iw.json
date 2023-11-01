@@ -1126,8 +1126,15 @@
     "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "sendTextDisabled": "הודעות טקסט מושבתות",
-    "disappearingMessageTimeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
-    "disappearingMessagesDisabled": "{changedBy} השבית הודעות נעלמות",
-    "durationMinutes": "{duration} דקות",
-    "oneMinute": "דקה 1"
+    "disappearingMessages": {
+        "label": "הודעות נעלמות",
+        "hours": "שעה (ות)",
+        "minutes": "דקות)",
+        "days": "ימים",
+        "summary": "ההודעות ייעלמו לאחר {duration}",
+        "timeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+        "disabled": "{changedBy} השבית הודעות נעלמות",
+        "durationMinutes": "{duration} דקות",
+        "oneMinute": "דקה 1"
+    }
 }

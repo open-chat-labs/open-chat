@@ -1129,8 +1129,15 @@
     "doubleTapReply": "メッセージをダブルタップして返信/編集します",
     "minimumAmount": "最小値: {amount} {symbol}",
     "sendTextDisabled": "テキストメッセージが無効になっています",
-    "disappearingMessageTimeUpdated": "{changedBy} はメッセージが消える時間を {duration} に設定します",
-    "disappearingMessagesDisabled": "{changedBy} は消えるメッセージを無効にしました",
-    "durationMinutes": "{duration}分",
-    "oneMinute": "1分"
+    "disappearingMessages": {
+        "label": "消えるメッセージ",
+        "hours": "時間）",
+        "minutes": "分）",
+        "days": "日々）",
+        "summary": "メッセージは {duration} 後に消えます",
+        "timeUpdated": "{changedBy} はメッセージが消える時間を {duration} に設定します",
+        "disabled": "{changedBy} は消えるメッセージを無効にしました",
+        "durationMinutes": "{duration}分",
+        "oneMinute": "1分"
+    }
 }

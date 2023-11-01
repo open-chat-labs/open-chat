@@ -1129,8 +1129,15 @@
     "doubleTapReply": "双击消息即可回复/编辑",
     "minimumAmount": "最小值：{amount} {symbol}",
     "sendTextDisabled": "短信已禁用",
-    "disappearingMessageTimeUpdated": "{changedBy} 将消息消失时间设置为 {duration}",
-    "disappearingMessagesDisabled": "{changedBy} 禁用消失消息",
-    "durationMinutes": "{duration} 分钟",
-    "oneMinute": "1分钟"
+    "disappearingMessages": {
+        "label": "消失的消息",
+        "hours": "小时）",
+        "minutes": "分钟）",
+        "days": "天）",
+        "summary": "消息将在 {duration} 之后消失",
+        "timeUpdated": "{changedBy} 将消息消失时间设置为 {duration}",
+        "disabled": "{changedBy} 禁用消失消息",
+        "durationMinutes": "{duration} 分钟",
+        "oneMinute": "1分钟"
+    }
 }

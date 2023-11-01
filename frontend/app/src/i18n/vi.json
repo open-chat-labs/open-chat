@@ -1129,8 +1129,15 @@
     "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
     "minimumAmount": "Tối thiểu: {amount} {symbol}",
     "sendTextDisabled": "Tin nhắn văn bản bị vô hiệu hóa",
-    "disappearingMessageTimeUpdated": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
-    "disappearingMessagesDisabled": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
-    "durationMinutes": "{duration} phút",
-    "oneMinute": "1 phút"
+    "disappearingMessages": {
+        "label": "Tin nhắn biến mất",
+        "hours": "Giờ)",
+        "minutes": "Phút)",
+        "days": "(Các) ngày",
+        "summary": "Tin nhắn sẽ biến mất sau {duration}",
+        "timeUpdated": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
+        "disabled": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
+        "durationMinutes": "{duration} phút",
+        "oneMinute": "1 phút"
+    }
 }

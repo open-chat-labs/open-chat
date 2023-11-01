@@ -19,13 +19,13 @@
     $: changedByStr = buildDisplayName($userStore, changedBy, me);
     $: text =
         newTimeToLive !== undefined
-            ? $_("disappearingMessageTimeUpdated", {
+            ? $_("disappearingMessages.timeUpdated", {
                   values: {
                       changedBy: changedByStr,
                       duration: client.formatDuration(Number(newTimeToLive)),
                   },
               })
-            : $_("disappearingMessagesDisabled", {
+            : $_("disappearingMessages.disabled", {
                   values: {
                       changedBy: changedByStr,
                   },

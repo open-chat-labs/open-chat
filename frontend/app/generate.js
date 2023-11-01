@@ -31,6 +31,10 @@ async function generateLanguage(lang, code) {
     function missingEntries(enEntries, targetEntries) {
         // if we need to delete a bunch of keys from all languages (for example if the english key has changed), add all the keys to this set
         const toDelete = new Set([
+            "disappearingMessageTimeUpdated",
+            "disappearingMessagesDisabled",
+            "durationMinutes",
+            "oneMinute",
             // "confirmMakeGroupPrivate",
             // "makeGroupPrivateFailed",
             // "groupVisibilityChangedBy",

@@ -1130,8 +1130,15 @@
     "doubleTapReply": "Toca dos veces el mensaje para responder/editar",
     "minimumAmount": "Mínimo: {amount} {symbol}",
     "sendTextDisabled": "Los mensajes de texto están deshabilitados",
-    "disappearingMessageTimeUpdated": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
-    "disappearingMessagesDisabled": "{changedBy} deshabilitó los mensajes que desaparecen",
-    "durationMinutes": "{duration} minutos",
-    "oneMinute": "1 minuto"
+    "disappearingMessages": {
+        "label": "Mensajes que desaparecen",
+        "hours": "Horas)",
+        "minutes": "Minutos)",
+        "days": "Días)",
+        "summary": "Los mensajes desaparecerán después de {duration}",
+        "timeUpdated": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
+        "disabled": "{changedBy} deshabilitó los mensajes que desaparecen",
+        "durationMinutes": "{duration} minutos",
+        "oneMinute": "1 minuto"
+    }
 }

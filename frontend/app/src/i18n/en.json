@@ -1125,10 +1125,10 @@
         "hours": "Hour(s)",
         "minutes": "Minute(s)",
         "days": "Day(s)",
-        "summary": "Messages will disappear after {duration}"
-    },
-    "disappearingMessageTimeUpdated": "{changedBy} set the disappearing message time to {duration}",
-    "disappearingMessagesDisabled": "{changedBy} disabled disappearing messages",
-    "durationMinutes": "{duration} minutes",
-    "oneMinute": "1 minute"
+        "summary": "Messages will disappear after {duration}",
+        "timeUpdated": "{changedBy} set the disappearing message time to {duration}",
+        "disabled": "{changedBy} disabled disappearing messages",
+        "durationMinutes": "{duration} minutes",
+        "oneMinute": "1 minute"
+    }
 }

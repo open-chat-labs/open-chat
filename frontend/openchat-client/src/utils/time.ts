@@ -26,8 +26,10 @@ export function formatDisappearingMessageTime(
             : formatter("durationHours", { values: { duration: duration.hours } });
 
     return duration.minutes === 1
-        ? formatter("oneMinute")
-        : formatter("durationMinutes", { values: { duration: duration.minutes } });
+        ? formatter("disappearingMessages.oneMinute")
+        : formatter("disappearingMessages.durationMinutes", {
+              values: { duration: duration.minutes },
+          });
 }
 
 export function startsIn(now: number, time: number): DurationData {
