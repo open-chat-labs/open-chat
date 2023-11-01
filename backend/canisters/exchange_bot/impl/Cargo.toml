@@ -36,6 +36,7 @@ rand = { workspace = true }
 regex-lite = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
