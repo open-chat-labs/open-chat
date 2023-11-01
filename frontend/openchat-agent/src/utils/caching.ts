@@ -1044,10 +1044,7 @@ async function runExpiredEventSweeper() {
     const threadEventsStore = transaction.objectStore("thread_events");
     const index = eventsStore.index("expiresAt");
     const batchSize = 100;
-    const expiredKeys: (EnhancedWrapper<ChatEvent> | ExpiredEventsRange)[] = await index.getAllKeys(
-        IDBKeyRange.upperBound(Date.now()),
-        batchSize,
-    );
+    const expiredKeys = await index.getAllKeys(IDBKeyRange.upperBound(Date.now()), batchSize);
 
     async function deleteKey(key: string): Promise<void> {
         const value = await eventsStore.get(key);
