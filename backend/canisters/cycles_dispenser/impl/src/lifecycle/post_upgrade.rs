@@ -6,8 +6,7 @@ use canister_tracing_macros::trace;
 use cycles_dispenser_canister::post_upgrade::Args;
 use ic_cdk::api::stable::StableReader;
 use ic_cdk_macros::post_upgrade;
-use ic_stable_structures::reader::{BufferedReader, Reader};
-use stable_memory::deserialize_from_stable_memory;
+use stable_memory::{deserialize_from_stable_memory, get_reader};
 use std::io::Read;
 use tracing::info;
 
@@ -21,7 +20,7 @@ fn post_upgrade(args: Args) {
     let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
         if stable_reader.read_exact(&mut magic).is_ok() && magic == *b"MGR" {
             let memory = get_upgrades_memory();
-            let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
+            let reader = get_reader(&memory);
 
             serializer::deserialize(reader).unwrap()
         } else {

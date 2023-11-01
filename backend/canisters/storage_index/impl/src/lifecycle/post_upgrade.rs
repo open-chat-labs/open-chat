@@ -1,10 +1,10 @@
-use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state, BUFFER_SIZE};
+use crate::lifecycle::{init_cycles_dispenser_client, init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use ic_stable_structures::reader::{BufferedReader, Reader};
+use stable_memory::get_reader;
 use storage_index_canister::post_upgrade::Args;
 use tracing::info;
 
@@ -14,7 +14,7 @@ fn post_upgrade(args: Args) {
     let env = init_env();
 
     let memory = get_upgrades_memory();
-    let reader = BufferedReader::new(BUFFER_SIZE, Reader::new(&memory, 0));
+    let reader = get_reader(&memory);
 
     let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
