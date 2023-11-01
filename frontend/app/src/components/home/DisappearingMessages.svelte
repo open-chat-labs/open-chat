@@ -20,15 +20,15 @@
 
     onMount(() => {
         if (ttl !== undefined) {
-            const duration = client.durationFromMilliseconds(Number(ttl));
-            if (duration.days > 0) {
-                messageTTL = duration.days.toString();
+            const { days, hours, minutes } = client.durationFromMilliseconds(Number(ttl));
+            if (days > 0) {
+                messageTTL = days.toString();
                 messageTTLUnit = "days";
-            } else if (duration.hours > 0) {
-                messageTTL = duration.hours.toString();
+            } else if (hours > 0) {
+                messageTTL = hours.toString();
                 messageTTLUnit = "hours";
-            } else if (duration.minutes > 0) {
-                messageTTL = duration.minutes.toString();
+            } else if (minutes > 0) {
+                messageTTL = minutes.toString();
                 messageTTLUnit = "minutes";
             }
         }
