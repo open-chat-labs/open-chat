@@ -37,6 +37,7 @@ pub mod migrate_user_principal;
 pub mod mute_notifications;
 pub mod pin_chat_v2;
 pub mod remove_reaction;
+pub mod report_message;
 pub mod save_crypto_account;
 pub mod send_message;
 pub mod send_message_with_transfer;
