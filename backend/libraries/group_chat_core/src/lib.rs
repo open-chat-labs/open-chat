@@ -282,8 +282,9 @@ impl GroupChatCore {
                 .if_set_after(since)
                 .map(Document::id)
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-            latest_event_index: events_reader.latest_event_index(),
             latest_message,
+            latest_event_index: events_reader.latest_event_index(),
+            latest_message_index: events_reader.latest_message_index(),
             member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
             role_changed: member.map(|m| m.role.timestamp > since).unwrap_or_default(),
             mentions,
@@ -1944,6 +1945,7 @@ pub struct SummaryUpdates {
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: Option<u32>,
     pub role_changed: bool,
     pub mentions: Vec<HydratedMention>,

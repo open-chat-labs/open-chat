@@ -1,1 +1,1 @@
-UserIndex, LocalUserIndex, GroupIndex, LocalGroupIndex, Community, Group, ProposalsBot, User
+Group & Community -> User & GroupIndex

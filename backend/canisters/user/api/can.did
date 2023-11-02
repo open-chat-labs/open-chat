@@ -619,6 +619,10 @@ type ProposalToSubmitAction = variant {
             Upgrade;
         };
     };
+    ExecuteGenericNervousSystemFunction : record {
+        function_id : nat64;
+        payload : blob;
+    };
 };
 
 type SubmitProposalResponse = variant {
