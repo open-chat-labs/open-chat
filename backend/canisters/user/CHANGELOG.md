@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Reduce size of message content when serialized ([#4680](https://github.com/open-chat-labs/open-chat/pull/4680))
 - Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Make `events_map` generic in preparation for moving it to stable memory ([#4689](https://github.com/open-chat-labs/open-chat/pull/4689))
 
 ## [[2.0.912](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.912-user)] - 2023-10-27
 

@@ -1,4 +1,4 @@
-use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, MessageInternal};
+use crate::{ChatEventInternal, ChatInternal, EventKey, EventOrExpiredRangeInternal, EventsMap, MessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -10,15 +10,15 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct ChatEventsList {
-    events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
+pub struct ChatEventsList<M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
+    events_map: M,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_event_indexes: Vec<EventIndex>,
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
 }
 
-impl ChatEventsList {
+impl<M: EventsMap> ChatEventsList<M> {
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
@@ -36,16 +36,13 @@ impl ChatEventsList {
             self.message_event_indexes.push(event_index);
         }
 
-        self.events_map.insert(
-            event_index,
-            EventWrapperInternal {
-                index: event_index,
-                timestamp: now,
-                correlation_id,
-                expires_at,
-                event,
-            },
-        );
+        self.events_map.insert(EventWrapperInternal {
+            index: event_index,
+            timestamp: now,
+            correlation_id,
+            expires_at,
+            event,
+        });
         self.latest_event_index = Some(event_index);
         self.latest_event_timestamp = Some(now);
 
@@ -55,7 +52,7 @@ impl ChatEventsList {
     pub(crate) fn get(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> Option<EventOrExpiredRangeInternal> {
         let event_index = self.event_index(event_key).filter(|e| *e >= min_visible_event_index)?;
 
-        match get_value_or_neighbours(&self.events_map, event_index) {
+        match self.get_value_or_neighbours(event_index) {
             Ok(event) => Some(EventOrExpiredRangeInternal::Event(event)),
             Err((prev, next)) => Some(EventOrExpiredRangeInternal::ExpiredEventRange(
                 prev.map_or(EventIndex::default(), |i| i.incr()),
@@ -79,7 +76,7 @@ impl ChatEventsList {
     ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
-            .and_then(|e| self.events_map.get_mut(&e))
+            .and_then(|e| self.events_map.get_mut(e))
     }
 
     pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
@@ -192,8 +189,8 @@ impl ChatEventsList {
             .count()
     }
 
-    pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
-        self.events_map.remove(&event_index)
+    pub fn remove(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
+        self.events_map.remove(event_index)
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {
@@ -243,30 +240,45 @@ impl ChatEventsList {
             EventKey::MessageId(m) => self.message_id_map.get(&m).copied(),
         }
     }
+
+    fn get_value_or_neighbours(
+        &self,
+        event_index: EventIndex,
+    ) -> Result<&EventWrapperInternal<ChatEventInternal>, (Option<EventIndex>, Option<EventIndex>)> {
+        let next_key = match self.events_map.range(event_index..).next() {
+            Some((k, v)) if *k == event_index => return Ok(v),
+            Some((k, _)) => Some(*k),
+            None => None,
+        };
+
+        let previous_key = self.events_map.range(..event_index).next_back().map(|(k, _)| *k);
+
+        Err((previous_key, next_key))
+    }
 }
 
-pub struct ChatEventsListReader<'r> {
-    events_list: &'r ChatEventsList,
+pub struct ChatEventsListReader<'r, M = BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>> {
+    events_list: &'r ChatEventsList<M>,
     min_visible_event_index: EventIndex,
 }
 
-impl<'r> Deref for ChatEventsListReader<'r> {
-    type Target = ChatEventsList;
+impl<'r, M> Deref for ChatEventsListReader<'r, M> {
+    type Target = ChatEventsList<M>;
 
     fn deref(&self) -> &Self::Target {
         self.events_list
     }
 }
 
-impl<'r> ChatEventsListReader<'r> {
-    pub(crate) fn new(events_list: &ChatEventsList) -> ChatEventsListReader {
+impl<'r, M: EventsMap + 'r> ChatEventsListReader<'r, M> {
+    pub(crate) fn new(events_list: &ChatEventsList<M>) -> ChatEventsListReader<M> {
         Self::with_min_visible_event_index(events_list, EventIndex::default())
     }
 
     pub(crate) fn with_min_visible_event_index(
-        events_list: &ChatEventsList,
+        events_list: &ChatEventsList<M>,
         min_visible_event_index: EventIndex,
-    ) -> ChatEventsListReader {
+    ) -> ChatEventsListReader<M> {
         ChatEventsListReader {
             events_list,
             min_visible_event_index,
@@ -504,18 +516,6 @@ fn try_into_message_event(
         expires_at: event.expires_at,
         event: message.hydrate(my_user_id),
     })
-}
-
-fn get_value_or_neighbours<K: Copy + Ord, V>(map: &BTreeMap<K, V>, key: K) -> Result<&V, (Option<K>, Option<K>)> {
-    let next_key = match map.range(key..).next() {
-        Some((k, v)) if *k == key => return Ok(v),
-        Some((k, _)) => Some(*k),
-        None => None,
-    };
-
-    let previous_key = map.range(..key).next_back().map(|(k, _)| *k);
-
-    Err((previous_key, next_key))
 }
 
 struct ChatEventsListIterator<I> {

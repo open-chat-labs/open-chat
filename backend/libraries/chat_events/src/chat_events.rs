@@ -1174,7 +1174,7 @@ impl ChatEvents {
         let mut result = RemoveExpiredEventsResult::default();
 
         while let Some(event_index) = self.expiring_events.take_next_expired_event(now) {
-            if let Some(event) = self.main.remove_expired_event(event_index) {
+            if let Some(event) = self.main.remove(event_index) {
                 result.events.push(event_index);
                 if let ChatEventInternal::Message(m) = event.event {
                     if let Some(thread) = m.thread_summary {
