@@ -36,6 +36,7 @@ impl CachedHotGroups {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "CachedPublicGroupSummaryCombined")]
 pub struct CachedPublicGroupSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
