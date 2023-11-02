@@ -118,6 +118,23 @@ type RemoveReactionResponse = variant {
     UserSuspended;
 };
 
+type ReportMessageArgs = record {
+    them : UserId;
+    message_id : MessageId;
+    reason_code : nat32;
+    notes : opt text;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    UserSuspended;
+    ChatNotFound;
+    MessageNotFound;
+    MessageTypeCannotBeDeleted;
+    InternalError : text;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -593,7 +610,7 @@ type ProposalToSubmitAction = variant {
         memo : opt nat64;
     };
     UpgradeSnsToNextVersion;
-    UpgradeSnsControlledCanister: record {
+    UpgradeSnsControlledCanister : record {
         canister_id : CanisterId;
         new_canister_wasm : blob;
         mode : variant {
@@ -922,6 +939,7 @@ service : {
     archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
     save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

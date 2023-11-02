@@ -48,6 +48,7 @@ fn main() {
     generate_candid_method!(community, remove_member_from_channel, update);
     generate_candid_method!(community, remove_member, update);
     generate_candid_method!(community, remove_reaction, update);
+    generate_candid_method!(community, report_message, update);
     generate_candid_method!(community, reset_invite_code, update);
     generate_candid_method!(community, send_message, update);
     generate_candid_method!(community, set_member_display_name, update);

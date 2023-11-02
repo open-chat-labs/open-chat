@@ -1,9 +1,10 @@
-use crate::{read_state, run_regular_jobs, RuntimeState};
+use crate::activity_notifications::handle_activity_notification;
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use group_canister::report_message::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{CanisterId, Chat};
+use types::{CanisterId, Chat, UserId};
 use user_index_canister::c2c_report_message;
 
 #[update]
@@ -11,10 +12,17 @@ use user_index_canister::c2c_report_message;
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();
 
-    let (c2c_args, user_index_canister) = match read_state(|state| build_c2c_args(args, state)) {
+    let (c2c_args, user_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
+
+    if args.delete {
+        match mutate_state(|state| delete_message(&args, c2c_args.reporter, state)) {
+            Ok(_) => (),
+            Err(response) => return response,
+        }
+    }
 
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
         Ok(result) => match result {
@@ -25,7 +33,7 @@ async fn report_message(args: Args) -> Response {
     }
 }
 
-fn build_c2c_args(args: Args, state: &RuntimeState) -> Result<(c2c_report_message::Args, CanisterId), Response> {
+fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_message::Args, CanisterId), Response> {
     if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
@@ -33,11 +41,19 @@ fn build_c2c_args(args: Args, state: &RuntimeState) -> Result<(c2c_report_messag
     let caller = state.env.caller();
 
     if let Some(member) = state.data.get_member(caller) {
+        let chat = &state.data.chat;
+
+        if member.suspended.value {
+            return Err(UserSuspended);
+        }
+
+        if args.delete && !member.role.can_delete_messages(&chat.permissions) {
+            return Err(NotAuthorized);
+        }
+
         let user_id = member.user_id;
 
-        if let Some(events_reader) = state
-            .data
-            .chat
+        if let Some(events_reader) = chat
             .events
             .events_reader(member.min_visible_event_index(), args.thread_root_message_index)
         {
@@ -49,7 +65,7 @@ fn build_c2c_args(args: Args, state: &RuntimeState) -> Result<(c2c_report_messag
                         thread_root_message_index: args.thread_root_message_index,
                         message,
                         reason_code: args.reason_code,
-                        notes: args.notes,
+                        notes: args.notes.clone(),
                     },
                     state.data.user_index_canister_id,
                 ))
@@ -61,5 +77,29 @@ fn build_c2c_args(args: Args, state: &RuntimeState) -> Result<(c2c_report_messag
         }
     } else {
         Err(CallerNotInGroup)
+    }
+}
+
+fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) -> Result<(), Response> {
+    match state.data.chat.delete_messages(
+        reporter,
+        args.thread_root_message_index,
+        vec![args.message_id],
+        false,
+        state.env.now(),
+    ) {
+        group_chat_core::DeleteMessagesResult::Success(results) => match results[0].1 {
+            chat_events::DeleteMessageResult::Success(_) => {
+                handle_activity_notification(state);
+                Ok(())
+            }
+            chat_events::DeleteMessageResult::AlreadyDeleted => Ok(()),
+            chat_events::DeleteMessageResult::MessageTypeCannotBeDeleted => Err(MessageTypeCannotBeDeleted),
+            chat_events::DeleteMessageResult::NotAuthorized => Err(NotAuthorized),
+            chat_events::DeleteMessageResult::NotFound => Err(MessageNotFound),
+        },
+        group_chat_core::DeleteMessagesResult::MessageNotFound => Err(MessageNotFound),
+        group_chat_core::DeleteMessagesResult::UserNotInGroup => Err(CallerNotInGroup),
+        group_chat_core::DeleteMessagesResult::UserSuspended => Err(UserSuspended),
     }
 }
