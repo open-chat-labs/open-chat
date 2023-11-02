@@ -17,8 +17,8 @@ use types::{
     CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, PrizeWinnerContent, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction,
-    RegisterVoteResult, ReportedMessageInternal, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -655,7 +655,7 @@ impl ChatEvents {
                         sender: OPENCHAT_BOT_USER_ID,
                         thread_root_message_index: None,
                         message_id: rng.gen(),
-                        content: MessageContentInternal::PrizeWinner(PrizeWinnerContent {
+                        content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
                             transaction,
                             prize_message: message_index,

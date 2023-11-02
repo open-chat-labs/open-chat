@@ -3,7 +3,7 @@
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { OpenChat, Message, PendingCryptocurrencyTransfer } from "openchat-client";
+    import type { CryptocurrencyDetails, Message, OpenChat, PendingCryptocurrencyTransfer } from "openchat-client";
     import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -50,7 +50,7 @@
             ? cryptoBalance - draftAmount - tokenDetails.transferFee
             : cryptoBalance;
     $: valid =
-        exchangeRate !== undefined && draftAmount > 0n && error === undefined && !tokenChanging;
+        exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
 
     $: {
@@ -156,6 +156,10 @@
         centAmount += increment;
     }
 
+    function hasExchangeRate(token: CryptocurrencyDetails): boolean {
+        return dollarExchangeRates[token.ledger] !== undefined;
+    }
+
     onMount(() => {
         let d = document.getElementById("tip-dollar");
         if (!d) {
@@ -177,7 +181,7 @@
                 <div class="main-title">
                     <div>{$_("tip.title")}</div>
                     <div>
-                        <CryptoSelector bind:ledger />
+                        <CryptoSelector bind:ledger filter={hasExchangeRate} />
                     </div>
                 </div>
             </div>
