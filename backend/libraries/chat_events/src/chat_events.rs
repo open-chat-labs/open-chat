@@ -220,7 +220,6 @@ impl ChatEvents {
                 }
                 match message.content {
                     MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
-                    MessageContentInternal::Crypto(_) => DeleteMessageResult::MessageTypeCannotBeDeleted,
                     _ => {
                         let sender = message.sender;
                         message.last_updated = Some(args.now);
@@ -1364,7 +1363,6 @@ pub enum EditMessageResult {
 pub enum DeleteMessageResult {
     Success(UserId), // UserId is the message sender
     AlreadyDeleted,
-    MessageTypeCannotBeDeleted,
     NotAuthorized,
     NotFound,
 }
