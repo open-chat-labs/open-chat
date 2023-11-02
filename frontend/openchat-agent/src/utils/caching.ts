@@ -68,7 +68,6 @@ export interface ChatSchema extends DBSchema {
         value: EnhancedWrapper<ChatEvent>;
         indexes: {
             messageIdx: string;
-            expiresAt: number;
         };
     };
 
@@ -1040,13 +1039,36 @@ function tryStartExpiredEventSweeper() {
 // TODO we can improve this by replacing these events with expired event ranges
 async function runExpiredEventSweeper() {
     if (db === undefined) return;
-    const transaction = (await db).transaction(["chat_events"], "readwrite");
-    const store = transaction.objectStore("chat_events");
-    const index = store.index("expiresAt");
+    const transaction = (await db).transaction(["chat_events", "thread_events"], "readwrite");
+    const eventsStore = transaction.objectStore("chat_events");
+    const threadEventsStore = transaction.objectStore("thread_events");
+    const index = eventsStore.index("expiresAt");
     const batchSize = 100;
     const expiredKeys = await index.getAllKeys(IDBKeyRange.upperBound(Date.now()), batchSize);
 
-    await Promise.all(expiredKeys.map((k) => store.delete(k)));
+    async function deleteKey(key: string): Promise<void> {
+        const value = await eventsStore.get(key);
+        if (value?.kind !== "event") {
+            return;
+        }
+
+        const promises: Promise<void>[] = [eventsStore.delete(key)];
+
+        if (
+            value.event.kind === "message" &&
+            value.event.thread !== undefined &&
+            value.messageKey !== undefined
+        ) {
+            const threadKey = value.messageKey.replace(/_0+/, "_"); // Remove the 0's which pad the message index
+            promises.push(
+                threadEventsStore.delete(IDBKeyRange.bound(threadKey + "_", threadKey + "_Z")),
+            );
+        }
+
+        await Promise.all(promises);
+    }
+
+    await Promise.all(expiredKeys.map(deleteKey));
 
     expiredEventSweeperJob = undefined;
 
