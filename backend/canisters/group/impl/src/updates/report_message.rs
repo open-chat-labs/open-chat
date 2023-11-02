@@ -35,23 +35,27 @@ fn build_c2c_args(args: Args, state: &RuntimeState) -> Result<(c2c_report_messag
     if let Some(member) = state.data.get_member(caller) {
         let user_id = member.user_id;
 
-        let main_events_reader = state
+        if let Some(events_reader) = state
             .data
             .chat
             .events
-            .visible_main_events_reader(member.min_visible_event_index());
-
-        if let Some(message) = main_events_reader.message(args.message_id.into(), Some(user_id)) {
-            Ok((
-                c2c_report_message::Args {
-                    reporter: user_id,
-                    chat_id: Chat::Group(state.env.canister_id().into()),
-                    message,
-                    reason_code: args.reason_code,
-                    notes: args.notes,
-                },
-                state.data.user_index_canister_id,
-            ))
+            .events_reader(member.min_visible_event_index(), args.thread_root_message_index)
+        {
+            if let Some(message) = events_reader.message(args.message_id.into(), Some(user_id)) {
+                Ok((
+                    c2c_report_message::Args {
+                        reporter: user_id,
+                        chat_id: Chat::Group(state.env.canister_id().into()),
+                        thread_root_message_index: args.thread_root_message_index,
+                        message,
+                        reason_code: args.reason_code,
+                        notes: args.notes,
+                    },
+                    state.data.user_index_canister_id,
+                ))
+            } else {
+                Err(MessageNotFound)
+            }
         } else {
             Err(MessageNotFound)
         }
