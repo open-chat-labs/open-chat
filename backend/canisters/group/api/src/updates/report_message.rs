@@ -19,6 +19,5 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     MessageNotFound,
-    MessageTypeCannotBeDeleted,
     InternalError(String),
 }

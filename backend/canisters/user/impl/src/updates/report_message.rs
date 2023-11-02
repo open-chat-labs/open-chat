@@ -17,18 +17,13 @@ async fn report_message(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if args.delete {
-        match mutate_state(|state| delete_message(&args, c2c_args.reporter, state)) {
-            Ok(_) => (),
-            Err(response) => return response,
-        }
-    }
-
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
-        Ok(result) => match result {
-            c2c_report_message::Response::Success => Success,
-            c2c_report_message::Response::InternalError(err) => InternalError(err),
-        },
+        Ok(_) => {
+            if args.delete {
+                mutate_state(|state| delete_message(&args, c2c_args.reporter, state));
+            }
+            Success
+        }
         Err(err) => InternalError(format!("{err:?}")),
     }
 }
@@ -62,24 +57,15 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
     }
 }
 
-fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) -> Result<(), Response> {
+fn delete_message(args: &Args, reporter: UserId, state: &mut RuntimeState) {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.them.into()) {
-        let (_, result) = &chat.events.delete_messages(DeleteUndeleteMessagesArgs {
+        chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: reporter,
             is_admin: true,
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_ids: vec![args.message_id],
             now: state.env.now(),
-        })[0];
-
-        match result {
-            chat_events::DeleteMessageResult::Success(_) | chat_events::DeleteMessageResult::AlreadyDeleted => Ok(()),
-            chat_events::DeleteMessageResult::MessageTypeCannotBeDeleted => Err(MessageTypeCannotBeDeleted),
-            chat_events::DeleteMessageResult::NotAuthorized => unreachable!(),
-            chat_events::DeleteMessageResult::NotFound => Err(MessageNotFound),
-        }
-    } else {
-        Err(ChatNotFound)
+        });
     }
 }

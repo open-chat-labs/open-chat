@@ -131,7 +131,6 @@ type ReportMessageResponse = variant {
     UserSuspended;
     ChatNotFound;
     MessageNotFound;
-    MessageTypeCannotBeDeleted;
     InternalError : text;
 };
 

@@ -22,6 +22,5 @@ pub enum Response {
     NotAuthorized,
     UserNotInChannel,
     MessageNotFound,
-    MessageTypeCannotBeDeleted,
     InternalError(String),
 }

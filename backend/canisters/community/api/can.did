@@ -727,7 +727,6 @@ type ReportMessageResponse = variant {
     NotAuthorized;
     UserNotInChannel;
     MessageNotFound;
-    MessageTypeCannotBeDeleted;
     InternalError : text;
 };
 
