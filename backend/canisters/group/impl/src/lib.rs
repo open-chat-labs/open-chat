@@ -105,7 +105,6 @@ impl RuntimeState {
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
-        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
@@ -119,7 +118,8 @@ impl RuntimeState {
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
-            latest_event_index,
+            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: main_events_reader.latest_message_index(),
             joined: member.date_added,
             participant_count: chat.members.len(),
             role: member.role.value.into(),

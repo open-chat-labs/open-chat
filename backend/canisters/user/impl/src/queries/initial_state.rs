@@ -111,6 +111,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         min_visible_message_index: cached.min_visible_message_index,
         latest_message: cached.latest_message.clone(),
         latest_event_index: cached.latest_event_index,
+        latest_message_index: cached.latest_message_index,
         joined: cached.joined,
         read_by_me_up_to: user_details.messages_read.read_by_me_up_to.value,
         notifications_muted: cached.notifications_muted,
