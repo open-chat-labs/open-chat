@@ -3,21 +3,21 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::report_message::{Response::*, *};
+use group_index_canister::c2c_report_message;
 use ic_cdk_macros::update;
-use types::{CanisterId, Chat, UserId};
-use user_index_canister::c2c_report_message;
+use types::{CanisterId, MultiUserChat, UserId};
 
 #[update]
 #[trace]
 async fn report_message(args: Args) -> Response {
     run_regular_jobs();
 
-    let (c2c_args, user_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
+    let (c2c_args, group_index_canister) = match read_state(|state| build_c2c_args(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
+    match group_index_canister_c2c_client::c2c_report_message(group_index_canister, &c2c_args).await {
         Ok(_) => {
             if args.delete {
                 mutate_state(|state| delete_message(&args, c2c_args.reporter, state));
@@ -59,13 +59,13 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
                         Ok((
                             c2c_report_message::Args {
                                 reporter: user_id,
-                                chat_id: Chat::Channel(state.env.canister_id().into(), args.channel_id),
+                                chat_id: MultiUserChat::Channel(state.env.canister_id().into(), args.channel_id),
                                 thread_root_message_index: args.thread_root_message_index,
                                 message,
                                 reason_code: args.reason_code,
                                 notes: args.notes.clone(),
                             },
-                            state.data.user_index_canister_id,
+                            state.data.group_index_canister_id,
                         ))
                     } else {
                         Err(MessageNotFound)
