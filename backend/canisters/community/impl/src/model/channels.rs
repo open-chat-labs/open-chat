@@ -208,7 +208,6 @@ impl Channel {
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
 
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
-        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
         let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
 
         let latest_message_sender_display_name = latest_message
@@ -252,7 +251,8 @@ impl Channel {
             min_visible_message_index,
             latest_message,
             latest_message_sender_display_name,
-            latest_event_index,
+            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: main_events_reader.latest_message_index(),
             member_count: chat.members.len(),
             permissions_v2: chat.permissions.value.clone(),
             metrics: chat.events.metrics().hydrate(),
@@ -332,6 +332,7 @@ impl Channel {
             latest_message,
             latest_message_sender_display_name,
             latest_event_index: updates.latest_event_index,
+            latest_message_index: updates.latest_message_index,
             member_count: updates.member_count,
             permissions_v2: updates.permissions,
             updated_events: updates.updated_events,
