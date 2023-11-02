@@ -17,10 +17,6 @@ async fn report_message(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if args.delete {
-        mutate_state(|state| delete_message(&args, c2c_args.reporter, state));
-    }
-
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
         Ok(_) => {
             if args.delete {
