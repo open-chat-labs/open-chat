@@ -10,8 +10,8 @@ use proposals_bot_canister::{ProposalToSubmit, ProposalToSubmitAction, Treasury}
 use sns_governance_canister::types::manage_neuron::Command;
 use sns_governance_canister::types::proposal::Action;
 use sns_governance_canister::types::{
-    manage_neuron_response, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds, UpgradeSnsControlledCanister,
-    UpgradeSnsToNextVersion,
+    manage_neuron_response, ExecuteGenericNervousSystemFunction, Motion, Proposal, Subaccount, TransferSnsTreasuryFunds,
+    UpgradeSnsControlledCanister, UpgradeSnsToNextVersion,
 };
 use tracing::{error, info};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserDetails, UserId};
@@ -224,6 +224,12 @@ fn convert_proposal_action(action: ProposalToSubmitAction) -> Action {
                 new_canister_wasm: u.new_canister_wasm.into_vec(),
                 mode: Some(u.mode.into()),
                 canister_upgrade_arg: None,
+            })
+        }
+        ProposalToSubmitAction::ExecuteGenericNervousSystemFunction(e) => {
+            Action::ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction {
+                function_id: e.function_id,
+                payload: e.payload.into_vec(),
             })
         }
     }

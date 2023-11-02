@@ -593,7 +593,7 @@ type ProposalToSubmitAction = variant {
         memo : opt nat64;
     };
     UpgradeSnsToNextVersion;
-    UpgradeSnsControlledCanister: record {
+    UpgradeSnsControlledCanister : record {
         canister_id : CanisterId;
         new_canister_wasm : blob;
         mode : variant {
@@ -601,6 +601,10 @@ type ProposalToSubmitAction = variant {
             Reinstall;
             Upgrade;
         };
+    };
+    ExecuteGenericNervousSystemFunction : record {
+        function_id : nat64;
+        payload : blob;
     };
 };
 
