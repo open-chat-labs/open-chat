@@ -9,6 +9,7 @@ pub struct Args {
     pub message_id: MessageId,
     pub reason_code: u32,
     pub notes: Option<String>,
+    pub delete: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,7 +17,9 @@ pub enum Response {
     Success,
     CommunityFrozen,
     UserNotInCommunity,
+    UserSuspended,
     ChannelNotFound,
+    NotAuthorized,
     UserNotInChannel,
     MessageNotFound,
     InternalError(String),

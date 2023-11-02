@@ -135,6 +135,24 @@ type RemoveReactionResponse = variant {
     ChatFrozen;
 };
 
+type ReportMessageArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reason_code : nat32;
+    notes : opt text;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    ChatFrozen;
+    UserSuspended;
+    NotAuthorized;
+    CallerNotInGroup;
+    MessageNotFound;
+    InternalError : text;
+};
+
 type BlockUserArgs = record {
     user_id : UserId;
     correlation_id : nat64;
@@ -614,6 +632,7 @@ service : {
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
     register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);
