@@ -18,6 +18,7 @@ pub enum ProposalToSubmitAction {
     TransferSnsTreasuryFunds(TransferSnsTreasuryFunds),
     UpgradeSnsToNextVersion,
     UpgradeSnsControlledCanister(UpgradeSnsControlledCanister),
+    ExecuteGenericNervousSystemFunction(ExecuteGenericNervousSystemFunction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -56,6 +57,12 @@ impl From<CanisterInstallMode> for i32 {
             CanisterInstallMode::Upgrade => 3,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ExecuteGenericNervousSystemFunction {
+    pub function_id: u64,
+    pub payload: ByteBuf,
 }
 
 mod lifecycle;
