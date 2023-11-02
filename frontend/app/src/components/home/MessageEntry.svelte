@@ -281,15 +281,6 @@
         return [expandedText, mentioned];
     }
 
-    function spookyTime(date: Date): boolean {
-        const time = date.getTime();
-        const halloween = new Date(date.getFullYear(), 9, 31).getTime();
-        const week = 7 * 24 * 60 * 60 * 1000;
-        const start = halloween - week;
-        const end = halloween + week;
-        return time >= start && time <= end;
-    }
-
     /**
      * Check the message content for special commands
      * * /poll - creates a poll
@@ -297,26 +288,23 @@
      * * /search [term]
      * * /pinned - opens pinned messages (not yet)
      * * /details - opens group details (not yet)
+     * * /witch - summon the halloween witch
      */
     function parseCommands(txt: string): boolean {
+        const summonWitch = txt.match(/^\/witch( *(.*))$/);
         const isHalloweenTheme = $currentThemeName === "halloween";
-        if (isHalloweenTheme || spookyTime(new Date())) {
-            const summonWitch = txt.match(
-                /pumpkin|zombie|skeleton|cauldron|halloween|witch|spooky|ghost/i
-            );
-            if (summonWitch) {
-                if (!isHalloweenTheme) {
-                    themeType.set("dark");
-                    preferredDarkThemeName.set("halloween");
-                }
-                document.body.classList.add("witch");
-                scream.currentTime = 0;
-                scream.play();
-                window.setTimeout(() => {
-                    document.body.classList.remove("witch");
-                }, 2000);
-                return false;
+        if (summonWitch) {
+            if (!isHalloweenTheme) {
+                themeType.set("dark");
+                preferredDarkThemeName.set("halloween");
             }
+            document.body.classList.add("witch");
+            scream.currentTime = 0;
+            scream.play();
+            window.setTimeout(() => {
+                document.body.classList.remove("witch");
+            }, 2000);
+            return false;
         }
 
         if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
