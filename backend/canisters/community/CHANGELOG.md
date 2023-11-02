@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `report_message` endpoint ([#4691](https://github.com/open-chat-labs/open-chat/pull/4691))
+
 ### Changed
 
 - Reduce size of message content when serialized ([#4680](https://github.com/open-chat-labs/open-chat/pull/4680))
