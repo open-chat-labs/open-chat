@@ -14,6 +14,7 @@
         type CommunitySummary,
         type OpenChat,
         emptyUnreadCounts,
+        ANON_USER_ID,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -43,6 +44,7 @@
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: communityExplorer = $pathParams.kind === "communities_route";
+    $: anon = user.userId === ANON_USER_ID;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -146,15 +148,17 @@
             </LeftNavItem>
         {/if}
 
-        <LeftNavItem
-            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
-            label={$_("communities.directChats")}
-            unread={$unreadDirectChats}
-            on:click={directChats}>
-            <div class="hover direct">
-                <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
+        {#if !anon}
+            <LeftNavItem
+                selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+                label={$_("communities.directChats")}
+                unread={$unreadDirectChats}
+                on:click={directChats}>
+                <div class="hover direct">
+                    <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
 
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
@@ -166,16 +170,18 @@
             </div>
         </LeftNavItem>
 
-        <LeftNavItem
-            selected={$chatListScope.kind === "favourite" && !communityExplorer}
-            separator
-            label={$_("communities.favourites")}
-            unread={$unreadFavouriteChats}
-            on:click={favouriteChats}>
-            <div class="hover favs">
-                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
+        {#if !anon}
+            <LeftNavItem
+                selected={$chatListScope.kind === "favourite" && !communityExplorer}
+                separator
+                label={$_("communities.favourites")}
+                unread={$unreadFavouriteChats}
+                on:click={favouriteChats}>
+                <div class="hover favs">
+                    <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+                </div>
+            </LeftNavItem>
+        {/if}
     </div>
 
     <div

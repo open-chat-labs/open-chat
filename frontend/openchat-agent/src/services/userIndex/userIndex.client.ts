@@ -11,7 +11,6 @@ import type {
     UserSummary,
     SuspendUserResponse,
     UnsuspendUserResponse,
-    MarkSuspectedBotResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
@@ -54,14 +53,14 @@ export class UserIndexClient extends CandidService {
         this.userIndexService = this.createServiceClient<UserIndexService>(
             idlFactory,
             config.userIndexCanister,
-            config
+            config,
         );
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
-            currentUserResponse
+            currentUserResponse,
         );
     }
 
@@ -70,14 +69,14 @@ export class UserIndexClient extends CandidService {
             this.userIndexService.set_moderation_flags({
                 moderation_flags_enabled: flags,
             }),
-            (_) => true
+            (_) => true,
         );
     }
 
     userRegistrationCanister(): Promise<string> {
         return this.handleResponse(
             this.userIndexService.user_registration_canister({}),
-            userRegistrationCanisterResponse
+            userRegistrationCanisterResponse,
         );
     }
 
@@ -89,7 +88,7 @@ export class UserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userIndexService.search(args),
             userSearchResponse,
-            args
+            args,
         );
     }
 
@@ -111,11 +110,11 @@ export class UserIndexClient extends CandidService {
             allUsers,
             requestedFromServer,
             response,
-            fromCache
+            fromCache,
         );
 
         setCachedUsers(mergedResponse.users).catch((err) =>
-            console.error("Failed to save users to the cache", err)
+            console.error("Failed to save users to the cache", err),
         );
 
         return mergedResponse;
@@ -139,14 +138,14 @@ export class UserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userIndexService.users_v2(args),
             usersResponse,
-            args
+            args,
         );
     }
 
     private buildGetUsersArgs(
         users: string[],
         fromCache: UserSummary[],
-        allowStale: boolean
+        allowStale: boolean,
     ): UsersArgs {
         const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
         const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
@@ -182,16 +181,14 @@ export class UserIndexClient extends CandidService {
         allUsers: string[],
         requestedFromServer: Set<string>,
         response: UsersResponse,
-        fromCache: UserSummary[]
+        fromCache: UserSummary[],
     ): UsersResponse {
         if (fromCache.length === 0) {
             return response;
         }
 
         const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
-        const responseMap = new Map<string, UserSummary>(
-            response.users.map((u) => [u.userId, u])
-        );
+        const responseMap = new Map<string, UserSummary>(response.users.map((u) => [u.userId, u]));
 
         const users: UserSummary[] = [];
 
@@ -232,7 +229,7 @@ export class UserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userIndexService.check_username(args),
             checkUsernameResponse,
-            args
+            args,
         );
     }
 
@@ -241,7 +238,7 @@ export class UserIndexClient extends CandidService {
             this.userIndexService.set_username({
                 username: username,
             }),
-            setUsernameResponse
+            setUsernameResponse,
         ).then((res) => {
             if (res === "success") {
                 setUsernameInCache(userId, username);
@@ -250,12 +247,15 @@ export class UserIndexClient extends CandidService {
         });
     }
 
-    setDisplayName(userId: string, displayName: string | undefined): Promise<SetDisplayNameResponse> {
+    setDisplayName(
+        userId: string,
+        displayName: string | undefined,
+    ): Promise<SetDisplayNameResponse> {
         return this.handleResponse(
             this.userIndexService.set_display_name({
                 display_name: apiOptional(identity, displayName),
             }),
-            setDisplayNameResponse
+            setDisplayNameResponse,
         ).then((res) => {
             if (res === "success") {
                 setDisplayNameInCache(userId, displayName);
@@ -271,7 +271,7 @@ export class UserIndexClient extends CandidService {
                 duration: [],
                 reason,
             }),
-            suspendUserResponse
+            suspendUserResponse,
         );
     }
 
@@ -280,12 +280,8 @@ export class UserIndexClient extends CandidService {
             this.userIndexService.unsuspend_user({
                 user_id: Principal.fromText(userId),
             }),
-            unsuspendUserResponse
+            unsuspendUserResponse,
         );
-    }
-
-    markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
-        return this.handleResponse(this.userIndexService.mark_suspected_bot({}), () => "success");
     }
 
     payForDiamondMembership(
@@ -293,7 +289,7 @@ export class UserIndexClient extends CandidService {
         token: string,
         duration: DiamondMembershipDuration,
         recurring: boolean,
-        expectedPriceE8s: bigint
+        expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
         return this.handleResponse(
             this.userIndexService.pay_for_diamond_membership({
@@ -302,7 +298,7 @@ export class UserIndexClient extends CandidService {
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
             }),
-            payForDiamondMembershipResponse
+            payForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
                 setUserDiamondStatusToTrueInCache(userId);
@@ -314,7 +310,7 @@ export class UserIndexClient extends CandidService {
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.userIndexService.set_user_upgrade_concurrency({ value }),
-            () => "success"
+            () => "success",
         );
     }
 
@@ -331,13 +327,13 @@ export class UserIndexClient extends CandidService {
                     };
                 }, req),
             }),
-            referralLeaderboardResponse
+            referralLeaderboardResponse,
         );
     }
 
     getPlatformModeratorGroup(): Promise<string> {
         return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
-            res.Success.toString()
+            res.Success.toString(),
         );
     }
 }

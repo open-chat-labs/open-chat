@@ -1,4 +1,11 @@
-import type { UserSummary, UserLookup } from "openchat-shared";
+import {
+    type UserSummary,
+    type UserLookup,
+    ANON_USER_ID,
+    ANON_USERNAME,
+    ANON_DISPLAY_NAME,
+    ANON_AVATAR_URL,
+} from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
 export const currentUserKey = Symbol();
@@ -13,6 +20,17 @@ export const openChatBotUser: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
+    diamond: false,
+};
+
+export const anonymousUserSummary: UserSummary = {
+    kind: "user",
+    userId: ANON_USER_ID,
+    username: ANON_USERNAME,
+    displayName: ANON_DISPLAY_NAME,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: ANON_AVATAR_URL,
     diamond: false,
 };
 

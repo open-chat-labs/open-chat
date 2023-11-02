@@ -2,7 +2,6 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
-import { load } from "@fingerprintjs/botd";
 import DRange from "drange";
 import {
     canChangeRoles as canChangeCommunityRoles,
@@ -174,6 +173,7 @@ import {
     proposalsBotUser,
     specialUsers,
     userStore,
+    anonymousUserSummary,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -367,6 +367,8 @@ import {
     isMessageNotification,
     userIdsFromTransactions,
     contentTypeToPermission,
+    anonymousUser,
+    ANON_USER_ID,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -433,7 +435,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
-    private _botDetected = false;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     private _cachePrimer: CachePrimer | undefined = undefined;
@@ -453,6 +454,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
+            [ANON_USER_ID]: anonymousUserSummary,
             [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
 
@@ -468,14 +470,6 @@ export class OpenChat extends OpenChatAgentWorker {
         initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
-
-        load()
-            .then((botd) => botd.detect())
-            .then((result) => {
-                console.log("BOTD: ", result);
-                this._botDetected = result.bot;
-            })
-            .catch((err) => console.error(err));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -502,10 +496,8 @@ export class OpenChat extends OpenChatAgentWorker {
     private loadedIdentity(id: Identity) {
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();
-        this.identityState.set(anon ? "requires_login" : "loading_user");
-        if (!anon) {
-            this.loadUser();
-        }
+        this.identityState.set(anon ? "anon" : "loading_user");
+        this.loadUser(anon);
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {
@@ -562,6 +554,12 @@ export class OpenChat extends OpenChatAgentWorker {
     // }
 
     private startSession(identity: Identity): Promise<void> {
+        if (this.user.userId === ANON_USER_ID) {
+            return new Promise((_) => {
+                console.debug("ANON: creating an anon session which will never expire");
+            });
+        }
+
         startTrackingSession(identity);
 
         return new Promise((resolve) => {
@@ -609,13 +607,23 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadUser() {
+    private async loadUser(anon: boolean = false) {
+        console.debug("anon: ", anon);
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
+
+        console.log("are we getting here");
         this.startRegistryPoller();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
+
+        if (anon) {
+            // short-circuit if we *know* that the user is anonymous
+            this.onCreatedUser(anonymousUser());
+            return;
+        }
+
         this.getCurrentUser()
             .then((user) => {
                 console.log("Loaded user: ", user);
@@ -633,8 +641,7 @@ export class OpenChat extends OpenChatAgentWorker {
                             });
                             return;
                         }
-
-                        this.identityState.set("registering");
+                        this.onCreatedUser(anonymousUser());
                         break;
                     case "created_user":
                         this.onCreatedUser(user);
@@ -711,12 +718,9 @@ export class OpenChat extends OpenChatAgentWorker {
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
             this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
-            this.identityState.set("logged_in");
-            this.initWebRtc();
-
-            if (this._botDetected && !this._user?.isSuspectedBot) {
-                this.sendRequest({ kind: "markSuspectedBot" });
-                console.log("markSuspectedBot");
+            if (this.anonUser) {
+                this.identityState.set("logged_in");
+                this.initWebRtc();
             }
         }
     }
@@ -743,6 +747,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._authClient.then((c) => {
             return c.logout().then(() => window.location.replace("/"));
         });
+    }
+
+    get anonUser(): boolean {
+        return this.user.userId === ANON_USER_ID;
     }
 
     get hasUser(): boolean {
@@ -4436,7 +4444,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const allUsers = this._liveState.userStore;
-            const usersToUpdate = new Set<string>([this.user.userId]);
+            const usersToUpdate = new Set<string>(this.anonUser ? [] : [this.user.userId]);
 
             // Update all users we have direct chats with
             for (const chat of this._liveState.chatSummariesList) {
@@ -4508,7 +4516,9 @@ export class OpenChat extends OpenChatAgentWorker {
                         userIds.add(userId);
                     }
                 }
-                userIds.add(this.user.userId);
+                if (!this.anonUser) {
+                    userIds.add(this.user.userId);
+                }
                 await this.getMissingUsers(userIds);
 
                 if (chatsResponse.state.blockedUsers !== undefined) {

@@ -282,7 +282,7 @@
         if (
             !$notFound &&
             (landingPage ||
-                $identityState === "requires_login" ||
+                $identityState === "anon" ||
                 $identityState === "logging_in" ||
                 $identityState === "registering")
         ) {
@@ -320,6 +320,8 @@
     $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
+
+    $: console.log("IdentityState: ", $identityState);
 </script>
 
 {#if $currentTheme.burst || landingPage}
@@ -339,7 +341,7 @@
     <SwitchDomain />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+{:else if $identityState === "anon" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
     {#if !$isLoading}
         <Router />
     {/if}

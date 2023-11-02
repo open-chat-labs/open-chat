@@ -8,10 +8,9 @@
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
     $: chatsLoading = client.chatsLoading;
-    $: landingPage =
-        $identityState === "requires_login" ||
-        $identityState === "registering" ||
-        $identityState === "logging_in";
+    $: landingPage = $identityState === "registering" || $identityState === "logging_in";
+
+    $: console.debug("anon: landing", landingPage, $identityState);
 </script>
 
 {#if landingPage}
@@ -29,6 +28,9 @@
 <style lang="scss">
     .loading {
         width: 100vw;
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+        height: 100dvh; // firefox will ignore this
         display: grid;
     }
 
