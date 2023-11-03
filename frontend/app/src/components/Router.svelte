@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy, onMount, SvelteComponent } from "svelte";
+    import { getContext, onDestroy, onMount, SvelteComponent } from "svelte";
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
@@ -19,6 +19,9 @@
         chatListRoute,
         routerReady,
     } from "../routes";
+    import type { OpenChat } from "openchat-client";
+
+    const client = getContext<OpenChat>("client");
 
     let route: typeof SvelteComponent<object> | undefined = undefined;
 

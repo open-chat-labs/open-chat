@@ -3,7 +3,7 @@
     import { _ } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { AuthProvider, type OpenChat } from "openchat-client";
     import ButtonGroup from "../ButtonGroup.svelte";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
@@ -19,6 +19,12 @@
 
     onMount(() => {
         selected = $selectedAuthProviderStore;
+    });
+
+    onDestroy(() => {
+        if (client.anonUser && $identityState === "logging_in") {
+            identityState.set("anon");
+        }
     });
 
     $: console.log("Selected auth provider: ", $selectedAuthProviderStore);

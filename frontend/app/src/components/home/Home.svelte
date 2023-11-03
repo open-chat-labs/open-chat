@@ -356,6 +356,17 @@
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
+
+            if (
+                client.anonUser &&
+                pathParams.kind === "chat_list_route" &&
+                (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
+            ) {
+                client.identityState.set("logging_in");
+                page.redirect("/group");
+                return;
+            }
+
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
@@ -737,7 +748,7 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         if (client.anonUser) {
-            modal = ModalType.LoggingIn;
+            client.identityState.set("logging_in");
             return;
         }
         const { group, select } = ev.detail;

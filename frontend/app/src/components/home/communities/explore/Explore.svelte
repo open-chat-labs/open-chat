@@ -58,7 +58,7 @@
 
     function createCommunity() {
         if (client.anonUser) {
-            client.login();
+            client.identityState.set("logging_in");
             return;
         }
         if (!$isDiamond) {

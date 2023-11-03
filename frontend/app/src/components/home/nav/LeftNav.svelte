@@ -100,7 +100,7 @@
         if (!anon) {
             dispatch("profile");
         } else {
-            client.login();
+            client.identityState.set("logging_in");
         }
     }
 
@@ -109,9 +109,6 @@
     }
 
     function directChats() {
-        if (anon) {
-            client.login();
-        }
         page("/user");
     }
 
@@ -120,9 +117,6 @@
     }
 
     function favouriteChats() {
-        if (anon) {
-            client.login();
-        }
         page("/favourite");
     }
 
