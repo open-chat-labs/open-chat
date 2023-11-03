@@ -420,12 +420,13 @@ export async function getCachedEventIndexByMessageIndex(
 ): Promise<number | undefined> {
     const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const cacheKey = createCacheKey(context, messageIndex);
+    const cacheKeyUpperBound = createCacheKey(context, 9999999999);
     const resolvedDb = await db;
 
     const value = await resolvedDb.getFromIndex(
         store,
         "messageIdx",
-        IDBKeyRange.lowerBound(cacheKey),
+        IDBKeyRange.bound(cacheKey, cacheKeyUpperBound),
     );
 
     if (
