@@ -5,7 +5,11 @@ export type CandidateProposal = {
     action: CandidateProposalAction;
 };
 
-export type CandidateProposalAction = Motion | TransferSnsFunds | UpgradeSnsToNextVersion;
+export type CandidateProposalAction =
+    | Motion
+    | TransferSnsFunds
+    | UpgradeSnsToNextVersion
+    | ExecuteGenericNervousSystemFunction;
 
 export type Motion = {
     kind: "motion";
@@ -27,4 +31,10 @@ export type Treasury = "SNS" | "ICP";
 
 export type UpgradeSnsToNextVersion = {
     kind: "upgrade_sns_to_next_version";
+};
+
+export type ExecuteGenericNervousSystemFunction = {
+    kind: "execute_generic_nervous_system_function";
+    functionId: bigint;
+    payload: Uint8Array;
 };
