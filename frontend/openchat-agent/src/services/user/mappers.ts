@@ -1082,6 +1082,13 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
             };
         case "upgrade_sns_to_next_version":
             return { UpgradeSnsToNextVersion: null };
+        case "execute_generic_nervous_system_function":
+            return {
+                ExecuteGenericNervousSystemFunction: {
+                    function_id: action.functionId,
+                    payload: action.payload,
+                },
+            };
     }
 }
 
