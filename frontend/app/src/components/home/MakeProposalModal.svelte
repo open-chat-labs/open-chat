@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { IDL } from "@dfinity/candid";
-    import { Principal } from "@dfinity/principal";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
     import ModalContent from "../ModalContent.svelte";
@@ -26,6 +24,7 @@
     import Markdown from "./Markdown.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
+    import { createAddTokenPayload } from "../../utils/sns";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -168,7 +167,7 @@
                 return {
                     kind: "execute_generic_nervous_system_function",
                     functionId: BigInt(7000),
-                    payload: createAddTokenPayload(),
+                    payload: createAddTokenPayload(addTokenLedgerCanisterId, addTokenInfoUrl, addTokenHowToBuyUrl, addTokenTransactionUrlFormat),
                 }
             }
         }
@@ -208,24 +207,6 @@
         return `${summary}
 
 > Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app${groupPath})`;
-    }
-
-    function createAddTokenPayload(): Uint8Array {
-        return new Uint8Array(IDL.encode([IDL.Record({
-            'how_to_buy_url' : IDL.Text,
-            'info_url' : IDL.Text,
-            'logo' : IDL.Opt(IDL.Text),
-            'token_standard' : IDL.Variant({ 'icrc1' : IDL.Null }),
-            'ledger_canister_id' : IDL.Principal,
-            'transaction_url_format' : IDL.Text,
-        })], [{
-            how_to_buy_url: addTokenHowToBuyUrl,
-            info_url: addTokenInfoUrl,
-            logo: [],
-            token_standard: { icrc1: null },
-            ledger_canister_id: Principal.fromText(addTokenLedgerCanisterId ?? ""),
-            transaction_url_format: addTokenTransactionUrlFormat ?? ""
-        }]));
     }
 </script>
 
