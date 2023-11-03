@@ -5,9 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.925](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.925-local_group_index)] - 2023-11-03
+
 ### Changed
 
 - Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+
+### Removed
+
+- Removed old permissions code ([#4667](https://github.com/open-chat-labs/open-chat/pull/4667))
 
 ## [[2.0.908](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.908-local_group_index)] - 2023-10-27
 
