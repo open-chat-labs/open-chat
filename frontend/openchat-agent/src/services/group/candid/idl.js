@@ -828,6 +828,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'wasm_version' : BuildVersion,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -916,6 +917,22 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
+  });
+  const ReportMessageArgs = IDL.Record({
+    'delete' : IDL.Bool,
+    'notes' : IDL.Opt(IDL.Text),
+    'message_id' : MessageId,
+    'reason_code' : IDL.Nat32,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ReportMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const ResetInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
   const ResetInviteCodeResponse = IDL.Variant({
@@ -1089,6 +1106,7 @@ export const idlFactory = ({ IDL }) => {
     'role' : GroupRole,
     'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -1147,6 +1165,7 @@ export const idlFactory = ({ IDL }) => {
     'role' : IDL.Opt(GroupRole),
     'wasm_version' : IDL.Opt(BuildVersion),
     'notifications_muted' : IDL.Opt(IDL.Bool),
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
@@ -1417,6 +1436,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_reaction' : IDL.Func(
         [RemoveReactionArgs],
         [RemoveReactionResponse],
+        [],
+      ),
+    'report_message' : IDL.Func(
+        [ReportMessageArgs],
+        [ReportMessageResponse],
         [],
       ),
     'reset_invite_code' : IDL.Func(

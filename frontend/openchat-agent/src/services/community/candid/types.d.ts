@@ -325,6 +325,7 @@ export interface CommunityCanisterChannelSummary {
   'min_visible_event_index' : EventIndex,
   'gate' : [] | [AccessGate],
   'name' : string,
+  'latest_message_index' : [] | [MessageIndex],
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -346,6 +347,7 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'date_last_pinned' : [] | [TimestampMillis],
   'gate' : AccessGateUpdate,
   'name' : [] | [string],
+  'latest_message_index' : [] | [MessageIndex],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
@@ -578,6 +580,7 @@ export interface DirectChatSummary {
   'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
+  'latest_message_index' : MessageIndex,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'latest_event_index' : EventIndex,
@@ -590,6 +593,7 @@ export interface DirectChatSummaryUpdates {
   'read_by_them_up_to' : [] | [MessageIndex],
   'metrics' : [] | [ChatMetrics],
   'notifications_muted' : [] | [boolean],
+  'latest_message_index' : [] | [MessageIndex],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'latest_event_index' : [] | [EventIndex],
@@ -791,6 +795,7 @@ export interface GroupCanisterGroupChatSummary {
   'role' : GroupRole,
   'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
+  'latest_message_index' : [] | [MessageIndex],
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -819,6 +824,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'role' : [] | [GroupRole],
   'wasm_version' : [] | [BuildVersion],
   'notifications_muted' : [] | [boolean],
+  'latest_message_index' : [] | [MessageIndex],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
@@ -858,6 +864,7 @@ export interface GroupChatSummary {
   'role' : GroupRole,
   'wasm_version' : BuildVersion,
   'notifications_muted' : boolean,
+  'latest_message_index' : [] | [MessageIndex],
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -1430,6 +1437,7 @@ export interface PublicGroupSummary {
   'gate' : [] | [AccessGate],
   'name' : string,
   'wasm_version' : BuildVersion,
+  'latest_message_index' : [] | [MessageIndex],
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
@@ -1534,6 +1542,23 @@ export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_index' : EventIndex,
 }
+export interface ReportMessageArgs {
+  'channel_id' : ChannelId,
+  'delete' : boolean,
+  'notes' : [] | [string],
+  'message_id' : MessageId,
+  'reason_code' : number,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type ReportMessageResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string };
 export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
@@ -2019,6 +2044,7 @@ export interface _SERVICE {
     RemoveMemberFromChannelResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
+  'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
   'reset_invite_code' : ActorMethod<[EmptyArgs], EnableInviteCodeResponse>,
   'search_channel' : ActorMethod<[SearchChannelArgs], SearchChannelResponse>,
   'selected_channel_initial' : ActorMethod<
