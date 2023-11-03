@@ -22,6 +22,10 @@
     }
 
     function joinCommunity() {
+        if (client.anonUser) {
+            client.login();
+            return;
+        }
         doJoinCommunity(undefined);
     }
 

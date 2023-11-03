@@ -2,20 +2,16 @@
     import Home from "./Home.svelte";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import LandingPage from "../landingpages/LandingPage.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
     $: chatsLoading = client.chatsLoading;
-    $: landingPage = $identityState === "registering" || $identityState === "logging_in";
 
-    $: console.debug("anon: landing", landingPage, $identityState);
+    $: console.log("State: ", $identityState, $chatsLoading);
 </script>
 
-{#if landingPage}
-    <LandingPage />
-{:else if $identityState === "loading_user" || $chatsLoading}
+{#if $identityState === "loading_user" || $chatsLoading}
     <div class="loading">
         <div class="inner-loader">
             <FancyLoader />

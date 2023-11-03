@@ -57,6 +57,10 @@
     }
 
     function createCommunity() {
+        if (client.anonUser) {
+            client.login();
+            return;
+        }
         if (!$isDiamond) {
             dispatch("upgrade");
         } else {

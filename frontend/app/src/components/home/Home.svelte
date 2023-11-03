@@ -85,6 +85,8 @@
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Register from "../register/Register.svelte";
+    import LoggingInModal from "./LoggingInModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -145,6 +147,8 @@
         HallOfFame,
         EditCommunity,
         MakeProposal,
+        Registering,
+        LoggingIn,
     }
 
     let modal = ModalType.None;
@@ -159,6 +163,7 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: identityState = client.identityState;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: selectedChatStore = client.selectedChatStore;
@@ -180,6 +185,18 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+
+    $: {
+        if ($identityState === "registering") {
+            modal = ModalType.Registering;
+        }
+        if ($identityState === "logging_in") {
+            modal = ModalType.LoggingIn;
+        }
+        if ($identityState === "anon" && modal === ModalType.LoggingIn) {
+            modal = ModalType.None;
+        }
+    }
 
     $: {
         document.title =
@@ -722,6 +739,10 @@
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
+        if (client.anonUser) {
+            client.login();
+            return;
+        }
         const { group, select } = ev.detail;
         doJoinGroup(group, select, undefined);
     }
@@ -1002,7 +1023,6 @@
             on:profile={showProfile}
             on:wallet={showWallet}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
             on:newChannel={newChannel}
@@ -1107,6 +1127,7 @@
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
+            modal !== ModalType.LoggingIn &&
             modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
@@ -1137,7 +1158,17 @@
             <HallOfFame on:close={closeModal} />
         {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
+        {:else if modal === ModalType.LoggingIn}
+            <LoggingInModal on:close={closeModal} />
         {/if}
+    </Overlay>
+{/if}
+
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
     </Overlay>
 {/if}
 

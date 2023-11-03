@@ -96,11 +96,22 @@
         }
     }
 
+    function viewProfile() {
+        if (!anon) {
+            dispatch("profile");
+        } else {
+            client.login();
+        }
+    }
+
     function exploreCommunities() {
         page("/communities");
     }
 
     function directChats() {
+        if (anon) {
+            client.login();
+        }
         page("/user");
     }
 
@@ -109,6 +120,9 @@
     }
 
     function favouriteChats() {
+        if (anon) {
+            client.login();
+        }
         page("/favourite");
     }
 
@@ -136,29 +150,28 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:wallet on:halloffame on:logout on:upgrade on:profile />
+                        <MainMenu on:wallet on:halloffame on:upgrade on:profile />
                     </span>
                 </MenuIcon>
             </div>
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.title")} on:click={() => dispatch("profile")}>
+            <LeftNavItem label={$_("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
 
-        {#if !anon}
-            <LeftNavItem
-                selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
-                label={$_("communities.directChats")}
-                unread={$unreadDirectChats}
-                on:click={directChats}>
-                <div class="hover direct">
-                    <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
-        {/if}
+        <LeftNavItem
+            selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
+            label={$_("communities.directChats")}
+            unread={$unreadDirectChats}
+            disabled={anon}
+            on:click={directChats}>
+            <div class="hover direct">
+                <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
 
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
@@ -170,18 +183,17 @@
             </div>
         </LeftNavItem>
 
-        {#if !anon}
-            <LeftNavItem
-                selected={$chatListScope.kind === "favourite" && !communityExplorer}
-                separator
-                label={$_("communities.favourites")}
-                unread={$unreadFavouriteChats}
-                on:click={favouriteChats}>
-                <div class="hover favs">
-                    <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
-                </div>
-            </LeftNavItem>
-        {/if}
+        <LeftNavItem
+            selected={$chatListScope.kind === "favourite" && !communityExplorer}
+            separator
+            disabled={anon}
+            label={$_("communities.favourites")}
+            unread={$unreadFavouriteChats}
+            on:click={favouriteChats}>
+            <div class="hover favs">
+                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
     </div>
 
     <div

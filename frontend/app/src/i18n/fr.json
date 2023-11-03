@@ -227,13 +227,6 @@
         "unread": "{count} message(s) non lu(s)",
         "mentions": "{count} mention(s) non lue(s)"
     },
-    "login": {
-        "welcomeTo": "Bienvenue à ...",
-        "blurbPartOne": "Une application de chat sécurisée, intuitive et décentralisée fonctionnant entièrement sur",
-        "blurbPartTwo": " - la première blockchain au monde à l'échelle d'Internet. Lire la suite",
-        "signIn": "S'identifier",
-        "signInOrRegister": "Connexion ou Inscription"
-    },
     "reactions": {
         "greaterThan99People": "99+ personnes",
         "youClickToRemove": "Vous (cliquez pour supprimer)",

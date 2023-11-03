@@ -205,13 +205,6 @@
         "unread": "{count} הודעות שלא נקראו",
         "mentions": "{count} אזכור(ים) שלא נקראו"
     },
-    "login": {
-        "welcomeTo": "ברוך הבא ל ...",
-        "blurbPartOne": "אפליקציית צ'אט מאובטחת, אינטואיטיבית, מבוזרת פועלת כולה",
-        "blurbPartTwo": " - הבלוקצ'יין הראשון בעולם בקנה מידה אינטרנטי. קרא עוד",
-        "signIn": "להתחבר",
-        "signInOrRegister": "היכנס או הירשם"
-    },
     "reactions": {
         "greaterThan99People": "99+ אנשים",
         "youClickToRemove": "אתה (לחץ כדי להסיר)",

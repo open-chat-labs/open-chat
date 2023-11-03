@@ -441,6 +441,9 @@ export class OpenChat extends OpenChatAgentWorker {
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
     private _userLookupForMentions: Record<string, UserOrUserGroup> | undefined = undefined;
+    private _chatsPoller: Poller | undefined = undefined;
+    private _registryPoller: Poller | undefined = undefined;
+    private _userUpdatePoller: Poller | undefined = undefined;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -520,9 +523,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 identityProvider: this.buildAuthProviderUrl(authProvider),
                 maxTimeToLive: SESSION_TIMEOUT_NANOS,
                 derivationOrigin: this.config.iiDerivationOrigin,
-                onSuccess: () => this.loadedIdentity(c.getIdentity()),
+                onSuccess: () => {
+                    this._user = undefined;
+                    chatsInitialised.set(false);
+                    this.loadedIdentity(c.getIdentity());
+                },
                 onError: (err) => {
-                    throw new Error(err);
+                    this.identityState.set("anon");
+                    console.warn("Login error from auth client: ", err);
                 },
             });
         });
@@ -554,7 +562,7 @@ export class OpenChat extends OpenChatAgentWorker {
     // }
 
     private startSession(identity: Identity): Promise<void> {
-        if (this.user.userId === ANON_USER_ID) {
+        if (this.anonUser) {
             return new Promise((_) => {
                 console.debug("ANON: creating an anon session which will never expire");
             });
@@ -612,7 +620,6 @@ export class OpenChat extends OpenChatAgentWorker {
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
-        console.log("are we getting here");
         this.startRegistryPoller();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
@@ -709,33 +716,50 @@ export class OpenChat extends OpenChatAgentWorker {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            new Poller(
-                () => this.loadChats(),
-                CHAT_UPDATE_INTERVAL,
-                CHAT_UPDATE_IDLE_INTERVAL,
-                true,
-            );
-            new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
+            this.startChatsPoller();
+            this.startUserUpdatePoller();
             initNotificationStores();
             this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
-            if (this.anonUser) {
+            if (!this.anonUser) {
                 this.identityState.set("logged_in");
                 this.initWebRtc();
             }
         }
     }
 
-    private startOnlinePoller() {
-        new Poller(
-            () => this.sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve(),
-            MARK_ONLINE_INTERVAL,
-            undefined,
+    private startUserUpdatePoller() {
+        this._userUpdatePoller?.stop();
+        this._userUpdatePoller = new Poller(
+            () => this.updateUsers(),
+            USER_UPDATE_INTERVAL,
+            USER_UPDATE_INTERVAL,
+        );
+    }
+
+    private startChatsPoller() {
+        this._chatsPoller?.stop();
+        this._chatsPoller = new Poller(
+            () => this.loadChats(),
+            CHAT_UPDATE_INTERVAL,
+            CHAT_UPDATE_IDLE_INTERVAL,
             true,
         );
     }
 
+    private startOnlinePoller() {
+        if (!this.anonUser) {
+            new Poller(
+                () => this.sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve(),
+                MARK_ONLINE_INTERVAL,
+                undefined,
+                true,
+            );
+        }
+    }
+
     private startRegistryPoller() {
-        new Poller(
+        this._registryPoller?.stop();
+        this._registryPoller = new Poller(
             () => this.updateRegistry(),
             REGISTRY_UPDATE_INTERVAL,
             REGISTRY_UPDATE_INTERVAL,
@@ -5512,6 +5536,8 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getDefaultScope(): ChatListScope {
+        if (this.anonUser) return { kind: "group_chat" };
+
         // sometimes we have to re-direct the user to home route "/"
         // However, with communities enabled it is not clear what this means
         // we actually need to direct the user to one of the global scopes "direct", "group" or "favourites"

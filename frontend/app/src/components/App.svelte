@@ -279,13 +279,7 @@
     }
 
     $: {
-        if (
-            !$notFound &&
-            (landingPage ||
-                $identityState === "anon" ||
-                $identityState === "logging_in" ||
-                $identityState === "registering")
-        ) {
+        if (!$notFound && landingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
@@ -320,8 +314,6 @@
     $: burstPath = $currentTheme.mode === "dark" ? "/assets/burst_dark" : "/assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
     $: burstFixed = isScrollingRoute($pathParams);
-
-    $: console.log("IdentityState: ", $identityState);
 </script>
 
 {#if $currentTheme.burst || landingPage}

@@ -194,13 +194,6 @@
         "unread": "{count} 件の未読メッセージ",
         "mentions": "{count}件の未読メンション"
     },
-    "login": {
-        "welcomeTo": "ようこそ...",
-        "blurbPartOne": "のみで動作する安全で直感的な分散型チャットアプリです。 ",
-        "blurbPartTwo": " - 世界初のインターネットスケールブロックチェーン 続きを読む ",
-        "signIn": "サインイン",
-        "signInOrRegister": "サインインまたは登録"
-    },
     "reactions": {
         "greaterThan99People": "99名以上",
         "youClickToRemove": "あなた（クリックすると削除されます）",
