@@ -99,10 +99,10 @@ impl Job for RecurringDiamondMembershipPayment {
                                 user_id,
                                 message: MessageContent::Text(TextContent {
                                     text: format!(
-                                        "Failed to take payment for Diamond membership due to insufficient funds.\
-Payment amount: {}\
-Balance: {}\
-\
+                                        "Failed to take payment for Diamond membership due to insufficient funds.
+Payment amount: {}
+Balance: {}
+
 If you would like to extend your Diamond membership you will need to top up your account and pay manually.",
                                         Tokens::from_e8s(price_e8s),
                                         Tokens::from_e8s(balance)
