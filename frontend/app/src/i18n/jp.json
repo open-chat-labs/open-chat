@@ -661,7 +661,15 @@
             "recipientSubaccount": "受信者のサブアカウント",
             "recipientSubaccountRules": "16 進文字列である必要があります",
             "enterRecipientOwner": "受信者のアカウントプリンシパルを入力してください",
-            "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します"
+            "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します",
+            "ledgerCanisterId": "レジャーキャニスターID",
+            "enterLedgerCanisterId": "レジャー キャニスター ID を入力してください",
+            "tokenInfoUrl": "トークン情報のURL",
+            "enterTokenInfoUrl": "トークン情報を示す URL を入力してください",
+            "howToBuyUrl": "購入方法URL",
+            "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
+            "transactionUrlFormat": "トランザクションURL形式",
+            "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
         }
     },
     "yes": "はい",

@@ -663,7 +663,15 @@
             "recipientSubaccount": "Subcuenta del destinatario",
             "recipientSubaccountRules": "debe ser una cadena hexadecimal",
             "enterRecipientOwner": "Ingrese el principal de la cuenta del destinatario",
-            "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional"
+            "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional",
+            "ledgerCanisterId": "ID del contenedor del libro mayor",
+            "enterLedgerCanisterId": "Ingrese el ID del contenedor del libro mayor",
+            "tokenInfoUrl": "URL de información del token",
+            "enterTokenInfoUrl": "Ingrese una URL que muestre la información del token",
+            "howToBuyUrl": "como comprar URL",
+            "enterHowToBuyUrl": "Ingrese una URL que muestre cómo comprar el token.",
+            "transactionUrlFormat": "Formato de URL de transacción",
+            "enterTransactionUrlFormat": "P.ej. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Sí",

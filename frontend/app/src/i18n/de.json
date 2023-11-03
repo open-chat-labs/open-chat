@@ -665,7 +665,15 @@
             "recipientSubaccount": "Unterkonto des Empfängers",
             "recipientSubaccountRules": "muss eine Hex-Zeichenfolge sein",
             "enterRecipientOwner": "Geben Sie den Kontoinhaber des Empfängers ein",
-            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein"
+            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein",
+            "ledgerCanisterId": "Hauptbuchkanister-ID",
+            "enterLedgerCanisterId": "Geben Sie die Hauptbuchkanister-ID ein",
+            "tokenInfoUrl": "Token-Info-URL",
+            "enterTokenInfoUrl": "Geben Sie eine URL mit den Token-Informationen ein",
+            "howToBuyUrl": "So kaufen Sie eine URL",
+            "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
+            "transactionUrlFormat": "Transaktions-URL-Format",
+            "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
         }
     },
     "quoteReply": "Antwort zitieren",
