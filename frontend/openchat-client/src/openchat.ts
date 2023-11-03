@@ -4468,7 +4468,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const allUsers = this._liveState.userStore;
-            const usersToUpdate = new Set<string>(this.anonUser ? [] : [this.user.userId]);
+            const usersToUpdate = new Set<string>([this.user.userId]);
 
             // Update all users we have direct chats with
             for (const chat of this._liveState.chatSummariesList) {
@@ -4486,6 +4486,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         break;
                     }
                 }
+            }
+
+            if (this.anonUser) {
+                usersToUpdate.delete(this.user.userId);
             }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);

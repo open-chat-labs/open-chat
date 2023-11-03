@@ -193,9 +193,6 @@
         if ($identityState === "logging_in") {
             modal = ModalType.LoggingIn;
         }
-        if ($identityState === "anon" && modal === ModalType.LoggingIn) {
-            modal = ModalType.None;
-        }
     }
 
     $: {
@@ -740,7 +737,7 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         if (client.anonUser) {
-            client.login();
+            modal = ModalType.LoggingIn;
             return;
         }
         const { group, select } = ev.detail;
@@ -1127,7 +1124,6 @@
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
-            modal !== ModalType.LoggingIn &&
             modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
