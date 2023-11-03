@@ -903,6 +903,7 @@ export const idlFactory = ({ IDL }) => {
     'role' : GroupRole,
     'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -938,6 +939,7 @@ export const idlFactory = ({ IDL }) => {
     'metrics' : ChatMetrics,
     'them' : UserId,
     'notifications_muted' : IDL.Bool,
+    'latest_message_index' : MessageIndex,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'latest_event_index' : EventIndex,
@@ -1083,6 +1085,20 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
+  });
+  const ReportMessageArgs = IDL.Record({
+    'them' : UserId,
+    'delete' : IDL.Bool,
+    'notes' : IDL.Opt(IDL.Text),
+    'message_id' : MessageId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportMessageResponse = IDL.Variant({
+    'MessageNotFound' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const NamedAccount = IDL.Record({ 'name' : IDL.Text, 'account' : IDL.Text });
   const SaveCryptoAccountResponse = IDL.Variant({
@@ -1297,6 +1313,10 @@ export const idlFactory = ({ IDL }) => {
       }),
       'canister_id' : CanisterId,
     }),
+    'ExecuteGenericNervousSystemFunction' : IDL.Record({
+      'function_id' : IDL.Nat64,
+      'payload' : IDL.Vec(IDL.Nat8),
+    }),
     'Motion' : IDL.Null,
   });
   const ProposalToSubmit = IDL.Record({
@@ -1424,6 +1444,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_them_up_to' : IDL.Opt(MessageIndex),
     'metrics' : IDL.Opt(ChatMetrics),
     'notifications_muted' : IDL.Opt(IDL.Bool),
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
     'latest_event_index' : IDL.Opt(EventIndex),
@@ -1566,6 +1587,11 @@ export const idlFactory = ({ IDL }) => {
     'remove_reaction' : IDL.Func(
         [RemoveReactionArgs],
         [RemoveReactionResponse],
+        [],
+      ),
+    'report_message' : IDL.Func(
+        [ReportMessageArgs],
+        [ReportMessageResponse],
         [],
       ),
     'save_crypto_account' : IDL.Func(

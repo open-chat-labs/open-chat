@@ -1080,6 +1080,8 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
                     treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null },
                 },
             };
+        case "upgrade_sns_to_next_version":
+            return { UpgradeSnsToNextVersion: null };
     }
 }
 

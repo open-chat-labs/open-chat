@@ -5,10 +5,11 @@
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,
+        type CandidateProposalAction,
         type MultiUserChat,
+        type NervousSystemDetails,
         type OpenChat,
         type Treasury,
-        type NervousSystemDetails,
     } from "openchat-client";
     import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
@@ -48,7 +49,7 @@
     let actualWidth = 0;
     let summaryPreview = false;
     let busy = true;
-    let selectedProposalType: "motion" | "transfer_sns_funds" = "motion";
+    let selectedProposalType: "motion" | "transfer_sns_funds" | "upgrade_sns_to_next_version" = "motion";
     let message = "";
     let error = true;
     let summaryContainerHeight = 0;
@@ -82,9 +83,9 @@
         titleValid &&
         urlValid &&
         summaryValid &&
-        (selectedProposalType === "motion" ||
+        (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version" ||
             (amountValid && recipientOwnerValid && recipientSubaccountValid));
-    $: canSubmit = step === 2 || (step === 1 && selectedProposalType === "motion");
+    $: canSubmit = step === 2 || (step === 1 && (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version"));
 
     $: {
         if (tokenDetails !== undefined) {
@@ -116,21 +117,7 @@
 
         busy = true;
 
-        const action =
-            selectedProposalType === "motion"
-                ? { kind: selectedProposalType }
-                : {
-                      kind: selectedProposalType,
-                      recipient: {
-                          owner: recipientOwner,
-                          subaccount:
-                              recipientSubaccount.length > 0
-                                  ? recipientSubaccount.padStart(64, "0")
-                                  : undefined,
-                      },
-                      amount: BigInt(Math.floor(amount)),
-                      treasury,
-                  };
+        const action = convertAction();
 
         client
             .submitProposal(nervousSystem.governanceCanisterId, {
@@ -148,6 +135,28 @@
                     message = $_("proposal.maker.unexpectedError");
                 }
             });
+    }
+
+    function convertAction(): CandidateProposalAction {
+        switch (selectedProposalType) {
+            case "motion":
+            case "upgrade_sns_to_next_version":
+                return { kind: selectedProposalType };
+            case "transfer_sns_funds": {
+                return {
+                    kind: "transfer_sns_funds",
+                    recipient: {
+                        owner: recipientOwner,
+                        subaccount:
+                            recipientSubaccount.length > 0
+                                ? recipientSubaccount.padStart(64, "0")
+                                : undefined,
+                    },
+                    amount: BigInt(Math.floor(amount)),
+                    treasury,
+                };
+            }
+        }
     }
 
     function onStartRefreshingBalance() {
@@ -215,6 +224,7 @@
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
+                        <option value={"upgrade_sns_to_next_version"}>Upgrade SNS to next version</option>
                     </Select>
                 </section>
                 <section>
