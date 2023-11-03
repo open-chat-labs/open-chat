@@ -32,7 +32,6 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
-use utils::time::now_millis;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
