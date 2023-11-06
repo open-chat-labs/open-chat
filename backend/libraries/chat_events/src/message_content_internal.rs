@@ -1,6 +1,6 @@
 use crate::DeletedByInternal;
 use ic_ledger_types::Tokens;
-use ledger_utils::format_crypto_amount;
+use ledger_utils::{create_pending_transaction, format_crypto_amount};
 use search::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -8,9 +8,9 @@ use types::{
     is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
     CompletedCryptoTransaction, CryptoContent, CryptoTransaction, CustomContent, FileContent, GiphyContent, GiphyImageVariant,
     ImageContent, MessageContent, MessageContentInitial, MessageIndex, MessageReminderContent, MessageReminderCreatedContent,
-    MessageReport, PollConfig, PollContent, PollVotes, PrizeContent, PrizeContentInitial, PrizeWinnerContent, Proposal,
-    ProposalContent, RegisterVoteResult, ReportedMessage, TextContent, ThumbnailData, TimestampMillis, TotalVotes, UserId,
-    VideoContent, VoteOperation,
+    MessageReport, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent, PrizeContentInitial,
+    PrizeWinnerContent, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, TextContent, ThumbnailData,
+    TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -683,6 +683,26 @@ pub struct PrizeContentInternal {
     pub caption: Option<String>,
     #[serde(rename = "d", default, skip_serializing_if = "is_default")]
     pub diamond_only: bool,
+}
+
+impl PrizeContentInternal {
+    pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
+        let fee = self.transaction.fee();
+        let unclaimed = self.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
+        if unclaimed > 0 {
+            Some(create_pending_transaction(
+                self.transaction.token(),
+                self.transaction.ledger_canister_id(),
+                unclaimed - fee,
+                fee,
+                sender,
+                Some(memo),
+                now_nanos,
+            ))
+        } else {
+            None
+        }
+    }
 }
 
 impl From<PrizeContentInitial> for PrizeContentInternal {

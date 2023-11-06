@@ -22,6 +22,7 @@ mod last_online_date_tests;
 mod notification_tests;
 mod platform_moderator_tests;
 mod poll_tests;
+mod prize_message_tests;
 mod register_user_tests;
 mod registry_tests;
 mod remove_from_group_tests;
