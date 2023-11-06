@@ -20,6 +20,7 @@ pub struct CommunityCanisterChannelSummary {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: u32,
     pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
@@ -52,6 +53,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: Option<u32>,
     pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)

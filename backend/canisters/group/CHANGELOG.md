@@ -7,8 +7,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Refund remaining prizes early if message gets deleted ([#4708](https://github.com/open-chat-labs/open-chat/pull/4708))
+
+## [[2.0.922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.922-group)] - 2023-11-02
+
+### Added
+
+- Add `report_message` endpoint ([#4691](https://github.com/open-chat-labs/open-chat/pull/4691))
+
+### Changed
+
 - Reduce size of message content when serialized ([#4680](https://github.com/open-chat-labs/open-chat/pull/4680))
 - Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Make `events_map` generic in preparation for moving it to stable memory ([#4689](https://github.com/open-chat-labs/open-chat/pull/4689))
+- Add `latest_message_index` to chat summaries ([#4693](https://github.com/open-chat-labs/open-chat/pull/4693))
+- Allow deleting all message types ([#4697](https://github.com/open-chat-labs/open-chat/pull/4697))
 
 ## [[2.0.914](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.914-group)] - 2023-10-27
 

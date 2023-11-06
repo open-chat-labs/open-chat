@@ -85,7 +85,8 @@ impl DirectChat {
             them: self.them,
             last_updated: self.last_updated(),
             latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
-            latest_event_index: events_reader.latest_event_index().unwrap(),
+            latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: events_reader.latest_message_index().unwrap_or_default(),
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,
@@ -107,6 +108,7 @@ impl DirectChat {
         let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
         let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
+        let latest_message_index = if has_new_events { events_reader.latest_message_index() } else { None };
         let notifications_muted = self.notifications_muted.if_set_after(updates_since).copied();
         let metrics = if has_new_events { Some(self.events.metrics().hydrate()) } else { None };
         let updated_events: Vec<_> = self
@@ -121,6 +123,7 @@ impl DirectChat {
             last_updated: self.last_updated(),
             latest_message,
             latest_event_index,
+            latest_message_index,
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
             read_by_them_up_to: self.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
             notifications_muted,

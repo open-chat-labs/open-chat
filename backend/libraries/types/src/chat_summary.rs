@@ -15,6 +15,7 @@ pub struct DirectChatSummary {
     pub last_updated: TimestampMillis,
     pub latest_message: EventWrapper<Message>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: MessageIndex,
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
@@ -46,6 +47,7 @@ pub struct GroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
@@ -72,6 +74,7 @@ pub struct DirectChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
@@ -96,6 +99,7 @@ pub struct PublicGroupSummary {
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub wasm_version: BuildVersion,
     pub is_public: bool,
@@ -105,6 +109,7 @@ pub struct PublicGroupSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "GroupCanisterGroupChatSummaryCombined")]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -118,6 +123,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub participant_count: u32,
     pub role: GroupRole,
@@ -133,6 +139,78 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupCanisterGroupChatSummaryCombined {
+    pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
+    pub name: String,
+    pub description: String,
+    pub subtype: Option<GroupSubtype>,
+    pub avatar_id: Option<u128>,
+    pub is_public: bool,
+    pub history_visible_to_new_joiners: bool,
+    pub min_visible_event_index: EventIndex,
+    pub min_visible_message_index: MessageIndex,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: EventIndex,
+    #[serde(default)]
+    pub latest_message_index: Option<MessageIndex>,
+    pub joined: TimestampMillis,
+    pub participant_count: u32,
+    pub role: GroupRole,
+    pub mentions: Vec<HydratedMention>,
+    pub wasm_version: BuildVersion,
+    pub permissions_v2: GroupPermissions,
+    pub notifications_muted: bool,
+    pub metrics: ChatMetrics,
+    pub my_metrics: ChatMetrics,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    pub frozen: Option<FrozenGroupInfo>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub events_ttl: Option<Milliseconds>,
+    pub gate: Option<AccessGate>,
+    pub rules_accepted: bool,
+}
+
+impl From<GroupCanisterGroupChatSummaryCombined> for GroupCanisterGroupChatSummary {
+    fn from(value: GroupCanisterGroupChatSummaryCombined) -> Self {
+        let latest_message_index = value
+            .latest_message_index
+            .or_else(|| value.latest_message.as_ref().map(|m| m.event.message_index));
+
+        GroupCanisterGroupChatSummary {
+            chat_id: value.chat_id,
+            last_updated: value.last_updated,
+            name: value.name,
+            description: value.description,
+            subtype: value.subtype,
+            avatar_id: value.avatar_id,
+            is_public: value.is_public,
+            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
+            min_visible_event_index: value.min_visible_event_index,
+            min_visible_message_index: value.min_visible_message_index,
+            latest_message: value.latest_message,
+            latest_event_index: value.latest_event_index,
+            latest_message_index,
+            joined: value.joined,
+            participant_count: value.participant_count,
+            role: value.role,
+            mentions: value.mentions,
+            wasm_version: value.wasm_version,
+            permissions_v2: value.permissions_v2,
+            notifications_muted: value.notifications_muted,
+            metrics: value.metrics,
+            my_metrics: value.my_metrics,
+            latest_threads: value.latest_threads,
+            frozen: value.frozen,
+            date_last_pinned: value.date_last_pinned,
+            events_ttl: value.events_ttl,
+            gate: value.gate,
+            rules_accepted: value.rules_accepted,
+        }
+    }
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -177,6 +255,7 @@ impl GroupCanisterGroupChatSummary {
             min_visible_message_index: self.min_visible_message_index,
             latest_message: updates.latest_message.or(self.latest_message),
             latest_event_index: updates.latest_event_index.unwrap_or(self.latest_event_index),
+            latest_message_index: updates.latest_message_index,
             joined: self.joined,
             participant_count: updates.participant_count.unwrap_or(self.participant_count),
             role: updates.role.unwrap_or(self.role),
@@ -206,6 +285,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
