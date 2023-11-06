@@ -128,6 +128,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         rulesAccepted: candid.rules_accepted,
+        eventsTTL: optional(candid.events_ttl, identity),
     };
 }
 
@@ -178,6 +179,7 @@ function groupChatSummaryUpdates(
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optionUpdate(candid.gate, accessGate),
         rulesAccepted: optional(candid.rules_accepted, identity),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
     };
 }
 

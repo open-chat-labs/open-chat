@@ -17,16 +17,19 @@
     $: userStore = client.userStore;
     $: me = changedBy === user?.userId;
     $: changedByStr = buildDisplayName($userStore, changedBy, me);
-    $: text = newTimeToLive !== undefined ? $_("disappearingMessageTimeUpdated", {
-        values: {
-            changedBy: changedByStr,
-            duration: client.formatDisappearingMessageTime(Number(newTimeToLive))
-        },
-    }) : $_("disappearingMessagesDisabled", {
-        values: {
-            changedBy: changedByStr
-        }
-    });
+    $: text =
+        newTimeToLive !== undefined
+            ? $_("disappearingMessages.timeUpdated", {
+                  values: {
+                      changedBy: changedByStr,
+                      duration: client.formatDuration(Number(newTimeToLive)),
+                  },
+              })
+            : $_("disappearingMessages.disabled", {
+                  values: {
+                      changedBy: changedByStr,
+                  },
+              });
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -223,6 +223,7 @@ export function mergeGroupChatUpdates(
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
             level: "group",
+            eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
             membership: {
                 ...c.membership,
                 mentions:
@@ -284,6 +285,7 @@ export function mergeGroupChats(
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
             level: "group",
+            eventsTTL: g.eventsTTL,
             membership: {
                 joined: g.joined,
                 role: g.myRole,
@@ -305,7 +307,9 @@ function mergeThreads(
     groupCanisterUnfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    const initial = current.filter((t) => !groupCanisterUnfollowedThreads.includes(t.threadRootMessageIndex));
+    const initial = current.filter(
+        (t) => !groupCanisterUnfollowedThreads.includes(t.threadRootMessageIndex),
+    );
     const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of groupCanisterUpdates) {

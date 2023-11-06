@@ -52,7 +52,12 @@ export function mergeChannels(
             dateReadPinned: u?.dateReadPinned,
             membership: {
                 ...c.membership,
-                latestThreads: mergeThreads([], c.membership.latestThreads, [], u?.threadsRead ?? {}),
+                latestThreads: mergeThreads(
+                    [],
+                    c.membership.latestThreads,
+                    [],
+                    u?.threadsRead ?? {},
+                ),
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
             },
@@ -113,7 +118,10 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
-                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
+                displayName: applyOptionUpdate(
+                    community.membership.displayName,
+                    c?.membership?.displayName,
+                ),
                 rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
             },
             channels: mergeChannelUpdates(
@@ -192,6 +200,7 @@ function mergeChannelUpdates(
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
             gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
             level: "channel",
+            eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
             membership: {
                 ...channel.membership,
                 mentions:

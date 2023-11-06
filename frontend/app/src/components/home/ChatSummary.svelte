@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
+    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -72,6 +73,7 @@
                         typing
                     ),
                     fav,
+                    eventsTTL: undefined,
                 };
             default:
                 return {
@@ -85,6 +87,7 @@
                         typing
                     ),
                     fav,
+                    eventsTTL: chatSummary.eventsTTL,
                 };
         }
     }
@@ -300,6 +303,11 @@
                 showStatus
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
+            {#if chat.eventsTTL}
+                <div class="expires">
+                    <CameraTimer size={"1em"} color={"#fff"} />
+                </div>
+            {/if}
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
@@ -596,7 +604,13 @@
     }
     .avatar {
         flex: 0 0 40px;
+        position: relative;
     }
+
+    .expires {
+        @include disappearing();
+    }
+
     .details {
         flex: 1;
         display: flex;

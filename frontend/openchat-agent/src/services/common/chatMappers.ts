@@ -1601,6 +1601,7 @@ export function communityChannelSummary(
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "channel",
+        eventsTTL: optional(candid.events_ttl, identity),
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,

@@ -1136,8 +1136,15 @@
     "doubleTapReply": "Дважды нажмите на сообщение, чтобы ответить или отредактировать",
     "minimumAmount": "Минимум: {amount} {symbol}",
     "sendTextDisabled": "Текстовые сообщения отключены",
-    "disappearingMessageTimeUpdated": "{changedBy} устанавливает время исчезновения сообщения на {duration}",
-    "disappearingMessagesDisabled": "{changedBy} отключил исчезающие сообщения",
-    "durationMinutes": "{duration} минут",
-    "oneMinute": "1 минута"
+    "disappearingMessages": {
+        "label": "Исчезающие сообщения",
+        "hours": "Часы)",
+        "minutes": "Минута(ы)",
+        "days": "День(а)",
+        "summary": "Сообщения исчезнут после {duration}",
+        "timeUpdated": "{changedBy} устанавливает время исчезновения сообщения на {duration}",
+        "disabled": "{changedBy} отключил исчезающие сообщения",
+        "durationMinutes": "{duration} минут",
+        "oneMinute": "1 минута"
+    }
 }
