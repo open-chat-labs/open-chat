@@ -50,7 +50,7 @@
     });
 </script>
 
-{#if $identityState === "registering"}
+{#if $identityState.kind === "registering"}
     <Overlay>
         <Register on:logout={logout} on:createdUser={createdUser} />
     </Overlay>

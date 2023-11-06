@@ -1,4 +1,4 @@
 export enum AuthProvider {
     II = "Internet Identity",
-    NFID = "NFID",
+    NFID = "Google via NFID",
 }

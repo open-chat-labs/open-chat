@@ -1,12 +1,14 @@
 <script lang="ts">
+    import { fade } from "svelte/transition";
     import ModalContent from "../ModalContent.svelte";
+    import Alert from "svelte-material-icons/Alert.svelte";
+    import Radio from "../Radio.svelte";
     import { _ } from "svelte-i18n";
-    import FancyLoader from "../icons/FancyLoader.svelte";
     import Button from "../Button.svelte";
     import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { AuthProvider, type OpenChat } from "openchat-client";
-    import ButtonGroup from "../ButtonGroup.svelte";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -15,13 +17,14 @@
 
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
-    $: prompt =
-        ($identityState.kind === "logging_in" ? $identityState.prompt : undefined) ??
-        $_("toProceedLogin");
-    let selected = $selectedAuthProviderStore;
 
-    onMount(() => {
+    let selected = $selectedAuthProviderStore;
+    let warn = false;
+    let previouslySignedIn = false;
+
+    onMount(async () => {
         selected = $selectedAuthProviderStore;
+        previouslySignedIn = await client.previouslySignedIn();
     });
 
     onDestroy(() => {
@@ -29,8 +32,6 @@
             identityState.set({ kind: "anon" });
         }
     });
-
-    $: console.log("Selected auth provider: ", $selectedAuthProviderStore);
 
     $: {
         if ($identityState.kind === "anon" && state === "logging-in") {
@@ -48,89 +49,131 @@
         dispatch("close");
     }
 
-    function login(provider: AuthProvider) {
-        if (provider !== $selectedAuthProviderStore && state !== "confirming") {
-            selected = provider;
-            state = "confirming";
-            return;
-        }
-        selectedAuthProviderStore.set(provider);
+    function login() {
+        selectedAuthProviderStore.set(selected);
         client.login();
         state = "logging-in";
     }
+
+    function selectProvider(provider: AuthProvider) {
+        selected = provider;
+        warn = previouslySignedIn && selected !== $selectedAuthProviderStore;
+    }
 </script>
 
-<ModalContent on:close={cancel} closeIcon>
-    <div class="header" slot="header">{$_("login")}</div>
+<ModalContent hideFooter on:close={cancel} closeIcon>
+    <div class="header" slot="header">{$_("loginToOpenChat")}</div>
     <div class="body" slot="body">
-        <div class="msg">
-            {#if state === "logging-in"}
-                <div class="spinner">
-                    <FancyLoader loop />
+        {#if warn}
+            <div transition:fade|local={{ duration: 300 }} class="confirming">
+                <div class="alert">
+                    <Alert size={$iconSize} color={"var(--warn"} />
                 </div>
-            {/if}
-            <p class="sub">
-                {#if state === "confirming"}
+                <div class="alert-txt">
                     {$_("loginProviderChanged", {
                         values: { previous: $selectedAuthProviderStore, next: selected },
                     })}
-                {:else if state === "logging-in"}
-                    {$_("loggingInPleaseWait")}
-                {:else}
-                    {prompt}
-                {/if}
-            </p>
-        </div>
-    </div>
-    <div slot="footer">
-        {#if state !== "logging-in"}
-            <ButtonGroup align="center">
-                <Button
-                    secondary={selected !== AuthProvider.II}
-                    on:click={() => login(AuthProvider.II)}>
-                    <div class="provider">
-                        <div class="ii-img">
-                            <InternetIdentityLogo />
-                        </div>
-                        {AuthProvider.II}
-                    </div>
-                </Button>
-                <Button
-                    secondary={selected !== AuthProvider.NFID}
-                    on:click={() => login(AuthProvider.NFID)}>
-                    <div class="provider">
-                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                        {AuthProvider.NFID}
-                    </div>
-                </Button>
-            </ButtonGroup>
+                </div>
+            </div>
         {/if}
+        <div class="cta">
+            <Button
+                disabled={state === "logging-in"}
+                loading={state === "logging-in"}
+                on:click={() => login()}>
+                {$_("login")}
+            </Button>
+        </div>
+        <div class="auth-providers">
+            <Radio
+                id="ii_auth"
+                group="authprovider"
+                value={AuthProvider.II}
+                label={AuthProvider.II}
+                disabled={state === "logging-in"}
+                checked={selected === AuthProvider.II}
+                on:change={() => selectProvider(AuthProvider.II)}>
+                <div class="provider">
+                    <div class="ii-img">
+                        <InternetIdentityLogo />
+                    </div>
+                    {AuthProvider.II}
+                </div>
+            </Radio>
+            <Radio
+                id="nfid_auth"
+                group="authprovider"
+                value={AuthProvider.NFID}
+                label={AuthProvider.NFID}
+                disabled={state === "logging-in"}
+                checked={selected === AuthProvider.NFID}
+                on:change={() => selectProvider(AuthProvider.NFID)}>
+                <div class="provider">
+                    <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                    {AuthProvider.NFID}
+                </div>
+            </Radio>
+        </div>
     </div>
 </ModalContent>
 
 <style lang="scss">
-    .msg {
-        display: flex;
-        flex-direction: column;
-        gap: $sp5;
-        align-items: center;
-        margin-bottom: $sp3;
+    :global(.auth-providers .radio) {
+        margin-bottom: 0 !important;
     }
-    .spinner {
-        flex: 0 0 80px;
-        width: 80px;
+
+    .body,
+    .header {
+        text-align: center;
     }
-    .sub {
-        flex: auto;
-        @include font(book, normal, fs-120, 32);
-    }
+
     .provider {
         display: flex;
         gap: $sp3;
+        background-color: var(--chatSummary-bg-selected);
+        padding: $sp2 $sp3;
+        border-radius: $sp3;
 
         .ii-img,
         .nfid-img {
-            width: 20px;
+            width: 30px;
+        }
+    }
+
+    .cta {
+        margin-bottom: $sp5;
+    }
+
+    .auth-providers {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: $sp4;
+
+        @include mobile() {
+            flex-direction: column;
+            gap: $sp3;
+        }
+    }
+
+    .confirming {
+        text-align: start;
+        @include font(book, normal, fs-100, 30);
+        padding: $sp4;
+        border: 1px solid var(--warn);
+        display: flex;
+        align-items: flex-start;
+        gap: $sp3;
+        border-radius: var(--rd);
+        margin-bottom: $sp4;
+
+        .alert {
+            flex: 0 0 25px;
+        }
+
+        .alert-txt {
+            flex: auto;
         }
     }
 </style>

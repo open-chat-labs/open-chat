@@ -38,7 +38,7 @@
         <div class="menu-item">
             <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
         </div>
-        {#if $identityState === "logged_in"}
+        {#if $identityState.kind === "logged_in"}
             <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">

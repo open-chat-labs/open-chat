@@ -11,7 +11,7 @@
     $: console.log("State: ", $identityState, $chatsLoading);
 </script>
 
-{#if $identityState === "loading_user" || $chatsLoading}
+{#if $identityState.kind === "loading_user" || $chatsLoading}
     <div class="loading">
         <div class="inner-loader">
             <FancyLoader />

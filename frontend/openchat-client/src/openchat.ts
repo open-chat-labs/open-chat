@@ -792,6 +792,14 @@ export class OpenChat extends OpenChatAgentWorker {
         this._user = user;
     }
 
+    async previouslySignedIn(): Promise<boolean> {
+        const KEY_STORAGE_IDENTITY = "identity";
+        const ls = await lsAuthClientStore.get(KEY_STORAGE_IDENTITY);
+        const idb = await idbAuthClientStore.get(KEY_STORAGE_IDENTITY);
+        const identity = ls != null || idb != null;
+        return this._liveState.userCreated && identity;
+    }
+
     async showAuthProviders(): Promise<boolean> {
         const KEY_STORAGE_DELEGATION = "delegation";
         const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);

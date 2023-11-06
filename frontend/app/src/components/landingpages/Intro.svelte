@@ -4,26 +4,14 @@
     import OnChain from "./OnChain.svelte";
     import { availableHeight, mobileWidth } from "../../stores/screenDimensions";
     import OnChainAlt from "./OnChainAlt.svelte";
-    import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
-    import { AuthProvider, OpenChat } from "openchat-client";
-    import { getContext, onMount } from "svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
 
-    const client = getContext<OpenChat>("client");
-
-    let showAuthProviders = false;
-
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: imgUrl =
         $currentTheme.mode === "light"
             ? "/assets/screenshots/intro_light.png"
             : "/assets/screenshots/intro_dark.png";
 
     $: introStyle = $mobileWidth ? "" : `height: ${$availableHeight}px`;
-
-    onMount(async () => {
-        showAuthProviders = await client.showAuthProviders();
-    });
 </script>
 
 <div class="wrapper" style={introStyle}>
@@ -44,26 +32,6 @@
         </p>
         <div class="launch">
             <Launch />
-            {#if showAuthProviders && !$mobileWidth}
-                <div class="auth-providers">
-                    <div
-                        class="provider"
-                        class:selected={$selectedAuthProviderStore === AuthProvider.II}
-                        on:click={() => selectedAuthProviderStore.set(AuthProvider.II)}>
-                        <div class="ii-img">
-                            <InternetIdentityLogo />
-                        </div>
-                        {AuthProvider.II}
-                    </div>
-                    <div
-                        class="provider"
-                        class:selected={$selectedAuthProviderStore === AuthProvider.NFID}
-                        on:click={() => selectedAuthProviderStore.set(AuthProvider.NFID)}>
-                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                        {AuthProvider.NFID}
-                    </div>
-                </div>
-            {/if}
         </div>
         <div class="powered-by">
             {#if $mobileWidth}
@@ -243,29 +211,6 @@
 
         @include mobile() {
             border: toRem(3) solid var(--landing-phone-bd);
-        }
-    }
-
-    .auth-providers {
-        grid-area: auth-providers;
-        @include font(light, normal, fs-60);
-        display: flex;
-        gap: toRem(8);
-
-        .provider {
-            cursor: pointer;
-            padding: toRem(2);
-
-            &.selected {
-                border-bottom: 3px solid var(--accent);
-            }
-
-            .ii-img,
-            .nfid-img {
-                display: inline-block;
-                width: 20px;
-                margin-right: $sp3;
-            }
         }
     }
 </style>

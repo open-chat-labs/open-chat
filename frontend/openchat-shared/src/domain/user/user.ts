@@ -43,7 +43,7 @@ export type IdentityState =
     | { kind: "loading_user" }
     | { kind: "logged_in" }
     | { kind: "registering" }
-    | { kind: "logging_in"; prompt?: string }
+    | { kind: "logging_in" }
     | { kind: "upgrading_user" }
     | { kind: "upgrade_user" };
 

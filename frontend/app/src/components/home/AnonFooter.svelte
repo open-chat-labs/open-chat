@@ -9,7 +9,7 @@
 <div
     role="button"
     tabindex="0"
-    on:click={() => client.identityState.set({ kind: "logging_in", prompt: $_("loginToOpenChat") })}
+    on:click={() => client.identityState.set({ kind: "logging_in" })}
     class="anon">
     {$_("tapToLogin")}
 </div>

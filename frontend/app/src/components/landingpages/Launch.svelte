@@ -12,7 +12,6 @@
     export let login = false;
 
     $: identityState = client.identityState;
-    $: txt = $identityState.kind === "logging_in" ? $_("loggingIn") : text;
 
     function launch() {
         if ($identityState.kind === "logged_in") {
@@ -27,7 +26,7 @@
     }
 </script>
 
-<div role="button" on:click={launch} class="launch">{txt}</div>
+<div tabindex="0" role="button" on:click={launch} class="launch">{text}</div>
 
 <style lang="scss">
     .launch {

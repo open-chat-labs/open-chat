@@ -1118,10 +1118,7 @@
     "disappearingMessagesDisabled": "{changedBy} disabled disappearing messages",
     "durationMinutes": "{duration} minutes",
     "oneMinute": "1 minute",
-    "loggingIn": "Logging in",
-    "toProceedLogin": "To proceed you will need to log into OpenChat",
     "loginToOpenChat": "Log into OpenChat",
     "tapToLogin": "Guest mode - tap here to log in",
-    "loggingInPleaseWait": "Please wait while we log you in to OpenChat",
-    "loginProviderChanged": "It looks like you have previously logged in with the {previous} identity provider. Click again to confirm that you would like to use {next} this time?"
+    "loginProviderChanged": "It looks like you have previously logged in with the {previous} provider. Please double check that you would like to use {next} this time?"
 }

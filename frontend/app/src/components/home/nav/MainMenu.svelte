@@ -86,9 +86,7 @@
             <span slot="text">{$_("logout")}</span>
         </MenuItem>
     {:else}
-        <MenuItem
-            on:click={() =>
-                client.identityState.set({ kind: "logging_in", prompt: $_("loginToOpenChat") })}>
+        <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{$_("login")}</span>
         </MenuItem>
