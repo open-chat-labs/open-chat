@@ -4,7 +4,6 @@ use crate::*;
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
-use ledger_utils::create_pending_transaction;
 use rand::rngs::StdRng;
 use rand::Rng;
 use search::{Document, Query};
@@ -215,40 +214,36 @@ impl ChatEvents {
             args.message_id.into(),
         ) {
             if message.sender == args.caller || args.is_admin {
-                if message.deleted_by.is_some() {
+                if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
                     return DeleteMessageResult::AlreadyDeleted;
-                }
-                match message.content {
-                    MessageContentInternal::Deleted(_) => DeleteMessageResult::AlreadyDeleted,
-                    _ => {
-                        let sender = message.sender;
-                        message.last_updated = Some(args.now);
-                        message.deleted_by = Some(DeletedByInternal {
-                            deleted_by: args.caller,
-                            timestamp: args.now,
-                        });
-                        self.last_updated_timestamps
-                            .mark_updated(args.thread_root_message_index, event_index, args.now);
+                } else {
+                    let sender = message.sender;
+                    message.last_updated = Some(args.now);
+                    message.deleted_by = Some(DeletedByInternal {
+                        deleted_by: args.caller,
+                        timestamp: args.now,
+                    });
+                    self.last_updated_timestamps
+                        .mark_updated(args.thread_root_message_index, event_index, args.now);
 
-                        if sender != args.caller {
-                            add_to_metrics(
-                                &mut self.metrics,
-                                &mut self.per_user_metrics,
-                                sender,
-                                |m| incr(&mut m.reported_messages),
-                                args.now,
-                            );
-                        }
+                    if sender != args.caller {
                         add_to_metrics(
                             &mut self.metrics,
                             &mut self.per_user_metrics,
-                            args.caller,
-                            |m| incr(&mut m.deleted_messages),
+                            sender,
+                            |m| incr(&mut m.reported_messages),
                             args.now,
                         );
-
-                        DeleteMessageResult::Success(sender)
                     }
+                    add_to_metrics(
+                        &mut self.metrics,
+                        &mut self.per_user_metrics,
+                        args.caller,
+                        |m| incr(&mut m.deleted_messages),
+                        args.now,
+                    );
+
+                    DeleteMessageResult::Success(sender)
                 }
             } else {
                 DeleteMessageResult::NotAuthorized
@@ -307,19 +302,19 @@ impl ChatEvents {
         }
     }
 
+    // The UserId returned is the message sender
     pub fn remove_deleted_message_content(
         &mut self,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-    ) -> Option<MessageContentInternal> {
+    ) -> Option<(MessageContentInternal, UserId)> {
         let (message, _) = self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())?;
 
         let deleted_by = message.deleted_by.clone()?;
 
-        Some(std::mem::replace(
-            &mut message.content,
-            MessageContentInternal::Deleted(deleted_by),
-        ))
+        let content = std::mem::replace(&mut message.content, MessageContentInternal::Deleted(deleted_by));
+
+        Some((content, message.sender))
     }
 
     pub fn register_poll_vote(&mut self, args: RegisterPollVoteArgs) -> RegisterPollVoteResult {
@@ -407,21 +402,11 @@ impl ChatEvents {
         memo: &[u8],
         now_nanos: TimestampNanos,
     ) -> Option<PendingCryptoTransaction> {
-        if let Some(message) = self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into()) {
+        if let Some((message, _)) =
+            self.message_internal(EventIndex::default(), thread_root_message_index, message_index.into())
+        {
             if let MessageContentInternal::Prize(p) = &message.content {
-                let fee = p.transaction.fee();
-                let unclaimed = p.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
-                if unclaimed > 0 {
-                    return Some(create_pending_transaction(
-                        p.transaction.token(),
-                        p.transaction.ledger_canister_id(),
-                        unclaimed - fee,
-                        fee,
-                        message.sender,
-                        Some(memo),
-                        now_nanos,
-                    ));
-                }
+                return p.prize_refund(message.sender, memo, now_nanos);
             }
         }
 
@@ -1120,6 +1105,15 @@ impl ChatEvents {
         unfollowed
     }
 
+    pub fn message_ids(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        event_key: EventKey,
+    ) -> Option<(EventIndex, MessageIndex, MessageId)> {
+        self.message_internal(EventIndex::default(), thread_root_message_index, event_key)
+            .map(|(m, e)| (e, m.message_index, m.message_id))
+    }
+
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
@@ -1278,10 +1272,10 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         thread_root_message_index: Option<MessageIndex>,
         event_key: EventKey,
-    ) -> Option<&MessageInternal> {
+    ) -> Option<(&MessageInternal, EventIndex)> {
         self.events_list(min_visible_event_index, thread_root_message_index)
             .and_then(|l| l.get_event(event_key, min_visible_event_index))
-            .and_then(|e| e.event.as_message())
+            .and_then(|e| e.event.as_message().map(|m| (m, e.index)))
     }
 
     fn expiry_date(&self, event: &ChatEventInternal, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {

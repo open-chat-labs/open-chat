@@ -30,6 +30,22 @@ impl<J: Job> TimerJobs<J> {
 }
 
 impl<J> TimerJobs<J> {
+    pub fn cancel_job<F: Fn(&J) -> bool>(&mut self, filter: F) -> Option<J> {
+        let timer_id = self
+            .jobs
+            .iter()
+            .find(|(_, (_, wrapper))| wrapper.deref().borrow().as_ref().map_or(true, |j| filter(j)))
+            .map(|(timer_id, _)| *timer_id)?;
+
+        ic_cdk_timers::clear_timer(timer_id);
+        if let Some((_, wrapper)) = self.jobs.remove(&timer_id) {
+            if let Some(job) = wrapper.take() {
+                return Some(job);
+            }
+        }
+        None
+    }
+
     pub fn cancel_jobs<F: Fn(&J) -> bool>(&mut self, filter: F) -> Vec<J> {
         #[allow(clippy::redundant_closure)]
         let to_remove: Vec<_> = self
