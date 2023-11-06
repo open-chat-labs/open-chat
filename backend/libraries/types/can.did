@@ -130,6 +130,7 @@ type DirectChatSummary = record {
     my_metrics : ChatMetrics;
     archived : bool;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
 };
 
 type DirectChatSummaryUpdates = record {
@@ -146,6 +147,7 @@ type DirectChatSummaryUpdates = record {
     my_metrics : opt ChatMetrics;
     archived : opt bool;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
 };
 
 type DirectMessageNotification = record {
@@ -275,6 +277,7 @@ type GroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
 };
@@ -306,6 +309,7 @@ type GroupCanisterGroupChatSummary = record {
     wasm_version : BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
 };
@@ -335,6 +339,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     wasm_version : opt BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
 };
@@ -392,6 +397,7 @@ type CommunityCanisterChannelSummary = record {
     metrics : ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     membership : opt ChannelMembership;
 };
@@ -453,6 +459,7 @@ type CommunityCanisterChannelSummaryUpdates = record {
     metrics : opt ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     membership : opt ChannelMembershipUpdates;
 };
@@ -714,6 +721,7 @@ type PublicGroupSummary = record {
     is_public : bool;
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     wasm_version : BuildVersion;
 };

@@ -158,6 +158,7 @@ impl GroupChatCore {
         let mentions = member
             .map(|m| m.most_recent_mentions(Some(since), &self.events))
             .unwrap_or_default();
+        let events_ttl = self.events.get_events_time_to_live();
         let mut updated_events: Vec<_> = self
             .events
             .iter_recently_updated_events()
@@ -205,12 +206,11 @@ impl GroupChatCore {
             updated_events,
             is_public: self.is_public.if_set_after(since).copied(),
             date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
-            events_ttl: self
-                .events
-                .get_events_time_to_live()
+            events_ttl: events_ttl
                 .if_set_after(since)
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
             gate: self
                 .gate
                 .if_set_after(since)
@@ -1867,6 +1867,7 @@ pub struct SummaryUpdates {
     pub is_public: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
 }

@@ -26,6 +26,8 @@ pub struct CommunityCanisterChannelSummary {
     pub metrics: ChatMetrics,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub membership: Option<ChannelMembership>,
 }
@@ -60,6 +62,8 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<ChannelMembershipUpdates>,
 }
