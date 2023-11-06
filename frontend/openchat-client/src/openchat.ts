@@ -433,7 +433,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
-    identityState = writable<IdentityState>("loading_user");
+    identityState = writable<IdentityState>({ kind: "loading_user" });
     private _logger: Logger;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -499,7 +499,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private loadedIdentity(id: Identity) {
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();
-        this.identityState.set(anon ? "anon" : "loading_user");
+        this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
         this.loadUser(anon);
     }
 
@@ -516,7 +516,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     login(): void {
-        this.identityState.set("logging_in");
+        this.identityState.set({ kind: "logging_in" });
         const authProvider = this._liveState.selectedAuthProvider;
         this._authClient.then((c) => {
             c.login({
@@ -529,7 +529,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     this.loadedIdentity(c.getIdentity());
                 },
                 onError: (err) => {
-                    this.identityState.set("anon");
+                    this.identityState.set({ kind: "anon" });
                     console.warn("Login error from auth client: ", err);
                 },
             });
@@ -707,7 +707,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         if (user.canisterUpgradeStatus === "in_progress") {
-            this.identityState.set("upgrading_user");
+            this.identityState.set({ kind: "upgrading_user" });
             window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
         } else {
             currentUserStore.set(user);
@@ -721,7 +721,7 @@ export class OpenChat extends OpenChatAgentWorker {
             initNotificationStores();
             this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
             if (!this.anonUser) {
-                this.identityState.set("logged_in");
+                this.identityState.set({ kind: "logged_in" });
                 this.initWebRtc();
             }
         }

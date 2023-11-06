@@ -23,7 +23,7 @@
 
     function joinCommunity() {
         if (client.anonUser) {
-            client.identityState.set("logging_in");
+            client.identityState.set({ kind: "logging_in" });
             return;
         }
         doJoinCommunity(undefined);

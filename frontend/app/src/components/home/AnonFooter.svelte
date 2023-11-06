@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
 </script>
@@ -8,9 +9,9 @@
 <div
     role="button"
     tabindex="0"
-    on:click={() => client.identityState.set("logging_in")}
+    on:click={() => client.identityState.set({ kind: "logging_in", prompt: $_("loginToOpenChat") })}
     class="anon">
-    Guest mode - tap here to log in
+    {$_("tapToLogin")}
 </div>
 
 <style lang="scss">

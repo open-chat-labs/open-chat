@@ -15,6 +15,9 @@
 
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
+    $: prompt =
+        ($identityState.kind === "logging_in" ? $identityState.prompt : undefined) ??
+        $_("toProceedLogin");
     let selected = $selectedAuthProviderStore;
 
     onMount(() => {
@@ -22,25 +25,25 @@
     });
 
     onDestroy(() => {
-        if (client.anonUser && $identityState === "logging_in") {
-            identityState.set("anon");
+        if (client.anonUser && $identityState.kind === "logging_in") {
+            identityState.set({ kind: "anon" });
         }
     });
 
     $: console.log("Selected auth provider: ", $selectedAuthProviderStore);
 
     $: {
-        if ($identityState === "anon" && state === "logging-in") {
+        if ($identityState.kind === "anon" && state === "logging-in") {
             dispatch("close");
         }
-        if ($identityState === "logged_in") {
+        if ($identityState.kind === "logged_in") {
             dispatch("close");
         }
     }
 
     function cancel() {
-        if (client.anonUser && $identityState === "logging_in") {
-            identityState.set("anon");
+        if (client.anonUser && $identityState.kind === "logging_in") {
+            identityState.set({ kind: "anon" });
         }
         dispatch("close");
     }
@@ -74,7 +77,7 @@
                 {:else if state === "logging-in"}
                     {$_("loggingInPleaseWait")}
                 {:else}
-                    {$_("toProceedLogin")}
+                    {prompt}
                 {/if}
             </p>
         </div>

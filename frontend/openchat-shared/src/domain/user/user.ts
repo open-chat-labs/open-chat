@@ -39,13 +39,13 @@ export type UserGroupDetails = {
 };
 
 export type IdentityState =
-    | "anon"
-    | "loading_user"
-    | "logged_in"
-    | "registering"
-    | "logging_in"
-    | "upgrading_user"
-    | "upgrade_user";
+    | { kind: "anon" }
+    | { kind: "loading_user" }
+    | { kind: "logged_in" }
+    | { kind: "registering" }
+    | { kind: "logging_in"; prompt?: string }
+    | { kind: "upgrading_user" }
+    | { kind: "upgrade_user" };
 
 export type UserLookup = Record<string, UserSummary>;
 

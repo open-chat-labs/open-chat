@@ -12,10 +12,10 @@
     export let login = false;
 
     $: identityState = client.identityState;
-    $: txt = $identityState === "logging_in" ? $_("loggingIn") : text;
+    $: txt = $identityState.kind === "logging_in" ? $_("loggingIn") : text;
 
     function launch() {
-        if ($identityState === "logged_in") {
+        if ($identityState.kind === "logged_in") {
             page(rootPath);
         } else {
             if (login) {

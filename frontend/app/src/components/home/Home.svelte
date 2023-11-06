@@ -188,10 +188,10 @@
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
 
     $: {
-        if ($identityState === "registering") {
+        if ($identityState.kind === "registering") {
             modal = ModalType.Registering;
         }
-        if ($identityState === "logging_in") {
+        if ($identityState.kind === "logging_in") {
             modal = ModalType.LoggingIn;
         }
     }
@@ -363,7 +363,7 @@
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
-                client.identityState.set("logging_in");
+                client.identityState.set({ kind: "logging_in" });
                 page.redirect("/group");
                 return;
             }
@@ -749,7 +749,7 @@
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
         if (client.anonUser) {
-            client.identityState.set("logging_in");
+            client.identityState.set({ kind: "logging_in" });
             return;
         }
         const { group, select } = ev.detail;

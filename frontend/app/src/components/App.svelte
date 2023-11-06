@@ -335,9 +335,9 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
+{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
     <Upgrading />
-{:else if $identityState === "anon" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
         <Router />
     {/if}
