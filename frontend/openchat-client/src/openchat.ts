@@ -800,14 +800,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.userCreated && identity;
     }
 
-    async showAuthProviders(): Promise<boolean> {
-        const KEY_STORAGE_DELEGATION = "delegation";
-        const ls = await lsAuthClientStore.get(KEY_STORAGE_DELEGATION);
-        const idb = await idbAuthClientStore.get(KEY_STORAGE_DELEGATION);
-        const noDelegation = ls == null && idb == null;
-        return !this._liveState.userCreated && noDelegation;
-    }
-
     unreadThreadMessageCount(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number,
