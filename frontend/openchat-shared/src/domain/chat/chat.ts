@@ -1073,10 +1073,12 @@ export type DirectChatSummaryUpdates = {
     readByThemUpTo?: number;
     readByMeUpTo?: number;
     lastUpdated: bigint;
-    latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
     notificationsMuted?: boolean;
     updatedEvents: UpdatedEvent[];
+    eventsTTL: OptionUpdate<bigint>;
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
@@ -1167,10 +1169,12 @@ export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = HasMembershipRole & {
     lastUpdated: bigint;
+    latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number;
-    latestMessage?: EventWrapper<Message>;
+    latestMessageIndex: number | undefined;
     metrics: Metrics;
     membership: ChatMembership;
+    eventsTTL: bigint | undefined;
 };
 
 export type ChannelSummary = DataContent &
@@ -1188,7 +1192,6 @@ export type ChannelSummary = DataContent &
         memberCount: number;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        eventsTTL?: bigint;
     };
 
 export type DirectChatSummary = ChatSummaryCommon & {
@@ -1215,7 +1218,6 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        eventsTTL?: bigint;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1266,6 +1268,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         minVisibleMessageIndex: number;
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
+        latestMessageIndex: number | undefined;
         joined: bigint;
         myRole: MemberRole;
         memberCount: number;
@@ -1295,6 +1298,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     public: boolean | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number | undefined;
+    latestMessageIndex: number | undefined;
     memberCount: number | undefined;
     myRole: MemberRole | undefined;
     mentions: Mention[];

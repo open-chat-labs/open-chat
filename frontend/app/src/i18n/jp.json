@@ -1143,9 +1143,11 @@
         "minutes": "分）",
         "days": "日々）",
         "summary": "メッセージは {duration} 後に消えます",
-        "timeUpdated": "{changedBy} はメッセージが消える時間を {duration} に設定します",
-        "disabled": "{changedBy} は消えるメッセージを無効にしました",
+        "timeUpdatedBy": "{changedBy} はメッセージが消える時間を {duration} に設定します",
+        "disabledBy": "{changedBy} は消えるメッセージを無効にしました",
         "durationMinutes": "{duration}分",
-        "oneMinute": "1分"
+        "oneMinute": "1分",
+        "timeUpdated": "メッセージが消える時間を {duration} に設定しました",
+        "disabled": "消えるメッセージの無効化"
     }
 }

@@ -1140,9 +1140,11 @@
         "minutes": "דקות)",
         "days": "ימים",
         "summary": "ההודעות ייעלמו לאחר {duration}",
-        "timeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
-        "disabled": "{changedBy} השבית הודעות נעלמות",
+        "timeUpdatedBy": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+        "disabledBy": "{changedBy} השבית הודעות נעלמות",
         "durationMinutes": "{duration} דקות",
-        "oneMinute": "דקה 1"
+        "oneMinute": "דקה 1",
+        "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
+        "disabled": "הודעות נעלמות מושבתות"
     }
 }

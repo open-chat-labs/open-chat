@@ -1143,9 +1143,11 @@
         "minutes": "分钟）",
         "days": "天）",
         "summary": "消息将在 {duration} 之后消失",
-        "timeUpdated": "{changedBy} 将消息消失时间设置为 {duration}",
-        "disabled": "{changedBy} 禁用消失消息",
+        "timeUpdatedBy": "{changedBy} 将消息消失时间设置为 {duration}",
+        "disabledBy": "{changedBy} 禁用消失消息",
         "durationMinutes": "{duration} 分钟",
-        "oneMinute": "1分钟"
+        "oneMinute": "1分钟",
+        "timeUpdated": "消息消失时间设置为 {duration}",
+        "disabled": "消息消失已禁用"
     }
 }

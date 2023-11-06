@@ -165,7 +165,9 @@ export function mergeDirectChatUpdates(
             lastUpdated: u.lastUpdated,
             latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
             latestMessage: u.latestMessage ?? c.latestMessage,
+            latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
             metrics: u.metrics ?? c.metrics,
+            eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
             membership: {
                 ...c.membership,
                 readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
@@ -217,6 +219,7 @@ export function mergeGroupChatUpdates(
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
+            latestMessageIndex: g?.latestMessageIndex ?? c.latestMessageIndex,
             metrics: g?.metrics ?? c.metrics,
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
@@ -276,6 +279,7 @@ export function mergeGroupChats(
             frozen: g.frozen,
             latestEventIndex: g.latestEventIndex,
             latestMessage: g.latestMessage,
+            latestMessageIndex: g.latestMessageIndex,
             metrics: g.metrics,
             blobReference:
                 g.avatarId !== undefined

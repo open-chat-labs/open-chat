@@ -100,8 +100,18 @@
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
-        if (chatSummary.latestMessage === undefined) {
+        if (chatSummary.latestMessageIndex === undefined) {
             return "";
+        }
+
+        if (chatSummary.latestMessage === undefined) {
+            return chatSummary.eventsTTL !== undefined
+                ? $_("disappearingMessages.timeUpdated", {
+                    values: {
+                        duration: client.formatDuration(Number(chatSummary.eventsTTL)),
+                    },
+                })
+                : $_("disappearingMessages.disabled");
         }
 
         const latestMessageText = client.getContentAsText(
