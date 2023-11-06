@@ -177,7 +177,13 @@
             "/",
             parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),
             track,
-            () => (route = Home)
+            () => {
+                if (client.anonUser) {
+                    route = LandingPage;
+                } else {
+                    route = Home;
+                }
+            }
         );
         // legacy route
         page(

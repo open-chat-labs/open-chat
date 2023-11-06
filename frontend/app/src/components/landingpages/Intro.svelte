@@ -43,7 +43,7 @@
             </a> blockchain.
         </p>
         <div class="launch">
-            <Launch on:login />
+            <Launch />
             {#if showAuthProviders && !$mobileWidth}
                 <div class="auth-providers">
                     <div

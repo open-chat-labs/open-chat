@@ -774,7 +774,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     get anonUser(): boolean {
-        return this.user.userId === ANON_USER_ID;
+        return this._user === undefined || this._user.userId === ANON_USER_ID;
     }
 
     get hasUser(): boolean {
@@ -4510,7 +4510,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadChats() {
         try {
-            if (this.user === undefined) {
+            if (this._user === undefined) {
                 console.log("Current user not set, cannot load chats");
                 return;
             }

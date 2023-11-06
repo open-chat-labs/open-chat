@@ -8,7 +8,7 @@
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { notFound, pathParams } from "../routes";
+    import { notFound, pathParams, type RouteParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -278,8 +278,12 @@
         });
     }
 
+    function anonRoot(pathParams: RouteParams): boolean {
+        return pathParams.kind === "home_route" && client.anonUser;
+    }
+
     $: {
-        if (!$notFound && landingPage) {
+        if ((!$notFound && landingPage) || anonRoot($pathParams)) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");

@@ -87,6 +87,7 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import Register from "../register/Register.svelte";
     import LoggingInModal from "./LoggingInModal.svelte";
+    import AnonFooter from "./AnonFooter.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1025,7 +1026,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main>
+<main class:anon={client.anonUser}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1094,6 +1095,10 @@
             on:groupCreated={groupCreated} />
     {/if}
 </main>
+
+{#if client.anonUser}
+    <AnonFooter />
+{/if}
 
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
@@ -1204,6 +1209,10 @@
         width: 100%;
         display: flex;
         margin: 0 auto;
+
+        &.anon {
+            margin-bottom: toRem(50);
+        }
     }
 
     .right-wrapper {

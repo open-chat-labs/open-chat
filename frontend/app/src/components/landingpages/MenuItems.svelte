@@ -42,7 +42,7 @@
             <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
         {/if}
         <div class="menu-item">
-            <Launch on:login />
+            <Launch />
         </div>
     </div>
 </div>

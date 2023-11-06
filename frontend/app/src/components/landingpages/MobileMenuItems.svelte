@@ -34,7 +34,7 @@
         if ($identityState === "logged_in") {
             page(routeForScope($chatListScope));
         } else {
-            dispatch("login");
+            page("/communities");
         }
     }
 

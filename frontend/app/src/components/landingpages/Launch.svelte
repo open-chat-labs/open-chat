@@ -1,15 +1,15 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import page from "page";
     import { _ } from "svelte-i18n";
     import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let rootPath = routeForScope(client.getDefaultScope());
     export let text = "Launch app";
+    export let login = false;
 
     $: identityState = client.identityState;
     $: txt = $identityState === "logging_in" ? $_("loggingIn") : text;
@@ -18,7 +18,11 @@
         if ($identityState === "logged_in") {
             page(rootPath);
         } else {
-            dispatch("login");
+            if (login) {
+                client.login();
+            } else {
+                page("/communities");
+            }
         }
     }
 </script>
