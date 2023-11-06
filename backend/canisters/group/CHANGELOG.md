@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Refund remaining prizes early if message gets deleted ([#4708](https://github.com/open-chat-labs/open-chat/pull/4708))
+
 ## [[2.0.922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.922-group)] - 2023-11-02
 
 ### Added
