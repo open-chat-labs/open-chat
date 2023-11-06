@@ -215,7 +215,7 @@ impl ChatEvents {
         ) {
             if message.sender == args.caller || args.is_admin {
                 if message.deleted_by.is_some() || matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    return DeleteMessageResult::AlreadyDeleted;
+                    DeleteMessageResult::AlreadyDeleted
                 } else {
                     let sender = message.sender;
                     message.last_updated = Some(args.now);

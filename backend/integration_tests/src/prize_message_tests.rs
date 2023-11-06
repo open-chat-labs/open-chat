@@ -37,7 +37,7 @@ fn prize_messages_can_be_claimed_successfully() {
         1_000_000_000u64,
     );
 
-    let prizes = vec![100000, 200000];
+    let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
     let message_id = random_message_id();
@@ -74,11 +74,11 @@ fn prize_messages_can_be_claimed_successfully() {
         },
     );
 
-    client::group::happy_path::claim_prize(env, user2.principal, group_id.into(), message_id);
+    client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
     let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
     assert_eq!(user2_balance, 200000);
 
-    client::group::happy_path::claim_prize(env, user3.principal, group_id.into(), message_id);
+    client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
     let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id.into());
     assert_eq!(user3_balance, 100000);
 }
@@ -108,7 +108,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
         1_000_000_000u64,
     );
 
-    let prizes = vec![100000, 200000];
+    let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
     let fee = token.fee().unwrap();
     let message_id = random_message_id();
@@ -145,10 +145,10 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
         },
     );
 
-    client::group::happy_path::claim_prize(env, user2.principal, group_id.into(), message_id);
+    client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
 
     let interval = if delete_message {
-        client::group::happy_path::delete_messages(env, user1.principal, group_id.into(), None, vec![message_id]);
+        client::group::happy_path::delete_messages(env, user1.principal, group_id, None, vec![message_id]);
         5 * MINUTE_IN_MS
     } else {
         HOUR_IN_MS

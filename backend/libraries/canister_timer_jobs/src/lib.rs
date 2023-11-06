@@ -31,6 +31,7 @@ impl<J: Job> TimerJobs<J> {
 
 impl<J> TimerJobs<J> {
     pub fn cancel_job<F: Fn(&J) -> bool>(&mut self, filter: F) -> Option<J> {
+        #[allow(clippy::redundant_closure)]
         let timer_id = self
             .jobs
             .iter()
