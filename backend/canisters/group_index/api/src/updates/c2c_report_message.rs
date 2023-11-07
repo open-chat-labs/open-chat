@@ -17,4 +17,5 @@ pub struct Args {
 pub enum Response {
     Success,
     AlreadyReported,
+    InternalError(String),
 }
