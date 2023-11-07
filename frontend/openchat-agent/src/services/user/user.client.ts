@@ -66,7 +66,6 @@ import {
     type SaveCryptoAccountResponse,
     type CandidateProposal,
     type SubmitProposalResponse,
-    ANON_USER_ID,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -137,7 +136,6 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import type { MessageContext } from "openchat-shared";
 import type { PendingCryptocurrencyTransfer } from "openchat-shared";
-import { AnonUserClient } from "./anonUser.client";
 
 export class UserClient extends CandidService {
     private userService: UserService;
