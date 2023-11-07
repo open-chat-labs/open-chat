@@ -8,7 +8,7 @@
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { notFound, pathParams, type RouteParams } from "../routes";
+    import { notFound, pathParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -74,6 +74,8 @@
 
     $: identityState = client.identityState;
     $: landingPage = isLandingPageRoute($pathParams);
+    $: anonUser = client.anonUser;
+    $: anonRoot = $pathParams.kind === "home_route" && $anonUser;
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
@@ -278,12 +280,8 @@
         });
     }
 
-    function anonRoot(pathParams: RouteParams): boolean {
-        return pathParams.kind === "home_route" && client.anonUser;
-    }
-
     $: {
-        if ((!$notFound && landingPage) || anonRoot($pathParams)) {
+        if ((!$notFound && landingPage) || anonRoot) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");

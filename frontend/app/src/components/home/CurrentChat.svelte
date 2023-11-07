@@ -44,7 +44,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     let previousChatId: ChatIdentifier | undefined = undefined;
     let unreadMessages = 0;
@@ -61,6 +60,8 @@
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
+    $: user = client.user;
+    $: suspendedUser = client.suspendedUser;
     $: showChatHeader = !$mobileWidth || !$framed;
     $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
@@ -72,7 +73,7 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: messagesRead = client.messagesRead;
     $: directlyBlockedUsers = client.blockedUsers;
-    $: showFooter = !showSearchHeader && !client.isReadOnly();
+    $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
 
@@ -329,7 +330,7 @@
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}
-            {user}
+            user={$user}
             mode={"message"}
             {joining}
             {preview}
@@ -340,8 +341,8 @@
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.id, undefined)}
             on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.id)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => client.startTyping(chat, user.userId)}
-            on:stopTyping={() => client.stopTyping(chat, user.userId)}
+            on:startTyping={() => client.startTyping(chat, $user.userId)}
+            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}

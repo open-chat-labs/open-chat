@@ -14,7 +14,7 @@
         type CommunitySummary,
         type OpenChat,
         emptyUnreadCounts,
-        ANON_USER_ID,
+        type UserSummary,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -30,11 +30,11 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    const createdUser = client.user;
     const flipDurationMs = 300;
 
+    $: createdUser = client.user;
     $: userStore = client.userStore;
-    $: user = $userStore[createdUser.userId];
+    $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
@@ -44,7 +44,7 @@
     $: unreadFavouriteChats = client.unreadFavouriteChats;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
     $: communityExplorer = $pathParams.kind === "communities_route";
-    $: anon = user.userId === ANON_USER_ID;
+    $: anonUser = client.anonUser;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -156,7 +156,7 @@
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={$_("communities.directChats")}
             unread={$unreadDirectChats}
-            disabled={anon}
+            disabled={$anonUser}
             on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -176,7 +176,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
-            disabled={anon}
+            disabled={$anonUser}
             label={$_("communities.favourites")}
             unread={$unreadFavouriteChats}
             on:click={favouriteChats}>

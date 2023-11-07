@@ -20,6 +20,7 @@
         routerReady,
     } from "../routes";
     import type { OpenChat } from "openchat-client";
+    import { get } from "svelte/store";
 
     const client = getContext<OpenChat>("client");
 
@@ -178,7 +179,8 @@
             parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),
             track,
             () => {
-                if (client.anonUser) {
+                console.log("AnonUser: ", get(client.anonUser));
+                if (get(client.anonUser)) {
                     route = LandingPage;
                 } else {
                     route = Home;

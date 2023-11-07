@@ -18,7 +18,11 @@
     $: anon = client.anonUser;
 
     function newGroup() {
-        dispatch("newGroup");
+        if (anon) {
+            client.identityState.set({ kind: "logging_in" });
+        } else {
+            dispatch("newGroup");
+        }
     }
 </script>
 
@@ -30,15 +34,13 @@
     </span>
     <span slot="menu">
         <Menu>
-            {#if !anon}
-                <MenuItem on:click={newGroup}>
-                    <AccountMultiplePlus
-                        size={$iconSize}
-                        color={"var(--icon-inverted-txt)"}
-                        slot="icon" />
-                    <span slot="text">{$_("newGroup")}</span>
-                </MenuItem>
-            {/if}
+            <MenuItem on:click={newGroup}>
+                <AccountMultiplePlus
+                    size={$iconSize}
+                    color={"var(--icon-inverted-txt)"}
+                    slot="icon" />
+                <span slot="text">{$_("newGroup")}</span>
+            </MenuItem>
             <MenuItem on:click={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <span slot="text">{$_("exploreGroups")}</span>

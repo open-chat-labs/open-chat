@@ -5,6 +5,8 @@ import {
     ANON_USERNAME,
     ANON_DISPLAY_NAME,
     ANON_AVATAR_URL,
+    type CreatedUser,
+    anonymousUser,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
@@ -93,3 +95,17 @@ export const userStore = {
         });
     },
 };
+
+export const currentUser = writable<CreatedUser>(anonymousUser());
+export const anonUser = derived(
+    currentUser,
+    ($currentUser) => $currentUser.userId === ANON_USER_ID,
+);
+export const suspendedUser = derived(
+    currentUser,
+    ($currentUser) => $currentUser.suspensionDetails !== undefined,
+);
+export const platformModerator = derived(
+    currentUser,
+    ($currentUser) => $currentUser.isPlatformModerator,
+);

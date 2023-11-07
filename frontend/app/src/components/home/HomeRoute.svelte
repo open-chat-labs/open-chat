@@ -7,9 +7,12 @@
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
     $: chatsLoading = client.chatsLoading;
+    $: showLoader =
+        $identityState.kind !== "registering" &&
+        ($chatsLoading || $identityState.kind === "loading_user");
 </script>
 
-{#if $identityState.kind === "loading_user" || $chatsLoading}
+{#if showLoader}
     <div class="loading">
         <div class="inner-loader">
             <FancyLoader />

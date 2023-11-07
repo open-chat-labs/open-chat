@@ -8,7 +8,6 @@ import type {
     EventWrapper,
     Message,
     ThreadSyncDetails,
-    CreatedUser,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
@@ -24,6 +23,7 @@ import {
     nullMembership,
     chatIdentifiersEqual,
     isAttachmentContent,
+    ANON_USER_ID,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -36,7 +36,7 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { userStore } from "./user";
+import { currentUser, userStore } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -61,7 +61,6 @@ import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore } from "./community";
 import { translationStore } from "./translation";
 
-export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
@@ -153,7 +152,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         serverChatSummariesStore,
         localChatSummaryUpdates,
         unconfirmed,
-        currentUserStore,
+        currentUser,
         localMessageUpdates,
         translationStore,
     ],
@@ -167,7 +166,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         return mergedSummaries
             .entries()
             .reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-                if (currentUser !== undefined) {
+                if (currentUser.userId !== ANON_USER_ID) {
                     result.set(
                         chatId,
                         mergeUnconfirmedIntoSummary(

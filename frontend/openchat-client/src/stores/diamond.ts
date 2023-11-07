@@ -1,11 +1,11 @@
-import {
-    type DiamondMembershipDetails,
-    type DiamondMembershipDuration,
-    UnsupportedValueError,
-} from "openchat-shared";
-import { derived, writable } from "svelte/store";
+import { type DiamondMembershipDuration, UnsupportedValueError } from "openchat-shared";
+import { derived } from "svelte/store";
+import { currentUser } from "./user";
 
-export const diamondMembership = writable<DiamondMembershipDetails | undefined>(undefined);
+export const diamondMembership = derived(
+    currentUser,
+    ($currentUser) => $currentUser.diamondMembership,
+);
 
 export const isDiamond = derived(diamondMembership, ($diamondMembership) => {
     return $diamondMembership !== undefined && $diamondMembership.expiresAt > Date.now();

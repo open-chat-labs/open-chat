@@ -36,7 +36,6 @@
     export let reply: boolean;
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
@@ -45,6 +44,7 @@
     let showNeuronInfo = false;
     let showPayload = false;
 
+    $: user = client.user;
     $: rootCanister =
         client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
@@ -263,7 +263,7 @@
             <div slot="body">
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: user.userId },
+                        values: { userId: $user.userId },
                     })} />
             </div>
         </ModalContent>

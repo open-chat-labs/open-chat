@@ -30,6 +30,7 @@
     let total = 0;
     let pageIndex = 0;
 
+    $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
@@ -57,7 +58,7 @@
     }
 
     function createCommunity() {
-        if (client.anonUser) {
+        if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
             return;
         }

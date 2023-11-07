@@ -69,7 +69,6 @@
     let displayName: string | undefined = undefined;
     let displayNameValid = true;
     let checkingUsername: boolean;
-    let readonly = client.isReadOnly() || client.anonUser;
     let view: "global" | "communities" = "global";
     let selectedCommunityId = "";
 
@@ -86,7 +85,9 @@
         kind: "community",
         communityId: selectedCommunityId,
     });
-    $: anon = client.anonUser;
+    $: anonUser = client.anonUser;
+    $: suspendedUser = client.suspendedUser;
+    $: readonly = $suspendedUser || $anonUser;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -121,7 +122,7 @@
     }
 
     function saveUser() {
-        if (anon) return;
+        if ($anonUser) return;
 
         saving = true;
         usernameError = undefined;
@@ -235,7 +236,7 @@
     </span>
 </SectionHeader>
 
-{#if !anon}
+{#if !$anonUser}
     <div class="tabs">
         <div
             tabindex="0"
@@ -276,7 +277,7 @@
                             on:imageSelected={userAvatarSelected} />
                     {/if}
                 </div>
-                {#if anon}
+                {#if $anonUser}
                     <div class="guest">
                         <p>{$_("guestUser")}</p>
                         <Button on:click={() => identityState.set({ kind: "logging_in" })}
@@ -352,7 +353,7 @@
                 </div>
             </CollapsibleCard>
         </div>
-        {#if !anon}
+        {#if !$anonUser}
             <div class="invite">
                 <CollapsibleCard
                     on:toggle={referralOpen.toggle}

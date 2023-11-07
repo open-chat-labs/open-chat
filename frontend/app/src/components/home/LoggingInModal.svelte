@@ -15,6 +15,7 @@
 
     let state: "idle" | "confirming" | "logging-in" = "idle";
 
+    $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
 
@@ -28,7 +29,7 @@
     });
 
     onDestroy(() => {
-        if (client.anonUser && $identityState.kind === "logging_in") {
+        if ($anonUser && $identityState.kind === "logging_in") {
             identityState.set({ kind: "anon" });
         }
     });
@@ -43,7 +44,7 @@
     }
 
     function cancel() {
-        if (client.anonUser && $identityState.kind === "logging_in") {
+        if ($anonUser && $identityState.kind === "logging_in") {
             identityState.set({ kind: "anon" });
         }
         dispatch("close");
@@ -61,7 +62,7 @@
     }
 </script>
 
-<ModalContent hideFooter on:close={cancel} closeIcon>
+<ModalContent compactFooter on:close={cancel} closeIcon>
     <div class="header" slot="header">{$_("loginToOpenChat")}</div>
     <div class="body" slot="body">
         {#if warn}
@@ -84,36 +85,38 @@
                 {$_("login")}
             </Button>
         </div>
-        <div class="auth-providers">
-            <Radio
-                id="ii_auth"
-                group="authprovider"
-                value={AuthProvider.II}
-                label={AuthProvider.II}
-                disabled={state === "logging-in"}
-                checked={selected === AuthProvider.II}
-                on:change={() => selectProvider(AuthProvider.II)}>
-                <div class="provider">
-                    <div class="ii-img">
-                        <InternetIdentityLogo />
-                    </div>
-                    {AuthProvider.II}
+    </div>
+    <div class="auth-providers" slot="footer">
+        <Radio
+            id="ii_auth"
+            compact
+            group="authprovider"
+            value={AuthProvider.II}
+            label={AuthProvider.II}
+            disabled={state === "logging-in"}
+            checked={selected === AuthProvider.II}
+            on:change={() => selectProvider(AuthProvider.II)}>
+            <div class="provider">
+                <div class="ii-img">
+                    <InternetIdentityLogo />
                 </div>
-            </Radio>
-            <Radio
-                id="nfid_auth"
-                group="authprovider"
-                value={AuthProvider.NFID}
-                label={AuthProvider.NFID}
-                disabled={state === "logging-in"}
-                checked={selected === AuthProvider.NFID}
-                on:change={() => selectProvider(AuthProvider.NFID)}>
-                <div class="provider">
-                    <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                    {AuthProvider.NFID}
-                </div>
-            </Radio>
-        </div>
+                {AuthProvider.II}
+            </div>
+        </Radio>
+        <Radio
+            id="nfid_auth"
+            compact
+            group="authprovider"
+            value={AuthProvider.NFID}
+            label={AuthProvider.NFID}
+            disabled={state === "logging-in"}
+            checked={selected === AuthProvider.NFID}
+            on:change={() => selectProvider(AuthProvider.NFID)}>
+            <div class="provider">
+                <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                {AuthProvider.NFID}
+            </div>
+        </Radio>
     </div>
 </ModalContent>
 
@@ -140,16 +143,13 @@
         }
     }
 
-    .cta {
-        margin-bottom: $sp5;
-    }
-
     .auth-providers {
         display: flex;
         flex-direction: row;
         justify-content: center;
         align-items: center;
         gap: $sp4;
+        @include font-size(fs-80);
 
         @include mobile() {
             flex-direction: column;

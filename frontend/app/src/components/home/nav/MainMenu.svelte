@@ -23,11 +23,11 @@
     const dispatch = createEventDispatcher();
 
     $: canExtendDiamond = client.canExtendDiamond;
-    $: anon = client.anonUser;
+    $: anonUser = client.anonUser;
 </script>
 
 <Menu>
-    {#if !anon}
+    {#if !$anonUser}
         <MenuItem on:click={() => dispatch("wallet")}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{$_("wallet")}</span>
@@ -80,7 +80,7 @@
         <span slot="text">Guidelines</span>
     </MenuItem>
     <MenuItem separator />
-    {#if !anon}
+    {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{$_("logout")}</span>

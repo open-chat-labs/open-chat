@@ -97,7 +97,6 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -164,6 +163,9 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: user = client.user;
+    $: suspendedUser = client.suspendedUser;
+    $: anonUser = client.anonUser;
     $: identityState = client.identityState;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
@@ -194,6 +196,10 @@
         if ($identityState.kind === "logging_in") {
             modal = ModalType.LoggingIn;
         }
+        if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+            console.log("We are now logged in so we are closing the register modal");
+            modal = ModalType.None;
+        }
     }
 
     $: {
@@ -213,7 +219,7 @@
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
-        if (client.user.suspensionDetails !== undefined) {
+        if ($suspendedUser) {
             modal = ModalType.Suspended;
         }
 
@@ -359,7 +365,7 @@
             filterRightPanelHistory((state) => state.kind !== "community_filters");
 
             if (
-                client.anonUser &&
+                $anonUser &&
                 pathParams.kind === "chat_list_route" &&
                 (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
             ) {
@@ -748,7 +754,7 @@
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
-        if (client.anonUser) {
+        if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
             return;
         }
@@ -1029,7 +1035,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main class:anon={client.anonUser}>
+<main class:anon={$anonUser}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1099,7 +1105,7 @@
     {/if}
 </main>
 
-{#if client.anonUser}
+{#if $anonUser}
     <AnonFooter />
 {/if}
 
@@ -1135,7 +1141,7 @@
 
 <Toast />
 
-{#if showUpgrade && user}
+{#if showUpgrade && $user}
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 

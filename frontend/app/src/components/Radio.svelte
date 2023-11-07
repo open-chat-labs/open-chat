@@ -6,9 +6,10 @@
     export let label: string = "radio-label";
     export let align: "center" | "start" = "center";
     export let disabled: boolean = false;
+    export let compact: boolean = false;
 </script>
 
-<div class="radio" class:align-start={align === "start"}>
+<div class="radio" class:compact class:align-start={align === "start"}>
     <input {disabled} {id} type="radio" name={group} {checked} {value} on:change />
     <label class:disabled for={id}>
         <slot>
@@ -31,6 +32,10 @@
             input {
                 margin-top: 6px;
             }
+        }
+
+        &.compact {
+            gap: $sp3;
         }
     }
 

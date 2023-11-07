@@ -15,11 +15,11 @@
     export let chat: MultiUserChat;
     export let joining: MultiUserChat | undefined;
 
+    $: platformModerator = client.platformModerator;
     $: isFrozen = client.isFrozen(chat.id);
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
 
-    let isPlatformModerator = client.isPlatformModerator();
     let freezingInProgress = false;
 
     function joinGroup() {
@@ -68,7 +68,7 @@
     <div class="gate">
         <GroupGateIcon on:upgrade gate={chat.gate} />
     </div>
-    {#if isPlatformModerator}
+    {#if $platformModerator}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
                 {$_("unfreezeGroup")}
