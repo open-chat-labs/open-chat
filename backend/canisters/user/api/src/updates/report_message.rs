@@ -17,5 +17,6 @@ pub enum Response {
     UserSuspended,
     ChatNotFound,
     MessageNotFound,
+    AlreadyReported,
     InternalError(String),
 }

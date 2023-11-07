@@ -18,11 +18,15 @@ async fn report_message(args: Args) -> Response {
     };
 
     match user_index_canister_c2c_client::c2c_report_message(user_index_canister, &c2c_args).await {
-        Ok(_) => {
+        Ok(result) => {
             if args.delete {
                 mutate_state(|state| delete_message(&args, c2c_args.reporter, state));
             }
-            Success
+
+            match result {
+                c2c_report_message::Response::Success => Success,
+                c2c_report_message::Response::AlreadyReported => AlreadyReported,
+            }
         }
         Err(err) => InternalError(format!("{err:?}")),
     }
@@ -46,6 +50,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
                     message,
                     reason_code: args.reason_code,
                     notes: args.notes.clone(),
+                    already_deleted: args.delete,
                 },
                 state.data.user_index_canister_id,
             ))

@@ -727,6 +727,7 @@ type ReportMessageResponse = variant {
     NotAuthorized;
     UserNotInChannel;
     MessageNotFound;
+    AlreadyReported;
     InternalError : text;
 };
 
