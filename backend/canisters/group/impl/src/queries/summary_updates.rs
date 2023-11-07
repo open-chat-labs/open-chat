@@ -81,6 +81,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             wasm_version: None,
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
+            events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
             rules_accepted: member
                 .rules_accepted

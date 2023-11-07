@@ -20,6 +20,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let is_public = state.data.chat.is_public.value;
     let data = &state.data;
     let events_reader = data.chat.events.main_events_reader();
+    let events_ttl = data.chat.events.get_events_time_to_live();
 
     // You can't see private group messages unless you are a member of the group
     let latest_message = if is_public || state.data.get_member(caller).is_some() {
@@ -42,7 +43,8 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         participant_count: data.chat.members.len(),
         is_public,
         frozen: data.frozen.value.clone(),
-        events_ttl: data.chat.events.get_events_time_to_live().value,
+        events_ttl: events_ttl.value,
+        events_ttl_last_updated: events_ttl.timestamp,
         gate: data.chat.gate.value.clone(),
         wasm_version: BuildVersion::default(),
     };
