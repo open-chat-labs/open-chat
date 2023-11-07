@@ -161,11 +161,11 @@ function mergeChannelUpdates(
     communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[],
 ): ChannelSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
-    const communityLookup = ChatMap.fromList(communityCanisterUpdates);
+    const channelLookup = ChatMap.fromList(communityCanisterUpdates);
 
     return channels.map((channel) => {
         const u = userLookup.get(channel.id);
-        const c = communityLookup.get(channel.id);
+        const c = channelLookup.get(channel.id);
 
         if (u === undefined && c === undefined) return channel;
 
@@ -193,6 +193,7 @@ function mergeChannelUpdates(
             previewed: false,
             frozen: channel.frozen, // frozen doesn't exist on CommunityCanisterChannelSummaryUpdates
             latestEventIndex: c?.latestEventIndex ?? channel.latestEventIndex,
+            latestMessageIndex: c?.latestMessageIndex ?? channel.latestMessageIndex,
             latestMessage,
             metrics: c?.metrics ?? channel.metrics,
             blobReference: applyOptionUpdate(channel.blobReference, blobReferenceUpdate),

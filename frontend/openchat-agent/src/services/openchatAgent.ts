@@ -1365,6 +1365,10 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
+            this.removeExpiredLatestMessages(current.directChats, start);
+            this.removeExpiredLatestMessages(current.groupChats, start);
+            current.communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
+
             directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
@@ -1535,6 +1539,17 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
         };
+    }
+
+    private removeExpiredLatestMessages(
+        chats: { latestMessage?: EventWrapper<Message> }[],
+        now: number,
+    ) {
+        for (const chat of chats) {
+            if (chat.latestMessage?.expiresAt !== undefined && chat.latestMessage.expiresAt < now) {
+                chat.latestMessage = undefined;
+            }
+        }
     }
 
     async getCommunitySummary(communityId: string): Promise<CommunitySummaryResponse> {

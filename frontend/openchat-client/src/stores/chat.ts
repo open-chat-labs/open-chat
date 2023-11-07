@@ -592,9 +592,11 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
+            latestMessageIndex: undefined,
             lastUpdated: BigInt(Date.now()),
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
+            eventsTTL: undefined,
             membership: {
                 ...nullMembership(),
                 role: "owner",

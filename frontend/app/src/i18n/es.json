@@ -1144,9 +1144,11 @@
         "minutes": "Minutos)",
         "days": "Días)",
         "summary": "Los mensajes desaparecerán después de {duration}",
-        "timeUpdated": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
-        "disabled": "{changedBy} deshabilitó los mensajes que desaparecen",
+        "timeUpdatedBy": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
+        "disabledBy": "{changedBy} deshabilitó los mensajes que desaparecen",
         "durationMinutes": "{duration} minutos",
-        "oneMinute": "1 minuto"
+        "oneMinute": "1 minuto",
+        "timeUpdated": "Tiempo de desaparición del mensaje establecido en {duration}",
+        "disabled": "Mensajes que desaparecen desactivados"
     }
 }

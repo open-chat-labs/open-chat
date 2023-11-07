@@ -1486,6 +1486,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
@@ -1501,6 +1502,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        eventsTTL: optional(candid.events_ttl, identity),
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -1587,6 +1589,7 @@ export function communityChannelSummary(
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
