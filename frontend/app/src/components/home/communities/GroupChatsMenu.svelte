@@ -8,10 +8,14 @@
     import Menu from "../../Menu.svelte";
     import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
+    import type { OpenChat } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
+
+    $: anon = client.anonUser;
 
     function newGroup() {
         dispatch("newGroup");
@@ -26,13 +30,15 @@
     </span>
     <span slot="menu">
         <Menu>
-            <MenuItem on:click={newGroup}>
-                <AccountMultiplePlus
-                    size={$iconSize}
-                    color={"var(--icon-inverted-txt)"}
-                    slot="icon" />
-                <span slot="text">{$_("newGroup")}</span>
-            </MenuItem>
+            {#if !anon}
+                <MenuItem on:click={newGroup}>
+                    <AccountMultiplePlus
+                        size={$iconSize}
+                        color={"var(--icon-inverted-txt)"}
+                        slot="icon" />
+                    <span slot="text">{$_("newGroup")}</span>
+                </MenuItem>
+            {/if}
             <MenuItem on:click={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <span slot="text">{$_("exploreGroups")}</span>
