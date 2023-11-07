@@ -150,6 +150,7 @@ type ReportMessageResponse = variant {
     NotAuthorized;
     CallerNotInGroup;
     MessageNotFound;
+    AlreadyReported;
     InternalError : text;
 };
 

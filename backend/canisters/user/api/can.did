@@ -131,6 +131,7 @@ type ReportMessageResponse = variant {
     UserSuspended;
     ChatNotFound;
     MessageNotFound;
+    AlreadyReported;
     InternalError : text;
 };
 
