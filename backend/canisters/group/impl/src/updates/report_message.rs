@@ -64,8 +64,6 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
                         chat_id: MultiUserChat::Group(state.env.canister_id().into()),
                         thread_root_message_index: args.thread_root_message_index,
                         message,
-                        reason_code: args.reason_code,
-                        notes: args.notes.clone(),
                         already_deleted: args.delete,
                     },
                     state.data.group_index_canister_id,

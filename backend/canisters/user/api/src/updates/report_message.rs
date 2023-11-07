@@ -6,8 +6,6 @@ use types::{MessageId, UserId};
 pub struct Args {
     pub them: UserId,
     pub message_id: MessageId,
-    pub reason_code: u32,
-    pub notes: Option<String>,
     pub delete: bool,
 }
 

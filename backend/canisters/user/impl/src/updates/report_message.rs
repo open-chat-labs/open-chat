@@ -48,8 +48,6 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
                     chat_id: Chat::Direct(args.them.into()),
                     thread_root_message_index: None,
                     message,
-                    reason_code: args.reason_code,
-                    notes: args.notes.clone(),
                     already_deleted: args.delete,
                 },
                 state.data.user_index_canister_id,

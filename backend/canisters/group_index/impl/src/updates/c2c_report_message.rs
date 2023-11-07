@@ -14,8 +14,6 @@ async fn c2c_report_message(args: Args) -> Response {
         reporter: args.reporter,
         thread_root_message_index: args.thread_root_message_index,
         message: args.message,
-        reason_code: args.reason_code,
-        notes: args.notes,
         already_deleted: args.already_deleted,
     };
 
