@@ -24,6 +24,8 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
 }
 
 impl DirectChatSummary {
@@ -64,6 +66,8 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -83,6 +87,8 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -105,11 +111,12 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "GroupCanisterGroupChatSummaryCombined")]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -137,80 +144,10 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<AccessGate>,
-    pub rules_accepted: bool,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupCanisterGroupChatSummaryCombined {
-    pub chat_id: ChatId,
-    pub last_updated: TimestampMillis,
-    pub name: String,
-    pub description: String,
-    pub subtype: Option<GroupSubtype>,
-    pub avatar_id: Option<u128>,
-    pub is_public: bool,
-    pub history_visible_to_new_joiners: bool,
-    pub min_visible_event_index: EventIndex,
-    pub min_visible_message_index: MessageIndex,
-    pub latest_message: Option<EventWrapper<Message>>,
-    pub latest_event_index: EventIndex,
     #[serde(default)]
-    pub latest_message_index: Option<MessageIndex>,
-    pub joined: TimestampMillis,
-    pub participant_count: u32,
-    pub role: GroupRole,
-    pub mentions: Vec<HydratedMention>,
-    pub wasm_version: BuildVersion,
-    pub permissions_v2: GroupPermissions,
-    pub notifications_muted: bool,
-    pub metrics: ChatMetrics,
-    pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    pub frozen: Option<FrozenGroupInfo>,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub events_ttl: Option<Milliseconds>,
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-}
-
-impl From<GroupCanisterGroupChatSummaryCombined> for GroupCanisterGroupChatSummary {
-    fn from(value: GroupCanisterGroupChatSummaryCombined) -> Self {
-        let latest_message_index = value
-            .latest_message_index
-            .or_else(|| value.latest_message.as_ref().map(|m| m.event.message_index));
-
-        GroupCanisterGroupChatSummary {
-            chat_id: value.chat_id,
-            last_updated: value.last_updated,
-            name: value.name,
-            description: value.description,
-            subtype: value.subtype,
-            avatar_id: value.avatar_id,
-            is_public: value.is_public,
-            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
-            min_visible_event_index: value.min_visible_event_index,
-            min_visible_message_index: value.min_visible_message_index,
-            latest_message: value.latest_message,
-            latest_event_index: value.latest_event_index,
-            latest_message_index,
-            joined: value.joined,
-            participant_count: value.participant_count,
-            role: value.role,
-            mentions: value.mentions,
-            wasm_version: value.wasm_version,
-            permissions_v2: value.permissions_v2,
-            notifications_muted: value.notifications_muted,
-            metrics: value.metrics,
-            my_metrics: value.my_metrics,
-            latest_threads: value.latest_threads,
-            frozen: value.frozen,
-            date_last_pinned: value.date_last_pinned,
-            events_ttl: value.events_ttl,
-            gate: value.gate,
-            rules_accepted: value.rules_accepted,
-        }
-    }
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -269,6 +206,7 @@ impl GroupCanisterGroupChatSummary {
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
+            events_ttl_last_updated: updates.events_ttl_last_updated.unwrap_or(self.events_ttl_last_updated),
             gate: updates.gate.apply_to(self.gate),
             rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
         }
@@ -301,6 +239,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
 }

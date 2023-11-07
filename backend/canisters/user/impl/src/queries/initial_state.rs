@@ -128,6 +128,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         date_last_pinned: cached.date_last_pinned,
         date_read_pinned: user_details.messages_read.date_read_pinned.value,
         events_ttl: cached.events_ttl,
+        events_ttl_last_updated: cached.events_ttl_last_updated,
         gate: cached.gate.clone(),
         rules_accepted: cached.rules_accepted,
     }
