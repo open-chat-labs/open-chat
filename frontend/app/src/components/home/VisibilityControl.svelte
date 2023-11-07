@@ -166,26 +166,26 @@
     </div>
 {/if}
 
-{#if candidate.kind === "candidate_group_chat"}
-    <div class="section">
-        <Checkbox
-            id="disappearing-messages"
-            disabled={!canEditDisappearingMessages}
-            on:change={toggleDisappearingMessages}
-            label={$_("disappearingMessages.label")}
-            align={"start"}
-            checked={disappearingMessages}>
-            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
-            <div class="info">
-                {#if disappearingMessages}
-                    <DisappearingMessages
-                        {canEditDisappearingMessages}
-                        bind:ttl={candidate.eventsTTL} />
-                {/if}
-            </div>
-        </Checkbox>
-    </div>
-{/if}
+<!--{#if candidate.kind === "candidate_group_chat"}-->
+<!--    <div class="section">-->
+<!--        <Checkbox-->
+<!--            id="disappearing-messages"-->
+<!--            disabled={!canEditDisappearingMessages}-->
+<!--            on:change={toggleDisappearingMessages}-->
+<!--            label={$_("disappearingMessages.label")}-->
+<!--            align={"start"}-->
+<!--            checked={disappearingMessages}>-->
+<!--            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>-->
+<!--            <div class="info">-->
+<!--                {#if disappearingMessages}-->
+<!--                    <DisappearingMessages-->
+<!--                        {canEditDisappearingMessages}-->
+<!--                        bind:ttl={candidate.eventsTTL} />-->
+<!--                {/if}-->
+<!--            </div>-->
+<!--        </Checkbox>-->
+<!--    </div>-->
+<!--{/if}-->
 
 {#if !requiresUpgrade}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">
