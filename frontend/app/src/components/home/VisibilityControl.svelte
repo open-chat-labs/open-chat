@@ -22,7 +22,7 @@
     import Input from "../Input.svelte";
     import { getGateBindings, type GateBinding } from "../../utils/access";
     import { fade } from "svelte/transition";
-    import DisappearingMessages from "./DisappearingMessages.svelte";
+    // import DisappearingMessages from "./DisappearingMessages.svelte";
 
     type T = $$Generic;
 
