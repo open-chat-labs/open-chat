@@ -1141,5 +1141,10 @@
         "oneMinute": "1 minute",
         "timeUpdated": "Heure de disparition du message définie sur {duration}",
         "disabled": "Messages qui disparaissent désactivés"
-    }
+    },
+    "login": "Se connecter",
+    "loginToOpenChat": "Connectez-vous à OpenChat",
+    "tapToLogin": "Mode Invité - appuyez ici pour vous connecter",
+    "loginProviderChanged": "Il semble que vous vous soyez déjà connecté avec le fournisseur {previous}. Veuillez vérifier que vous souhaitez utiliser {next} cette fois ?",
+    "guestUser": "Utilisateur invité"
 }

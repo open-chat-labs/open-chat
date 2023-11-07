@@ -1139,5 +1139,10 @@
         "oneMinute": "דקה 1",
         "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
         "disabled": "הודעות נעלמות מושבתות"
-    }
+    },
+    "login": "התחברות",
+    "loginToOpenChat": "היכנס ל-OpenChat",
+    "tapToLogin": "מצב אורח - הקש כאן כדי להיכנס",
+    "loginProviderChanged": "נראה שנכנסת בעבר עם הספק {previous}. בדוק שוב שברצונך להשתמש ב-{next} הפעם?",
+    "guestUser": "משתמש אורח"
 }

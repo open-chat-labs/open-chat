@@ -1142,5 +1142,10 @@
         "oneMinute": "1分",
         "timeUpdated": "メッセージが消える時間を {duration} に設定しました",
         "disabled": "消えるメッセージの無効化"
-    }
+    },
+    "login": "ログイン",
+    "loginToOpenChat": "オープンチャットにログインする",
+    "tapToLogin": "ゲスト モード - ここをタップしてログインします",
+    "loginProviderChanged": "以前に {previous} プロバイダーを使用してログインしたようです。今回は {next} を使用したいことを再確認してください?",
+    "guestUser": "ゲストユーザー"
 }

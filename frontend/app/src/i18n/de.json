@@ -1143,5 +1143,10 @@
         "oneMinute": "1 Minute",
         "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
         "disabled": "Verschwindende Nachrichten deaktiviert"
-    }
+    },
+    "login": "Anmeldung",
+    "loginToOpenChat": "Melden Sie sich bei OpenChat an",
+    "tapToLogin": "Gastmodus – tippen Sie hier, um sich anzumelden",
+    "loginProviderChanged": "Anscheinend haben Sie sich zuvor beim Anbieter {previous} angemeldet. Bitte überprüfen Sie noch einmal, ob Sie dieses Mal {next} verwenden möchten.",
+    "guestUser": "Gastbenutzer"
 }

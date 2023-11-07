@@ -1142,5 +1142,10 @@
         "oneMinute": "1分钟",
         "timeUpdated": "消息消失时间设置为 {duration}",
         "disabled": "消息消失已禁用"
-    }
+    },
+    "login": "登录",
+    "loginToOpenChat": "登录 OpenChat",
+    "tapToLogin": "访客模式 - 点击此处登录",
+    "loginProviderChanged": "您之前似乎已使用 {previous} 提供商登录。请仔细检查您这次是否想使用 {next}？",
+    "guestUser": "访客用户"
 }
