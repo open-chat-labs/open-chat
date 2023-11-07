@@ -550,6 +550,7 @@ export type LocalChatSummaryUpdates = {
               gate?: AccessGate;
               notificationsMuted?: boolean;
               archived?: boolean;
+              eventsTTL?: OptionUpdate<bigint>;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -1072,10 +1073,12 @@ export type DirectChatSummaryUpdates = {
     readByThemUpTo?: number;
     readByMeUpTo?: number;
     lastUpdated: bigint;
-    latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
     notificationsMuted?: boolean;
     updatedEvents: UpdatedEvent[];
+    eventsTTL: OptionUpdate<bigint>;
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
@@ -1166,10 +1169,12 @@ export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = HasMembershipRole & {
     lastUpdated: bigint;
+    latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number;
-    latestMessage?: EventWrapper<Message>;
+    latestMessageIndex: number | undefined;
     metrics: Metrics;
     membership: ChatMembership;
+    eventsTTL: bigint | undefined;
 };
 
 export type ChannelSummary = DataContent &
@@ -1263,6 +1268,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         minVisibleMessageIndex: number;
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
+        latestMessageIndex: number | undefined;
         joined: bigint;
         myRole: MemberRole;
         memberCount: number;
@@ -1273,6 +1279,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
         rulesAccepted: boolean;
+        eventsTTL?: bigint;
     };
 
 export type UpdatedEvent = {
@@ -1291,6 +1298,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     public: boolean | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number | undefined;
+    latestMessageIndex: number | undefined;
     memberCount: number | undefined;
     myRole: MemberRole | undefined;
     mentions: Mention[];
@@ -1305,6 +1313,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     dateLastPinned: bigint | undefined;
     gate: OptionUpdate<AccessGate>;
     rulesAccepted: boolean | undefined;
+    eventsTTL: OptionUpdate<bigint>;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1339,11 +1348,13 @@ export type CandidateGroupChat = AccessControlled &
     HasMembershipRole &
     Permissioned<ChatPermissions> & {
         id: MultiUserChatIdentifier;
+        kind: "candidate_group_chat";
         name: string;
         description: string;
         rules: UpdatedRules;
         members: CandidateMember[];
         avatar?: DataContent;
+        eventsTTL?: bigint;
     };
 
 export type CandidateChannel = CandidateGroupChat;

@@ -496,6 +496,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     &::after {
         content: "💎";
         margin-inline-start: 5px;
+        @include font-size(fs-80);
     }
 }
 
@@ -569,4 +570,16 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
         width: 80px;
         height: 80px;
     }
+}
+
+@mixin disappearing() {
+    height: calc(1em + 4px);
+    width: calc(1em + 4px);
+    padding: 2px;
+    border-radius: 50%;
+    backdrop-filter: blur(1px);
+    background-color: rgba(255, 255, 255, 0.2);
+    position: absolute;
+    bottom: -2px;
+    right: 2px;
 }

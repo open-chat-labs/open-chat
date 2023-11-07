@@ -27,6 +27,7 @@ pub mod register_proposal_vote;
 pub mod register_proposal_vote_v2;
 pub mod remove_participant;
 pub mod remove_reaction;
+pub mod report_message;
 pub mod send_message;
 pub mod toggle_mute_notifications;
 pub mod unblock_user;

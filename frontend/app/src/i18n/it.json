@@ -654,7 +654,15 @@
             "recipientSubaccount": "Sottoconto del destinatario",
             "recipientSubaccountRules": "deve essere una stringa esadecimale",
             "enterRecipientOwner": "Inserisci l'entità del conto del destinatario",
-            "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo"
+            "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo",
+            "ledgerCanisterId": "ID contenitore registro",
+            "enterLedgerCanisterId": "Inserisci l'ID del contenitore del registro",
+            "tokenInfoUrl": "URL delle informazioni sul token",
+            "enterTokenInfoUrl": "Inserisci un URL che mostri le informazioni sul token",
+            "howToBuyUrl": "Come acquistare l'URL",
+            "enterHowToBuyUrl": "Inserisci un URL che mostri come acquistare il token",
+            "transactionUrlFormat": "Formato dell'URL della transazione",
+            "enterTransactionUrlFormat": "Per esempio. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "sì",
@@ -1121,8 +1129,17 @@
     "doubleTapReply": "Tocca due volte il messaggio per rispondere/modificare",
     "minimumAmount": "Minimo: {amount} {symbol}",
     "sendTextDisabled": "I messaggi di testo sono disabilitati",
-    "disappearingMessageTimeUpdated": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
-    "disappearingMessagesDisabled": "{changedBy} ha disabilitato i messaggi a scomparsa",
-    "durationMinutes": "{duration} minuti",
-    "oneMinute": "1 minuto"
+    "disappearingMessages": {
+        "label": "Messaggi che scompaiono",
+        "hours": "Ore)",
+        "minutes": "Minuti)",
+        "days": "Giorno(i)",
+        "summary": "I messaggi scompariranno dopo le ore {duration}",
+        "timeUpdatedBy": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
+        "disabledBy": "{changedBy} ha disabilitato i messaggi a scomparsa",
+        "durationMinutes": "{duration} minuti",
+        "oneMinute": "1 minuto",
+        "timeUpdated": "Orario di scomparsa del messaggio impostato su {duration}",
+        "disabled": "Messaggi a scomparsa disabilitati"
+    }
 }

@@ -15,6 +15,7 @@ pub struct DirectChatSummary {
     pub last_updated: TimestampMillis,
     pub latest_message: EventWrapper<Message>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: MessageIndex,
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
@@ -23,6 +24,8 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
 }
 
 impl DirectChatSummary {
@@ -46,6 +49,7 @@ pub struct GroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
@@ -62,6 +66,8 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -72,6 +78,7 @@ pub struct DirectChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
@@ -80,6 +87,8 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -96,11 +105,14 @@ pub struct PublicGroupSummary {
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub wasm_version: BuildVersion,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
 
@@ -118,6 +130,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub participant_count: u32,
     pub role: GroupRole,
@@ -131,6 +144,8 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -177,6 +192,7 @@ impl GroupCanisterGroupChatSummary {
             min_visible_message_index: self.min_visible_message_index,
             latest_message: updates.latest_message.or(self.latest_message),
             latest_event_index: updates.latest_event_index.unwrap_or(self.latest_event_index),
+            latest_message_index: updates.latest_message_index,
             joined: self.joined,
             participant_count: updates.participant_count.unwrap_or(self.participant_count),
             role: updates.role.unwrap_or(self.role),
@@ -190,6 +206,7 @@ impl GroupCanisterGroupChatSummary {
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
+            events_ttl_last_updated: updates.events_ttl_last_updated.unwrap_or(self.events_ttl_last_updated),
             gate: updates.gate.apply_to(self.gate),
             rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
         }
@@ -206,6 +223,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
@@ -221,6 +239,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
 }

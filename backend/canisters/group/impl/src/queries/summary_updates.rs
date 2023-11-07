@@ -45,6 +45,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             avatar_id: updates.avatar_id,
             latest_message: updates.latest_message,
             latest_event_index: updates.latest_event_index,
+            latest_message_index: updates.latest_message_index,
             participant_count: updates.member_count,
             role: updates.role_changed.then_some(member.role.value.into()),
             mentions: updates.mentions,
@@ -80,6 +81,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             wasm_version: None,
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
+            events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
             rules_accepted: member
                 .rules_accepted

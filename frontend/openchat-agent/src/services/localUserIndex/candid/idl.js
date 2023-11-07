@@ -147,13 +147,13 @@ export const idlFactory = ({ IDL }) => {
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
+  const MessageIndex = IDL.Nat32;
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
     'Moderator' : IDL.Null,
     'Owner' : IDL.Null,
   });
-  const MessageIndex = IDL.Nat32;
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -528,6 +528,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_event_index' : EventIndex,
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -653,6 +654,7 @@ export const idlFactory = ({ IDL }) => {
     'role' : GroupRole,
     'wasm_version' : BuildVersion,
     'notifications_muted' : IDL.Bool,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,

@@ -20,11 +20,14 @@ pub struct CommunityCanisterChannelSummary {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: u32,
     pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub membership: Option<ChannelMembership>,
 }
@@ -52,12 +55,15 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_message_sender_display_name: Option<String>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: Option<u32>,
     pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub membership: Option<ChannelMembershipUpdates>,
 }

@@ -154,6 +154,7 @@
                             editing={false}
                             eventIndex={thread.rootMessage.index}
                             timestamp={thread.rootMessage.timestamp}
+                            expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={client.toDatetimeString}
                             msg={thread.rootMessage.event} />
                     </div>
@@ -196,6 +197,7 @@
                                 editing={false}
                                 eventIndex={evt.index}
                                 timestamp={evt.timestamp}
+                                expiresAt={evt.expiresAt}
                                 dateFormatter={client.toDatetimeString}
                                 msg={evt.event} />
                         {/each}

@@ -270,7 +270,7 @@ export class CommunityClient extends CandidService {
                 is_public: channel.public,
                 name: channel.name,
                 subtype: [],
-                events_ttl: [],
+                events_ttl: apiOptional(identity, channel.eventsTTL),
                 description: channel.description,
                 history_visible_to_new_joiners: channel.historyVisible,
                 avatar: apiOptional(

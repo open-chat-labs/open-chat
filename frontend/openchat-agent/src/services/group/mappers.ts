@@ -113,6 +113,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         joined: candid.joined,
         memberCount: candid.participant_count,
         myRole: memberRole(candid.role),
@@ -128,6 +129,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         rulesAccepted: candid.rules_accepted,
+        eventsTTL: optional(candid.events_ttl, identity),
     };
 }
 
@@ -162,6 +164,7 @@ function groupChatSummaryUpdates(
         public: optional(candid.is_public, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         memberCount: optional(candid.participant_count, identity),
         myRole: optional(candid.role, memberRole),
         mentions: candid.mentions
@@ -178,6 +181,7 @@ function groupChatSummaryUpdates(
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optionUpdate(candid.gate, accessGate),
         rulesAccepted: optional(candid.rules_accepted, identity),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
     };
 }
 

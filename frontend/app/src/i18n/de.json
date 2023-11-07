@@ -658,7 +658,15 @@
             "recipientSubaccount": "Unterkonto des Empfängers",
             "recipientSubaccountRules": "muss eine Hex-Zeichenfolge sein",
             "enterRecipientOwner": "Geben Sie den Kontoinhaber des Empfängers ein",
-            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein"
+            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein",
+            "ledgerCanisterId": "Hauptbuchkanister-ID",
+            "enterLedgerCanisterId": "Geben Sie die Hauptbuchkanister-ID ein",
+            "tokenInfoUrl": "Token-Info-URL",
+            "enterTokenInfoUrl": "Geben Sie eine URL mit den Token-Informationen ein",
+            "howToBuyUrl": "So kaufen Sie eine URL",
+            "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
+            "transactionUrlFormat": "Transaktions-URL-Format",
+            "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
         }
     },
     "quoteReply": "Antwort zitieren",
@@ -1123,8 +1131,17 @@
     "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "sendTextDisabled": "Textnachrichten sind deaktiviert",
-    "disappearingMessageTimeUpdated": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
-    "disappearingMessagesDisabled": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
-    "durationMinutes": "{duration} Minuten",
-    "oneMinute": "1 Minute"
+    "disappearingMessages": {
+        "label": "Verschwindende Nachrichten",
+        "hours": "Std)",
+        "minutes": "Protokoll)",
+        "days": "Tage)",
+        "summary": "Nachrichten verschwinden nach {duration}",
+        "timeUpdatedBy": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
+        "disabledBy": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
+        "durationMinutes": "{duration} Minuten",
+        "oneMinute": "1 Minute",
+        "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
+        "disabled": "Verschwindende Nachrichten deaktiviert"
+    }
 }

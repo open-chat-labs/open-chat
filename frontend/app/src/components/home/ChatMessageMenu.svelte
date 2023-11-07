@@ -419,7 +419,7 @@
                         <div slot="text">{$_("blockUser")}</div>
                     </MenuItem>
                 {/if}
-                {#if (canDelete || me) && !crypto && !inert}
+                {#if (canDelete || me) && !inert}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}

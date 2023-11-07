@@ -4,6 +4,7 @@
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
     import VisibilityLabel from "./VisibilityLabel.svelte";
+    import DisappearLabel from "./DisappearLabel.svelte";
 
     const client = getContext<OpenChat>("client");
     export let chat: ChatSummary;
@@ -32,6 +33,9 @@
     {subtext}
 {:else if chat.kind === "group_chat" || chat.kind === "channel"}
     <div class="wrapper">
+        {#if chat.eventsTTL !== undefined}
+            <DisappearLabel ttl={chat.eventsTTL} />
+        {/if}
         <VisibilityLabel isPublic={chat.public} />
         <div class="members">
             <span class="num">{chat.memberCount.toLocaleString()}</span>

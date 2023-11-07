@@ -306,7 +306,7 @@ export class UserClient extends CandidService {
                 permissions_v2: [apiGroupPermissions(group.permissions)],
                 rules: group.rules,
                 gate: apiMaybeAccessGate(group.gate),
-                events_ttl: [],
+                events_ttl: apiOptional(identity, group.eventsTTL),
             }),
             (resp) => createGroupResponse(resp, group.id),
         );

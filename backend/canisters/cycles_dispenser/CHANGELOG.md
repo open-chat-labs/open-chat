@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.920](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.920-cycles_dispenser)] - 2023-11-02
+
 ### Added
 
 - Add `latest_top_ups` endpoint ([#4252](https://github.com/open-chat-labs/open-chat/pull/4252))

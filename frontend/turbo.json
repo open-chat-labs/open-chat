@@ -14,15 +14,15 @@
     "pipeline": {
         "deploy:prod": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck:prod", "validate", "lint", "test:prod"]
+            "dependsOn": ["typecheck", "validate", "lint", "test:prod"]
         },
         "deploy:prod_test": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck:prod_test", "validate", "lint", "test:prod_test"]
+            "dependsOn": ["typecheck", "validate", "lint", "test:prod_test"]
         },
         "deploy:testnet": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["typecheck:testnet", "validate", "lint", "test:testnet"]
+            "dependsOn": ["typecheck", "validate", "lint", "test:testnet"]
         },
 
         "build:prod": {
@@ -45,7 +45,7 @@
 
         "build:ci": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["build:prod", "typecheck:prod", "validate", "lint", "test:prod"]
+            "dependsOn": ["build:prod", "typecheck", "validate", "lint", "test:prod"]
         },
 
         "test:prod": {
@@ -64,22 +64,6 @@
             "inputs": ["src/**/*.ts"]
         },
 
-        "typecheck:prod": {
-            "dependsOn": ["build:prod", "^typecheck"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        },
-        "typecheck:prod_test": {
-            "dependsOn": ["build:prod_test", "^typecheck"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        },
-        "typecheck:testnet": {
-            "dependsOn": ["build:testnet", "^typecheck"],
-            "outputs": [],
-            "inputs": ["src/**/*.ts", "src/**/*.svelte"]
-        },
-
         "dev": {
             "cache": false,
             "persistent": true,
@@ -94,7 +78,7 @@
             "inputs": ["src/**/*.ts"]
         },
         "typecheck": {
-            "dependsOn": ["^typecheck"],
+            "dependsOn": ["^build"],
             "outputs": [],
             "inputs": ["src/**/*.ts", "src/**/*.svelte"]
         },

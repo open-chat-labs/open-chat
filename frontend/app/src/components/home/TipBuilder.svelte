@@ -157,7 +157,7 @@
     }
 
     function hasExchangeRate(token: CryptocurrencyDetails): boolean {
-        return dollarExchangeRates[token.ledger] !== undefined;
+        return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
     }
 
     onMount(() => {
