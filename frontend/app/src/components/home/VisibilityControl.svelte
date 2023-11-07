@@ -39,8 +39,8 @@
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let gateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
-    let disappearingMessages =
-        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    // let disappearingMessages =
+    //     candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
@@ -97,11 +97,11 @@
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
 
-    function toggleDisappearingMessages() {
-        if (candidate.kind === "community") return;
-        disappearingMessages = !disappearingMessages;
-        candidate.eventsTTL = disappearingMessages ? BigInt(1000 * 60 * 60) : undefined;
-    }
+    // function toggleDisappearingMessages() {
+    //     if (candidate.kind === "community") return;
+    //     disappearingMessages = !disappearingMessages;
+    //     candidate.eventsTTL = disappearingMessages ? BigInt(1000 * 60 * 60) : undefined;
+    // }
 </script>
 
 <div class="section">
