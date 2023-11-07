@@ -662,7 +662,15 @@
             "recipientSubaccount": "Tài khoản phụ của người nhận",
             "recipientSubaccountRules": "phải là một chuỗi hex",
             "enterRecipientOwner": "Nhập số tiền gốc tài khoản của người nhận",
-            "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn"
+            "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn",
+            "ledgerCanisterId": "Id hộp sổ cái",
+            "enterLedgerCanisterId": "Nhập Id hộp sổ cái",
+            "tokenInfoUrl": "Url thông tin mã thông báo",
+            "enterTokenInfoUrl": "Nhập url hiển thị thông tin mã thông báo",
+            "howToBuyUrl": "Làm thế nào để mua url",
+            "enterHowToBuyUrl": "Nhập url hiển thị cách mua mã thông báo",
+            "transactionUrlFormat": "Định dạng url giao dịch",
+            "enterTransactionUrlFormat": "Ví dụ. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Đúng",
@@ -1129,8 +1137,17 @@
     "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
     "minimumAmount": "Tối thiểu: {amount} {symbol}",
     "sendTextDisabled": "Tin nhắn văn bản bị vô hiệu hóa",
-    "disappearingMessageTimeUpdated": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
-    "disappearingMessagesDisabled": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
-    "durationMinutes": "{duration} phút",
-    "oneMinute": "1 phút"
+    "disappearingMessages": {
+        "label": "Tin nhắn biến mất",
+        "hours": "Giờ)",
+        "minutes": "Phút)",
+        "days": "(Các) ngày",
+        "summary": "Tin nhắn sẽ biến mất sau {duration}",
+        "timeUpdatedBy": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
+        "disabledBy": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
+        "durationMinutes": "{duration} phút",
+        "oneMinute": "1 phút",
+        "timeUpdated": "Thời gian tin nhắn biến mất được đặt thành {duration}",
+        "disabled": "Tin nhắn biến mất bị vô hiệu hóa"
+    }
 }

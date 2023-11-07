@@ -121,6 +121,7 @@ type DirectChatSummary = record {
     last_updated : TimestampMillis;
     latest_message : MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : MessageIndex;
     date_created : TimestampMillis;
     read_by_me_up_to : opt MessageIndex;
     read_by_them_up_to : opt MessageIndex;
@@ -129,6 +130,7 @@ type DirectChatSummary = record {
     my_metrics : ChatMetrics;
     archived : bool;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
 };
 
 type DirectChatSummaryUpdates = record {
@@ -136,6 +138,7 @@ type DirectChatSummaryUpdates = record {
     last_updated : TimestampMillis;
     latest_message : opt MessageEventWrapper;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     read_by_me_up_to : opt MessageIndex;
     read_by_them_up_to : opt MessageIndex;
     notifications_muted : opt bool;
@@ -144,6 +147,7 @@ type DirectChatSummaryUpdates = record {
     my_metrics : opt ChatMetrics;
     archived : opt bool;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
 };
 
 type DirectMessageNotification = record {
@@ -256,6 +260,7 @@ type GroupChatSummary = record {
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     joined : TimestampMillis;
     read_by_me_up_to : opt MessageIndex;
     notifications_muted : bool;
@@ -272,6 +277,7 @@ type GroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
 };
@@ -289,6 +295,7 @@ type GroupCanisterGroupChatSummary = record {
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     joined : TimestampMillis;
     participant_count : nat32;
     role : GroupRole;
@@ -302,6 +309,7 @@ type GroupCanisterGroupChatSummary = record {
     wasm_version : BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
 };
@@ -315,6 +323,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     avatar_id : DocumentIdUpdate;
     latest_message : opt MessageEventWrapper;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     participant_count : opt nat32;
     role : opt GroupRole;
     mentions : vec Mention;
@@ -330,6 +339,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     wasm_version : opt BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
 };
@@ -381,11 +391,13 @@ type CommunityCanisterChannelSummary = record {
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     member_count : nat32;
     permissions_v2 : GroupPermissions;
     metrics : ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     membership : opt ChannelMembership;
 };
@@ -440,12 +452,14 @@ type CommunityCanisterChannelSummaryUpdates = record {
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     member_count : opt nat32;
     permissions_v2 : opt GroupPermissions;
     updated_events : vec record { opt nat32; nat32; nat64 };
     metrics : opt ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     membership : opt ChannelMembershipUpdates;
 };
@@ -702,10 +716,12 @@ type PublicGroupSummary = record {
     avatar_id : opt nat;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     participant_count : nat32;
     is_public : bool;
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     wasm_version : BuildVersion;
 };

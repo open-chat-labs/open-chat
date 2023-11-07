@@ -38,7 +38,8 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 86;
+const CACHE_VERSION = 88;
+const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -420,12 +421,13 @@ export async function getCachedEventIndexByMessageIndex(
 ): Promise<number | undefined> {
     const store = context.threadRootMessageIndex !== undefined ? "thread_events" : "chat_events";
     const cacheKey = createCacheKey(context, messageIndex);
+    const cacheKeyUpperBound = createCacheKey(context, MAX_INDEX);
     const resolvedDb = await db;
 
     const value = await resolvedDb.getFromIndex(
         store,
         "messageIdx",
-        IDBKeyRange.lowerBound(cacheKey),
+        IDBKeyRange.bound(cacheKey, cacheKeyUpperBound),
     );
 
     if (

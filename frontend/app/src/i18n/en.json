@@ -766,7 +766,15 @@
             "enterAmount": "Enter a quantity of {token} tokens",
             "type": "Proposal type",
             "treasury": "Token to transfer from treasury",
-            "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted."
+            "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted.",
+            "ledgerCanisterId": "Ledger canister Id",
+            "enterLedgerCanisterId": "Enter the ledger canister Id",
+            "tokenInfoUrl": "Token info url",
+            "enterTokenInfoUrl": "Enter a url showing the token info",
+            "howToBuyUrl": "How to buy url",
+            "enterHowToBuyUrl": "Enter a url showing how to buy the token",
+            "transactionUrlFormat": "Transaction url format",
+            "enterTransactionUrlFormat": "Eg. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Yes",
@@ -1120,8 +1128,17 @@
     "followThreadFailed": "Follow thread failed",
     "unfollowThreadFailed": "Unfollow thread failed",
     "minimumAmount": "Minimum: {amount} {symbol}",
-    "disappearingMessageTimeUpdated": "{changedBy} set the disappearing message time to {duration}",
-    "disappearingMessagesDisabled": "{changedBy} disabled disappearing messages",
-    "durationMinutes": "{duration} minutes",
-    "oneMinute": "1 minute"
+    "disappearingMessages": {
+        "label": "Disappearing messages",
+        "hours": "Hour(s)",
+        "minutes": "Minute(s)",
+        "days": "Day(s)",
+        "summary": "Messages will disappear after {duration}",
+        "timeUpdatedBy": "{changedBy} set the disappearing message time to {duration}",
+        "disabledBy": "{changedBy} disabled disappearing messages",
+        "durationMinutes": "{duration} minutes",
+        "oneMinute": "1 minute",
+        "timeUpdated": "Disappearing message time set to {duration}",
+        "disabled": "Disappearing messages disabled"
+    }
 }

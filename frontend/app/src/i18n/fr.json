@@ -661,7 +661,15 @@
             "recipientSubaccount": "Sous-compte du destinataire",
             "recipientSubaccountRules": "doit être une chaîne hexadécimale",
             "enterRecipientOwner": "Saisissez le principal du compte du destinataire",
-            "enterRecipientSubaccount": "Saisissez un sous-compte de destinataire facultatif"
+            "enterRecipientSubaccount": "Saisissez un sous-compte de destinataire facultatif",
+            "ledgerCanisterId": "Identifiant de la cartouche du grand livre",
+            "enterLedgerCanisterId": "Saisissez l'ID de la cartouche du grand livre",
+            "tokenInfoUrl": "URL des informations sur le jeton",
+            "enterTokenInfoUrl": "Entrez une URL affichant les informations du jeton",
+            "howToBuyUrl": "Comment acheter une URL",
+            "enterHowToBuyUrl": "Entrez une URL montrant comment acheter le jeton",
+            "transactionUrlFormat": "Format de l'URL de la transaction",
+            "enterTransactionUrlFormat": "Par exemple. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Oui",
@@ -1128,8 +1136,17 @@
     "doubleTapReply": "Appuyez deux fois sur le message pour répondre/modifier",
     "minimumAmount": "Minimum: {amount} {symbol}",
     "sendTextDisabled": "Les messages texte sont désactivés",
-    "disappearingMessageTimeUpdated": "{changedBy} définit l'heure de disparition du message sur {duration}",
-    "disappearingMessagesDisabled": "{changedBy} a désactivé les messages qui disparaissent",
-    "durationMinutes": "{duration} minutes",
-    "oneMinute": "1 minute"
+    "disappearingMessages": {
+        "label": "Messages qui disparaissent",
+        "hours": "Heures)",
+        "minutes": "Minutes)",
+        "days": "Jours)",
+        "summary": "Les messages disparaîtront après {duration}",
+        "timeUpdatedBy": "{changedBy} définit l'heure de disparition du message sur {duration}",
+        "disabledBy": "{changedBy} a désactivé les messages qui disparaissent",
+        "durationMinutes": "{duration} minutes",
+        "oneMinute": "1 minute",
+        "timeUpdated": "Heure de disparition du message définie sur {duration}",
+        "disabled": "Messages qui disparaissent désactivés"
+    }
 }

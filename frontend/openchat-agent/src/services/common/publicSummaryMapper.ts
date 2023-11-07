@@ -3,7 +3,7 @@ import type {
     ApiPublicGroupSummary,
     ApiPublicSummaryResponse,
 } from "../../services/group/candid/idl";
-import { optional } from "../../utils/mapping";
+import { identity, optional } from "../../utils/mapping";
 import { apiGroupSubtype, accessGate, messageEvent } from "./chatMappers";
 import {
     nullMembership,
@@ -17,6 +17,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         kind: "group_chat",
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
         name: candid.name,
         description: candid.description,
@@ -40,10 +41,11 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             reactToMessages: "none",
             mentionAllMembers: "none",
             messagePermissions: {
-                default: "none"
+                default: "none",
             },
-            threadPermissions: undefined
+            threadPermissions: undefined,
         },
+        eventsTTL: optional(candid.events_ttl, identity),
         metrics: emptyChatMetrics(),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: true,

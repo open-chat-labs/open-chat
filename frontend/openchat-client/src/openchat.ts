@@ -204,7 +204,9 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import {
+    durationFromMilliseconds,
     formatDisappearingMessageTime,
+    formatDuration,
     formatRelativeTime,
     formatTimeRemaining,
 } from "./utils/time";
@@ -2054,10 +2056,15 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    formatDisappearingMessageTime(milliseconds: number): string {
-        return formatDisappearingMessageTime(milliseconds, this.config.i18nFormatter);
+    formatDisappearingMessageTime(
+        milliseconds: number,
+        formatter: MessageFormatter = this.config.i18nFormatter,
+    ): string {
+        return formatDisappearingMessageTime(milliseconds, formatter);
     }
 
+    formatDuration = formatDuration;
+    durationFromMilliseconds = durationFromMilliseconds;
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     enableAllProposalFilters = enableAllProposalFilters;
@@ -3070,6 +3077,15 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.draftThreadMessages[threadRootMessageIndex];
     }
 
+    eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
+        if (chat.kind === "group_chat" || chat.kind === "channel") {
+            if (chat.eventsTTL !== undefined) {
+                return timestamp + Number(chat.eventsTTL);
+            }
+        }
+        return undefined;
+    }
+
     sendMessageWithContent(
         messageContext: MessageContext,
         content: MessageContent,
@@ -3098,7 +3114,13 @@ export class OpenChat extends OpenChatAgentWorker {
             draftMessage?.replyingTo,
             forwarded,
         );
-        const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
+        const timestamp = Date.now();
+        const event = {
+            event: msg,
+            index: nextEventIndex,
+            timestamp: BigInt(timestamp),
+            expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
+        };
 
         const canRetry = this.canRetryMessage(msg.content);
 
@@ -4232,6 +4254,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     description: desc,
                     permissions,
                     gate,
+                    eventsTTL: eventsTimeToLive,
                 });
 
                 if (rules !== undefined && resp.rulesVersion !== undefined) {

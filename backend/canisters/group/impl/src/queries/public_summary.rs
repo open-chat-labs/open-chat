@@ -20,8 +20,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
     let is_public = state.data.chat.is_public.value;
     let data = &state.data;
     let events_reader = data.chat.events.main_events_reader();
-    let latest_event_timestamp = events_reader.latest_event_timestamp().unwrap_or_default();
-    let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
+    let events_ttl = data.chat.events.get_events_time_to_live();
 
     // You can't see private group messages unless you are a member of the group
     let latest_message = if is_public || state.data.get_member(caller).is_some() {
@@ -32,18 +31,20 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
 
     let summary = PublicGroupSummary {
         chat_id: state.env.canister_id().into(),
-        last_updated: latest_event_timestamp,
+        last_updated: events_reader.latest_event_timestamp().unwrap_or_default(),
         name: data.chat.name.value.clone(),
         description: data.chat.description.value.clone(),
         subtype: data.chat.subtype.value.clone(),
         history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
         avatar_id: Document::id(&data.chat.avatar),
         latest_message,
-        latest_event_index,
+        latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
+        latest_message_index: events_reader.latest_message_index(),
         participant_count: data.chat.members.len(),
         is_public,
         frozen: data.frozen.value.clone(),
-        events_ttl: data.chat.events.get_events_time_to_live().value,
+        events_ttl: events_ttl.value,
+        events_ttl_last_updated: events_ttl.timestamp,
         gate: data.chat.gate.value.clone(),
         wasm_version: BuildVersion::default(),
     };

@@ -388,6 +388,11 @@ export function mergeLocalSummaryUpdates(
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
                         },
+                        eventsTTL: updated.eventsTTL
+                            ? updated.eventsTTL === "set_to_none"
+                                ? undefined
+                                : updated.eventsTTL.value
+                            : current.eventsTTL,
                     });
                 }
             }
@@ -809,6 +814,7 @@ export function groupChatFromCandidate(
             joined: BigInt(Date.now()),
             role: "owner",
         },
+        eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
 }
 
@@ -1210,6 +1216,7 @@ export function mergeSendMessageResponse(
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
+        expiresAt: resp.expiresAt,
         event: {
             ...msg,
             messageIndex: resp.messageIndex,

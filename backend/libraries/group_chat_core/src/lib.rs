@@ -32,121 +32,34 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
-use utils::time::now_millis;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "GroupChatCoreCombined")]
 pub struct GroupChatCore {
-    #[serde(rename = "is_public_v2")]
+    #[serde(alias = "is_public_v2")]
     pub is_public: Timestamped<bool>,
-    #[serde(rename = "name_v2")]
+    #[serde(alias = "name_v2")]
     pub name: Timestamped<String>,
-    #[serde(rename = "description_v2")]
+    #[serde(alias = "description_v2")]
     pub description: Timestamped<String>,
-    #[serde(rename = "rules_v2")]
+    #[serde(alias = "rules_v2")]
     pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    #[serde(rename = "avatar_v2")]
+    #[serde(alias = "avatar_v2")]
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
-    #[serde(rename = "pinned_messages_v2")]
+    #[serde(alias = "pinned_messages_v2")]
     pub pinned_messages: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(default)]
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(rename = "permissions_v2")]
+    #[serde(alias = "permissions_v2")]
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
     pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct GroupChatCoreCombined {
-    #[serde(default)]
-    pub is_public: bool,
-    #[serde(default)]
-    pub is_public_v2: Timestamped<bool>,
-    #[serde(default)]
-    pub name: String,
-    #[serde(default)]
-    pub name_v2: Timestamped<String>,
-    #[serde(default)]
-    pub description: String,
-    #[serde(default)]
-    pub description_v2: Timestamped<String>,
-    #[serde(default)]
-    pub rules: AccessRulesInternal,
-    #[serde(default)]
-    pub rules_v2: Timestamped<AccessRulesInternal>,
-    pub subtype: Timestamped<Option<GroupSubtype>>,
-    #[serde(default)]
-    pub avatar: Option<Document>,
-    #[serde(default)]
-    pub avatar_v2: Timestamped<Option<Document>>,
-    pub history_visible_to_new_joiners: bool,
-    pub members: GroupMembers,
-    pub events: ChatEvents,
-    pub created_by: UserId,
-    pub date_created: TimestampMillis,
-    #[serde(default)]
-    pub pinned_messages: Vec<MessageIndex>,
-    #[serde(default)]
-    pub pinned_messages_v2: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(default)]
-    pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(default)]
-    pub permissions: GroupPermissions,
-    #[serde(default)]
-    pub permissions_v2: Timestamped<GroupPermissions>,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<AccessGate>>,
-    pub invited_users: InvitedUsers,
-    pub min_visible_indexes_for_new_members: Option<(EventIndex, MessageIndex)>,
-}
-
-impl From<GroupChatCoreCombined> for GroupChatCore {
-    fn from(value: GroupChatCoreCombined) -> Self {
-        let now = now_millis();
-        let date_last_pinned = value.date_last_pinned.unwrap_or(now);
-
-        GroupChatCore {
-            is_public: to_timestamped(value.is_public_v2, value.is_public, now),
-            name: to_timestamped(value.name_v2, value.name, now),
-            description: to_timestamped(value.description_v2, value.description, now),
-            rules: to_timestamped(value.rules_v2, value.rules, now),
-            subtype: value.subtype,
-            avatar: to_timestamped(value.avatar_v2, value.avatar, now),
-            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
-            members: value.members,
-            events: value.events,
-            created_by: value.created_by,
-            date_created: value.date_created,
-            pinned_messages: if !value.pinned_messages.is_empty() {
-                value.pinned_messages.into_iter().map(|m| (date_last_pinned, m)).collect()
-            } else {
-                value.pinned_messages_v2
-            },
-            pinned_messages_removed: value.pinned_messages_removed,
-            permissions: to_timestamped(value.permissions_v2, value.permissions, now),
-            date_last_pinned: value.date_last_pinned,
-            gate: value.gate,
-            invited_users: value.invited_users,
-            min_visible_indexes_for_new_members: value.min_visible_indexes_for_new_members,
-        }
-    }
-}
-
-fn to_timestamped<T>(ts: Timestamped<T>, value: T, now: TimestampMillis) -> Timestamped<T> {
-    if ts.timestamp > 0 {
-        ts
-    } else {
-        Timestamped::new(value, now)
-    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -245,6 +158,7 @@ impl GroupChatCore {
         let mentions = member
             .map(|m| m.most_recent_mentions(Some(since), &self.events))
             .unwrap_or_default();
+        let events_ttl = self.events.get_events_time_to_live();
         let mut updated_events: Vec<_> = self
             .events
             .iter_recently_updated_events()
@@ -282,8 +196,9 @@ impl GroupChatCore {
                 .if_set_after(since)
                 .map(Document::id)
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
-            latest_event_index: events_reader.latest_event_index(),
             latest_message,
+            latest_event_index: events_reader.latest_event_index(),
+            latest_message_index: events_reader.latest_message_index(),
             member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
             role_changed: member.map(|m| m.role.timestamp > since).unwrap_or_default(),
             mentions,
@@ -291,12 +206,11 @@ impl GroupChatCore {
             updated_events,
             is_public: self.is_public.if_set_after(since).copied(),
             date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
-            events_ttl: self
-                .events
-                .get_events_time_to_live()
+            events_ttl: events_ttl
                 .if_set_after(since)
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
             gate: self
                 .gate
                 .if_set_after(since)
@@ -1944,6 +1858,7 @@ pub struct SummaryUpdates {
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub member_count: Option<u32>,
     pub role_changed: bool,
     pub mentions: Vec<HydratedMention>,
@@ -1952,6 +1867,7 @@ pub struct SummaryUpdates {
     pub is_public: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
 }

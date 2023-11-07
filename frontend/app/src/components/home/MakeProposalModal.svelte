@@ -5,10 +5,11 @@
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,
+        type CandidateProposalAction,
         type MultiUserChat,
+        type NervousSystemDetails,
         type OpenChat,
         type Treasury,
-        type NervousSystemDetails,
     } from "openchat-client";
     import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
@@ -23,12 +24,14 @@
     import Markdown from "./Markdown.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
+    import { createAddTokenPayload } from "../../utils/sns";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
     const MAX_URL_LENGTH = 2000;
     const MIN_SUMMARY_LENGTH = 3;
     const MAX_SUMMARY_LENGTH = 5000;
+    const CANISTER_ID_LENGTH = 27;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,7 +51,7 @@
     let actualWidth = 0;
     let summaryPreview = false;
     let busy = true;
-    let selectedProposalType: "motion" | "transfer_sns_funds" = "motion";
+    let selectedProposalType: "motion" | "transfer_sns_funds" | "upgrade_sns_to_next_version" | "add_token" = "motion";
     let message = "";
     let error = true;
     let summaryContainerHeight = 0;
@@ -77,14 +80,19 @@
     $: recipientOwnerValid = isPrincipalValid(recipientOwner);
     $: recipientSubaccountValid =
         recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
+    $: addTokenLedgerCanisterId = "";
+    $: addTokenHowToBuyUrl = "";
+    $: addTokenInfoUrl = "";
+    $: addTokenTransactionUrlFormat = "";
     $: valid =
         !insufficientFunds &&
         titleValid &&
         urlValid &&
         summaryValid &&
-        (selectedProposalType === "motion" ||
-            (amountValid && recipientOwnerValid && recipientSubaccountValid));
-    $: canSubmit = step === 2 || (step === 1 && selectedProposalType === "motion");
+        (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version" ||
+            (selectedProposalType === "transfer_sns_funds" && amountValid && recipientOwnerValid && recipientSubaccountValid) ||
+            (selectedProposalType === "add_token" && isPrincipalValid(addTokenLedgerCanisterId) && addTokenHowToBuyUrl.length > 0 && addTokenTransactionUrlFormat.length > 0));
+    $: canSubmit = step === 2 || (step === 1 && (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version"));
 
     $: {
         if (tokenDetails !== undefined) {
@@ -116,21 +124,7 @@
 
         busy = true;
 
-        const action =
-            selectedProposalType === "motion"
-                ? { kind: selectedProposalType }
-                : {
-                      kind: selectedProposalType,
-                      recipient: {
-                          owner: recipientOwner,
-                          subaccount:
-                              recipientSubaccount.length > 0
-                                  ? recipientSubaccount.padStart(64, "0")
-                                  : undefined,
-                      },
-                      amount: BigInt(Math.floor(amount)),
-                      treasury,
-                  };
+        const action = convertAction();
 
         client
             .submitProposal(nervousSystem.governanceCanisterId, {
@@ -148,6 +142,35 @@
                     message = $_("proposal.maker.unexpectedError");
                 }
             });
+    }
+
+    function convertAction(): CandidateProposalAction {
+        switch (selectedProposalType) {
+            case "motion":
+            case "upgrade_sns_to_next_version":
+                return { kind: selectedProposalType };
+            case "transfer_sns_funds": {
+                return {
+                    kind: "transfer_sns_funds",
+                    recipient: {
+                        owner: recipientOwner,
+                        subaccount:
+                            recipientSubaccount.length > 0
+                                ? recipientSubaccount.padStart(64, "0")
+                                : undefined,
+                    },
+                    amount: BigInt(Math.floor(amount)),
+                    treasury,
+                };
+            }
+            case "add_token": {
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(7000),
+                    payload: createAddTokenPayload(addTokenLedgerCanisterId, addTokenInfoUrl, addTokenHowToBuyUrl, addTokenTransactionUrlFormat),
+                }
+            }
+        }
     }
 
     function onStartRefreshingBalance() {
@@ -215,6 +238,10 @@
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
+                        <option value={"upgrade_sns_to_next_version"}>Upgrade SNS to next version</option>
+                        {#if symbol === "CHAT"}
+                            <option value={"add_token"}>Add token</option>
+                        {/if}
                     </Select>
                 </section>
                 <section>
@@ -285,62 +312,106 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                <div class="hidden" class:visible={selectedProposalType === "transfer_sns_funds"}>
-                    <section>
-                        <Legend label={$_("proposal.maker.treasury")} required />
-                        <Radio
-                            id="chat_treasury"
-                            group="treasury"
-                            value={symbol}
-                            label={symbol}
-                            disabled={busy}
-                            checked={treasury === "SNS"}
-                            on:change={() => (treasury = "SNS")} />
-                        <Radio
-                            id="icp_treasury"
-                            group="treasury"
-                            value="ICP"
-                            label="ICP"
-                            disabled={busy}
-                            checked={treasury === "ICP"}
-                            on:change={() => (treasury = "ICP")} />
-                    </section>
-                    <section>
-                        <Legend label={$_("proposal.maker.recipientOwner")} required />
-                        <Input
-                            disabled={busy}
-                            invalid={recipientOwner.length > 0 && !recipientOwnerValid}
-                            maxlength={63}
-                            bind:value={recipientOwner}
-                            placeholder={$_("proposal.maker.enterRecipientOwner")} />
-                    </section>
-                    <section>
-                        <Legend
-                            label={$_("proposal.maker.recipientSubaccount")}
-                            rules={$_("proposal.maker.recipientSubaccountRules")} />
-                        <Input
-                            disabled={busy}
-                            invalid={!recipientSubaccountValid}
-                            maxlength={64}
-                            bind:value={recipientSubaccount}
-                            placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
-                    </section>
-                    <section>
-                        <Legend
-                            label={$_("proposal.maker.amount")}
-                            rules={$_("proposal.maker.amountRules", { values: { token } })}
-                            required />
-                        <Input
-                            disabled={busy}
-                            invalid={amountText.length > 0 && !amountValid}
-                            minlength={1}
-                            maxlength={20}
-                            bind:value={amountText}
-                            placeholder={$_("proposal.maker.enterAmount", {
-                                values: { token },
-                            })} />
-                    </section>
-                </div>
+                {#if selectedProposalType === "transfer_sns_funds"}
+                    <div>
+                        <section>
+                            <Legend label={$_("proposal.maker.treasury")} required />
+                            <Radio
+                                id="chat_treasury"
+                                group="treasury"
+                                value={symbol}
+                                label={symbol}
+                                disabled={busy}
+                                checked={treasury === "SNS"}
+                                on:change={() => (treasury = "SNS")} />
+                            <Radio
+                                id="icp_treasury"
+                                group="treasury"
+                                value="ICP"
+                                label="ICP"
+                                disabled={busy}
+                                checked={treasury === "ICP"}
+                                on:change={() => (treasury = "ICP")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.recipientOwner")} required />
+                            <Input
+                                disabled={busy}
+                                invalid={recipientOwner.length > 0 && !recipientOwnerValid}
+                                maxlength={63}
+                                bind:value={recipientOwner}
+                                placeholder={$_("proposal.maker.enterRecipientOwner")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={$_("proposal.maker.recipientSubaccount")}
+                                rules={$_("proposal.maker.recipientSubaccountRules")} />
+                            <Input
+                                disabled={busy}
+                                invalid={!recipientSubaccountValid}
+                                maxlength={64}
+                                bind:value={recipientSubaccount}
+                                placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={$_("proposal.maker.amount")}
+                                rules={$_("proposal.maker.amountRules", { values: { token } })}
+                                required />
+                            <Input
+                                disabled={busy}
+                                invalid={amountText.length > 0 && !amountValid}
+                                minlength={1}
+                                maxlength={20}
+                                bind:value={amountText}
+                                placeholder={$_("proposal.maker.enterAmount", {
+                                    values: { token },
+                                })} />
+                        </section>
+                    </div>
+                {:else if selectedProposalType === "add_token"}
+                    <div>
+                        <section>
+                            <Legend label={$_("proposal.maker.ledgerCanisterId")} required />
+                            <Input
+                                autofocus
+                                disabled={busy}
+                                invalid={addTokenLedgerCanisterId.length > 0 && !isPrincipalValid(addTokenLedgerCanisterId)}
+                                bind:value={addTokenLedgerCanisterId}
+                                minlength={CANISTER_ID_LENGTH}
+                                maxlength={CANISTER_ID_LENGTH}
+                                countdown
+                                placeholder={$_("proposal.maker.enterLedgerCanisterId")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
+                            <Input
+                                    disabled={busy}
+                                    minlength={1}
+                                    maxlength={100}
+                                    bind:value={addTokenInfoUrl}
+                                    placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.howToBuyUrl")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenHowToBuyUrl}
+                                placeholder={$_("proposal.maker.enterHowToBuyUrl")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.transactionUrlFormat")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenTransactionUrlFormat}
+                                placeholder={$_("proposal.maker.enterTransactionUrlFormat")} />
+                        </section>
+                    </div>
+                {/if}
             </div>
         </div>
     </div>

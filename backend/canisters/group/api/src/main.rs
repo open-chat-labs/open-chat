@@ -35,6 +35,7 @@ fn main() {
     generate_candid_method!(group, register_proposal_vote_v2, update);
     generate_candid_method!(group, remove_participant, update);
     generate_candid_method!(group, remove_reaction, update);
+    generate_candid_method!(group, report_message, update);
     generate_candid_method!(group, reset_invite_code, update);
     generate_candid_method!(group, send_message_v2, update);
     generate_candid_method!(group, toggle_mute_notifications, update);

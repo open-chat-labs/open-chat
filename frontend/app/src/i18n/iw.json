@@ -659,7 +659,15 @@
             "recipientSubaccount": "חשבון המשנה של הנמען",
             "recipientSubaccountRules": "חייב להיות מחרוזת משושה",
             "enterRecipientOwner": "הזן את מנהל החשבון של הנמען",
-            "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען"
+            "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען",
+            "ledgerCanisterId": "מזהה מיכל פנקס",
+            "enterLedgerCanisterId": "הזן את מזהה מיכל הפנקס",
+            "tokenInfoUrl": "כתובת אתר של מידע אסימון",
+            "enterTokenInfoUrl": "הזן כתובת אתר המציגה את פרטי האסימון",
+            "howToBuyUrl": "איך לקנות כתובת אתר",
+            "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
+            "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
+            "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "כן",
@@ -1126,8 +1134,17 @@
     "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
     "minimumAmount": "מינימום: {amount} {symbol}",
     "sendTextDisabled": "הודעות טקסט מושבתות",
-    "disappearingMessageTimeUpdated": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
-    "disappearingMessagesDisabled": "{changedBy} השבית הודעות נעלמות",
-    "durationMinutes": "{duration} דקות",
-    "oneMinute": "דקה 1"
+    "disappearingMessages": {
+        "label": "הודעות נעלמות",
+        "hours": "שעה (ות)",
+        "minutes": "דקות)",
+        "days": "ימים",
+        "summary": "ההודעות ייעלמו לאחר {duration}",
+        "timeUpdatedBy": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+        "disabledBy": "{changedBy} השבית הודעות נעלמות",
+        "durationMinutes": "{duration} דקות",
+        "oneMinute": "דקה 1",
+        "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
+        "disabled": "הודעות נעלמות מושבתות"
+    }
 }

@@ -188,6 +188,7 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const MessageIndex = IDL.Nat32;
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
     'frozen_by' : UserId,
@@ -381,7 +382,6 @@ export const idlFactory = ({ IDL }) => {
     'NNS' : NnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
-  const MessageIndex = IDL.Nat32;
   const PrizeWinnerContent = IDL.Record({
     'transaction' : CompletedCryptoTransaction,
     'winner' : UserId,
@@ -541,6 +541,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'wasm_version' : BuildVersion,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,

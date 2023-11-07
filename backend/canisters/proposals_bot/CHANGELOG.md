@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.928](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.928-proposals_bot)] - 2023-11-06
+
 ### Added
 
 - Support submitting proposals of type `UpgradeSnsToNextVersion` ([#4670](https://github.com/open-chat-labs/open-chat/pull/4670))
 - Support submitting proposals of type `UpgradeSnsControlledCanister` ([#4672](https://github.com/open-chat-labs/open-chat/pull/4672))
+- Support submitting proposals of type `ExecuteGenericNervousSystemFunction` ([#4694](https://github.com/open-chat-labs/open-chat/pull/4694))
 
 ### Changed
 

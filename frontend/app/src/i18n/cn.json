@@ -661,7 +661,15 @@
             "recipientSubaccount": "收款人子账户",
             "recipientSubaccountRules": "必须是十六进制字符串",
             "enterRecipientOwner": "输入收件人的账户主体",
-            "enterRecipientSubaccount": "输入可选的收件人子帐户"
+            "enterRecipientSubaccount": "输入可选的收件人子帐户",
+            "ledgerCanisterId": "分类帐容器 ID",
+            "enterLedgerCanisterId": "输入账本容器 ID",
+            "tokenInfoUrl": "代币信息网址",
+            "enterTokenInfoUrl": "输入显示令牌信息的 url",
+            "howToBuyUrl": "如何购买网址",
+            "enterHowToBuyUrl": "输入显示如何购买代币的网址",
+            "transactionUrlFormat": "交易url格式",
+            "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}"
         }
     },
     "quoteReply": "引用",
@@ -1129,8 +1137,17 @@
     "doubleTapReply": "双击消息即可回复/编辑",
     "minimumAmount": "最小值：{amount} {symbol}",
     "sendTextDisabled": "短信已禁用",
-    "disappearingMessageTimeUpdated": "{changedBy} 将消息消失时间设置为 {duration}",
-    "disappearingMessagesDisabled": "{changedBy} 禁用消失消息",
-    "durationMinutes": "{duration} 分钟",
-    "oneMinute": "1分钟"
+    "disappearingMessages": {
+        "label": "消失的消息",
+        "hours": "小时）",
+        "minutes": "分钟）",
+        "days": "天）",
+        "summary": "消息将在 {duration} 之后消失",
+        "timeUpdatedBy": "{changedBy} 将消息消失时间设置为 {duration}",
+        "disabledBy": "{changedBy} 禁用消失消息",
+        "durationMinutes": "{duration} 分钟",
+        "oneMinute": "1分钟",
+        "timeUpdated": "消息消失时间设置为 {duration}",
+        "disabled": "消息消失已禁用"
+    }
 }

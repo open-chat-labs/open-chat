@@ -71,6 +71,7 @@
                         typing
                     ),
                     username: "@" + them.username,
+                    eventsTTL: undefined,
                 };
             default:
                 return {
@@ -84,6 +85,7 @@
                         { chatId: chatSummary.id },
                         typing
                     ),
+                    eventsTTL: chatSummary.eventsTTL,
                 };
         }
     }

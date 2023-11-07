@@ -661,7 +661,15 @@
             "recipientSubaccount": "Субсчет получателя",
             "recipientSubaccountRules": "должна быть шестнадцатеричной строкой",
             "enterRecipientOwner": "Введите основную сумму счета получателя",
-            "enterRecipientSubaccount": "Введите дополнительный дополнительный аккаунт получателя."
+            "enterRecipientSubaccount": "Введите дополнительный дополнительный аккаунт получателя.",
+            "ledgerCanisterId": "Идентификатор контейнера бухгалтерской книги",
+            "enterLedgerCanisterId": "Введите идентификатор контейнера реестра",
+            "tokenInfoUrl": "URL-адрес информации о токене",
+            "enterTokenInfoUrl": "Введите URL-адрес, показывающий информацию о токене.",
+            "howToBuyUrl": "Как купить URL",
+            "enterHowToBuyUrl": "Введите URL-адрес, показывающий, как купить токен",
+            "transactionUrlFormat": "Формат URL транзакции",
+            "enterTransactionUrlFormat": "Например. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Да",
@@ -1128,8 +1136,17 @@
     "doubleTapReply": "Дважды нажмите на сообщение, чтобы ответить или отредактировать",
     "minimumAmount": "Минимум: {amount} {symbol}",
     "sendTextDisabled": "Текстовые сообщения отключены",
-    "disappearingMessageTimeUpdated": "{changedBy} устанавливает время исчезновения сообщения на {duration}",
-    "disappearingMessagesDisabled": "{changedBy} отключил исчезающие сообщения",
-    "durationMinutes": "{duration} минут",
-    "oneMinute": "1 минута"
+    "disappearingMessages": {
+        "label": "Исчезающие сообщения",
+        "hours": "Часы)",
+        "minutes": "Минута(ы)",
+        "days": "День(а)",
+        "summary": "Сообщения исчезнут после {duration}",
+        "timeUpdatedBy": "{changedBy} устанавливает время исчезновения сообщения на {duration}",
+        "disabledBy": "{changedBy} отключил исчезающие сообщения",
+        "durationMinutes": "{duration} минут",
+        "oneMinute": "1 минута",
+        "timeUpdated": "Время исчезновения сообщения установлено на {duration}.",
+        "disabled": "Исчезающие сообщения отключены"
+    }
 }

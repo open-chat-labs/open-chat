@@ -663,7 +663,15 @@
             "recipientSubaccount": "Subcuenta del destinatario",
             "recipientSubaccountRules": "debe ser una cadena hexadecimal",
             "enterRecipientOwner": "Ingrese el principal de la cuenta del destinatario",
-            "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional"
+            "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional",
+            "ledgerCanisterId": "ID del contenedor del libro mayor",
+            "enterLedgerCanisterId": "Ingrese el ID del contenedor del libro mayor",
+            "tokenInfoUrl": "URL de información del token",
+            "enterTokenInfoUrl": "Ingrese una URL que muestre la información del token",
+            "howToBuyUrl": "como comprar URL",
+            "enterHowToBuyUrl": "Ingrese una URL que muestre cómo comprar el token.",
+            "transactionUrlFormat": "Formato de URL de transacción",
+            "enterTransactionUrlFormat": "P.ej. https://token.com/?index={transaction_index}"
         }
     },
     "yes": "Sí",
@@ -1130,8 +1138,17 @@
     "doubleTapReply": "Toca dos veces el mensaje para responder/editar",
     "minimumAmount": "Mínimo: {amount} {symbol}",
     "sendTextDisabled": "Los mensajes de texto están deshabilitados",
-    "disappearingMessageTimeUpdated": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
-    "disappearingMessagesDisabled": "{changedBy} deshabilitó los mensajes que desaparecen",
-    "durationMinutes": "{duration} minutos",
-    "oneMinute": "1 minuto"
+    "disappearingMessages": {
+        "label": "Mensajes que desaparecen",
+        "hours": "Horas)",
+        "minutes": "Minutos)",
+        "days": "Días)",
+        "summary": "Los mensajes desaparecerán después de {duration}",
+        "timeUpdatedBy": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
+        "disabledBy": "{changedBy} deshabilitó los mensajes que desaparecen",
+        "durationMinutes": "{duration} minutos",
+        "oneMinute": "1 minuto",
+        "timeUpdated": "Tiempo de desaparición del mensaje establecido en {duration}",
+        "disabled": "Mensajes que desaparecen desactivados"
+    }
 }

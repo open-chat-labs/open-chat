@@ -80,12 +80,14 @@ impl DirectChat {
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
         let events_reader = self.events.main_events_reader();
+        let events_ttl = self.events.get_events_time_to_live();
 
         DirectChatSummary {
             them: self.them,
             last_updated: self.last_updated(),
             latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
-            latest_event_index: events_reader.latest_event_index().unwrap(),
+            latest_event_index: events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: events_reader.latest_message_index().unwrap_or_default(),
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,
@@ -97,7 +99,8 @@ impl DirectChat {
                 .map(|m| m.hydrate())
                 .unwrap_or_default(),
             archived: self.archived.value,
-            events_ttl: self.events.get_events_time_to_live().value,
+            events_ttl: events_ttl.value,
+            events_ttl_last_updated: events_ttl.timestamp,
         }
     }
 
@@ -107,8 +110,10 @@ impl DirectChat {
         let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
         let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
         let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
+        let latest_message_index = if has_new_events { events_reader.latest_message_index() } else { None };
         let notifications_muted = self.notifications_muted.if_set_after(updates_since).copied();
         let metrics = if has_new_events { Some(self.events.metrics().hydrate()) } else { None };
+        let events_ttl = self.events.get_events_time_to_live();
         let updated_events: Vec<_> = self
             .events
             .iter_recently_updated_events()
@@ -121,6 +126,7 @@ impl DirectChat {
             last_updated: self.last_updated(),
             latest_message,
             latest_event_index,
+            latest_message_index,
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
             read_by_them_up_to: self.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
             notifications_muted,
@@ -131,12 +137,11 @@ impl DirectChat {
                 .user_metrics(&my_user_id, Some(updates_since))
                 .map(|m| m.hydrate()),
             archived: self.archived.if_set_after(updates_since).copied(),
-            events_ttl: self
-                .events
-                .get_events_time_to_live()
+            events_ttl: events_ttl
                 .if_set_after(updates_since)
                 .copied()
                 .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl_last_updated: (events_ttl.timestamp > updates_since).then_some(events_ttl.timestamp),
         }
     }
 }

@@ -709,6 +709,27 @@ type RemoveReactionResponse = variant {
     CommunityFrozen;
 };
 
+type ReportMessageArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    reason_code : nat32;
+    notes : opt text;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    NotAuthorized;
+    UserNotInChannel;
+    MessageNotFound;
+    InternalError : text;
+};
+
 type SendMessageArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
@@ -967,6 +988,7 @@ service : {
     remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);

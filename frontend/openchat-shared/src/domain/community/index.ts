@@ -146,7 +146,9 @@ export type ChannelMessageMatch = {
 
 export type UnblockCommunityUserResponse = Failure | Success;
 
-export type UpdateCommunityResponse = Failure | { kind: "success", rulesVersion: number | undefined };
+export type UpdateCommunityResponse =
+    | Failure
+    | { kind: "success"; rulesVersion: number | undefined };
 
 export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
 
@@ -201,9 +203,11 @@ export type CommunityCanisterChannelSummaryUpdates = {
     avatarId: OptionUpdate<bigint>;
     membership: ChannelMembershipUpdates | undefined;
     latestEventIndex: number | undefined;
+    latestMessageIndex: number | undefined;
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
+    eventsTTL: OptionUpdate<bigint>;
 };
 
 export type CommunityMembershipUpdates = {

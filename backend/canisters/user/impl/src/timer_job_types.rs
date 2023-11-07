@@ -86,7 +86,7 @@ impl Job for RetrySendingFailedMessagesJob {
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
         mutate_state(|state| {
-            if let Some(content) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+            if let Some((content, _)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             }) {
