@@ -7,8 +7,6 @@
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
     $: chatsLoading = client.chatsLoading;
-
-    $: console.log("State: ", $identityState, $chatsLoading);
 </script>
 
 {#if $identityState.kind === "loading_user" || $chatsLoading}
