@@ -49,7 +49,10 @@
     });
 
     function url(id: bigint): string {
-        return urlFormat.replace("{block_index}", id.toString()).replace("{transaction_hash}", "");
+        return urlFormat
+            .replace("{block_index}", id.toString())
+            .replace("{transaction_index}", id.toString())
+            .replace("{transaction_hash}", "");
     }
 
     function openDashboard(id: bigint) {

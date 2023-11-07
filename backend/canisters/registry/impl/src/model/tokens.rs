@@ -9,6 +9,12 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn rename_block_index_to_transaction_index(&mut self) {
+        for token in self.tokens.iter_mut() {
+            token.transaction_url_format = token.transaction_url_format.replace("block_index", "transaction_index");
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
