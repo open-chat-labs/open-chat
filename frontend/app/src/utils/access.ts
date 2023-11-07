@@ -12,19 +12,21 @@ export type GateBinding = {
 function getSnsGateBindings(
     nervousSystemLookup: Record<string, NervousSystemDetails>,
 ): GateBinding[] {
-    return Object.values(nervousSystemLookup).map((ns) => {
-        return {
-            label: "access.snsHolder",
-            gate: {
-                kind: "sns_gate",
-                governanceCanister: ns.governanceCanisterId,
-            },
-            key: ns.governanceCanisterId,
-            enabled: true,
-            cssClass: ns.token.symbol.toLowerCase(),
-            labelParams: { token: ns.token.symbol },
-        };
-    });
+    return Object.values(nervousSystemLookup)
+        .filter((ns) => !ns.isNns)
+        .map((ns) => {
+            return {
+                label: "access.snsHolder",
+                gate: {
+                    kind: "sns_gate",
+                    governanceCanister: ns.governanceCanisterId,
+                },
+                key: ns.governanceCanisterId,
+                enabled: true,
+                cssClass: ns.token.symbol.toLowerCase(),
+                labelParams: { token: ns.token.symbol },
+            };
+        });
 }
 
 const noGate: GateBinding = {
