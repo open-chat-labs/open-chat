@@ -97,11 +97,7 @@
     }
 
     function viewProfile() {
-        if (!anon) {
-            dispatch("profile");
-        } else {
-            client.identityState.set({ kind: "logging_in" });
-        }
+        dispatch("profile");
     }
 
     function exploreCommunities() {

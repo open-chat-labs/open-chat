@@ -1120,5 +1120,6 @@
     "oneMinute": "1 minute",
     "loginToOpenChat": "Log into OpenChat",
     "tapToLogin": "Guest mode - tap here to log in",
-    "loginProviderChanged": "It looks like you have previously logged in with the {previous} provider. Please double check that you would like to use {next} this time?"
+    "loginProviderChanged": "It looks like you have previously logged in with the {previous} provider. Please double check that you would like to use {next} this time?",
+    "guestUser": "Guest User"
 }
