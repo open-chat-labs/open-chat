@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
-- Implement `group_index::c2c_report_message` ([#4720](https://github.com/open-chat-labs/open-chat/pull/4720))
+- Implement `group_index::c2c_report_message` ([#4723](https://github.com/open-chat-labs/open-chat/pull/4723))
 
 ## [[2.0.926](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.926-group_index)] - 2023-11-03
 
