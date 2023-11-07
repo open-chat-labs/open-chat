@@ -203,6 +203,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     avatarId: OptionUpdate<bigint>;
     membership: ChannelMembershipUpdates | undefined;
     latestEventIndex: number | undefined;
+    latestMessageIndex: number | undefined;
     memberCount: number | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];

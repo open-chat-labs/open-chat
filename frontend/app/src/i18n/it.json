@@ -1142,9 +1142,11 @@
         "minutes": "Minuti)",
         "days": "Giorno(i)",
         "summary": "I messaggi scompariranno dopo le ore {duration}",
-        "timeUpdated": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
-        "disabled": "{changedBy} ha disabilitato i messaggi a scomparsa",
+        "timeUpdatedBy": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
+        "disabledBy": "{changedBy} ha disabilitato i messaggi a scomparsa",
         "durationMinutes": "{duration} minuti",
-        "oneMinute": "1 minuto"
+        "oneMinute": "1 minuto",
+        "timeUpdated": "Orario di scomparsa del messaggio impostato su {duration}",
+        "disabled": "Messaggi a scomparsa disabilitati"
     }
 }

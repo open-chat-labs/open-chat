@@ -1144,9 +1144,11 @@
         "minutes": "Protokoll)",
         "days": "Tage)",
         "summary": "Nachrichten verschwinden nach {duration}",
-        "timeUpdated": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
-        "disabled": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
+        "timeUpdatedBy": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
+        "disabledBy": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
         "durationMinutes": "{duration} Minuten",
-        "oneMinute": "1 Minute"
+        "oneMinute": "1 Minute",
+        "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
+        "disabled": "Verschwindende Nachrichten deaktiviert"
     }
 }

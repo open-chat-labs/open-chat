@@ -1143,9 +1143,11 @@
         "minutes": "Phút)",
         "days": "(Các) ngày",
         "summary": "Tin nhắn sẽ biến mất sau {duration}",
-        "timeUpdated": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
-        "disabled": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
+        "timeUpdatedBy": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
+        "disabledBy": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
         "durationMinutes": "{duration} phút",
-        "oneMinute": "1 phút"
+        "oneMinute": "1 phút",
+        "timeUpdated": "Thời gian tin nhắn biến mất được đặt thành {duration}",
+        "disabled": "Tin nhắn biến mất bị vô hiệu hóa"
     }
 }

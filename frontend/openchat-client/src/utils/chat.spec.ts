@@ -34,6 +34,7 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
+    latestMessageIndex: undefined,
     memberCount: 10,
     permissions: {
         changeRoles: "admin",
@@ -45,9 +46,9 @@ const defaultGroupChat: GroupChatSummary = {
         reactToMessages: "member",
         mentionAllMembers: "member",
         messagePermissions: {
-            default: "member"
+            default: "member",
         },
-        threadPermissions: undefined
+        threadPermissions: undefined,
     },
     metrics: emptyChatMetrics(),
     subtype: undefined,
@@ -57,6 +58,7 @@ const defaultGroupChat: GroupChatSummary = {
     dateReadPinned: undefined,
     gate: { kind: "no_gate" },
     level: "group",
+    eventsTTL: undefined,
     membership: {
         archived: false,
         mentions: [],

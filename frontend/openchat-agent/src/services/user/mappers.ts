@@ -775,8 +775,10 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         lastUpdated: candid.last_updated,
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         notificationsMuted: optional(candid.notifications_muted, identity),
         updatedEvents: candid.updated_events.map(updatedEvent),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
@@ -828,6 +830,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
@@ -843,6 +846,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        eventsTTL: undefined,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -876,9 +880,11 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         latestMessage: messageEvent(candid.latest_message),
         them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: candid.latest_message_index,
         lastUpdated: candid.last_updated,
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
+        eventsTTL: undefined,
         metrics: chatMetrics(candid.metrics),
         membership: {
             ...nullMembership(),
