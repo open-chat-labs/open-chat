@@ -22,7 +22,7 @@
     import Input from "../Input.svelte";
     import { getGateBindings, type GateBinding } from "../../utils/access";
     import { fade } from "svelte/transition";
-    // import DisappearingMessages from "./DisappearingMessages.svelte";
+    import DisappearingMessages from "./DisappearingMessages.svelte";
 
     type T = $$Generic;
 
@@ -39,8 +39,9 @@
     let minStake = client.getMinStakeInTokens(original.gate) ?? "";
     let gateBindings: GateBinding[] = [];
     let selectedGateKey: string | undefined = undefined;
-    // let disappearingMessages =
-    //     candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    let disappearingMessages =
+        candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
+    let disappearingMessagesEnabled = false;
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
@@ -97,11 +98,11 @@
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
 
-    // function toggleDisappearingMessages() {
-    //     if (candidate.kind === "community") return;
-    //     disappearingMessages = !disappearingMessages;
-    //     candidate.eventsTTL = disappearingMessages ? BigInt(1000 * 60 * 60) : undefined;
-    // }
+    function toggleDisappearingMessages() {
+        if (candidate.kind === "community") return;
+        disappearingMessages = !disappearingMessages;
+        candidate.eventsTTL = disappearingMessages ? BigInt(1000 * 60 * 60) : undefined;
+    }
 </script>
 
 <div class="section">
@@ -166,26 +167,26 @@
     </div>
 {/if}
 
-<!--{#if candidate.kind === "candidate_group_chat"}-->
-<!--    <div class="section">-->
-<!--        <Checkbox-->
-<!--            id="disappearing-messages"-->
-<!--            disabled={!canEditDisappearingMessages}-->
-<!--            on:change={toggleDisappearingMessages}-->
-<!--            label={$_("disappearingMessages.label")}-->
-<!--            align={"start"}-->
-<!--            checked={disappearingMessages}>-->
-<!--            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>-->
-<!--            <div class="info">-->
-<!--                {#if disappearingMessages}-->
-<!--                    <DisappearingMessages-->
-<!--                        {canEditDisappearingMessages}-->
-<!--                        bind:ttl={candidate.eventsTTL} />-->
-<!--                {/if}-->
-<!--            </div>-->
-<!--        </Checkbox>-->
-<!--    </div>-->
-<!--{/if}-->
+{#if disappearingMessagesEnabled && candidate.kind === "candidate_group_chat"}
+    <div class="section">
+        <Checkbox
+            id="disappearing-messages"
+            disabled={!canEditDisappearingMessages}
+            on:change={toggleDisappearingMessages}
+            label={$_("disappearingMessages.label")}
+            align={"start"}
+            checked={disappearingMessages}>
+            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
+            <div class="info">
+                {#if disappearingMessages}
+                    <DisappearingMessages
+                        {canEditDisappearingMessages}
+                        bind:ttl={candidate.eventsTTL} />
+                {/if}
+            </div>
+        </Checkbox>
+    </div>
+{/if}
 
 {#if !requiresUpgrade}
     <div transition:fade|local={{ duration: 250 }} class="wrapper">
