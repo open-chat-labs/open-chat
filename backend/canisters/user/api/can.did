@@ -121,8 +121,6 @@ type RemoveReactionResponse = variant {
 type ReportMessageArgs = record {
     them : UserId;
     message_id : MessageId;
-    reason_code : nat32;
-    notes : opt text;
     delete : bool;
 };
 

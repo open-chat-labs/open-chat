@@ -8,8 +8,6 @@ pub struct Args {
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message: Message,
-    pub reason_code: u32,
-    pub notes: Option<String>,
     pub already_deleted: bool,
 }
 

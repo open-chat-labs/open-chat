@@ -713,8 +713,6 @@ type ReportMessageArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
-    reason_code : nat32;
-    notes : opt text;
     delete : bool;
 };
 
