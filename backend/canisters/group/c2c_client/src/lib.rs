@@ -28,6 +28,7 @@ generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_unfreeze_group);
 generate_c2c_call!(c2c_update_proposals);
 generate_c2c_call!(c2c_update_user_principal);
+generate_c2c_call!(delete_messages);
 generate_c2c_call!(send_message_v2);
 
 generate_candid_c2c_call!(change_role);
