@@ -209,6 +209,7 @@ impl Channel {
 
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
         let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
+        let events_ttl = chat.events.get_events_time_to_live();
 
         let latest_message_sender_display_name = latest_message
             .as_ref()
@@ -257,7 +258,8 @@ impl Channel {
             permissions_v2: chat.permissions.value.clone(),
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
-            events_ttl: chat.events.get_events_time_to_live().value,
+            events_ttl: events_ttl.value,
+            events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
             membership,
         })
@@ -339,6 +341,7 @@ impl Channel {
             metrics: Some(self.chat.events.metrics().hydrate()),
             date_last_pinned: updates.date_last_pinned,
             events_ttl: updates.events_ttl,
+            events_ttl_last_updated: updates.events_ttl_last_updated,
             gate: updates.gate,
             membership,
         })

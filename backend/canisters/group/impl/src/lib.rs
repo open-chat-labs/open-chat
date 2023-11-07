@@ -105,6 +105,7 @@ impl RuntimeState {
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
+        let events_ttl = chat.events.get_events_time_to_live();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
@@ -142,7 +143,8 @@ impl RuntimeState {
             frozen: self.data.frozen.value.clone(),
             wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
-            events_ttl: chat.events.get_events_time_to_live().value,
+            events_ttl: events_ttl.value,
+            events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
             rules_accepted: member
                 .rules_accepted

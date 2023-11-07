@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Refund remaining prizes early if message gets deleted ([#4708](https://github.com/open-chat-labs/open-chat/pull/4708))
+- Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
 
 ## [[2.0.921](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.921-community)] - 2023-11-02
 
