@@ -2,8 +2,6 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{EventIndex, MessageIndex, MultiUserChat, UserId};
 
-use crate::c2c_report_message;
-
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
@@ -14,4 +12,7 @@ pub struct Args {
     pub notes: Option<String>,
 }
 
-pub type Response = c2c_report_message::Response;
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success,
+}

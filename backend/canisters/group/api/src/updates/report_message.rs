@@ -19,5 +19,6 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     MessageNotFound,
+    AlreadyReported,
     InternalError(String),
 }
