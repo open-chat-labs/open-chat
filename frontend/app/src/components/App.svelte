@@ -79,7 +79,7 @@
     $: showLandingPage =
         landingPageRoute ||
         (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
-        ($identityState.kind === "anon" && framed); // show landing page if anon and running in a frame
+        ($identityState.kind === "anon" && $framed); // show landing page if anon and running in a frame
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
