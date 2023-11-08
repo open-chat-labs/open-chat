@@ -18,8 +18,7 @@
 
     $: user = client.user;
     $: userStore = client.userStore;
-
-    let link = `${window.location.origin}/?ref=${$user.userId}`;
+    $: link = `${window.location.origin}/?ref=${$user.userId}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
