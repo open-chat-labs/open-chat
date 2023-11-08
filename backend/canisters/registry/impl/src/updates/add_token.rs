@@ -132,7 +132,7 @@ fn extract_urls(
             .as_ref()
             .filter(|ns| !ns.is_nns)
             .map(|ns| ns.root_canister_id)
-            .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}/transaction/{{block_index}}"))
+            .map(|c| format!("https://dashboard.internetcomputer.org/sns/{c}/transaction/{{transaction_index}}"))
     }) {
         Some(url) => url,
         _ => return Err("'transaction_url_format' must be provided for non-SNS tokens"),

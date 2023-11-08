@@ -545,7 +545,7 @@
         "diamondGateInfo": "Only users with Diamond membership will be allowed to join",
         "snsHolder": "{token} neuron holder",
         "snsHolderInfo": "Only holders of {token} neurons will be allowed to join",
-        "nnsHolder": "NNS neuron holder (coming soon)",
+        "nnsHolder": "ICP neuron holder (coming soon)",
         "nftHolder": "NFT holder (coming soon)",
         "openAccess": "Open access",
         "minDissolveDelay": "Min dissolve delay (days)",

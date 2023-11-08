@@ -23,3 +23,11 @@ pub fn caller_is_community_canister() -> Result<(), String> {
         Err("Caller is not a community canister".to_string())
     }
 }
+
+pub fn caller_is_group_or_community_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_group_canister() || state.is_caller_community_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a group or community canister".to_string())
+    }
+}
