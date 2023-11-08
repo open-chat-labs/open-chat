@@ -1,6 +1,6 @@
 use crate::{
     guards::caller_is_user_canister_or_group_index,
-    jobs::make_pending_payments,
+    jobs::submit_message_to_modclub,
     model::{
         pending_modclub_submissions_queue::PendingModclubSubmission,
         reported_messages::{build_message_to_reporter, AddReportArgs, AddReportResult},
@@ -52,7 +52,7 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         html_report: construct_html_report(args.chat_id, args.thread_root_message_index, args.message),
         level: Level::normal,
     });
-    make_pending_payments::start_job_if_required(state);
+    submit_message_to_modclub::start_job_if_required(state);
 
     Success
 }
