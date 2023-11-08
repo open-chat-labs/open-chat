@@ -1236,13 +1236,12 @@ export const idlFactory = ({ IDL }) => {
   const ReportMessageArgs = IDL.Record({
     'channel_id' : ChannelId,
     'delete' : IDL.Bool,
-    'notes' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
-    'reason_code' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const ReportMessageResponse = IDL.Variant({
     'UserNotInChannel' : IDL.Null,
+    'AlreadyReported' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,

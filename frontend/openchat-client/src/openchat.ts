@@ -4849,25 +4849,22 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     reportMessage(
-        chatId: MultiUserChatIdentifier,
-        eventIndex: number,
-        reasonCode: number,
-        notes: string | undefined,
+        chatId: ChatIdentifier,
         threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.sendRequest({
             kind: "reportMessage",
             chatId,
-            eventIndex,
-            reasonCode,
-            notes,
             threadRootMessageIndex,
+            messageId,
+            deleteMessage,
         })
-            .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to set report message", err);
-                return false;
-            });
+        .catch((err) => {
+            this._logger.error("Unable to report message", err);
+            return false;
+        });
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<boolean> {

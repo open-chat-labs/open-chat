@@ -63,6 +63,7 @@ import {
     convertToCommunityReponse,
     apiUpdatedRules,
     followThreadResponse,
+    reportMessageResponse,
 } from "./mappers";
 import {
     type Database,
@@ -901,6 +902,21 @@ export class GroupClient extends CandidService {
                 ? this.groupService.follow_thread(args)
                 : this.groupService.unfollow_thread(args),
             followThreadResponse,
+        );
+    }
+
+    reportMessage(
+        threadRootMessageIndex: number | undefined, 
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.groupService.report_message({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }

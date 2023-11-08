@@ -1377,12 +1377,11 @@ export interface ReplyContext {
 }
 export interface ReportMessageArgs {
   'delete' : boolean,
-  'notes' : [] | [string],
   'message_id' : MessageId,
-  'reason_code' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type ReportMessageResponse = { 'MessageNotFound' : null } |
+export type ReportMessageResponse = { 'AlreadyReported' : null } |
+  { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |

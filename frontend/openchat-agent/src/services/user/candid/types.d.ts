@@ -1494,11 +1494,10 @@ export interface ReplyContext {
 export interface ReportMessageArgs {
   'them' : UserId,
   'delete' : boolean,
-  'notes' : [] | [string],
   'message_id' : MessageId,
-  'reason_code' : number,
 }
-export type ReportMessageResponse = { 'MessageNotFound' : null } |
+export type ReportMessageResponse = { 'AlreadyReported' : null } |
+  { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |

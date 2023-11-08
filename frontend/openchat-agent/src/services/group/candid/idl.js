@@ -920,12 +920,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const ReportMessageArgs = IDL.Record({
     'delete' : IDL.Bool,
-    'notes' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
-    'reason_code' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const ReportMessageResponse = IDL.Variant({
+    'AlreadyReported' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,

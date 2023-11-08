@@ -980,10 +980,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.reportMessage(
                         payload.chatId,
-                        payload.eventIndex,
-                        payload.reasonCode,
-                        payload.notes,
                         payload.threadRootMessageIndex,
+                        payload.messageId,
+                        payload.deleteMessage,
                     ),
                 );
                 break;

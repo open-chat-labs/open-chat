@@ -1545,12 +1545,11 @@ export interface ReplyContext {
 export interface ReportMessageArgs {
   'channel_id' : ChannelId,
   'delete' : boolean,
-  'notes' : [] | [string],
   'message_id' : MessageId,
-  'reason_code' : number,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type ReportMessageResponse = { 'UserNotInChannel' : null } |
+  { 'AlreadyReported' : null } |
   { 'MessageNotFound' : null } |
   { 'ChannelNotFound' : null } |
   { 'NotAuthorized' : null } |

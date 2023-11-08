@@ -100,6 +100,7 @@ import {
     saveCryptoAccountResponse,
     proposalToSubmit,
     submitProposalResponse,
+    reportMessageResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -1137,6 +1138,21 @@ export class UserClient extends CandidService {
                 transaction_fee: transactionFee,
             }),
             submitProposalResponse,
+        );
+    }
+
+    reportMessage(
+        chatId: DirectChatIdentifier,
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.report_message({
+                them: Principal.fromText(chatId.userId),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }

@@ -1089,11 +1089,10 @@ export const idlFactory = ({ IDL }) => {
   const ReportMessageArgs = IDL.Record({
     'them' : UserId,
     'delete' : IDL.Bool,
-    'notes' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
-    'reason_code' : IDL.Nat32,
   });
   const ReportMessageResponse = IDL.Variant({
+    'AlreadyReported' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,

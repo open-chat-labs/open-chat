@@ -89,7 +89,9 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
-    $: isFollowedByMe = threadRootMessage !== undefined && ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
+    $: isFollowedByMe =
+        threadRootMessage !== undefined &&
+        ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
     $: canFollow = threadRootMessage !== undefined && !isFollowedByMe;
     $: canUnfollow = isFollowedByMe;
 
@@ -434,7 +436,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && publicGroup && !me && !inert}
+                {#if confirmed && !me && !inert}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

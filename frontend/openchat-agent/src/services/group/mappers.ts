@@ -67,7 +67,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
-import type { OptionalGroupPermissions } from "./candid/types";
+import type { OptionalGroupPermissions, ReportMessageResponse } from "./candid/types";
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -691,4 +691,8 @@ export function followThreadResponse(
         console.warn("followThread failed with", candid);
         return "failed";
     }
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

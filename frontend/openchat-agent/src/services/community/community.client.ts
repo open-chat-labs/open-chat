@@ -31,6 +31,7 @@ import {
     deleteUserGroupsResponse,
     setMemberDisplayNameResponse,
     followThreadResponse,
+    reportMessageResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -1264,6 +1265,23 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(
             follow ? this.service.follow_thread(args) : this.service.unfollow_thread(args),
             followThreadResponse,
+        );
+    }
+
+    reportMessage(
+        channelId: string, 
+        threadRootMessageIndex: number | undefined, 
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.service.report_message({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }
