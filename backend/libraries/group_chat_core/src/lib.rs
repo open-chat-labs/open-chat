@@ -1146,26 +1146,37 @@ impl GroupChatCore {
         }
     }
 
-    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
-        use LeaveResult::*;
+    pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {
+        use CanLeaveResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
-                return UserSuspended;
+                UserSuspended
+            } else if member.role.is_owner() && self.members.owner_count() == 1 {
+                LastOwnerCannotLeave
+            } else {
+                Yes
             }
-
-            if member.role.is_owner() && self.members.owner_count() == 1 {
-                return LastOwnerCannotLeave;
-            }
-
-            let removed = self.members.remove(user_id, now).unwrap();
-
-            self.events
-                .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
-
-            Success(removed)
         } else {
             UserNotInGroup
+        }
+    }
+
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
+        use LeaveResult::*;
+
+        match self.can_leave(user_id) {
+            CanLeaveResult::Yes => {
+                let removed = self.members.remove(user_id, now).unwrap();
+
+                self.events
+                    .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
+
+                Success(removed)
+            }
+            CanLeaveResult::UserSuspended => UserSuspended,
+            CanLeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
+            CanLeaveResult::UserNotInGroup => UserNotInGroup,
         }
     }
 
@@ -1763,6 +1774,13 @@ pub enum PinUnpinMessageResult {
     UserNotInGroup,
     MessageNotFound,
     UserSuspended,
+}
+
+pub enum CanLeaveResult {
+    Yes,
+    UserSuspended,
+    LastOwnerCannotLeave,
+    UserNotInGroup,
 }
 
 pub enum LeaveResult {
