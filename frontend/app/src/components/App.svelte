@@ -73,9 +73,11 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
-    $: landingPage = isLandingPageRoute($pathParams);
+    $: landingPageRoute = isLandingPageRoute($pathParams);
     $: anonUser = client.anonUser;
-    $: anonRoot = $pathParams.kind === "home_route" && $anonUser;
+    $: homeRoute = $pathParams.kind === "home_route";
+    $: showLandingPage =
+        landingPageRoute || (homeRoute && $identityState.kind === "anon" && $anonUser);
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
@@ -281,7 +283,7 @@
     }
 
     $: {
-        if ((!$notFound && landingPage) || anonRoot) {
+        if (!$notFound && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
@@ -318,7 +320,7 @@
     $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
-{#if $currentTheme.burst || landingPage}
+{#if $currentTheme.burst || landingPageRoute}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
@@ -337,7 +339,7 @@
     <Upgrading />
 {:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router />
+        <Router {showLandingPage} />
     {/if}
 {/if}
 

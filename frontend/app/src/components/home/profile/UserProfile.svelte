@@ -112,9 +112,11 @@
         !readonly;
 
     onMount(() => {
-        client.getBio().then((bio) => {
-            originalBio = userbio = bio;
-        });
+        if (!$anonUser) {
+            client.getBio().then((bio) => {
+                originalBio = userbio = bio;
+            });
+        }
     });
 
     function toggleModerationFlag(flag: ModerationFlag) {

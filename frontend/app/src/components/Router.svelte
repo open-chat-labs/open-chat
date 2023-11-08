@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getContext, onDestroy, onMount, SvelteComponent } from "svelte";
+    import { onDestroy, onMount, SvelteComponent } from "svelte";
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
@@ -19,10 +19,8 @@
         chatListRoute,
         routerReady,
     } from "../routes";
-    import type { OpenChat } from "openchat-client";
-    import { get } from "svelte/store";
 
-    const client = getContext<OpenChat>("client");
+    export let showLandingPage: boolean;
 
     let route: typeof SvelteComponent<object> | undefined = undefined;
 
@@ -178,14 +176,7 @@
             "/",
             parsePathParams(() => ({ kind: "home_route", scope: { kind: "none" } })),
             track,
-            () => {
-                console.log("AnonUser: ", get(client.anonUser));
-                if (get(client.anonUser)) {
-                    route = LandingPage;
-                } else {
-                    route = Home;
-                }
-            }
+            () => (route = Home)
         );
         // legacy route
         page(
@@ -226,5 +217,5 @@
 </script>
 
 {#if route !== undefined}
-    <svelte:component this={route} />
+    <svelte:component this={route} {showLandingPage} />
 {/if}

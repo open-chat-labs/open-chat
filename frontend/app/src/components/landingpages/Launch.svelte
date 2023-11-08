@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import page from "page";
     import { _ } from "svelte-i18n";
     import { routeForScope } from "../../routes";
 
@@ -12,21 +11,14 @@
     export let login = false;
 
     $: identityState = client.identityState;
-
-    function launch() {
-        if ($identityState.kind === "logged_in") {
-            page(rootPath);
-        } else {
-            if (login) {
-                client.login();
-            } else {
-                page("/communities");
-            }
-        }
-    }
+    $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
 </script>
 
-<div tabindex="0" role="button" on:click={launch} class="launch">{text}</div>
+{#if login}
+    <div role="button" tabindex="0" on:click={() => client.login()} class="launch">{text}</div>
+{:else}
+    <a href={url} class="launch">{text}</a>
+{/if}
 
 <style lang="scss">
     .launch {
