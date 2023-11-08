@@ -312,6 +312,7 @@ type GroupCanisterGroupChatSummary = record {
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
+    membership : opt GroupMembership;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -342,6 +343,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
+    membership : opt GroupMembershipUpdates;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -399,10 +401,10 @@ type CommunityCanisterChannelSummary = record {
     events_ttl : opt Milliseconds;
     events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
-    membership : opt ChannelMembership;
+    membership : opt GroupMembership;
 };
 
-type ChannelMembership = record {
+type GroupMembership = record {
     joined : TimestampMillis;
     role : GroupRole;
     mentions : vec Mention;
@@ -461,10 +463,10 @@ type CommunityCanisterChannelSummaryUpdates = record {
     events_ttl : EventsTimeToLiveUpdate;
     events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
-    membership : opt ChannelMembershipUpdates;
+    membership : opt GroupMembershipUpdates;
 };
 
-type ChannelMembershipUpdates = record {
+type GroupMembershipUpdates = record {
     role : opt GroupRole;
     mentions : vec Mention;
     notifications_muted : opt bool;

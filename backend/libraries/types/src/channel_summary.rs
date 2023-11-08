@@ -1,6 +1,6 @@
 use crate::{
-    AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupCanisterThreadDetails, GroupPermissions, GroupRole,
-    GroupSubtype, HydratedMention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupMembership, GroupMembershipUpdates, GroupPermissions,
+    GroupSubtype, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -29,18 +29,7 @@ pub struct CommunityCanisterChannelSummary {
     #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
-    pub membership: Option<ChannelMembership>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ChannelMembership {
-    pub joined: TimestampMillis,
-    pub role: GroupRole,
-    pub mentions: Vec<HydratedMention>,
-    pub notifications_muted: bool,
-    pub my_metrics: ChatMetrics,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    pub rules_accepted: bool,
+    pub membership: Option<GroupMembership>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -65,18 +54,7 @@ pub struct CommunityCanisterChannelSummaryUpdates {
     #[serde(default)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
-    pub membership: Option<ChannelMembershipUpdates>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ChannelMembershipUpdates {
-    pub role: Option<GroupRole>,
-    pub mentions: Vec<HydratedMention>,
-    pub notifications_muted: Option<bool>,
-    pub my_metrics: Option<ChatMetrics>,
-    pub latest_threads: Vec<GroupCanisterThreadDetails>,
-    pub unfollowed_threads: Vec<MessageIndex>,
-    pub rules_accepted: Option<bool>,
+    pub membership: Option<GroupMembershipUpdates>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
