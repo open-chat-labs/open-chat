@@ -1,5 +1,5 @@
 use chat_events::Reader;
-use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
+use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
 use serde::{Deserialize, Serialize};
 use std::cmp::{max, Reverse};
@@ -80,6 +80,15 @@ impl Channels {
             .filter(|(_, c)| c.chat.is_public.value)
             .map(|(_, c)| c)
             .collect()
+    }
+
+    pub fn can_leave_all_channels(&self, user_id: UserId) -> bool {
+        self.channels.values().all(|c| {
+            matches!(
+                c.chat.can_leave(user_id),
+                CanLeaveResult::Yes | CanLeaveResult::UserNotInGroup
+            )
+        })
     }
 
     pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {

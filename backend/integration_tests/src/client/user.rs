@@ -225,6 +225,17 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::leave_group::Response::Success));
     }
 
+    pub fn leave_community(env: &mut PocketIc, user: &User, community_id: CommunityId) {
+        let response = super::leave_community(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::leave_community::Args { community_id },
+        );
+
+        assert!(matches!(response, user_canister::leave_community::Response::Success));
+    }
+
     pub fn updates(
         env: &PocketIc,
         user: &User,
