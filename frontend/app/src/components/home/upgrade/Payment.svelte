@@ -123,7 +123,12 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo border={false} centered {ledger} user={client.user} />
+                <AccountInfo
+                    fullWidthOnMobile
+                    border={false}
+                    centered
+                    {ledger}
+                    user={client.user} />
             </div>
         </div>
 
