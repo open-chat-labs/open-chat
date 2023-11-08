@@ -6,8 +6,8 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
+    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupMembership,
+    GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
 
@@ -215,7 +215,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembership {
+        let membership = member.map(|m| GroupMembership {
             joined: m.date_added,
             role: m.role.value.into(),
             mentions: m.most_recent_mentions(None, &chat.events),
@@ -298,7 +298,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembershipUpdates {
+        let membership = member.map(|m| GroupMembershipUpdates {
             role: updates.role_changed.then_some(m.role.value.into()),
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
