@@ -89,7 +89,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: Option<&CommunityMemberInternal>, now: TimestampMillis) -> CommunityCanisterCommunitySummary {
+    pub fn summary(&self, member: Option<&CommunityMemberInternal>) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
         let (channels, membership) = if let Some(m) = member {
@@ -108,7 +108,7 @@ impl RuntimeState {
                 .channels
                 .iter()
                 .filter_map(|c| self.data.channels.get(c))
-                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members, now))
+                .filter_map(|c| c.summary(Some(m.user_id), true, data.is_public, &data.members))
                 .collect();
 
             (channels, Some(membership))
@@ -119,15 +119,25 @@ impl RuntimeState {
                 .channels
                 .public_channels()
                 .iter()
-                .filter_map(|c| c.summary(None, false, data.is_public, &data.members, now))
+                .filter_map(|c| c.summary(None, false, data.is_public, &data.members))
                 .collect();
 
             (channels, None)
         };
 
+        let last_updated = [
+            member.map(|m| m.last_updated()).unwrap_or_default(),
+            self.data.events.latest_event_timestamp(),
+            self.data.members.user_groups_last_updated(),
+        ]
+        .into_iter()
+        .chain(channels.iter().map(|c| c.last_updated))
+        .max()
+        .unwrap_or_default();
+
         CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
-            last_updated: now,
+            last_updated,
             name: data.name.clone(),
             description: data.description.clone(),
             avatar_id: Document::id(&data.avatar),

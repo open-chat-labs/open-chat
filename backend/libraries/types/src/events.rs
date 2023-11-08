@@ -41,6 +41,7 @@ pub struct EventsResponse {
     pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
     pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
+    pub chat_last_updated: TimestampMillis,
     pub timestamp: TimestampMillis,
 }
 
@@ -82,6 +83,7 @@ impl EventOrExpiredRange {
 pub struct MessagesResponse {
     pub messages: Vec<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub chat_last_updated: TimestampMillis,
     pub timestamp: TimestampMillis,
 }
 

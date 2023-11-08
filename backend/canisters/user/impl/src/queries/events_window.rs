@@ -14,8 +14,11 @@ fn events_window_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
         let events_reader = chat.events.main_events_reader();
         let latest_event_index = events_reader.latest_event_index().unwrap();
+        let chat_last_updated = chat.last_updated();
 
-        if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+        if args.latest_known_update.map_or(false, |ts| chat_last_updated < ts)
+            || args.latest_client_event_index.map_or(false, |e| latest_event_index < e)
+        {
             return ReplicaNotUpToDate(latest_event_index);
         }
 
@@ -35,6 +38,7 @@ fn events_window_impl(args: Args, state: &RuntimeState) -> Response {
             expired_event_ranges,
             expired_message_ranges,
             latest_event_index,
+            chat_last_updated,
             timestamp: now,
         })
     } else {

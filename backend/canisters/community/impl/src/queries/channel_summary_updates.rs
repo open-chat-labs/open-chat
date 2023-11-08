@@ -23,7 +23,7 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             return PrivateChannel;
         }
 
-        if !channel.chat.has_updates_since(user_id, args.updates_since) {
+        if channel.last_updated(user_id) <= args.updates_since {
             return SuccessNoUpdates;
         }
 
@@ -35,7 +35,6 @@ fn channel_summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             is_community_member,
             state.data.is_public,
             &state.data.members,
-            state.env.now(),
         ) {
             ChannelUpdates::Added(s) => SuccessAdded(s),
             ChannelUpdates::Updated(s) => SuccessUpdated(s),
