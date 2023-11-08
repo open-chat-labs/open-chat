@@ -6,7 +6,6 @@
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let ledger: string;
@@ -18,6 +17,7 @@
     export let showTopUp = false;
     export let refreshing = false;
 
+    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -33,7 +33,7 @@
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger, user.userId)
+            .refreshAccountBalance(ledger, $user.userId)
             .then((val) => {
                 dispatch("refreshed", val);
             })
@@ -56,7 +56,9 @@
     {#if label !== undefined}
         <div class="label">{label}</div>
     {/if}
-    <div class="amount" class:bold>{client.formatTokens(value, minDecimals, tokenDetails.decimals)}</div>
+    <div class="amount" class:bold>
+        {client.formatTokens(value, minDecimals, tokenDetails.decimals)}
+    </div>
     <div class="refresh" class:refreshing on:click={refresh}>
         <Refresh size={"1em"} color={"var(--icon-txt)"} />
     </div>

@@ -15,11 +15,11 @@
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
+    $: user = client.user;
     $: userStore = client.userStore;
 
-    let link = `${window.location.origin}/?ref=${user.userId}`;
+    let link = `${window.location.origin}/?ref=${$user.userId}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
@@ -66,11 +66,11 @@
             </Link>
         </div>
     {/if}
-    {#if user.referrals.length > 0}
+    {#if $user.referrals.length > 0}
         <div class="referrals-section">
             <h4>{$_("invitedUsers")}</h4>
             <div class="referrals">
-                {#each user.referrals as userId}
+                {#each $user.referrals as userId}
                     <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>
                         <div>
                             <Avatar

@@ -23,7 +23,6 @@ import {
     nullMembership,
     chatIdentifiersEqual,
     isAttachmentContent,
-    ANON_USER_ID,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -166,19 +165,17 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         return mergedSummaries
             .entries()
             .reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-                if (currentUser.userId !== ANON_USER_ID) {
-                    result.set(
-                        chatId,
-                        mergeUnconfirmedIntoSummary(
-                            (k) => k,
-                            currentUser.userId,
-                            summary,
-                            unconfirmed,
-                            localUpdates,
-                            translations,
-                        ),
-                    );
-                }
+                result.set(
+                    chatId,
+                    mergeUnconfirmedIntoSummary(
+                        (k) => k,
+                        currentUser.userId,
+                        summary,
+                        unconfirmed,
+                        localUpdates,
+                        translations,
+                    ),
+                );
                 return result;
             }, new ChatMap<ChatSummary>());
     },

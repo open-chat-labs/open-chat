@@ -37,11 +37,12 @@
     let loading = false;
     let confirmReset = false;
 
+    $: user = client.user;
     $: link = getLink(container.id, code);
     $: spinner = loading && code === undefined;
 
     function getLink(id: CommunityIdentifier | MultiUserChatIdentifier, code: string | undefined) {
-        const qs = `/?ref=${client.user.userId}` + (!container.public ? `&code=${code}` : "");
+        const qs = `/?ref=${$user.userId}` + (!container.public ? `&code=${code}` : "");
         switch (id.kind) {
             case "community":
                 return `${window.location.origin}/community/${id.communityId}${qs}`;
