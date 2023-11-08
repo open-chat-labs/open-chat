@@ -15,10 +15,10 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    $: anon = client.anonUser;
+    $: anonUser = client.anonUser;
 
     function newGroup() {
-        if (anon) {
+        if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
         } else {
             dispatch("newGroup");
