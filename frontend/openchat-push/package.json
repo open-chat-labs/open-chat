@@ -29,7 +29,7 @@
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
         "process": "^0.11.10",
-        "rollup": "^3.28.0",
+        "rollup": "^4.0.0",
         "rollup-plugin-delete": "^2.0.0",
         "ts-loader": "^9.4.4",
         "wait-on": "^7.0.1"
