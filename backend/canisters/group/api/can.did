@@ -370,6 +370,7 @@ type SelectedInitialArgs = record {};
 
 type SelectedInitialSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     participants : vec Participant;
     blocked_users : vec UserId;
@@ -399,12 +400,14 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
 type EventsByIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -413,6 +416,7 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -432,6 +436,7 @@ type LocalUserIndexResponse = variant {
 type MessagesByMessageIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 

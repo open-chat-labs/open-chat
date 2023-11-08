@@ -2,12 +2,12 @@ use chat_events::Reader;
 use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::Reverse;
+use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
+    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupMembership,
+    GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
 
@@ -190,7 +190,6 @@ impl Channel {
         is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
-        now: TimestampMillis,
     ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
@@ -216,7 +215,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembership {
+        let membership = member.map(|m| GroupMembership {
             joined: m.date_added,
             role: m.role.value.into(),
             mentions: m.most_recent_mentions(None, &chat.events),
@@ -241,7 +240,7 @@ impl Channel {
 
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
-            last_updated: now,
+            last_updated: self.chat.last_updated(user_id),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
@@ -265,8 +264,8 @@ impl Channel {
         })
     }
 
-    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        self.chat.has_updates_since(user_id, since) || self.date_imported.unwrap_or_default() > since
+    pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(self.chat.last_updated(user_id), self.date_imported.unwrap_or_default())
     }
 
     pub fn summary_updates(
@@ -276,7 +275,6 @@ impl Channel {
         is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
-        now: TimestampMillis,
     ) -> ChannelUpdates {
         let chat = &self.chat;
         let member = user_id.and_then(|id| chat.members.get(&id));
@@ -284,7 +282,7 @@ impl Channel {
         if let Some(m) = member {
             if m.date_added > since {
                 return ChannelUpdates::Added(
-                    self.summary(user_id, is_community_member, is_public_community, community_members, now)
+                    self.summary(user_id, is_community_member, is_public_community, community_members)
                         .expect("Channel should be accessible"),
                 );
             }
@@ -300,7 +298,7 @@ impl Channel {
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembershipUpdates {
+        let membership = member.map(|m| GroupMembershipUpdates {
             role: updates.role_changed.then_some(m.role.value.into()),
             mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
@@ -325,7 +323,7 @@ impl Channel {
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
-            last_updated: now,
+            last_updated: self.last_updated(user_id),
             name: updates.name,
             description: updates.description,
             subtype: updates.subtype,
