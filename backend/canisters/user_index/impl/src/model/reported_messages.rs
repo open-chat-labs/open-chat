@@ -2,7 +2,7 @@ use chat_events::deep_message_links;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Chat, MessageId, MessageIndex, TimestampMillis, UserId, MessageContent, TextContent};
+use types::{Chat, MessageContent, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
 
 pub type RuleId = u32;
 
@@ -165,8 +165,8 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> LocalUserI
     let text = format!(
         "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} to {}.", 
         build_message_link(reported_message),
-        outcome.rejected + outcome.approved, 
-        outcome.rejected, 
+        outcome.rejected + outcome.approved,
+        outcome.rejected,
         outcome.approved);
 
     build_oc_bot_message(text, reported_message.sender)
@@ -181,7 +181,8 @@ fn build_oc_bot_message(text: String, user_id: UserId) -> LocalUserIndexEvent {
 
 fn build_message_link(reported_message: &ReportedMessage) -> String {
     deep_message_links::build_message_link(
-        reported_message.chat_id, 
-        reported_message.thread_root_message_index, 
-        reported_message.message_index)
+        reported_message.chat_id,
+        reported_message.thread_root_message_index,
+        reported_message.message_index,
+    )
 }
