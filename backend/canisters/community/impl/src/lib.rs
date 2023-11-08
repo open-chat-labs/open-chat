@@ -361,6 +361,18 @@ impl Data {
         );
     }
 
+    pub fn details_last_updated(&self) -> TimestampMillis {
+        [
+            self.invited_users.last_updated(),
+            self.events.latest_event_timestamp(),
+            self.members.user_groups_last_updated(),
+            self.members.display_names_last_updated(),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {

@@ -476,6 +476,7 @@ type ChannelMembershipUpdates = record {
 
 type SelectedGroupUpdates = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;

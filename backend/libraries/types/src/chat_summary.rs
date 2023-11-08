@@ -248,6 +248,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
+    pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub members_added_or_updated: Vec<GroupMember>,
     pub members_removed: Vec<UserId>,

@@ -131,6 +131,7 @@ type SelectedChannelInitialArgs = record {
 type SelectedChannelInitialResponse = variant {
     Success : record {
         timestamp : TimestampMillis;
+        last_updated : TimestampMillis;
         latest_event_index : EventIndex;
         members : vec Participant;
         blocked_users : vec UserId;
@@ -175,6 +176,7 @@ type SelectedInitialResponse = variant {
 
 type SelectedInitialSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members : vec CommunityMember;
     blocked_users : vec UserId;
@@ -202,6 +204,7 @@ type SelectedUpdatesV2Response = variant {
 
 type SelectedUpdatesSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     members_added_or_updated : vec CommunityMember;
     members_removed : vec UserId;
     blocked_users_added : vec UserId;

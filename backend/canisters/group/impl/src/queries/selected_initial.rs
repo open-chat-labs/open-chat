@@ -12,9 +12,11 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
     if let Some(member) = state.data.get_member(caller) {
         let min_visible_message_index = member.min_visible_message_index();
         let chat = &state.data.chat;
+        let last_updated = chat.details_last_updated();
 
         Success(SuccessResult {
-            timestamp: chat.details_last_updated(),
+            timestamp: last_updated,
+            last_updated,
             latest_event_index: chat.events.main_events_reader().latest_event_index().unwrap_or_default(),
             participants: chat.members.iter().map(|p| p.into()).collect(),
             blocked_users: chat.members.blocked(),

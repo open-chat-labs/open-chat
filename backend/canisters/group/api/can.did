@@ -370,6 +370,7 @@ type SelectedInitialArgs = record {};
 
 type SelectedInitialSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     participants : vec Participant;
     blocked_users : vec UserId;
