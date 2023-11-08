@@ -22,7 +22,6 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             return ReplicaNotUpToDate(latest_event_index);
         }
 
-        let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
 
         let (events, expired_event_ranges) = EventOrExpiredRange::split(events_reader.scan(
@@ -40,7 +39,7 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             expired_message_ranges,
             latest_event_index,
             chat_last_updated,
-            timestamp: now,
+            timestamp: chat_last_updated,
         })
     } else {
         ChatNotFound

@@ -22,7 +22,6 @@ fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
             return ReplicaNotUpToDate(latest_event_index);
         }
 
-        let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
         let (events, expired_event_ranges) =
             EventOrExpiredRange::split(events_reader.get_by_indexes(&args.events, Some(my_user_id)));
@@ -34,7 +33,7 @@ fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
             expired_message_ranges,
             latest_event_index,
             chat_last_updated,
-            timestamp: now,
+            timestamp: chat_last_updated,
         })
     } else {
         ChatNotFound

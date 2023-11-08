@@ -26,6 +26,7 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -33,6 +34,7 @@ type EventsByIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -42,6 +44,7 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -88,6 +91,7 @@ type MessagesByMessageIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
