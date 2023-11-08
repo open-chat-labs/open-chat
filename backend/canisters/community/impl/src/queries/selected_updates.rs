@@ -24,28 +24,13 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let data = &state.data;
-
-    // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
-    let invited_users_last_updated = data.invited_users.last_updated();
-    let events_last_updated = data.events.latest_event_timestamp();
-    let user_groups_last_updated = data.members.user_groups_last_updated();
-    let display_names_last_updated = data.members.display_names_last_updated();
-
-    let last_updated = [
-        invited_users_last_updated,
-        events_last_updated,
-        user_groups_last_updated,
-        display_names_last_updated,
-    ]
-    .into_iter()
-    .max()
-    .unwrap();
+    let last_updated = data.details_last_updated();
 
     if last_updated <= args.updates_since {
         return SuccessNoUpdates(args.updates_since);
     }
 
-    let invited_users = if invited_users_last_updated > args.updates_since {
+    let invited_users = if state.data.invited_users.last_updated() > args.updates_since {
         Some(data.invited_users.users())
     } else {
         None
@@ -53,6 +38,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     let mut result = SuccessResult {
         timestamp: last_updated,
+        last_updated,
         members_added_or_updated: vec![],
         members_removed: vec![],
         blocked_users_added: vec![],

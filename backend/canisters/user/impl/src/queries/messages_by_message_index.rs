@@ -15,6 +15,13 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
 
         let events_reader = chat.events.main_events_reader();
         let latest_event_index = events_reader.latest_event_index().unwrap();
+        let chat_last_updated = chat.last_updated();
+
+        if args.latest_known_update.map_or(false, |ts| chat_last_updated < ts)
+            || args.latest_client_event_index.map_or(false, |e| latest_event_index < e)
+        {
+            return ReplicaNotUpToDate(latest_event_index);
+        }
 
         let messages: Vec<_> = args
             .messages
@@ -25,6 +32,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
         Success(SuccessResult {
             messages,
             latest_event_index,
+            chat_last_updated,
         })
     } else {
         ChatNotFound

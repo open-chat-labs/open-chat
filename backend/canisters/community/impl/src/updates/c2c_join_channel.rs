@@ -32,7 +32,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             if matches!(response, Success(_) | AlreadyInChannel(_)) {
                 let summary = read_state(|state| {
                     let member = state.data.members.get_by_user_id(&args.user_id);
-                    state.summary(member, state.env.now())
+                    state.summary(member)
                 });
                 SuccessJoinedCommunity(Box::new(summary))
             } else {
@@ -94,13 +94,7 @@ fn is_permitted_to_join(
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
                 Err(AlreadyInChannel(Box::new(
                     channel
-                        .summary(
-                            Some(channel_member.user_id),
-                            true,
-                            state.data.is_public,
-                            &state.data.members,
-                            state.env.now(),
-                        )
+                        .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap(),
                 )))
             } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
@@ -129,14 +123,14 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
             match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(_) => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members, now)
+                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
                     handle_activity_notification(state);
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members, now)
+                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
                     AlreadyInChannel(Box::new(summary))
                 }

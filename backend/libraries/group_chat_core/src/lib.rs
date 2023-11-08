@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
     AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
@@ -124,20 +124,21 @@ impl GroupChatCore {
         }
     }
 
-    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
-            if member.date_added > since
-                || member.notifications_muted.timestamp > since
-                || member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| accepted.timestamp > since)
-            {
-                return true;
-            }
-        }
+    pub fn details_last_updated(&self) -> TimestampMillis {
+        max(
+            self.events.last_updated().unwrap_or_default(),
+            self.invited_users.last_updated(),
+        )
+    }
 
-        self.events.has_updates_since(since) || self.invited_users.last_updated() > since
+    pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(
+            self.details_last_updated(),
+            user_id
+                .and_then(|user_id| self.members.get(&user_id))
+                .map(|m| m.last_updated())
+                .unwrap_or_default(),
+        )
     }
 
     pub fn summary_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdates {
@@ -184,6 +185,7 @@ impl GroupChatCore {
         };
 
         SummaryUpdates {
+            timestamp: self.last_updated(user_id),
             name: self.name.if_set_after(since).cloned(),
             description: self.description.if_set_after(since).cloned(),
             subtype: self
@@ -232,14 +234,13 @@ impl GroupChatCore {
         };
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
-
         let latest_event_index = events_reader.latest_event_index().unwrap();
-        let latest_event_timestamp = self.events.latest_event_timestamp().unwrap_or_default();
-
         let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
+        let last_updated = self.details_last_updated();
 
         let mut result = SelectedGroupUpdates {
-            timestamp: latest_event_timestamp,
+            timestamp: last_updated,
+            last_updated,
             latest_event_index,
             invited_users,
             pinned_messages_added: self
@@ -300,15 +301,18 @@ impl GroupChatCore {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
+        latest_known_update: Option<TimestampMillis>,
         latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let chat_last_updated = self.last_updated(user_id);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                if chat_last_updated < latest_known_update.unwrap_or_default()
+                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
+                {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
@@ -326,7 +330,8 @@ impl GroupChatCore {
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
+                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -339,15 +344,18 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
+        latest_known_update: Option<TimestampMillis>,
         latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let chat_last_updated = self.last_updated(user_id);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                if chat_last_updated < latest_known_update.unwrap_or_default()
+                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
+                {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
@@ -359,7 +367,8 @@ impl GroupChatCore {
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
+                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -374,15 +383,18 @@ impl GroupChatCore {
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
+        latest_known_update: Option<TimestampMillis>,
         latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let chat_last_updated = self.last_updated(user_id);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                if chat_last_updated < latest_known_update.unwrap_or_default()
+                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
+                {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
@@ -399,7 +411,8 @@ impl GroupChatCore {
                     expired_event_ranges,
                     expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
+                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -412,15 +425,18 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
+        latest_known_update: Option<TimestampMillis>,
         latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> MessagesResult {
         use MessagesResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let chat_last_updated = self.last_updated(user_id);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                if chat_last_updated < latest_known_update.unwrap_or_default()
+                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
+                {
                     return ReplicaNotUpToDate(latest_event_index);
                 }
 
@@ -432,7 +448,8 @@ impl GroupChatCore {
                 Success(MessagesResponse {
                     messages,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
+                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -1852,6 +1869,7 @@ pub enum UnfollowThreadResult {
 
 #[derive(Default)]
 pub struct SummaryUpdates {
+    pub timestamp: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
     pub subtype: OptionUpdate<GroupSubtype>,
