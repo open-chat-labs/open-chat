@@ -1147,5 +1147,7 @@
     "loginToOpenChat": "オープンチャットにログインする",
     "tapToLogin": "ゲスト モード - ここをタップしてログインします",
     "loginProviderChanged": "以前に {previous} プロバイダーを使用してログインしたようです。今回は {next} を使用したいことを再確認してください?",
-    "guestUser": "ゲストユーザー"
+    "guestUser": "ゲストユーザー",
+    "showAuthProviders": "オプションを表示",
+    "hideAuthProviders": "オプションを非表示にする"
 }

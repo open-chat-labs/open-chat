@@ -1147,5 +1147,7 @@
     "loginToOpenChat": "登录 OpenChat",
     "tapToLogin": "访客模式 - 点击此处登录",
     "loginProviderChanged": "您之前似乎已使用 {previous} 提供商登录。请仔细检查您这次是否想使用 {next}？",
-    "guestUser": "访客用户"
+    "guestUser": "访客用户",
+    "showAuthProviders": "显示选项",
+    "hideAuthProviders": "隐藏选项"
 }

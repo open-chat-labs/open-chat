@@ -1148,5 +1148,7 @@
     "loginToOpenChat": "Iniciar sesión en OpenChat",
     "tapToLogin": "Modo invitado: toque aquí para iniciar sesión",
     "loginProviderChanged": "Parece que ya has iniciado sesión con el proveedor {previous}. Por favor, verifique que le gustaría usar {next} esta vez.",
-    "guestUser": "Usuario invitado"
+    "guestUser": "Usuario invitado",
+    "showAuthProviders": "Mostrar opciones",
+    "hideAuthProviders": "Ocultar opciones"
 }

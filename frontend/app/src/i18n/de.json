@@ -1148,5 +1148,7 @@
     "loginToOpenChat": "Melden Sie sich bei OpenChat an",
     "tapToLogin": "Gastmodus – tippen Sie hier, um sich anzumelden",
     "loginProviderChanged": "Anscheinend haben Sie sich zuvor beim Anbieter {previous} angemeldet. Bitte überprüfen Sie noch einmal, ob Sie dieses Mal {next} verwenden möchten.",
-    "guestUser": "Gastbenutzer"
+    "guestUser": "Gastbenutzer",
+    "showAuthProviders": "Optionen anzeigen",
+    "hideAuthProviders": "Optionen ausblenden"
 }

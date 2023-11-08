@@ -1144,5 +1144,7 @@
     "loginToOpenChat": "היכנס ל-OpenChat",
     "tapToLogin": "מצב אורח - הקש כאן כדי להיכנס",
     "loginProviderChanged": "נראה שנכנסת בעבר עם הספק {previous}. בדוק שוב שברצונך להשתמש ב-{next} הפעם?",
-    "guestUser": "משתמש אורח"
+    "guestUser": "משתמש אורח",
+    "showAuthProviders": "הצג אפשרויות",
+    "hideAuthProviders": "הסתר אפשרויות"
 }

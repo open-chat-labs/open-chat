@@ -1147,5 +1147,7 @@
     "loginToOpenChat": "Đăng nhập vào OpenChat",
     "tapToLogin": "Chế độ khách - nhấn vào đây để đăng nhập",
     "loginProviderChanged": "Có vẻ như trước đây bạn đã đăng nhập bằng nhà cung cấp {previous}. Vui lòng kiểm tra kỹ xem bạn có muốn sử dụng {next} lần này không?",
-    "guestUser": "Tài khoản khách"
+    "guestUser": "Tài khoản khách",
+    "showAuthProviders": "Hiển thị tùy chọn",
+    "hideAuthProviders": "Ẩn tùy chọn"
 }
