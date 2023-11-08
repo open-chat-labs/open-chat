@@ -48,8 +48,7 @@ fn is_permitted_to_join(
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
     } else if let Some(member) = state.data.chat.members.get(&user_id) {
-        let now = state.env.now();
-        let summary = state.summary(member, now);
+        let summary = state.summary(member);
         Err(AlreadyInGroupV2(Box::new(summary)))
     } else {
         Ok(state
@@ -123,12 +122,12 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             new_event = true;
 
-            let summary = state.summary(&participant, now);
+            let summary = state.summary(&participant);
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {
             let member = state.data.chat.members.get(&args.user_id).unwrap();
-            let summary = state.summary(member, now);
+            let summary = state.summary(member);
             AlreadyInGroupV2(Box::new(summary))
         }
         AddResult::Blocked => Blocked,

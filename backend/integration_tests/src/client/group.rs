@@ -150,6 +150,7 @@ pub mod happy_path {
                 ascending,
                 max_messages,
                 max_events,
+                latest_known_update: None,
                 latest_client_event_index: None,
             },
         );
@@ -168,6 +169,7 @@ pub mod happy_path {
             &group_canister::events_by_index::Args {
                 thread_root_message_index: None,
                 events,
+                latest_known_update: None,
                 latest_client_event_index: None,
             },
         );
@@ -195,6 +197,7 @@ pub mod happy_path {
                 mid_point,
                 max_messages,
                 max_events,
+                latest_known_update: None,
                 latest_client_event_index: None,
             },
         );
