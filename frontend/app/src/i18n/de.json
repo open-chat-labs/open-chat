@@ -1150,5 +1150,6 @@
         "oneMinute": "1 Minute",
         "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
         "disabled": "Verschwindende Nachrichten deaktiviert"
-    }
+    },
+    "messageDeletedByOpenChatBot": "Diese Nachricht wurde von einem OpenChat-Benutzer gemeldet, an [Modclub]({modclub}) gesendet, wo festgestellt wurde, dass sie gegen eine [Plattformregel]({rules}) verstoßen hat, und dann von {username} am {timestamp} gelöscht."
 }

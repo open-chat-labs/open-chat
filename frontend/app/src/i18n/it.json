@@ -1148,5 +1148,6 @@
         "oneMinute": "1 minuto",
         "timeUpdated": "Orario di scomparsa del messaggio impostato su {duration}",
         "disabled": "Messaggi a scomparsa disabilitati"
-    }
+    },
+    "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato da un utente OpenChat, inviato a [Modclub]({modclub}) dove si è ritenuto che avesse infranto una [regola della piattaforma]({rules}), e poi eliminato da {username} su {timestamp}"
 }

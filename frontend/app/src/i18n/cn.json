@@ -1149,5 +1149,6 @@
         "oneMinute": "1分钟",
         "timeUpdated": "消息消失时间设置为 {duration}",
         "disabled": "消息消失已禁用"
-    }
+    },
+    "messageDeletedByOpenChatBot": "此消息由 OpenChat 用户报告，发送至 [Modclub]({modclub})，并被判断为违反了 [平台规则]({rules})，然后被 {username} 上的 {timestamp} 删除"
 }

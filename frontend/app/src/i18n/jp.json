@@ -1149,5 +1149,6 @@
         "oneMinute": "1分",
         "timeUpdated": "メッセージが消える時間を {duration} に設定しました",
         "disabled": "消えるメッセージの無効化"
-    }
+    },
+    "messageDeletedByOpenChatBot": "このメッセージは OpenChat ユーザーによって報告され、[Modclub]({modclub}) に送信され、[プラットフォーム ルール]({rules}) に違反していると判断され、その後、{username} の {timestamp} によって削除されました。"
 }

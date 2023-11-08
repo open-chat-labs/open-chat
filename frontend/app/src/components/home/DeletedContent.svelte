@@ -2,8 +2,9 @@
 
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { DeletedContent, OpenChat } from "openchat-client";
+    import { OPENCHAT_BOT_USER_ID, type DeletedContent, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -21,6 +22,16 @@
         {$_("undeletingMessage", {
             values: { username, timestamp: timestampStr },
         })}
+    {:else if content.deletedBy === OPENCHAT_BOT_USER_ID}
+        <Markdown
+            text={$_("messageDeletedByOpenChatBot", {
+                values: {
+                    username,
+                    timestamp: timestampStr,
+                    rules: "/guidelines?section=3",
+                    modclub: "https://modclub.ai/",
+                },
+            })} />
     {:else}
         {$_("messageDeleted", {
             values: { username, timestamp: timestampStr },

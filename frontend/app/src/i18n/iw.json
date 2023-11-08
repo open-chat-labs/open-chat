@@ -1146,5 +1146,6 @@
         "oneMinute": "דקה 1",
         "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
         "disabled": "הודעות נעלמות מושבתות"
-    }
+    },
+    "messageDeletedByOpenChatBot": "הודעה זו דווחה על ידי משתמש OpenChat, נשלחה ל-[Modclub]({modclub}) שם היא נשפטה שהיא הפרה [כלל פלטפורמה]({rules}), ולאחר מכן נמחקה על ידי {username} ב-{timestamp}"
 }
