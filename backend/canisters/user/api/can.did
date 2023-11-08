@@ -830,6 +830,7 @@ type MessagesByMessageIndexResponse = variant {
     Success : record {
         messages : vec MessageEventWrapper;
         latest_event_index : EventIndex;
+        chat_last_updated : TimestampMillis;
     };
     ChatNotFound;
     ReplicaNotUpToDate : EventIndex;
