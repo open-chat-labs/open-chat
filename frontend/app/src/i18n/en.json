@@ -1126,6 +1126,8 @@
     "tapToLogin": "Guest mode - tap here to log in",
     "loginProviderChanged": "It looks like you have previously logged in with the {previous} provider. Please double check that you would like to use {next} this time?",
     "guestUser": "Guest User",
+    "showAuthProviders": "Show options",
+    "hideAuthProviders": "Hide options",
     "disappearingMessages": {
         "label": "Disappearing messages",
         "hours": "Hour(s)",

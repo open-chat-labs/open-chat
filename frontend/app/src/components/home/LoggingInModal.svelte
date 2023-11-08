@@ -14,6 +14,7 @@
     const dispatch = createEventDispatcher();
 
     let state: "idle" | "confirming" | "logging-in" = "idle";
+    let expanded = false;
 
     $: anonUser = client.anonUser;
     $: identityState = client.identityState;
@@ -86,37 +87,51 @@
             </Button>
         </div>
     </div>
-    <div class="auth-providers" slot="footer">
-        <Radio
-            id="ii_auth"
-            compact
-            group="authprovider"
-            value={AuthProvider.II}
-            label={AuthProvider.II}
-            disabled={state === "logging-in"}
-            checked={selected === AuthProvider.II}
-            on:change={() => selectProvider(AuthProvider.II)}>
-            <div class="provider">
-                <div class="ii-img">
-                    <InternetIdentityLogo />
-                </div>
-                {AuthProvider.II}
+
+    <div class="footer" slot="footer">
+        <a
+            role="button"
+            tabindex="0"
+            on:click={() => (expanded = !expanded)}
+            class="options"
+            class:expanded>
+            {expanded ? $_("hideAuthProviders") : $_("showAuthProviders")}
+        </a>
+
+        {#if expanded}
+            <div in:fade|local={{ duration: 300 }} class="auth-providers">
+                <Radio
+                    id="ii_auth"
+                    compact
+                    group="authprovider"
+                    value={AuthProvider.II}
+                    label={AuthProvider.II}
+                    disabled={state === "logging-in"}
+                    checked={selected === AuthProvider.II}
+                    on:change={() => selectProvider(AuthProvider.II)}>
+                    <div class="provider">
+                        <div class="ii-img">
+                            <InternetIdentityLogo />
+                        </div>
+                        {AuthProvider.II}
+                    </div>
+                </Radio>
+                <Radio
+                    id="nfid_auth"
+                    compact
+                    group="authprovider"
+                    value={AuthProvider.NFID}
+                    label={AuthProvider.NFID}
+                    disabled={state === "logging-in"}
+                    checked={selected === AuthProvider.NFID}
+                    on:change={() => selectProvider(AuthProvider.NFID)}>
+                    <div class="provider">
+                        <img class="nfid-img" src="/assets/nfid.svg" alt="" />
+                        {AuthProvider.NFID}
+                    </div>
+                </Radio>
             </div>
-        </Radio>
-        <Radio
-            id="nfid_auth"
-            compact
-            group="authprovider"
-            value={AuthProvider.NFID}
-            label={AuthProvider.NFID}
-            disabled={state === "logging-in"}
-            checked={selected === AuthProvider.NFID}
-            on:change={() => selectProvider(AuthProvider.NFID)}>
-            <div class="provider">
-                <img class="nfid-img" src="/assets/nfid.svg" alt="" />
-                {AuthProvider.NFID}
-            </div>
-        </Radio>
+        {/if}
     </div>
 </ModalContent>
 
@@ -174,6 +189,18 @@
 
         .alert-txt {
             flex: auto;
+        }
+    }
+
+    .footer {
+        text-align: center;
+
+        .options {
+            @include font(light, normal, fs-80);
+            display: block;
+            &.expanded {
+                margin-bottom: $sp4;
+            }
         }
     }
 </style>
