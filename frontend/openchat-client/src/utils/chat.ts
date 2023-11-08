@@ -1597,6 +1597,7 @@ export function buildTransactionUrl(
 
     return transactionUrlFormat
         .replace("{block_index}", transfer.blockIndex.toString())
+        .replace("{transaction_index}", transfer.blockIndex.toString())
         .replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
