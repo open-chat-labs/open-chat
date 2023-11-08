@@ -81,7 +81,7 @@
             page.replace(removeQueryStringParam("ref"));
         }
         if (mobileOperatingSystem === "iOS") {
-            viewPortContent += ", maximum-scale=1";
+            // viewPortContent += ", maximum-scale=1";
         }
         calculateHeight();
 
