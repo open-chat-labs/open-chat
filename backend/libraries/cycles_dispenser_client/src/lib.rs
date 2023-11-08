@@ -54,34 +54,27 @@ impl Config {
 pub fn start(config: Config) {
     let interval = config.interval;
 
-    CONFIG.with(|c| {
-        *c.borrow_mut() = Some(config);
-    });
+    CONFIG.set(Some(config));
 
     let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_millis(interval), run_once);
 
-    TIMER_ID.with(|t| {
-        if let Some(previous) = t.replace(Some(timer_id)) {
-            ic_cdk_timers::clear_timer(previous);
-        }
-    });
+    if let Some(previous) = TIMER_ID.replace(Some(timer_id)) {
+        ic_cdk_timers::clear_timer(previous);
+    }
 }
 
 pub fn stop() -> bool {
-    TIMER_ID.with(|t| {
-        if let Some(timer_id) = t.take() {
-            ic_cdk_timers::clear_timer(timer_id);
-            true
-        } else {
-            false
-        }
-    })
+    if let Some(timer_id) = TIMER_ID.take() {
+        ic_cdk_timers::clear_timer(timer_id);
+        true
+    } else {
+        false
+    }
 }
 
 fn run_once() {
-    if let Some((min_cycles_balance, cycles_dispenser_canister_id)) = CONFIG.with(|config| {
+    if let Some((min_cycles_balance, cycles_dispenser_canister_id)) = CONFIG.with_borrow(|config| {
         config
-            .borrow()
             .as_ref()
             .map(|c| (c.min_cycles_balance, c.cycles_dispenser_canister_id))
     }) {
@@ -109,15 +102,15 @@ async fn request_top_up(cycles_balance: Cycles, cycles_dispenser_canister_id: Ca
 
     if let Ok(cycles_dispenser_canister::c2c_request_cycles::Response::Success(cycles)) = &response {
         info!(cycles, "Cycles topped up successfully");
-        CONFIG.with(|config| {
-            if let Some(on_success) = config.borrow().as_ref().map(|c| &c.on_success_callback) {
+        CONFIG.with_borrow(|config| {
+            if let Some(on_success) = config.as_ref().map(|c| &c.on_success_callback) {
                 (*on_success)(*cycles)
             }
         });
     } else {
         error!(?response, "Cycles top up failed");
-        CONFIG.with(|config| {
-            if let Some(on_error) = config.borrow().as_ref().map(|c| &c.on_error_callback) {
+        CONFIG.with_borrow(|config| {
+            if let Some(on_error) = config.as_ref().map(|c| &c.on_error_callback) {
                 (*on_error)(format!("{response:?}"))
             }
         });
