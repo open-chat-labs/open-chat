@@ -134,8 +134,7 @@ mod tests {
     #[test]
     fn create_report_from_text_message() {
         let chat_id: ChatId = Principal::from_text("2rgzm-4iaaa-aaaaf-aaa5a-cai").unwrap().into();
-        let text = format!(
-            "## GitHub commit
+        let text = "## GitHub commit
 
 https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938b84bb3371f2
 
@@ -145,7 +144,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
 - Support submitting proposals of type 'Add token'
 - Final changes needed for disappearing messages (will be enabled soon)
 - A few minor bugfixes"
-        );
+            .to_string();
 
         let message = Message {
             message_index: 27461.into(),
@@ -184,7 +183,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
                 caption: Some("It's over!".to_string()),
                 mime_type: "image/png".to_string(),
                 blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap().into(),
+                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
                     blob_id: 181941936258991437198326577112311764747,
                 }),
             }),
@@ -220,11 +219,11 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
                 caption: Some("Hello world".to_string()),
                 mime_type: "video/mpeg".to_string(),
                 image_blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap().into(),
+                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
                     blob_id: 181941936277550442520330478250480023339,
                 }),
                 video_blob_reference: Some(BlobReference {
-                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap().into(),
+                    canister_id: Principal::from_text("m7ykd-3iaaa-aaaar-ad2uq-cai").unwrap(),
                     blob_id: 181941936239106898356555537109512322009,
                 }),
             }),
