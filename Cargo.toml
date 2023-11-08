@@ -79,6 +79,8 @@ members = [
     "backend/external_canisters/icpswap_swap_pool/c2c_client",
     "backend/external_canisters/icrc1_ledger/api",
     "backend/external_canisters/icrc1_ledger/c2c_client",
+    "backend/external_canisters/modclub/api",
+    "backend/external_canisters/modclub/c2c_client",
     "backend/external_canisters/sns_governance/api",
     "backend/external_canisters/sns_governance/c2c_client",
     "backend/external_canisters/sns_swap/api",
@@ -147,7 +149,6 @@ ic-cdk-macros = "0.7.0"
 ic-cdk-timers = "0.4.0"
 ic-ledger-types = "0.7.0"
 ic-stable-structures = "0.5.6"
-pocket-ic = "1.0"
 ic-utils = "0.27.0"
 ic0 = "0.18.11"
 itertools = "0.11.0"
@@ -155,7 +156,9 @@ lazy_static = "1.4.0"
 lodepng = "3.7.2"
 num-traits = "0.2.16"
 openssl = "0.10.56"
+pocket-ic = "1.0"
 proc-macro2 = "1.0.66"
+pulldown-cmark = { version = "0.9.2", default-features = false }
 quote = "1.0.33"
 rand = "0.8.5"
 rand_chacha = "0.3.1"

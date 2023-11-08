@@ -3893,6 +3893,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "modclub_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "modclub_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk",
+ "modclub_canister",
+ "types",
+]
+
+[[package]]
 name = "msgpack"
 version = "0.1.0"
 dependencies = [
@@ -4988,6 +5009,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5787f7cda34e3033a72192c018bc5883100330f362ef279a8cbccfce8bb4e874"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "pulldown-cmark"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77a1a2f1f0a7ecff9c31abbe177637be0e97a0aef46cf8738ece09327985d998"
+dependencies = [
+ "bitflags 1.3.2",
+ "memchr",
+ "unicase",
 ]
 
 [[package]]
@@ -6742,6 +6774,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed646292ffc8188ef8ea4d1e0e0150fb15a5c2e12ad9b8fc191ae7a8a7f3c4b9"
 
 [[package]]
+name = "unicase"
+version = "2.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7d2d4dafb69621809a81864c9c1b864479e1235c0dd4e199924b9742439ed89"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "unicode-bidi"
 version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6921,6 +6962,7 @@ dependencies = [
  "candid_gen",
  "human_readable",
  "ic-ledger-types",
+ "modclub_canister",
  "serde",
  "serde_bytes",
  "types",
@@ -6961,6 +7003,10 @@ dependencies = [
  "canister_state_macros",
  "canister_timer_jobs",
  "canister_tracing_macros",
+ "chat_events",
+ "community_canister",
+ "community_canister_c2c_client",
+ "fire_and_forget_handler",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -6977,9 +7023,12 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "lodepng",
+ "modclub_canister",
+ "modclub_canister_c2c_client",
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
+ "pulldown-cmark",
  "rand",
  "serde",
  "serde_bytes",
