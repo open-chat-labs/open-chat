@@ -441,10 +441,7 @@ type MessagesByMessageIndexArgs = record {
 };
 
 type MessagesByMessageIndexResponse = variant {
-    Success : record {
-        messages : vec MessageEventWrapper;
-        latest_event_index : EventIndex;
-    };
+    Success : MessagesSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
     ReplicaNotUpToDate : EventIndex;

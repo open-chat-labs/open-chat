@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, EventWrapper, Message, MessageIndex, TimestampMillis, UserId};
+use types::{EventIndex, MessageIndex, MessagesResponse, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,14 +13,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
+    Success(MessagesResponse),
     ChatNotFound,
     ReplicaNotUpToDate(EventIndex),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub messages: Vec<EventWrapper<Message>>,
-    pub latest_event_index: EventIndex,
-    pub chat_last_updated: TimestampMillis,
 }
