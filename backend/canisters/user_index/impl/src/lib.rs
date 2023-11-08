@@ -113,7 +113,7 @@ impl RuntimeState {
 
     pub fn modclub_canister_id(&self) -> CanisterId {
         let modclub_canister_id =
-            if self.data.test_mode { "gwuzc-waaaa-aaaah-qdboa-cai" } else { "d7isk-4aaaa-aaaah-qdbsa-cai" };
+            if self.data.test_mode { "d7isk-4aaaa-aaaah-qdbsa-cai" } else { "gwuzc-waaaa-aaaah-qdboa-cai" };
 
         Principal::from_text(modclub_canister_id).unwrap()
     }
