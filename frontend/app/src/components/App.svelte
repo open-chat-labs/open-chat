@@ -12,7 +12,6 @@
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
-    import { mobileOperatingSystem } from "../utils/devices";
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
@@ -79,9 +78,6 @@
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             page.replace(removeQueryStringParam("ref"));
-        }
-        if (mobileOperatingSystem === "iOS") {
-            // viewPortContent += ", maximum-scale=1";
         }
         calculateHeight();
 
