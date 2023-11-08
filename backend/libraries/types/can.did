@@ -476,6 +476,7 @@ type ChannelMembershipUpdates = record {
 
 type SelectedGroupUpdates = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;
@@ -1380,12 +1381,14 @@ type EventsSuccessResult = record {
     expired_event_ranges: vec record { EventIndex; EventIndex };
     expired_message_ranges: vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
+    chat_last_updated : TimestampMillis;
     timestamp : TimestampMillis;
 };
 
 type MessagesSuccessResult = record {
     messages : vec MessageEventWrapper;
     latest_event_index : EventIndex;
+    chat_last_updated : TimestampMillis;
     timestamp : TimestampMillis;
 };
 

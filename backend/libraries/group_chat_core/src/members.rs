@@ -403,6 +403,19 @@ impl From<GroupMemberInternalCombined> for GroupMemberInternal {
 }
 
 impl GroupMemberInternal {
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.date_added,
+            self.role.timestamp,
+            self.notifications_muted.timestamp,
+            self.suspended.timestamp,
+            self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
+
     pub fn min_visible_event_index(&self) -> EventIndex {
         if self.role.can_view_full_message_history() {
             EventIndex::default()

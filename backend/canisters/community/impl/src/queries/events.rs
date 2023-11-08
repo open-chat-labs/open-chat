@@ -10,7 +10,6 @@ fn events(args: Args) -> Response {
 
 fn events_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let now = state.env.now();
     let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
     if !state.data.is_public && user_id.is_none() {
@@ -25,8 +24,8 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             args.ascending,
             args.max_messages,
             args.max_events,
+            args.latest_known_update,
             args.latest_client_event_index,
-            now,
         ) {
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,

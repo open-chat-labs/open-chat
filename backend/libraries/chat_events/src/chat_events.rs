@@ -184,10 +184,6 @@ impl ChatEvents {
         EditMessageResult::NotFound
     }
 
-    pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
-        self.last_updated().unwrap_or_default() > since
-    }
-
     pub fn last_updated(&self) -> Option<TimestampMillis> {
         max(
             self.main.latest_event_timestamp(),

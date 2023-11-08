@@ -100,7 +100,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
@@ -109,7 +109,7 @@ impl RuntimeState {
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
-            last_updated: now,
+            last_updated: chat.last_updated(Some(member.user_id)),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),

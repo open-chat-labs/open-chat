@@ -10,12 +10,13 @@ fn selected_initial(_args: Args) -> Response {
 fn selected_initial_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
-        let now = state.env.now();
         let min_visible_message_index = member.min_visible_message_index();
         let chat = &state.data.chat;
+        let last_updated = chat.details_last_updated();
 
         Success(SuccessResult {
-            timestamp: now,
+            timestamp: last_updated,
+            last_updated,
             latest_event_index: chat.events.main_events_reader().latest_event_index().unwrap_or_default(),
             participants: chat.members.iter().map(|p| p.into()).collect(),
             blocked_users: chat.members.blocked(),

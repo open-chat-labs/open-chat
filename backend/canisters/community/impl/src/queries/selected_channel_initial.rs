@@ -21,15 +21,16 @@ fn selected_channel_initial_impl(args: Args, state: &RuntimeState) -> Response {
             return PrivateChannel;
         }
 
-        let now = state.env.now();
         let chat = &channel.chat;
+        let last_updated = chat.details_last_updated();
         let min_visible_message_index = user_id
             .and_then(|u| chat.members.get(&u))
             .map(|m| m.min_visible_message_index())
             .unwrap_or_default();
 
         Success(SuccessResult {
-            timestamp: now,
+            timestamp: last_updated,
+            last_updated,
             latest_event_index: chat.events.latest_event_index().unwrap_or_default(),
             members: chat.members.iter().map(|m| m.into()).collect(),
             blocked_users: chat.members.blocked(),

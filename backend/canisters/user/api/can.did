@@ -790,6 +790,7 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -797,6 +798,7 @@ type EventsByIndexArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -806,6 +808,7 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -819,6 +822,7 @@ type MessagesByMessageIndexArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
+    latest_known_update : opt TimestampMillis;
     latest_client_event_index : opt EventIndex;
 };
 
@@ -826,6 +830,7 @@ type MessagesByMessageIndexResponse = variant {
     Success : record {
         messages : vec MessageEventWrapper;
         latest_event_index : EventIndex;
+        chat_last_updated : TimestampMillis;
     };
     ChatNotFound;
     ReplicaNotUpToDate : EventIndex;
