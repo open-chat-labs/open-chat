@@ -13,7 +13,7 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none())
+    if TIMER_ID.get().is_none()
         && state
             .data
             .nervous_systems
@@ -21,7 +21,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
             .is_some()
     {
         let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
-        TIMER_ID.with(|t| t.set(Some(timer_id)));
+        TIMER_ID.set(Some(timer_id));
         trace!("'increase_dissolve_delay' job started");
         true
     } else {
@@ -42,7 +42,7 @@ pub fn run() {
 }
 
 fn stop_job() {
-    if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+    if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'increase_dissolve_delay' job stopped");
     }

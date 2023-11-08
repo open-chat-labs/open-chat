@@ -181,7 +181,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             public: self.data.is_public,
             date_created: self.data.date_created,
@@ -345,7 +345,7 @@ impl Data {
     }
 
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
-        let wasm_version = WASM_VERSION.with(|v| **v.borrow());
+        let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();
 
         let _ = self

@@ -21,7 +21,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     let state = RuntimeState::new(env, data);
 
     crate::init_state(state);
-    WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
+    WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
 fn reseed_rng() {
