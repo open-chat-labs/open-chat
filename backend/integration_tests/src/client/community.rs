@@ -41,8 +41,8 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{
         ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-        CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, Rules, TextContent, TimestampMillis, UserId,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
+        MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
@@ -148,6 +148,26 @@ pub mod happy_path {
         match response {
             community_canister::update_channel::Response::SuccessV2(_) => {}
             response => panic!("'update_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn change_role(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        user_id: UserId,
+        new_role: CommunityRole,
+    ) {
+        let response = super::change_role(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::change_role::Args { user_id, new_role },
+        );
+
+        match response {
+            community_canister::change_role::Response::Success => {}
+            response => panic!("'change_role' error: {response:?}"),
         }
     }
 
