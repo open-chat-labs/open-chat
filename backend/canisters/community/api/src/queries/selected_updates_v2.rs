@@ -19,6 +19,7 @@ pub enum Response {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
+    pub last_updated: TimestampMillis,
     pub members_added_or_updated: Vec<CommunityMember>,
     pub members_removed: Vec<UserId>,
     pub blocked_users_added: Vec<UserId>,

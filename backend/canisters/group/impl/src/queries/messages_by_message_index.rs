@@ -10,15 +10,14 @@ fn messages_by_message_index(args: Args) -> Response {
 
 fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let now = state.env.now();
     let user_id = state.data.lookup_user_id(caller);
 
     match state.data.chat.messages_by_message_index(
         user_id,
         args.thread_root_message_index,
         args.messages,
+        args.latest_known_update,
         args.latest_client_event_index,
-        now,
     ) {
         MessagesResult::Success(response) => Success(SuccessResult {
             messages: response.messages,

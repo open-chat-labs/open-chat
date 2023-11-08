@@ -39,8 +39,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
-                    let now = state.env.now();
-                    Success(Box::new(state.summary(Some(member), now)))
+                    Success(Box::new(state.summary(Some(member))))
                 } else {
                     InternalError("User not found in community".to_string())
                 }
@@ -111,7 +110,7 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
         }
         AddResult::AlreadyInCommunity => {
             let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
-            let summary = state.summary(Some(member), now);
+            let summary = state.summary(Some(member));
             Err(AlreadyInCommunity(Box::new(summary)))
         }
         AddResult::Blocked => Err(UserBlocked),

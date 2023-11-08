@@ -20,8 +20,8 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
-    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -100,34 +100,18 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
         let events_ttl = chat.events.get_events_time_to_live();
 
-        GroupCanisterGroupChatSummary {
-            chat_id: self.env.canister_id().into(),
-            last_updated: now,
-            name: chat.name.value.clone(),
-            description: chat.description.value.clone(),
-            subtype: chat.subtype.value.clone(),
-            avatar_id: Document::id(&chat.avatar),
-            is_public: chat.is_public.value,
-            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
-            min_visible_event_index,
-            min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
-            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
-            latest_message_index: main_events_reader.latest_message_index(),
+        let membership = GroupMembership {
             joined: member.date_added,
-            participant_count: chat.members.len(),
             role: member.role.value.into(),
             mentions: member.most_recent_mentions(None, &chat.events),
-            permissions_v2: chat.permissions.value.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: chat.events.metrics().hydrate(),
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id, None)
@@ -140,16 +124,43 @@ impl RuntimeState {
                 MAX_THREADS_IN_SUMMARY,
                 member.user_id,
             ),
+            rules_accepted: member
+                .rules_accepted
+                .as_ref()
+                .map_or(false, |version| version.value >= chat.rules.text.version),
+        };
+
+        GroupCanisterGroupChatSummary {
+            chat_id: self.env.canister_id().into(),
+            last_updated: chat.last_updated(Some(member.user_id)),
+            name: chat.name.value.clone(),
+            description: chat.description.value.clone(),
+            subtype: chat.subtype.value.clone(),
+            avatar_id: Document::id(&chat.avatar),
+            is_public: chat.is_public.value,
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
+            min_visible_event_index,
+            min_visible_message_index,
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
+            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: main_events_reader.latest_message_index(),
+            joined: membership.joined,
+            participant_count: chat.members.len(),
+            role: membership.role,
+            mentions: membership.mentions.clone(),
+            permissions_v2: chat.permissions.value.clone(),
+            notifications_muted: membership.notifications_muted,
+            metrics: chat.events.metrics().hydrate(),
+            my_metrics: membership.my_metrics.clone(),
+            latest_threads: membership.latest_threads.clone(),
             frozen: self.data.frozen.value.clone(),
             wasm_version: BuildVersion::default(),
             date_last_pinned: chat.date_last_pinned,
             events_ttl: events_ttl.value,
             events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
-            rules_accepted: member
-                .rules_accepted
-                .as_ref()
-                .map_or(false, |version| version.value >= chat.rules.text.version),
+            rules_accepted: membership.rules_accepted,
+            membership: Some(membership),
         }
     }
 

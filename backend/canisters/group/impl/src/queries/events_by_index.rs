@@ -10,15 +10,14 @@ fn events_by_index(args: Args) -> Response {
 
 fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let now = state.env.now();
     let user_id = state.data.lookup_user_id(caller);
 
     match state.data.chat.events_by_index(
         user_id,
         args.thread_root_message_index,
         args.events,
+        args.latest_known_update,
         args.latest_client_event_index,
-        now,
     ) {
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,

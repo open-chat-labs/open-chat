@@ -14,16 +14,17 @@ fn selected_initial_impl(args: Args, state: &RuntimeState) -> Response {
         return PrivateCommunity;
     }
 
-    let now = state.env.now();
-    let members = &state.data.members;
+    let data = &state.data;
+    let last_updated = data.details_last_updated();
 
     Success(SuccessResult {
-        timestamp: now,
-        latest_event_index: state.data.events.latest_event_index(),
-        members: members.iter().map(|m| m.into()).collect(),
-        blocked_users: members.blocked(),
-        invited_users: state.data.invited_users.users(),
-        chat_rules: state.data.rules.clone().into(),
-        user_groups: state.data.members.iter_user_groups().map(|u| u.into()).collect(),
+        timestamp: last_updated,
+        last_updated,
+        latest_event_index: data.events.latest_event_index(),
+        members: data.members.iter().map(|m| m.into()).collect(),
+        blocked_users: data.members.blocked(),
+        invited_users: data.invited_users.users(),
+        chat_rules: data.rules.clone().into(),
+        user_groups: data.members.iter_user_groups().map(|u| u.into()).collect(),
     })
 }
