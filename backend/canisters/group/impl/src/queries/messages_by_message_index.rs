@@ -19,10 +19,7 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
         args.latest_known_update,
         args.latest_client_event_index,
     ) {
-        MessagesResult::Success(response) => Success(SuccessResult {
-            messages: response.messages,
-            latest_event_index: response.latest_event_index,
-        }),
+        MessagesResult::Success(response) => Success(response),
         MessagesResult::UserNotInGroup => CallerNotInGroup,
         MessagesResult::ThreadNotFound => ThreadMessageNotFound,
         MessagesResult::ReplicaNotUpToDate(event_index) => ReplicaNotUpToDate(event_index),
