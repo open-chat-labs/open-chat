@@ -194,7 +194,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.startIndex,
                         payload.ascending,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -244,7 +244,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.messageIndex,
                         payload.threadRootMessageIndex,
-                        payload.latestClientMainEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -257,7 +257,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -270,7 +270,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -771,7 +771,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     agent.getGroupMessagesByMessageIndex(
                         payload.chatId,
                         payload.messageIndexes,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -1055,8 +1055,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         .messagesByMessageIndex(
                             payload.chatId,
                             payload.messageIndexes,
-                            payload.latestClientEventIndex,
                             payload.threadRootMessageIndex,
+                            payload.latestKnownUpdate,
                         ),
                 );
                 break;

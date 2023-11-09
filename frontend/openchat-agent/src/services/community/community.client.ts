@@ -375,7 +375,7 @@ export class CommunityClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
@@ -394,14 +394,14 @@ export class CommunityClient extends CandidService {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
         } else {
             return this.handleMissingEvents(
                 chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             );
         }
     }
@@ -411,7 +411,7 @@ export class CommunityClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -420,18 +420,13 @@ export class CommunityClient extends CandidService {
             max_events: MAX_EVENTS,
             start_index: startIndex,
             ascending: ascending,
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.service.events(args),
             (res) => {
-                return getEventsResponse(
-                    this.principal,
-                    res,
-                    chatId,
-                    threadRootMessageIndex,
-                    latestClientEventIndex,
-                );
+                return getEventsResponse(this.principal, res, chatId);
             },
         );
     }
@@ -440,13 +435,13 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex),
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 
@@ -454,24 +449,19 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.service.events_by_index(args),
             (res) => {
-                return getEventsResponse(
-                    this.principal,
-                    res,
-                    chatId,
-                    threadRootMessageIndex,
-                    latestClientEventIndex,
-                );
+                return getEventsResponse(this.principal, res, chatId);
             },
         );
     }
@@ -481,7 +471,7 @@ export class CommunityClient extends CandidService {
         eventIndexRange: IndexRange,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] =
             await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
@@ -501,14 +491,14 @@ export class CommunityClient extends CandidService {
                 chatId,
                 messageIndex,
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
         } else {
             return this.handleMissingEvents(
                 chatId,
                 [cachedEvents, missing],
                 undefined,
-                latestClientEventIndex,
+                latestKnownUpdate,
             );
         }
     }
@@ -517,7 +507,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
@@ -525,18 +515,13 @@ export class CommunityClient extends CandidService {
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.service.events_window(args),
             (res) => {
-                return getEventsResponse(
-                    this.principal,
-                    res,
-                    chatId,
-                    threadRootMessageIndex,
-                    latestClientEventIndex,
-                );
+                return getEventsResponse(this.principal, res, chatId);
             },
         );
     }
@@ -544,7 +529,7 @@ export class CommunityClient extends CandidService {
     async getMessagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: Set<number>,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const fromCache = await loadMessagesByMessageIndex(this.db, chatId, messageIndexes);
         if (fromCache.missing.size > 0) {
@@ -553,7 +538,7 @@ export class CommunityClient extends CandidService {
             const resp = await this.getMessagesByMessageIndexFromBackend(
                 chatId,
                 fromCache.missing,
-                latestClientEventIndex,
+                latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp));
 
             return resp === "events_failed"
@@ -576,7 +561,7 @@ export class CommunityClient extends CandidService {
     private getMessagesByMessageIndexFromBackend(
         chatId: ChannelIdentifier,
         messageIndexes: Set<number>,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -584,18 +569,12 @@ export class CommunityClient extends CandidService {
             thread_root_message_index,
             messages: new Uint32Array(messageIndexes),
             invite_code: apiOptional(textToCode, this.inviteCode),
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (resp) =>
-                getMessagesByMessageIndexResponse(
-                    this.principal,
-                    resp,
-                    chatId,
-                    undefined,
-                    latestClientEventIndex,
-                ),
+            (resp) => getMessagesByMessageIndexResponse(this.principal, resp, chatId),
             args,
         );
     }
@@ -604,7 +583,7 @@ export class CommunityClient extends CandidService {
         chatId: ChannelIdentifier,
         [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<GroupChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
@@ -613,7 +592,7 @@ export class CommunityClient extends CandidService {
                 chatId,
                 [...missing],
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
@@ -656,25 +635,19 @@ export class CommunityClient extends CandidService {
     messagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: number[],
-        latestClientEventIndex: number | undefined,
         threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: BigInt(chatId.channelId),
             messages: messageIndexes,
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (res) =>
-                messagesByMessageIndexResponse(
-                    this.principal,
-                    res,
-                    chatId,
-                    threadRootMessageIndex,
-                    latestClientEventIndex,
-                ),
+            (res) => messagesByMessageIndexResponse(this.principal, res, chatId),
         );
     }
 

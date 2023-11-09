@@ -454,35 +454,22 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
-    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            undefined,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.events.map(event),
             expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
             expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex,
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false,
-        );
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

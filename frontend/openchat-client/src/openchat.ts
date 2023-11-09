@@ -1768,13 +1768,14 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadThreadEventWindow(
-        chatId: ChatIdentifier,
+        chat: ChatSummary,
         messageIndex: number,
         threadRootEvent: EventWrapper<Message>,
         initialLoad = false,
     ): Promise<number | undefined> {
         if (threadRootEvent.event.thread === undefined) return undefined;
 
+        const chatId = chat.id;
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
         const eventsResponse = await this.sendRequest({
@@ -1782,8 +1783,8 @@ export class OpenChat extends OpenChatAgentWorker {
             eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
             messageIndex,
-            latestClientMainEventIndex: threadRootEvent.event.thread?.latestEventIndex,
             threadRootMessageIndex: threadRootEvent.event.messageIndex,
+            latestKnownUpdate: chat.lastUpdated,
         });
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
@@ -1820,7 +1821,7 @@ export class OpenChat extends OpenChatAgentWorker {
         if (messageIndex >= 0) {
             if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
                 return this.loadThreadEventWindow(
-                    chatId,
+                    serverChat ?? clientChat,
                     messageIndex,
                     threadRootEvent,
                     initialLoad,
@@ -1833,15 +1834,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const range = indexRangeForChat(clientChat);
-            const eventsPromise: Promise<EventsResponse<ChatEvent>> = this.sendRequest({
+            const eventsResponse = await this.sendRequest({
                 kind: "chatEventsWindow",
                 eventIndexRange: range,
                 chatId,
                 messageIndex,
-                latestClientMainEventIndex: serverChat?.latestEventIndex,
                 threadRootMessageIndex: undefined,
+                latestKnownUpdate: serverChat?.lastUpdated,
             });
-            const eventsResponse = await eventsPromise;
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
                 return undefined;
@@ -2170,7 +2170,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
     async loadThreadMessages(
         chatId: ChatIdentifier,
-        thread: ThreadSummary,
         range: [number, number],
         startIndex: number,
         ascending: boolean,
@@ -2196,7 +2195,7 @@ export class OpenChat extends OpenChatAgentWorker {
             startIndex,
             ascending,
             threadRootMessageIndex,
-            latestClientEventIndex: thread.latestEventIndex,
+            latestKnownUpdate: chat.lastUpdated,
         });
 
         if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) {
@@ -2351,7 +2350,6 @@ export class OpenChat extends OpenChatAgentWorker {
             const [index, ascending] = this.previousThreadMessagesCriteria(thread);
             return this.loadThreadMessages(
                 chatId,
-                thread,
                 [0, thread.latestEventIndex],
                 index,
                 ascending,
@@ -2394,7 +2392,7 @@ export class OpenChat extends OpenChatAgentWorker {
             startIndex,
             ascending,
             threadRootMessageIndex: undefined,
-            latestClientEventIndex: serverChat.latestEventIndex,
+            latestKnownUpdate: serverChat.lastUpdated,
         });
     }
 
@@ -2437,7 +2435,6 @@ export class OpenChat extends OpenChatAgentWorker {
             const [index, ascending] = this.newThreadMessageCriteria(thread);
             return this.loadThreadMessages(
                 chatId,
-                thread,
                 [0, thread.latestEventIndex],
                 index,
                 ascending,
@@ -2614,14 +2611,14 @@ export class OpenChat extends OpenChatAgentWorker {
                             chatId: serverChat.them,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
-                            latestClientEventIndex: serverChat.latestEventIndex,
+                            latestKnownUpdate: serverChat.lastUpdated,
                         })
                       : this.sendRequest({
                             kind: "chatEventsByEventIndex",
                             chatId: serverChat.id,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
-                            latestClientEventIndex: serverChat.latestEventIndex,
+                            latestKnownUpdate: serverChat.lastUpdated,
                         })
                   ).then((resp) => this.handleEventsResponse(serverChat, resp));
 
@@ -2633,8 +2630,7 @@ export class OpenChat extends OpenChatAgentWorker {
                       chatId: serverChat.id,
                       eventIndexes: currentThreadEvents,
                       threadRootMessageIndex: selectedThreadRootMessageIndex,
-                      latestClientEventIndex:
-                          selectedThreadRootEvent?.event?.thread?.latestEventIndex,
+                      latestKnownUpdate: serverChat.lastUpdated,
                   }).then((resp) =>
                       this.handleThreadEventsResponse(
                           serverChat.id,
@@ -3394,25 +3390,25 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const minVisibleEventIndex =
-            serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
-        const latestClientEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
-
         if (!isMessageNotification(notification)) {
             // TODO first clear the existing cache entry
             return;
         }
+
+        const minVisibleEventIndex =
+            serverChat.kind === "direct_chat" ? 0 : serverChat.minVisibleEventIndex;
+        const latestEventIndex = Math.max(eventIndex, serverChat.latestEventIndex);
 
         // Load the event
         this.sendRequest({
             kind: "chatEvents",
             chatType: serverChat.kind,
             chatId,
-            eventIndexRange: [minVisibleEventIndex, latestClientEventIndex],
+            eventIndexRange: [minVisibleEventIndex, latestEventIndex],
             startIndex: eventIndex,
             ascending: false,
             threadRootMessageIndex,
-            latestClientEventIndex,
+            latestKnownUpdate: serverChat.lastUpdated,
         });
     }
 
@@ -3441,7 +3437,7 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId: serverChat.id,
             message: messageEvent,
             threadRootMessageIndex,
-            latestClientEventIndex: serverChat.latestEventIndex,
+            latestKnownUpdate: serverChat.lastUpdated,
         }).then((m) => {
             this.handleEventsResponse(serverChat, {
                 events: [m],
@@ -4055,15 +4051,15 @@ export class OpenChat extends OpenChatAgentWorker {
         threadsByChat: ChatMap<ThreadSyncDetails[]>,
         serverChatSummaries: ChatMap<ChatSummary>,
     ): Promise<ThreadPreview[]> {
-        const request: ChatMap<[ThreadSyncDetails[], number | undefined]> = threadsByChat
+        const request: ChatMap<[ThreadSyncDetails[], bigint | undefined]> = threadsByChat
             .entries()
             .reduce((map, [chatId, threads]) => {
                 if (chatId.kind === "group_chat" || chatId.kind === "channel") {
-                    const latestEventIndex = serverChatSummaries.get(chatId)?.latestEventIndex;
-                    map.set(chatId, [threads, latestEventIndex]);
+                    const latestKnownUpdate = serverChatSummaries.get(chatId)?.lastUpdated;
+                    map.set(chatId, [threads, latestKnownUpdate]);
                 }
                 return map;
-            }, new ChatMap<[ThreadSyncDetails[], number | undefined]>());
+            }, new ChatMap<[ThreadSyncDetails[], bigint | undefined]>());
 
         return this.sendRequest({
             kind: "threadPreviews",
@@ -4198,7 +4194,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "getGroupMessagesByMessageIndex",
             chatId,
             messageIndexes,
-            latestClientEventIndex: serverChat?.latestEventIndex,
+            latestKnownUpdate: serverChat?.lastUpdated,
         });
     }
 
