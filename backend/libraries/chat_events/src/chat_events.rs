@@ -16,8 +16,8 @@ use types::{
     CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -136,9 +136,12 @@ impl ChatEvents {
         if let Some(root_message_index) = args.thread_root_message_index {
             self.update_thread_summary(
                 root_message_index,
-                args.sender,
-                args.mentioned,
-                push_event_result.index,
+                |t| {
+                    t.mark_message_added(args.sender, &args.mentioned, push_event_result.index, args.now);
+                    true
+                },
+                EventIndex::default(),
+                true,
                 args.now,
             );
         }
@@ -163,8 +166,7 @@ impl ChatEvents {
                     message.content = args.content.into();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    self.last_updated_timestamps
-                        .mark_updated(args.thread_root_message_index, event_index, args.now);
+                    self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
                     add_to_metrics(
                         &mut self.metrics,
@@ -219,8 +221,7 @@ impl ChatEvents {
                         deleted_by: args.caller,
                         timestamp: args.now,
                     });
-                    self.last_updated_timestamps
-                        .mark_updated(args.thread_root_message_index, event_index, args.now);
+                    self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
                     if sender != args.caller {
                         add_to_metrics(
@@ -264,8 +265,7 @@ impl ChatEvents {
                             let sender = message.sender;
                             message.last_updated = Some(args.now);
                             message.deleted_by = None;
-                            self.last_updated_timestamps
-                                .mark_updated(args.thread_root_message_index, event_index, args.now);
+                            self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
                             if sender != args.caller {
                                 add_to_metrics(
@@ -325,8 +325,7 @@ impl ChatEvents {
                         message.last_updated = Some(args.now);
                         let votes = p.hydrate(Some(args.user_id)).votes;
 
-                        self.last_updated_timestamps
-                            .mark_updated(args.thread_root_message_index, event_index, args.now);
+                        self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
                         match args.operation {
                             VoteOperation::RegisterVote => {
@@ -380,8 +379,7 @@ impl ChatEvents {
                 } else {
                     message.last_updated = Some(now);
                     p.ended = true;
-                    self.last_updated_timestamps
-                        .mark_updated(thread_root_message_index, event_index, now);
+                    self.mark_event_updated(thread_root_message_index, event_index, now);
 
                     EndPollResult::Success
                 };
@@ -452,7 +450,7 @@ impl ChatEvents {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
                         p.proposal.update_status(update.into(), now);
                         message.last_updated = Some(now);
-                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+                        self.mark_event_updated(None, event_index, now);
                     }
                 }
             }
@@ -484,8 +482,7 @@ impl ChatEvents {
             }
 
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+            self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
             add_to_metrics(
                 &mut self.metrics,
@@ -523,8 +520,7 @@ impl ChatEvents {
             }
 
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+            self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
             add_to_metrics(
                 &mut self.metrics,
@@ -557,8 +553,7 @@ impl ChatEvents {
 
             message.tips.push(args.ledger, args.user_id, args.amount);
             message.last_updated = Some(args.now);
-            self.last_updated_timestamps
-                .mark_updated(args.thread_root_message_index, event_index, args.now);
+            self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
 
             add_to_metrics(
                 &mut self.metrics,
@@ -603,7 +598,7 @@ impl ChatEvents {
 
                 content.reservations.insert(user_id);
                 message.last_updated = Some(now);
-                self.last_updated_timestamps.mark_updated(None, event_index, now);
+                self.mark_event_updated(None, event_index, now);
 
                 return ReservePrizeResult::Success(token, ledger_canister_id, amount.e8s() as u128, fee);
             }
@@ -628,7 +623,7 @@ impl ChatEvents {
                     content.winners.insert(winner);
                     message.last_updated = Some(now);
                     let message_index = message.message_index;
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.mark_event_updated(None, event_index, now);
 
                     // Push a PrizeWinnerContent message to the group from the OpenChatBot
                     let message_event = self.push_message(PushMessageArgs {
@@ -671,7 +666,7 @@ impl ChatEvents {
                     // Put the prize back
                     content.prizes_remaining.push(amount);
                     message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.mark_event_updated(None, event_index, now);
 
                     UnreservePrizeResult::Success
                 } else {
@@ -736,7 +731,7 @@ impl ChatEvents {
                     reason_code,
                     notes,
                 });
-                self.last_updated_timestamps.mark_updated(None, index, now);
+                self.mark_event_updated(None, index, now);
                 return;
             }
         }
@@ -768,14 +763,19 @@ impl ChatEvents {
 
     // Used when a group is imported into a community
     pub fn migrate_replies(&mut self, old: ChatInternal, new: ChatInternal, now: TimestampMillis) {
+        let mut updated_events = Vec::new();
+
         for (thread_root_message_index, events_list) in [(None, &mut self.main)]
             .into_iter()
             .chain(self.threads.iter_mut().map(|(t, e)| (Some(*t), e)))
         {
             for event_index in events_list.migrate_replies(old, new) {
-                self.last_updated_timestamps
-                    .mark_updated(thread_root_message_index, event_index, now);
+                updated_events.push((thread_root_message_index, event_index));
             }
+        }
+
+        for (thread_root_message_index, event_index) in updated_events {
+            self.mark_event_updated(thread_root_message_index, event_index, now);
         }
     }
 
@@ -788,21 +788,17 @@ impl ChatEvents {
     ) -> FollowThreadResult {
         use FollowThreadResult::*;
 
-        if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
-        {
-            if let Some(summary) = &mut root_message.thread_summary {
-                if !summary.participant_ids.contains(&user_id) && summary.set_follow(user_id, now, true) {
-                    root_message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return Success;
-                } else {
-                    return AlreadyFollowing;
-                }
-            }
+        match self.update_thread_summary(
+            thread_root_message_index,
+            |t| t.set_follow(user_id, now, true),
+            min_visible_event_index,
+            false,
+            now,
+        ) {
+            Some(true) => Success,
+            Some(false) => AlreadyFollowing,
+            None => ThreadNotFound,
         }
-
-        ThreadNotFound
     }
 
     pub fn unfollow_thread(
@@ -814,52 +810,43 @@ impl ChatEvents {
     ) -> UnfollowThreadResult {
         use UnfollowThreadResult::*;
 
-        if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
-        {
-            if let Some(summary) = &mut root_message.thread_summary {
-                if summary.set_follow(user_id, now, false) {
-                    root_message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return Success;
-                } else {
-                    return NotFollowing;
-                }
-            }
+        match self.update_thread_summary(
+            thread_root_message_index,
+            |t| t.set_follow(user_id, now, false),
+            min_visible_event_index,
+            false,
+            now,
+        ) {
+            Some(true) => Success,
+            Some(false) => NotFollowing,
+            None => ThreadNotFound,
         }
-
-        ThreadNotFound
     }
 
-    fn update_thread_summary(
+    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
         &mut self,
         thread_root_message_index: MessageIndex,
-        user_id: UserId,
-        mentioned_users: Vec<UserId>,
-        latest_event_index: EventIndex,
+        update_fn: F,
+        min_visible_event_index: EventIndex,
+        create_if_not_exists: bool,
         now: TimestampMillis,
-    ) {
-        let (root_message, event_index) = self
-            .message_internal_mut(EventIndex::default(), None, thread_root_message_index.into())
-            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_root_message_index:?}"));
+    ) -> Option<bool> {
+        let (root_message, event_index) =
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())?;
 
-        root_message.last_updated = Some(now);
+        let summary = if create_if_not_exists {
+            root_message.thread_summary.get_or_insert(ThreadSummaryInternal::default())
+        } else {
+            root_message.thread_summary.as_mut()?
+        };
 
-        let summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
-        summary.latest_event_index = latest_event_index;
-        summary.latest_event_timestamp = now;
-        summary.reply_count += 1;
-        summary.participant_ids.push_if_not_contains(user_id);
-        summary.follower_ids.remove(&user_id);
-
-        // If a user is mentioned in a thread they automatically become a follower
-        for muid in mentioned_users {
-            if !summary.participant_ids.contains(&muid) {
-                summary.set_follow(user_id, now, true);
-            }
+        if update_fn(summary) {
+            root_message.last_updated = Some(now);
+            self.mark_event_updated(None, event_index, now);
+            Some(true)
+        } else {
+            Some(false)
         }
-
-        self.last_updated_timestamps.mark_updated(None, event_index, now);
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
@@ -897,10 +884,28 @@ impl ChatEvents {
             &mut self.main
         };
 
+        let is_message = matches!(event, ChatEventInternal::Message(_));
+
         let event_index = events_list.push_event(event, correlation_id, expires_at, now);
 
         if let Some(timestamp) = expires_at {
             self.expiring_events.insert(event_index, timestamp);
+        }
+
+        if let Some(root_message_index) = thread_root_message_index {
+            // Messages are handled in `push_message`
+            if !is_message {
+                self.update_thread_summary(
+                    root_message_index,
+                    |t| {
+                        t.mark_event_added(event_index, now);
+                        true
+                    },
+                    EventIndex::default(),
+                    false,
+                    now,
+                );
+            }
         }
 
         PushEventResult {
@@ -985,7 +990,7 @@ impl ChatEvents {
             if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
                 r.hidden = true;
                 message.last_updated = Some(now);
-                self.last_updated_timestamps.mark_updated(None, event_index, now);
+                self.mark_event_updated(None, event_index, now);
                 return true;
             }
         }
@@ -1141,7 +1146,8 @@ impl ChatEvents {
             if let ChatEventInternal::MembersAddedToPublicChannel(m) = &mut e.event {
                 m.user_ids.push(user_id);
                 e.timestamp = now;
-                self.last_updated_timestamps.mark_updated(None, e.index, now);
+                let event_index = e.index;
+                self.mark_event_updated(None, event_index, now);
                 return;
             }
         }
@@ -1298,6 +1304,25 @@ impl ChatEvents {
             }
         } else {
             None
+        }
+    }
+
+    fn mark_event_updated(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        event_index: EventIndex,
+        now: TimestampMillis,
+    ) {
+        self.last_updated_timestamps
+            .mark_updated(thread_root_message_index, event_index, now);
+
+        if let Some(message_index) = thread_root_message_index {
+            if let Some((root_message, root_message_event_index)) =
+                self.message_internal_mut(EventIndex::default(), None, message_index.into())
+            {
+                root_message.last_updated = Some(now);
+                self.last_updated_timestamps.mark_updated(None, root_message_event_index, now);
+            }
         }
     }
 }
