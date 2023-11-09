@@ -124,7 +124,7 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo border={false} centered {ledger} user={$user} />
+                <AccountInfo fullWidthOnMobile border={false} centered {ledger} user={$user} />
             </div>
         </div>
 

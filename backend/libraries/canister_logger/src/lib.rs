@@ -54,10 +54,10 @@ pub fn init_with_logs(enable_trace: bool, logs: Vec<LogEntry>, traces: Vec<LogEn
     init(enable_trace);
 
     for log in logs {
-        LOG.with(|l| l.borrow_mut().append(log));
+        LOG.with_borrow_mut(|l| l.append(log));
     }
     for trace in traces {
-        TRACE.with(|t| t.borrow_mut().append(trace));
+        TRACE.with_borrow_mut(|t| t.append(trace));
     }
 }
 
@@ -100,11 +100,11 @@ impl Default for LogBuffer {
 }
 
 pub fn export_logs() -> Vec<LogEntry> {
-    LOG.with(|l| l.borrow().iter().cloned().collect())
+    LOG.with_borrow(|l| l.iter().cloned().collect())
 }
 
 pub fn export_traces() -> Vec<LogEntry> {
-    TRACE.with(|t| t.borrow().iter().cloned().collect())
+    TRACE.with_borrow(|t| t.iter().cloned().collect())
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
@@ -143,7 +143,7 @@ impl Write for LogWriter {
         };
 
         let sink = if self.trace { &TRACE } else { &LOG };
-        sink.with(|s| s.borrow_mut().append(log_entry));
+        sink.with_borrow_mut(|s| s.append(log_entry));
         Ok(())
     }
 

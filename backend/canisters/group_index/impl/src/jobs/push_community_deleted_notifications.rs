@@ -12,9 +12,9 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && state.data.deleted_communities.notifications_pending() > 0 {
+    if TIMER_ID.get().is_none() && state.data.deleted_communities.notifications_pending() > 0 {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.with(|t| t.set(Some(timer_id)));
+        TIMER_ID.set(Some(timer_id));
         trace!("'push_community_deleted_notifications' job started");
         true
     } else {
@@ -27,7 +27,7 @@ fn run() {
         if !batch.is_empty() {
             ic_cdk::spawn(push_notifications(batch));
         }
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+    } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'push_community_deleted_notifications' job stopped");
     }

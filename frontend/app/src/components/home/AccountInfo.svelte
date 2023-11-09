@@ -16,6 +16,7 @@
     export let ledger: string;
     export let centered = false;
     export let border = true;
+    export let fullWidthOnMobile: boolean = false;
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -43,7 +44,7 @@
 </script>
 
 <div class="account-info">
-    <QRCode text={account} size={qrSize} logo={tokenDetails.logo} {border} />
+    <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
     <p class="your-account" class:centered>
         {$_("tokenTransfer.yourAccount", { values: { token: symbol } })}
     </p>

@@ -21,7 +21,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
     let state = RuntimeState::new(env, data);
 
     set_state(state);
-    WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
+    WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
 fn init_cycles_dispenser_client(cycles_dispenser_canister_id: CanisterId, min_cycles_balance: Cycles) {
