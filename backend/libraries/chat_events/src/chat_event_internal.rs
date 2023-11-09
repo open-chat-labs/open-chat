@@ -10,8 +10,8 @@ use types::{
     GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged, GroupNameChanged, GroupReplyContext, GroupRulesChanged,
     GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded, MembersAddedToDefaultChannel,
     MembersRemoved, Message, MessageContent, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MultiUserChat,
-    PermissionsChanged, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped, Tips, UserId,
-    UsersBlocked, UsersInvited, UsersUnblocked,
+    PermissionsChanged, PushIfNotContains, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, Timestamped,
+    Tips, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -345,7 +345,32 @@ impl ThreadSummaryInternal {
         }
     }
 
+    pub fn mark_message_added(
+        &mut self,
+        sender: UserId,
+        mentioned_users: &[UserId],
+        latest_event_index: EventIndex,
+        now: TimestampMillis,
+    ) {
+        self.latest_event_index = latest_event_index;
+        self.latest_event_timestamp = now;
+        self.reply_count += 1;
+        self.participant_ids.push_if_not_contains(sender);
+        self.follower_ids.remove(&sender);
+
+        // If a user is mentioned in a thread they automatically become a follower
+        for user_id in mentioned_users {
+            if !self.participant_ids.contains(user_id) {
+                self.set_follow(*user_id, now, true);
+            }
+        }
+    }
+
     pub fn set_follow(&mut self, user_id: UserId, now: TimestampMillis, follow: bool) -> bool {
+        if self.participant_ids.contains(&user_id) {
+            return false;
+        }
+
         let new_entry = Timestamped::new(follow, now);
         match self.follower_ids.entry(user_id) {
             Occupied(mut e) => {

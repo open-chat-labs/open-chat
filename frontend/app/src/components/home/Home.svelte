@@ -182,10 +182,8 @@
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
 
     $: {
-        document.title =
-            $globalUnreadCount.unmuted > 0
-                ? `OpenChat (${$globalUnreadCount.unmuted})`
-                : "OpenChat";
+        const merged = client.mergeCombinedUnreadCounts($globalUnreadCount);
+        document.title = merged.unmuted > 0 ? `OpenChat (${merged.unmuted})` : "OpenChat";
     }
 
     $: {
