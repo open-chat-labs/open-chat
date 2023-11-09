@@ -50,6 +50,9 @@
 
 <div class="input-wrapper">
     <input
+        data-gram="false"
+        data-gramm_editor="false"
+        data-enable-grammarly="false"
         class:invalid
         class:hasCountdown={countdown}
         spellcheck="false"

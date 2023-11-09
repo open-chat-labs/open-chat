@@ -18,6 +18,7 @@ import type {
     ChatListScope,
     Member,
     VersionedRules,
+    CreatedUser,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -51,7 +52,7 @@ import {
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
-import { userStore } from "./stores/user";
+import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
 import type DRange from "drange";
@@ -113,8 +114,16 @@ export class LiveState {
     currentChatDraftMessage!: DraftMessage | undefined;
     draftThreadMessages!: DraftMessagesByThread;
     currentCommunityRules!: VersionedRules | undefined;
+    user!: CreatedUser;
+    anonUser!: boolean;
+    suspendedUser!: boolean;
+    platformModerator!: boolean;
 
     constructor() {
+        currentUser.subscribe((user) => (this.user = user));
+        anonUser.subscribe((anon) => (this.anonUser = anon));
+        suspendedUser.subscribe((suspended) => (this.suspendedUser = suspended));
+        platformModerator.subscribe((mod) => (this.platformModerator = mod));
         confirmedThreadEventIndexesLoadedStore.subscribe(
             (data) => (this.confirmedThreadEventIndexesLoaded = data),
         );

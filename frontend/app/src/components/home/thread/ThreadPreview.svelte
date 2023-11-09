@@ -20,11 +20,11 @@
     import LinkButton from "../../LinkButton.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: user = client.user;
     $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
@@ -137,8 +137,8 @@
                             readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            {user}
-                            me={thread.rootMessage.event.sender === user.userId}
+                            user={$user}
+                            me={thread.rootMessage.event.sender === $user.userId}
                             first
                             last
                             readonly
@@ -180,8 +180,8 @@
                                 readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                {user}
-                                me={evt.event.sender === user.userId}
+                                user={$user}
+                                me={evt.event.sender === $user.userId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly

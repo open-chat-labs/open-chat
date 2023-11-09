@@ -12,6 +12,7 @@
     import Security from "svelte-material-icons/Security.svelte";
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
+    import Login from "svelte-material-icons/Login.svelte";
     import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
     import page from "page";
@@ -22,26 +23,30 @@
     const dispatch = createEventDispatcher();
 
     $: canExtendDiamond = client.canExtendDiamond;
+    $: anonUser = client.anonUser;
 </script>
 
 <Menu>
-    <MenuItem on:click={() => dispatch("wallet")}>
-        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("wallet")}</span>
-    </MenuItem>
-    <MenuItem on:click={() => dispatch("profile")}>
-        <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("profile.title")}</span>
-    </MenuItem>
-    <MenuItem on:click={() => dispatch("upgrade")}>
-        <span class="diamond-icon" slot="icon">💎</span>
-        <span slot="text">{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
-    </MenuItem>
-    <!-- <MenuItem on:click={() => dispatch("halloffame")}>
+    {#if !$anonUser}
+        <MenuItem on:click={() => dispatch("wallet")}>
+            <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("wallet")}</span>
+        </MenuItem>
+        <MenuItem on:click={() => dispatch("profile")}>
+            <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("profile.title")}</span>
+        </MenuItem>
+        <MenuItem on:click={() => dispatch("upgrade")}>
+            <span class="diamond-icon" slot="icon">💎</span>
+            <span slot="text"
+                >{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
+        </MenuItem>
+        <!-- <MenuItem on:click={() => dispatch("halloffame")}>
         <span class="halloffame" slot="icon">👑</span>
         <span slot="text">{$_("halloffame.menu")}</span>
     </MenuItem> -->
-    <MenuItem separator />
+        <MenuItem separator />
+    {/if}
     <MenuItem on:click={() => page("/home")}>
         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Home page</span>
@@ -75,8 +80,15 @@
         <span slot="text">Guidelines</span>
     </MenuItem>
     <MenuItem separator />
-    <MenuItem on:click={() => dispatch("logout")}>
-        <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("logout")}</span>
-    </MenuItem>
+    {#if !$anonUser}
+        <MenuItem on:click={() => client.logout()}>
+            <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("logout")}</span>
+        </MenuItem>
+    {:else}
+        <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
+            <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("login")}</span>
+        </MenuItem>
+    {/if}
 </Menu>

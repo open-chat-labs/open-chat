@@ -6,6 +6,7 @@
     export let selected: boolean = false;
     export let separator: boolean = false;
     export let unread = emptyUnreadCounts();
+    export let disabled = false;
 </script>
 
 <div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>

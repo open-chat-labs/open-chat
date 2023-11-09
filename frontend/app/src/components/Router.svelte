@@ -20,6 +20,8 @@
         routerReady,
     } from "../routes";
 
+    export let showLandingPage: boolean;
+
     let route: typeof SvelteComponent<object> | undefined = undefined;
 
     function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
@@ -215,5 +217,5 @@
 </script>
 
 {#if route !== undefined}
-    <svelte:component this={route} />
+    <svelte:component this={route} {showLandingPage} />
 {/if}

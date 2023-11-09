@@ -7,10 +7,10 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let content: PrizeWinnerContent;
 
+    $: user = client.user;
     $: userStore = client.userStore;
     $: cryptoLookup = client.cryptoLookup;
     $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
@@ -18,11 +18,11 @@
     $: symbol = tokenDetails.symbol;
     $: amount = client.formatTokens(content.transaction.amountE8s, 0, tokenDetails.decimals);
     $: winner = `${username(content.transaction.recipient)}`;
-    $: me = user.userId === content.transaction.recipient;
+    $: me = $user.userId === content.transaction.recipient;
     $: transactionLinkText = client.buildTransactionLink($_, content.transaction);
 
     function username(userId: string): string {
-        return userId === user.userId
+        return userId === $user.userId
             ? $_("you")
             : `${$userStore[userId]?.username ?? $_("unknown")}`;
     }

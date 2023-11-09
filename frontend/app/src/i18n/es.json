@@ -223,13 +223,6 @@
         "unread": "{count} mensaje(s) sin leer",
         "mentions": "{count} mecion(es) sin leer"
     },
-    "login": {
-        "welcomeTo": "Bienvenido a ...",
-        "blurbPartOne": "Una aplicación de chat segura, intuitiva y descentralizada que se ejecuta completamente en ",
-        "blurbPartTwo": " - la primer cadena de bloques a escala de internet del mundo. Leer más ",
-        "signIn": "Entrar",
-        "signInOrRegister": "Ingresa o Registro"
-    },
     "reactions": {
         "greaterThan99People": "+99 personas",
         "youClickToRemove": "Tú (click para quitar)",
@@ -1150,5 +1143,12 @@
         "oneMinute": "1 minuto",
         "timeUpdated": "Tiempo de desaparición del mensaje establecido en {duration}",
         "disabled": "Mensajes que desaparecen desactivados"
-    }
+    },
+    "login": "Acceso",
+    "loginToOpenChat": "Iniciar sesión en OpenChat",
+    "tapToLogin": "Modo invitado: toque aquí para iniciar sesión",
+    "loginProviderChanged": "Parece que ya has iniciado sesión con el proveedor {previous}. Por favor, verifique que le gustaría usar {next} esta vez.",
+    "guestUser": "Usuario invitado",
+    "showAuthProviders": "Mostrar opciones",
+    "hideAuthProviders": "Ocultar opciones"
 }

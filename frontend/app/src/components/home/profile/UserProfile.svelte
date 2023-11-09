@@ -69,10 +69,10 @@
     let displayName: string | undefined = undefined;
     let displayNameValid = true;
     let checkingUsername: boolean;
-    let readonly = client.isReadOnly();
     let view: "global" | "communities" = "global";
     let selectedCommunityId = "";
 
+    $: identityState = client.identityState;
     $: originalUsername = user?.username ?? "";
     $: originalDisplayName = user?.displayName ?? undefined;
     $: moderationFlags = client.moderationFlags;
@@ -85,6 +85,9 @@
         kind: "community",
         communityId: selectedCommunityId,
     });
+    $: anonUser = client.anonUser;
+    $: suspendedUser = client.suspendedUser;
+    $: readonly = $suspendedUser || $anonUser;
 
     //@ts-ignore
     let version = window.OPENCHAT_WEBSITE_VERSION;
@@ -109,9 +112,11 @@
         !readonly;
 
     onMount(() => {
-        client.getBio().then((bio) => {
-            originalBio = userbio = bio;
-        });
+        if (!$anonUser) {
+            client.getBio().then((bio) => {
+                originalBio = userbio = bio;
+            });
+        }
     });
 
     function toggleModerationFlag(flag: ModerationFlag) {
@@ -119,6 +124,8 @@
     }
 
     function saveUser() {
+        if ($anonUser) return;
+
         saving = true;
         usernameError = undefined;
         bioError = undefined;
@@ -231,24 +238,26 @@
     </span>
 </SectionHeader>
 
-<div class="tabs">
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => (view = "global")}
-        class:selected={view === "global"}
-        class="tab">
-        {$_("profile.global")}
+{#if !$anonUser}
+    <div class="tabs">
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (view = "global")}
+            class:selected={view === "global"}
+            class="tab">
+            {$_("profile.global")}
+        </div>
+        <div
+            tabindex="0"
+            role="button"
+            on:click={() => (view = "communities")}
+            class:selected={view === "communities"}
+            class="tab">
+            {$_("communities.communityLabel")}
+        </div>
     </div>
-    <div
-        tabindex="0"
-        role="button"
-        on:click={() => (view = "communities")}
-        class:selected={view === "communities"}
-        class="tab">
-        {$_("communities.communityLabel")}
-    </div>
-</div>
+{/if}
 
 {#if view === "global"}
     <form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
@@ -270,49 +279,57 @@
                             on:imageSelected={userAvatarSelected} />
                     {/if}
                 </div>
-                <Legend label={$_("username")} rules={$_("usernameRules")} />
-                <UsernameInput
-                    {client}
-                    {originalUsername}
-                    disabled={readonly}
-                    bind:username
-                    bind:usernameValid
-                    bind:checking={checkingUsername}
-                    bind:error={usernameError}>
-                    {#if usernameError !== undefined}
-                        <ErrorMessage>{$_(usernameError)}</ErrorMessage>
-                    {/if}
-                </UsernameInput>
-                <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
-                <DisplayNameInput
-                    {client}
-                    {originalDisplayName}
-                    disabled={readonly}
-                    bind:displayName
-                    bind:displayNameValid>
-                    {#if displayNameError !== undefined}
-                        <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
-                    {/if}
-                </DisplayNameInput>
-                <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
-                <TextArea
-                    rows={3}
-                    bind:value={userbio}
-                    invalid={false}
-                    disabled={readonly}
-                    maxlength={MAX_BIO_LENGTH}
-                    placeholder={$_("enterBio")}>
-                    {#if bioError !== undefined}
-                        <ErrorMessage>{bioError}</ErrorMessage>
-                    {/if}
-                </TextArea>
-                <div class="full-width-btn">
-                    <Button
-                        loading={saving || checkingUsername}
-                        disabled={!buttonEnabled}
-                        fill
-                        small>{$_("update")}</Button>
-                </div>
+                {#if $anonUser}
+                    <div class="guest">
+                        <p>{$_("guestUser")}</p>
+                        <Button on:click={() => identityState.set({ kind: "logging_in" })}
+                            >{$_("login")}</Button>
+                    </div>
+                {:else}
+                    <Legend label={$_("username")} rules={$_("usernameRules")} />
+                    <UsernameInput
+                        {client}
+                        {originalUsername}
+                        disabled={readonly}
+                        bind:username
+                        bind:usernameValid
+                        bind:checking={checkingUsername}
+                        bind:error={usernameError}>
+                        {#if usernameError !== undefined}
+                            <ErrorMessage>{$_(usernameError)}</ErrorMessage>
+                        {/if}
+                    </UsernameInput>
+                    <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
+                    <DisplayNameInput
+                        {client}
+                        {originalDisplayName}
+                        disabled={readonly}
+                        bind:displayName
+                        bind:displayNameValid>
+                        {#if displayNameError !== undefined}
+                            <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
+                        {/if}
+                    </DisplayNameInput>
+                    <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
+                    <TextArea
+                        rows={3}
+                        bind:value={userbio}
+                        invalid={false}
+                        disabled={readonly}
+                        maxlength={MAX_BIO_LENGTH}
+                        placeholder={$_("enterBio")}>
+                        {#if bioError !== undefined}
+                            <ErrorMessage>{bioError}</ErrorMessage>
+                        {/if}
+                    </TextArea>
+                    <div class="full-width-btn">
+                        <Button
+                            loading={saving || checkingUsername}
+                            disabled={!buttonEnabled}
+                            fill
+                            small>{$_("update")}</Button>
+                    </div>
+                {/if}
             </CollapsibleCard>
         </div>
         <div class="appearance">
@@ -338,130 +355,134 @@
                 </div>
             </CollapsibleCard>
         </div>
-        <div class="invite">
-            <CollapsibleCard
-                on:toggle={referralOpen.toggle}
-                open={$referralOpen}
-                headerText={$_("referralHeader")}>
-                <ReferUsers />
-            </CollapsibleCard>
-        </div>
-        <div class="chats">
-            <CollapsibleCard
-                on:toggle={chatsSectionOpen.toggle}
-                open={$chatsSectionOpen}
-                headerText={$_("chats")}>
-                <Toggle
-                    id={"enter-send"}
-                    small
-                    on:change={() => enterSend.toggle()}
-                    label={$_("enterToSend")}
-                    checked={$enterSend} />
-                <Toggle
-                    id={"dclick-reply"}
-                    small
-                    on:change={() => dclickReply.toggle()}
-                    label={$_(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
-                    checked={$dclickReply} />
-                {#if notificationsSupported}
-                    <Toggle
-                        id={"notifications"}
-                        small
-                        disabled={$notificationStatus === "hard-denied"}
-                        on:change={toggleNotifications}
-                        label={$notificationStatus === "hard-denied"
-                            ? $_("notificationsDisabled")
-                            : $_("enableNotificationsMenu")}
-                        checked={$notificationStatus === "granted"} />
-                {/if}
-                <Toggle
-                    id={"low-bandwidth"}
-                    small
-                    on:change={() => lowBandwidth.toggle()}
-                    label={$_("lowBandwidth")}
-                    checked={$lowBandwidth} />
-            </CollapsibleCard>
-        </div>
-        <div class="restricted">
-            <CollapsibleCard
-                on:toggle={restrictedSectionOpen.toggle}
-                open={$restrictedSectionOpen}
-                headerText={$_("restrictedContent")}>
-                <p class="blurb">{$_("restrictedContentInfo")}</p>
-                <Toggle
-                    id={"offensive"}
-                    small
-                    on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                    label={$_("communities.offensive")}
-                    checked={offensiveEnabled} />
-                <Toggle
-                    id={"adult"}
-                    small
-                    on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
-                    label={$_("communities.adult")}
-                    checked={adultEnabled} />
-                <Toggle
-                    id={"underReview"}
-                    small
-                    on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                    label={$_("communities.underReview")}
-                    checked={underReviewEnabled} />
-            </CollapsibleCard>
-        </div>
-        {#if !readonly}
-            <div class="storage">
+        {#if !$anonUser}
+            <div class="invite">
                 <CollapsibleCard
-                    on:toggle={storageSectionOpen.toggle}
-                    open={$storageSectionOpen}
-                    headerText={$_("upgrade.membership")}>
-                    <StorageUsage />
-
-                    {#if !$isDiamond}
-                        <ButtonGroup align={"fill"}>
-                            <Button on:click={() => dispatch("upgrade")} small
-                                >{$_("upgrade.button")}</Button>
-                        </ButtonGroup>
-                    {:else}
-                        <Expiry />
-                        <ButtonGroup align={"fill"}>
-                            <Button
-                                title={!$canExtendDiamond ? $_("upgrade.cannotExtend") : undefined}
-                                disabled={!$canExtendDiamond}
-                                on:click={() => dispatch("upgrade")}
-                                small>{$_("upgrade.extend")}</Button>
-                        </ButtonGroup>
+                    on:toggle={referralOpen.toggle}
+                    open={$referralOpen}
+                    headerText={$_("referralHeader")}>
+                    <ReferUsers />
+                </CollapsibleCard>
+            </div>
+            <div class="chats">
+                <CollapsibleCard
+                    on:toggle={chatsSectionOpen.toggle}
+                    open={$chatsSectionOpen}
+                    headerText={$_("chats")}>
+                    <Toggle
+                        id={"enter-send"}
+                        small
+                        on:change={() => enterSend.toggle()}
+                        label={$_("enterToSend")}
+                        checked={$enterSend} />
+                    <Toggle
+                        id={"dclick-reply"}
+                        small
+                        on:change={() => dclickReply.toggle()}
+                        label={$_(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
+                        checked={$dclickReply} />
+                    {#if notificationsSupported}
+                        <Toggle
+                            id={"notifications"}
+                            small
+                            disabled={$notificationStatus === "hard-denied"}
+                            on:change={toggleNotifications}
+                            label={$notificationStatus === "hard-denied"
+                                ? $_("notificationsDisabled")
+                                : $_("enableNotificationsMenu")}
+                            checked={$notificationStatus === "granted"} />
                     {/if}
+                    <Toggle
+                        id={"low-bandwidth"}
+                        small
+                        on:change={() => lowBandwidth.toggle()}
+                        label={$_("lowBandwidth")}
+                        checked={$lowBandwidth} />
+                </CollapsibleCard>
+            </div>
+            <div class="restricted">
+                <CollapsibleCard
+                    on:toggle={restrictedSectionOpen.toggle}
+                    open={$restrictedSectionOpen}
+                    headerText={$_("restrictedContent")}>
+                    <p class="blurb">{$_("restrictedContentInfo")}</p>
+                    <Toggle
+                        id={"offensive"}
+                        small
+                        on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
+                        label={$_("communities.offensive")}
+                        checked={offensiveEnabled} />
+                    <Toggle
+                        id={"adult"}
+                        small
+                        on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
+                        label={$_("communities.adult")}
+                        checked={adultEnabled} />
+                    <Toggle
+                        id={"underReview"}
+                        small
+                        on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
+                        label={$_("communities.underReview")}
+                        checked={underReviewEnabled} />
+                </CollapsibleCard>
+            </div>
+            {#if !readonly}
+                <div class="storage">
+                    <CollapsibleCard
+                        on:toggle={storageSectionOpen.toggle}
+                        open={$storageSectionOpen}
+                        headerText={$_("upgrade.membership")}>
+                        <StorageUsage />
+
+                        {#if !$isDiamond}
+                            <ButtonGroup align={"fill"}>
+                                <Button on:click={() => dispatch("upgrade")} small
+                                    >{$_("upgrade.button")}</Button>
+                            </ButtonGroup>
+                        {:else}
+                            <Expiry />
+                            <ButtonGroup align={"fill"}>
+                                <Button
+                                    title={!$canExtendDiamond
+                                        ? $_("upgrade.cannotExtend")
+                                        : undefined}
+                                    disabled={!$canExtendDiamond}
+                                    on:click={() => dispatch("upgrade")}
+                                    small>{$_("upgrade.extend")}</Button>
+                            </ButtonGroup>
+                        {/if}
+                    </CollapsibleCard>
+                </div>
+            {/if}
+            <div class="stats">
+                <CollapsibleCard
+                    on:toggle={statsSectionOpen.toggle}
+                    open={$statsSectionOpen}
+                    headerText={$_("stats.userStats")}>
+                    <Stats showReported stats={$userMetrics} />
+                </CollapsibleCard>
+            </div>
+            <div class="advanced">
+                <CollapsibleCard
+                    on:toggle={advancedSectionOpen.toggle}
+                    open={$advancedSectionOpen}
+                    headerText={$_("advanced")}>
+                    <div class="userid">
+                        <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
+                        <div class="userid-txt">
+                            <div>{user.userId}</div>
+                            <div role="button" tabindex="0" on:click={onCopy} class="copy">
+                                <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <Legend label={$_("version")} rules={$_("websiteVersion")} />
+                        <div>{version}</div>
+                    </div>
                 </CollapsibleCard>
             </div>
         {/if}
-        <div class="stats">
-            <CollapsibleCard
-                on:toggle={statsSectionOpen.toggle}
-                open={$statsSectionOpen}
-                headerText={$_("stats.userStats")}>
-                <Stats showReported stats={$userMetrics} />
-            </CollapsibleCard>
-        </div>
-        <div class="advanced">
-            <CollapsibleCard
-                on:toggle={advancedSectionOpen.toggle}
-                open={$advancedSectionOpen}
-                headerText={$_("advanced")}>
-                <div class="userid">
-                    <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
-                    <div class="userid-txt">
-                        <div>{user.userId}</div>
-                        <div role="button" tabindex="0" on:click={onCopy} class="copy">
-                            <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-                        </div>
-                    </div>
-                </div>
-                <div>
-                    <Legend label={$_("version")} rules={$_("websiteVersion")} />
-                    <div>{version}</div>
-                </div>
-            </CollapsibleCard>
-        </div>
     </form>
 {:else}
     <div class="community-selector">
@@ -567,6 +588,16 @@
         padding: $sp5 $sp5 0 $sp5;
         @include mobile() {
             padding: $sp4 $sp4 0 $sp4;
+        }
+    }
+
+    .guest {
+        text-align: center;
+        @include font(bold, normal, fs-120);
+        margin-bottom: $sp4;
+
+        p {
+            margin-bottom: $sp4;
         }
     }
 </style>

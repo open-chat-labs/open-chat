@@ -50,7 +50,7 @@
     });
 </script>
 
-{#if $identityState === "registering"}
+{#if $identityState.kind === "registering"}
     <Overlay>
         <Register on:logout={logout} on:createdUser={createdUser} />
     </Overlay>
@@ -60,7 +60,7 @@
     <HostedLandingPage on:login={() => client.login()} />
 {:else}
     {#if showMenu}
-        <Header on:login={() => client.login()} on:logout={logout} />
+        <Header on:logout={logout} />
     {/if}
 
     <main class:miami class="main">

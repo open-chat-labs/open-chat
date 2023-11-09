@@ -27,6 +27,9 @@
 <div class="outer-wrapper" class:margin bind:clientHeight={outerHeight}>
     <div class="input-wrapper" bind:clientHeight={innerHeight}>
         <textarea
+            data-gram="false"
+            data-gramm_editor="false"
+            data-enable-grammarly="false"
             bind:this={inp}
             {rows}
             class:invalid

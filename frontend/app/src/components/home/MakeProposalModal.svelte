@@ -35,7 +35,6 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    const user = client.user;
 
     export let selectedMultiUserChat: MultiUserChat;
     export let nervousSystem: NervousSystemDetails;
@@ -51,7 +50,11 @@
     let actualWidth = 0;
     let summaryPreview = false;
     let busy = true;
-    let selectedProposalType: "motion" | "transfer_sns_funds" | "upgrade_sns_to_next_version" | "add_token" = "motion";
+    let selectedProposalType:
+        | "motion"
+        | "transfer_sns_funds"
+        | "upgrade_sns_to_next_version"
+        | "add_token" = "motion";
     let message = "";
     let error = true;
     let summaryContainerHeight = 0;
@@ -59,6 +62,7 @@
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
 
+    $: user = client.user;
     $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -89,10 +93,21 @@
         titleValid &&
         urlValid &&
         summaryValid &&
-        (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version" ||
-            (selectedProposalType === "transfer_sns_funds" && amountValid && recipientOwnerValid && recipientSubaccountValid) ||
-            (selectedProposalType === "add_token" && isPrincipalValid(addTokenLedgerCanisterId) && addTokenHowToBuyUrl.length > 0 && addTokenTransactionUrlFormat.length > 0));
-    $: canSubmit = step === 2 || (step === 1 && (selectedProposalType === "motion" || selectedProposalType === "upgrade_sns_to_next_version"));
+        (selectedProposalType === "motion" ||
+            selectedProposalType === "upgrade_sns_to_next_version" ||
+            (selectedProposalType === "transfer_sns_funds" &&
+                amountValid &&
+                recipientOwnerValid &&
+                recipientSubaccountValid) ||
+            (selectedProposalType === "add_token" &&
+                isPrincipalValid(addTokenLedgerCanisterId) &&
+                addTokenHowToBuyUrl.length > 0 &&
+                addTokenTransactionUrlFormat.length > 0));
+    $: canSubmit =
+        step === 2 ||
+        (step === 1 &&
+            (selectedProposalType === "motion" ||
+                selectedProposalType === "upgrade_sns_to_next_version"));
 
     $: {
         if (tokenDetails !== undefined) {
@@ -167,8 +182,13 @@
                 return {
                     kind: "execute_generic_nervous_system_function",
                     functionId: BigInt(7000),
-                    payload: createAddTokenPayload(addTokenLedgerCanisterId, addTokenInfoUrl, addTokenHowToBuyUrl, addTokenTransactionUrlFormat),
-                }
+                    payload: createAddTokenPayload(
+                        addTokenLedgerCanisterId,
+                        addTokenInfoUrl,
+                        addTokenHowToBuyUrl,
+                        addTokenTransactionUrlFormat
+                    ),
+                };
             }
         }
     }
@@ -206,7 +226,7 @@
 
         return `${summary}
 
-> Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
     }
 </script>
 
@@ -226,7 +246,7 @@
     <div class="body" slot="body">
         <div class="sections" style={`left: -${left}px`}>
             <div class="topup hidden" class:visible={step === 0}>
-                <AccountInfo {ledger} {user} />
+                <AccountInfo {ledger} user={$user} />
                 <p>{$_("tokenTransfer.makeDeposit")}</p>
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol } })}
@@ -238,7 +258,8 @@
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
-                        <option value={"upgrade_sns_to_next_version"}>Upgrade SNS to next version</option>
+                        <option value={"upgrade_sns_to_next_version"}
+                            >Upgrade SNS to next version</option>
                         {#if symbol === "CHAT"}
                             <option value={"add_token"}>Add token</option>
                         {/if}
@@ -376,7 +397,8 @@
                             <Input
                                 autofocus
                                 disabled={busy}
-                                invalid={addTokenLedgerCanisterId.length > 0 && !isPrincipalValid(addTokenLedgerCanisterId)}
+                                invalid={addTokenLedgerCanisterId.length > 0 &&
+                                    !isPrincipalValid(addTokenLedgerCanisterId)}
                                 bind:value={addTokenLedgerCanisterId}
                                 minlength={CANISTER_ID_LENGTH}
                                 maxlength={CANISTER_ID_LENGTH}
@@ -386,11 +408,11 @@
                         <section>
                             <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
                             <Input
-                                    disabled={busy}
-                                    minlength={1}
-                                    maxlength={100}
-                                    bind:value={addTokenInfoUrl}
-                                    placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenInfoUrl}
+                                placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
                         </section>
                         <section>
                             <Legend label={$_("proposal.maker.howToBuyUrl")} required />

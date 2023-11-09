@@ -40,6 +40,7 @@
     export let showSuspendUserModal = false;
     export let hasPinned: boolean;
 
+    $: platformModerator = client.platformModerator;
     $: isDiamond = client.isDiamond;
     $: favouritesStore = client.favouritesStore;
     $: messagesRead = client.messagesRead;
@@ -381,7 +382,7 @@
                         </MenuItem>
                     {/if}
 
-                    {#if client.user.isPlatformModerator}
+                    {#if $platformModerator}
                         {#if client.isFrozen(selectedChatSummary.id)}
                             <MenuItem warning on:click={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
@@ -465,7 +466,7 @@
                             <div slot="text">{$_("blockUser")}</div>
                         </MenuItem>
                     {/if}
-                    {#if client.user.isPlatformModerator}
+                    {#if $platformModerator}
                         {#if isSuspended}
                             <MenuItem on:click={unsuspendUser}>
                                 <TickIcon
