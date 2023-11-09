@@ -10,7 +10,6 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
-    ThreadSyncDetails,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
@@ -75,36 +74,18 @@ function hasUnreadMentions(chat: ChatSummary): boolean {
     );
 }
 
-function unreadThreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
-    const threadsByChat = chats.reduce((result, chat) => {
-        if (chat === undefined) return result;
-        if (
-            (chat.kind === "group_chat" || chat.kind === "channel") &&
-            chat.membership &&
-            chat.membership.latestThreads.length > 0
-        ) {
-            result.set(chat.id, chat.membership.latestThreads);
-        }
-        return result;
-    }, new ChatMap<ThreadSyncDetails[]>());
-    return {
-        unmuted: messagesRead.staleThreadsCount(threadsByChat),
-        muted: 0,
-        mentions: false,
-    };
-}
-
-function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+function genericUnreadCountForChats(
+    unreadCount: (chat: ChatSummary) => number,
+    unreadMentions: (chat: ChatSummary) => boolean,
+    chats: (ChatSummary | undefined)[],
+): UnreadCounts {
     return chats.reduce(
         (counts, chat) => {
             if (chat === undefined) return counts;
-            const unread = messagesRead.unreadMessageCount(
-                chat.id,
-                chat.latestMessage?.event.messageIndex,
-            );
+            const unread = unreadCount(chat);
             const increment = unread > 0 ? 1 : 0;
             return {
-                mentions: counts.mentions || hasUnreadMentions(chat),
+                mentions: counts.mentions || unreadMentions(chat),
                 unmuted: chat.membership.notificationsMuted
                     ? counts.unmuted
                     : counts.unmuted + increment,
@@ -112,6 +93,22 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCount
             };
         },
         { muted: 0, unmuted: 0, mentions: false } as UnreadCounts,
+    );
+}
+
+function unreadThreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+    return genericUnreadCountForChats(
+        (chat) => messagesRead.staleThreadCountForChat(chat.id, chat.membership.latestThreads),
+        (_) => false,
+        chats,
+    );
+}
+
+function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+    return genericUnreadCountForChats(
+        (chat) => messagesRead.unreadMessageCount(chat.id, chat.latestMessage?.event.messageIndex),
+        hasUnreadMentions,
+        chats,
     );
 }
 
