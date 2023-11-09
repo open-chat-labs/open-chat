@@ -22,15 +22,15 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    let (pending_payment, modclub_canister_id) = mutate_state(|state| {
+    let (pending_submission, modclub_canister_id) = mutate_state(|state| {
         (
             state.data.pending_modclub_submissions_queue.pop(),
             state.modclub_canister_id(),
         )
     });
 
-    if let Some(pending_payment) = pending_payment {
-        ic_cdk::spawn(process_submission(modclub_canister_id, pending_payment));
+    if let Some(pending_submission) = pending_submission {
+        ic_cdk::spawn(process_submission(modclub_canister_id, pending_submission));
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'submit_message_to_modclub' job stopped");
@@ -47,10 +47,12 @@ async fn process_submission(modclub_canister_id: CanisterId, pending_submission:
 }
 
 async fn submit_message(modclub_canister_id: CanisterId, pending_submission: &PendingModclubSubmission) -> bool {
+    trace!("'submit_message_to_modclub' submit_message");
+
     let args = (
         pending_submission.report_index.to_string(),
         pending_submission.html_report.clone(),
-        None,
+        Some(pending_submission.title.clone()),
         Some(pending_submission.level),
     );
     match modclub_canister_c2c_client::submitHtmlContent(modclub_canister_id, args).await {

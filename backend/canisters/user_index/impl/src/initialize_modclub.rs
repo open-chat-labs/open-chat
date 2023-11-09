@@ -7,6 +7,7 @@ use tracing::error;
 
 use crate::read_state;
 
+#[allow(dead_code)]
 pub async fn initialize_modclub() {
     let (modclub_canister_id, user_index_canister_id, test_mode) =
         read_state(|state| (state.modclub_canister_id(), state.env.canister_id(), state.data.test_mode));

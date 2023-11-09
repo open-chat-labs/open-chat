@@ -1,5 +1,5 @@
 use crate::{
-    guards::caller_is_modclub,
+    // guards::caller_is_modclub,
     model::{
         reported_messages::{
             build_message_to_reporter, build_message_to_sender, rule_id_from_modclub_rule_id, RecordOutcomeResult,
@@ -11,7 +11,6 @@ use crate::{
     timer_job_types::{SetUserSuspended, TimerJob},
     RuntimeState,
 };
-use candid::Nat;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
@@ -20,27 +19,31 @@ use tracing::error;
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 use user_index_canister::modclub_callback::*;
 use utils::consts::OPENCHAT_BOT_USER_ID;
-use x509_parser::num_bigint::BigUint;
 
-#[update(guard = "caller_is_modclub")]
+#[update]
+// #[update(guard = "caller_is_modclub")]
 #[trace]
 fn modclub_callback(args: Args) {
+    tracing::trace!("modclub_callback");
     ic_cdk::spawn(handle_modclub_callback(args))
 }
 
 async fn handle_modclub_callback(args: Args) {
+    tracing::trace!("handle_modclub_callback");
     mutate_state(|state| {
+        let approved = args.approvedCount.0.try_into().unwrap();
+        let rejected = args.rejectedCount.0.try_into().unwrap();
         let now = state.env.now();
         let outcome = ReportOutcome {
             timestamp: now,
-            approved: nat_to_u32(args.approvedCount),
-            rejected: nat_to_u32(args.rejectedCount),
+            approved,
+            rejected,
             violated_rules: args
                 .violatedRules
                 .into_iter()
                 .map(|v| ViolatedRules {
                     rule_id: rule_id_from_modclub_rule_id(v.id),
-                    rejected: nat_to_u32(v.rejectionCount),
+                    rejected,
                 })
                 .collect(),
         };
@@ -148,11 +151,6 @@ fn delete_group_message(
         "delete_messages_msgpack".to_string(),
         serialize_then_unwrap(args),
     );
-}
-
-fn nat_to_u32(num: Nat) -> u32 {
-    let bi: BigUint = num.into();
-    bi.to_u32_digits()[0]
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {

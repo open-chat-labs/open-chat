@@ -1,6 +1,5 @@
 use crate::{
     guards::caller_is_user_canister_or_group_index,
-    jobs::submit_message_to_modclub,
     model::{
         pending_modclub_submissions_queue::PendingModclubSubmission,
         reported_messages::{build_message_to_reporter, AddReportArgs, AddReportResult},
@@ -47,14 +46,20 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.users.push_reported_message(args.message.sender, report_index);
 
     // Queue submission of the report to Modclub
-    state.data.pending_modclub_submissions_queue.push(PendingModclubSubmission {
+    state.queue_modclub_submission(PendingModclubSubmission {
         report_index,
+        title: construct_report_title(&args.message),
         html_report: construct_html_report(args.chat_id, args.thread_root_message_index, args.message),
-        level: Level::normal,
+        level: if state.data.test_mode { Level::simple } else { Level::normal },
     });
-    submit_message_to_modclub::start_job_if_required(state);
 
     Success
+}
+
+fn construct_report_title(message: &Message) -> String {
+    let mut title = message.content.text().unwrap_or(&message.content.message_type()).to_string();
+    title.truncate(80);
+    title
 }
 
 fn construct_html_report(chat_id: Chat, thread_root_message_index: Option<MessageIndex>, message: Message) -> String {

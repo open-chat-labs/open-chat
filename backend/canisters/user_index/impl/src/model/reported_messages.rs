@@ -63,6 +63,19 @@ impl ReportedMessages {
     pub fn get(&self, index: u64) -> Option<&ReportedMessage> {
         self.messages.get(index as usize)
     }
+
+    pub fn metrics(&self) -> ReportingMetrics {
+        ReportingMetrics {
+            messages_reported: self.messages.len(),
+            messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
+        }
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ReportingMetrics {
+    pub messages_reported: usize,
+    pub messages_pending_outcome: usize,
 }
 
 pub struct AddReportArgs {
@@ -148,7 +161,7 @@ pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: U
     let outcome = reported_message.outcome.as_ref().unwrap();
     let rejected = reported_message.rejected();
 
-    let text = format!("You reported [this message][{}] for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} to {}.",
+    let text = format!("You reported [this message]({}) for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided the message {} the platform rules {} - {}.",
         build_message_link(reported_message),
         outcome.rejected + outcome.approved,
         if rejected {"broke"} else {"didn't break"},
@@ -163,7 +176,7 @@ pub fn build_message_to_sender(reported_message: &ReportedMessage) -> LocalUserI
     let outcome = reported_message.outcome.as_ref().unwrap();
 
     let text = format!(
-        "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} to {}.", 
+        "Your [message]({}) was reported by another user for breaking [the platform rules](https://oc.app/guidelines?section=3) and it was referred to [Modclub](https://modclub.ai/) for external moderation. A group of {} moderators decided your message broke the platform rules {} - {}.", 
         build_message_link(reported_message),
         outcome.rejected + outcome.approved,
         outcome.rejected,

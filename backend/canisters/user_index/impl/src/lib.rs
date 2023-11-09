@@ -10,9 +10,9 @@ use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use model::pending_modclub_submissions_queue::PendingModclubSubmissionsQueue;
+use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
-use model::reported_messages::ReportedMessages;
+use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -106,10 +106,10 @@ impl RuntimeState {
         caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
-    pub fn is_caller_modclub(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.modclub_canister_id()
-    }
+    // pub fn is_caller_modclub(&self) -> bool {
+    //     let caller = self.env.caller();
+    //     caller == self.modclub_canister_id()
+    // }
 
     pub fn modclub_canister_id(&self) -> CanisterId {
         let modclub_canister_id =
@@ -137,6 +137,11 @@ impl RuntimeState {
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
+    }
+
+    pub fn queue_modclub_submission(&mut self, pending_submission: PendingModclubSubmission) {
+        self.data.pending_modclub_submissions_queue.push(pending_submission);
+        jobs::submit_message_to_modclub::start_job_if_required(self);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -174,6 +179,8 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
+            reporting_metrics: self.data.reported_messages.metrics(),
         }
     }
 }
@@ -339,6 +346,8 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
     pub canister_ids: CanisterIds,
+    pub pending_modclub_submissions: usize,
+    pub reporting_metrics: ReportingMetrics,
 }
 
 #[derive(Serialize, Debug, Default)]

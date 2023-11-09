@@ -41,7 +41,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "suspected_bots" => state.is_caller_governance_principal(),
-        "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" => true,
+        "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" | "modclub_callback" => true,
         _ => false,
     };
 

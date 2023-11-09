@@ -56,13 +56,13 @@ pub fn caller_is_platform_operator() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_modclub() -> Result<(), String> {
-    if read_state(|state| state.is_caller_modclub()) {
-        Ok(())
-    } else {
-        Err("Caller is not modclub".to_string())
-    }
-}
+// pub fn caller_is_modclub() -> Result<(), String> {
+//     if read_state(|state| state.is_caller_modclub()) {
+//         Ok(())
+//     } else {
+//         Err("Caller is not modclub".to_string())
+//     }
+// }
 
 pub fn caller_is_user_canister_or_group_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_group_index_canister() || state.is_caller_user_canister()) {
