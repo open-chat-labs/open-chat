@@ -13,7 +13,7 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        emptyUnreadCounts,
+        emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -38,10 +38,10 @@
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
-    $: unreadDirectChats = client.unreadDirectChats;
-    $: unreadGroupChats = client.unreadGroupChats;
-    $: unreadFavouriteChats = client.unreadFavouriteChats;
-    $: unreadCommunityChannels = client.unreadCommunityChannels;
+    $: unreadDirectCounts = client.unreadDirectCounts;
+    $: unreadGroupCounts = client.unreadGroupCounts;
+    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
+    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -149,7 +149,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={$_("communities.directChats")}
-            unread={$unreadDirectChats}
+            unread={$unreadDirectCounts.chats}
             on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -159,7 +159,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={$_("communities.groupChats")}
-            unread={$unreadGroupChats}
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -170,7 +170,7 @@
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
             label={$_("communities.favourites")}
-            unread={$unreadFavouriteChats}
+            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
             on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -194,7 +194,10 @@
                     selected={community === $selectedCommunity &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
+                    unread={client.mergeCombinedUnreadCounts(
+                        $unreadCommunityChannelCounts.get(community.id) ??
+                            emptyCombinedUnreadCounts()
+                    )}
                     label={community.name}
                     on:click={() => selectCommunity(community)}>
                     <Avatar
