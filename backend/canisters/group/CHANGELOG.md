@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improve `ReplicaNotUpToDate` check to avoid displaying outdated events ([#4727](https://github.com/open-chat-labs/open-chat/pull/4727))
 - Add `membership` to group summaries to support anonymous mode ([#4730](https://github.com/open-chat-labs/open-chat/pull/4730))
 - Consolidate logic to update thread summaries ([#4736](https://github.com/open-chat-labs/open-chat/pull/4736))
+- Add msgpack endpoint for `delete_messages` ([#4742](https://github.com/open-chat-labs/open-chat/pull/4742))
+- Platform mods can delete group messages despite not being member ([#4744](https://github.com/open-chat-labs/open-chat/pull/4744))
 
 ## [[2.0.922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.922-group)] - 2023-11-02
 
