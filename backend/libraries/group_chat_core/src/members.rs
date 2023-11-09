@@ -13,7 +13,6 @@ use types::{
     is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
     HydratedMention, MessageIndex, TimestampMillis, Timestamped, UserId, Version, MAX_RETURNED_MENTIONS,
 };
-use utils::time::now_millis;
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
@@ -314,13 +313,12 @@ pub struct ChangeRoleSuccess {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(from = "GroupMemberInternalCombined")]
 pub struct GroupMemberInternal {
     #[serde(rename = "u")]
     pub user_id: UserId,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r2", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "r", alias = "r2", default, skip_serializing_if = "is_default")]
     pub role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
@@ -343,63 +341,6 @@ pub struct GroupMemberInternal {
     min_visible_event_index: EventIndex,
     #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
     min_visible_message_index: MessageIndex,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct GroupMemberInternalCombined {
-    #[serde(rename = "u")]
-    pub user_id: UserId,
-    #[serde(rename = "d")]
-    pub date_added: TimestampMillis,
-    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
-    pub role: GroupRoleInternal,
-    #[serde(rename = "r2", default, skip_serializing_if = "is_default")]
-    pub role_v2: Timestamped<GroupRoleInternal>,
-    #[serde(rename = "n")]
-    pub notifications_muted: Timestamped<bool>,
-    #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
-    pub mentions: Mentions,
-    #[serde(rename = "t", default, skip_serializing_if = "is_empty_hashset")]
-    pub threads: HashSet<MessageIndex>,
-    #[serde(rename = "f", default, skip_serializing_if = "is_empty_slice")]
-    pub unfollowed_threads: Vec<MessageIndex>,
-    #[serde(rename = "p", default, skip_serializing_if = "is_empty_btreemap")]
-    pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
-    #[serde(rename = "s", default, skip_serializing_if = "is_default")]
-    pub suspended: Timestamped<bool>,
-    #[serde(rename = "ra", default, skip_serializing_if = "is_default")]
-    pub rules_accepted: Option<Timestamped<Version>>,
-    #[serde(rename = "b", default, skip_serializing_if = "is_default")]
-    pub is_bot: bool,
-
-    #[serde(rename = "me", default, skip_serializing_if = "is_default")]
-    min_visible_event_index: EventIndex,
-    #[serde(rename = "mm", default, skip_serializing_if = "is_default")]
-    min_visible_message_index: MessageIndex,
-}
-
-impl From<GroupMemberInternalCombined> for GroupMemberInternal {
-    fn from(value: GroupMemberInternalCombined) -> Self {
-        GroupMemberInternal {
-            user_id: value.user_id,
-            date_added: value.date_added,
-            role: if value.role == GroupRoleInternal::Member {
-                value.role_v2
-            } else {
-                Timestamped::new(value.role, now_millis())
-            },
-            notifications_muted: value.notifications_muted,
-            mentions: value.mentions,
-            threads: value.threads,
-            unfollowed_threads: value.unfollowed_threads,
-            proposal_votes: value.proposal_votes,
-            suspended: value.suspended,
-            rules_accepted: value.rules_accepted,
-            is_bot: value.is_bot,
-            min_visible_event_index: value.min_visible_event_index,
-            min_visible_message_index: value.min_visible_message_index,
-        }
-    }
 }
 
 impl GroupMemberInternal {
