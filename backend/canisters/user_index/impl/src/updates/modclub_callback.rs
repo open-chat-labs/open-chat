@@ -11,10 +11,10 @@ use crate::{
     timer_job_types::{SetUserSuspended, TimerJob},
     RuntimeState,
 };
+use candid::Encode;
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
-use msgpack::serialize_then_unwrap;
 use tracing::error;
 use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 use user_index_canister::modclub_callback::*;
@@ -127,11 +127,7 @@ fn delete_channel_message(
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
     };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        serialize_then_unwrap(args),
-    );
+    fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
 }
 
 fn delete_group_message(
@@ -146,11 +142,7 @@ fn delete_group_message(
         as_platform_moderator: Some(true),
         correlation_id: 0,
     };
-    fire_and_forget_handler.send(
-        canister_id,
-        "delete_messages_msgpack".to_string(),
-        serialize_then_unwrap(args),
-    );
+    fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
