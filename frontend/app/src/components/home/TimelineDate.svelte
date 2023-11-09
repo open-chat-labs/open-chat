@@ -33,7 +33,7 @@
         color: var(--currentChat-date-txt);
         width: fit-content;
         min-width: 100px;
-        margin: auto;
+        margin: 0 auto;
         border-radius: 12px;
         @include z-index("date-label");
         @include font(book, normal, fs-70);
