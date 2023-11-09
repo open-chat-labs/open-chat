@@ -345,11 +345,6 @@ impl ThreadSummaryInternal {
         }
     }
 
-    pub fn mark_event_added(&mut self, latest_event_index: EventIndex, now: TimestampMillis) {
-        self.latest_event_index = latest_event_index;
-        self.latest_event_timestamp = now;
-    }
-
     pub fn mark_message_added(
         &mut self,
         sender: UserId,
@@ -357,8 +352,8 @@ impl ThreadSummaryInternal {
         latest_event_index: EventIndex,
         now: TimestampMillis,
     ) {
-        self.mark_event_added(latest_event_index, now);
-
+        self.latest_event_index = latest_event_index;
+        self.latest_event_timestamp = now;
         self.reply_count += 1;
         self.participant_ids.push_if_not_contains(sender);
         self.follower_ids.remove(&sender);

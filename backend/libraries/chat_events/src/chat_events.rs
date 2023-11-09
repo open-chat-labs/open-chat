@@ -740,33 +740,32 @@ impl ChatEvents {
                     notes,
                 });
                 self.last_updated_timestamps.mark_updated(None, index, now);
-                return;
             }
+        } else {
+            let chat: Chat = chat.into();
+
+            self.push_message(PushMessageArgs {
+                sender: OPENCHAT_BOT_USER_ID,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
+                    reports: vec![MessageReport {
+                        reported_by: user_id,
+                        timestamp: now,
+                        reason_code,
+                        notes,
+                    }],
+                }),
+                mentioned: Vec::new(),
+                replies_to: Some(ReplyContextInternal {
+                    chat_if_other: Some((chat.into(), thread_root_message_index)),
+                    event_index,
+                }),
+                forwarded: false,
+                correlation_id: 0,
+                now,
+            });
         }
-
-        let chat: Chat = chat.into();
-
-        self.push_message(PushMessageArgs {
-            sender: OPENCHAT_BOT_USER_ID,
-            thread_root_message_index: None,
-            message_id,
-            content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
-                reports: vec![MessageReport {
-                    reported_by: user_id,
-                    timestamp: now,
-                    reason_code,
-                    notes,
-                }],
-            }),
-            mentioned: Vec::new(),
-            replies_to: Some(ReplyContextInternal {
-                chat_if_other: Some((chat.into(), thread_root_message_index)),
-                event_index,
-            }),
-            forwarded: false,
-            correlation_id: 0,
-            now,
-        });
     }
 
     // Used when a group is imported into a community
@@ -887,28 +886,10 @@ impl ChatEvents {
             &mut self.main
         };
 
-        let is_message = matches!(event, ChatEventInternal::Message(_));
-
         let event_index = events_list.push_event(event, correlation_id, expires_at, now);
 
         if let Some(timestamp) = expires_at {
             self.expiring_events.insert(event_index, timestamp);
-        }
-
-        if let Some(root_message_index) = thread_root_message_index {
-            // Messages are handled in `push_message`
-            if !is_message {
-                self.update_thread_summary(
-                    root_message_index,
-                    |t| {
-                        t.mark_event_added(event_index, now);
-                        true
-                    },
-                    EventIndex::default(),
-                    false,
-                    now,
-                );
-            }
         }
 
         PushEventResult {
