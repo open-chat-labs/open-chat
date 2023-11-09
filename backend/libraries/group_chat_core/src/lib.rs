@@ -820,57 +820,60 @@ impl GroupChatCore {
     ) -> DeleteMessagesResult {
         use DeleteMessagesResult::*;
 
-        if let Some(member) = self.members.get(&user_id) {
+        let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
             }
+            (
+                member.role.can_delete_messages(&self.permissions),
+                member.min_visible_event_index(),
+            )
+        } else if as_platform_moderator {
+            (true, EventIndex::default())
+        } else {
+            return UserNotInGroup;
+        };
 
-            let min_visible_event_index = member.min_visible_event_index();
-            let is_admin = member.role.can_delete_messages(&self.permissions) || as_platform_moderator;
+        let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
+            caller: user_id,
+            is_admin,
+            min_visible_event_index,
+            thread_root_message_index,
+            message_ids,
+            now,
+        });
 
-            let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
-                caller: user_id,
-                is_admin,
-                min_visible_event_index,
-                thread_root_message_index,
-                message_ids,
-                now,
-            });
-
-            if thread_root_message_index.is_none() {
-                for message_id in results
-                    .iter()
-                    .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
-                    .map(|(message_id, _)| *message_id)
+        if thread_root_message_index.is_none() {
+            for message_id in results
+                .iter()
+                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                .map(|(message_id, _)| *message_id)
+            {
+                if let Some(message_index) = self
+                    .events
+                    .visible_main_events_reader(min_visible_event_index)
+                    .message_internal(message_id.into())
+                    .map(|m| m.message_index)
                 {
-                    if let Some(message_index) = self
-                        .events
-                        .visible_main_events_reader(min_visible_event_index)
-                        .message_internal(message_id.into())
-                        .map(|m| m.message_index)
-                    {
-                        // If the message being deleted is pinned, unpin it
-                        if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
-                            self.pinned_messages.remove(&entry);
+                    // If the message being deleted is pinned, unpin it
+                    if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
+                        self.pinned_messages.remove(&entry);
 
-                            self.events.push_main_event(
-                                ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
-                                    message_index,
-                                    unpinned_by: user_id,
-                                    due_to_message_deleted: true,
-                                })),
-                                0,
-                                now,
-                            );
-                        }
+                        self.events.push_main_event(
+                            ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                                message_index,
+                                unpinned_by: user_id,
+                                due_to_message_deleted: true,
+                            })),
+                            0,
+                            now,
+                        );
                     }
                 }
             }
-
-            Success(results)
-        } else {
-            UserNotInGroup
         }
+
+        Success(results)
     }
 
     pub fn undelete_messages(
