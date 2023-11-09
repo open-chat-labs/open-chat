@@ -116,7 +116,7 @@
 
         .content {
             padding: toRem(16);
-            padding-top: toRem(24);
+            padding-top: toRem(28);
 
             .name {
                 @include font(bold, normal, fs-130);

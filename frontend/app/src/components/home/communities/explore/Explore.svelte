@@ -3,7 +3,6 @@
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
-    import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
     import {
@@ -20,6 +19,7 @@
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
     import { derived } from "svelte/store";
+    import CommunityCardLink from "./CommunityCardLink.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -62,10 +62,6 @@
         } else {
             dispatch("createCommunity");
         }
-    }
-
-    function selectCommunity(community: CommunityMatch) {
-        page(`/community/${community.id.communityId}`);
     }
 
     function search(reset = false) {
@@ -170,18 +166,19 @@
                 </div>
             {:else}
                 {#each searchResults as community (community.id.communityId)}
-                    <CommunityCard
-                        id={community.id.communityId}
-                        name={community.name}
-                        description={community.description}
-                        avatar={community.avatar}
-                        banner={community.banner}
-                        memberCount={community.memberCount}
-                        channelCount={community.channelCount}
-                        gate={community.gate}
-                        language={community.primaryLanguage}
-                        flags={community.flags}
-                        on:click={() => selectCommunity(community)} />
+                    <CommunityCardLink url={`/community/${community.id.communityId}`}>
+                        <CommunityCard
+                            id={community.id.communityId}
+                            name={community.name}
+                            description={community.description}
+                            avatar={community.avatar}
+                            banner={community.banner}
+                            memberCount={community.memberCount}
+                            channelCount={community.channelCount}
+                            gate={community.gate}
+                            language={community.primaryLanguage}
+                            flags={community.flags} />
+                    </CommunityCardLink>
                 {/each}
             {/if}
         </div>
