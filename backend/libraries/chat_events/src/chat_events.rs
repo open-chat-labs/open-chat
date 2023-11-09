@@ -16,8 +16,8 @@ use types::{
     CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, TimestampMillis,
+    TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -136,9 +136,12 @@ impl ChatEvents {
         if let Some(root_message_index) = args.thread_root_message_index {
             self.update_thread_summary(
                 root_message_index,
-                args.sender,
-                args.mentioned,
-                push_event_result.index,
+                |t| {
+                    t.mark_message_added(args.sender, &args.mentioned, push_event_result.index, args.now);
+                    true
+                },
+                EventIndex::default(),
+                true,
                 args.now,
             );
         }
@@ -737,33 +740,32 @@ impl ChatEvents {
                     notes,
                 });
                 self.last_updated_timestamps.mark_updated(None, index, now);
-                return;
             }
+        } else {
+            let chat: Chat = chat.into();
+
+            self.push_message(PushMessageArgs {
+                sender: OPENCHAT_BOT_USER_ID,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
+                    reports: vec![MessageReport {
+                        reported_by: user_id,
+                        timestamp: now,
+                        reason_code,
+                        notes,
+                    }],
+                }),
+                mentioned: Vec::new(),
+                replies_to: Some(ReplyContextInternal {
+                    chat_if_other: Some((chat.into(), thread_root_message_index)),
+                    event_index,
+                }),
+                forwarded: false,
+                correlation_id: 0,
+                now,
+            });
         }
-
-        let chat: Chat = chat.into();
-
-        self.push_message(PushMessageArgs {
-            sender: OPENCHAT_BOT_USER_ID,
-            thread_root_message_index: None,
-            message_id,
-            content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
-                reports: vec![MessageReport {
-                    reported_by: user_id,
-                    timestamp: now,
-                    reason_code,
-                    notes,
-                }],
-            }),
-            mentioned: Vec::new(),
-            replies_to: Some(ReplyContextInternal {
-                chat_if_other: Some((chat.into(), thread_root_message_index)),
-                event_index,
-            }),
-            forwarded: false,
-            correlation_id: 0,
-            now,
-        });
     }
 
     // Used when a group is imported into a community
@@ -788,21 +790,17 @@ impl ChatEvents {
     ) -> FollowThreadResult {
         use FollowThreadResult::*;
 
-        if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
-        {
-            if let Some(summary) = &mut root_message.thread_summary {
-                if !summary.participant_ids.contains(&user_id) && summary.set_follow(user_id, now, true) {
-                    root_message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return Success;
-                } else {
-                    return AlreadyFollowing;
-                }
-            }
+        match self.update_thread_summary(
+            thread_root_message_index,
+            |t| t.set_follow(user_id, now, true),
+            min_visible_event_index,
+            false,
+            now,
+        ) {
+            Some(true) => Success,
+            Some(false) => AlreadyFollowing,
+            None => ThreadNotFound,
         }
-
-        ThreadNotFound
     }
 
     pub fn unfollow_thread(
@@ -814,52 +812,43 @@ impl ChatEvents {
     ) -> UnfollowThreadResult {
         use UnfollowThreadResult::*;
 
-        if let Some((root_message, event_index)) =
-            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())
-        {
-            if let Some(summary) = &mut root_message.thread_summary {
-                if summary.set_follow(user_id, now, false) {
-                    root_message.last_updated = Some(now);
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return Success;
-                } else {
-                    return NotFollowing;
-                }
-            }
+        match self.update_thread_summary(
+            thread_root_message_index,
+            |t| t.set_follow(user_id, now, false),
+            min_visible_event_index,
+            false,
+            now,
+        ) {
+            Some(true) => Success,
+            Some(false) => NotFollowing,
+            None => ThreadNotFound,
         }
-
-        ThreadNotFound
     }
 
-    fn update_thread_summary(
+    fn update_thread_summary<F: FnOnce(&mut ThreadSummaryInternal) -> bool>(
         &mut self,
         thread_root_message_index: MessageIndex,
-        user_id: UserId,
-        mentioned_users: Vec<UserId>,
-        latest_event_index: EventIndex,
+        update_fn: F,
+        min_visible_event_index: EventIndex,
+        create_if_not_exists: bool,
         now: TimestampMillis,
-    ) {
-        let (root_message, event_index) = self
-            .message_internal_mut(EventIndex::default(), None, thread_root_message_index.into())
-            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_root_message_index:?}"));
+    ) -> Option<bool> {
+        let (root_message, event_index) =
+            self.message_internal_mut(min_visible_event_index, None, thread_root_message_index.into())?;
 
-        root_message.last_updated = Some(now);
+        let summary = if create_if_not_exists {
+            root_message.thread_summary.get_or_insert(ThreadSummaryInternal::default())
+        } else {
+            root_message.thread_summary.as_mut()?
+        };
 
-        let summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
-        summary.latest_event_index = latest_event_index;
-        summary.latest_event_timestamp = now;
-        summary.reply_count += 1;
-        summary.participant_ids.push_if_not_contains(user_id);
-        summary.follower_ids.remove(&user_id);
-
-        // If a user is mentioned in a thread they automatically become a follower
-        for muid in mentioned_users {
-            if !summary.participant_ids.contains(&muid) {
-                summary.set_follow(user_id, now, true);
-            }
+        if update_fn(summary) {
+            root_message.last_updated = Some(now);
+            self.last_updated_timestamps.mark_updated(None, event_index, now);
+            Some(true)
+        } else {
+            Some(false)
         }
-
-        self.last_updated_timestamps.mark_updated(None, event_index, now);
     }
 
     // Note: this method assumes that if there is some thread_root_message_index then the thread exists
