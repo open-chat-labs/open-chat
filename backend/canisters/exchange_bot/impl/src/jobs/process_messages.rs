@@ -13,9 +13,9 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.messages_pending.is_empty() {
+    if TIMER_ID.get().is_none() && !state.data.messages_pending.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.with(|t| t.set(Some(timer_id)));
+        TIMER_ID.set(Some(timer_id));
         trace!("'process_messages' job started");
         true
     } else {
@@ -27,7 +27,7 @@ fn run() {
     match mutate_state(next_batch) {
         Some(batch) => ic_cdk::spawn(process_batch(batch)),
         None => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+            if let Some(timer_id) = TIMER_ID.take() {
                 ic_cdk_timers::clear_timer(timer_id);
                 trace!("'process_messages' job stopped");
             }

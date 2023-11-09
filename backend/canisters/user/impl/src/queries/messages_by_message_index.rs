@@ -2,6 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use ic_cdk_macros::query;
+use types::MessagesResponse;
 use user_canister::messages_by_message_index::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -29,10 +30,11 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
             .filter_map(|m| events_reader.message_event(m.into(), Some(my_user_id)))
             .collect();
 
-        Success(SuccessResult {
+        Success(MessagesResponse {
             messages,
             latest_event_index,
             chat_last_updated,
+            timestamp: chat_last_updated,
         })
     } else {
         ChatNotFound

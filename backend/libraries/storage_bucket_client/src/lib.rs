@@ -8,7 +8,7 @@ thread_local! {
 }
 
 pub fn retry_failed() {
-    let references = PENDING_RETRY.with(|r| r.take());
+    let references = PENDING_RETRY.take();
     if !references.is_empty() {
         ic_cdk::spawn(delete_files(references));
     }
@@ -32,7 +32,7 @@ pub async fn delete_files(blob_references: Vec<BlobReference>) {
                     .map(|blob_id| BlobReference { canister_id, blob_id })
                     .collect();
 
-                PENDING_RETRY.with(|r| r.borrow_mut().extend(references));
+                PENDING_RETRY.with_borrow_mut(|r| r.extend(references));
             }
         }
         response

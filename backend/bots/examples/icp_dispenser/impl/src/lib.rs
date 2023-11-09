@@ -41,7 +41,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
         }
     }
