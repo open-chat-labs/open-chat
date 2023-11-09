@@ -40,8 +40,11 @@
     $: chatListScope = client.chatListScope;
     $: unreadDirectChats = client.unreadDirectChats;
     $: unreadGroupChats = client.unreadGroupChats;
+    $: unreadGroupThreads = client.unreadGroupThreads;
     $: unreadFavouriteChats = client.unreadFavouriteChats;
+    $: unreadFavouriteThreads = client.unreadFavouriteThreads;
     $: unreadCommunityChannels = client.unreadCommunityChannels;
+    $: unreadCommunityChannelThreads = client.unreadCommunityChannelThreads;
     $: communityExplorer = $pathParams.kind === "communities_route";
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
@@ -159,7 +162,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={$_("communities.groupChats")}
-            unread={$unreadGroupChats}
+            unread={client.combinePairOfUnreadCounts($unreadGroupChats, $unreadGroupThreads)}
             on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -170,7 +173,10 @@
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
             label={$_("communities.favourites")}
-            unread={$unreadFavouriteChats}
+            unread={client.combinePairOfUnreadCounts(
+                $unreadFavouriteChats,
+                $unreadFavouriteThreads
+            )}
             on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -194,7 +200,10 @@
                     selected={community === $selectedCommunity &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
+                    unread={client.combinePairOfUnreadCounts(
+                        $unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts(),
+                        $unreadCommunityChannelThreads.get(community.id) ?? emptyUnreadCounts()
+                    )}
                     label={community.name}
                     on:click={() => selectCommunity(community)}>
                     <Avatar

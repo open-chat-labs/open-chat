@@ -10,6 +10,7 @@ import type {
     EventWrapper,
     GroupChatSummary,
     Message,
+    ThreadSyncDetails,
 } from "openchat-shared";
 import { ChatMap, CommunityMap, ObjectSet, chatScopesEqual } from "openchat-shared";
 import { immutableStore } from "./immutable";
@@ -74,6 +75,25 @@ function hasUnreadMentions(chat: ChatSummary): boolean {
     );
 }
 
+function unreadThreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+    const threadsByChat = chats.reduce((result, chat) => {
+        if (chat === undefined) return result;
+        if (
+            (chat.kind === "group_chat" || chat.kind === "channel") &&
+            chat.membership &&
+            chat.membership.latestThreads.length > 0
+        ) {
+            result.set(chat.id, chat.membership.latestThreads);
+        }
+        return result;
+    }, new ChatMap<ThreadSyncDetails[]>());
+    return {
+        unmuted: messagesRead.staleThreadsCount(threadsByChat),
+        muted: 0,
+        mentions: false,
+    };
+}
+
 function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
     return chats.reduce(
         (counts, chat) => {
@@ -95,6 +115,21 @@ function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCount
     );
 }
 
+export function combineListOfUnreadCounts(counts: UnreadCounts[]): UnreadCounts {
+    return counts.reduce(
+        (result, count) => combinePairOfUnreadCounts(result, count),
+        emptyUnreadCounts(),
+    );
+}
+
+export function combinePairOfUnreadCounts(a: UnreadCounts, b: UnreadCounts): UnreadCounts {
+    return {
+        muted: a.muted + b.muted,
+        unmuted: a.unmuted + b.unmuted,
+        mentions: a.mentions || b.mentions,
+    };
+}
+
 // the messagesRead store is used as part of the derivation so that it gets recomputed when messages are read
 export const unreadGroupChats = derived(
     [globalStateStore, messagesRead],
@@ -107,6 +142,13 @@ export const unreadDirectChats = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         return unreadCountForChatList($global.directChats.values());
+    },
+);
+
+export const unreadGroupThreads = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return unreadThreadCountForChatList($global.groupChats.values());
     },
 );
 
@@ -130,6 +172,15 @@ export const unreadFavouriteChats = derived(
     },
 );
 
+export const unreadFavouriteThreads = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        const allChats = getAllServerChats($global);
+        const chats = $global.favourites.values().map((id) => allChats.get(id));
+        return unreadThreadCountForChatList(chats);
+    },
+);
+
 export const unreadCommunityChannels = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
@@ -140,24 +191,32 @@ export const unreadCommunityChannels = derived(
     },
 );
 
+export const unreadCommunityChannelThreads = derived(
+    [globalStateStore, messagesRead],
+    ([$global, _$messagesRead]) => {
+        return $global.communities.values().reduce((map, community) => {
+            map.set(community.id, unreadThreadCountForChatList(community.channels));
+            return map;
+        }, new CommunityMap<UnreadCounts>());
+    },
+);
+
 export const globalUnreadCount = derived(
-    [unreadGroupChats, unreadDirectChats, unreadCommunityChannels],
-    ([groupCounts, directCounts, $communities]) => {
-        const communityCounts = $communities.values().reduce(
-            (agg, counts) => {
-                return {
-                    unmuted: agg.unmuted + counts.unmuted,
-                    muted: agg.muted + counts.muted,
-                    mentions: agg.mentions || counts.mentions,
-                };
-            },
-            { muted: 0, unmuted: 0, mentions: false },
-        );
-        return {
-            unmuted: groupCounts.unmuted + directCounts.unmuted + communityCounts.unmuted,
-            muted: groupCounts.muted + directCounts.muted + communityCounts.muted,
-            mentions: groupCounts.mentions || directCounts.mentions || communityCounts.mentions,
-        };
+    [
+        unreadGroupChats,
+        unreadDirectChats,
+        unreadCommunityChannels,
+        unreadGroupThreads,
+        unreadCommunityChannelThreads,
+    ],
+    ([$groupCounts, $directCounts, $communities, $groupThreads, $communityThreads]) => {
+        return combineListOfUnreadCounts([
+            $groupCounts,
+            $groupThreads,
+            $directCounts,
+            combineListOfUnreadCounts($communities.values()),
+            combineListOfUnreadCounts($communityThreads.values()),
+        ]);
     },
 );
 

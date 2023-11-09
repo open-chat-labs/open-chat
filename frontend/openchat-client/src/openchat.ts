@@ -134,7 +134,6 @@ import {
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
-    staleThreadsCount,
 } from "./stores/chat";
 import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -404,6 +403,10 @@ import {
     unreadFavouriteChats,
     unreadCommunityChannels,
     globalUnreadCount,
+    unreadCommunityChannelThreads,
+    unreadFavouriteThreads,
+    unreadGroupThreads,
+    combinePairOfUnreadCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -5619,11 +5622,14 @@ export class OpenChat extends OpenChatAgentWorker {
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
     unreadGroupChats = unreadGroupChats;
+    unreadGroupThreads = unreadGroupThreads;
     unreadDirectChats = unreadDirectChats;
     unreadFavouriteChats = unreadFavouriteChats;
+    unreadFavouriteThreads = unreadFavouriteThreads;
     unreadCommunityChannels = unreadCommunityChannels;
+    unreadCommunityChannelThreads = unreadCommunityChannelThreads;
     globalUnreadCount = globalUnreadCount;
-    staleThreadsCount = staleThreadsCount;
+    combinePairOfUnreadCounts = combinePairOfUnreadCounts;
     moderationFlags = moderationFlags;
     isEventKindHidden = isEventKindHidden;
 }
