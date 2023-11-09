@@ -14,7 +14,7 @@
         routeForChatIdentifier,
         chatIdentifiersEqual,
         type ChannelMatch,
-        emptyUnreadCounts,
+        emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
@@ -67,42 +67,34 @@
         !$exploreGroupsDismissed &&
         !searchResultsAvailable;
     $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
-    $: unreadDirectChats = client.unreadDirectChats;
-    $: unreadGroupChats = client.unreadGroupChats;
-    $: unreadGroupThreads = client.unreadGroupThreads;
-    $: unreadFavouriteChats = client.unreadFavouriteChats;
-    $: unreadFavouriteThreads = client.unreadFavouriteThreads;
-    $: unreadCommunityChannels = client.unreadCommunityChannels;
-    $: unreadCommunityChannelThreads = client.unreadCommunityChannelThreads;
+    $: unreadDirectCounts = client.unreadDirectCounts;
+    $: unreadGroupCounts = client.unreadGroupCounts;
+    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
+    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
 
-    let unreadChats = emptyUnreadCounts();
-    let unreadThreads = emptyUnreadCounts();
+    let unreadCounts = emptyCombinedUnreadCounts();
     $: {
         switch ($chatListScope.kind) {
             case "group_chat": {
-                unreadChats = $unreadGroupChats;
-                unreadThreads = $unreadGroupThreads;
+                unreadCounts = $unreadGroupCounts;
                 break;
             }
             case "direct_chat": {
-                unreadChats = $unreadDirectChats;
-                unreadThreads = emptyUnreadCounts();
+                unreadCounts = $unreadDirectCounts;
                 break;
             }
             case "favourite": {
-                unreadChats = $unreadFavouriteChats;
-                unreadThreads = $unreadFavouriteThreads;
+                unreadCounts = $unreadFavouriteCounts;
                 break;
             }
             case "community": {
-                unreadChats =
-                    $unreadCommunityChannels.get($chatListScope.id) ?? emptyUnreadCounts();
-                unreadThreads =
-                    $unreadCommunityChannelThreads.get($chatListScope.id) ?? emptyUnreadCounts();
+                unreadCounts =
+                    $unreadCommunityChannelCounts.get($chatListScope.id) ??
+                    emptyCombinedUnreadCounts();
                 break;
             }
             default:
-                unreadChats = emptyUnreadCounts();
+                unreadCounts = emptyCombinedUnreadCounts();
         }
     }
 
@@ -244,11 +236,11 @@
         <div class="section-selector">
             <ChatListSectionButton
                 on:click={() => setView("chats")}
-                unread={unreadChats}
+                unread={unreadCounts.chats}
                 title={$_("chats")}
                 selected={view === "chats"} />
             <ChatListSectionButton
-                unread={unreadThreads}
+                unread={unreadCounts.threads}
                 on:click={() => setView("threads")}
                 title={$_("thread.previewTitle")}
                 selected={view === "threads"} />

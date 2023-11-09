@@ -398,15 +398,12 @@ import {
     setGlobalState,
     updateSummaryWithConfirmedMessage,
     chatListScopeStore,
-    unreadGroupChats,
-    unreadDirectChats,
-    unreadFavouriteChats,
-    unreadCommunityChannels,
+    unreadGroupCounts,
+    unreadDirectCounts,
+    unreadFavouriteCounts,
+    unreadCommunityChannelCounts,
     globalUnreadCount,
-    unreadCommunityChannelThreads,
-    unreadFavouriteThreads,
-    unreadGroupThreads,
-    combinePairOfUnreadCounts,
+    mergeCombinedUnreadCounts,
 } from "./stores/global";
 import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpdates";
 import { hasFlag, moderationFlags } from "./stores/flagStore";
@@ -5621,15 +5618,12 @@ export class OpenChat extends OpenChatAgentWorker {
     communityStateStore = communityStateStore;
     favouritesStore = favouritesStore;
     globalStateStore = globalStateStore;
-    unreadGroupChats = unreadGroupChats;
-    unreadGroupThreads = unreadGroupThreads;
-    unreadDirectChats = unreadDirectChats;
-    unreadFavouriteChats = unreadFavouriteChats;
-    unreadFavouriteThreads = unreadFavouriteThreads;
-    unreadCommunityChannels = unreadCommunityChannels;
-    unreadCommunityChannelThreads = unreadCommunityChannelThreads;
+    unreadGroupCounts = unreadGroupCounts;
+    unreadDirectCounts = unreadDirectCounts;
+    unreadFavouriteCounts = unreadFavouriteCounts;
+    unreadCommunityChannelCounts = unreadCommunityChannelCounts;
     globalUnreadCount = globalUnreadCount;
-    combinePairOfUnreadCounts = combinePairOfUnreadCounts;
+    mergeCombinedUnreadCounts = mergeCombinedUnreadCounts;
     moderationFlags = moderationFlags;
     isEventKindHidden = isEventKindHidden;
 }
