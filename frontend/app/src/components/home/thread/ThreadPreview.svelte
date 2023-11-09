@@ -32,6 +32,7 @@
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
     $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
+    $: muted = chat?.membership?.notificationsMuted || false;
     $: syncDetails = chat?.membership?.latestThreads?.find(
         (t) => t.threadRootMessageIndex === threadRootMessageIndex
     );
@@ -116,6 +117,7 @@
                         title={$_("chatSummary.unread", {
                             values: { count: unreadCount.toString() },
                         })}
+                        class:muted
                         class="unread">
                         {unreadCount > 999 ? "999+" : unreadCount}
                     </div>
@@ -266,5 +268,10 @@
     .unread {
         @include unread();
         margin: 0 $sp2;
+
+        &.muted {
+            background-color: var(--unread-mute);
+            text-shadow: none;
+        }
     }
 </style>

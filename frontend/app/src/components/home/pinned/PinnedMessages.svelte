@@ -158,7 +158,7 @@
             position: sticky;
             top: 0;
             width: 200px;
-            margin: auto;
+            margin: 0 auto;
             border-radius: $sp4;
             @include z-index("date-label");
             @include font(book, normal, fs-70);

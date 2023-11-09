@@ -297,13 +297,6 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
     }, new ChatMap<ThreadSyncDetails[]>());
 });
 
-export const staleThreadsCount = derived(
-    [threadsByChatStore, messagesRead],
-    ([$threadsByChat, _messagesRead]) => {
-        return messagesRead.staleThreadsCount($threadsByChat);
-    },
-);
-
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
     return threadsByChat.entries().reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
         const set = new Set<number>();
