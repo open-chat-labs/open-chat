@@ -119,6 +119,12 @@ fn delete_group_message(
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
+    if true {
+        // Disable auto suspensions until the user canisters are released otherwise when a user is suspended
+        // they won't be suspended from the communities they are in
+        return None;
+    }
+
     if let Some(user) = state.data.users.get_by_user_id(&sender) {
         if let Some(current_suspension_details) = user.suspension_details.as_ref() {
             if matches!(current_suspension_details.duration, SuspensionDuration::Indefinitely) {
