@@ -25,6 +25,7 @@ pub struct SuccessResult {
     pub communities: CommunitiesUpdates,
     pub avatar_id: OptionUpdate<u128>,
     pub blocked_users: Option<Vec<UserId>>,
+    pub suspended: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -21,6 +21,7 @@ pub struct SuccessResult {
     pub communities: CommunitiesInitial,
     pub avatar_id: Option<u128>,
     pub blocked_users: Vec<UserId>,
+    pub suspended: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
