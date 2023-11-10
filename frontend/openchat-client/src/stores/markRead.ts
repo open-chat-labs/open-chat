@@ -60,10 +60,13 @@ export class MessagesRead {
     }
 
     setThreads(threads: ThreadRead[]): void {
-        this.threads = threads.reduce((rec, t) => {
-            rec[t.threadRootMessageIndex] = t.readUpTo;
-            return rec;
-        }, {} as Record<number, number>);
+        this.threads = threads.reduce(
+            (rec, t) => {
+                rec[t.threadRootMessageIndex] = t.readUpTo;
+                return rec;
+            },
+            {} as Record<number, number>,
+        );
     }
 
     markReadPinned(dateReadPinned: bigint | undefined): void {
@@ -87,7 +90,9 @@ export class MessageReadTracker {
      * The waiting structure is either keyed on chatId for normal chat messages or
      * of chatId_threadRootMessageIndex for thread messages
      */
-    public waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<Map<bigint, number>>(); // The map is messageId -> (unconfirmed) messageIndex
+    public waiting: MessageContextMap<Map<bigint, number>> = new MessageContextMap<
+        Map<bigint, number>
+    >(); // The map is messageId -> (unconfirmed) messageIndex
     public state: MessagesReadByChat = new ChatMap<MessagesRead>();
     private subscribers: Subscriber<MessageReadState>[] = [];
     private executingBatch = false;
@@ -141,7 +146,7 @@ export class MessageReadTracker {
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
             api.sendRequest({ kind: "markMessagesRead", payload: req }).finally(() =>
-                this.triggerLoop(api)
+                this.triggerLoop(api),
             );
         } else {
             this.triggerLoop(api);
@@ -174,9 +179,9 @@ export class MessageReadTracker {
     markMessageRead(
         context: MessageContext,
         messageIndex: number,
-        messageId: bigint | undefined
+        messageId: bigint | undefined,
     ): void {
-        const chatState = this.stateForId(context.chatId)
+        const chatState = this.stateForId(context.chatId);
         if (!this.state.has(context.chatId)) {
             this.state.set(context.chatId, new MessagesRead());
         }
@@ -239,7 +244,8 @@ export class MessageReadTracker {
     threadReadUpTo(chatId: ChatIdentifier, threadRootMessageIndex: number): number {
         const local = this.state.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
         const server = this.serverState.get(chatId)?.threads[threadRootMessageIndex] ?? -1;
-        const unconfirmedReadCount = this.waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
+        const unconfirmedReadCount =
+            this.waiting.get({ chatId, threadRootMessageIndex })?.size ?? 0;
 
         return Math.max(local + unconfirmedReadCount, server);
     }
@@ -254,9 +260,12 @@ export class MessageReadTracker {
     unreadThreadMessageCount(
         chatId: ChatIdentifier,
         threadRootMessageIndex: number,
-        latestMessageIndex: number
+        latestMessageIndex: number,
     ): number {
-        return Math.max(latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex), 0);
+        return Math.max(
+            latestMessageIndex - this.threadReadUpTo(chatId, threadRootMessageIndex),
+            0,
+        );
     }
 
     unreadMessageCount(chatId: ChatIdentifier, latestMessageIndex: number | undefined): number {
@@ -284,7 +293,7 @@ export class MessageReadTracker {
 
     getFirstUnreadMessageIndex(
         chatId: ChatIdentifier,
-        latestMessageIndex: number | undefined
+        latestMessageIndex: number | undefined,
     ): number | undefined {
         if (latestMessageIndex === undefined) {
             return undefined;
@@ -309,7 +318,7 @@ export class MessageReadTracker {
 
     getFirstUnreadMention(chat: ChatSummary): Mention | undefined {
         return chat.membership.mentions.find(
-            (m) => !this.isRead({ chatId: chat.id }, m.messageIndex, m.messageId)
+            (m) => !this.isRead({ chatId: chat.id }, m.messageIndex, m.messageId),
         );
     }
 
@@ -338,7 +347,7 @@ export class MessageReadTracker {
         chatId: ChatIdentifier,
         readUpTo: number | undefined,
         threads: ThreadRead[],
-        dateReadPinned: bigint | undefined
+        dateReadPinned: bigint | undefined,
     ): void {
         const serverState = new MessagesRead();
         serverState.readUpTo = readUpTo;
@@ -401,5 +410,6 @@ export class MessageReadTracker {
 export const messagesRead = new MessageReadTracker();
 
 export function startMessagesReadTracker(api: OpenChat): void {
+    messagesRead.stop();
     messagesRead.start(api);
 }

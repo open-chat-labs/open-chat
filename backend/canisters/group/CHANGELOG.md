@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add msgpack endpoint for `delete_messages` ([#4742](https://github.com/open-chat-labs/open-chat/pull/4742))
+- Platform mods can delete group messages despite not being member ([#4744](https://github.com/open-chat-labs/open-chat/pull/4744))
+
+## [[2.0.931](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.931-group)] - 2023-11-09
+
+### Changed
+
 - Refund remaining prizes early if message gets deleted ([#4708](https://github.com/open-chat-labs/open-chat/pull/4708))
 - Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
 - Support UserIndex calling `delete_messages` ([#4713](https://github.com/open-chat-labs/open-chat/pull/4713))

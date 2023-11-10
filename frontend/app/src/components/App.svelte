@@ -72,7 +72,13 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
-    $: landingPage = isLandingPageRoute($pathParams);
+    $: landingPageRoute = isLandingPageRoute($pathParams);
+    $: anonUser = client.anonUser;
+    $: homeRoute = $pathParams.kind === "home_route";
+    $: showLandingPage =
+        landingPageRoute ||
+        (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
+        ($identityState.kind === "anon" && $framed); // show landing page if anon and running in a frame
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
@@ -275,13 +281,7 @@
     }
 
     $: {
-        if (
-            !$notFound &&
-            (landingPage ||
-                $identityState === "requires_login" ||
-                $identityState === "logging_in" ||
-                $identityState === "registering")
-        ) {
+        if (!$notFound && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
@@ -318,7 +318,7 @@
     $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
-{#if $currentTheme.burst || landingPage}
+{#if $currentTheme.burst || landingPageRoute}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
@@ -333,11 +333,11 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
+{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
     <Upgrading />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router />
+        <Router {showLandingPage} />
     {/if}
 {/if}
 

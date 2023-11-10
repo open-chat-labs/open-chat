@@ -28,15 +28,8 @@ const auth = AuthClient.create({
     storage: new IdbStorage(),
 });
 
-function getIdentity(): Promise<Identity | undefined> {
-    return auth.then((a) => {
-        const id = a.getIdentity();
-        const p = id.getPrincipal();
-        if (p.isAnonymous()) {
-            return undefined;
-        }
-        return id;
-    });
+function getIdentity(): Promise<Identity> {
+    return auth.then((a) => a.getIdentity());
 }
 
 let agent: OpenChatAgent | undefined = undefined;
@@ -128,20 +121,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     try {
         if (kind === "init") {
             getIdentity().then((id) => {
-                if (id) {
-                    logger = inititaliseLogger(
-                        payload.rollbarApiKey,
-                        payload.websiteVersion,
-                        payload.env,
-                    );
-                    logger?.debug("WORKER: constructing agent instance");
-                    agent = new OpenChatAgent(id, {
-                        ...payload,
-                        logger,
-                    });
-                    agent.addEventListener("openchat_event", handleAgentEvent);
-                    sendResponse(correlationId, undefined);
-                }
+                console.debug("anon: init worker", id, id?.getPrincipal().isAnonymous());
+                logger = inititaliseLogger(
+                    payload.rollbarApiKey,
+                    payload.websiteVersion,
+                    payload.env,
+                );
+                logger?.debug("WORKER: constructing agent instance");
+                agent = new OpenChatAgent(id, {
+                    ...payload,
+                    logger,
+                });
+                agent.addEventListener("openchat_event", handleAgentEvent);
+                sendResponse(correlationId, undefined);
             });
         }
 
@@ -194,7 +186,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.startIndex,
                         payload.ascending,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -244,7 +236,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.messageIndex,
                         payload.threadRootMessageIndex,
-                        payload.latestClientMainEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -257,7 +249,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -270,7 +262,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -771,7 +763,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     agent.getGroupMessagesByMessageIndex(
                         payload.chatId,
                         payload.messageIndexes,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -895,10 +887,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.stake,
                     ),
                 );
-                break;
-
-            case "markSuspectedBot":
-                executeThenReply(payload, correlationId, agent.markSuspectedBot());
                 break;
 
             case "loadFailedMessages":
@@ -1055,8 +1043,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         .messagesByMessageIndex(
                             payload.chatId,
                             payload.messageIndexes,
-                            payload.latestClientEventIndex,
                             payload.threadRootMessageIndex,
+                            payload.latestKnownUpdate,
                         ),
                 );
                 break;

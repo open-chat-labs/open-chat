@@ -20,6 +20,7 @@
     export let messageId: bigint;
     export let me: boolean;
 
+    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: logo =
         Object.values($cryptoLookup).find(
@@ -27,7 +28,7 @@
         )?.logo ?? "";
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
-    $: claimedByYou = content.winners.includes(client.user.userId);
+    $: claimedByYou = content.winners.includes($user.userId);
     $: finished = $now500 >= Number(content.endDate);
     $: allClaimed = content.prizesRemaining <= 0;
     $: disabled = finished || claimedByYou || allClaimed;

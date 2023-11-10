@@ -30,7 +30,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -47,6 +46,7 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
 
+    $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
@@ -73,7 +73,7 @@
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
         reverseScroll ? [...events].reverse() : events,
-        user.userId,
+        $user.userId,
         $expandedDeletedMessages,
         reverseScroll
     ) as TimelineItem<Message>[];
@@ -144,11 +144,11 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, user.userId, threadRootMessageIndex);
+        client.startTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        client.stopTyping(chat, user.userId, threadRootMessageIndex);
+        client.stopTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
@@ -267,11 +267,11 @@
                         <ChatEvent
                             chatId={chat.id}
                             chatType={chat.kind}
-                            {user}
+                            user={$user}
                             event={evt}
                             first={reverseScroll ? i + 1 === userGroup.length : i === 0}
                             last={reverseScroll ? i === 0 : i + 1 === userGroup.length}
-                            me={evt.event.sender === user.userId}
+                            me={evt.event.sender === $user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
                             readByMe={evt.event.messageId === rootEvent.event.messageId ||
@@ -320,7 +320,7 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        {user}
+        user={$user}
         joining={undefined}
         preview={false}
         mode={"thread"}

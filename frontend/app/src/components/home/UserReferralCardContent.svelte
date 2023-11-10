@@ -7,9 +7,9 @@
     import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
+    $: user = client.user;
 
-    let link = `${window.location.origin}/?ref=${user.userId}`;
+    let link = `${window.location.origin}/?ref=${$user.userId}`;
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(

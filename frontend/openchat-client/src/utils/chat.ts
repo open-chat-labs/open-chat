@@ -257,6 +257,7 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
+        lastUpdated: undefined,
     };
 }
 

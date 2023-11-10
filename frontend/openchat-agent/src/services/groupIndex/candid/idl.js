@@ -550,6 +550,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'chat_id' : ChatId,
+    'events_ttl_last_updated' : TimestampMillis,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });

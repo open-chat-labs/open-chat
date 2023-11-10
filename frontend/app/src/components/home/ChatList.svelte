@@ -38,7 +38,6 @@
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
 
     const client = getContext<OpenChat>("client");
-    const createdUser = client.user;
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -50,6 +49,7 @@
 
     let view: "chats" | "threads" = "chats";
 
+    $: createdUser = client.user;
     $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
@@ -60,7 +60,7 @@
         $selectedChatId === undefined;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
-    $: user = $userStore[createdUser.userId];
+    $: user = $userStore[$createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showExploreGroups =
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&

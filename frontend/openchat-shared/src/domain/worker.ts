@@ -235,7 +235,6 @@ export type WorkerRequest =
     | RemoveHotGroupExclusion
     | SuspendUser
     | UnsuspendUser
-    | MarkSuspectedBot
     | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -419,7 +418,7 @@ type GetInviteCode = {
 type GroupMessagesByMessageIndex = {
     chatId: MultiUserChatIdentifier;
     messageIndexes: Set<number>;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     kind: "getGroupMessagesByMessageIndex";
 };
 
@@ -462,7 +461,7 @@ type GetUser = {
 };
 
 type GetThreadPreviews = {
-    threadsByChat: Map<string, [ThreadSyncDetails[], number | undefined]>;
+    threadsByChat: Map<string, [ThreadSyncDetails[], bigint | undefined]>;
     kind: "threadPreviews";
 };
 
@@ -790,7 +789,7 @@ type ChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: ChatIdentifier;
     messageIndex: number;
-    latestClientMainEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     threadRootMessageIndex: number | undefined;
     kind: "chatEventsWindow";
 };
@@ -799,7 +798,7 @@ type ChatEventsByEventIndex = {
     chatId: ChatIdentifier;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     kind: "chatEventsByEventIndex";
 };
 
@@ -807,7 +806,7 @@ export type RehydrateMessage = {
     chatId: ChatIdentifier;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     kind: "rehydrateMessage";
 };
 
@@ -907,10 +906,6 @@ type StakeNeuronForSubmittingProposals = {
     kind: "stakeNeuronForSubmittingProposals";
 };
 
-type MarkSuspectedBot = {
-    kind: "markSuspectedBot";
-};
-
 type GetUsers = {
     users: UsersArgs;
     allowStale: boolean;
@@ -923,7 +918,7 @@ type ChatEvents = {
     startIndex: number;
     ascending: boolean;
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     kind: "chatEvents";
 };
 
@@ -1235,7 +1230,7 @@ type ChannelEvents = {
     startIndex: number;
     ascending: boolean;
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
 };
 
 type ChannelEventsByIndex = {
@@ -1243,7 +1238,7 @@ type ChannelEventsByIndex = {
     chatId: ChannelIdentifier;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
 };
 
 type ChannelEventsWindow = {
@@ -1251,14 +1246,14 @@ type ChannelEventsWindow = {
     chatId: ChannelIdentifier;
     messageIndex: number;
     threadRootMessageIndex: number | undefined;
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
 };
 
 type ChannelMessagesByMessageIndex = {
     kind: "channelMessagesByMessageIndex";
     chatId: ChannelIdentifier;
     messageIndexes: number[];
-    latestClientEventIndex: number | undefined;
+    latestKnownUpdate: bigint | undefined;
     threadRootMessageIndex: number | undefined;
 };
 
@@ -1540,8 +1535,6 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends LoadFailedMessages
     ? Map<string, Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
-    ? void
-    : T extends MarkSuspectedBot
     ? void
     : T extends ClaimPrize
     ? ClaimPrizeResponse
