@@ -77,6 +77,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         communities,
         avatar_id,
         blocked_users,
+        suspended: state.data.suspended.value,
     })
 }
 
