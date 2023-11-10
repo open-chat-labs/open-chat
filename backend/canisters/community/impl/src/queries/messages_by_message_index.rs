@@ -22,12 +22,11 @@ fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response 
             args.thread_root_message_index,
             args.messages,
             args.latest_known_update,
-            args.latest_client_event_index,
         ) {
             MessagesResult::Success(response) => Success(response),
             MessagesResult::UserNotInGroup => UserNotInChannel,
             MessagesResult::ThreadNotFound => ThreadNotFound,
-            MessagesResult::ReplicaNotUpToDate(event_index) => ReplicaNotUpToDate(event_index),
+            MessagesResult::ReplicaNotUpToDate(last_updated) => ReplicaNotUpToDateV2(last_updated),
         }
     } else {
         ChannelNotFound
