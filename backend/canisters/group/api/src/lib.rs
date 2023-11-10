@@ -15,4 +15,5 @@ pub enum EventsResponse {
     CallerNotInGroup,
     ThreadMessageNotFound,
     ReplicaNotUpToDate(types::EventIndex),
+    ReplicaNotUpToDateV2(types::TimestampMillis),
 }

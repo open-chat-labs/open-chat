@@ -17,17 +17,14 @@ fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {
-        match channel.chat.events_by_index(
-            user_id,
-            args.thread_root_message_index,
-            args.events,
-            args.latest_known_update,
-            args.latest_client_event_index,
-        ) {
+        match channel
+            .chat
+            .events_by_index(user_id, args.thread_root_message_index, args.events, args.latest_known_update)
+        {
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,
             EventsResult::ThreadNotFound => ThreadNotFound,
-            EventsResult::ReplicaNotUpToDate(event_index) => ReplicaNotUpToDate(event_index),
+            EventsResult::ReplicaNotUpToDate(last_updated) => ReplicaNotUpToDateV2(last_updated),
         }
     } else {
         ChannelNotFound

@@ -22,6 +22,7 @@ pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
     ReplicaNotUpToDate(EventIndex),
+    ReplicaNotUpToDateV2(TimestampMillis),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

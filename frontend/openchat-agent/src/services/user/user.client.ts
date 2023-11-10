@@ -357,7 +357,7 @@ export class UserClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -412,7 +412,7 @@ export class UserClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -474,7 +474,7 @@ export class UserClient extends CandidService {
 
         return this.handleQueryResponse(
             () => this.userService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }

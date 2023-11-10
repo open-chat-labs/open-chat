@@ -12,16 +12,13 @@ fn events(args: Args) -> Response {
 
 fn events_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
-        let events_reader = chat.events.main_events_reader();
-        let latest_event_index = events_reader.latest_event_index().unwrap();
         let chat_last_updated = chat.last_updated();
 
-        if args.latest_known_update.map_or(false, |ts| chat_last_updated < ts)
-            || args.latest_client_event_index.map_or(false, |e| latest_event_index < e)
-        {
-            return ReplicaNotUpToDate(latest_event_index);
+        if args.latest_known_update.map_or(false, |ts| chat_last_updated < ts) {
+            return ReplicaNotUpToDateV2(chat_last_updated);
         }
 
+        let events_reader = chat.events.main_events_reader();
         let my_user_id = state.env.canister_id().into();
 
         let (events, expired_event_ranges) = EventOrExpiredRange::split(events_reader.scan(
@@ -32,6 +29,7 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             Some(my_user_id),
         ));
         let expired_message_ranges = chat.events.convert_to_message_ranges(&expired_event_ranges);
+        let latest_event_index = events_reader.latest_event_index().unwrap();
 
         Success(EventsResponse {
             events,
