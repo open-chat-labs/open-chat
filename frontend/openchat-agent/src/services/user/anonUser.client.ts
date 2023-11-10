@@ -123,7 +123,7 @@ export class AnonUserClient {
         _eventIndexes: number[],
         _chatId: DirectChatIdentifier,
         _threadRootMessageIndex: number | undefined,
-        _latestClientEventIndex: number | undefined,
+        _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         throw new AnonymousOperationError();
     }
@@ -132,7 +132,7 @@ export class AnonUserClient {
         _eventIndexRange: IndexRange,
         _chatId: DirectChatIdentifier,
         _messageIndex: number,
-        _latestClientEventIndex: number | undefined,
+        _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         throw new AnonymousOperationError();
     }
@@ -143,7 +143,7 @@ export class AnonUserClient {
         _startIndex: number,
         _ascending: boolean,
         _threadRootMessageIndex: number | undefined,
-        _latestClientEventIndex: number | undefined,
+        _latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         throw new AnonymousOperationError();
     }
