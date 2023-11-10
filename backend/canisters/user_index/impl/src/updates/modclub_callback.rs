@@ -100,6 +100,7 @@ fn delete_channel_message(
         message_ids: vec![message_id],
         as_platform_moderator: Some(true),
     };
+    // TODO: When user canisters are released this can be delete_messages_msgpack
     fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
 }
 
@@ -115,12 +116,13 @@ fn delete_group_message(
         as_platform_moderator: Some(true),
         correlation_id: 0,
     };
+    // TODO: When user canisters are released this can be delete_messages_msgpack
     fire_and_forget_handler.send(canister_id, "delete_messages".to_string(), Encode!(&args).unwrap());
 }
 
 fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &RuntimeState) -> Option<SuspensionDetails> {
     if true {
-        // Disable auto suspensions until the user canisters are released otherwise when a user is suspended
+        // TODO: Disable auto suspensions until the user canisters are released otherwise when a user is suspended
         // they won't be suspended from the communities they are in
         return None;
     }

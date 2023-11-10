@@ -26,6 +26,7 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
+    // TODO: delete this once user_index has been released
     ic_cdk_timers::set_timer(Duration::ZERO, initialize_modclub_outer);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
