@@ -967,7 +967,7 @@
         "optional": "Optional",
         "note": "Add a note",
         "notePlaceholder": "Tell us why you are reporting this content",
-        "advice": "If you believe this message violates the rules of this group, please contact the owners and admins on the group in the first instance. Only report a message for platform moderation if you feel like it violates the [platform guidelines](/guidelines).",
+        "advice": "If you believe this message violates the rules of this group, please contact the owners and admins on the group in the first instance. Only report a message for platform moderation if you feel like it violates the [platform rules]({rules}).",
         "threat": "Message is threatening",
         "child": "Message contains child sexual content",
         "nonConsensual": "Message contains non-consensual sexual content",

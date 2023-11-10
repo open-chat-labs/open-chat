@@ -70,21 +70,30 @@ fn construct_html_report(chat_id: Chat, thread_root_message_index: Option<Messag
     // 1. Media/file
     match content {
         MessageContent::Giphy(g) => {
-            html.push_str(&format!("<img src=\"{}\">\n", g.desktop.url));
+            let (w, h) = impose_max_dimensions(g.desktop.height, g.desktop.height);
+            html.push_str(&format!("<img width=\"{}\" height=\"{}\" src=\"{}\">\n", w, h, g.desktop.url));
         }
         MessageContent::Image(i) => {
             if let Some(br) = i.blob_reference.as_ref() {
-                html.push_str(&format!("<img src=\"{}\">\n", br.url()));
+                let (w, h) = impose_max_dimensions(i.width, i.height);
+                html.push_str(&format!("<img width=\"{}\" height=\"{}\" src=\"{}\">\n", w, h, br.url()));
             }
         }
         MessageContent::Video(v) => {
             if let Some(br) = v.video_blob_reference.as_ref() {
+                let (w, h) = impose_max_dimensions(v.width, v.height);
                 let preload = v
                     .image_blob_reference
                     .as_ref()
                     .map(|b| format!(" preload=\"{}\"", b.url()))
                     .unwrap_or_default();
-                html.push_str(&format!("<video{} controls><source src=\"{}\"></video>\n", preload, br.url()));
+                html.push_str(&format!(
+                    "<video{} width=\"{}\" height=\"{}\" controls><source src=\"{}\"></video>\n",
+                    preload,
+                    w,
+                    h,
+                    br.url()
+                ));
             }
         }
         MessageContent::Audio(a) => {
@@ -108,6 +117,21 @@ fn construct_html_report(chat_id: Chat, thread_root_message_index: Option<Messag
     html.push_str(&format!("<a href=\"{}\">link to message</a>\n", message_link));
 
     html
+}
+
+fn impose_max_dimensions(w: u32, h: u32) -> (u32, u32) {
+    const MAX_W: u32 = 500;
+    const MAX_H: u32 = 500;
+
+    if w == 0 || h == 0 {
+        (MAX_W, MAX_H)
+    } else if w <= MAX_W && h <= MAX_H {
+        (w, h)
+    } else if w > h {
+        (MAX_W, (h * MAX_W) / w)
+    } else {
+        ((w * MAX_H / h), MAX_H)
+    }
 }
 
 fn extract_text(content: &MessageContent) -> String {

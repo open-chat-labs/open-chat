@@ -886,7 +886,6 @@
         "optional": "Không bắt buộc",
         "note": "Thêm một lưu ý",
         "notePlaceholder": "Hãy cho chúng tôi biết lý do bạn báo cáo nội dung này",
-        "advice": "Nếu bạn tin rằng bài viết này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trong trường hợp đầu tiên. Chỉ báo cáo một tin nhắn để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [nguyên tắc nền tảng](/guidelines).",
         "threat": "Tin nhắn đe dọa",
         "child": "Tin nhắn chứa nội dung khiêu dâm trẻ em",
         "nonConsensual": "Tin nhắn chứa nội dung khiêu dâm không có sự đồng thuận",
@@ -898,7 +897,8 @@
         "failure": "Xin lỗi, chúng tôi không thể báo cáo tin nhắn này cho người điều hành nền tảng",
         "deleteMessage": "Xóa tin nhắn đã báo cáo",
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
-        "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
+        "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất",
+        "advice": "Nếu bạn cho rằng tin nhắn này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trước tiên. Chỉ báo cáo một thông báo để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [quy tắc nền tảng]({rules})."
     },
     "invitedBy": "{changedBy} đã mời {changed} tham gia {level}",
     "halloffame": {

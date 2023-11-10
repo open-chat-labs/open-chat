@@ -887,7 +887,6 @@
         "optional": "Opcional",
         "note": "Agrega una nota",
         "notePlaceholder": "Cuéntanos por qué estás denunciando este contenido.",
-        "advice": "Si cree que este mensaje infringe las normas de este grupo, póngase en contacto con los propietarios y administradores del grupo en primera instancia. Informe un mensaje para la moderación de la plataforma solo si cree que infringe las [directrices de la plataforma](/directrices).",
         "threat": "El mensaje es amenazante",
         "child": "El mensaje contiene contenido sexual infantil",
         "nonConsensual": "El mensaje contiene contenido sexual no consentido",
@@ -899,7 +898,8 @@
         "failure": "Lo sentimos, no pudimos informar este mensaje a los moderadores de la plataforma.",
         "deleteMessage": "Eliminar mensaje denunciado",
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
-        "showing": "Mostrando los {count} más recientes de {total} informe(s)"
+        "showing": "Mostrando los {count} más recientes de {total} informe(s)",
+        "advice": "Si cree que este mensaje viola las reglas de este grupo, comuníquese con los propietarios y administradores del grupo en primera instancia. Solo reporta un mensaje para moderación de la plataforma si crees que viola las [reglas de la plataforma]({rules})."
     },
     "invitedBy": "{changedBy} invitó a {changed} al {level}",
     "halloffame": {

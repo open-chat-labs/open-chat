@@ -82,7 +82,10 @@
                 </div>
             {/if}
             <div class="advice">
-                <Markdown text={$_("report.advice")} />
+                <Markdown
+                    text={$_("report.advice", {
+                        values: { rules: "https://oc.app/guidelines?section=3" },
+                    })} />
             </div>
         </span>
         <span slot="footer">

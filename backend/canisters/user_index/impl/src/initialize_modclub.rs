@@ -53,7 +53,7 @@ pub async fn initialize_modclub() {
         "Do not share sexually explicit or sexually suggestive content of other people without the subject’s knowledge and consent, otherwise known as “revenge porn.” This includes the non-consensual distribution of intimate media that was created either with or without an individual’s consent.",
         "Do not share content that glorifies, promotes, or normalizes suicide or other acts of physical self-harm. This includes content that encourages others to cut, burn, or starve themselves, as well as content that normalizes eating disorders, such as anorexia and bulimia. Self-harm acts or threats used as a form of emotional manipulation or coercion are also prohibited.",
         "Do not share real media depicting gore, excessive violence, or animal harm, especially with the intention to harass or shock others.",
-        "Do not use OpenChat to promote, coordinate, or execute financial scams."];
+        "Do not use OpenChat to promote, coordinate, or execute financial scams. Promoting a particular crypto token or NFT does not break this rule in general."];
 
     match modclub_canister_c2c_client::addRules(
         modclub_canister_id,

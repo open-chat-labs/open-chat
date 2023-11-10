@@ -887,7 +887,6 @@
         "optional": "Optional",
         "note": "Füg ein Notiz hinzu",
         "notePlaceholder": "Teilen Sie uns mit, warum Sie diesen Inhalt melden",
-        "advice": "Wenn Sie der Meinung sind, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur zur Plattformmoderation, wenn Sie der Meinung sind, dass sie gegen die [Plattformrichtlinien](/guidelines) verstößt.",
         "threat": "Nachricht ist bedrohlich",
         "child": "Die Nachricht enthält jugendgefährdende Inhalte",
         "nonConsensual": "Die Nachricht enthält nicht einvernehmliche sexuelle Inhalte",
@@ -899,7 +898,8 @@
         "failure": "Es tut uns leid, dass wir diese Nachricht nicht an die Moderatoren der Plattform melden konnten",
         "deleteMessage": "Gemeldete Nachricht löschen",
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
-        "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
+        "showing": "Anzeige der neusten {count} von {total} Bericht(en)",
+        "advice": "Wenn Sie glauben, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur dann zur Plattformmoderation, wenn Sie der Meinung sind, dass sie gegen die [Plattformregeln]({rules}) verstößt."
     },
     "invitedBy": "{changedBy} hat {changed} zum {level} eingeladen",
     "halloffame": {
