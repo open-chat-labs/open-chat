@@ -35,7 +35,7 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
 
     let c2c_args = user_canister::c2c_charge_user_account::Args {
         ledger_canister_id: args.token.ledger_canister_id().unwrap(),
-        amount: ICP::from_e8s(args.expected_price_e8s),
+        amount: ICP::from_e8s(args.expected_price_e8s - args.token.fee().unwrap() as u64),
     };
 
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.into(), &c2c_args).await {
