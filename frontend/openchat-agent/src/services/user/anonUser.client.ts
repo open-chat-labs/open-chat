@@ -362,4 +362,12 @@ export class AnonUserClient {
     ): Promise<SubmitProposalResponse> {
         throw new AnonymousOperationError();
     }
+
+    reportMessage(
+        _chatId: DirectChatIdentifier,
+        _messageId: bigint, 
+        _deleteMessage: boolean
+    ): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
 }
