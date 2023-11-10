@@ -1,0 +1,1 @@
+UserIndex -> User because `ledger_canister_id` has been added to `c2c_charge_user_account` args

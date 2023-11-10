@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+
 ## [[2.0.932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.932-user)] - 2023-11-09
 
 ### Changed
