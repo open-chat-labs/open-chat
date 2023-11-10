@@ -11,7 +11,6 @@ pub struct Args {
     pub max_messages: u32,
     pub max_events: u32,
     pub latest_known_update: Option<TimestampMillis>,
-    pub latest_client_event_index: Option<EventIndex>,
 }
 
 pub use crate::EventsResponse as Response;

@@ -7,7 +7,6 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub messages: Vec<MessageIndex>,
     pub latest_known_update: Option<TimestampMillis>,
-    pub latest_client_event_index: Option<EventIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -16,4 +15,5 @@ pub enum Response {
     CallerNotInGroup,
     ThreadMessageNotFound,
     ReplicaNotUpToDate(EventIndex),
+    ReplicaNotUpToDateV2(TimestampMillis),
 }

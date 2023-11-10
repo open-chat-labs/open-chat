@@ -659,7 +659,6 @@ export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
 export type EventIndex = number;
 export interface EventsArgs {
   'channel_id' : ChannelId,
-  'latest_client_event_index' : [] | [EventIndex],
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -669,7 +668,6 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'channel_id' : ChannelId,
-  'latest_client_event_index' : [] | [EventIndex],
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
@@ -679,7 +677,8 @@ export type EventsResponse = { 'ThreadNotFound' : null } |
   { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChannelNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
-  { 'UserNotInCommunity' : null };
+  { 'UserNotInCommunity' : null } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
@@ -697,7 +696,6 @@ export interface EventsTimeToLiveUpdated {
 }
 export interface EventsWindowArgs {
   'channel_id' : ChannelId,
-  'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'max_messages' : number,
   'max_events' : number,
@@ -1198,7 +1196,6 @@ export interface MessageUnpinned {
 }
 export interface MessagesByMessageIndexArgs {
   'channel_id' : ChannelId,
-  'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
@@ -1208,7 +1205,8 @@ export type MessagesByMessageIndexResponse = { 'ThreadNotFound' : null } |
   { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChannelNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
-  { 'UserNotInCommunity' : null };
+  { 'UserNotInCommunity' : null } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
