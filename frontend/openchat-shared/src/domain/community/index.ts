@@ -201,7 +201,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     description: string | undefined;
     lastUpdated: bigint;
     avatarId: OptionUpdate<bigint>;
-    membership: ChannelMembershipUpdates | undefined;
+    membership: GroupMembershipUpdates | undefined;
     latestEventIndex: number | undefined;
     latestMessageIndex: number | undefined;
     memberCount: number | undefined;
@@ -216,7 +216,7 @@ export type CommunityMembershipUpdates = {
     rulesAccepted: boolean | undefined;
 };
 
-export type ChannelMembershipUpdates = {
+export type GroupMembershipUpdates = {
     role: MemberRole | undefined;
     notificationsMuted: boolean | undefined;
     latestThreads: GroupCanisterThreadDetails[];

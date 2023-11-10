@@ -168,7 +168,7 @@ export const idlFactory = ({ IDL }) => {
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
-  const ChannelMembership = IDL.Record({
+  const GroupMembership = IDL.Record({
     'role' : GroupRole,
     'notifications_muted' : IDL.Bool,
     'joined' : TimestampMillis,
@@ -533,11 +533,12 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
-    'membership' : IDL.Opt(ChannelMembership),
+    'membership' : IDL.Opt(GroupMembership),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'min_visible_message_index' : MessageIndex,
     'member_count' : IDL.Nat32,
+    'events_ttl_last_updated' : TimestampMillis,
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const CommunityPermissionRole = IDL.Variant({
@@ -661,6 +662,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
+    'membership' : IDL.Opt(GroupMembership),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -668,6 +670,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'events_ttl_last_updated' : TimestampMillis,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),

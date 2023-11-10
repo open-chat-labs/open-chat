@@ -252,6 +252,7 @@ export function message(candid: ApiMessage): Message {
         edited: candid.edited,
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
+        lastUpdated: optional(candid.last_updated, identity),
         thread: optional(candid.thread_summary, threadSummary),
     };
 }
@@ -2082,6 +2083,7 @@ export function threadPreviewsResponse(
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDate,
             latestClientThreadUpdate ?? BigInt(-1),
+            false,
         );
     }
     console.warn("ThreadPreviewsResponse failed with: ", candid);

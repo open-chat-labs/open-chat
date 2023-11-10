@@ -594,6 +594,7 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'latest_known_update' : IDL.Opt(TimestampMillis),
     'start_index' : EventIndex,
   });
   const ParticipantJoined = IDL.Record({
@@ -764,6 +765,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsSuccessResult = IDL.Record({
     'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
+    'chat_last_updated' : TimestampMillis,
     'events' : IDL.Vec(ChatEventWrapper),
     'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
@@ -779,6 +781,7 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'latest_known_update' : IDL.Opt(TimestampMillis),
   });
   const EventsWindowArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
@@ -787,6 +790,7 @@ export const idlFactory = ({ IDL }) => {
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'latest_known_update' : IDL.Opt(TimestampMillis),
   });
   const HotGroupExclusionsArgs = IDL.Record({});
   const HotGroupExclusionsResponse = IDL.Variant({
@@ -920,6 +924,7 @@ export const idlFactory = ({ IDL }) => {
     'chat_id' : ChatId,
     'date_read_pinned' : IDL.Opt(TimestampMillis),
     'archived' : IDL.Bool,
+    'events_ttl_last_updated' : TimestampMillis,
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -945,6 +950,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'archived' : IDL.Bool,
+    'events_ttl_last_updated' : TimestampMillis,
     'my_metrics' : ChatMetrics,
     'latest_message' : MessageEventWrapper,
   });
@@ -1026,14 +1032,18 @@ export const idlFactory = ({ IDL }) => {
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'latest_known_update' : IDL.Opt(TimestampMillis),
+  });
+  const MessagesSuccessResult = IDL.Record({
+    'messages' : IDL.Vec(MessageEventWrapper),
+    'chat_last_updated' : TimestampMillis,
+    'timestamp' : TimestampMillis,
+    'latest_event_index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
-    'Success' : IDL.Record({
-      'messages' : IDL.Vec(MessageEventWrapper),
-      'latest_event_index' : EventIndex,
-    }),
+    'Success' : MessagesSuccessResult,
   });
   const MigrateUserPrincipalArgs = IDL.Record({});
   const MigrateUserPrincipalResponse = IDL.Variant({
@@ -1089,11 +1099,10 @@ export const idlFactory = ({ IDL }) => {
   const ReportMessageArgs = IDL.Record({
     'them' : UserId,
     'delete' : IDL.Bool,
-    'notes' : IDL.Opt(IDL.Text),
     'message_id' : MessageId,
-    'reason_code' : IDL.Nat32,
   });
   const ReportMessageResponse = IDL.Variant({
+    'AlreadyReported' : IDL.Null,
     'MessageNotFound' : IDL.Null,
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
@@ -1452,6 +1461,7 @@ export const idlFactory = ({ IDL }) => {
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
     'archived' : IDL.Opt(IDL.Bool),
+    'events_ttl_last_updated' : IDL.Opt(TimestampMillis),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });

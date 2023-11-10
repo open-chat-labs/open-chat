@@ -102,24 +102,6 @@ export interface ChannelMatch {
   'avatar_id' : [] | [bigint],
   'member_count' : number,
 }
-export interface ChannelMembership {
-  'role' : GroupRole,
-  'notifications_muted' : boolean,
-  'joined' : TimestampMillis,
-  'rules_accepted' : boolean,
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'mentions' : Array<Mention>,
-  'my_metrics' : ChatMetrics,
-}
-export interface ChannelMembershipUpdates {
-  'role' : [] | [GroupRole],
-  'notifications_muted' : [] | [boolean],
-  'unfollowed_threads' : Uint32Array | number[],
-  'rules_accepted' : [] | [boolean],
-  'latest_threads' : Array<GroupCanisterThreadDetails>,
-  'mentions' : Array<Mention>,
-  'my_metrics' : [] | [ChatMetrics],
-}
 export interface ChannelMessageNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -271,11 +253,12 @@ export interface CommunityCanisterChannelSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
-  'membership' : [] | [ChannelMembership],
+  'membership' : [] | [GroupMembership],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'min_visible_message_index' : MessageIndex,
   'member_count' : number,
+  'events_ttl_last_updated' : TimestampMillis,
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterChannelSummaryUpdates {
@@ -293,10 +276,11 @@ export interface CommunityCanisterChannelSummaryUpdates {
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'avatar_id' : DocumentIdUpdate,
-  'membership' : [] | [ChannelMembershipUpdates],
+  'membership' : [] | [GroupMembershipUpdates],
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
   'member_count' : [] | [number],
+  'events_ttl_last_updated' : [] | [TimestampMillis],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface CommunityCanisterCommunitySummary {
@@ -537,6 +521,7 @@ export interface DirectChatSummary {
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
   'archived' : boolean,
+  'events_ttl_last_updated' : TimestampMillis,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
 }
@@ -552,6 +537,7 @@ export interface DirectChatSummaryUpdates {
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
   'archived' : [] | [boolean],
+  'events_ttl_last_updated' : [] | [TimestampMillis],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -629,6 +615,7 @@ export interface EventsArgs {
   'max_events' : number,
   'ascending' : boolean,
   'thread_root_message_index' : [] | [MessageIndex],
+  'latest_known_update' : [] | [TimestampMillis],
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
@@ -636,12 +623,14 @@ export interface EventsByIndexArgs {
   'user_id' : UserId,
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
+  'latest_known_update' : [] | [TimestampMillis],
 }
 export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
+  'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
   'timestamp' : TimestampMillis,
   'latest_event_index' : number,
@@ -661,6 +650,7 @@ export interface EventsWindowArgs {
   'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
+  'latest_known_update' : [] | [TimestampMillis],
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'ICRC1' : Icrc1FailedCryptoTransaction };
@@ -735,6 +725,7 @@ export interface GroupCanisterGroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'membership' : [] | [GroupMembership],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -742,6 +733,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'events_ttl_last_updated' : TimestampMillis,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -764,12 +756,14 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'unfollowed_threads' : Uint32Array | number[],
   'avatar_id' : DocumentIdUpdate,
   'rules_accepted' : [] | [boolean],
+  'membership' : [] | [GroupMembershipUpdates],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'updated_events' : Array<[[] | [number], number, bigint]>,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'events_ttl_last_updated' : [] | [TimestampMillis],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -814,6 +808,7 @@ export interface GroupChatSummary {
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
   'archived' : boolean,
+  'events_ttl_last_updated' : TimestampMillis,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -853,6 +848,24 @@ export interface GroupMatch {
   'description' : string,
   'avatar_id' : [] | [bigint],
   'member_count' : number,
+}
+export interface GroupMembership {
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'joined' : TimestampMillis,
+  'rules_accepted' : boolean,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : ChatMetrics,
+}
+export interface GroupMembershipUpdates {
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'unfollowed_threads' : Uint32Array | number[],
+  'rules_accepted' : [] | [boolean],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'mentions' : Array<Mention>,
+  'my_metrics' : [] | [ChatMetrics],
 }
 export interface GroupMessageNotification {
   'image_url' : [] | [string],
@@ -1156,19 +1169,16 @@ export interface MessagesByMessageIndexArgs {
   'messages' : Uint32Array | number[],
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
+  'latest_known_update' : [] | [TimestampMillis],
 }
 export type MessagesByMessageIndexResponse = {
     'ReplicaNotUpToDate' : EventIndex
   } |
   { 'ChatNotFound' : null } |
-  {
-    'Success' : {
-      'messages' : Array<MessageEventWrapper>,
-      'latest_event_index' : EventIndex,
-    }
-  };
+  { 'Success' : MessagesSuccessResult };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
+  'chat_last_updated' : TimestampMillis,
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
@@ -1452,6 +1462,7 @@ export interface PublicGroupSummary {
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
+  'events_ttl_last_updated' : TimestampMillis,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
@@ -1494,11 +1505,10 @@ export interface ReplyContext {
 export interface ReportMessageArgs {
   'them' : UserId,
   'delete' : boolean,
-  'notes' : [] | [string],
   'message_id' : MessageId,
-  'reason_code' : number,
 }
-export type ReportMessageResponse = { 'MessageNotFound' : null } |
+export type ReportMessageResponse = { 'AlreadyReported' : null } |
+  { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
@@ -1534,6 +1544,7 @@ export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
   'invited_users' : [] | [Array<UserId>],
+  'last_updated' : TimestampMillis,
   'members_added_or_updated' : Array<Participant>,
   'pinned_messages_added' : Uint32Array | number[],
   'chat_rules' : [] | [VersionedRules],

@@ -178,7 +178,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
@@ -187,7 +187,7 @@ export class UserClient extends CandidService {
                 [...missing],
                 chatId,
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             )
                 .then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex))
                 .then((resp) => {
@@ -332,13 +332,13 @@ export class UserClient extends CandidService {
         eventIndexes: number[],
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
-            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestClientEventIndex),
+            this.handleMissingEvents(chatId, res, threadRootMessageIndex, latestKnownUpdate),
         );
     }
 
@@ -346,17 +346,18 @@ export class UserClient extends CandidService {
         eventIndexes: number[],
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
             events: new Uint32Array(eventIndexes),
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId),
             args,
         );
     }
@@ -365,7 +366,7 @@ export class UserClient extends CandidService {
         eventIndexRange: IndexRange,
         chatId: DirectChatIdentifier,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing, totalMiss] =
             await getCachedEventsWindowByMessageIndex<DirectChatEvent>(
@@ -381,17 +382,15 @@ export class UserClient extends CandidService {
                 missing.size,
                 totalMiss,
             );
-            return this.chatEventsWindowFromBackend(
-                chatId,
-                messageIndex,
-                latestClientEventIndex,
-            ).then((resp) => this.setCachedEvents(chatId, resp));
+            return this.chatEventsWindowFromBackend(chatId, messageIndex, latestKnownUpdate).then(
+                (resp) => this.setCachedEvents(chatId, resp),
+            );
         } else {
             return this.handleMissingEvents(
                 chatId,
                 [cachedEvents, missing],
                 undefined,
-                latestClientEventIndex,
+                latestKnownUpdate,
             );
         }
     }
@@ -399,7 +398,7 @@ export class UserClient extends CandidService {
     private async chatEventsWindowFromBackend(
         chatId: DirectChatIdentifier,
         messageIndex: number,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
@@ -408,11 +407,12 @@ export class UserClient extends CandidService {
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId),
             args,
         );
     }
@@ -423,7 +423,7 @@ export class UserClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
             this.db,
@@ -442,14 +442,14 @@ export class UserClient extends CandidService {
                 startIndex,
                 ascending,
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(chatId, resp, threadRootMessageIndex));
         } else {
             return this.handleMissingEvents(
                 chatId,
                 [cachedEvents, missing],
                 threadRootMessageIndex,
-                latestClientEventIndex,
+                latestKnownUpdate,
             );
         }
     }
@@ -459,7 +459,7 @@ export class UserClient extends CandidService {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<DirectChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -468,12 +468,13 @@ export class UserClient extends CandidService {
             max_events: MAX_EVENTS,
             start_index: startIndex,
             ascending: ascending,
-            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            latest_known_update: apiOptional(identity, latestKnownUpdate),
+            latest_client_event_index: [] as [] | [number],
         };
 
         return this.handleQueryResponse(
             () => this.userService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId, latestClientEventIndex),
+            (resp) => getEventsResponse(this.principal, resp, chatId),
             args,
         );
     }
