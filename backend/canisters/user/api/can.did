@@ -664,6 +664,7 @@ type InitialStateResponse = variant {
         communities : CommunitiesInitial;
         avatar_id : opt nat;
         blocked_users : vec UserId;
+        suspended : bool;
     };
 };
 
@@ -707,6 +708,7 @@ type UpdatesResponse = variant {
         communities : CommunitiesUpdates;
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
+        suspended : opt bool;
     };
     SuccessNoUpdates;
 };
