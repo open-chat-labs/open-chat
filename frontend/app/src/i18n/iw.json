@@ -205,13 +205,6 @@
         "unread": "{count} הודעות שלא נקראו",
         "mentions": "{count} אזכור(ים) שלא נקראו"
     },
-    "login": {
-        "welcomeTo": "ברוך הבא ל ...",
-        "blurbPartOne": "אפליקציית צ'אט מאובטחת, אינטואיטיבית, מבוזרת פועלת כולה",
-        "blurbPartTwo": " - הבלוקצ'יין הראשון בעולם בקנה מידה אינטרנטי. קרא עוד",
-        "signIn": "להתחבר",
-        "signInOrRegister": "היכנס או הירשם"
-    },
     "reactions": {
         "greaterThan99People": "99+ אנשים",
         "youClickToRemove": "אתה (לחץ כדי להסיר)",
@@ -1147,5 +1140,12 @@
         "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
         "disabled": "הודעות נעלמות מושבתות"
     },
+    "login": "התחברות",
+    "loginToOpenChat": "היכנס ל-OpenChat",
+    "tapToLogin": "מצב אורח - הקש כאן כדי להיכנס",
+    "loginProviderChanged": "נראה שנכנסת בעבר עם הספק {previous}. בדוק שוב שברצונך להשתמש ב-{next} הפעם?",
+    "guestUser": "משתמש אורח",
+    "showAuthProviders": "הצג אפשרויות",
+    "hideAuthProviders": "הסתר אפשרויות",
     "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }"
 }

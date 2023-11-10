@@ -127,8 +127,8 @@
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            user.userId,
-            msg.sender === user.userId,
+            $user.userId,
+            msg.sender === $user.userId,
             msg,
             $cryptoLookup
         );
@@ -182,7 +182,7 @@
             dispatch("deleteFailedMessage");
             return;
         }
-        if (!canDelete && user.userId !== msg.sender) return;
+        if (!canDelete && $user.userId !== msg.sender) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 

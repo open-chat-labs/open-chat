@@ -37,11 +37,14 @@
     import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
-    const userId = client.user.userId;
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
     export let visible: boolean;
+
+    $: user = client.user;
+    $: userId = $user.userId;
+    $: suspendedUser = client.suspendedUser;
 
     $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
@@ -107,10 +110,10 @@
         if (chatSummary.latestMessage === undefined) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
-                    values: {
-                        duration: client.formatDuration(Number(chatSummary.eventsTTL)),
-                    },
-                })
+                      values: {
+                          duration: client.formatDuration(Number(chatSummary.eventsTTL)),
+                      },
+                  })
                 : $_("disappearingMessages.disabled");
         }
 
@@ -375,7 +378,7 @@
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
-            {#if !client.isReadOnly()}
+            {#if !$suspendedUser}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" class:rtl={$rtlStore} slot="icon">

@@ -365,25 +365,15 @@ export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.messages.map(messageEvent),
             expiredEventRanges: [],
             expiredMessageRanges: [],
-            latestEventIndex,
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if (
@@ -397,11 +387,7 @@ export async function getMessagesByMessageIndexResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false,
-        );
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
@@ -413,33 +399,19 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<GroupChatEvent>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.events.map(event),
             expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
             expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex,
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false,
-        );
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     console.warn("GetGroupChatEvents failed with ", candid);
     return "events_failed";

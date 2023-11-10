@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { AuthProvider, OpenChat } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
+    import { OpenChat } from "openchat-client";
     import MenuItem from "../MenuItem.svelte";
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
@@ -21,25 +21,14 @@
 
     $: identityState = client.identityState;
     $: chatListScope = client.chatListScope;
-    $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: path = $location;
 
-    let showAuthProviders = false;
-
-    onMount(async () => {
-        showAuthProviders = await client.showAuthProviders();
-    });
-
     function launch() {
-        if ($identityState === "logged_in") {
+        if ($identityState.kind === "logged_in") {
             page(routeForScope($chatListScope));
         } else {
-            dispatch("login");
+            page("/communities");
         }
-    }
-
-    function changeProvider(provider: AuthProvider) {
-        selectedAuthProviderStore.set(provider);
     }
 </script>
 
@@ -74,32 +63,11 @@
         <div class="rocket" slot="icon">🚀</div>
         <div slot="text">{"Launch app"}</div>
     </MenuItem>
-    {#if $identityState === "logged_in"}
+    {#if $identityState.kind === "logged_in"}
         <MenuItem separator />
         <MenuItem on:click={() => dispatch("logout")}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <div slot="text">{"Logout"}</div>
-        </MenuItem>
-    {/if}
-    {#if showAuthProviders}
-        <MenuItem separator />
-        <MenuItem on:click={() => changeProvider(AuthProvider.II)}>
-            <div slot="icon" class="checked">
-                {#if $selectedAuthProviderStore === AuthProvider.II}
-                    ✅
-                {/if}
-            </div>
-
-            <div slot="text">{AuthProvider.II}</div>
-        </MenuItem>
-        <MenuItem on:click={() => changeProvider(AuthProvider.NFID)}>
-            <div slot="icon" class="checked">
-                {#if $selectedAuthProviderStore === AuthProvider.NFID}
-                    ✅
-                {/if}
-            </div>
-
-            <div slot="text">{AuthProvider.NFID} (with google)</div>
         </MenuItem>
     {/if}
 </Menu>

@@ -518,6 +518,9 @@
         {#if canEnterText}
             {#key textboxId}
                 <div
+                    data-gram="false"
+                    data-gramm_editor="false"
+                    data-enable-grammarly="false"
                     tabindex={0}
                     bind:this={inp}
                     on:blur={saveSelection}

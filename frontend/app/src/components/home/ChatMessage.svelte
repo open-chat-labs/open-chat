@@ -358,7 +358,7 @@
     function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
         tipping = undefined;
         const transfer = ev.detail;
-        const currentTip = (msg.tips[transfer.ledger] ?? {})[client.user.userId] ?? 0n;
+        const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind !== "success") {
                 toastStore.showFailureToast("tip.failure");

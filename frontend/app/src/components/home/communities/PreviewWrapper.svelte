@@ -9,6 +9,7 @@
 
     const client = getContext<OpenChat>("client");
 
+    $: anonUser = client.anonUser;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: communityGate = $selectedCommunity?.gate;
@@ -22,6 +23,10 @@
     }
 
     function joinCommunity() {
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+            return;
+        }
         doJoinCommunity(undefined);
     }
 

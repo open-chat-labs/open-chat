@@ -170,13 +170,6 @@
         "unread": "{count} 未读消息",
         "mentions": "{count} 未读提及"
     },
-    "login": {
-        "welcomeTo": "欢迎来到 ...",
-        "blurbPartOne": "一个安全，易用，去中心化的聊天软件。完全搭建在",
-        "blurbPartTwo": " - 世界上首个互联网量级的区块链上. 了解更多详情 ",
-        "signIn": "登录",
-        "signInOrRegister": "登录或注册"
-    },
     "reactions": {
         "greaterThan99People": "99+ 用户",
         "youClickToRemove": "您 (点击删除)",
@@ -1150,5 +1143,12 @@
         "timeUpdated": "消息消失时间设置为 {duration}",
         "disabled": "消息消失已禁用"
     },
+    "login": "登录",
+    "loginToOpenChat": "登录 OpenChat",
+    "tapToLogin": "访客模式 - 点击此处登录",
+    "loginProviderChanged": "您之前似乎已使用 {previous} 提供商登录。请仔细检查您这次是否想使用 {next}？",
+    "guestUser": "访客用户",
+    "showAuthProviders": "显示选项",
+    "hideAuthProviders": "隐藏选项",
     "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}"
 }

@@ -6,13 +6,13 @@
     import Markdown from "./home/Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
+    $: user = client.user;
 
     function buildNoticeText(): string {
-        const suspensionDetails = client.user.suspensionDetails!;
+        const suspensionDetails = $user.suspensionDetails!;
         const actionDate = new Date(Number(suspensionDetails.action.timestamp));
-        const actionText = suspensionDetails.action.kind === "delete_action"
-            ? "deleted"
-            : "unsuspended";
+        const actionText =
+            suspensionDetails.action.kind === "delete_action" ? "deleted" : "unsuspended";
 
         return `Your account has been suspended.
 

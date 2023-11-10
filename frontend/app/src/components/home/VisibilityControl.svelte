@@ -41,7 +41,6 @@
     let selectedGateKey: string | undefined = undefined;
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
-    let disappearingMessagesEnabled = false;
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
@@ -167,7 +166,7 @@
     </div>
 {/if}
 
-{#if disappearingMessagesEnabled && candidate.kind === "candidate_group_chat"}
+{#if candidate.kind === "candidate_group_chat"}
     <div class="section">
         <Checkbox
             id="disappearing-messages"

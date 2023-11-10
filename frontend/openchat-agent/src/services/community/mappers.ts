@@ -4,7 +4,6 @@ import type {
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
     ChannelMatch,
-    ChannelMembershipUpdates,
     ChannelMessageMatch,
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
@@ -21,6 +20,7 @@ import type {
     ExploreChannelsResponse,
     FollowThreadResponse,
     GateCheckFailedReason,
+    GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
     Message,
@@ -61,7 +61,7 @@ import type {
     ApiMessageMatch,
     ApiCommunityCanisterCommunitySummaryUpdates,
     ApiCommunityCanisterChannelSummaryUpdates,
-    ApiChannelMembershipUpdates,
+    ApiGroupMembershipUpdates,
     ApiCommunityMembershipUpdates,
     ApiExploreChannelsResponse,
     ApiChannelMatch,
@@ -219,25 +219,15 @@ export async function messagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
     chatId: ChannelIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.messages.map(messageEvent),
             expiredEventRanges: [],
             expiredMessageRanges: [],
-            latestEventIndex,
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if (
@@ -251,11 +241,7 @@ export async function messagesByMessageIndexResponse(
         return "events_failed";
     }
     if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false,
-        );
+        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
@@ -459,7 +445,7 @@ export function communityChannelUpdates(
         description: optional(candid.description, identity),
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
-        membership: optional(candid.membership, channelMembershipUpdates),
+        membership: optional(candid.membership, GroupMembershipUpdates),
         updatedEvents: candid.updated_events.map(updatedEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
         latestMessageIndex: optional(candid.latest_message_index, identity),
@@ -481,9 +467,7 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     };
 }
 
-export function channelMembershipUpdates(
-    candid: ApiChannelMembershipUpdates,
-): ChannelMembershipUpdates {
+export function GroupMembershipUpdates(candid: ApiGroupMembershipUpdates): GroupMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
         notificationsMuted: optional(candid.notifications_muted, identity),

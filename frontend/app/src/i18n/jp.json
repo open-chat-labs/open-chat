@@ -194,13 +194,6 @@
         "unread": "{count} 件の未読メッセージ",
         "mentions": "{count}件の未読メンション"
     },
-    "login": {
-        "welcomeTo": "ようこそ...",
-        "blurbPartOne": "のみで動作する安全で直感的な分散型チャットアプリです。 ",
-        "blurbPartTwo": " - 世界初のインターネットスケールブロックチェーン 続きを読む ",
-        "signIn": "サインイン",
-        "signInOrRegister": "サインインまたは登録"
-    },
     "reactions": {
         "greaterThan99People": "99名以上",
         "youClickToRemove": "あなた（クリックすると削除されます）",
@@ -1150,5 +1143,12 @@
         "timeUpdated": "メッセージが消える時間を {duration} に設定しました",
         "disabled": "消えるメッセージの無効化"
     },
+    "login": "ログイン",
+    "loginToOpenChat": "オープンチャットにログインする",
+    "tapToLogin": "ゲスト モード - ここをタップしてログインします",
+    "loginProviderChanged": "以前に {previous} プロバイダーを使用してログインしたようです。今回は {next} を使用したいことを再確認してください?",
+    "guestUser": "ゲストユーザー",
+    "showAuthProviders": "オプションを表示",
+    "hideAuthProviders": "オプションを非表示にする",
     "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }"
 }

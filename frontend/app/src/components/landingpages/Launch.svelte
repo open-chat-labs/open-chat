@@ -1,28 +1,24 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let rootPath = routeForScope(client.getDefaultScope());
     export let text = "Launch app";
+    export let login = false;
 
     $: identityState = client.identityState;
-    $: txt = $identityState === "logging_in" ? "Logging in..." : text;
-
-    function launch() {
-        if ($identityState === "logged_in") {
-            page(rootPath);
-        } else {
-            dispatch("login");
-        }
-    }
+    $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
 </script>
 
-<div role="button" on:click={launch} class="launch">{txt}</div>
+{#if login}
+    <div role="button" tabindex="0" on:click={() => client.login()} class="launch">{text}</div>
+{:else}
+    <a href={url} class="launch">{text}</a>
+{/if}
 
 <style lang="scss">
     .launch {

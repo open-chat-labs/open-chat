@@ -228,13 +228,6 @@
         "unread": "{count} messaggi non letti",
         "mentions": "{count} menzioni non lette"
     },
-    "login": {
-        "welcomeTo": "Benvenuto a ...",
-        "blurbPartOne": "Un'app di chat sicura, intuitiva e decentralizzata che funziona interamente",
-        "blurbPartTwo": " - la prima blockchain al mondo su scala Internet. Per saperne di più",
-        "signIn": "Registrazione",
-        "signInOrRegister": "Accedi o Registrati"
-    },
     "reactions": {
         "greaterThan99People": "99+ persone",
         "youClickToRemove": "Tu (clicca per rimuovere)",
@@ -1149,5 +1142,12 @@
         "timeUpdated": "Orario di scomparsa del messaggio impostato su {duration}",
         "disabled": "Messaggi a scomparsa disabilitati"
     },
+    "login": "Login",
+    "loginToOpenChat": "Accedi a OpenChat",
+    "tapToLogin": "Modalità ospite: tocca qui per accedere",
+    "loginProviderChanged": "Sembra che tu abbia già effettuato l'accesso con il provider {previous}. Per favore ricontrolla che desideri utilizzare {next} questa volta?",
+    "guestUser": "Utente ospite",
+    "showAuthProviders": "Mostra opzioni",
+    "hideAuthProviders": "Nascondi opzioni",
     "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }"
 }

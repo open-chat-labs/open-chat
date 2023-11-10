@@ -28,12 +28,12 @@
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let chat: MultiUserChat;
     export let memberCount: number;
 
     // capture a snapshot of the chat as it is right now
+    $: currentUser = client.user;
     $: canEdit = client.canEditGroupDetails(chat.id);
     $: canSend = client.canSendMessage(chat.id, "any");
     $: canInvite = client.canInviteUsers(chat.id) && (chat.kind === "group_chat" || chat.public);
@@ -63,7 +63,7 @@
         let description = chat.description;
 
         if (chat.subtype?.kind === "governance_proposals" ?? false) {
-            description = description.replace("{userId}", currentUser.userId);
+            description = description.replace("{userId}", $currentUser.userId);
         }
 
         return description;
