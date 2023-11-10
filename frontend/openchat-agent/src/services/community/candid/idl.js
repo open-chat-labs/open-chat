@@ -860,7 +860,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -1017,17 +1016,16 @@ export const idlFactory = ({ IDL }) => {
     'ChannelNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
     'UserNotInCommunity' : IDL.Null,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const EventsByIndexArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
   const EventsWindowArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
@@ -1107,7 +1105,6 @@ export const idlFactory = ({ IDL }) => {
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MessagesByMessageIndexArgs = IDL.Record({
     'channel_id' : ChannelId,
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
@@ -1125,6 +1122,7 @@ export const idlFactory = ({ IDL }) => {
     'ChannelNotFound' : IDL.Null,
     'Success' : MessagesSuccessResult,
     'UserNotInCommunity' : IDL.Null,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const PinMessageArgs = IDL.Record({
     'channel_id' : ChannelId,

@@ -83,7 +83,6 @@ fn report_message_succeeds() {
             max_messages: 10,
             max_events: 10,
             latest_known_update: None,
-            latest_client_event_index: None,
         },
     );
     let mut success = false;

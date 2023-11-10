@@ -181,7 +181,6 @@ pub mod happy_path {
                 max_messages,
                 max_events,
                 latest_known_update: None,
-                latest_client_event_index: None,
             },
         );
 
@@ -201,7 +200,6 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 events,
                 latest_known_update: None,
-                latest_client_event_index: None,
             },
         );
 

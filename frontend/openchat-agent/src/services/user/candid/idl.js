@@ -588,7 +588,6 @@ export const idlFactory = ({ IDL }) => {
     'UserBlocked' : IDL.Null,
   });
   const EventsArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
@@ -775,16 +774,15 @@ export const idlFactory = ({ IDL }) => {
     'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const EventsByIndexArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
   const EventsWindowArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'user_id' : UserId,
     'max_messages' : IDL.Nat32,
@@ -1028,7 +1026,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
   const MessagesByMessageIndexArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
     'user_id' : UserId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1044,6 +1041,7 @@ export const idlFactory = ({ IDL }) => {
     'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : MessagesSuccessResult,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const MigrateUserPrincipalArgs = IDL.Record({});
   const MigrateUserPrincipalResponse = IDL.Variant({
