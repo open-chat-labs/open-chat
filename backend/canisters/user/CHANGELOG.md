@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
 
+### Changed
+
+- `c2c_set_user_suspended` also returns user's communities ([#4749](https://github.com/open-chat-labs/open-chat/pull/4749))
+
 ### Removed
 
 - Remove `latest_client_event_index` from args to get events ([#4747](https://github.com/open-chat-labs/open-chat/pull/4747))
