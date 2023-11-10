@@ -454,6 +454,7 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -470,6 +471,13 @@ export async function getEventsResponse(
     }
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
+    }
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
+        );
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);

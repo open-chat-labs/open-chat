@@ -219,6 +219,7 @@ export async function messagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
     chatId: ChannelIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -242,6 +243,13 @@ export async function messagesByMessageIndexResponse(
     }
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
+    }
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
+        );
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",

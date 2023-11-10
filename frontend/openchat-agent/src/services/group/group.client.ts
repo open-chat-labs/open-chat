@@ -224,7 +224,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -274,7 +274,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -330,7 +330,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -680,7 +680,13 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            (resp) => getMessagesByMessageIndexResponse(this.principal, resp, this.chatId),
+            (resp) =>
+                getMessagesByMessageIndexResponse(
+                    this.principal,
+                    resp,
+                    this.chatId,
+                    latestKnownUpdate,
+                ),
             args,
         );
     }

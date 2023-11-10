@@ -427,7 +427,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -462,7 +462,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events_by_index(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -522,7 +522,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events_window(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -575,7 +575,8 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (resp) => getMessagesByMessageIndexResponse(this.principal, resp, chatId),
+            (resp) =>
+                getMessagesByMessageIndexResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -648,7 +649,7 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (res) => messagesByMessageIndexResponse(this.principal, res, chatId),
+            (res) => messagesByMessageIndexResponse(this.principal, res, chatId, latestKnownUpdate),
         );
     }
 

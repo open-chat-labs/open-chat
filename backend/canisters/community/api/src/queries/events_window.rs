@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, EventIndex, MessageIndex, TimestampMillis};
+use types::{ChannelId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,7 +10,6 @@ pub struct Args {
     pub max_messages: u32,
     pub max_events: u32,
     pub latest_known_update: Option<TimestampMillis>,
-    pub latest_client_event_index: Option<EventIndex>,
 }
 
 pub use crate::EventsResponse as Response;
