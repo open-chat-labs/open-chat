@@ -8,7 +8,7 @@
 </script>
 
 <div class="content">
-    <Intro on:login />
+    <Intro />
 
     <div class="headline">
         <h2>

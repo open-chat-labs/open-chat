@@ -4,9 +4,13 @@
 
 import { Poller } from "../utils/poller";
 
+let poller: Poller | undefined = undefined;
+
 export async function startSwCheckPoller(): Promise<void> {
     if ("serviceWorker" in navigator) {
-        new Poller(checkServiceWorker, 60000);
+        if (poller === undefined) {
+            poller = new Poller(checkServiceWorker, 60000);
+        }
     }
 }
 

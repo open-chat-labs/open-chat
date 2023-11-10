@@ -7,16 +7,16 @@
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let content: CryptocurrencyContent;
     export let me: boolean = false;
     export let reply: boolean = false;
     export let senderId: string;
 
+    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: logo = $cryptoLookup[content.transfer.ledger].logo;
-    $: transferText = client.buildCryptoTransferText($_, user.userId, senderId, content, me);
+    $: transferText = client.buildCryptoTransferText($_, $user.userId, senderId, content, me);
     $: transactionLinkText = client.buildTransactionLink($_, content.transfer);
 </script>
 

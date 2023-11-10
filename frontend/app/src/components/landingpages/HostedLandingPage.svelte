@@ -10,7 +10,7 @@
     </div>
     <h1 class="title">powered by OpenChat</h1>
     <div class="launch">
-        <Launch text="Launch chat" on:login />
+        <Launch text="Launch chat" login />
     </div>
 </div>
 

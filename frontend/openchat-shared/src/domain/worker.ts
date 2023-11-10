@@ -235,7 +235,6 @@ export type WorkerRequest =
     | RemoveHotGroupExclusion
     | SuspendUser
     | UnsuspendUser
-    | MarkSuspectedBot
     | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -907,10 +906,6 @@ type StakeNeuronForSubmittingProposals = {
     kind: "stakeNeuronForSubmittingProposals";
 };
 
-type MarkSuspectedBot = {
-    kind: "markSuspectedBot";
-};
-
 type GetUsers = {
     users: UsersArgs;
     allowStale: boolean;
@@ -1540,8 +1535,6 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends LoadFailedMessages
     ? Map<string, Record<number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
-    ? void
-    : T extends MarkSuspectedBot
     ? void
     : T extends ClaimPrize
     ? ClaimPrizeResponse

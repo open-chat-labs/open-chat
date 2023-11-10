@@ -28,7 +28,6 @@
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let draftAmount: bigint;
@@ -43,6 +42,7 @@
     let selectedDuration: Duration = "oneDay";
     let diamondOnly = true;
 
+    $: user = client.user;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     let refreshing = false;
@@ -230,7 +230,7 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
+                    <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
                     {/if}

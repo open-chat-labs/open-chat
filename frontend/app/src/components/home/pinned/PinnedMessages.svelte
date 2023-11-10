@@ -21,11 +21,11 @@
     export let dateLastPinned: bigint | undefined;
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     let unread: boolean = false;
     let messagesDiv: HTMLDivElement | undefined;
 
+    $: user = client.user;
     $: messagesRead = client.messagesRead;
 
     let messages: RemoteData<EventWrapper<Message>[][], string> = { kind: "idle" };
@@ -123,7 +123,7 @@
                 {#each dayGroup as message (message.event.messageId)}
                     <PinnedMessage
                         {chatId}
-                        {user}
+                        user={$user}
                         senderId={message.event.sender}
                         msg={message.event}
                         on:chatWith={chatWith}

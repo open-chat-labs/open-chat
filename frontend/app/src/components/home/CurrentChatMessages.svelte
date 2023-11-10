@@ -29,7 +29,6 @@
     import Witch from "../Witch.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let chat: ChatSummary;
@@ -47,6 +46,7 @@
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
 
+    $: user = client.user;
     $: isProposalGroup = client.isProposalGroup;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -133,7 +133,7 @@
 
     $: timeline = client.groupEvents(
         reverseScroll ? [...events].reverse() : events,
-        user.userId,
+        $user.userId,
         $expandedDeletedMessages,
         reverseScroll,
         groupInner(filteredProposals)
@@ -166,10 +166,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === user.userId;
+            return evt.event.sender === $user.userId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === user.userId;
+            return evt.event.created_by === $user.userId;
         }
         return false;
     }
@@ -326,7 +326,7 @@
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.id}
                         chatType={chat.kind}
-                        {user}
+                        user={$user}
                         me={isMe(evt)}
                         first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
                         last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}

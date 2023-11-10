@@ -62,7 +62,6 @@
     let loadingFromUserScroll = false;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
-    let user = client.user;
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
@@ -70,6 +69,7 @@
     let labelObserver: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
 
+    $: user = client.user;
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -283,7 +283,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([user.userId]),
+                participantIds: new Set<string>([$user.userId]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,

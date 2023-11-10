@@ -85,6 +85,9 @@
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Register from "../register/Register.svelte";
+    import LoggingInModal from "./LoggingInModal.svelte";
+    import AnonFooter from "./AnonFooter.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -94,7 +97,6 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -145,6 +147,8 @@
         HallOfFame,
         EditCommunity,
         MakeProposal,
+        Registering,
+        LoggingIn,
     }
 
     let modal = ModalType.None;
@@ -159,6 +163,10 @@
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: user = client.user;
+    $: suspendedUser = client.suspendedUser;
+    $: anonUser = client.anonUser;
+    $: identityState = client.identityState;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: selectedChatStore = client.selectedChatStore;
@@ -182,6 +190,19 @@
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
 
     $: {
+        if ($identityState.kind === "registering") {
+            modal = ModalType.Registering;
+        }
+        if ($identityState.kind === "logging_in") {
+            modal = ModalType.LoggingIn;
+        }
+        if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+            console.log("We are now logged in so we are closing the register modal");
+            modal = ModalType.None;
+        }
+    }
+
+    $: {
         const merged = client.mergeCombinedUnreadCounts($globalUnreadCount);
         document.title = merged.unmuted > 0 ? `OpenChat (${merged.unmuted})` : "OpenChat";
     }
@@ -196,7 +217,7 @@
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
-        if (client.user.suspensionDetails !== undefined) {
+        if ($suspendedUser) {
             modal = ModalType.Suspended;
         }
 
@@ -340,6 +361,17 @@
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
+
+            if (
+                $anonUser &&
+                pathParams.kind === "chat_list_route" &&
+                (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
+            ) {
+                client.identityState.set({ kind: "logging_in" });
+                page.redirect("/group");
+                return;
+            }
+
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
@@ -720,6 +752,10 @@
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+            return;
+        }
         const { group, select } = ev.detail;
         doJoinGroup(group, select, undefined);
     }
@@ -997,13 +1033,12 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main>
+<main class:anon={$anonUser}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
             on:newChannel={newChannel}
@@ -1068,6 +1103,10 @@
     {/if}
 </main>
 
+{#if $anonUser}
+    <AnonFooter />
+{/if}
+
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
@@ -1100,7 +1139,7 @@
 
 <Toast />
 
-{#if showUpgrade && user}
+{#if showUpgrade && $user}
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1138,7 +1177,17 @@
             <HallOfFame on:close={closeModal} />
         {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
             <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
+        {:else if modal === ModalType.LoggingIn}
+            <LoggingInModal on:close={closeModal} />
         {/if}
+    </Overlay>
+{/if}
+
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
     </Overlay>
 {/if}
 
@@ -1167,6 +1216,10 @@
         width: 100%;
         display: flex;
         margin: 0 auto;
+
+        &.anon {
+            margin-bottom: toRem(50);
+        }
     }
 
     .right-wrapper {
