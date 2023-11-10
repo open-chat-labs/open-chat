@@ -24,7 +24,7 @@
         UserOrUserGroup,
         AttachmentContent,
     } from "openchat-client";
-    import { allQuestions } from "openchat-client";
+    import { allQuestions, chatIdentifiersEqual } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
@@ -68,6 +68,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let previousChatId = chat.id;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -117,6 +118,14 @@
 
         if (editingEvent === undefined) {
             previousEditingEvent = undefined;
+        }
+    }
+
+    $: {
+        // If the chat has changed, close the emoji picker or file selector
+        if (!chatIdentifiersEqual(chat.id, previousChatId)) {
+            messageAction = undefined;
+            previousChatId = chat.id;
         }
     }
 
@@ -401,7 +410,7 @@
 
     function restoreSelection() {
         inp.focus();
-        if (!selectedRange) {
+        if (!selectedRange || !selectedRange.intersectsNode(inp)) {
             const range = new Range();
             range.selectNodeContents(inp);
             range.collapse(false);
