@@ -1149,5 +1149,5 @@
         "timeUpdated": "Heure de disparition du message définie sur {duration}",
         "disabled": "Messages qui disparaissent désactivés"
     },
-    "messageDeletedByOpenChatBot": "Ce message a été signalé par un utilisateur d'OpenChat, envoyé au [Modclub]({modclub}) où il a été jugé comme ayant enfreint une [règle de la plateforme]({rules}), puis supprimé par le {username} sur {timestamp}"
+    "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }"
 }

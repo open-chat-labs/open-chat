@@ -1,18 +1,23 @@
 use chat_events::deep_message_links;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage};
+use modclub_canister::{getProviderRules::Rule, subscribe::ContentResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{Chat, MessageContent, MessageId, MessageIndex, TextContent, TimestampMillis, UserId};
-
-pub type RuleId = u32;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
     lookup: HashMap<(Chat, Option<MessageIndex>, MessageIndex), usize>,
+    #[serde(default)]
+    rules: Vec<Rule>,
 }
 
 impl ReportedMessages {
+    pub fn set_rules(&mut self, rules: Vec<Rule>) {
+        self.rules = rules;
+    }
+
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
         if let Some(index) = self
             .lookup
@@ -47,16 +52,34 @@ impl ReportedMessages {
         }
     }
 
-    pub fn record_outcome(&mut self, index: u64, outcome: ReportOutcome) -> RecordOutcomeResult {
-        if let Some(message) = self.messages.get_mut(index as usize) {
-            if let Some(outcome) = &message.outcome {
-                RecordOutcomeResult::OutcomeExists(outcome.clone())
+    pub fn record_outcome(&mut self, result: ContentResult, now: TimestampMillis) -> RecordOutcomeResult {
+        let approved = result.approvedCount.0.try_into().unwrap();
+        let rejected = result.rejectedCount.0.try_into().unwrap();
+        let report_index: u64 = result.sourceId.parse().unwrap();
+
+        let outcome = ReportOutcome {
+            timestamp: now,
+            approved,
+            rejected,
+            violated_rules: result
+                .violatedRules
+                .into_iter()
+                .map(|v| ViolatedRules {
+                    rule_index: self.index_from_rule_id(v.id),
+                    rejected,
+                })
+                .collect(),
+        };
+
+        if let Some(message) = self.messages.get_mut(report_index as usize) {
+            if message.outcome.is_some() {
+                RecordOutcomeResult::OutcomeExists(report_index)
             } else {
                 message.outcome = Some(outcome);
                 RecordOutcomeResult::Success(message.clone())
             }
         } else {
-            RecordOutcomeResult::ReportNotFound
+            RecordOutcomeResult::ReportNotFound(report_index)
         }
     }
 
@@ -68,7 +91,16 @@ impl ReportedMessages {
         ReportingMetrics {
             messages_reported: self.messages.len(),
             messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
+            rules: self.rules.clone(),
         }
+    }
+
+    pub fn rules(&self) -> &Vec<Rule> {
+        &self.rules
+    }
+
+    fn index_from_rule_id(&self, rule_id: String) -> usize {
+        self.rules.iter().position(|r| r.id == rule_id).unwrap()
     }
 }
 
@@ -76,6 +108,7 @@ impl ReportedMessages {
 pub struct ReportingMetrics {
     pub messages_reported: usize,
     pub messages_pending_outcome: usize,
+    pub rules: Vec<Rule>,
 }
 
 pub struct AddReportArgs {
@@ -98,8 +131,8 @@ pub enum AddReportResult {
 
 pub enum RecordOutcomeResult {
     Success(ReportedMessage),
-    OutcomeExists(ReportOutcome),
-    ReportNotFound,
+    OutcomeExists(u64),
+    ReportNotFound(u64),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -129,14 +162,14 @@ pub struct ReportOutcome {
 }
 
 impl ReportOutcome {
-    pub fn unanimous_rejection_decision(&self, rule_id: Option<RuleId>) -> bool {
+    pub fn unanimous_rejection_decision(&self, rule_index: Option<usize>) -> bool {
         if self.approved > 0 {
             false
-        } else if let Some(rid) = rule_id {
+        } else if let Some(i) = rule_index {
             let rejected_given_rule = self
                 .violated_rules
                 .iter()
-                .find(|r| r.rule_id == rid)
+                .find(|r| r.rule_index == i)
                 .map(|r| r.rejected)
                 .unwrap_or_default();
 
@@ -149,12 +182,9 @@ impl ReportOutcome {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ViolatedRules {
-    pub rule_id: RuleId,
+    #[serde(alias = "rule_id")]
+    pub rule_index: usize,
     pub rejected: u32,
-}
-
-pub fn rule_id_from_modclub_rule_id(rule_id: String) -> RuleId {
-    rule_id.parse().unwrap()
 }
 
 pub fn build_message_to_reporter(reported_message: &ReportedMessage, reporter: UserId) -> LocalUserIndexEvent {

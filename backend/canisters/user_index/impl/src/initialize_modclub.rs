@@ -1,18 +1,31 @@
 use candid::Principal;
 use modclub_canister::{
     addProviderAdmin::{ProviderError, ProviderResult},
+    getProviderRules::Rule,
     subscribe::{SubscribeCallbackFunc, SubscribeMessage},
 };
-use tracing::error;
+use tracing::{error, trace};
 
-use crate::read_state;
+use crate::{mutate_state, read_state};
 
 #[allow(dead_code)]
 pub async fn initialize_modclub() {
-    let (modclub_canister_id, user_index_canister_id, test_mode) =
-        read_state(|state| (state.modclub_canister_id(), state.env.canister_id(), state.data.test_mode));
+    let (modclub_canister_id, user_index_canister_id, already_registered, test_mode) = read_state(|state| {
+        (
+            state.modclub_canister_id(),
+            state.env.canister_id(),
+            !state.data.reported_messages.rules().is_empty(),
+            state.data.test_mode,
+        )
+    });
 
-    // 1. Register OpenChat with Modclub as a provider
+    if already_registered {
+        trace!("Already registered with modclub");
+        return;
+    }
+
+    trace!("1. Register OpenChat with Modclub as a provider");
+
     match modclub_canister_c2c_client::registerProvider(
         modclub_canister_id,
         (
@@ -32,8 +45,9 @@ pub async fn initialize_modclub() {
         Err(_) => return,
     }
 
-    // 2. Add the platform rules
-    let rules = vec![
+    trace!("2. Add the platform rules");
+
+    let initial_rules = vec![
         "Do not threaten to harm another individual or group of people. This includes direct, indirect, and suggestive threats.", 
         "Do not solicit, share, or make attempts to distribute content that depicts, promotes, or attempts to normalize child sexual abuse. Also, do not post content that in any way sexualizes children.", 
         "Do not share sexually explicit or sexually suggestive content of other people without the subject’s knowledge and consent, otherwise known as “revenge porn.” This includes the non-consensual distribution of intimate media that was created either with or without an individual’s consent.",
@@ -41,17 +55,31 @@ pub async fn initialize_modclub() {
         "Do not share real media depicting gore, excessive violence, or animal harm, especially with the intention to harass or shock others.",
         "Do not use OpenChat to promote, coordinate, or execute financial scams."];
 
-    if modclub_canister_c2c_client::addRules(
+    match modclub_canister_c2c_client::addRules(
         modclub_canister_id,
-        (rules.into_iter().map(|r| r.to_string()).collect(), None),
+        (initial_rules.iter().map(|r| r.to_string()).collect(), None),
     )
     .await
-    .is_err()
     {
-        return;
+        Ok((rule_ids,)) => {
+            mutate_state(|state| {
+                state.data.reported_messages.set_rules(
+                    rule_ids
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, id)| Rule {
+                            description: initial_rules[i].to_string(),
+                            id,
+                        })
+                        .collect(),
+                )
+            });
+        }
+        Err(_) => return,
     }
 
-    // 3. Set Matt as initial Modclub admin
+    trace!("3. Set Matt as initial Modclub admin");
+
     let admin_principal = if test_mode {
         "gq3of-647vc-zi77a-4byjm-j43ti-btw75-5ig3w-qnps3-kkg3f-sm5ir-vqe"
     } else {
@@ -74,7 +102,8 @@ pub async fn initialize_modclub() {
         Err(_) => return,
     }
 
-    // 4. Register a callback with Modclub to receive moderation reports
+    trace!("4. Register a callback with Modclub to receive moderation reports");
+
     let _ = modclub_canister_c2c_client::subscribe(
         modclub_canister_id,
         (SubscribeMessage {

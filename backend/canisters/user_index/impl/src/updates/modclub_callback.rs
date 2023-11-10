@@ -1,10 +1,7 @@
 use crate::{
-    // guards::caller_is_modclub,
+    guards::caller_is_modclub,
     model::{
-        reported_messages::{
-            build_message_to_reporter, build_message_to_sender, rule_id_from_modclub_rule_id, RecordOutcomeResult,
-            ReportOutcome, ViolatedRules,
-        },
+        reported_messages::{build_message_to_reporter, build_message_to_sender, RecordOutcomeResult, ReportOutcome},
         user::{SuspensionDetails, SuspensionDuration},
     },
     mutate_state,
@@ -20,44 +17,23 @@ use types::{CanisterId, ChannelId, MessageId, MessageIndex, UserId};
 use user_index_canister::modclub_callback::*;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
-#[update]
-// #[update(guard = "caller_is_modclub")]
+#[update(guard = "caller_is_modclub")]
 #[trace]
 fn modclub_callback(args: Args) {
-    tracing::trace!("modclub_callback");
     ic_cdk::spawn(handle_modclub_callback(args))
 }
 
 async fn handle_modclub_callback(args: Args) {
-    tracing::trace!("handle_modclub_callback");
     mutate_state(|state| {
-        let approved = args.approvedCount.0.try_into().unwrap();
-        let rejected = args.rejectedCount.0.try_into().unwrap();
         let now = state.env.now();
-        let outcome = ReportOutcome {
-            timestamp: now,
-            approved,
-            rejected,
-            violated_rules: args
-                .violatedRules
-                .into_iter()
-                .map(|v| ViolatedRules {
-                    rule_id: rule_id_from_modclub_rule_id(v.id),
-                    rejected,
-                })
-                .collect(),
-        };
-
-        let report_index = args.sourceId.parse().unwrap();
-
-        let reported_message = match state.data.reported_messages.record_outcome(report_index, outcome) {
+        let reported_message = match state.data.reported_messages.record_outcome(args, now) {
             RecordOutcomeResult::Success(m) => m,
-            RecordOutcomeResult::OutcomeExists(_) => {
-                error!(?report_index, "Modclub outcome already recorded");
+            RecordOutcomeResult::OutcomeExists(index) => {
+                error!(?index, "Modclub outcome already recorded");
                 return;
             }
-            RecordOutcomeResult::ReportNotFound => {
-                error!(?report_index, "Report not found");
+            RecordOutcomeResult::ReportNotFound(index) => {
+                error!(?index, "Report not found");
                 return;
             }
         };
@@ -108,9 +84,6 @@ async fn handle_modclub_callback(args: Args) {
         for reporter in reported_message.reports.keys() {
             state.push_event_to_local_user_index(*reporter, build_message_to_reporter(&reported_message, *reporter));
         }
-
-        // Push message + outcome to the platform moderators group
-        if let Some(_platform_moderators_group) = state.data.platform_moderators_group {}
     });
 }
 
@@ -184,27 +157,3 @@ fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &Runtim
         None
     }
 }
-
-// fn push_message_to_platform_moderators_group(
-//     canister_id: CanisterId,
-//     chat_id: MultiUserChat,
-//     thread_root_message_index: Option<MessageIndex>,
-//     event_index: EventIndex,
-//     reason_code: u32,
-//     notes: String,
-//     fire_and_forget_handler: &mut FireAndForgetHandler,
-// ) {
-//     let args = group_canister::c2c_report_message_v2::Args {
-//         user_id: OPENCHAT_BOT_USER_ID,
-//         chat_id,
-//         thread_root_message_index,
-//         event_index,
-//         reason_code,
-//         notes: Some(notes),
-//     };
-//     fire_and_forget_handler.send(
-//         canister_id,
-//         "c2c_report_message_v2_msgpack".to_string(),
-//         serialize_then_unwrap(args),
-//     );
-// }

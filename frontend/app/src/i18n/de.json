@@ -1151,5 +1151,5 @@
         "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
         "disabled": "Verschwindende Nachrichten deaktiviert"
     },
-    "messageDeletedByOpenChatBot": "Diese Nachricht wurde von einem OpenChat-Benutzer gemeldet, an [Modclub]({modclub}) gesendet, wo festgestellt wurde, dass sie gegen eine [Plattformregel]({rules}) verstoßen hat, und dann von {username} am {timestamp} gelöscht."
+    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }"
 }

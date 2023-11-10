@@ -1,8 +1,6 @@
 use candid::{define_function, CandidType, Nat};
 use serde::Deserialize;
 
-pub type RuleId = String;
-
 #[derive(CandidType, Deserialize, Clone, Debug)]
 #[allow(non_camel_case_types)]
 pub enum ContentStatus {
@@ -14,7 +12,7 @@ pub enum ContentStatus {
 #[derive(CandidType, Deserialize, Clone, Debug)]
 #[allow(non_snake_case)]
 pub struct ViolatedRules {
-    pub id: RuleId,
+    pub id: String,
     pub rejectionCount: Nat,
 }
 

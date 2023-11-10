@@ -106,10 +106,10 @@ impl RuntimeState {
         caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
-    // pub fn is_caller_modclub(&self) -> bool {
-    //     let caller = self.env.caller();
-    //     caller == self.modclub_canister_id()
-    // }
+    pub fn is_caller_modclub(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.modclub_canister_id()
+    }
 
     pub fn modclub_canister_id(&self) -> CanisterId {
         let modclub_canister_id =

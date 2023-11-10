@@ -1150,5 +1150,5 @@
         "timeUpdated": "Thời gian tin nhắn biến mất được đặt thành {duration}",
         "disabled": "Tin nhắn biến mất bị vô hiệu hóa"
     },
-    "messageDeletedByOpenChatBot": "Tin nhắn này đã được một người dùng OpenChat báo cáo, được gửi tới [Modclub]({modclub}) nơi nó được đánh giá là đã vi phạm [quy tắc nền tảng]({rules}), sau đó bị xóa bởi {username} trên {timestamp}"
+    "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}) nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }"
 }
