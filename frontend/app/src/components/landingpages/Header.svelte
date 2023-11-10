@@ -35,7 +35,7 @@
             </MenuIcon>
         {:else}
             <div class="menu">
-                <MenuItems {showBlog} on:login on:logout />
+                <MenuItems {showBlog} on:logout />
             </div>
         {/if}
     </div>

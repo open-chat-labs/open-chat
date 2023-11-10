@@ -3,7 +3,12 @@
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { CryptocurrencyDetails, Message, OpenChat, PendingCryptocurrencyTransfer } from "openchat-client";
+    import type {
+        CryptocurrencyDetails,
+        Message,
+        OpenChat,
+        PendingCryptocurrencyTransfer,
+    } from "openchat-client";
     import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -17,7 +22,6 @@
     import TipButton from "./TipButton.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
     const increments: Increment[] = [1, 10, 100];
     type Increment = 1 | 10 | 100;
@@ -36,6 +40,7 @@
     let dollarScale = tweened(0);
     let centAmount = 0;
 
+    $: user = client.user;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
@@ -49,8 +54,7 @@
         draftAmount > BigInt(0)
             ? cryptoBalance - draftAmount - tokenDetails.transferFee
             : cryptoBalance;
-    $: valid =
-        exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
+    $: valid = exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
 
     $: {
@@ -200,7 +204,7 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
+                    <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>
                             {$_("tokenTransfer.zeroBalance", {

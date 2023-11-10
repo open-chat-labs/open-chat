@@ -39,13 +39,13 @@ export type UserGroupDetails = {
 };
 
 export type IdentityState =
-    | "requires_login"
-    | "loading_user"
-    | "logged_in"
-    | "registering"
-    | "logging_in"
-    | "upgrading_user"
-    | "upgrade_user";
+    | { kind: "anon" }
+    | { kind: "loading_user" }
+    | { kind: "logged_in" }
+    | { kind: "registering" }
+    | { kind: "logging_in" }
+    | { kind: "upgrading_user" }
+    | { kind: "upgrade_user" };
 
 export type UserLookup = Record<string, UserSummary>;
 
@@ -92,9 +92,33 @@ export enum AvatarSize {
 
 export type CurrentUserResponse = CreatedUser | UserNotFound;
 
+export type CurrentUser = CreatedUser | UserNotFound;
+
 export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
+
+export const ANON_USER_ID = "does_this_need_to_be_a_principal";
+export const ANON_USERNAME = "guest_user";
+export const ANON_DISPLAY_NAME = "Guest user";
+export const ANON_AVATAR_URL = "/assets/anon.svg";
+
+export function anonymousUser(): CreatedUser {
+    return {
+        kind: "created_user",
+        username: ANON_USERNAME,
+        displayName: ANON_DISPLAY_NAME, // TODO probably need to translate this
+        cryptoAccount: "", // TODO - will this be a problem?
+        userId: ANON_USER_ID,
+        canisterUpgradeStatus: "not_required",
+        referrals: [],
+        isPlatformModerator: false,
+        suspensionDetails: undefined,
+        isSuspectedBot: false,
+        diamondMembership: undefined,
+        moderationFlagsEnabled: 0,
+    };
+}
 
 export type CreatedUser = {
     kind: "created_user";
@@ -215,8 +239,6 @@ export type UnsuspendUserResponse =
     | "user_not_found"
     | "user_not_suspended"
     | "internal_error";
-
-export type MarkSuspectedBotResponse = "success";
 
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }

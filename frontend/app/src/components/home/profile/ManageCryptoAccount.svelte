@@ -16,7 +16,6 @@
     export let mode: "send" | "receive";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     let sendCrypto: SendCrypto;
@@ -27,6 +26,7 @@
     let capturingAccount = false;
     let valid = false;
 
+    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: transferFees = tokenDetails.transferFee;
@@ -86,7 +86,7 @@
         </span>
         <form class={`body ${mode}`} slot="body">
             {#if mode === "receive"}
-                <AccountInfo qrSize={"larger"} centered {ledger} {user} />
+                <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol } })}
                 </a>

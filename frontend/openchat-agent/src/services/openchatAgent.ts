@@ -122,7 +122,6 @@ import type {
     FreezeGroupResponse,
     UnfreezeGroupResponse,
     UnsuspendUserResponse,
-    MarkSuspectedBotResponse,
     ChatStateFull,
     ChatSummary,
     UpdatesResult,
@@ -183,6 +182,7 @@ import {
     DestinationInvalidError,
     CommonResponses,
     applyOptionUpdate,
+    ANON_USER_ID,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { waitAll } from "openchat-shared";
@@ -194,12 +194,13 @@ import {
     mergeCommunities,
     mergeCommunityUpdates,
 } from "../utils/community";
+import { AnonUserClient } from "./user/anonUser.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
-    private _userClient?: UserClient;
+    private _userClient?: UserClient | AnonUserClient;
     private _notificationClient: NotificationsClient;
     private _proposalsBotClient: ProposalsBotClient;
     private _marketMakerClient: MarketMakerClient;
@@ -260,7 +261,11 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createUserClient(userId: string): OpenChatAgent {
-        this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
+        if (userId === ANON_USER_ID) {
+            this._userClient = AnonUserClient.create();
+        } else {
+            this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
+        }
         return this;
     }
 
@@ -295,7 +300,7 @@ export class OpenChatAgent extends EventTarget {
         return this._groupClients[chatId];
     }
 
-    get userClient(): UserClient {
+    get userClient(): UserClient | AnonUserClient {
         if (this._userClient) {
             return this._userClient;
         }
@@ -2377,10 +2382,6 @@ export class OpenChatAgent extends EventTarget {
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this._userIndexClient.unsuspendUser(userId);
-    }
-
-    markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
-        return this._userIndexClient.markSuspectedBot();
     }
 
     loadFailedMessages(): Promise<Map<string, Record<number, EventWrapper<Message>>>> {

@@ -2,21 +2,24 @@
     import Home from "./Home.svelte";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import LandingPage from "../landingpages/LandingPage.svelte";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import LandingPage from "../landingpages/LandingPage.svelte";
+
+    export let showLandingPage: boolean;
 
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
     $: chatsLoading = client.chatsLoading;
-    $: landingPage =
-        $identityState === "requires_login" ||
-        $identityState === "registering" ||
-        $identityState === "logging_in";
+    $: showLoader =
+        $identityState.kind !== "registering" &&
+        ($chatsLoading || $identityState.kind === "loading_user");
+
+    $: console.log("ShowLandingPage: ", showLandingPage);
 </script>
 
-{#if landingPage}
+{#if showLandingPage}
     <LandingPage />
-{:else if $identityState === "loading_user" || $chatsLoading}
+{:else if showLoader}
     <div class="loading">
         <div class="inner-loader">
             <FancyLoader />
@@ -29,6 +32,9 @@
 <style lang="scss">
     .loading {
         width: 100vw;
+        height: 100vh;
+        height: calc(var(--vh, 1vh) * 100);
+        height: 100dvh; // firefox will ignore this
         display: grid;
     }
 

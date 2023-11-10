@@ -75,3 +75,25 @@ export class MessageMap extends Map {}
 export class CommunityMap extends Map {}
 
 export class ObjectSet extends Set {}
+
+export const ANON_USER_ID = "does_this_need_to_be_a_principal";
+export const ANON_USERNAME = "guest_user";
+export const ANON_DISPLAY_NAME = "Guest user";
+export const ANON_AVATAR_URL = "/assets/anon.svg";
+
+export function anonymousUser() {
+    return {
+        kind: "created_user",
+        username: ANON_USERNAME,
+        displayName: ANON_DISPLAY_NAME,
+        cryptoAccount: "",
+        userId: ANON_USER_ID,
+        canisterUpgradeStatus: "not_required",
+        referrals: [],
+        isPlatformModerator: false,
+        suspensionDetails: undefined,
+        isSuspectedBot: false,
+        diamondMembership: undefined,
+        moderationFlagsEnabled: 0,
+    };
+}

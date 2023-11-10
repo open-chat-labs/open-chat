@@ -12,7 +12,6 @@
     import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let prefix: string | undefined;
     export let offset: number;
@@ -25,6 +24,7 @@
     let index = 0;
     let usersAndGroups: UserOrUserGroup[] = [];
 
+    $: currentUser = client.user;
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
@@ -51,7 +51,7 @@
             }
             default:
                 return (
-                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                    (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
                     (prefixLower === undefined ||
                         userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                         userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))

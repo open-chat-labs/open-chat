@@ -228,13 +228,6 @@
         "unread": "{count} ungelesene Nachricht(en)",
         "mentions": "{count} ungelesene Erwähnung(en)"
     },
-    "login": {
-        "welcomeTo": "Willkommen zu ...",
-        "blurbPartOne": "Eine sichere, intuitive, dezentralisierte Chat-App, die vollständig auf läuft",
-        "blurbPartTwo": " - die weltweit erste Blockchain im Internetmaßstab. Weiterlesen",
-        "signIn": "Anmelden",
-        "signInOrRegister": "Einloggen oder Registrieren"
-    },
     "reactions": {
         "greaterThan99People": "99+ Leute",
         "youClickToRemove": "Sie (zum Entfernen klicken)",
@@ -1150,5 +1143,12 @@
         "oneMinute": "1 Minute",
         "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
         "disabled": "Verschwindende Nachrichten deaktiviert"
-    }
+    },
+    "login": "Anmeldung",
+    "loginToOpenChat": "Melden Sie sich bei OpenChat an",
+    "tapToLogin": "Gastmodus – tippen Sie hier, um sich anzumelden",
+    "loginProviderChanged": "Anscheinend haben Sie sich zuvor beim Anbieter {previous} angemeldet. Bitte überprüfen Sie noch einmal, ob Sie dieses Mal {next} verwenden möchten.",
+    "guestUser": "Gastbenutzer",
+    "showAuthProviders": "Optionen anzeigen",
+    "hideAuthProviders": "Optionen ausblenden"
 }

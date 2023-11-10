@@ -31,7 +31,9 @@
     let user: UserSummary | undefined;
     let lastOnline: number | undefined;
 
-    $: me = userId === client.user.userId;
+    $: createdUser = client.user;
+    $: platformModerator = client.platformModerator;
+    $: me = userId === $createdUser.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
     $: status =
@@ -260,7 +262,7 @@
                     <div class="right">
                         {joined}
                     </div>
-                    {#if client.user.isPlatformModerator}
+                    {#if $platformModerator}
                         {#if isPremium}
                             <p class="left">PREMIUM</p>
                         {/if}
