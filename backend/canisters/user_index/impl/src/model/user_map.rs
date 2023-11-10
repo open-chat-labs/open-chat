@@ -266,6 +266,15 @@ impl UserMap {
         }
     }
 
+    pub fn push_reported_message(&mut self, user_id: UserId, report_index: u64) -> bool {
+        if let Some(user) = self.users.get_mut(&user_id) {
+            user.reported_messages.push(report_index);
+            true
+        } else {
+            false
+        }
+    }
+
     #[cfg(test)]
     pub fn add_test_user(&mut self, user: User) {
         let date_created = user.date_created;

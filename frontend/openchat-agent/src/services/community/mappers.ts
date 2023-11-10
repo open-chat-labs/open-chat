@@ -99,6 +99,7 @@ import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
+import type { ReportMessageResponse } from "./candid/types";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse,
@@ -736,4 +737,8 @@ export function followThreadResponse(
         console.warn("followThread failed with", candid);
         return "failed";
     }
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

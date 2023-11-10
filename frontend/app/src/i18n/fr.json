@@ -885,7 +885,6 @@
         "optional": "Facultatif",
         "note": "Ajouter une note",
         "notePlaceholder": "Dites-nous pourquoi vous signalez ce contenu",
-        "advice": "Si vous pensez que ce message enfreint les règles de ce groupe, veuillez contacter les propriétaires et les administrateurs du groupe en premier lieu. Ne signalez un message à la modération de la plate-forme que si vous pensez qu'il enfreint les [directives de la plate-forme](/guidelines).",
         "threat": "Le message est menaçant",
         "child": "Le message contient du contenu sexuel impliquant des enfants",
         "nonConsensual": "Le message contient du contenu sexuel non consensuel",
@@ -897,7 +896,8 @@
         "failure": "Désolé, nous n'avons pas pu signaler ce message aux modérateurs de la plateforme",
         "deleteMessage": "Supprimer le message signalé",
         "messageReport": "Signalé par @{username} sur {timestamp} pour la raison suivante : **{reason}**",
-        "showing": "Affichage du ou des rapports {count} sur {total} les plus récents"
+        "showing": "Affichage du ou des rapports {count} sur {total} les plus récents",
+        "advice": "Si vous pensez que ce message enfreint les règles de ce groupe, veuillez contacter en premier lieu les propriétaires et les administrateurs du groupe. Signalez un message à la modération de la plateforme uniquement si vous pensez qu'il enfreint les [règles de la plateforme]({rules})."
     },
     "invitedBy": "{changedBy} a invité {changed} au {level}",
     "halloffame": {
@@ -1148,5 +1148,6 @@
     "loginProviderChanged": "Il semble que vous vous soyez déjà connecté avec le fournisseur {previous}. Veuillez vérifier que vous souhaitez utiliser {next} cette fois ?",
     "guestUser": "Utilisateur invité",
     "showAuthProviders": "Afficher les options",
-    "hideAuthProviders": "Masquer les options"
+    "hideAuthProviders": "Masquer les options",
+    "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }"
 }

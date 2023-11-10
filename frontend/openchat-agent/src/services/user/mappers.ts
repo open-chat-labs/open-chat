@@ -148,7 +148,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import { Principal } from "@dfinity/principal";
-import type { ProposalToSubmit, ProposalToSubmitAction } from "./candid/types";
+import type { ProposalToSubmit, ProposalToSubmitAction, ReportMessageResponse } from "./candid/types";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -1116,4 +1116,8 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
         return { kind: "insufficient_payment" };
     }
     throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", candid);
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

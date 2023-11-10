@@ -20,7 +20,6 @@ export {
     GroupCanisterGroupChatSummary as ApiGroupCanisterGroupChatSummary,
     JoinGroupResponse as ApiJoinGroupResponse,
     GateCheckFailedReason as ApiGateCheckFailedReason,
-    ReportMessageResponse as ApiReportMessageResponse,
     InviteUsersToGroupResponse as ApiInviteUsersResponse,
     InviteUsersToChannelResponse as ApiInviteUsersToChannelResponse,
     JoinCommunityResponse as ApiJoinCommunityResponse,

@@ -405,7 +405,6 @@
 
 {#if showReport}
     <ReportMessage
-        {eventIndex}
         {threadRootMessageIndex}
         messageId={msg.messageId}
         {chatId}

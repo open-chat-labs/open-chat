@@ -1875,8 +1875,6 @@ export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
 export type ClaimPrizeResponse = Success | Failure;
 
-export type ReportMessageResponse = "success" | "failure";
-
 export type DeclineInvitationResponse = "success" | "failure";
 
 export type PublicGroupSummaryResponse =

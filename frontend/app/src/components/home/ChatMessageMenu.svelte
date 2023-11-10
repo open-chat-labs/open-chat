@@ -436,7 +436,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && publicGroup && !me && !inert}
+                {#if confirmed && !me && !inert}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

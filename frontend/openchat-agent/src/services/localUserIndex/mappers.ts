@@ -3,7 +3,6 @@ import type {
     JoinCommunityResponse,
     JoinGroupResponse,
     RegisterUserResponse,
-    ReportMessageResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
@@ -12,7 +11,6 @@ import type {
     ApiJoinChannelResponse,
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
-    ApiReportMessageResponse,
 } from "./candid/idl";
 import { bytesToHexString } from "../../utils/mapping";
 import {
@@ -106,16 +104,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
-}
-
-export function reportMessageResponse(candid: ApiReportMessageResponse): ReportMessageResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("InternalError" in candid) {
-        return "failure";
-    }
-    throw new UnsupportedValueError("Unexpected ApiReportMessageResponse type received", candid);
 }
 
 export function inviteUsersResponse(

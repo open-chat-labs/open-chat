@@ -1,6 +1,5 @@
 <script lang="ts">
     import Overlay from "../Overlay.svelte";
-    import TextArea from "../TextArea.svelte";
     import Select from "../Select.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
@@ -17,7 +16,6 @@
     import { toastStore } from "../../stores/toast";
 
     export let chatId: ChatIdentifier;
-    export let eventIndex: number;
     export let messageId: bigint;
     export let threadRootMessageIndex: number | undefined;
     export let canDelete: boolean;
@@ -27,7 +25,6 @@
 
     let deleteMessage = false;
     let busy = false;
-    let note: string;
     let selectedReasonIndex = -1;
     let reasons = [
         $_("report.pleaseSelect"),
@@ -37,16 +34,12 @@
         $_("report.selfHarm"),
         $_("report.violence"),
         $_("report.scam"),
-        $_("report.other"),
     ];
 
-    $: valid = selectedReasonIndex > -1 && (selectedReasonIndex !== 8 || note.length > 0);
+    $: valid = selectedReasonIndex > -1;
 
     function createReport() {
         report();
-        if (deleteMessage) {
-            doDelete();
-        }
         dispatch("close");
     }
 
@@ -54,13 +47,7 @@
         if (chatId.kind === "direct_chat") return;
 
         client
-            .reportMessage(
-                chatId,
-                eventIndex,
-                selectedReasonIndex,
-                note.length > 0 ? note : undefined,
-                threadRootMessageIndex
-            )
+            .reportMessage(chatId, threadRootMessageIndex, messageId, canDelete && deleteMessage)
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast("report.success");
@@ -68,14 +55,6 @@
                     toastStore.showFailureToast("report.failure");
                 }
             });
-    }
-
-    function doDelete() {
-        client.deleteMessage(chatId, threadRootMessageIndex, messageId, false).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("deleteFailed");
-            }
-        });
     }
 </script>
 
@@ -94,24 +73,19 @@
                     {/each}
                 </Select>
             </div>
-            <div class="note">
-                <Legend label={$_("report.note")} rules={$_("report.optional")} />
-                <TextArea
-                    maxlength={200}
-                    rows={3}
-                    placeholder={$_("report.notePlaceholder")}
-                    bind:value={note} />
-                {#if canDelete}
-                    <div class="delete">
-                        <Checkbox
-                            id={"delete_message"}
-                            label={$_("report.deleteMessage")}
-                            bind:checked={deleteMessage} />
-                    </div>
-                {/if}
-            </div>
+            {#if canDelete}
+                <div class="delete">
+                    <Checkbox
+                        id={"delete_message"}
+                        label={$_("report.deleteMessage")}
+                        bind:checked={deleteMessage} />
+                </div>
+            {/if}
             <div class="advice">
-                <Markdown text={$_("report.advice")} />
+                <Markdown
+                    text={$_("report.advice", {
+                        values: { rules: "https://oc.app/guidelines?section=3" },
+                    })} />
             </div>
         </span>
         <span slot="footer">
