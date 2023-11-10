@@ -42,6 +42,7 @@
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
+        UserNewlySuspended,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -256,6 +257,9 @@
             });
         } else if (ev instanceof SelectedChatInvalid) {
             page.replace(routeForScope(client.getDefaultScope()));
+        } else if (ev instanceof UserNewlySuspended) {
+            // This will mean user_index::current_user is called returning the latest suspensionDetails
+            window.location.reload();
         }
     }
 
