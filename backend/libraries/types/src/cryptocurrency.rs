@@ -416,7 +416,7 @@ pub mod icrc1 {
         pub amount: NumTokens,
     }
 
-    #[derive(CandidType, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum TransferError {
         BadFee { expected_fee: NumTokens },
         BadBurn { min_burn_amount: NumTokens },

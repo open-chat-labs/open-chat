@@ -10,8 +10,6 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
-use ic_ledger_types::AccountIdentifier;
-use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
@@ -226,10 +224,6 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
         }
-    }
-
-    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
-        default_ledger_account(self.user_index_canister_id)
     }
 
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
