@@ -47,7 +47,7 @@ pub async fn initialize_modclub() {
 
     trace!("2. Add the platform rules");
 
-    let initial_rules = vec![
+    let initial_rules = [
         "Do not threaten to harm another individual or group of people. This includes direct, indirect, and suggestive threats.", 
         "Do not solicit, share, or make attempts to distribute content that depicts, promotes, or attempts to normalize child sexual abuse. Also, do not post content that in any way sexualizes children.", 
         "Do not share sexually explicit or sexually suggestive content of other people without the subject’s knowledge and consent, otherwise known as “revenge porn.” This includes the non-consensual distribution of intimate media that was created either with or without an individual’s consent.",
