@@ -228,7 +228,7 @@ import {
     SentMessage,
     ThreadClosed,
     ThreadSelected,
-    UserNewlySuspended,
+    UserSuspensionChanged,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -4522,8 +4522,8 @@ export class OpenChat extends OpenChatAgentWorker {
             });
 
             if (!init || chatsResponse.anyUpdates) {
-                if (chatsResponse.newlySuspended) {
-                    this.dispatchEvent(new UserNewlySuspended());
+                if (chatsResponse.suspensionChanged !== undefined) {
+                    this.dispatchEvent(new UserSuspensionChanged());
                     return;
                 }
 

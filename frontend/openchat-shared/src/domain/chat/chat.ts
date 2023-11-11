@@ -836,7 +836,7 @@ export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
-    newlySuspended: boolean;
+    suspensionChanged: boolean | undefined;
 };
 
 export type ChatStateFull = {

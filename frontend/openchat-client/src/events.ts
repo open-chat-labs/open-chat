@@ -70,7 +70,7 @@ export class SelectedChatInvalid extends Event {
     }
 }
 
-export class UserNewlySuspended extends Event {
+export class UserSuspensionChanged extends Event {
     constructor() {
         super("openchat_event");
     }
