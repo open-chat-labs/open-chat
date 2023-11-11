@@ -258,7 +258,7 @@
         } else if (ev instanceof SelectedChatInvalid) {
             page.replace(routeForScope(client.getDefaultScope()));
         } else if (ev instanceof UserSuspensionChanged) {
-            // This will mean user_index::current_user is called returning the latest suspensionDetails
+            // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
         }
     }
