@@ -725,13 +725,11 @@ export const idlFactory = ({ IDL }) => {
     'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'chat_last_updated' : TimestampMillis,
     'events' : IDL.Vec(ChatEventWrapper),
-    'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
     'expired_event_ranges' : IDL.Vec(IDL.Tuple(EventIndex, EventIndex)),
   });
   const EventsResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
-    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
@@ -781,12 +779,10 @@ export const idlFactory = ({ IDL }) => {
   const MessagesSuccessResult = IDL.Record({
     'messages' : IDL.Vec(MessageEventWrapper),
     'chat_last_updated' : TimestampMillis,
-    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
-    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : MessagesSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,

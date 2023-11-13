@@ -241,9 +241,6 @@ export async function messagesByMessageIndexResponse(
     ) {
         return "events_failed";
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
-    }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDateV2,

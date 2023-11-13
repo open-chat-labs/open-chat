@@ -674,7 +674,6 @@ export interface EventsByIndexArgs {
 }
 export type EventsResponse = { 'ThreadNotFound' : null } |
   { 'UserNotInChannel' : null } |
-  { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChannelNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'UserNotInCommunity' : null } |
@@ -683,7 +682,6 @@ export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
@@ -1202,7 +1200,6 @@ export interface MessagesByMessageIndexArgs {
 }
 export type MessagesByMessageIndexResponse = { 'ThreadNotFound' : null } |
   { 'UserNotInChannel' : null } |
-  { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChannelNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
   { 'UserNotInCommunity' : null } |
@@ -1210,7 +1207,6 @@ export type MessagesByMessageIndexResponse = { 'ThreadNotFound' : null } |
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
 export type Milliseconds = bigint;

@@ -386,6 +386,16 @@ export interface DiamondMembershipDetails {
   'recurring' : [] | [DiamondMembershipPlanDuration],
   'expires_at' : TimestampMillis,
 }
+export type DiamondMembershipFeesResponse = {
+    'Success' : Array<
+      {
+        'one_year' : bigint,
+        'token' : Cryptocurrency,
+        'one_month' : bigint,
+        'three_months' : bigint,
+      }
+    >
+  };
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
@@ -472,7 +482,6 @@ export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
@@ -933,7 +942,6 @@ export interface MessageUnpinned {
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
 export type Milliseconds = bigint;
@@ -1494,6 +1502,10 @@ export interface _SERVICE {
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
+  'diamond_membership_fees' : ActorMethod<
+    [EmptyArgs],
+    DiamondMembershipFeesResponse
+  >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse
