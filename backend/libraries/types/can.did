@@ -891,6 +891,7 @@ type PollConfig = record {
     anonymous : bool;
     show_votes_before_end_date : bool;
     allow_multiple_votes_per_user : bool;
+    allow_user_to_change_vote: bool;
 };
 
 type PollContent = record {

@@ -476,6 +476,7 @@ pub enum RegisterVoteResult {
     Success(bool), // The bool specifies if an existing vote was removed or not
     SuccessNoChange,
     PollEnded,
+    UserCannotChangeVote,
     OptionIndexOutOfRange,
 }
 
