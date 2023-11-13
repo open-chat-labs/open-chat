@@ -11,7 +11,7 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let env = init_env();
+    let env = init_env([0; 32]);
 
     let data = Data::new(
         args.is_public,

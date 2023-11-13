@@ -176,6 +176,8 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -223,6 +225,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
+            rng_seed: [0; 32],
         }
     }
 

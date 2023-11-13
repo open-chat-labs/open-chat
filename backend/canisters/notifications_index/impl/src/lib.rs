@@ -120,6 +120,8 @@ struct Data {
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -144,6 +146,7 @@ impl Data {
             notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

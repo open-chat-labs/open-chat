@@ -56,6 +56,8 @@ struct Data {
     pub reward_codes: RewardCodes,
     pub pending_actions: PendingActions,
     pub avatar: Timestamped<Option<Document>>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -74,6 +76,7 @@ impl Data {
             reward_codes: RewardCodes::new(this_canister_id),
             pending_actions: PendingActions::default(),
             avatar: Timestamped::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

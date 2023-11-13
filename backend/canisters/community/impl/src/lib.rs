@@ -244,6 +244,8 @@ struct Data {
     next_event_expiry: Option<TimestampMillis>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
+    #[serde(default)]
+    rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -308,6 +310,7 @@ impl Data {
             next_event_expiry: None,
             test_mode,
             cached_chat_metrics: Timestamped::default(),
+            rng_seed: [0; 32],
         }
     }
 

@@ -79,6 +79,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -104,6 +106,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             registry_synced_up_to: 0,
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

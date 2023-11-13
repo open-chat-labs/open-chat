@@ -128,6 +128,8 @@ struct Data {
     username: String,
     display_name: Option<String>,
     is_registered: bool,
+    #[serde(default)]
+    rng_seed: [u8; 32],
     test_mode: bool,
 }
 
@@ -151,6 +153,7 @@ impl Data {
             username: "".to_string(),
             display_name: None,
             is_registered: false,
+            rng_seed: [0; 32],
             test_mode,
         }
     }

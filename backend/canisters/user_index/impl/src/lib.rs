@@ -220,6 +220,8 @@ struct Data {
     pub reported_messages: ReportedMessages,
     #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -267,6 +269,7 @@ impl Data {
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         };
 
         // Register the ProposalsBot
@@ -318,6 +321,7 @@ impl Default for Data {
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 }

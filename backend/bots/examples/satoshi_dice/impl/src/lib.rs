@@ -80,6 +80,8 @@ struct Data {
     pub users: UserMap,
     pub pending_actions_queue: PendingActionsQueue,
     pub initialized: bool,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -101,6 +103,7 @@ impl Data {
             users: UserMap::default(),
             pending_actions_queue: PendingActionsQueue::default(),
             initialized: false,
+            rng_seed: [0; 32],
             test_mode,
         }
     }

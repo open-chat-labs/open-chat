@@ -11,8 +11,6 @@ use tracing::info;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    let env = init_env();
-
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
@@ -20,6 +18,7 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
+    let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(
         data.cycles_dispenser_config.canister_id,
         data.cycles_dispenser_config.min_cycles_balance,

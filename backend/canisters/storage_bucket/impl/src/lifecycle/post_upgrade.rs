@@ -11,7 +11,7 @@ use tracing::info;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    let env = init_env();
+    let env = init_env([0; 32]);
 
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
