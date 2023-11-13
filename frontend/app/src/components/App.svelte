@@ -15,7 +15,7 @@
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, SessionExpiryError } from "openchat-client";
+    import { OpenChat, SessionExpiryError, UserLoggedIn } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -27,7 +27,7 @@
     import "../components/web-components/profileLink";
     import page from "page";
     import { menuStore } from "../stores/menu";
-    import { framed } from "../stores/xframe";
+    import { framed, broadcastLoggedInUser } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
@@ -78,7 +78,7 @@
     $: showLandingPage =
         landingPageRoute ||
         (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
-        ($identityState.kind === "anon" && $framed); // show landing page if anon and running in a frame
+        (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
@@ -108,7 +108,14 @@
         };
 
         framed.set(window.self !== window.top);
+        client.addEventListener("openchat_event", onUserLoggedIn);
     });
+
+    function onUserLoggedIn(ev: Event) {
+        if (ev instanceof UserLoggedIn) {
+            broadcastLoggedInUser(ev.detail);
+        }
+    }
 
     function addHotGroupExclusion(chatId: string): void {
         client.addHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {

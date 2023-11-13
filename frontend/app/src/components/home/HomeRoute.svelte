@@ -13,8 +13,6 @@
     $: showLoader =
         $identityState.kind !== "registering" &&
         ($chatsLoading || $identityState.kind === "loading_user");
-
-    $: console.log("ShowLandingPage: ", showLandingPage);
 </script>
 
 {#if showLandingPage}
