@@ -12,10 +12,20 @@
 
     $: identityState = client.identityState;
     $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
+    $: busy = $identityState.kind === "logging_in" || $identityState.kind === "loading_user";
 </script>
 
 {#if login}
-    <div role="button" tabindex="0" on:click={() => client.login()} class="launch">{text}</div>
+    <div
+        class:loading={busy}
+        role="button"
+        tabindex="0"
+        on:click={() => client.login()}
+        class="launch">
+        {#if !busy}
+            {text}
+        {/if}
+    </div>
 {:else}
     <a href={url} class="launch">{text}</a>
 {/if}
@@ -30,6 +40,9 @@
         border-radius: toRem(4);
         cursor: pointer;
         text-decoration: none;
+        min-height: 45px;
+        min-width: 150px;
+        text-align: center;
         @include font(bold, normal, fs-100);
         padding: toRem(12) toRem(16) toRem(12) toRem(16);
 
@@ -41,7 +54,15 @@
             @include font(bold, normal, fs-120);
             padding: toRem(16) toRem(20);
             width: 100%;
-            text-align: center;
+        }
+
+        &.loading {
+            @include loading-spinner(
+                1em,
+                0.5em,
+                var(--button-spinner),
+                "/assets/plain-spinner.svg"
+            );
         }
     }
 </style>

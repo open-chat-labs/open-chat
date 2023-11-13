@@ -20,7 +20,7 @@ type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings;
 type OutboundXFrameMessage = UserLoggedIn | "openchat_ready";
 
 type UserLoggedIn = {
-    kind: "user_logged_in";
+    kind: "openchat_user_logged_in";
     userId: string;
 };
 
@@ -56,7 +56,7 @@ export function init() {
 
 export function broadcastLoggedInUser(userId: string) {
     broadcastMessage({
-        kind: "user_logged_in",
+        kind: "openchat_user_logged_in",
         userId,
     });
 }

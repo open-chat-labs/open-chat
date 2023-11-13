@@ -228,6 +228,7 @@ import {
     SentMessage,
     ThreadClosed,
     ThreadSelected,
+    UserLoggedIn,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -732,6 +733,7 @@ export class OpenChat extends OpenChatAgentWorker {
             if (!this._liveState.anonUser) {
                 this.identityState.set({ kind: "logged_in" });
                 this.initWebRtc();
+                this.dispatchEvent(new UserLoggedIn(user.userId));
             }
         }
     }
@@ -4871,8 +4873,7 @@ export class OpenChat extends OpenChatAgentWorker {
             threadRootMessageIndex,
             messageId,
             deleteMessage,
-        })
-        .catch((err) => {
+        }).catch((err) => {
             this._logger.error("Unable to report message", err);
             return false;
         });
