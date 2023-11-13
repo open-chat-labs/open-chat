@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+
 ## [[2.0.928](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.928-proposals_bot)] - 2023-11-06
 
 ### Added

@@ -77,6 +77,8 @@ struct Data {
     index_sync_state: IndexSyncState,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
+    #[serde(default)]
+    rng_seed: [u8; 32],
     test_mode: bool,
 }
 
@@ -89,6 +91,7 @@ impl Data {
             index_sync_state: IndexSyncState::default(),
             created: now,
             freezing_limit: Timestamped::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

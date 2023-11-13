@@ -14,7 +14,7 @@ fn init(args: Args) {
         args.cycles_dispenser_config.min_cycles_balance,
     );
 
-    let env = init_env();
+    let env = init_env([0; 32]);
     let data = Data::new(
         args.user_controllers,
         args.governance_principals,

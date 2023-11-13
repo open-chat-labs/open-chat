@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+
 ## [[2.0.920](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.920-cycles_dispenser)] - 2023-11-02
 
 ### Added

@@ -85,6 +85,8 @@ struct Data {
     pub prizes_sent: Vec<Prize>,
     pub groups: HashSet<CanisterId>,
     pub started: bool,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -100,6 +102,7 @@ impl Data {
             prizes_sent: Vec::new(),
             groups: HashSet::new(),
             started: false,
+            rng_seed: [0; 32],
         }
     }
 }
