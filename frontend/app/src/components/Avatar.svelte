@@ -38,8 +38,8 @@
     class:small={size === AvatarSize.Small}
     class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
-    class:blocked
-    style="background-image: url({url});">
+    class:blocked>
+    <img class="avatar-image" src={url} loading="lazy" />
     {#if userStatus === UserStatus.Online}
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
     {/if}
@@ -64,15 +64,20 @@
         }
     }
 
-    .avatar {
+    .avatar-image {
+        height: 100%;
+        width: 100%;
         background-color: var(--avatar-bg);
         background-position: center;
-        background-repeat: no-repeat;
         background-size: cover;
         border-radius: 50%;
+    }
+
+    .avatar {
         position: relative;
         margin: 0 auto;
         transition: box-shadow 200ms ease-in-out;
+        border-radius: 50%;
 
         &.tiny {
             width: toRem(20);
