@@ -814,7 +814,6 @@ type EventsWindowArgs = record {
 type EventsResponse = variant {
     Success : EventsSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -828,7 +827,6 @@ type MessagesByMessageIndexArgs = record {
 type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
