@@ -48,7 +48,6 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
-    ReportMessageResponse,
     InviteUsersResponse,
     ResetInviteCodeResponse,
     AddHotGroupExclusionResponse,
@@ -1071,7 +1070,6 @@ export type WorkerResponseInner =
     | UpdateMarketMakerConfigResponse
     | SetMessageReminderResponse
     | ReferralLeaderboardResponse
-    | ReportMessageResponse
     | BlockCommunityUserResponse
     | ChangeCommunityRoleResponse
     | ToggleMuteCommunityNotificationsResponse
@@ -1185,11 +1183,10 @@ type CancelMessageReminder = {
 };
 
 type ReportMessage = {
-    chatId: MultiUserChatIdentifier;
-    eventIndex: number;
-    reasonCode: number;
-    notes: string | undefined;
+    chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    deleteMessage: boolean;
     kind: "reportMessage";
 };
 
@@ -1549,7 +1546,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ReferralLeaderboard
     ? ReferralLeaderboardResponse
     : T extends ReportMessage
-    ? ReportMessageResponse
+    ? boolean
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
     : T extends AddMembersToChannel

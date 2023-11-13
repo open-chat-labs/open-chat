@@ -609,7 +609,6 @@ export interface EditMessageV2Args {
 export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'max_messages' : number,
   'max_events' : number,
@@ -619,7 +618,6 @@ export interface EventsArgs {
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
@@ -627,7 +625,8 @@ export interface EventsByIndexArgs {
 }
 export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventsSuccessResult };
+  { 'Success' : EventsSuccessResult } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
@@ -644,7 +643,6 @@ export interface EventsTimeToLiveUpdated {
   'updated_by' : UserId,
 }
 export interface EventsWindowArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'user_id' : UserId,
   'max_messages' : number,
@@ -1165,7 +1163,6 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
   'user_id' : UserId,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -1175,7 +1172,8 @@ export type MessagesByMessageIndexResponse = {
     'ReplicaNotUpToDate' : EventIndex
   } |
   { 'ChatNotFound' : null } |
-  { 'Success' : MessagesSuccessResult };
+  { 'Success' : MessagesSuccessResult } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,

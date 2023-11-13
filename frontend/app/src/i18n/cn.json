@@ -885,7 +885,6 @@
         "optional": "选修的",
         "note": "添加备注",
         "notePlaceholder": "告诉我们您举报此内容的原因",
-        "advice": "如果您认为该帖子违反了本群规则，请第一时间联系群主和管理员。如果您认为某条消息违反了[平台准则](/guidelines)，则仅将其报告给平台审核。",
         "threat": "留言有威胁",
         "child": "邮件包含儿童色情内容",
         "nonConsensual": "消息包含未经同意的色情内容",
@@ -897,7 +896,8 @@
         "failure": "抱歉，我们无法将此消息报告给平台版主",
         "deleteMessage": "删除举报的消息",
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
-        "showing": "显示最近的 {count} 份报告（共 {total} 份）"
+        "showing": "显示最近的 {count} 份报告（共 {total} 份）",
+        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息。"
     },
     "invitedBy": "{changedBy} 邀请 {changed} 参加 {level}",
     "halloffame": {
@@ -1149,5 +1149,6 @@
     "loginProviderChanged": "您之前似乎已使用 {previous} 提供商登录。请仔细检查您这次是否想使用 {next}？",
     "guestUser": "访客用户",
     "showAuthProviders": "显示选项",
-    "hideAuthProviders": "隐藏选项"
+    "hideAuthProviders": "隐藏选项",
+    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}"
 }

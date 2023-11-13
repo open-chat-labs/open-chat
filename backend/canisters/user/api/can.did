@@ -664,6 +664,7 @@ type InitialStateResponse = variant {
         communities : CommunitiesInitial;
         avatar_id : opt nat;
         blocked_users : vec UserId;
+        suspended : bool;
     };
 };
 
@@ -707,6 +708,7 @@ type UpdatesResponse = variant {
         communities : CommunitiesUpdates;
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
+        suspended : opt bool;
     };
     SuccessNoUpdates;
 };
@@ -791,7 +793,6 @@ type EventsArgs = record {
     max_messages : nat32;
     max_events : nat32;
     latest_known_update : opt TimestampMillis;
-    latest_client_event_index : opt EventIndex;
 };
 
 type EventsByIndexArgs = record {
@@ -799,7 +800,6 @@ type EventsByIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
     latest_known_update : opt TimestampMillis;
-    latest_client_event_index : opt EventIndex;
 };
 
 type EventsWindowArgs = record {
@@ -809,13 +809,13 @@ type EventsWindowArgs = record {
     max_messages : nat32;
     max_events : nat32;
     latest_known_update : opt TimestampMillis;
-    latest_client_event_index : opt EventIndex;
 };
 
 type EventsResponse = variant {
     Success : EventsSuccessResult;
     ChatNotFound;
     ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type MessagesByMessageIndexArgs = record {
@@ -823,13 +823,13 @@ type MessagesByMessageIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
     latest_known_update : opt TimestampMillis;
-    latest_client_event_index : opt EventIndex;
 };
 
 type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     ChatNotFound;
     ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type SearchMessagesArgs = record {

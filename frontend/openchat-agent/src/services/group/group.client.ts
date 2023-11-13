@@ -63,6 +63,7 @@ import {
     convertToCommunityReponse,
     apiUpdatedRules,
     followThreadResponse,
+    reportMessageResponse,
 } from "./mappers";
 import {
     type Database,
@@ -223,7 +224,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -273,7 +274,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -329,7 +330,7 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, this.chatId),
+            (resp) => getEventsResponse(this.principal, resp, this.chatId, latestKnownUpdate),
             args,
         );
     }
@@ -679,7 +680,13 @@ export class GroupClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.groupService.messages_by_message_index(args),
-            (resp) => getMessagesByMessageIndexResponse(this.principal, resp, this.chatId),
+            (resp) =>
+                getMessagesByMessageIndexResponse(
+                    this.principal,
+                    resp,
+                    this.chatId,
+                    latestKnownUpdate,
+                ),
             args,
         );
     }
@@ -871,6 +878,21 @@ export class GroupClient extends CandidService {
                 ? this.groupService.follow_thread(args)
                 : this.groupService.unfollow_thread(args),
             followThreadResponse,
+        );
+    }
+
+    reportMessage(
+        threadRootMessageIndex: number | undefined, 
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.groupService.report_message({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }

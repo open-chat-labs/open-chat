@@ -20,11 +20,10 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
         args.max_messages,
         args.max_events,
         args.latest_known_update,
-        args.latest_client_event_index,
     ) {
         EventsResult::Success(response) => Success(response),
         EventsResult::UserNotInGroup => CallerNotInGroup,
         EventsResult::ThreadNotFound => ThreadMessageNotFound,
-        EventsResult::ReplicaNotUpToDate(event_index) => ReplicaNotUpToDate(event_index),
+        EventsResult::ReplicaNotUpToDate(last_updated) => ReplicaNotUpToDateV2(last_updated),
     }
 }

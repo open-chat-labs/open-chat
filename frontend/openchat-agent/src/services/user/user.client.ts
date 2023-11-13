@@ -100,6 +100,7 @@ import {
     saveCryptoAccountResponse,
     proposalToSubmit,
     submitProposalResponse,
+    reportMessageResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -357,7 +358,7 @@ export class UserClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.userService.events_by_index(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -412,7 +413,7 @@ export class UserClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.userService.events_window(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -474,7 +475,7 @@ export class UserClient extends CandidService {
 
         return this.handleQueryResponse(
             () => this.userService.events(args),
-            (resp) => getEventsResponse(this.principal, resp, chatId),
+            (resp) => getEventsResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -1138,6 +1139,21 @@ export class UserClient extends CandidService {
                 transaction_fee: transactionFee,
             }),
             submitProposalResponse,
+        );
+    }
+
+    reportMessage(
+        chatId: DirectChatIdentifier,
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.report_message({
+                them: Principal.fromText(chatId.userId),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }

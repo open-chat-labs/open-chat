@@ -496,7 +496,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -735,15 +734,14 @@ export const idlFactory = ({ IDL }) => {
     'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const EventsByIndexArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
   });
   const EventsWindowArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
@@ -769,7 +767,6 @@ export const idlFactory = ({ IDL }) => {
   const LocalUserIndexArgs = IDL.Record({});
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MessagesByMessageIndexArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'latest_known_update' : IDL.Opt(TimestampMillis),
@@ -792,6 +789,7 @@ export const idlFactory = ({ IDL }) => {
     'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : MessagesSuccessResult,
+    'ReplicaNotUpToDateV2' : TimestampMillis,
   });
   const PinMessageArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,

@@ -544,7 +544,6 @@ export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'UserSuspended' : null };
 export type EventIndex = number;
 export interface EventsArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -553,7 +552,6 @@ export interface EventsArgs {
   'start_index' : EventIndex,
 }
 export interface EventsByIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
@@ -561,7 +559,8 @@ export interface EventsByIndexArgs {
 export type EventsResponse = { 'ThreadMessageNotFound' : null } |
   { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
-  { 'Success' : EventsSuccessResult };
+  { 'Success' : EventsSuccessResult } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
@@ -578,7 +577,6 @@ export interface EventsTimeToLiveUpdated {
   'updated_by' : UserId,
 }
 export interface EventsWindowArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
   'max_messages' : number,
   'max_events' : number,
@@ -1043,7 +1041,6 @@ export interface MessageUnpinned {
   'message_index' : MessageIndex,
 }
 export interface MessagesByMessageIndexArgs {
-  'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
@@ -1053,7 +1050,8 @@ export type MessagesByMessageIndexResponse = {
   } |
   { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
-  { 'Success' : MessagesSuccessResult };
+  { 'Success' : MessagesSuccessResult } |
+  { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,

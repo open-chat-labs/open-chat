@@ -130,6 +130,15 @@ type SearchResponse = variant {
     };
 };
 
+type DiamondMembershipFeesResponse = variant {
+    Success : vec record {
+        token : Cryptocurrency;
+        one_month : nat64;
+        three_months : nat64;
+        one_year : nat64;
+    };
+};
+
 type AddPlatformModeratorArgs = record {
     user_id : UserId;
 };
@@ -343,6 +352,9 @@ service : {
 
     // Search for users matching some query
     search : (SearchArgs) -> (SearchResponse) query;
+
+    // Retrieves the current fees to pay for Diamond membership
+    diamond_membership_fees : (EmptyArgs) -> (DiamondMembershipFeesResponse) query;
 
     // Mark the caller as a suspected bot
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);

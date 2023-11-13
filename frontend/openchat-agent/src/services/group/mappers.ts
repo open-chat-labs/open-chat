@@ -67,7 +67,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
-import type { OptionalGroupPermissions } from "./candid/types";
+import type { OptionalGroupPermissions, ReportMessageResponse } from "./candid/types";
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -365,6 +365,7 @@ export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -389,6 +390,13 @@ export async function getMessagesByMessageIndexResponse(
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
+        );
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
         candid,
@@ -399,6 +407,7 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<GroupChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -412,6 +421,13 @@ export async function getEventsResponse(
     }
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
+    }
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
+        );
     }
     console.warn("GetGroupChatEvents failed with ", candid);
     return "events_failed";
@@ -663,4 +679,8 @@ export function followThreadResponse(
         console.warn("followThread failed with", candid);
         return "failed";
     }
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

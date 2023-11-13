@@ -148,7 +148,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import { Principal } from "@dfinity/principal";
-import type { ProposalToSubmit, ProposalToSubmitAction } from "./candid/types";
+import type { ProposalToSubmit, ProposalToSubmitAction, ReportMessageResponse } from "./candid/types";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -454,6 +454,7 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
@@ -470,6 +471,13 @@ export async function getEventsResponse(
     }
     if ("ReplicaNotUpToDate" in candid) {
         throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
+    }
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
+        );
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
@@ -1108,4 +1116,8 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
         return { kind: "insufficient_payment" };
     }
     throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", candid);
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

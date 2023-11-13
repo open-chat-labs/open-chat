@@ -885,7 +885,6 @@
         "optional": "Opzionale",
         "note": "Aggiungi una nota",
         "notePlaceholder": "Spiegaci perché stai segnalando questo contenuto",
-        "advice": "Se ritieni che questo messaggio violi le regole di questo gruppo, contatta innanzitutto i proprietari e gli amministratori del gruppo. Segnala un messaggio per la moderazione della piattaforma solo se ritieni che violi le [linee guida della piattaforma](/guidelines).",
         "threat": "Il messaggio è minaccioso",
         "child": "Il messaggio contiene contenuti di natura sessuale per bambini",
         "nonConsensual": "Il messaggio contiene contenuti sessuali non consensuali",
@@ -897,7 +896,8 @@
         "failure": "Spiacenti, non siamo stati in grado di segnalare questo messaggio ai moderatori della piattaforma",
         "deleteMessage": "Elimina messaggio segnalato",
         "messageReport": "Segnalato da @{username} il {timestamp} per il seguente motivo: **{reason}**",
-        "showing": "Visualizzazione dei {count} rapporti {total} più recenti"
+        "showing": "Visualizzazione dei {count} rapporti {total} più recenti",
+        "advice": "Se ritieni che questo messaggio violi le regole di questo gruppo, contatta in primo luogo i proprietari e gli amministratori del gruppo. Segnala un messaggio per la moderazione della piattaforma solo se ritieni che violi le [regole della piattaforma]({rules})."
     },
     "invitedBy": "{changedBy} ha invitato {changed} al {level}",
     "halloffame": {
@@ -1148,5 +1148,6 @@
     "loginProviderChanged": "Sembra che tu abbia già effettuato l'accesso con il provider {previous}. Per favore ricontrolla che desideri utilizzare {next} questa volta?",
     "guestUser": "Utente ospite",
     "showAuthProviders": "Mostra opzioni",
-    "hideAuthProviders": "Nascondi opzioni"
+    "hideAuthProviders": "Nascondi opzioni",
+    "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }"
 }

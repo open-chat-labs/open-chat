@@ -132,6 +132,8 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -169,6 +171,7 @@ impl Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 
@@ -249,6 +252,7 @@ impl Default for Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 }

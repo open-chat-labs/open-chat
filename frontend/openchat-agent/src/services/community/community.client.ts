@@ -31,6 +31,7 @@ import {
     deleteUserGroupsResponse,
     setMemberDisplayNameResponse,
     followThreadResponse,
+    reportMessageResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -426,7 +427,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -461,7 +462,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events_by_index(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -521,7 +522,7 @@ export class CommunityClient extends CandidService {
         return this.handleQueryResponse(
             () => this.service.events_window(args),
             (res) => {
-                return getEventsResponse(this.principal, res, chatId);
+                return getEventsResponse(this.principal, res, chatId, latestKnownUpdate);
             },
         );
     }
@@ -574,7 +575,8 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (resp) => getMessagesByMessageIndexResponse(this.principal, resp, chatId),
+            (resp) =>
+                getMessagesByMessageIndexResponse(this.principal, resp, chatId, latestKnownUpdate),
             args,
         );
     }
@@ -647,7 +649,7 @@ export class CommunityClient extends CandidService {
         };
         return this.handleQueryResponse(
             () => this.service.messages_by_message_index(args),
-            (res) => messagesByMessageIndexResponse(this.principal, res, chatId),
+            (res) => messagesByMessageIndexResponse(this.principal, res, chatId, latestKnownUpdate),
         );
     }
 
@@ -1237,6 +1239,23 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(
             follow ? this.service.follow_thread(args) : this.service.unfollow_thread(args),
             followThreadResponse,
+        );
+    }
+
+    reportMessage(
+        channelId: string, 
+        threadRootMessageIndex: number | undefined, 
+        messageId: bigint, 
+        deleteMessage: boolean
+    ): Promise<boolean> {
+        return this.handleResponse(
+            this.service.report_message({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+                delete: deleteMessage
+            }),
+            reportMessageResponse
         );
     }
 }

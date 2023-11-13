@@ -302,18 +302,14 @@ impl GroupChatCore {
         max_messages: u32,
         max_events: u32,
         latest_known_update: Option<TimestampMillis>,
-        latest_client_event_index: Option<EventIndex>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let chat_last_updated = self.last_updated(user_id);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if chat_last_updated < latest_known_update.unwrap_or_default()
-                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
-                {
-                    return ReplicaNotUpToDate(latest_event_index);
+                if chat_last_updated < latest_known_update.unwrap_or_default() {
+                    return ReplicaNotUpToDate(chat_last_updated);
                 }
 
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
@@ -324,6 +320,7 @@ impl GroupChatCore {
                     user_id,
                 ));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+                let latest_event_index = reader.latest_event_index().unwrap();
 
                 Success(EventsResponse {
                     events,
@@ -345,22 +342,19 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
         latest_known_update: Option<TimestampMillis>,
-        latest_client_event_index: Option<EventIndex>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let chat_last_updated = self.last_updated(user_id);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if chat_last_updated < latest_known_update.unwrap_or_default()
-                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
-                {
-                    return ReplicaNotUpToDate(latest_event_index);
+                if chat_last_updated < latest_known_update.unwrap_or_default() {
+                    return ReplicaNotUpToDate(chat_last_updated);
                 }
 
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+                let latest_event_index = reader.latest_event_index().unwrap();
 
                 Success(EventsResponse {
                     events,
@@ -384,18 +378,14 @@ impl GroupChatCore {
         max_messages: u32,
         max_events: u32,
         latest_known_update: Option<TimestampMillis>,
-        latest_client_event_index: Option<EventIndex>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let chat_last_updated = self.last_updated(user_id);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if chat_last_updated < latest_known_update.unwrap_or_default()
-                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
-                {
-                    return ReplicaNotUpToDate(latest_event_index);
+                if chat_last_updated < latest_known_update.unwrap_or_default() {
+                    return ReplicaNotUpToDate(chat_last_updated);
                 }
 
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
@@ -405,6 +395,7 @@ impl GroupChatCore {
                     user_id,
                 ));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+                let latest_event_index = reader.latest_event_index().unwrap();
 
                 Success(EventsResponse {
                     events,
@@ -426,24 +417,21 @@ impl GroupChatCore {
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
         latest_known_update: Option<TimestampMillis>,
-        latest_client_event_index: Option<EventIndex>,
     ) -> MessagesResult {
         use MessagesResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
                 let chat_last_updated = self.last_updated(user_id);
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if chat_last_updated < latest_known_update.unwrap_or_default()
-                    || latest_client_event_index.map_or(false, |e| latest_event_index < e)
-                {
-                    return ReplicaNotUpToDate(latest_event_index);
+                if chat_last_updated < latest_known_update.unwrap_or_default() {
+                    return ReplicaNotUpToDate(chat_last_updated);
                 }
 
                 let messages: Vec<_> = messages
                     .into_iter()
                     .filter_map(|m| reader.message_event(m.into(), user_id))
                     .collect();
+                let latest_event_index = reader.latest_event_index().unwrap();
 
                 Success(MessagesResponse {
                     messages,
@@ -1686,14 +1674,14 @@ pub enum EventsResult {
     Success(EventsResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(EventIndex),
+    ReplicaNotUpToDate(TimestampMillis),
 }
 
 pub enum MessagesResult {
     Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(EventIndex),
+    ReplicaNotUpToDate(TimestampMillis),
 }
 
 #[allow(clippy::large_enum_variant)]

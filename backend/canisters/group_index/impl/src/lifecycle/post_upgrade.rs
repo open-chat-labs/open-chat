@@ -12,8 +12,6 @@ use utils::cycles::init_cycles_dispenser_client;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    let env = init_env();
-
     let memory = get_upgrades_memory();
     let reader = get_reader(&memory);
 
@@ -21,6 +19,7 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
+    let env = init_env(data.rng_seed);
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 

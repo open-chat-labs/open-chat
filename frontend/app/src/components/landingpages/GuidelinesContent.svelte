@@ -122,6 +122,7 @@
             <li>
                 <strong
                     >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong>
+                Promoting a particular crypto token or NFT does not break this rule in general.
             </li>
         </ul>
     </div>

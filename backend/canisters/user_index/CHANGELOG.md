@@ -5,9 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+- Return Diamond membership fees from UserIndex ([#4751](https://github.com/open-chat-labs/open-chat/pull/4751))
+- Implement modclub integration for reporting ([#4726](https://github.com/open-chat-labs/open-chat/pull/4726))
+
 ### Changed
 
 - Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
 
 ### Fixed
 

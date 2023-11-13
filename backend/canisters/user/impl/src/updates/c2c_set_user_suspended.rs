@@ -16,8 +16,9 @@ fn c2c_set_user_suspended(args: Args) -> Response {
 fn c2c_set_user_suspended_impl(suspended: bool, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     let groups = state.data.group_chats.iter().map(|g| g.chat_id).collect();
+    let communities = state.data.communities.iter().map(|c| c.community_id).collect();
 
     state.data.suspended = Timestamped::new(suspended, now);
 
-    Success(SuccessResult { groups })
+    Success(SuccessResult { groups, communities })
 }

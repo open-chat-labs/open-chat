@@ -141,7 +141,6 @@ import type {
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
-    ReportMessageResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
     AccessGate,
@@ -2481,23 +2480,6 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getReferralLeaderboard(req);
     }
 
-    async reportMessage(
-        chatId: MultiUserChatIdentifier,
-        eventIndex: number,
-        reasonCode: number,
-        notes: string | undefined,
-        threadRootMessageIndex: number | undefined,
-    ): Promise<ReportMessageResponse> {
-        const modGroupId = await this._userIndexClient.getPlatformModeratorGroup();
-        const localUserIndex = await this.getGroupClient(modGroupId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).reportMessage(
-            chatId,
-            eventIndex,
-            reasonCode,
-            notes,
-            threadRootMessageIndex,
-        );
-    }
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
         switch (chatId.kind) {
             case "group_chat":
@@ -2624,5 +2606,30 @@ export class OpenChatAgent extends EventTarget {
             proposalRejectionFee,
             transactionFee,
         );
+    }
+
+    reportMessage(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
+    ): Promise<boolean> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).reportMessage(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+                deleteMessage);
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).reportMessage(
+                threadRootMessageIndex, 
+                messageId, 
+                deleteMessage);
+        } else {
+            return this.userClient.reportMessage(
+                chatId,
+                messageId,
+                deleteMessage);
+        }
     }
 }

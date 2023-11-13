@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+
+### Changed
+
+- `c2c_set_user_suspended` also returns user's communities ([#4749](https://github.com/open-chat-labs/open-chat/pull/4749))
+- Return `suspended` in `initial_state` and `updates` ([#4750](https://github.com/open-chat-labs/open-chat/pull/4750))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+
+### Removed
+
+- Remove `latest_client_event_index` from args to get events ([#4747](https://github.com/open-chat-labs/open-chat/pull/4747))
+
 ## [[2.0.932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.932-user)] - 2023-11-09
 
 ### Changed

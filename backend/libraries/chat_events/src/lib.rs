@@ -1,6 +1,7 @@
 mod chat_event_internal;
 mod chat_events;
 mod chat_events_list;
+pub mod deep_message_links;
 mod events_map;
 mod expiring_events;
 mod last_updated_timestamps;

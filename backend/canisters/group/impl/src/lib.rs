@@ -313,6 +313,8 @@ struct Data {
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
     pub next_event_expiry: Option<TimestampMillis>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -381,6 +383,7 @@ impl Data {
             community_being_imported_into: None,
             serialized_chat_state: None,
             next_event_expiry: None,
+            rng_seed: [0; 32],
         }
     }
 
