@@ -30,6 +30,7 @@
         limitedDuration: boolean;
         showVotesBeforeEndDate: boolean;
         allowMultipleVotesPerUser: boolean;
+        allowUserToChangeVote: boolean;
         pollAnswers: Set<string>;
     };
 
@@ -60,6 +61,7 @@
             limitedDuration: true,
             showVotesBeforeEndDate: true,
             allowMultipleVotesPerUser: false,
+            allowUserToChangeVote: true,
             pollAnswers: new Set<string>(),
         };
     }
@@ -123,6 +125,7 @@
             },
             config: {
                 allowMultipleVotesPerUser: poll.allowMultipleVotesPerUser,
+                allowUserToChangeVote: poll.allowUserToChangeVote,
                 text: poll.pollQuestion === "" ? undefined : poll.pollQuestion,
                 showVotesBeforeEndDate: poll.showVotesBeforeEndDate,
                 endDate: createPollEndDate(),

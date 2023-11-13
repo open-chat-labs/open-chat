@@ -1013,6 +1013,7 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1363,6 +1364,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1841,6 +1843,7 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };

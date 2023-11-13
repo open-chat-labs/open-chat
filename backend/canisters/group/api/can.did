@@ -96,6 +96,7 @@ type RegisterPollVoteResponse = variant {
     CallerNotInGroup;
     UserSuspended;
     ChatFrozen;
+    UserCannotChangeVote;
 };
 
 type AddReactionArgs = record {

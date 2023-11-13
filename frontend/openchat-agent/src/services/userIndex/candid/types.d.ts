@@ -386,6 +386,16 @@ export interface DiamondMembershipDetails {
   'recurring' : [] | [DiamondMembershipPlanDuration],
   'expires_at' : TimestampMillis,
 }
+export type DiamondMembershipFeesResponse = {
+    'Success' : Array<
+      {
+        'one_year' : bigint,
+        'token' : Cryptocurrency,
+        'one_month' : bigint,
+        'three_months' : bigint,
+      }
+    >
+  };
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
@@ -1134,6 +1144,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1494,6 +1505,10 @@ export interface _SERVICE {
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
+  'diamond_membership_fees' : ActorMethod<
+    [EmptyArgs],
+    DiamondMembershipFeesResponse
+  >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse

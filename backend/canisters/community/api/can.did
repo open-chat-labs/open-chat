@@ -628,6 +628,7 @@ type RegisterPollVoteResponse = variant {
     PollNotFound;
     PollEnded;
     OptionIndexOutOfRange;
+    UserCannotChangeVote;
 };
 
 type RegisterProposalVoteArgs = record {

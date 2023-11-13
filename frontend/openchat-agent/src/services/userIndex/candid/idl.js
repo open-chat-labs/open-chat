@@ -80,8 +80,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const MarkSuspectedBotArgs = IDL.Record({});
-  const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
     'CHAT' : IDL.Null,
@@ -90,6 +88,18 @@ export const idlFactory = ({ IDL }) => {
     'CKBTC' : IDL.Null,
     'Other' : IDL.Text,
   });
+  const DiamondMembershipFeesResponse = IDL.Variant({
+    'Success' : IDL.Vec(
+      IDL.Record({
+        'one_year' : IDL.Nat64,
+        'token' : Cryptocurrency,
+        'one_month' : IDL.Nat64,
+        'three_months' : IDL.Nat64,
+      })
+    ),
+  });
+  const MarkSuspectedBotArgs = IDL.Record({});
+  const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const PayForDiamondMembershipArgs = IDL.Record({
     'token' : Cryptocurrency,
     'duration' : DiamondMembershipPlanDuration,
@@ -307,6 +317,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
+    'diamond_membership_fees' : IDL.Func(
+        [EmptyArgs],
+        [DiamondMembershipFeesResponse],
+        ['query'],
+      ),
     'mark_suspected_bot' : IDL.Func(
         [MarkSuspectedBotArgs],
         [MarkSuspectedBotResponse],
