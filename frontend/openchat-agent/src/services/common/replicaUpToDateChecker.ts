@@ -3,6 +3,8 @@ import { openDbAndGetCachedChats } from "../../utils/caching";
 import { ReplicaNotUpToDateError } from "../error";
 import { chatIdentifiersEqual, type ChatIdentifier, type ChatSummary } from "openchat-shared";
 
+const DATE_FIXED = BigInt(1699800000000);
+
 export async function ensureReplicaIsUpToDate(
     principal: Principal,
     chatId: ChatIdentifier,
@@ -10,13 +12,27 @@ export async function ensureReplicaIsUpToDate(
 ): Promise<void> {
     const clientChat = await getChat(principal, chatId);
 
-    if (clientChat !== undefined && replicaChatLastUpdated < clientChat.lastUpdated) {
+    if (
+        clientChat !== undefined &&
+        replicaChatLastUpdated < clientChat.lastUpdated &&
+        clientChat.lastUpdated > DATE_FIXED
+    ) {
         throw ReplicaNotUpToDateError.byTimestamp(
             replicaChatLastUpdated,
             clientChat.lastUpdated,
             true,
         );
     }
+}
+
+export function excludeLatestKnownUpdateIfBeforeFix(
+    latestKnownUpdate: bigint | undefined,
+): bigint | undefined {
+    if (latestKnownUpdate !== undefined && latestKnownUpdate < DATE_FIXED) {
+        return undefined;
+    }
+
+    return latestKnownUpdate;
 }
 
 async function getChat(

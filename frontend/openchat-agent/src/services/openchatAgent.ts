@@ -194,6 +194,7 @@ import {
     mergeCommunityUpdates,
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
+import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -594,6 +595,8 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
+        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
         switch (chatId.kind) {
             case "direct_chat":
                 return this.directChatEventsWindow(
@@ -648,6 +651,8 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
+        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
         if (chatId.kind === "group_chat") {
             return this.groupChatEvents(
                 eventIndexRange,
@@ -814,6 +819,8 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
+        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
         switch (chatId.kind) {
             case "group_chat":
                 return this.groupChatEventsByEventIndex(
@@ -1152,6 +1159,8 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventWrapper<Message>> {
+        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
@@ -2033,6 +2042,8 @@ export class OpenChatAgent extends EventTarget {
         messageIndexes: Set<number>,
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<Message>> {
+        latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
         switch (chatId.kind) {
             case "group_chat":
                 return this.rehydrateEventResponse(
@@ -2239,6 +2250,8 @@ export class OpenChatAgent extends EventTarget {
             ChatMap.fromMap(threadsByChat)
                 .entries()
                 .map(([chatId, [threadSyncs, latestKnownUpdate]]) => {
+                    latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
                     const latestClientThreadUpdate = threadSyncs.reduce(
                         (curr, next) => (next.lastUpdated > curr ? next.lastUpdated : curr),
                         BigInt(0),
