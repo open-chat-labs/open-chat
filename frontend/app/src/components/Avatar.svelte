@@ -77,6 +77,7 @@
         position: relative;
         margin: 0 auto;
         transition: box-shadow 200ms ease-in-out;
+        border-radius: 50%;
 
         &.tiny {
             width: toRem(20);
