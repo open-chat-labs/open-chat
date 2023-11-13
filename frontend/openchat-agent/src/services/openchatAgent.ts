@@ -1928,7 +1928,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<ToggleMuteNotificationResponse> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.userClient.toggleMuteNotifications(chatId.groupId, muted);
+                return this.getGroupClient(chatId.groupId).toggleMuteNotifications(muted);
             case "direct_chat":
                 return this.userClient.toggleMuteNotifications(chatId.userId, muted);
             case "channel":
@@ -2619,17 +2619,16 @@ export class OpenChatAgent extends EventTarget {
                 chatId.channelId,
                 threadRootMessageIndex,
                 messageId,
-                deleteMessage);
+                deleteMessage,
+            );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).reportMessage(
-                threadRootMessageIndex, 
-                messageId, 
-                deleteMessage);
-        } else {
-            return this.userClient.reportMessage(
-                chatId,
+                threadRootMessageIndex,
                 messageId,
-                deleteMessage);
+                deleteMessage,
+            );
+        } else {
+            return this.userClient.reportMessage(chatId, messageId, deleteMessage);
         }
     }
 }

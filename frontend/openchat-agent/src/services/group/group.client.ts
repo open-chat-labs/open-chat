@@ -46,6 +46,7 @@ import type {
     UpdatedRules,
     FollowThreadResponse,
     OptionalChatPermissions,
+    ToggleMuteNotificationResponse,
 } from "openchat-shared";
 import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -114,6 +115,7 @@ import { apiOptionUpdate, identity } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
+import { muteNotificationsResponse } from "../notifications/mappers";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -850,10 +852,10 @@ export class GroupClient extends CandidService {
         );
     }
 
-    toggleMuteNotifications(mute: boolean): Promise<undefined> {
+    toggleMuteNotifications(mute: boolean): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.groupService.toggle_mute_notifications({ mute }),
-            (_) => undefined,
+            muteNotificationsResponse,
         );
     }
 
@@ -882,17 +884,17 @@ export class GroupClient extends CandidService {
     }
 
     reportMessage(
-        threadRootMessageIndex: number | undefined, 
-        messageId: bigint, 
-        deleteMessage: boolean
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.groupService.report_message({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }
