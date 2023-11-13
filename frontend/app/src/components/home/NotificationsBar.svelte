@@ -8,11 +8,12 @@
     const client = getContext<OpenChat>("client");
 
     $: notificationStatus = client.notificationStatus;
+    $: anonUser = client.anonUser;
 
     $: console.debug("PUSH STATUS: ", $notificationStatus);
 </script>
 
-{#if $notificationStatus === "prompt"}
+{#if !$anonUser && $notificationStatus === "prompt"}
     <div in:fade={{ duration: 100 }} out:fade={{ duration: 100 }} class="notification-bar">
         <div class="txt">{$_("enableNotifications")}</div>
         <div class="links">
