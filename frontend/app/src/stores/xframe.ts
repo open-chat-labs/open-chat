@@ -16,7 +16,13 @@ const FRAME_ANCESTORS = [
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
 ];
 
-type XFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings;
+type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings;
+type OutboundXFrameMessage = UserLoggedIn | "openchat_ready";
+
+type UserLoggedIn = {
+    kind: "user_logged_in";
+    userId: string;
+};
 
 type OverrideSettings = {
     kind: "override_settings";
@@ -44,10 +50,21 @@ export function init() {
     if (window.self !== window.top) {
         console.debug("XFRAME_TARGET: setting listeners", window.top);
         window.addEventListener("message", externalMessage);
-        if (window.top) {
-            console.debug("XFRAME_TARGET: sending ready message");
-            window.top.postMessage("openchat_ready", "*");
-        }
+        broadcastMessage("openchat_ready");
+    }
+}
+
+export function broadcastLoggedInUser(userId: string) {
+    broadcastMessage({
+        kind: "user_logged_in",
+        userId,
+    });
+}
+
+function broadcastMessage(msg: OutboundXFrameMessage) {
+    if (window.top && window.self !== window.top) {
+        console.debug("XFRAME_TARGET: sending message to host: ", msg);
+        window.top.postMessage(msg, "*");
     }
 }
 
@@ -73,7 +90,7 @@ function externalMessage(ev: MessageEvent) {
     console.debug("XFRAME_TARGET: message received from host", ev);
     if (ev.data) {
         try {
-            const payload = ev.data as XFrameMessage;
+            const payload = ev.data as InboundXFrameMessage;
             switch (payload.kind) {
                 case "override_settings":
                     console.debug(
