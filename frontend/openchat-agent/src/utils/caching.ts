@@ -29,6 +29,7 @@ import type {
     CommunityDetails,
     CommunitySummary,
     DataContent,
+    CreatedUser,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -38,7 +39,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 89;
+const CACHE_VERSION = 90;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -101,6 +102,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: bigint;
     };
+
+    currentUser: {
+        key: string;
+        value: CreatedUser;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -156,6 +162,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("cachePrimer")) {
                 db.deleteObjectStore("cachePrimer");
             }
+            if (db.objectStoreNames.contains("currentUser")) {
+                db.deleteObjectStore("currentUser");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             chatEvents.createIndex("expiresAt", "expiresAt");
@@ -167,6 +176,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("failed_chat_messages");
             db.createObjectStore("failed_thread_messages");
             db.createObjectStore("cachePrimer");
+            db.createObjectStore("currentUser");
         },
     });
 }
@@ -1078,4 +1088,14 @@ async function runExpiredEventSweeper() {
     if (expiredKeys.length === batchSize) {
         tryStartExpiredEventSweeper();
     }
+}
+
+export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
+    if (db === undefined) return;
+    return (await db).get("currentUser", principal);
+}
+
+export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("currentUser", user, principal);
 }

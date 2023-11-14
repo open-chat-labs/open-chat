@@ -72,7 +72,7 @@ import {
     userAvatarUrl,
 } from "./utils/user";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
-import { showTrace } from "./utils/profiling";
+import { markTimeline, showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import {
@@ -473,6 +473,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
+        initialiseTracking(config);
+
+        performance.mark("before_login");
+
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
@@ -480,9 +484,14 @@ export class OpenChat extends OpenChatAgentWorker {
             },
             storage: idbAuthClientStore,
         });
-        initialiseTracking(config);
+        performance.mark("created_authclient");
 
-        this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
+        this._authClient
+            .then((c) => {
+                performance.mark("initialised_authclient");
+                return c.getIdentity();
+            })
+            .then((id) => this.loadedIdentity(id));
     }
 
     private chatUpdated(chatId: ChatIdentifier, updatedEvents: UpdatedEvent[]): void {
@@ -510,6 +519,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private loadedIdentity(id: Identity) {
+        performance.mark("loaded_identity");
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
@@ -645,6 +655,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.getCurrentUser()
             .then((user) => {
+                performance.mark("user_loaded");
+
+                console.log("Perf: ", markTimeline());
+
                 switch (user.kind) {
                     case "unknown_user":
                         // TODO remove this once the principal migration can be done via the UI

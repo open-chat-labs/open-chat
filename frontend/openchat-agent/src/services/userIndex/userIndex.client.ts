@@ -43,6 +43,7 @@ import {
     setUsernameInCache,
 } from "../../utils/userCache";
 import { identity } from "../../utils/mapping";
+import { getCachedCurrentUser, setCachedCurrentUser } from "../../utils/caching";
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
@@ -57,11 +58,21 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.handleQueryResponse(
+    async getCurrentUser(): Promise<CurrentUserResponse> {
+        const principal = this.identity.getPrincipal().toString();
+        const cachedUser = await getCachedCurrentUser(principal);
+
+        const liveUser = this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
             currentUserResponse,
-        );
+        ).then((liveUser) => {
+            if (liveUser.kind === "created_user") {
+                setCachedCurrentUser(principal, liveUser);
+            }
+            return liveUser;
+        });
+
+        return cachedUser ?? liveUser;
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
