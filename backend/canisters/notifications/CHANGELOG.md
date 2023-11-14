@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 
 ## [[2.0.898](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.898-notifications)] - 2023-10-19
 
