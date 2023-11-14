@@ -83,6 +83,8 @@ members = [
     "backend/external_canisters/icrc_ledger/c2c_client",
     "backend/external_canisters/modclub/api",
     "backend/external_canisters/modclub/c2c_client",
+    "backend/external_canisters/nns_governance/api",
+    "backend/external_canisters/nns_governance/c2c_client",
     "backend/external_canisters/sns_governance/api",
     "backend/external_canisters/sns_governance/c2c_client",
     "backend/external_canisters/sns_swap/api",

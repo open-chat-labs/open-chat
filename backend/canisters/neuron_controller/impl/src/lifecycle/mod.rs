@@ -1,6 +1,5 @@
-use crate::ecdsa::get_public_key;
+use crate::ecdsa::{get_key_id, get_public_key};
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
-use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
@@ -46,16 +45,11 @@ fn reseed_rng() {
 }
 
 fn init_public_key(test_mode: bool) {
-    let key_name = if test_mode { "dfx_test_key" } else { "key_1" };
+    ic_cdk::spawn(init_public_key_inner(test_mode));
 
-    let key_id = EcdsaKeyId {
-        curve: EcdsaCurve::Secp256k1,
-        name: key_name.to_string(),
-    };
+    async fn init_public_key_inner(test_mode: bool) {
+        let key_id = get_key_id(test_mode);
 
-    ic_cdk::spawn(init_public_key_inner(key_id));
-
-    async fn init_public_key_inner(key_id: EcdsaKeyId) {
         if let Ok(public_key) = get_public_key(key_id).await {
             mutate_state(|state| state.data.public_key = public_key);
         }
