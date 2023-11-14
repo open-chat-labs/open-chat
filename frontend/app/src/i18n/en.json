@@ -391,6 +391,7 @@
         "oneDay": "1 Day",
         "oneWeek": "1 Week",
         "allowMultipleVotes": "Allow multiple votes",
+        "allowChangeVotes": "Allow user to change vote",
         "start": "Start",
         "pollEnds": "Poll ends {end}",
         "voteFailed": "Poll vote failed",

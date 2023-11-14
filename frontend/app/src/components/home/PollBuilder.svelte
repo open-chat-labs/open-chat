@@ -236,6 +236,14 @@
 
                     <Toggle
                         small
+                        id={"allow-change"}
+                        disabled={poll.allowMultipleVotesPerUser}
+                        label={$_("poll.allowChangeVotes")}
+                        on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
+                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
+
+                    <Toggle
+                        small
                         id={"limited-duration"}
                         label={$_("poll.limitedDuration")}
                         on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
