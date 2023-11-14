@@ -2052,7 +2052,6 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "candid",
- "candid_gen",
  "human_readable",
  "serde",
  "types",
