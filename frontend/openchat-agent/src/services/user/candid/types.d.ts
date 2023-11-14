@@ -1046,7 +1046,6 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
-      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1911,7 +1910,6 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
-      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };
