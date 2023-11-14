@@ -50,8 +50,6 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sha2 = { workspace = true }
-sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
-sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
@@ -61,4 +59,3 @@ user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
 user_index_canister = { path = "../api" }
 utils = { path = "../../../libraries/utils" }
-x509-parser = { workspace = true }
