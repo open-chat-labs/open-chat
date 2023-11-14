@@ -33,6 +33,36 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const Subaccount = IDL.Vec(IDL.Nat8);
+  const Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(Subaccount),
+  });
+  const ApproveTransferArgs = IDL.Record({
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+    'expires_at' : IDL.Opt(Milliseconds),
+    'spender' : Account,
+  });
+  const ApproveError = IDL.Variant({
+    'GenericError' : IDL.Record({
+      'message' : IDL.Text,
+      'error_code' : IDL.Nat,
+    }),
+    'TemporarilyUnavailable' : IDL.Null,
+    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
+    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
+    'AllowanceChanged' : IDL.Record({ 'current_allowance' : IDL.Nat }),
+    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'TooOld' : IDL.Null,
+    'Expired' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
+  });
+  const ApproveTransferResponse = IDL.Variant({
+    'ApproveError' : ApproveError,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
@@ -288,7 +318,6 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
-    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
@@ -1496,6 +1525,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
+    'approve_transfer' : IDL.Func(
+        [ApproveTransferArgs],
+        [ApproveTransferResponse],
+        [],
+      ),
     'archive_unarchive_chats' : IDL.Func(
         [ArchiveUnarchiveChatsArgs],
         [ArchiveUnarchiveChatsResponse],

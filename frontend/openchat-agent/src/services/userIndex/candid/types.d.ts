@@ -1142,7 +1142,6 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
-  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
