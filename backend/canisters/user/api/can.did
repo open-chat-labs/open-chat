@@ -1,4 +1,5 @@
 import "../../../libraries/types/can.did";
+import "../../../external_canisters/icrc_ledger/api/can.did";
 
 type SendMessageV2Args = record {
     recipient : UserId;
@@ -130,6 +131,19 @@ type ReportMessageResponse = variant {
     ChatNotFound;
     MessageNotFound;
     AlreadyReported;
+    InternalError : text;
+};
+
+type ApproveTransferArgs = record {
+    spender : Account;
+    ledger_canister_id : CanisterId;
+    amount : nat;
+    expires_at : opt Milliseconds;
+};
+
+type ApproveTransferResponse = variant {
+    Success;
+    ApproveError : ApproveError;
     InternalError : text;
 };
 
@@ -941,6 +955,7 @@ service : {
     save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
+    approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
