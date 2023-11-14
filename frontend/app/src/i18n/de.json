@@ -319,7 +319,7 @@
         "oneVoteBy": "1 Stimme von",
         "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner",
         "atLeastTwo": "Mindestens 2",
-        "allowChangeVotes": "Dem Benutzer erlauben, seine Stimme zu ändern"
+        "allowChangeVotes": "Benutzern erlauben, ihre Stimme zu ändern"
     },
     "role": {
         "admin": "Admins",

@@ -317,7 +317,7 @@
         "oneVoteBy": "1 voto di",
         "numVotesIncludingYours": "{votes} voti compreso il tuo",
         "atLeastTwo": "Minimo 2",
-        "allowChangeVotes": "Consenti all'utente di modificare il voto"
+        "allowChangeVotes": "Consenti agli utenti di modificare il voto"
     },
     "role": {
         "admin": "Amministratori",

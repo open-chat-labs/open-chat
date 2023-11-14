@@ -325,7 +325,7 @@
         "oneVoteBy": "הצבעה 1 מאת",
         "numVotesIncludingYours": "{votes} הצבעות כולל שלך",
         "atLeastTwo": "מינימום 2",
-        "allowChangeVotes": "אפשר למשתמש לשנות הצבעה"
+        "allowChangeVotes": "אפשר למשתמשים לשנות הצבעה"
     },
     "role": {
         "admin": "מנהלי מערכת",
