@@ -153,6 +153,7 @@ describe("merging metrics", () => {
 describe("updating poll votes", () => {
     const config: PollConfig = {
         allowMultipleVotesPerUser: true,
+        allowUserToChangeVote: true,
         text: "Who's the best",
         showVotesBeforeEndDate: true,
         endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),

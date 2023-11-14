@@ -317,7 +317,8 @@
         "oneVote": "1 phiếu bầu",
         "oneVoteBy": "1 phiếu bầu của",
         "numVotesIncludingYours": "{votes} phiếu bầu bao gồm cả của bạn",
-        "atLeastTwo": "Tối thiểu 2"
+        "atLeastTwo": "Tối thiểu 2",
+        "allowChangeVotes": "Cho phép người dùng thay đổi phiếu bầu"
     },
     "role": {
         "admin": "Quản trị viên",

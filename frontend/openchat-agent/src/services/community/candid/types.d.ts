@@ -1390,6 +1390,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1472,7 +1473,8 @@ export interface RegisterPollVoteArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
-export type RegisterPollVoteResponse = { 'UserNotInChannel' : null } |
+export type RegisterPollVoteResponse = { 'UserCannotChangeVote' : null } |
+  { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |
