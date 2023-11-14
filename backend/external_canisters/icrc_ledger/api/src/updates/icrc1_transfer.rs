@@ -1,5 +1,5 @@
 use candid::Nat;
-use types::icrc1::{TransferArg, TransferError};
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 
 pub type Args = TransferArg;
 pub type Response = Result<Nat, TransferError>;

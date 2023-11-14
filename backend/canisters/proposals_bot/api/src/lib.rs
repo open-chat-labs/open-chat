@@ -1,7 +1,7 @@
 use candid::CandidType;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use types::icrc1::Account;
 use types::CanisterId;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

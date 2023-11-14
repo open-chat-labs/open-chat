@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sha256::sha256;
-use types::icrc1::Account;
 use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
     PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,

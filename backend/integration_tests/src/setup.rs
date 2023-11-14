@@ -4,13 +4,13 @@ use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
-use icrc1_ledger_canister::MetadataValue;
+use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
+use icrc_ledger_types::icrc1::account::Account;
 use pocket_ic::PocketIc;
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::icrc1::Account;
 use types::{BuildVersion, CanisterId};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";

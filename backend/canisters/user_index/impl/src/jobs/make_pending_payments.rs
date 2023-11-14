@@ -3,12 +3,13 @@ use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::{Account, TransferArg};
 use types::{Cryptocurrency, MessageContent, TextContent};
 use utils::consts::SNS_ROOT_CANISTER_ID;
 
@@ -66,8 +67,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
         amount: pending_payment.amount.into(),
     };
 
-    match icrc1_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await
-    {
+    match icrc_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await {
         Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
         Ok(Err(transfer_error)) => {
             error!(?transfer_error, ?args, "Transfer failed");

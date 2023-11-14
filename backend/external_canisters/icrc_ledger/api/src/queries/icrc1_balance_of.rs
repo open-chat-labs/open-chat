@@ -1,5 +1,5 @@
 use candid::Nat;
-use types::icrc1::Account;
+use icrc_ledger_types::icrc1::account::Account;
 
 pub type Args = Account;
 pub type Response = Nat;

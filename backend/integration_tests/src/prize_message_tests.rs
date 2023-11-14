@@ -4,10 +4,10 @@ use crate::utils::{now_millis, now_nanos};
 use crate::{client, TestEnv};
 use candid::Principal;
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::icrc1::Account;
 use types::{icrc1, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction, PrizeContentInitial};
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 

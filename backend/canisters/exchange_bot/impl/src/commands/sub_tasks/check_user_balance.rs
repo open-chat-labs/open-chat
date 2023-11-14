@@ -1,6 +1,6 @@
 use crate::commands::CommandSubTaskResult;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::{convert_to_subaccount, format_crypto_amount_with_symbol};
-use types::icrc1::Account;
 use types::{CanisterId, TokenInfo, UserId};
 
 pub(crate) async fn check_user_balance(
@@ -13,7 +13,7 @@ pub(crate) async fn check_user_balance(
         subaccount: Some(convert_to_subaccount(&user_id.into()).0),
     };
 
-    match icrc1_ledger_canister_c2c_client::icrc1_balance_of(token.ledger, &account)
+    match icrc_ledger_canister_c2c_client::icrc1_balance_of(token.ledger, &account)
         .await
         .map(|a| u128::try_from(a.0).unwrap())
     {

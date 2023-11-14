@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use exchange_bot_canister::ExchangeId;
 use ic_cdk::api::call::CallResult;
-use types::icrc1::Account;
+use icrc_ledger_types::icrc1::account::Account;
 use types::{CanisterId, TokenInfo};
 
 pub trait SwapClientFactory {

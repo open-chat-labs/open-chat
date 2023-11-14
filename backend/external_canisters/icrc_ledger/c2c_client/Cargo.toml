@@ -1,5 +1,5 @@
 [package]
-name = "icrc1_ledger_canister"
+name = "icrc_ledger_canister_c2c_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-candid_gen = { path = "../../../libraries/candid_gen" }
-serde = { workspace = true }
-serde_bytes = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-cdk = { workspace = true }
+icrc_ledger_canister = { path = "../api" }
 types = { path = "../../../libraries/types" }
