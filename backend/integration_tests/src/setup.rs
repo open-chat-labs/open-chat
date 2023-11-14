@@ -13,7 +13,7 @@ use storage_index_canister::init::CyclesDispenserConfig;
 use types::icrc1::Account;
 use types::{BuildVersion, CanisterId};
 
-pub static POCKET_IC_BIN: &str = "./local-bin/pocket-ic";
+pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
 pub fn setup_new_env() -> TestEnv {
     let path = match env::var_os("POCKET_IC_BIN") {

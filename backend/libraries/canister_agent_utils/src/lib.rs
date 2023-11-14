@@ -162,7 +162,7 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
 pub fn get_canister_wasm(canister_name: impl ToString, version: BuildVersion) -> CanisterWasm {
     let mut local_bin_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
-    local_bin_path.push("local-bin");
+    local_bin_path.push("wasms");
 
     let file_name = file_by_prefix(&canister_name.to_string(), &local_bin_path)
         .unwrap_or_else(|| panic!("Couldn't find file for canister '{}'", canister_name.to_string()));

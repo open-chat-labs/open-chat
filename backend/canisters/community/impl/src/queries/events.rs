@@ -1,3 +1,4 @@
+use crate::queries::check_replica_up_to_date;
 use crate::{read_state, RuntimeState};
 use community_canister::events::{Response::*, *};
 use group_chat_core::EventsResult;
@@ -9,6 +10,10 @@ fn events(args: Args) -> Response {
 }
 
 fn events_impl(args: Args, state: &RuntimeState) -> Response {
+    if let Err(now) = check_replica_up_to_date(args.latest_known_update, state) {
+        return ReplicaNotUpToDateV2(now);
+    }
+
     let caller = state.env.caller();
     let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
@@ -24,12 +29,10 @@ fn events_impl(args: Args, state: &RuntimeState) -> Response {
             args.ascending,
             args.max_messages,
             args.max_events,
-            args.latest_known_update,
         ) {
             EventsResult::Success(response) => Success(response),
             EventsResult::UserNotInGroup => UserNotInChannel,
             EventsResult::ThreadNotFound => ThreadNotFound,
-            EventsResult::ReplicaNotUpToDate(last_updated) => ReplicaNotUpToDateV2(last_updated),
         }
     } else {
         ChannelNotFound

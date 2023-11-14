@@ -432,7 +432,6 @@ export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
@@ -901,7 +900,6 @@ export interface MessageUnpinned {
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
 export type Milliseconds = bigint;

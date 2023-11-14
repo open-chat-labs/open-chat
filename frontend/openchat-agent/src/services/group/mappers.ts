@@ -387,9 +387,6 @@ export async function getMessagesByMessageIndexResponse(
     ) {
         return "events_failed";
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
-    }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDateV2,
@@ -418,9 +415,6 @@ export async function getEventsResponse(
             expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
             latestEventIndex: candid.Success.latest_event_index,
         };
-    }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
