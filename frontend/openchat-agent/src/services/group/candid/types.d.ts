@@ -1320,7 +1320,8 @@ export interface RegisterPollVoteArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
-export type RegisterPollVoteResponse = { 'CallerNotInGroup' : null } |
+export type RegisterPollVoteResponse = { 'UserCannotChangeVote' : null } |
+  { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |

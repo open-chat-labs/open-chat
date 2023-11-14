@@ -410,6 +410,7 @@ export type PollVotes = {
 
 export type PollConfig = {
     allowMultipleVotesPerUser: boolean;
+    allowUserToChangeVote: boolean;
     text?: string;
     showVotesBeforeEndDate: boolean;
     endDate?: bigint;

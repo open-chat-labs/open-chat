@@ -1472,7 +1472,8 @@ export interface RegisterPollVoteArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'message_index' : MessageIndex,
 }
-export type RegisterPollVoteResponse = { 'UserNotInChannel' : null } |
+export type RegisterPollVoteResponse = { 'UserCannotChangeVote' : null } |
+  { 'UserNotInChannel' : null } |
   { 'ChannelNotFound' : null } |
   { 'PollEnded' : null } |
   { 'Success' : PollVotes } |

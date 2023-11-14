@@ -18,6 +18,7 @@ fn main() {
 
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
+    generate_candid_method!(user, approve_transfer, update);
     generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);

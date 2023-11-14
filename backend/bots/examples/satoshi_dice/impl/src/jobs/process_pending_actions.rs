@@ -2,10 +2,11 @@ use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::{Account, TransferArg, TransferError};
 use types::{
     icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
     MessageContentInitial,
@@ -93,7 +94,7 @@ async fn process_action(action: Action) {
                 amount: amount.into(),
             };
 
-            match icrc1_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
                 Ok(Ok(block_index)) => {
                     if send_oc_message {
                         mutate_state(|state| {

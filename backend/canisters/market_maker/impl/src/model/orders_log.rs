@@ -1,4 +1,5 @@
 use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
+use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{StableLog, Storable};
 use market_maker_canister::ExchangeId;
 use msgpack::{deserialize_then_unwrap, serialize_then_unwrap};
@@ -75,6 +76,8 @@ impl Storable for LogEntry {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         deserialize_then_unwrap(bytes.as_ref())
     }
+
+    const BOUND: Bound = Bound::Unbounded;
 }
 
 impl Display for LogEntry {

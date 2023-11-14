@@ -4,12 +4,16 @@ use crate::mutate_state;
 use candid::{Nat, Principal};
 use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
+use icrc_ledger_types::icrc1::{
+    account::Account,
+    transfer::{BlockIndex, TransferArg, TransferError},
+};
 use ledger_utils::{calculate_transaction_hash, convert_to_subaccount, default_ledger_account};
 use rand::Rng;
-use types::icrc1::{Account, BlockIndex, CryptoAccount, TransferArg, TransferError};
 use types::{
-    icrc1, nns, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial,
-    TimestampNanos, TokenInfo, UserId,
+    icrc1::{self, CryptoAccount},
+    nns, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContentInitial, TimestampNanos,
+    TokenInfo, UserId,
 };
 
 pub async fn withdraw(
@@ -34,7 +38,7 @@ async fn transfer_to_user(
     now_nanos: TimestampNanos,
 ) -> CallResult<Result<Nat, TransferError>> {
     let subaccount = if default_subaccount { DEFAULT_SUBACCOUNT } else { convert_to_subaccount(&user_id.into()) };
-    let response = icrc1_ledger_canister_c2c_client::icrc1_transfer(
+    let response = icrc_ledger_canister_c2c_client::icrc1_transfer(
         token.ledger,
         &TransferArg {
             from_subaccount: Some(subaccount.0),

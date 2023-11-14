@@ -17,6 +17,7 @@ pub enum Response {
     PollNotFound,
     PollEnded,
     OptionIndexOutOfRange,
+    UserCannotChangeVote,
     CallerNotInGroup,
     UserSuspended,
     ChatFrozen,

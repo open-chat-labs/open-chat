@@ -1152,6 +1152,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
+    'UserCannotChangeVote' : IDL.Null,
     'UserNotInChannel' : IDL.Null,
     'ChannelNotFound' : IDL.Null,
     'PollEnded' : IDL.Null,

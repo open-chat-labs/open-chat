@@ -315,7 +315,8 @@
         "oneVote": "1 票",
         "oneVoteBy": "1 票",
         "numVotesIncludingYours": "{votes} 票，包括您的票",
-        "atLeastTwo": "至少 2 个"
+        "atLeastTwo": "至少 2 个",
+        "allowChangeVotes": "允许用户更改投票"
     },
     "role": {
         "admin": "管理员",

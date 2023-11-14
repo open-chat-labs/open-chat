@@ -5,11 +5,12 @@ use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
+use icrc_ledger_types::icrc1;
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{icrc1, Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
+use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::DAY_IN_MS;
@@ -240,9 +241,9 @@ fn process_error(transfer_error: TransferError) -> Response {
     }
 }
 
-fn process_error_v2(transfer_error: icrc1::TransferError) -> Response {
+fn process_error_v2(transfer_error: icrc1::transfer::TransferError) -> Response {
     match transfer_error {
-        icrc1::TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.0.try_into().unwrap()),
+        icrc1::transfer::TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.0.try_into().unwrap()),
         error => TransferFailed(format!("{error:?}")),
     }
 }

@@ -1,5 +1,6 @@
 use crate::memory::{get_blobs_memory, Memory};
-use ic_stable_structures::{BoundedStorable, StableBTreeMap, Storable};
+use ic_stable_structures::storable::Bound;
+use ic_stable_structures::{StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::mem::size_of;
@@ -122,11 +123,11 @@ impl Storable for Key {
 
         unsafe { std::ptr::read(bytes.as_ptr() as *const _) }
     }
-}
 
-impl BoundedStorable for Key {
-    const MAX_SIZE: u32 = size_of::<Key>() as u32;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: size_of::<Key>() as u32,
+        is_fixed_size: false,
+    };
 }
 
 struct Chunk {
@@ -151,11 +152,11 @@ impl Storable for Chunk {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         Chunk { bytes: bytes.to_vec() }
     }
-}
 
-impl BoundedStorable for Chunk {
-    const MAX_SIZE: u32 = MAX_CHUNK_SIZE as u32;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: MAX_CHUNK_SIZE as u32,
+        is_fixed_size: false,
+    };
 }
 
 #[cfg(test)]

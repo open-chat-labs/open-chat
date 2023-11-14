@@ -529,6 +529,8 @@ function pollContent(candid: ApiPollContent): PollContent {
 function pollConfig(candid: ApiPollConfig): PollConfig {
     return {
         allowMultipleVotesPerUser: candid.allow_multiple_votes_per_user,
+        // allowUserToChangeVote: candid.allow_user_to_change_vote, //TODO - reinstate
+        allowUserToChangeVote: true,
         text: optional(candid.text, identity),
         showVotesBeforeEndDate: candid.show_votes_before_end_date,
         endDate: optional(candid.end_date, identity),
@@ -1186,6 +1188,7 @@ function apiPollContent(domain: PollContent): ApiPollContent {
 function apiPollConfig(domain: PollConfig): ApiPollConfig {
     return {
         allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
+        // allow_user_to_change_vote: domain.allowUserToChangeVote, //TODO - reinstate
         text: apiOptional(identity, domain.text),
         show_votes_before_end_date: domain.showVotesBeforeEndDate,
         end_date: apiOptional(identity, domain.endDate),
