@@ -288,7 +288,6 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
-    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
