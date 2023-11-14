@@ -1,4 +1,5 @@
 use candid::{CandidType, Deserialize, Nat};
+use serde::Serialize;
 
 use super::super::icrc1::account::{Account, Subaccount};
 use super::super::icrc1::transfer::Memo;
@@ -18,7 +19,7 @@ pub struct TransferFromArgs {
     pub created_at_time: Option<u64>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum TransferFromError {
     BadFee { expected_fee: Nat },
     BadBurn { min_burn_amount: Nat },
