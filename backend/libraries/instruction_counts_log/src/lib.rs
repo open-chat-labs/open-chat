@@ -1,5 +1,6 @@
 use ic_stable_structures::log::WriteError;
 use ic_stable_structures::memory_manager::VirtualMemory;
+use ic_stable_structures::storable::Bound;
 use ic_stable_structures::{DefaultMemoryImpl, StableLog, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -66,6 +67,8 @@ impl Storable for InstructionCountEntry {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         msgpack::deserialize_then_unwrap(bytes.as_ref())
     }
+
+    const BOUND: Bound = Bound::Unbounded;
 }
 
 #[cfg(test)]
