@@ -1062,6 +1062,7 @@ dependencies = [
  "ic-agent",
  "ic-utils",
  "market_maker_canister",
+ "neuron_controller_canister",
  "notifications_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",
@@ -1144,6 +1145,7 @@ dependencies = [
  "ic-agent",
  "ic-utils",
  "market_maker_canister",
+ "neuron_controller_canister",
  "notifications_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",
@@ -3947,6 +3949,40 @@ checksum = "b1bb540dc6ef51cfe1916ec038ce7a620daf3a111e2502d745197cd53d6bca15"
 dependencies = [
  "libc",
  "socket2 0.4.9",
+]
+
+[[package]]
+name = "neuron_controller_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "neuron_controller_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "http_request",
+ "human_readable",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "neuron_controller_canister",
+ "serde",
+ "serializer",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils",
 ]
 
 [[package]]

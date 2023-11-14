@@ -185,6 +185,14 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let neuron_controller_canister_wasm = get_canister_wasm(CanisterName::ExchangeBot, version);
+    let neuron_controller_init_args = neuron_controller_canister::init::Args {
+        governance_principals: vec![principal],
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -250,6 +258,14 @@ async fn install_service_canisters_impl(
             &exchange_bot_canister_wasm.module,
             exchange_bot_init_args,
         ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.neuron_controller,
+        &neuron_controller_canister_wasm.module,
+        neuron_controller_init_args,
     )
     .await;
 
