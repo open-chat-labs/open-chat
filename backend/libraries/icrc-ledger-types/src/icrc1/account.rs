@@ -37,10 +37,9 @@ impl std::cmp::PartialOrd for Account {
 
 impl std::cmp::Ord for Account {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.owner.cmp(&other.owner).then_with(|| {
-            self.effective_subaccount()
-                .cmp(other.effective_subaccount())
-        })
+        self.owner
+            .cmp(&other.owner)
+            .then_with(|| self.effective_subaccount().cmp(other.effective_subaccount()))
     }
 }
 
@@ -62,9 +61,6 @@ impl fmt::Display for Account {
 
 impl From<Principal> for Account {
     fn from(owner: Principal) -> Self {
-        Self {
-            owner,
-            subaccount: None,
-        }
+        Self { owner, subaccount: None }
     }
 }
