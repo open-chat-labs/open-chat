@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex,
+    ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
     MessageContent, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
@@ -21,7 +21,6 @@ pub use queries::*;
 pub enum EventsResponse {
     Success(types::EventsResponse),
     ChatNotFound,
-    ReplicaNotUpToDate(EventIndex),
     ReplicaNotUpToDateV2(TimestampMillis),
 }
 

@@ -148,7 +148,11 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import { Principal } from "@dfinity/principal";
-import type { ProposalToSubmit, ProposalToSubmitAction, ReportMessageResponse } from "./candid/types";
+import type {
+    ProposalToSubmit,
+    ProposalToSubmitAction,
+    ReportMessageResponse,
+} from "./candid/types";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -468,9 +472,6 @@ export async function getEventsResponse(
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
-    }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(

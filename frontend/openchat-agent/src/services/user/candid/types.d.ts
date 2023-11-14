@@ -623,15 +623,13 @@ export interface EventsByIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
-  { 'ChatNotFound' : null } |
+export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
@@ -1013,6 +1011,7 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1168,16 +1167,12 @@ export interface MessagesByMessageIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type MessagesByMessageIndexResponse = {
-    'ReplicaNotUpToDate' : EventIndex
-  } |
-  { 'ChatNotFound' : null } |
+export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
 export type MigrateUserPrincipalArgs = {};
@@ -1841,6 +1836,7 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };

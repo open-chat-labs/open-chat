@@ -1384,14 +1384,12 @@ type EventsSuccessResult = record {
     expired_message_ranges: vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
     chat_last_updated : TimestampMillis;
-    timestamp : TimestampMillis;
 };
 
 type MessagesSuccessResult = record {
     messages : vec MessageEventWrapper;
     latest_event_index : EventIndex;
     chat_last_updated : TimestampMillis;
-    timestamp : TimestampMillis;
 };
 
 type MessageIndexRange = record {
