@@ -1,4 +1,6 @@
+use crate::ecdsa::get_public_key;
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
+use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId};
 use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, Timestamped};
@@ -18,6 +20,11 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
+    if data.public_key.is_empty() {
+        let test_mode = data.test_mode;
+        ic_cdk_timers::set_timer(Duration::ZERO, move || init_public_key(test_mode));
+    }
+
     let now = env.now();
     let state = RuntimeState::new(env, data);
 
@@ -35,5 +42,22 @@ fn reseed_rng() {
             state.env = Box::new(CanisterEnv::new(seed))
         });
         trace!("Successfully reseeded rng");
+    }
+}
+
+fn init_public_key(test_mode: bool) {
+    let key_name = if test_mode { "dfx_test_key" } else { "key_1" };
+
+    let key_id = EcdsaKeyId {
+        curve: EcdsaCurve::Secp256k1,
+        name: key_name.to_string(),
+    };
+
+    ic_cdk::spawn(init_public_key_inner(key_id));
+
+    async fn init_public_key_inner(key_id: EcdsaKeyId) {
+        if let Ok(public_key) = get_public_key(key_id).await {
+            mutate_state(|state| state.data.public_key = public_key);
+        }
     }
 }

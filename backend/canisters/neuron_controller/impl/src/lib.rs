@@ -5,6 +5,7 @@ use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
+mod ecdsa;
 mod lifecycle;
 mod memory;
 mod queries;
@@ -33,6 +34,8 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            public_key: hex::encode(&self.data.public_key),
+            principal: Principal::self_authenticating(&self.data.public_key),
             governance_principals: self.data.governance_principals.clone(),
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -43,6 +46,7 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub public_key: Vec<u8>,
     pub governance_principals: Vec<Principal>,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
@@ -52,6 +56,7 @@ struct Data {
 impl Data {
     pub fn new(governance_principals: Vec<Principal>, cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
         Data {
+            public_key: Vec::new(),
             governance_principals,
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],
@@ -67,6 +72,8 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
+    pub public_key: String,
+    pub principal: Principal,
     pub governance_principals: Vec<Principal>,
     pub canister_ids: CanisterIds,
 }
