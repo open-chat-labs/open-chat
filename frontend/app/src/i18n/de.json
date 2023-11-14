@@ -318,7 +318,8 @@
         "oneVote": "1 Stimme",
         "oneVoteBy": "1 Stimme von",
         "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner",
-        "atLeastTwo": "Mindestens 2"
+        "atLeastTwo": "Mindestens 2",
+        "allowChangeVotes": "Dem Benutzer erlauben, seine Stimme zu ändern"
     },
     "role": {
         "admin": "Admins",

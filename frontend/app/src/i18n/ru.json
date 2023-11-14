@@ -316,7 +316,8 @@
         "oneVote": "1 голос",
         "oneVoteBy": "1 голос от",
         "numVotesIncludingYours": "{votes} голосов, включая ваш",
-        "atLeastTwo": "Минимум 2"
+        "atLeastTwo": "Минимум 2",
+        "allowChangeVotes": "Разрешить пользователю изменить голос"
     },
     "role": {
         "admin": "Админы",
