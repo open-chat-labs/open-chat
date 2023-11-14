@@ -316,7 +316,8 @@
         "oneVote": "1票",
         "oneVoteBy": "1票",
         "numVotesIncludingYours": "{votes}あなたを含む投票",
-        "atLeastTwo": "最小 2"
+        "atLeastTwo": "最小 2",
+        "allowChangeVotes": "ユーザーが投票を変更できるようにする"
     },
     "role": {
         "admin": "管理者",
