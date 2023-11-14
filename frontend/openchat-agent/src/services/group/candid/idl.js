@@ -725,7 +725,6 @@ export const idlFactory = ({ IDL }) => {
     'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'chat_last_updated' : TimestampMillis,
     'events' : IDL.Vec(ChatEventWrapper),
-    'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
     'expired_event_ranges' : IDL.Vec(IDL.Tuple(EventIndex, EventIndex)),
   });
@@ -780,7 +779,6 @@ export const idlFactory = ({ IDL }) => {
   const MessagesSuccessResult = IDL.Record({
     'messages' : IDL.Vec(MessageEventWrapper),
     'chat_last_updated' : TimestampMillis,
-    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
