@@ -11,3 +11,5 @@ generate_candid_c2c_call_no_args!(icrc1_symbol);
 
 // Updates
 generate_candid_c2c_call!(icrc1_transfer);
+generate_candid_c2c_call!(icrc2_approve);
+generate_candid_c2c_call!(icrc2_transfer_from);

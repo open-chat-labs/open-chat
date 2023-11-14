@@ -8,6 +8,10 @@ export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessorId = Principal;
+export interface Account {
+  'owner' : Principal,
+  'subaccount' : [] | [Subaccount],
+}
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddHotGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
@@ -39,6 +43,36 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
+export interface ApproveArgs {
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+  'expected_allowance' : [] | [bigint],
+  'expires_at' : [] | [bigint],
+  'spender' : Account,
+}
+export type ApproveError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'Expired' : { 'ledger_time' : bigint } } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface ApproveTransferArgs {
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+  'expires_at' : [] | [Milliseconds],
+  'spender' : Account,
+}
+export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface ArchiveUnarchiveChatsArgs {
   'to_archive' : Array<Chat>,
   'to_unarchive' : Array<Chat>,
@@ -594,6 +628,7 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
+export type Duration = bigint;
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
@@ -1358,7 +1393,6 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
-  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1712,6 +1746,7 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
+export type Subaccount = Uint8Array | number[];
 export interface SubmitProposalArgs {
   'token' : Cryptocurrency,
   'transaction_fee' : bigint,
@@ -1769,6 +1804,7 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
+export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
@@ -1801,6 +1837,44 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface TransferArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Subaccount],
+  'created_at_time' : [] | [Timestamp],
+  'amount' : bigint,
+}
+export type TransferError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface TransferFromArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'spender_subaccount' : [] | [Uint8Array | number[]],
+  'from' : Account,
+  'memo' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+}
+export type TransferFromError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
@@ -1911,6 +1985,10 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
+export type Value = { 'Int' : bigint } |
+  { 'Nat' : bigint } |
+  { 'Blob' : Uint8Array | number[] } |
+  { 'Text' : string };
 export interface VerifiedCredentialGate {
   'credential' : string,
   'issuer' : string,
@@ -1942,6 +2020,10 @@ export interface _SERVICE {
     AddHotGroupExclusionsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
+  'approve_transfer' : ActorMethod<
+    [ApproveTransferArgs],
+    ApproveTransferResponse
+  >,
   'archive_unarchive_chats' : ActorMethod<
     [ArchiveUnarchiveChatsArgs],
     ArchiveUnarchiveChatsResponse
