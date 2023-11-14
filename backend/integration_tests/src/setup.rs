@@ -407,7 +407,7 @@ pub fn install_icrc1_ledger(
     });
 
     let canister_id = create_canister(env, controller);
-    install_canister(env, controller, canister_id, wasms::ICRC1_LEDGER.clone(), args);
+    install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id
 }
