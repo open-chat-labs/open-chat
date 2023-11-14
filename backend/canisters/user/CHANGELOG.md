@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+- Add `approve_transfer` endpoint ([#4767](https://github.com/open-chat-labs/open-chat/pull/4767))
 
 ### Changed
 
