@@ -1,6 +1,7 @@
 use crate::{generate_query_call, generate_update_call};
 use candid::Nat;
-use types::icrc1::{Account, NumTokens, TransferArg, TransferError};
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{NumTokens, TransferArg, TransferError};
 
 // Queries
 generate_query_call!(icrc1_balance_of);
@@ -16,9 +17,12 @@ pub mod icrc1_balance_of {
 }
 
 pub mod icrc1_transfer {
+
     use super::*;
 
-    pub type Args = TransferArg;
+    type Type = TransferArg;
+
+    pub type Args = Type;
     pub type Response = Result<Nat, TransferError>;
 }
 

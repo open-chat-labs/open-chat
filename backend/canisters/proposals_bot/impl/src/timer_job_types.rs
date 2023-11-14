@@ -2,13 +2,13 @@ use crate::mutate_state;
 use crate::updates::c2c_submit_proposal::{lookup_user_then_submit_proposal, submit_proposal};
 use candid::Principal;
 use canister_timer_jobs::Job;
+use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use proposals_bot_canister::ProposalToSubmit;
 use serde::{Deserialize, Serialize};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::By;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use sns_governance_canister::types::{manage_neuron_response, Empty, ManageNeuron};
 use tracing::error;
-use types::icrc1::{Account, TransferArg};
 use types::{icrc1, CanisterId, MultiUserChat, SnsNeuronId, UserId};
 use utils::time::SECOND_IN_MS;
 
@@ -119,7 +119,7 @@ impl Job for ProcessUserRefundJob {
             amount: self.amount.into(),
         };
         ic_cdk::spawn(async move {
-            if icrc1_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args)
+            if icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args)
                 .await
                 .is_err()
             {
@@ -149,7 +149,7 @@ impl Job for TopUpNeuronJob {
             amount: self.amount.into(),
         };
         ic_cdk::spawn(async move {
-            match icrc1_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(self.ledger_canister_id, &transfer_args).await {
                 Ok(Ok(_)) => {
                     let refresh_job = RefreshNeuronJob {
                         governance_canister_id: self.governance_canister_id,

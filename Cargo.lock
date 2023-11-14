@@ -946,9 +946,9 @@ dependencies = [
 
 [[package]]
 name = "candid"
-version = "0.9.7"
+version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f391a0d11d997af68e1a06b5e2ab354079cecb82b6eefb26addb38adf66d351d"
+checksum = "465c1ce01d8089ee5b49ba20d3a9da15a28bba64c35cdff2aa256d37e319625d"
 dependencies = [
  "anyhow",
  "arbitrary",
@@ -981,9 +981,9 @@ dependencies = [
 
 [[package]]
 name = "candid_derive"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158403ea38fab5904ae47a5d67eb7047650a91681407f5ccbcbcabc4f4ffb489"
+checksum = "201ea498d901add0822653ac94cb0f8a92f9b1758a5273f4dafbb6673c9a5020"
 dependencies = [
  "lazy_static",
  "proc-macro2",
@@ -1203,6 +1203,33 @@ dependencies = [
  "num-traits",
  "wasm-bindgen",
  "windows-targets 0.48.5",
+]
+
+[[package]]
+name = "ciborium"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "effd91f6c78e5a4ace8a5d3c0b6bfaec9e2baaef55f3efc00e45fb2e477ee926"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cdf919175532b369853f5d5e20b26b43112613fd6fe7aee757e35f7a44642656"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "defaa24ecc093c77630e6c15e17c51f5e187bf35ee514f4e2d67baaa96dae22b"
+dependencies = [
+ "ciborium-io",
+ "half",
 ]
 
 [[package]]
@@ -2092,7 +2119,8 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icpswap_client",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "lazy_static",
  "ledger_utils",
@@ -2623,8 +2651,9 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "icrc1_ledger_canister",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
+ "icrc_ledger_canister_c2c_client",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -3105,6 +3134,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "icrc-ledger-types",
  "serde",
  "types",
 ]
@@ -3129,7 +3159,8 @@ dependencies = [
  "ic-cdk",
  "icdex_canister",
  "icdex_canister_c2c_client",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "serde",
  "types",
 ]
@@ -3211,6 +3242,7 @@ dependencies = [
  "ic-cdk",
  "icpswap_swap_pool_canister",
  "icpswap_swap_pool_canister_c2c_client",
+ "icrc-ledger-types",
  "ledger_utils",
  "serde",
  "types",
@@ -3238,24 +3270,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "icrc1_ledger_canister"
+name = "icrc-ledger-types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ciborium",
+ "hex",
+ "num-traits",
+ "serde",
+ "serde_bytes",
+ "sha2 0.10.7",
+]
+
+[[package]]
+name = "icrc_ledger_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "icrc-ledger-types",
  "serde",
  "serde_bytes",
  "types",
 ]
 
 [[package]]
-name = "icrc1_ledger_canister_c2c_client"
+name = "icrc_ledger_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client",
  "ic-cdk",
- "icrc1_ledger_canister",
+ "icrc_ledger_canister",
  "types",
 ]
 
@@ -3328,7 +3374,8 @@ dependencies = [
  "group_index_canister",
  "ic-cdk",
  "ic-ledger-types",
- "icrc1_ledger_canister",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
  "itertools 0.11.0",
  "lazy_static",
  "ledger_utils",
@@ -3550,7 +3597,8 @@ dependencies = [
  "candid",
  "ic-ledger-types",
  "icp_ledger_canister_c2c_client",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "serde",
  "serde_cbor",
  "sha2 0.10.7",
@@ -3710,7 +3758,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
@@ -3830,7 +3879,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures",
  "icdex_client",
- "icrc1_ledger_canister_c2c_client",
+ "icrc_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "market_maker_canister",
  "msgpack",
@@ -4941,6 +4990,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "human_readable",
+ "icrc-ledger-types",
  "serde",
  "serde_bytes",
  "types",
@@ -4982,7 +5032,8 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "local_user_index_canister_c2c_client",
  "msgpack",
@@ -5191,8 +5242,9 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
- "icrc1_ledger_canister",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
+ "icrc_ledger_canister_c2c_client",
  "msgpack",
  "registry_canister",
  "serde",
@@ -5505,7 +5557,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "ledger_utils",
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
@@ -6759,6 +6812,7 @@ dependencies = [
  "candid",
  "human_readable",
  "ic-ledger-types",
+ "icrc-ledger-types",
  "rand",
  "range-set",
  "serde",
@@ -6867,6 +6921,7 @@ dependencies = [
  "candid",
  "candid_gen",
  "ic-ledger-types",
+ "icrc-ledger-types",
  "proposals_bot_canister",
  "serde",
  "serde_bytes",
@@ -6925,7 +6980,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "ledger_utils",
  "local_user_index_canister",
@@ -7017,7 +7073,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
- "icrc1_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "itertools 0.11.0",
  "ledger_utils",
  "local_user_index_canister",

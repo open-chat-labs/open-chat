@@ -3,13 +3,13 @@ use crate::commands::sub_tasks::check_user_balance::check_user_balance;
 use crate::commands::sub_tasks::withdraw::withdraw;
 use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
 use crate::{mutate_state, RuntimeState};
+use icrc_ledger_types::icrc1::transfer::BlockIndex;
 use lazy_static::lazy_static;
 use ledger_utils::format_crypto_amount;
 use rand::Rng;
 use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use types::icrc1::BlockIndex;
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 lazy_static! {

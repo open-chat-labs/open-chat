@@ -1,5 +1,5 @@
 use canister_client::{generate_candid_c2c_call, generate_candid_c2c_call_no_args};
-use icrc1_ledger_canister::*;
+use icrc_ledger_canister::*;
 
 // Queries
 generate_candid_c2c_call!(icrc1_balance_of);

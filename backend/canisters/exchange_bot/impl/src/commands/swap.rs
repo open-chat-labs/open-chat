@@ -7,6 +7,7 @@ use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use exchange_bot_canister::ExchangeId;
+use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg};
 use lazy_static::lazy_static;
 use ledger_utils::{convert_to_subaccount, format_crypto_amount};
 use rand::Rng;
@@ -14,7 +15,6 @@ use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use tracing::{error, trace};
-use types::icrc1::{BlockIndex, TransferArg};
 use types::{CanisterId, MessageContent, MessageId, TimestampMillis, TimestampNanos, TokenInfo, UserId};
 
 lazy_static! {
@@ -254,7 +254,7 @@ impl SwapCommand {
     async fn transfer_to_dex(mut self, client: Box<dyn SwapClient>, amount: u128) {
         self.sub_tasks.transfer_to_dex = match client.deposit_account().await {
             Ok((ledger, account)) => {
-                match icrc1_ledger_canister_c2c_client::icrc1_transfer(
+                match icrc_ledger_canister_c2c_client::icrc1_transfer(
                     ledger,
                     &TransferArg {
                         from_subaccount: Some(convert_to_subaccount(&Principal::from(self.user_id)).0),

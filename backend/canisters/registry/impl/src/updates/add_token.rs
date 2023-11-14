@@ -3,6 +3,7 @@ use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::RejectionCode;
+use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use registry_canister::add_token::{Response::*, *};
 use registry_canister::NervousSystemDetails;
 use tracing::{error, info};
@@ -55,10 +56,10 @@ async fn add_token_impl(
     };
 
     match futures::future::try_join5(
-        icrc1_ledger_canister_c2c_client::icrc1_name(ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_symbol(ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
-        icrc1_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
+        icrc_ledger_canister_c2c_client::icrc1_name(ledger_canister_id),
+        icrc_ledger_canister_c2c_client::icrc1_symbol(ledger_canister_id),
+        icrc_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
+        icrc_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
         get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.logo.clone())),
     )
     .await
@@ -154,10 +155,10 @@ async fn get_logo(
         return Ok(logo);
     }
 
-    let metadata = icrc1_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
+    let metadata = icrc_ledger_canister_c2c_client::icrc1_metadata(ledger_canister_id).await?;
 
     let logo = metadata.into_iter().find(|(k, _)| k == "icrc1:logo").and_then(|(_, v)| {
-        if let icrc1_ledger_canister::MetadataValue::Text(t) = v {
+        if let MetadataValue::Text(t) = v {
             Some(t)
         } else {
             None

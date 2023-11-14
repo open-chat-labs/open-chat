@@ -9,6 +9,7 @@ edition = "2021"
 candid = { workspace = true }
 human_readable = { path = "../human_readable" }
 ic-ledger-types = { workspace = true }
+icrc-ledger-types = { path = "../icrc-ledger-types" }
 rand = { workspace = true }
 range-set = { workspace = true }
 serde = { workspace = true }
