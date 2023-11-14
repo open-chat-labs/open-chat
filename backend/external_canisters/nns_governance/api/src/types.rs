@@ -138,28 +138,6 @@ pub mod manage_neuron {
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-    pub struct ClaimOrRefresh {
-        pub by: Option<claim_or_refresh::By>,
-    }
-
-    pub mod claim_or_refresh {
-        use super::*;
-
-        #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-        pub struct MemoAndController {
-            pub memo: u64,
-            pub controller: Option<Principal>,
-        }
-
-        #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-        pub enum By {
-            Memo(u64),
-            MemoAndController(MemoAndController),
-            NeuronIdOrSubaccount(Empty),
-        }
-    }
-
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum NeuronIdOrSubaccount {
         Subaccount(Vec<u8>),
         NeuronId(NeuronId),
@@ -174,7 +152,6 @@ pub mod manage_neuron {
         RegisterVote(RegisterVote),
         Split(Split),
         DisburseToNeuron(DisburseToNeuron),
-        ClaimOrRefresh(ClaimOrRefresh),
         MergeMaturity(MergeMaturity),
         Merge(Merge),
         StakeMaturity(StakeMaturity),

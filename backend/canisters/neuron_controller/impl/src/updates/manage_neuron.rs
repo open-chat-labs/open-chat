@@ -9,7 +9,7 @@ use ic_cdk::{query, update};
 use neuron_controller_canister::manage_neuron::{Response::*, *};
 use rand::Rng;
 use serde::Serialize;
-use utils::time::HOUR_IN_MS;
+use utils::time::{HOUR_IN_MS, NANOS_PER_MILLISECOND};
 
 #[update(guard = "caller_is_governance_principal")]
 #[trace]
@@ -61,7 +61,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> PrepareResult {
 
     let envelope_content = EnvelopeContent::Call {
         nonce: Some(nonce.to_vec()),
-        ingress_expiry: state.env.now_nanos() + HOUR_IN_MS * 1_000_000,
+        ingress_expiry: state.env.now_nanos() + HOUR_IN_MS * NANOS_PER_MILLISECOND,
         sender: state.env.canister_id(),
         canister_id: nns_governance_canister_id,
         method_name: "manage_neuron".to_string(),
