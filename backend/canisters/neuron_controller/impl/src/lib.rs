@@ -1,3 +1,4 @@
+use crate::model::signed_requests::SignedRequests;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -6,10 +7,10 @@ use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod ecdsa;
-mod envelope;
 mod guards;
 mod lifecycle;
 mod memory;
+mod model;
 mod queries;
 mod updates;
 
@@ -42,8 +43,9 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             public_key: hex::encode(&self.data.public_key),
-            principal: Principal::self_authenticating(&self.data.public_key),
+            principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
+            requests_signed: self.data.signed_requests.len() as u32,
             canister_ids: CanisterIds {
                 nns_governance_canister_id: self.data.nns_governance_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -58,6 +60,8 @@ struct Data {
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(default)]
+    pub signed_requests: SignedRequests,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -74,9 +78,14 @@ impl Data {
             governance_principals,
             nns_governance_canister_id,
             cycles_dispenser_canister_id,
+            signed_requests: SignedRequests::default(),
             rng_seed: [0; 32],
             test_mode,
         }
+    }
+
+    pub fn get_principal(&self) -> Principal {
+        Principal::self_authenticating(&self.public_key)
     }
 }
 
@@ -90,6 +99,7 @@ pub struct Metrics {
     pub public_key: String,
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
+    pub requests_signed: u32,
     pub canister_ids: CanisterIds,
 }
 

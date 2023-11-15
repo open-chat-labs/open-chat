@@ -29,7 +29,6 @@ type DisburseToNeuron = record {
   nonce : nat64;
 };
 type Follow = record { topic : int32; followees : vec NeuronId };
-type GovernanceError = record { error_message : text; error_type : int32 };
 type IncreaseDissolveDelay = record {
   additional_dissolve_delay_seconds : nat32;
 };
@@ -66,6 +65,12 @@ type Spawn = record {
 };
 type Split = record { amount_e8s : nat64 };
 type StakeMaturity = record { percentage_to_stake : opt nat32 };
+
+type Response = variant {
+    Success: text;
+    InternalError : text;
+};
+
 service : {
-  manage_neuron : (ManageNeuron) -> (variant { Success });
+  manage_neuron : (ManageNeuron) -> (Response);
 }

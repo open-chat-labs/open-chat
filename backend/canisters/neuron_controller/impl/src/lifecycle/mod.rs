@@ -20,8 +20,7 @@ fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
     if data.public_key.is_empty() {
-        let test_mode = data.test_mode;
-        ic_cdk_timers::set_timer(Duration::ZERO, move || init_public_key(test_mode));
+        ic_cdk_timers::set_timer(Duration::ZERO, init_public_key);
     }
 
     let now = env.now();
@@ -44,11 +43,11 @@ fn reseed_rng() {
     }
 }
 
-fn init_public_key(test_mode: bool) {
-    ic_cdk::spawn(init_public_key_inner(test_mode));
+fn init_public_key() {
+    ic_cdk::spawn(init_public_key_inner());
 
-    async fn init_public_key_inner(test_mode: bool) {
-        let key_id = get_key_id(test_mode);
+    async fn init_public_key_inner() {
+        let key_id = get_key_id(false);
 
         if let Ok(public_key) = get_public_key(key_id).await {
             mutate_state(|state| state.data.public_key = public_key);
