@@ -1367,6 +1367,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "instruction_counts_log",
  "itertools 0.11.0",
  "lazy_static",

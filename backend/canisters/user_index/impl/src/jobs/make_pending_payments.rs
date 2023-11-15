@@ -41,7 +41,9 @@ async fn process_payment(pending_payment: PendingPayment) {
     let reason = pending_payment.reason.clone();
     match make_payment(&pending_payment).await {
         Ok(block_index) => {
-            mutate_state(|state| inform_referrer(&pending_payment, block_index, reason, state));
+            if matches!(reason, PendingPaymentReason::ReferralReward) {
+                mutate_state(|state| inform_referrer(&pending_payment, block_index, state));
+            }
         }
         Err(retry) => {
             if retry {
@@ -80,16 +82,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
     }
 }
 
-fn inform_referrer(
-    pending_payment: &PendingPayment,
-    block_index: BlockIndex,
-    reason: PendingPaymentReason,
-    state: &mut RuntimeState,
-) {
-    if matches!(reason, PendingPaymentReason::Treasury) {
-        return;
-    }
-
+fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
     let user_id = pending_payment.recipient.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
     let symbol = pending_payment.currency.token_symbol();
@@ -103,17 +96,12 @@ fn inform_referrer(
         amount_text = format!("[{}]({})", amount_text, link);
     }
 
-    let messages = match reason {
-        PendingPaymentReason::ReferralReward => vec![MessageContent::Text(TextContent { text: format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text) })],
-        PendingPaymentReason::Treasury => vec![],
-    };
+    let message = MessageContent::Text(TextContent { text: format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text) });
 
-    for message in messages {
-        state.push_event_to_local_user_index(
-            user_id,
-            LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
-        );
-    }
+    state.push_event_to_local_user_index(
+        user_id,
+        LocalUserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage { user_id, message })),
+    );
 }
 
 #[derive(Serialize)]

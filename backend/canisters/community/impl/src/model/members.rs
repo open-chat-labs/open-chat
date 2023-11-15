@@ -6,6 +6,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId, Version};
 
+use super::payment_receipts::PaymentReceipts;
+
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
@@ -37,6 +39,7 @@ impl CommunityMembers {
             rules_accepted: Some(Timestamped::new(Version::zero(), now)),
             is_bot: false,
             display_name: Timestamped::default(),
+            payment_receipts: PaymentReceipts::default(),
         };
 
         CommunityMembers {
@@ -66,6 +69,7 @@ impl CommunityMembers {
                         rules_accepted: None,
                         is_bot,
                         display_name: Timestamped::default(),
+                        payment_receipts: PaymentReceipts::default(),
                     };
                     e.insert(member.clone());
                     self.add_user_id(principal, user_id);
@@ -337,6 +341,8 @@ pub struct CommunityMemberInternal {
     pub rules_accepted: Option<Timestamped<Version>>,
     pub is_bot: bool,
     display_name: Timestamped<Option<String>>,
+    #[serde(default)]
+    pub payment_receipts: PaymentReceipts,
 }
 
 impl CommunityMemberInternal {

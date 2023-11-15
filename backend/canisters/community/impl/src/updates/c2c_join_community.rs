@@ -8,7 +8,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
-use types::{ChannelId, MemberJoined, UsersUnblocked};
+use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -98,6 +98,16 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
                 })),
                 now,
             );
+
+            // If there is a payment gate on this community then queue payments to owner(s) and treasury
+            let payment_gate = state.data.gate.value.as_ref().and_then(|access_gate| match access_gate {
+                AccessGate::Payment(g) => Some(g.clone()),
+                _ => None,
+            });
+
+            if let Some(gate) = payment_gate {
+                state.queue_access_gate_payments(gate);
+            }
 
             handle_activity_notification(state);
 

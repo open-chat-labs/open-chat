@@ -11,7 +11,7 @@ use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
-use types::{ChannelId, MemberJoined, TimestampMillis};
+use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -99,6 +99,8 @@ fn is_permitted_to_join(
                 Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
+            } else if channel.chat.members.is_blocked(&member.user_id) {
+                Err(UserBlocked)
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| CheckGateArgs {
                     gate: g.clone(),
@@ -125,7 +127,19 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                     let summary = channel
                         .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
+
+                    // If there is a payment gate on this channel then queue payments to owner(s) and treasury
+                    let payment_gate = channel.chat.gate.value.as_ref().and_then(|access_gate| match access_gate {
+                        AccessGate::Payment(g) => Some(g.clone()),
+                        _ => None,
+                    });
+
+                    if let Some(gate) = payment_gate {
+                        state.queue_access_gate_payments(gate);
+                    }
+
                     handle_activity_notification(state);
+
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
