@@ -15,6 +15,7 @@ import {
 import { unconfirmed } from "./unconfirmed";
 import { bigIntMax } from "../utils/bigint";
 import type { OpenChat } from "../openchat";
+import { networkStatus } from "./network";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -409,7 +410,19 @@ export class MessageReadTracker {
 
 export const messagesRead = new MessageReadTracker();
 
+let networkUnsub: Unsubscriber | undefined;
+
 export function startMessagesReadTracker(api: OpenChat): void {
-    messagesRead.stop();
-    messagesRead.start(api);
+    if (networkUnsub !== undefined) {
+        networkUnsub;
+    }
+    networkUnsub = networkStatus.subscribe((status) => {
+        if (status === "offline") {
+            console.log("Stopping the message read tracker");
+            messagesRead.stop();
+        } else {
+            console.log("Starting the message read tracker");
+            messagesRead.start(api);
+        }
+    });
 }
