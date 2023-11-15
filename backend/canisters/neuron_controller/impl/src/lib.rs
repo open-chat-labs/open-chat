@@ -6,6 +6,7 @@ use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod ecdsa;
+mod envelope;
 mod guards;
 mod lifecycle;
 mod memory;
