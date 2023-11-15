@@ -418,10 +418,8 @@ export function startMessagesReadTracker(api: OpenChat): void {
     }
     networkUnsub = networkStatus.subscribe((status) => {
         if (status === "offline") {
-            console.log("Stopping the message read tracker");
             messagesRead.stop();
         } else {
-            console.log("Starting the message read tracker");
             messagesRead.start(api);
         }
     });
