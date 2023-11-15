@@ -116,6 +116,7 @@ export class MessageReadTracker {
     }
 
     start(api: OpenChat): void {
+        console.log("starting the mark read poller");
         if (process.env.NODE_ENV !== "test") {
             this.triggerLoop(api);
         }
@@ -125,8 +126,8 @@ export class MessageReadTracker {
     }
 
     stop(): void {
+        console.log("stopping the mark read poller");
         if (this.timeout !== undefined) {
-            console.log("stopping the mark read poller");
             window.clearTimeout(this.timeout);
         }
     }

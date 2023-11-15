@@ -66,6 +66,8 @@ import {
     type SaveCryptoAccountResponse,
     type CandidateProposal,
     type SubmitProposalResponse,
+    OfflineError,
+    CommonResponses,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -550,6 +552,9 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
+        if (!navigator.onLine) {
+            return Promise.resolve([CommonResponses.failure(), event.event]);
+        }
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
@@ -607,6 +612,9 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
+        if (!navigator.onLine) {
+            return Promise.resolve([CommonResponses.failure(), event.event]);
+        }
         const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToGroupArgs = {
@@ -682,6 +690,10 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
+        if (!navigator.onLine) {
+            return Promise.resolve([CommonResponses.failure(), event.event]);
+        }
+
         const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToChannelArgs = {
@@ -1144,16 +1156,16 @@ export class UserClient extends CandidService {
 
     reportMessage(
         chatId: DirectChatIdentifier,
-        messageId: bigint, 
-        deleteMessage: boolean
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
                 them: Principal.fromText(chatId.userId),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }

@@ -348,6 +348,8 @@ export class OpenChatAgent extends EventTarget {
         msg: Message,
         threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
+        if (!navigator.onLine) return Promise.resolve("failure");
+
         switch (chatId.kind) {
             case "direct_chat":
                 return this.editDirectMessage(chatId, msg, threadRootMessageIndex);

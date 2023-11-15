@@ -130,7 +130,12 @@ import type {
     ClaimPrizeResponse,
     OptionalChatPermissions,
 } from "openchat-shared";
-import { textToCode, DestinationInvalidError } from "openchat-shared";
+import {
+    textToCode,
+    DestinationInvalidError,
+    OfflineError,
+    CommonResponses,
+} from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
     apiUpdatedRules,
@@ -807,7 +812,7 @@ export class CommunityClient extends CandidService {
     ): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated) {
+            if (fromCache.timestamp >= chatLastUpdated || !navigator.onLine) {
                 return fromCache;
             } else {
                 return this.getChannelDetailsUpdates(chatId, fromCache);
@@ -883,6 +888,11 @@ export class CommunityClient extends CandidService {
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
+
+        if (!navigator.onLine) {
+            recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
+            return Promise.resolve([CommonResponses.failure(), event.event]);
+        }
 
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
@@ -1243,19 +1253,19 @@ export class CommunityClient extends CandidService {
     }
 
     reportMessage(
-        channelId: string, 
-        threadRootMessageIndex: number | undefined, 
-        messageId: bigint, 
-        deleteMessage: boolean
+        channelId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.service.report_message({
                 channel_id: BigInt(channelId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }
