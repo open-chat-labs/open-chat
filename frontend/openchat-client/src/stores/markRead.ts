@@ -414,7 +414,7 @@ let networkUnsub: Unsubscriber | undefined;
 
 export function startMessagesReadTracker(api: OpenChat): void {
     if (networkUnsub !== undefined) {
-        networkUnsub;
+        networkUnsub();
     }
     networkUnsub = networkStatus.subscribe((status) => {
         if (status === "offline") {
