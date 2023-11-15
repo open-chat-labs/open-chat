@@ -1,13 +1,24 @@
 type AccountIdentifier = vec nat8;
 type AddHotKey = record { new_hot_key : opt principal };
 type Amount = record { e8s : nat64 };
+type By = variant {
+  NeuronIdOrSubaccount : record {};
+  MemoAndController : ClaimOrRefreshNeuronFromAccount;
+  Memo : nat64;
+};
 type ChangeAutoStakeMaturity = record {
   requested_setting_for_auto_stake_maturity : bool;
+};
+type ClaimOrRefresh = record { by : opt By };
+type ClaimOrRefreshNeuronFromAccount = record {
+  controller : opt principal;
+  memo : nat64;
 };
 type Command = variant {
   Spawn : Spawn;
   Split : Split;
   Follow : Follow;
+  ClaimOrRefresh : ClaimOrRefresh;
   Configure : Configure;
   RegisterVote : RegisterVote;
   Merge : Merge;
