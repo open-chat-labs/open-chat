@@ -1152,5 +1152,6 @@
     "guestUser": "Usuario invitado",
     "showAuthProviders": "Mostrar opciones",
     "hideAuthProviders": "Ocultar opciones",
-    "messageDeletedByOpenChatBot": "Este mensaje fue reportado por primera vez por un usuario de OpenChat, luego enviado a [Modclub]({modclub}) donde se decidió que el mensaje infringía una [regla de plataforma]({rules}) y finalmente eliminado por {username} en {xyz }"
+    "messageDeletedByOpenChatBot": "Este mensaje fue reportado por primera vez por un usuario de OpenChat, luego enviado a [Modclub]({modclub}) donde se decidió que el mensaje infringía una [regla de plataforma]({rules}) y finalmente eliminado por {username} en {xyz }",
+    "offlineMessage": "Desconectado"
 }
