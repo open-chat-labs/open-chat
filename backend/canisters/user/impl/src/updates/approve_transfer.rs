@@ -18,10 +18,10 @@ async fn approve_transfer(args: Args) -> Response {
         &ApproveArgs {
             from_subaccount: None,
             spender: args.spender,
-            amount: args.amount.into(),
+            amount: (args.amount - args.fee).into(),
             expected_allowance: None,
             expires_at: args.expires_at.map(|expires_at| expires_at * NANOS_PER_MILLISECOND),
-            fee: None,
+            fee: Some(args.fee.into()),
             memo: None,
             created_at_time: Some(now_nanos),
         },
