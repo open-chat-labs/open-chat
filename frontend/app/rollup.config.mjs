@@ -205,7 +205,7 @@ export default {
             },
         }),
 
-        styles({ mode: "extract", plugins: [autoprefixer()] }),
+        styles({ mode: "inject", plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
@@ -330,9 +330,6 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
-                                ${files.css
-                                    .map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`)
-                                    .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
                             <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>

@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 canister_time = { path = "../canister_time" }
-ic0 = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 tracing-attributes = { workspace = true }

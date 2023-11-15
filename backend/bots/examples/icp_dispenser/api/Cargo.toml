@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 bot_api = { path = "../../../api" }
 candid = { workspace = true }
-candid_gen = { path = "../../../../libraries/candid_gen" }
 ic-ledger-types = { workspace = true }
 serde = { workspace = true }
 user_canister = { path = "../../../../canisters/user/api" }

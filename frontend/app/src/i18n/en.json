@@ -1142,5 +1142,6 @@
         "oneMinute": "1 minute",
         "timeUpdated": "Disappearing message time set to {duration}",
         "disabled": "Disappearing messages disabled"
-    }
+    },
+    "offlineMessage": "Offline"
 }

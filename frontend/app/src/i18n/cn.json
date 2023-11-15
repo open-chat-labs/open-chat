@@ -1151,5 +1151,6 @@
     "guestUser": "访客用户",
     "showAuthProviders": "显示选项",
     "hideAuthProviders": "隐藏选项",
-    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}"
+    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}",
+    "offlineMessage": "离线"
 }

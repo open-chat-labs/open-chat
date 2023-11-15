@@ -31,9 +31,8 @@ ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { path = "../../../libraries/icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
-local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 rand = { workspace = true }

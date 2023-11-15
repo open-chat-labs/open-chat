@@ -8,7 +8,6 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 dfx-core = { workspace = true }
-dirs = { workspace = true }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
 itertools = { workspace = true }
