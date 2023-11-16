@@ -24,7 +24,6 @@ pub struct User {
     pub suspension_details: Option<SuspensionDetails>,
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
     pub moderation_flags_enabled: u32,
-    #[serde(default)]
     pub reported_messages: Vec<u64>,
 }
 
