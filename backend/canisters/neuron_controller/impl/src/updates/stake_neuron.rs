@@ -52,7 +52,7 @@ async fn stake_neuron(_args: Args) -> Response {
         Err(error) => return InternalError(format!("{error:?}")),
     };
 
-    if let Ok(response) = nns_governance_canister_c2c_client::manage_neuron(
+    match nns_governance_canister_c2c_client::manage_neuron(
         nns_governance_canister_id,
         &ManageNeuron {
             id: None,
@@ -67,7 +67,7 @@ async fn stake_neuron(_args: Args) -> Response {
     )
     .await
     {
-        match response.command {
+        Ok(response) => match response.command {
             Some(manage_neuron_response::Command::ClaimOrRefresh(c)) => {
                 let neuron_id = c.refreshed_neuron_id.unwrap().id;
                 mutate_state(|state| state.data.neurons.push(neuron_id));
@@ -75,11 +75,10 @@ async fn stake_neuron(_args: Args) -> Response {
             }
             response => {
                 error!(?response, "Governance error");
-                InternalError
+                InternalError(format!("{response:?}"))
             }
-        }
-    } else {
-        InternalError
+        },
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
