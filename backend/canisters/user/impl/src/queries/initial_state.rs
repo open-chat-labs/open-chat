@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use std::collections::HashMap;
-use types::{BuildVersion, GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId};
+use types::{BuildVersion, GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, TimestampMillis, UserId};
 use user_canister::initial_state::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -49,7 +49,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
                 .groups
                 .iter()
                 .filter_map(|c| group_chats.remove(&c.chat_id).map(|g| (c, g)))
-                .map(|(c, g)| hydrate_cached_summary(c, g))
+                .map(|(c, g)| hydrate_cached_summary(c, g, now))
                 .collect(),
             timestamp: cached.timestamp,
         };
@@ -81,7 +81,11 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     })
 }
 
-fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: &GroupChat) -> GroupChatSummary {
+fn hydrate_cached_summary(
+    cached: &GroupCanisterGroupChatSummary,
+    user_details: &GroupChat,
+    now: TimestampMillis,
+) -> GroupChatSummary {
     let mut threads = HashMap::new();
     for thread in cached.latest_threads.iter() {
         threads.insert(thread.root_message_index, ThreadSyncDetails::from(thread));
@@ -110,7 +114,11 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         history_visible_to_new_joiners: cached.history_visible_to_new_joiners,
         min_visible_event_index: cached.min_visible_event_index,
         min_visible_message_index: cached.min_visible_message_index,
-        latest_message: cached.latest_message.clone(),
+        latest_message: cached
+            .latest_message
+            .as_ref()
+            .filter(|m| m.expires_at.map_or(true, |e| e > now))
+            .cloned(),
         latest_event_index: cached.latest_event_index,
         latest_message_index: cached.latest_message_index,
         joined: cached.joined,
