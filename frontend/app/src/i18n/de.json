@@ -1153,5 +1153,6 @@
     "showAuthProviders": "Optionen anzeigen",
     "hideAuthProviders": "Optionen ausblenden",
     "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }",
-    "offlineMessage": "Offline"
+    "offlineMessage": "Offline",
+    "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline"
 }

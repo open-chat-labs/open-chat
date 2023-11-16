@@ -2,6 +2,7 @@ import type { DataContent } from "../data/data";
 import type {
     Failure,
     InternalError,
+    Offline,
     Retrying,
     Success,
     TransferFailed,
@@ -169,7 +170,8 @@ export type CheckUsernameResponse =
     | "username_taken"
     | "username_too_short"
     | "username_too_long"
-    | "username_invalid";
+    | "username_invalid"
+    | "offline";
 
 export type SetUsernameResponse =
     | "success"
@@ -177,18 +179,20 @@ export type SetUsernameResponse =
     | "user_not_found"
     | "username_too_short"
     | "username_too_long"
-    | "username_invalid";
+    | "username_invalid"
+    | "offline";
 
 export type SetDisplayNameResponse =
     | "success"
     | "user_not_found"
     | "display_name_too_short"
     | "display_name_too_long"
-    | "display_name_invalid";
+    | "display_name_invalid"
+    | "offline";
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
-export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
+export type SetBioResponse = "success" | "bio_too_long" | "user_suspended" | "offline";
 
 export type RegisterUserResponse =
     | {
@@ -211,34 +215,38 @@ export type RegisterUserResponse =
     | { kind: "public_key_invalid" }
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
-    | { kind: "referral_code_expired" };
+    | { kind: "referral_code_expired" }
+    | Offline;
 
-export type PinChatResponse = "success" | "failure";
+export type PinChatResponse = "success" | "failure" | "offline";
 
-export type UnpinChatResponse = "success" | "failure";
+export type UnpinChatResponse = "success" | "failure" | "offline";
 
-export type ArchiveChatResponse = "failure" | "success";
+export type ArchiveChatResponse = "failure" | "success" | "offline";
 
-export type ManageFavouritesResponse = "success" | "failure";
+export type ManageFavouritesResponse = "success" | "failure" | "offline";
 
 export type MigrateUserPrincipalResponse =
     | "success"
     | "principal_already_in_use"
     | "migration_already_in_progress"
     | "internal_error"
-    | "migration_not_initialized";
+    | "migration_not_initialized"
+    | "offline";
 
 export type SuspendUserResponse =
     | "success"
     | "user_not_found"
     | "user_already_suspended"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type UnsuspendUserResponse =
     | "success"
     | "user_not_found"
     | "user_not_suspended"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }
@@ -249,11 +257,12 @@ export type PayForDiamondMembershipResponse =
     | { kind: "internal_error" }
     | { kind: "cannot_extend" }
     | { kind: "user_not_found" }
-    | { kind: "insufficient_funds" };
+    | { kind: "insufficient_funds" }
+    | Offline;
 
-export type SetUserUpgradeConcurrencyResponse = "success";
+export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
 
-export type SetMessageReminderResponse = "failure" | "success";
+export type SetMessageReminderResponse = "failure" | "success" | "offline";
 
 export type ReferralLeaderboardRange = { year: number; month: number };
 
@@ -301,7 +310,8 @@ export type SubmitProposalResponse =
     | GovernanceCanisterNotSupported
     | InsufficientPayment
     | TransferFailed
-    | InternalError;
+    | InternalError
+    | Offline;
 
 export type GovernanceCanisterNotSupported = {
     kind: "governance_canister_not_supported";

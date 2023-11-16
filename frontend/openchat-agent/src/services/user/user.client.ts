@@ -1144,16 +1144,16 @@ export class UserClient extends CandidService {
 
     reportMessage(
         chatId: DirectChatIdentifier,
-        messageId: bigint, 
-        deleteMessage: boolean
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
                 them: Principal.fromText(chatId.userId),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }
