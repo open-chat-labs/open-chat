@@ -2786,6 +2786,8 @@ dependencies = [
  "human_readable_derive",
  "serde",
  "serde_json",
+ "sha256",
+ "types",
 ]
 
 [[package]]
@@ -4018,11 +4020,8 @@ name = "nns_governance_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen",
- "canister_time",
  "ic-ledger-types",
  "serde",
- "types",
 ]
 
 [[package]]
@@ -6776,15 +6775,12 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
- "human_readable",
  "ic-ledger-types",
  "icrc-ledger-types",
  "rand",
  "range-set",
  "serde",
  "serde_bytes",
- "serde_json",
- "sha256",
 ]
 
 [[package]]

@@ -10,3 +10,5 @@ candid = { workspace = true }
 human_readable_derive = { path = "../human_readable_derive" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+sha256 = { path = "../sha256" }
+types = { path = "../types" }
