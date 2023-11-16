@@ -130,6 +130,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         rulesAccepted: candid.rules_accepted,
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
     };
 }
 
@@ -182,6 +183,7 @@ function groupChatSummaryUpdates(
         gate: optionUpdate(candid.gate, accessGate),
         rulesAccepted: optional(candid.rules_accepted, identity),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
     };
 }
 

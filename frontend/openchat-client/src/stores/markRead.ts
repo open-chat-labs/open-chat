@@ -3,6 +3,7 @@ import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
     ChatMap,
     MessageContextMap,
+    bigIntMax,
     type ChatIdentifier,
     type ChatSummary,
     type MarkReadRequest,
@@ -13,7 +14,6 @@ import {
     type ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import { bigIntMax } from "../utils/bigint";
 import type { OpenChat } from "../openchat";
 import { networkStatus } from "./network";
 

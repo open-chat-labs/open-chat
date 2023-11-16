@@ -217,6 +217,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated: bigint | undefined;
 };
 
 export type CommunityMembershipUpdates = {

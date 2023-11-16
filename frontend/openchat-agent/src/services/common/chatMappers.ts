@@ -1507,6 +1507,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -1609,6 +1610,7 @@ export function communityChannelSummary(
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
