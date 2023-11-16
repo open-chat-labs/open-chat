@@ -7,7 +7,7 @@ use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
-use types::{MemberJoined, UsersUnblocked};
+use types::{AccessGate, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -116,6 +116,17 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             new_event = true;
 
             let summary = state.summary(&participant);
+
+            // If there is a payment gate on this channel then queue payments to owner(s) and treasury
+            let payment_gate = state.data.chat.gate.value.as_ref().and_then(|access_gate| match access_gate {
+                AccessGate::Payment(g) => Some(g.clone()),
+                _ => None,
+            });
+
+            if let Some(gate) = payment_gate {
+                state.queue_access_gate_payments(gate);
+            }
+
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {

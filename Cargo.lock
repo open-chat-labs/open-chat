@@ -2440,6 +2440,8 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "instruction_counts_log",
  "itertools 0.11.0",
  "ledger_utils",

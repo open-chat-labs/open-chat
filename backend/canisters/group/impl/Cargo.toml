@@ -32,6 +32,8 @@ ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
+icrc-ledger-types = { workspace = true }
 instruction_counts_log = { path = "../../../libraries/instruction_counts_log" }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
