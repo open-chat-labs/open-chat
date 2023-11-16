@@ -66,8 +66,6 @@ import {
     type SaveCryptoAccountResponse,
     type CandidateProposal,
     type SubmitProposalResponse,
-    OfflineError,
-    CommonResponses,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {

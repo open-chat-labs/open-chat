@@ -48,12 +48,7 @@ import type {
     OptionalChatPermissions,
     ToggleMuteNotificationResponse,
 } from "openchat-shared";
-import {
-    CommonResponses,
-    DestinationInvalidError,
-    OfflineError,
-    textToCode,
-} from "openchat-shared";
+import { DestinationInvalidError, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,

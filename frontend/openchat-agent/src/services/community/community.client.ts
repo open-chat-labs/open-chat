@@ -130,12 +130,7 @@ import type {
     ClaimPrizeResponse,
     OptionalChatPermissions,
 } from "openchat-shared";
-import {
-    textToCode,
-    DestinationInvalidError,
-    OfflineError,
-    CommonResponses,
-} from "openchat-shared";
+import { textToCode, DestinationInvalidError } from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
     apiUpdatedRules,
