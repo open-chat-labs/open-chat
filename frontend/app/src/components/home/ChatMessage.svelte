@@ -296,7 +296,7 @@
     }
 
     function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined) {
+        if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
         }
 

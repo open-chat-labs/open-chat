@@ -206,7 +206,6 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
