@@ -9,7 +9,7 @@
         OpenChat,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
-    import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
+    import { dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -44,12 +44,12 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
     $: draftAmount = calculateAmount(centAmount, exchangeRate);
-    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toString();
-    $: displayFee = (Number(tokenDetails.transferFee) / E8S_PER_TOKEN).toString();
-    $: tokenDetails = $cryptoLookup[ledger];
+    $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
+    $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
         draftAmount > BigInt(0)
             ? cryptoBalance - draftAmount - tokenDetails.transferFee
@@ -70,7 +70,7 @@
     }
 
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = (centAmount / 100) * exchangeRate * E8S_PER_TOKEN;
+        const e8s = (centAmount / 100) * exchangeRate * Math.pow(10, tokenDetails.decimals);
         return BigInt(Math.round(e8s));
     }
 
