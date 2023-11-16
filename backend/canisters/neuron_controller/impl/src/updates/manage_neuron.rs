@@ -26,7 +26,10 @@ async fn manage_neuron(args: Args) -> Response {
         this_canister_id,
     } = mutate_state(|state| prepare(args, state));
 
-    let body = sign_envelope(envelope_content, public_key, key_id).await.unwrap();
+    let body = match sign_envelope(envelope_content, public_key, key_id).await {
+        Ok(bytes) => bytes,
+        Err(error) => return InternalError(format!("{error:?}")),
+    };
 
     let (response,) = ic_cdk::api::management_canister::http_request::http_request(
         CanisterHttpRequestArgument {
@@ -87,7 +90,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> PrepareResult {
     PrepareResult {
         envelope_content,
         request_url: format!("{IC_URL}/api/v2/canister/{nns_governance_canister_id}/call"),
-        public_key: state.data.public_key.clone(),
+        public_key: state.data.get_public_key_der(),
         key_id: get_key_id(false),
         this_canister_id: state.env.canister_id(),
     }

@@ -1,5 +1,7 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
+use k256::pkcs8::EncodePublicKey;
+use k256::PublicKey;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -41,6 +43,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             public_key: hex::encode(&self.data.public_key),
+            public_key_der: hex::encode(self.data.get_public_key_der()),
             principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
             neurons: self.data.neurons.clone(),
@@ -85,8 +88,16 @@ impl Data {
         }
     }
 
+    pub fn get_public_key_der(&self) -> Vec<u8> {
+        PublicKey::from_sec1_bytes(&self.public_key)
+            .unwrap()
+            .to_public_key_der()
+            .unwrap()
+            .to_vec()
+    }
+
     pub fn get_principal(&self) -> Principal {
-        Principal::self_authenticating(&self.public_key)
+        Principal::self_authenticating(&self.get_public_key_der())
     }
 }
 
@@ -98,6 +109,7 @@ pub struct Metrics {
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
     pub public_key: String,
+    pub public_key_der: String,
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
     pub neurons: Vec<u64>,

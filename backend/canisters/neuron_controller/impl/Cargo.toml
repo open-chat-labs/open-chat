@@ -25,6 +25,7 @@ ic-stable-structures = { workspace = true }
 ic-transport-types = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
+k256 = "0.13.1"
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 neuron_controller_canister = { path = "../api" }
 nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }

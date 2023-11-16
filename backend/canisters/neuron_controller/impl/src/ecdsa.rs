@@ -2,6 +2,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument, SignWithEcdsaArgument};
 use ic_transport_types::{to_request_id, EnvelopeContent};
 use serde::Serialize;
+use tracing::error;
 
 pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     let key_name = if is_local_dev_mode { "dfx_test_key" } else { "key_1" };
@@ -13,19 +14,25 @@ pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
 }
 
 pub async fn get_public_key(key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
-    ic_cdk::api::management_canister::ecdsa::ecdsa_public_key(EcdsaPublicKeyArgument {
+    match ic_cdk::api::management_canister::ecdsa::ecdsa_public_key(EcdsaPublicKeyArgument {
         canister_id: None,
         derivation_path: Vec::new(),
         key_id,
     })
     .await
-    .map(|res| res.0.public_key)
+    {
+        Ok(res) => Ok(res.0.public_key),
+        Err(error) => {
+            error!(?error, "Error calling 'ecdsa_public_key'");
+            Err(error)
+        }
+    }
 }
 
-pub async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: EcdsaKeyId) -> Result<Vec<u8>, String> {
+pub async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
     let request_id = to_request_id(&content).unwrap();
 
-    let signature = sign(key_id, *request_id).await.unwrap();
+    let signature = sign(key_id, *request_id).await?;
 
     let envelope = Envelope {
         content: content.clone(),
@@ -42,13 +49,19 @@ pub async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id
 }
 
 async fn sign(key_id: EcdsaKeyId, message_hash: [u8; 32]) -> CallResult<Vec<u8>> {
-    ic_cdk::api::management_canister::ecdsa::sign_with_ecdsa(SignWithEcdsaArgument {
+    match ic_cdk::api::management_canister::ecdsa::sign_with_ecdsa(SignWithEcdsaArgument {
         message_hash: message_hash.to_vec(),
         derivation_path: Vec::new(),
         key_id,
     })
     .await
-    .map(|res| res.0.signature)
+    {
+        Ok(res) => Ok(res.0.signature),
+        Err(error) => {
+            error!(?error, "Error calling 'sign_with_ecdsa'");
+            Err(error)
+        }
+    }
 }
 
 #[derive(Serialize)]
