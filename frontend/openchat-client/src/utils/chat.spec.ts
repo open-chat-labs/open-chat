@@ -59,6 +59,7 @@ const defaultGroupChat: GroupChatSummary = {
     gate: { kind: "no_gate" },
     level: "group",
     eventsTTL: undefined,
+    eventsTtlLastUpdated: BigInt(0),
     membership: {
         archived: false,
         mentions: [],

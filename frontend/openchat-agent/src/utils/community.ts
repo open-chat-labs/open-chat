@@ -13,7 +13,13 @@ import type {
     UserCanisterChannelSummary,
     UserGroupSummary,
 } from "openchat-shared";
-import { CommunityMap, ChatMap, mapOptionUpdate, applyOptionUpdate } from "openchat-shared";
+import {
+    CommunityMap,
+    ChatMap,
+    mapOptionUpdate,
+    applyOptionUpdate,
+    bigIntMax,
+} from "openchat-shared";
 import { toRecord } from "./list";
 
 export function mergeCommunities(
@@ -202,6 +208,10 @@ function mergeChannelUpdates(
             gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
             level: "channel",
             eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                channel.eventsTtlLastUpdated,
+                c?.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...channel.membership,
                 mentions:
