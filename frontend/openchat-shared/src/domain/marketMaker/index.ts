@@ -17,4 +17,5 @@ export type UpdateMarketMakerConfigResponse =
     | "success"
     | "not_authorized"
     | "exchange_not_found"
-    | "internal_error";
+    | "internal_error"
+    | "offline";

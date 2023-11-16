@@ -10,6 +10,9 @@ export type CommunityNotPublic = { kind: "community_not_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
 };
+export type Offline = {
+    kind: "offline";
+};
 export type Failure = {
     kind: "failure";
 };
@@ -46,26 +49,27 @@ export type TransferFailed = {
 };
 
 export const CommonResponses = {
-    userNotInChat: (): UserNotInChat => ({ kind: "user_not_in_chat" } as UserNotInChat),
-    chatNotFound: (): ChatNotFound => ({ kind: "chat_not_found" } as ChatNotFound),
-    userLimitReached: (): UserLimitReached => ({ kind: "user_limit_reached" } as UserLimitReached),
-    notAuthorized: (): NotAuthorised => ({ kind: "not_authorized" } as NotAuthorised),
-    success: (): Success => ({ kind: "success" } as Success),
-    successNoUpdates: (): SuccessNoUpdates => ({ kind: "success_no_updates" } as SuccessNoUpdates),
+    userNotInChat: (): UserNotInChat => ({ kind: "user_not_in_chat" }) as UserNotInChat,
+    chatNotFound: (): ChatNotFound => ({ kind: "chat_not_found" }) as ChatNotFound,
+    userLimitReached: (): UserLimitReached => ({ kind: "user_limit_reached" }) as UserLimitReached,
+    notAuthorized: (): NotAuthorised => ({ kind: "not_authorized" }) as NotAuthorised,
+    success: (): Success => ({ kind: "success" }) as Success,
+    successNoUpdates: (): SuccessNoUpdates => ({ kind: "success_no_updates" }) as SuccessNoUpdates,
     userNotInCommunity: (): UserNotInCommunity =>
-        ({ kind: "user_not_in_community" } as UserNotInCommunity),
-    userSuspended: (): UserSuspended => ({ kind: "user_suspended" } as UserSuspended),
-    communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" } as CommunityFrozen),
-    messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" } as MessageNotFound),
-    noChange: (): NoChange => ({ kind: "no_change" } as NoChange),
+        ({ kind: "user_not_in_community" }) as UserNotInCommunity,
+    userSuspended: (): UserSuspended => ({ kind: "user_suspended" }) as UserSuspended,
+    communityFrozen: (): CommunityFrozen => ({ kind: "community_frozen" }) as CommunityFrozen,
+    messageNotFound: (): MessageNotFound => ({ kind: "message_not_found" }) as MessageNotFound,
+    noChange: (): NoChange => ({ kind: "no_change" }) as NoChange,
     communityNotPublic: (): CommunityNotPublic =>
-        ({ kind: "community_not_public" } as CommunityNotPublic),
-    internalError: (): InternalError => ({ kind: "internal_error" } as InternalError),
-    invalid: (): Invalid => ({ kind: "invalid" } as Invalid),
+        ({ kind: "community_not_public" }) as CommunityNotPublic,
+    internalError: (): InternalError => ({ kind: "internal_error" }) as InternalError,
+    invalid: (): Invalid => ({ kind: "invalid" }) as Invalid,
     targetUserNotInCommunity: (): TargetUserNotInCommunity =>
-        ({ kind: "target_user_not_in_community" } as TargetUserNotInCommunity),
+        ({ kind: "target_user_not_in_community" }) as TargetUserNotInCommunity,
     notPlatformModerator: (): NotPlatformModerator =>
-        ({ kind: "not_platform_moderator" } as NotPlatformModerator),
-    userBlocked: (): UserBlocked => ({ kind: "user_blocked" } as UserBlocked),
-    failure: (): Failure => ({ kind: "failure" } as Failure),
+        ({ kind: "not_platform_moderator" }) as NotPlatformModerator,
+    userBlocked: (): UserBlocked => ({ kind: "user_blocked" }) as UserBlocked,
+    failure: (): Failure => ({ kind: "failure" }) as Failure,
+    offline: (): Offline => ({ kind: "offline" }) as Offline,
 };
