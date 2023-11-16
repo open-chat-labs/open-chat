@@ -1405,10 +1405,6 @@ export class OpenChatAgent extends EventTarget {
             latestUserCanisterUpdates = userResponse.timestamp;
             anyUpdates = true;
         } else {
-            this.removeExpiredLatestMessages(current.directChats, start);
-            this.removeExpiredLatestMessages(current.groupChats, start);
-            current.communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
-
             directChats = current.directChats;
             currentGroups = current.groupChats;
             currentCommunities = current.communities;
@@ -1547,6 +1543,10 @@ export class OpenChatAgent extends EventTarget {
             )
             .filter((c) => !communitiesRemoved.has(c.id.communityId));
 
+        this.removeExpiredLatestMessages(directChats, start);
+        this.removeExpiredLatestMessages(groupChats, start);
+        communities.forEach((c) => this.removeExpiredLatestMessages(c.channels, start));
+
         const state = {
             latestUserCanisterUpdates,
             latestActiveGroupsCheck,
@@ -1582,11 +1582,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private removeExpiredLatestMessages(
-        chats: { latestMessage?: EventWrapper<Message> }[],
+        chats: { latestMessage?: EventWrapper<Message>; latestMessageIndex: number | undefined }[],
         now: number,
     ) {
         for (const chat of chats) {
-            if (chat.latestMessage?.expiresAt !== undefined && chat.latestMessage.expiresAt < now) {
+            if (
+                chat.latestMessage?.event.messageIndex !== chat.latestMessageIndex ||
+                (chat.latestMessage?.expiresAt !== undefined && chat.latestMessage.expiresAt < now)
+            ) {
                 chat.latestMessage = undefined;
             }
         }
