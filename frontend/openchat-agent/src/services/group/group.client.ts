@@ -404,11 +404,6 @@ export class GroupClient extends CandidService {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
 
-        if (!navigator.onLine) {
-            recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
-            return Promise.resolve([CommonResponses.failure(), event.event]);
-        }
-
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.chatId.groupId])

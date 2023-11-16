@@ -552,9 +552,6 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        if (!navigator.onLine) {
-            return Promise.resolve([CommonResponses.failure(), event.event]);
-        }
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [this.userId, chatId.userId])
@@ -612,9 +609,6 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        if (!navigator.onLine) {
-            return Promise.resolve([CommonResponses.failure(), event.event]);
-        }
         const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToGroupArgs = {
@@ -690,10 +684,6 @@ export class UserClient extends CandidService {
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
     ): Promise<[SendMessageResponse, Message]> {
-        if (!navigator.onLine) {
-            return Promise.resolve([CommonResponses.failure(), event.event]);
-        }
-
         const content = apiMessageContent(event.event.content);
 
         const req: ApiSendMessageWithTransferToChannelArgs = {

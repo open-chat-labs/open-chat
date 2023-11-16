@@ -113,6 +113,7 @@
         if (resp.kind === "user_suspended") return "userSuspended";
         if (resp.kind === "chat_frozen") return "chatFrozen";
         if (resp.kind === "failure") return "failure";
+        if (resp.kind === "offline") return "offlineError";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
@@ -121,6 +122,7 @@
         level: Level
     ): string | undefined {
         if (resp.kind === "success") return undefined;
+        if (resp.kind === "offline") return "offlineError";
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
