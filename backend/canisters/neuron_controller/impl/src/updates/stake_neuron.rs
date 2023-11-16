@@ -47,9 +47,9 @@ async fn stake_neuron(_args: Args) -> Response {
         Ok(Ok(_)) => {}
         Ok(Err(error)) => {
             error!(?error, "Transfer error");
-            return InternalError;
+            return InternalError(format!("{error:?}"));
         }
-        Err(_) => return InternalError,
+        Err(error) => return InternalError(format!("{error:?}")),
     };
 
     if let Ok(response) = nns_governance_canister_c2c_client::manage_neuron(

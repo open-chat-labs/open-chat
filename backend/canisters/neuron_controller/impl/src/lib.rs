@@ -97,7 +97,7 @@ impl Data {
     }
 
     pub fn get_principal(&self) -> Principal {
-        Principal::self_authenticating(&self.get_public_key_der())
+        Principal::self_authenticating(self.get_public_key_der())
     }
 }
 

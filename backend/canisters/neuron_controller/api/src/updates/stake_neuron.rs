@@ -7,5 +7,5 @@ pub type Args = Empty;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64),
-    InternalError,
+    InternalError(String),
 }
