@@ -189,6 +189,7 @@ async fn install_service_canisters_impl(
     let neuron_controller_init_args = neuron_controller_canister::init::Args {
         governance_principals: vec![principal],
         nns_governance_canister_id: canister_ids.nns_governance,
+        nns_ledger_canister_id: canister_ids.nns_ledger,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,

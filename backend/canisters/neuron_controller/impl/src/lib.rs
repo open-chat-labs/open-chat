@@ -1,4 +1,3 @@
-use crate::model::signed_requests::SignedRequests;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -10,7 +9,6 @@ mod ecdsa;
 mod guards;
 mod lifecycle;
 mod memory;
-mod model;
 mod queries;
 mod updates;
 
@@ -45,9 +43,10 @@ impl RuntimeState {
             public_key: hex::encode(&self.data.public_key),
             principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
-            requests_signed: self.data.signed_requests.len() as u32,
+            neurons: self.data.neurons.clone(),
             canister_ids: CanisterIds {
                 nns_governance_canister_id: self.data.nns_governance_canister_id,
+                nns_ledger_canister_id: self.data.nns_ledger_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -59,9 +58,9 @@ struct Data {
     pub public_key: Vec<u8>,
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
+    pub nns_ledger_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(default)]
-    pub signed_requests: SignedRequests,
+    pub neurons: Vec<u64>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -70,6 +69,7 @@ impl Data {
     pub fn new(
         governance_principals: Vec<Principal>,
         nns_governance_canister_id: CanisterId,
+        nns_ledger_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -77,8 +77,9 @@ impl Data {
             public_key: Vec::new(),
             governance_principals,
             nns_governance_canister_id,
+            nns_ledger_canister_id,
             cycles_dispenser_canister_id,
-            signed_requests: SignedRequests::default(),
+            neurons: Vec::new(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -99,12 +100,13 @@ pub struct Metrics {
     pub public_key: String,
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
-    pub requests_signed: u32,
+    pub neurons: Vec<u64>,
     pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub nns_governance_canister_id: CanisterId,
+    pub nns_ledger_canister_id: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

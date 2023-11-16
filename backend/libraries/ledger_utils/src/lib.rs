@@ -2,6 +2,7 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sha256::sha256;
 use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
@@ -109,6 +110,18 @@ pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
         .trim_end_matches('0')
         .trim_end_matches('.')
         .to_string()
+}
+
+pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
+    const DOMAIN: &[u8] = b"neuron-stake";
+    const DOMAIN_LENGTH: [u8; 1] = [0x0c];
+
+    let mut hasher = Sha256::new();
+    hasher.update(&DOMAIN_LENGTH);
+    hasher.update(DOMAIN);
+    hasher.update(controller.as_slice());
+    hasher.update(&nonce.to_be_bytes());
+    hasher.finalize().into()
 }
 
 /// An operation which modifies account balances

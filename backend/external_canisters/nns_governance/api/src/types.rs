@@ -190,6 +190,11 @@ pub mod manage_neuron_response {
     use super::*;
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct ClaimOrRefreshResponse {
+        pub refreshed_neuron_id: Option<NeuronId>,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum Command {
         Error(GovernanceError),
         Configure(Empty),
@@ -200,7 +205,7 @@ pub mod manage_neuron_response {
         RegisterVote(Empty),
         Split(Empty),
         DisburseToNeuron(Empty),
-        ClaimOrRefresh(Empty),
+        ClaimOrRefresh(ClaimOrRefreshResponse),
         MergeMaturity(Empty),
         Merge(Empty),
         StakeMaturity(Empty),

@@ -1,5 +1,3 @@
-use crate::model::signed_requests::SignedRequest;
-use crate::mutate_state;
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument, SignWithEcdsaArgument};
 use ic_transport_types::{to_request_id, EnvelopeContent};
@@ -40,20 +38,7 @@ pub async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id
     serializer.self_describe().unwrap();
     envelope.serialize(&mut serializer).unwrap();
 
-    mutate_state(|state| {
-        let now = state.env.now();
-
-        let signed_request = SignedRequest {
-            timestamp: now,
-            content,
-            request_id,
-            signature,
-            body: serialized_bytes.clone(),
-        };
-        state.data.signed_requests.push(signed_request);
-
-        Ok(serialized_bytes)
-    })
+    Ok(serialized_bytes)
 }
 
 async fn sign(key_id: EcdsaKeyId, message_hash: [u8; 32]) -> CallResult<Vec<u8>> {
