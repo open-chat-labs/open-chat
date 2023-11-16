@@ -4,7 +4,6 @@
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../Checkbox.svelte";
     import {
-        E8S_PER_TOKEN,
         type OpenChat,
         isSnsGate,
         type InterpolationValues,
@@ -70,7 +69,7 @@
                             : undefined,
                     minStakeE8s:
                         minStake !== "" && !invalidMinStake
-                            ? Number(minStake) * E8S_PER_TOKEN
+                            ? Number(minStake) * Math.pow(10, client.getTokenDetailsForSnsAccessGate(candidate.gate)?.decimals ?? 8)
                             : undefined,
                 },
             };
