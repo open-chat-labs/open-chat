@@ -66,6 +66,7 @@ import {
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 import type { DraftMessage, DraftMessagesByThread } from "./stores/draftMessageFactory";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
+import { networkStatus, type NetworkStatus } from "./stores/network";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -118,8 +119,10 @@ export class LiveState {
     anonUser!: boolean;
     suspendedUser!: boolean;
     platformModerator!: boolean;
+    networkStatus!: NetworkStatus;
 
     constructor() {
+        networkStatus.subscribe((status) => (this.networkStatus = status));
         currentUser.subscribe((user) => (this.user = user));
         anonUser.subscribe((anon) => (this.anonUser = anon));
         suspendedUser.subscribe((suspended) => (this.suspendedUser = suspended));

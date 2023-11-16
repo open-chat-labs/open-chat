@@ -15,7 +15,7 @@ ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 pocket-ic = { workspace = true }
 icrc_ledger_canister = { path = "../external_canisters/icrc_ledger/api" }
-icrc-ledger-types = { path = "../libraries/icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../libraries/ledger_utils" }

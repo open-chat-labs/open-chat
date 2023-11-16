@@ -7,6 +7,6 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-icrc-ledger-types = { path = "../../../libraries/icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

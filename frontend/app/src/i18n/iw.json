@@ -1148,5 +1148,6 @@
     "guestUser": "משתמש אורח",
     "showAuthProviders": "הצג אפשרויות",
     "hideAuthProviders": "הסתר אפשרויות",
-    "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }"
+    "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }",
+    "offlineMessage": "לא מקוון"
 }
