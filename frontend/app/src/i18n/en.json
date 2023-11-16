@@ -781,6 +781,7 @@
     "loadingTweetPreview": "Loading tweet preview...",
     "displayWidth": "Display width",
     "apply": "Apply",
+    "offlineError": "Sorry - it looks like you are offline at the moment",
     "archiveChat": "Archive chat",
     "archiveChatFailed": "Failed to archive chat",
     "unarchiveChatFailed": "Failed to un-archive chat",

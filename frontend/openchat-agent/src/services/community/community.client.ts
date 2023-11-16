@@ -807,7 +807,7 @@ export class CommunityClient extends CandidService {
     ): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated) {
+            if (fromCache.timestamp >= chatLastUpdated || !navigator.onLine) {
                 return fromCache;
             } else {
                 return this.getChannelDetailsUpdates(chatId, fromCache);
@@ -1243,19 +1243,19 @@ export class CommunityClient extends CandidService {
     }
 
     reportMessage(
-        channelId: string, 
-        threadRootMessageIndex: number | undefined, 
-        messageId: bigint, 
-        deleteMessage: boolean
+        channelId: string,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.service.report_message({
                 channel_id: BigInt(channelId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }

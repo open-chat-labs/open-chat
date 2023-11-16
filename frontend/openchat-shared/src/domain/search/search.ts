@@ -2,7 +2,7 @@ import type { AccessGate } from "../access";
 import type { ChatIdentifier, GroupChatIdentifier, MessageContent } from "../chat/chat";
 import type { ChannelMatch, CommunityIdentifier } from "../community";
 import type { DataContent } from "../data/data";
-import type { ChatNotFound, Failure } from "../response";
+import type { ChatNotFound, Failure, Offline } from "../response";
 
 export type GroupMatch = DataContent & {
     chatId: GroupChatIdentifier;
@@ -31,9 +31,9 @@ export type MessageMatch = {
     score: number;
 };
 
-export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess;
-export type GroupSearchResponse = TermInvalid | GroupSearchSuccess;
-export type ExploreChannelsResponse = Failure | ExploreChannelsSuccess;
+export type ExploreCommunitiesResponse = TermInvalid | ExploreSuccess | Offline;
+export type GroupSearchResponse = TermInvalid | GroupSearchSuccess | Offline;
+export type ExploreChannelsResponse = Failure | ExploreChannelsSuccess | Offline;
 
 export type TooManyUsers = {
     kind: "too_many_users";
@@ -66,9 +66,9 @@ export type SearchSuccess = {
     matches: GroupMatch[];
 };
 
-export type SearchGroupChatResponse = SearchMessagesSuccess | Failure;
+export type SearchGroupChatResponse = SearchMessagesSuccess | Failure | Offline;
 
-export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid;
+export type SearchDirectChatResponse = SearchMessagesSuccess | ChatNotFound | TermInvalid | Offline;
 
 export type SearchMessagesSuccess = {
     kind: "success";

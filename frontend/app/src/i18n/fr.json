@@ -1151,5 +1151,6 @@
     "showAuthProviders": "Afficher les options",
     "hideAuthProviders": "Masquer les options",
     "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }",
-    "offlineMessage": "Hors ligne"
+    "offlineMessage": "Hors ligne",
+    "offlineError": "Désolé, il semble que vous soyez hors ligne pour le moment"
 }
