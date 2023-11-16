@@ -1151,5 +1151,6 @@
     "showAuthProviders": "Mostra opzioni",
     "hideAuthProviders": "Nascondi opzioni",
     "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }",
-    "offlineMessage": "disconnesso"
+    "offlineMessage": "disconnesso",
+    "offlineError": "Siamo spiacenti, sembra che tu sia offline al momento"
 }
