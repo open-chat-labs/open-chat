@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::compute_neuron_staking_subaccount_bytes;
-use neuron_controller_canister::stake_neuron::{Response::*, *};
+use neuron_controller_canister::stake_nns_neuron::{Response::*, *};
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{manage_neuron_response, ManageNeuron};
@@ -16,7 +16,7 @@ use utils::canister::get_random_seed;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-async fn stake_neuron(_args: Args) -> Response {
+async fn stake_nns_neuron(_args: Args) -> Response {
     let random_bytes = get_random_seed().await;
 
     let nonce = u64::from_be_bytes(random_bytes[..8].try_into().unwrap());

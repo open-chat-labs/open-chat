@@ -3954,6 +3954,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "human_readable",
  "nns_governance_canister",
  "serde",
  "types",
@@ -3987,7 +3988,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_cbor",
- "serde_json",
  "serializer",
  "sha256",
  "stable_memory",

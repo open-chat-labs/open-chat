@@ -88,6 +88,6 @@ type StakeNeuronResponse = variant {
 };
 
 service : {
-  manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
-  stake_neuron : (record {}) -> (StakeNeuronResponse);
+  manage_nns_neuron : (ManageNeuron) -> (ManageNeuronResponse);
+  stake_nns_neuron : (record {}) -> (StakeNeuronResponse);
 }
