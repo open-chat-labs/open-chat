@@ -59,6 +59,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub public_key: Vec<u8>,
+    #[serde(skip_deserializing, default = "sns_governance_canister")]
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
@@ -66,6 +67,10 @@ struct Data {
     pub neurons: Vec<u64>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn sns_governance_canister() -> Vec<Principal> {
+    vec![Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()]
 }
 
 impl Data {
