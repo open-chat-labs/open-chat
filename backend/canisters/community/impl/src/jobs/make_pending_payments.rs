@@ -1,6 +1,6 @@
-use crate::model::pending_payments_queue::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
+use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::BlockIndex;
 use icrc_ledger_types::icrc1::account::Account;

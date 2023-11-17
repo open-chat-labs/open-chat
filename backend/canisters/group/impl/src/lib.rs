@@ -12,9 +12,8 @@ use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{
     AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
 };
+use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
-use model::payment_receipts::PaymentReceipts;
-use model::pending_payments_queue::{PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};

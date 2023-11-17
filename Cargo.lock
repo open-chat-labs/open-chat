@@ -1294,6 +1294,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "group_chat_core",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -2431,6 +2432,7 @@ dependencies = [
  "gated_groups",
  "group_canister",
  "group_chat_core",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -2480,6 +2482,18 @@ dependencies = [
  "serde_repr",
  "types",
  "utils",
+]
+
+[[package]]
+name = "group_community_common"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "icrc-ledger-types",
+ "msgpack",
+ "serde",
+ "serde_repr",
+ "types",
 ]
 
 [[package]]
