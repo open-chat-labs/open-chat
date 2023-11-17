@@ -56,7 +56,7 @@ async fn stake_neuron(_args: Args) -> Response {
         nns_governance_canister_id,
         &ManageNeuron {
             id: None,
-            neuron_id_or_subaccount: Some(NeuronIdOrSubaccount::Subaccount(subaccount.to_vec())),
+            neuron_id_or_subaccount: None,
             command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
                 by: Some(By::MemoAndController(MemoAndController {
                     controller: Some(principal),
