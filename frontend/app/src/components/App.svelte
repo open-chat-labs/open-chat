@@ -30,6 +30,7 @@
     import { framed, broadcastLoggedInUser } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
+    import { mobileOperatingSystem } from "../utils/devices";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -86,6 +87,10 @@
             page.replace(removeQueryStringParam("ref"));
         }
         calculateHeight();
+
+        if (mobileOperatingSystem === "iOS") {
+            viewPortContent += ", maximum-scale=1";
+        }
 
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
