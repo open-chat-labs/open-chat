@@ -30,10 +30,8 @@
     import { framed, broadcastLoggedInUser } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
-    import { mobileOperatingSystem } from "../utils/devices";
+    import Head from "./Head.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
-
-    let viewPortContent = "width=device-width, initial-scale=1";
 
     const logger = inititaliseLogger(
         process.env.ROLLBAR_ACCESS_TOKEN!,
@@ -87,10 +85,6 @@
             page.replace(removeQueryStringParam("ref"));
         }
         calculateHeight();
-
-        if (mobileOperatingSystem === "iOS") {
-            viewPortContent += ", maximum-scale=1";
-        }
 
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
@@ -337,9 +331,7 @@
         style={`background-image: url(${burstUrl})`} />
 {/if}
 
-<svelte:head>
-    <meta name="viewport" content={viewPortContent} />
-</svelte:head>
+<Head />
 
 <Witch background />
 
