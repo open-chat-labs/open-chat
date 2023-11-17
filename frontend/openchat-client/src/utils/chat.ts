@@ -73,8 +73,7 @@ import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
-import { bigIntMax } from "./bigint";
-import { messagePermissionsList } from "openchat-shared";
+import { bigIntMax, messagePermissionsList } from "openchat-shared";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute

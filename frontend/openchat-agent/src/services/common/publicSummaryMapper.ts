@@ -46,6 +46,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
             threadPermissions: undefined,
         },
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         metrics: emptyChatMetrics(),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: true,

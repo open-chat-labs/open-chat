@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { E8S_PER_TOKEN, type OpenChat } from "openchat-client";
+    import { type OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
@@ -49,7 +49,7 @@
     }
 
     function onKeyup() {
-        const inputAmount = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
+        const inputAmount = Math.round(Number(inputElement.value) * Math.pow(10, tokenDecimals));
         if (!isNaN(inputAmount)) {
             amount = BigInt(inputAmount);
         }
@@ -93,8 +93,8 @@
     <input
         {autofocus}
         class="amount-val"
-        min={Number(maxAmount) / E8S_PER_TOKEN}
-        max={Number(maxAmount) / E8S_PER_TOKEN}
+        min={Number(maxAmount) / Math.pow(10, tokenDecimals)}
+        max={Number(maxAmount) / Math.pow(10, tokenDecimals)}
         type="number"
         step="0.00000001"
         bind:this={inputElement}

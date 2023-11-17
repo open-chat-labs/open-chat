@@ -1607,7 +1607,7 @@ impl GroupChatCore {
             })
             .collect();
 
-        new.retain(|cp| removed.contains(&cp.subtype));
+        new.retain(|cp| !removed.contains(&cp.subtype));
         new
     }
 

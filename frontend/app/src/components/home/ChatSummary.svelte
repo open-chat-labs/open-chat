@@ -107,7 +107,7 @@
             return "";
         }
 
-        if (chatSummary.latestMessage === undefined) {
+        if (chatSummary.latestMessage === undefined || chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
                       values: {

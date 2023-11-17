@@ -1083,6 +1083,7 @@ export type DirectChatSummaryUpdates = {
     notificationsMuted?: boolean;
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated?: bigint;
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
@@ -1179,6 +1180,7 @@ type ChatSummaryCommon = HasMembershipRole & {
     metrics: Metrics;
     membership: ChatMembership;
     eventsTTL: bigint | undefined;
+    eventsTtlLastUpdated: bigint;
 };
 
 export type ChannelSummary = DataContent &
@@ -1284,6 +1286,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         dateLastPinned: bigint | undefined;
         rulesAccepted: boolean;
         eventsTTL?: bigint;
+        eventsTtlLastUpdated: bigint;
     };
 
 export type UpdatedEvent = {
@@ -1318,6 +1321,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     gate: OptionUpdate<AccessGate>;
     rulesAccepted: boolean | undefined;
     eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated?: bigint;
 };
 
 export type GroupCanisterThreadDetails = {
