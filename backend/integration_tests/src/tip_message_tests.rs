@@ -34,7 +34,6 @@ fn tip_direct_message_succeeds() {
         canister_ids.icp_ledger,
         Cryptocurrency::InternetComputer,
         tip_amount,
-        Cryptocurrency::InternetComputer.fee().unwrap(),
     );
 
     let user1_message = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![event_index])
@@ -96,7 +95,6 @@ fn tip_group_message_succeeds() {
         canister_ids.icp_ledger,
         Cryptocurrency::InternetComputer,
         tip_amount,
-        Cryptocurrency::InternetComputer.fee().unwrap(),
     );
 
     let message = client::group::happy_path::events_by_index(env, &user2, group_id, vec![event_index])
@@ -160,7 +158,6 @@ fn tip_channel_message_succeeds() {
         canister_ids.icp_ledger,
         Cryptocurrency::InternetComputer,
         tip_amount,
-        Cryptocurrency::InternetComputer.fee().unwrap(),
     );
 
     let message = client::community::happy_path::events_by_index(env, &user2, community_id, channel_id, vec![event_index])
@@ -217,6 +214,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            decimals: 8,
         },
     );
 
@@ -296,6 +294,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
+            decimals: 8,
         },
     );
 

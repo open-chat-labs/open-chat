@@ -262,7 +262,6 @@ pub mod happy_path {
         ledger: CanisterId,
         token: Cryptocurrency,
         amount: u128,
-        fee: u128,
     ) {
         let response = super::tip_message(
             env,
@@ -274,9 +273,10 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 ledger,
-                token,
                 amount,
-                fee,
+                fee: token.fee().unwrap(),
+                decimals: token.decimals().unwrap(),
+                token,
             },
         );
 

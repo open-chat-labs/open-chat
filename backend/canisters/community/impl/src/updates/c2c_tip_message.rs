@@ -63,11 +63,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             tipped_by: user_id,
                             tipped_by_name: args.username,
                             tipped_by_display_name: args.display_name,
-                            tip: format_crypto_amount_with_symbol(
-                                args.amount,
-                                args.token.decimals().unwrap_or(8),
-                                args.token.token_symbol(),
-                            ),
+                            tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
                             community_avatar_id: state.data.avatar.as_ref().map(|a| a.id),
                             channel_avatar_id: channel.chat.avatar.as_ref().map(|a| a.id),
                         });
