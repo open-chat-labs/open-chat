@@ -77,17 +77,22 @@ type Spawn = record {
 type Split = record { amount_e8s : nat64 };
 type StakeMaturity = record { percentage_to_stake : opt nat32 };
 
-type ManageNeuronResponse = variant {
+type ManageNnsNeuronArgs = record {
+    neuron_id : nat64;
+    command : Command;
+};
+
+type ManageNnsNeuronResponse = variant {
     Success: text;
     InternalError : text;
 };
 
-type StakeNeuronResponse = variant {
+type StakeNnsNeuronResponse = variant {
     Success : nat64;
     InternalError : text;
 };
 
 service : {
-  manage_nns_neuron : (ManageNeuron) -> (ManageNeuronResponse);
-  stake_nns_neuron : (record {}) -> (StakeNeuronResponse);
+  manage_nns_neuron : (ManageNnsNeuronArgs) -> (ManageNnsNeuronResponse);
+  stake_nns_neuron : (record {}) -> (StakeNnsNeuronResponse);
 }
