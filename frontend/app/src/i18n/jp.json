@@ -1060,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** グループのメンバー",
         "searchUserGroups": "ユーザーグループを検索...",
         "userGroupName": "ユーザーグループ名",
-        "noSpaces": "スペースは使用できません"
+        "noSpaces": "スペースは使用できません",
+        "noMatch": "一致するコミュニティが見つかりませんでした",
+        "refineSearch": "検索を絞り込んでみてください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

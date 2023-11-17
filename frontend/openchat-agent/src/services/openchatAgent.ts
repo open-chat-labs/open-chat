@@ -2067,6 +2067,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getBio(userId?: string): Promise<string> {
+        if (!navigator.onLine) return Promise.resolve("");
+
         const userClient = userId
             ? UserClient.create(userId, this.identity, this.config, this.db)
             : this.userClient;
