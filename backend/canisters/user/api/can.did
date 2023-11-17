@@ -156,6 +156,7 @@ type TipMessageArgs = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
+    decimals : opt nat8;
 };
 
 type TipMessageResponse = variant {
