@@ -31,6 +31,7 @@ dfx --identity $IDENTITY canister create --provisional-create-canister-effective
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 registry
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 market_maker
 dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 exchange_bot
+dfx --identity $IDENTITY canister create --provisional-create-canister-effective-canister-id jrlun-jiaaa-aaaab-aaaaa-cai --network $NETWORK --no-wallet --with-cycles 100000000000000 neuron_controller
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh $NETWORK \
