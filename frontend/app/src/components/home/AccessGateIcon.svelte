@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, type AccessGate, isSnsGate, OpenChat } from "openchat-client";
+    import { type AccessGate, isSnsGate, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
 
@@ -29,7 +29,7 @@
             }
             if (gate.minStakeE8s) {
                 parts.push(
-                    `${$_("access.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`
+                    `${$_("access.minStakeN", { values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) } })}`
                 );
             }
         }

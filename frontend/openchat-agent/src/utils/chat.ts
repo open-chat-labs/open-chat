@@ -23,7 +23,7 @@ import type {
     ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
-import { ChatMap, applyOptionUpdate, mapOptionUpdate } from "openchat-shared";
+import { ChatMap, applyOptionUpdate, bigIntMax, mapOptionUpdate } from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
 import Identicon from "identicon.js";
@@ -168,6 +168,10 @@ export function mergeDirectChatUpdates(
             latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
             metrics: u.metrics ?? c.metrics,
             eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                c.eventsTtlLastUpdated ?? BigInt(0),
+                u.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...c.membership,
                 readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
@@ -194,7 +198,14 @@ export function mergeGroupChatUpdates(
 
         if (u === undefined && g === undefined) return c;
 
-        const latestMessage = g?.latestMessage ?? c.latestMessage;
+        const latestMessageIndex = g?.latestMessageIndex ?? c.latestMessageIndex;
+        let latestMessage = g?.latestMessage ?? c.latestMessage;
+        if (
+            latestMessage !== undefined &&
+            latestMessage.event.messageIndex !== latestMessageIndex
+        ) {
+            latestMessage = undefined;
+        }
         const readByMeUpTo = u?.readByMeUpTo ?? c.membership.readByMeUpTo;
 
         const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
@@ -219,7 +230,7 @@ export function mergeGroupChatUpdates(
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
-            latestMessageIndex: g?.latestMessageIndex ?? c.latestMessageIndex,
+            latestMessageIndex,
             metrics: g?.metrics ?? c.metrics,
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
@@ -227,6 +238,10 @@ export function mergeGroupChatUpdates(
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
             level: "group",
             eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                c.eventsTtlLastUpdated ?? BigInt(0),
+                g?.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...c.membership,
                 mentions:
@@ -290,6 +305,7 @@ export function mergeGroupChats(
             gate: g.gate,
             level: "group",
             eventsTTL: g.eventsTTL,
+            eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
                 joined: g.joined,
                 role: g.myRole,

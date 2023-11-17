@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import {
-        E8S_PER_TOKEN,
         OpenChat,
         type CredentialGate,
         type SNSAccessGate,
@@ -50,7 +49,7 @@
             {#if gate.minStakeE8s}
                 <div>
                     {`${$_("access.minStakeN", {
-                        values: { n: gate.minStakeE8s / E8S_PER_TOKEN },
+                        values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) },
                     })}`}
                 </div>
             {/if}
