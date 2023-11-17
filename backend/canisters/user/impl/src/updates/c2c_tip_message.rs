@@ -47,11 +47,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     message_event_index: event.index,
                     username: args.username,
                     display_name: args.display_name,
-                    tip: format_crypto_amount_with_symbol(
-                        args.amount,
-                        args.token.decimals().unwrap_or(8),
-                        args.token.token_symbol(),
-                    ),
+                    tip: format_crypto_amount_with_symbol(args.amount, args.decimals, args.token.token_symbol()),
                     user_avatar_id: args.user_avatar_id,
                 });
                 state.push_notification(my_user_id, notification);
