@@ -275,7 +275,7 @@ pub mod happy_path {
                 ledger,
                 amount,
                 fee: token.fee().unwrap(),
-                decimals: token.decimals().unwrap(),
+                decimals: token.decimals(),
                 token,
             },
         );

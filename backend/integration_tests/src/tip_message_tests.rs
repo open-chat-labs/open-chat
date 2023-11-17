@@ -214,7 +214,7 @@ fn tip_group_message_retries_if_c2c_call_fails() {
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
-            decimals: 8,
+            decimals: Some(8),
         },
     );
 
@@ -294,7 +294,7 @@ fn tip_channel_message_retries_if_c2c_call_fails() {
             token: Cryptocurrency::InternetComputer,
             amount: tip_amount,
             fee: Cryptocurrency::InternetComputer.fee().unwrap(),
-            decimals: 8,
+            decimals: Some(8),
         },
     );
 
