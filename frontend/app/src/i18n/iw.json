@@ -662,7 +662,8 @@
             "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
             "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
             "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "פעולות בקר נוירון"
     },
     "yes": "כן",
     "no": "לא",

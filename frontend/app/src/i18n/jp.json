@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
             "transactionUrlFormat": "トランザクションURL形式",
             "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "ニューロン コントローラーのアクション"
     },
     "yes": "はい",
     "no": "いいえ",

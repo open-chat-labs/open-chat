@@ -668,7 +668,8 @@
             "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
             "transactionUrlFormat": "Transaktions-URL-Format",
             "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Neuron-Controller-Aktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",

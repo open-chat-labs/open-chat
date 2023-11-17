@@ -665,7 +665,8 @@
             "enterHowToBuyUrl": "Nhập url hiển thị cách mua mã thông báo",
             "transactionUrlFormat": "Định dạng url giao dịch",
             "enterTransactionUrlFormat": "Ví dụ. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Hành động điều khiển nơ-ron"
     },
     "yes": "Đúng",
     "no": "Không",
