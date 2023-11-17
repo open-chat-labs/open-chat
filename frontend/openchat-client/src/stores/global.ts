@@ -51,12 +51,12 @@ export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, 
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
-type CombinedUnreadCounts = {
+export type CombinedUnreadCounts = {
     threads: UnreadCounts;
     chats: UnreadCounts;
 };
 
-type UnreadCounts = {
+export type UnreadCounts = {
     muted: number;
     unmuted: number;
     mentions: boolean;
