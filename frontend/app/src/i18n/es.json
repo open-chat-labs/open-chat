@@ -666,7 +666,8 @@
             "enterHowToBuyUrl": "Ingrese una URL que muestre cómo comprar el token.",
             "transactionUrlFormat": "Formato de URL de transacción",
             "enterTransactionUrlFormat": "P.ej. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Acciones del controlador de neuronas"
     },
     "yes": "Sí",
     "no": "No",

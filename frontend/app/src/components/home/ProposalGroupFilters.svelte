@@ -31,6 +31,7 @@
         storageIndex: "proposal.storageIndexAction",
         cyclesDispenser: "proposal.cyclesDispenserAction",
         registry: "proposal.registryAction",
+        neuronController: "proposal.neuronControllerAction",
     };
 
     const client = getContext<OpenChat>("client");
@@ -62,6 +63,8 @@
                 return "cyclesDispenser";
             } else if (id < 8000) {
                 return "registry";
+            } else if (id < 9000) {
+                return "neuronController";
             } else {
                 return "unknown";
             }
