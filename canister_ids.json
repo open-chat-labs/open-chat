@@ -28,6 +28,10 @@
     "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
     "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
   },
+  "neuron_controller": {
+    "ic": "tktqu-nyaaa-aaaar-qackq-cai",
+    "ic_test": "tdq3i-3qaaa-aaaar-qacla-cai"
+  },
   "notifications": {
     "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
     "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"

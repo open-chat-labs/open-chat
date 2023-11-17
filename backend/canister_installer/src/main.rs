@@ -21,6 +21,7 @@ async fn main() {
         registry: opts.registry,
         market_maker: opts.market_maker,
         exchange_bot: opts.exchange_bot,
+        neuron_controller: opts.neuron_controller,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -84,6 +85,9 @@ struct Opts {
 
     #[arg(long)]
     exchange_bot: CanisterId,
+
+    #[arg(long)]
+    neuron_controller: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,

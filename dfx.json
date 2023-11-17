@@ -25,6 +25,12 @@
       "wasm": "wasms/local_group_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_group"
     },
+    "neuron_controller": {
+      "type": "custom",
+      "candid": "backend/canisters/neuron_controller/api/can.did",
+      "wasm": "wasms/neuron_controller.wasm.gz",
+      "build": "./scripts/generate-wasm.sh neuron_controller"
+    },
     "notifications_index": {
       "type": "custom",
       "candid": "backend/canisters/notifications_index/api/can.did",
