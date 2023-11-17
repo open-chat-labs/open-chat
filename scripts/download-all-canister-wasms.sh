@@ -21,6 +21,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh local_group_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh local_user_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh market_maker $WASM_SRC || exit 1
+./download-canister-wasm.sh neuron_controller $WASM_SRC || exit 1
 ./download-canister-wasm.sh notifications $WASM_SRC || exit 1
 ./download-canister-wasm.sh notifications_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh online_users $WASM_SRC || exit 1

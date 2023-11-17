@@ -197,6 +197,25 @@ pub async fn upgrade_exchange_bot_canister(
     println!("Exchange bot canister upgraded");
 }
 
+pub async fn upgrade_neuron_controller_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    neuron_controller_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        neuron_controller_canister_id,
+        version,
+        neuron_controller_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::NeuronController,
+    )
+    .await;
+
+    println!("Neuron controller canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: Box<dyn Identity>,
     url: String,
