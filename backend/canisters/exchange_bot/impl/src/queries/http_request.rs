@@ -17,10 +17,16 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 
+    fn get_swaps(state: &RuntimeState) -> HttpResponse {
+        let swaps: Vec<_> = state.data.swaps_log.iter().rev().take(100).collect();
+        build_json_response(&swaps)
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
+        Route::Other(path, _) if path == "swaps" => read_state(get_swaps),
         _ => HttpResponse::not_found(),
     }
 }

@@ -28,11 +28,9 @@ fn handle_direct_message_impl(message: MessageContent, state: &mut RuntimeState)
 
     if let MessageContent::Crypto(c) = &message {
         let token = c.transfer.token();
-        response_messages.push(convert_to_message(format_crypto_amount_with_symbol(
-            c.transfer.units(),
-            token.decimals().unwrap_or(8),
-            token.token_symbol(),
-        )));
+        let amount_formatted =
+            format_crypto_amount_with_symbol(c.transfer.units(), token.decimals().unwrap_or(8), token.token_symbol());
+        response_messages.push(convert_to_message(format!("You deposited {amount_formatted}")));
     }
 
     match BalanceCommandParser::try_parse(&message, state) {

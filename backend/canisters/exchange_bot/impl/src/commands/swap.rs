@@ -3,13 +3,14 @@ use crate::commands::sub_tasks::check_user_balance::check_user_balance;
 use crate::commands::sub_tasks::get_quotes::get_quotes;
 use crate::commands::sub_tasks::withdraw::withdraw;
 use crate::commands::{Command, CommandParser, CommandSubTaskResult, ParseMessageResult};
+use crate::model::swaps_log::SwapsLogEntry;
 use crate::swap_client::SwapClient;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use exchange_bot_canister::ExchangeId;
 use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg};
 use lazy_static::lazy_static;
-use ledger_utils::{convert_to_subaccount, format_crypto_amount};
+use ledger_utils::{convert_to_subaccount, format_crypto_amount, format_crypto_amount_with_symbol};
 use rand::Rng;
 use regex_lite::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
@@ -301,9 +302,23 @@ impl SwapCommand {
             Ok(amount_out) => {
                 self.sub_tasks.swap = CommandSubTaskResult::Complete(
                     amount_out,
-                    Some(format_crypto_amount(amount_out, self.output_token.decimals)),
+                    Some(format_crypto_amount_with_symbol(
+                        amount_out,
+                        self.output_token.decimals,
+                        self.output_token.token.token_symbol(),
+                    )),
                 );
-                mutate_state(|state| self.on_updated(state));
+                mutate_state(|state| {
+                    state.data.swaps_log.push(SwapsLogEntry {
+                        timestamp: state.env.now(),
+                        exchange_id: client.exchange_id(),
+                        input_token: self.input_token.token.token_symbol().to_string(),
+                        output_token: self.output_token.token.token_symbol().to_string(),
+                        amount_in: amount,
+                        amount_out,
+                    });
+                    self.on_updated(state)
+                });
             }
             Err(error) => {
                 error!(
