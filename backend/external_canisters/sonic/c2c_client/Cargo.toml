@@ -1,5 +1,5 @@
 [package]
-name = "icpswap_swap_pool_canister"
+name = "sonic_canister_c2c_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,5 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-serde = { workspace = true }
+canister_client = { path = "../../../libraries/canister_client" }
+ic-cdk = { workspace = true }
+sonic_canister = { path = "../api" }
 types = { path = "../../../libraries/types" }

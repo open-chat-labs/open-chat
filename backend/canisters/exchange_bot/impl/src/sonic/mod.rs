@@ -2,60 +2,61 @@ use crate::swap_client::{SwapClient, SwapClientFactory};
 use async_trait::async_trait;
 use exchange_bot_canister::ExchangeId;
 use ic_cdk::api::call::CallResult;
-use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::account::Account;
+use sonic_client::SonicClient;
 use types::{CanisterId, Cryptocurrency, TokenInfo};
 
-pub struct ICPSwapClientFactory {}
+pub fn sonic_canister_id() -> CanisterId {
+    CanisterId::from_text("3xwpq-ziaaa-aaaah-qcn4a-cai").unwrap()
+}
 
-impl ICPSwapClientFactory {
-    pub fn new() -> ICPSwapClientFactory {
-        ICPSwapClientFactory {}
-    }
+pub struct SonicClientFactory {
+    sonic_canister_id: CanisterId,
+    deposit_subaccount: [u8; 32],
+}
 
-    fn lookup_swap_canister_id(&self, token0: &TokenInfo, token1: &TokenInfo) -> Option<CanisterId> {
-        match (token0.token.clone(), token1.token.clone()) {
-            (Cryptocurrency::CHAT, Cryptocurrency::InternetComputer) => {
-                Some(CanisterId::from_text("ne2vj-6yaaa-aaaag-qb3ia-cai").unwrap())
-            }
-            _ => None,
+impl SonicClientFactory {
+    pub fn new(deposit_subaccount: [u8; 32]) -> SonicClientFactory {
+        SonicClientFactory {
+            sonic_canister_id: sonic_canister_id(),
+            deposit_subaccount,
         }
     }
 }
 
-impl SwapClientFactory for ICPSwapClientFactory {
+impl SwapClientFactory for SonicClientFactory {
     fn build(
         &self,
         this_canister_id: CanisterId,
         input_token: &TokenInfo,
         output_token: &TokenInfo,
     ) -> Option<Box<dyn SwapClient>> {
-        if let Some(swap_canister_id) = self.lookup_swap_canister_id(input_token, output_token) {
-            Some(Box::new(ICPSwapClient::new(
+        match (&input_token.token, &output_token.token) {
+            (Cryptocurrency::CHAT, Cryptocurrency::InternetComputer) => Some(Box::new(SonicClient::new(
                 this_canister_id,
-                swap_canister_id,
+                self.sonic_canister_id,
                 input_token.clone(),
                 output_token.clone(),
                 true,
-            )))
-        } else if let Some(swap_canister_id) = self.lookup_swap_canister_id(output_token, input_token) {
-            Some(Box::new(ICPSwapClient::new(
+                self.deposit_subaccount,
+            ))),
+            (Cryptocurrency::InternetComputer, Cryptocurrency::CHAT) => Some(Box::new(SonicClient::new(
                 this_canister_id,
-                swap_canister_id,
+                self.sonic_canister_id,
                 output_token.clone(),
                 input_token.clone(),
                 false,
-            )))
-        } else {
-            None
+                self.deposit_subaccount,
+            ))),
+            _ => None,
         }
     }
 }
 
 #[async_trait]
-impl SwapClient for ICPSwapClient {
+impl SwapClient for SonicClient {
     fn exchange_id(&self) -> ExchangeId {
-        ExchangeId::ICPSwap
+        ExchangeId::Sonic
     }
 
     fn input_token(&self) -> &TokenInfo {
@@ -71,11 +72,11 @@ impl SwapClient for ICPSwapClient {
     }
 
     async fn deposit_account(&self) -> CallResult<(CanisterId, Account)> {
-        Ok(self.deposit_account())
+        self.deposit_account().await
     }
 
     async fn deposit(&self, amount: u128) -> CallResult<()> {
-        self.deposit(amount).await.map(|_| ())
+        self.deposit(amount - self.input_token().fee).await.map(|_| ())
     }
 
     async fn swap(&self, amount: u128) -> CallResult<u128> {

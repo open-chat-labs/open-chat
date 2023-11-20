@@ -1,5 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::ResultLowercase;
 
 mod queries;
 mod updates;
@@ -7,13 +8,7 @@ mod updates;
 pub use queries::*;
 pub use updates::*;
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ICPSwapResult<T> {
-    #[serde(rename = "ok")]
-    Ok(T),
-    #[serde(rename = "err")]
-    Err(ICPSwapError),
-}
+pub type ICPSwapResult<T> = ResultLowercase<T, ICPSwapError>;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ICPSwapError {

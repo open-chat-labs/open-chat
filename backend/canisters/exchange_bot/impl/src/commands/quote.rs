@@ -110,7 +110,7 @@ impl QuoteCommand {
         let clients: Vec<_> = self
             .exchange_ids
             .iter()
-            .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
+            .filter_map(|e| state.get_swap_client(*e, &self.input_token, &self.output_token))
             .collect();
 
         ic_cdk::spawn(self.get_quotes(clients, amount));

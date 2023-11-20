@@ -156,6 +156,14 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
     }
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum ResultLowercase<T, E> {
+    #[serde(rename = "ok")]
+    Ok(T),
+    #[serde(rename = "err")]
+    Err(E),
+}
+
 pub fn is_empty_slice<T>(value: &[T]) -> bool {
     value.is_empty()
 }
