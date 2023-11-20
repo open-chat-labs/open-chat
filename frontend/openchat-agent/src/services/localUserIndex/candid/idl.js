@@ -142,10 +142,15 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const PaymentGate = IDL.Record({
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const MessageIndex = IDL.Nat32;
   const GroupRole = IDL.Variant({
@@ -595,8 +600,23 @@ export const idlFactory = ({ IDL }) => {
     'member_count' : IDL.Nat32,
     'primary_language' : IDL.Text,
   });
+  const TransferFromError = IDL.Variant({
+    'GenericError' : IDL.Record({
+      'message' : IDL.Text,
+      'error_code' : IDL.Nat,
+    }),
+    'TemporarilyUnavailable' : IDL.Null,
+    'InsufficientAllowance' : IDL.Record({ 'allowance' : IDL.Nat }),
+    'BadBurn' : IDL.Record({ 'min_burn_amount' : IDL.Nat }),
+    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
+    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
+    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'TooOld' : IDL.Null,
+    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
+  });
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
+    'PaymentFailed' : TransferFromError,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,

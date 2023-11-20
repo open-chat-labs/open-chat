@@ -3,7 +3,8 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -718,6 +719,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -1365,6 +1367,10 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PaymentGate {
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+}
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
@@ -1811,6 +1817,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'decimals' : [] | [number],
   'token' : Cryptocurrency,
   'chat' : Chat,
   'recipient' : UserId,

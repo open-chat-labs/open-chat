@@ -656,10 +656,15 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const PaymentGate = IDL.Record({
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
