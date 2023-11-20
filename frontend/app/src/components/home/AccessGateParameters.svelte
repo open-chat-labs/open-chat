@@ -1,15 +1,11 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import {
-        OpenChat,
-        type CredentialGate,
-        type SNSAccessGate,
-    } from "openchat-client";
+    import { OpenChat, type CredentialGate, type NeuronGate } from "openchat-client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: SNSAccessGate | CredentialGate;
+    export let gate: NeuronGate | CredentialGate;
     $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
 </script>
 
@@ -34,7 +30,7 @@
 {:else}
     <div class="detail">
         <div>
-            {$_("access.snsHolder", {
+            {$_("access.neuronHolder", {
                 values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
             })}
         </div>
@@ -49,7 +45,13 @@
             {#if gate.minStakeE8s}
                 <div>
                     {`${$_("access.minStakeN", {
-                        values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) },
+                        values: {
+                            n: client.formatTokens(
+                                BigInt(gate.minStakeE8s),
+                                0,
+                                tokenDetails?.decimals ?? 8
+                            ),
+                        },
                     })}`}
                 </div>
             {/if}

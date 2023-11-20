@@ -39,9 +39,10 @@
     let step = 0;
     let actualWidth = 0;
     let detailsValid = true;
+    let visibilityValid = true;
     let originalGroup = structuredClone(candidateGroup);
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid, hideInviteUsers);
+    $: steps = getSteps(editing, detailsValid, visibilityValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -71,10 +72,15 @@
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
 
-    function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
+    function getSteps(
+        editing: boolean,
+        detailsValid: boolean,
+        visibilityValid: boolean,
+        hideInviteUsers: boolean
+    ) {
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
-            { labelKey: "access.visibility", valid: true },
+            { labelKey: "access.visibility", valid: visibilityValid },
             { labelKey: $_("rules.rules"), valid: true },
             { labelKey: "permissions.permissions", valid: true },
         ];
@@ -295,6 +301,7 @@
                         {editing}
                         history
                         {canEditDisappearingMessages}
+                        bind:valid={visibilityValid}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
@@ -363,7 +370,7 @@
                     </Button>
                 {:else}
                     <Button
-                        disabled={busy || !detailsValid}
+                        disabled={busy || !detailsValid || !visibilityValid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}

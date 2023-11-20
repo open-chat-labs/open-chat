@@ -1,27 +1,13 @@
 <script lang="ts">
-    import CredentialSelector from "./CredentialSelector.svelte";
     import { interpolateLevel } from "../../utils/i18n";
-    import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../Checkbox.svelte";
-    import {
-        type OpenChat,
-        isSnsGate,
-        type InterpolationValues,
-        type SNSAccessGate,
-        type CandidateGroupChat,
-        type CommunitySummary,
-    } from "openchat-client";
+    import { type OpenChat, type CandidateGroupChat, type CommunitySummary } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
-    import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import Select from "../Select.svelte";
-    import { iconSize } from "../../stores/iconSize";
-    import Legend from "../Legend.svelte";
-    import Input from "../Input.svelte";
-    import { getGateBindings, type GateBinding } from "../../utils/access";
-    import { fade } from "svelte/transition";
     import DisappearingMessages from "./DisappearingMessages.svelte";
+    import AccessGateControl from "./AccessGateControl.svelte";
 
     type T = $$Generic;
 
@@ -33,67 +19,20 @@
     export let editing: boolean;
     export let history: boolean;
     export let canEditDisappearingMessages: boolean;
+    export let valid: boolean;
 
-    let minDissolveDelay = client.getMinDissolveDelayDays(original.gate) ?? "";
-    let minStake = client.getMinStakeInTokens(original.gate) ?? "";
-    let gateBindings: GateBinding[] = [];
-    let selectedGateKey: string | undefined = undefined;
     let disappearingMessages =
         candidate.kind === "candidate_group_chat" && candidate.eventsTTL !== undefined;
 
-    $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
-    $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
-    $: nervousSystemLookup = client.nervousSystemLookup;
     $: isDiamond = client.isDiamond;
     $: requiresUpgrade = !editing && !$isDiamond && candidate.level !== "channel";
     $: canChangeVisibility = !editing ? client.canChangeVisibility(candidate) : true;
-
-    onMount(() => {
-        gateBindings = getGateBindings($nervousSystemLookup);
-        selectedGateKey = gateBindings.find((g) => {
-            return candidate.gate.kind === "sns_gate"
-                ? candidate.gate.governanceCanister === g.key
-                : candidate.gate.kind === g.gate.kind;
-        })?.key;
-    });
-
-    afterUpdate(() => {
-        if (isSnsGate(candidate.gate)) {
-            candidate = {
-                ...candidate,
-                gate: {
-                    ...candidate.gate,
-                    minDissolveDelay:
-                        minDissolveDelay !== "" && !invalidDissolveDelay
-                            ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
-                            : undefined,
-                    minStakeE8s:
-                        minStake !== "" && !invalidMinStake
-                            ? Number(minStake) * Math.pow(10, client.getTokenDetailsForSnsAccessGate(candidate.gate)?.decimals ?? 8)
-                            : undefined,
-                },
-            };
-        }
-    });
 
     function toggleScope() {
         candidate.public = !candidate.public;
         if (candidate.public) {
             candidate.historyVisible = true;
         }
-    }
-
-    function updateGate() {
-        candidate.gate = gateBindings.find((g) => g.key === selectedGateKey)?.gate ?? {
-            kind: "no_gate",
-        };
-        minDissolveDelay = "";
-        minStake = "";
-    }
-
-    function snsHolderParams(gate: SNSAccessGate): InterpolationValues {
-        const tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
-        return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
 
     function toggleDisappearingMessages() {
@@ -187,51 +126,7 @@
 {/if}
 
 {#if !requiresUpgrade}
-    <div transition:fade|local={{ duration: 250 }} class="wrapper">
-        <div class="icon">
-            <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div class="section">
-            <div class="section-title">{$_("access.chooseGate")}</div>
-            <div class="choose-gate">
-                <Select margin={false} on:change={updateGate} bind:value={selectedGateKey}>
-                    {#each gateBindings as gate}
-                        <option disabled={!gate.enabled} value={gate.key}
-                            >{$_(gate.label, { values: gate.labelParams })}</option>
-                    {/each}
-                </Select>
-            </div>
-            {#if isSnsGate(candidate.gate)}
-                <Legend label={$_("access.minDissolveDelay")} />
-                <Input
-                    maxlength={100}
-                    placeholder={$_("access.optional")}
-                    invalid={invalidDissolveDelay}
-                    bind:value={minDissolveDelay} />
-
-                <Legend label={$_("access.minStake")} />
-                <Input
-                    maxlength={100}
-                    placeholder={$_("access.optional")}
-                    invalid={invalidMinStake}
-                    bind:value={minStake} />
-            {/if}
-            {#if candidate.gate.kind === "diamond_gate"}
-                <div class="info">{$_("access.diamondGateInfo")}</div>
-            {:else if isSnsGate(candidate.gate)}
-                <div class="info">
-                    {$_("access.snsHolderInfo", {
-                        values: snsHolderParams(candidate.gate),
-                    })}
-                </div>
-            {:else if candidate.gate.kind === "no_gate"}
-                <div class="info">{$_("access.openAccessInfo")}</div>
-            {/if}
-            {#if candidate.gate.kind === "credential_gate"}
-                <CredentialSelector bind:gate={candidate.gate} />
-            {/if}
-        </div>
-    </div>
+    <AccessGateControl {original} {candidate} bind:valid />
 {/if}
 
 {#if requiresUpgrade}
@@ -247,34 +142,8 @@
 {/if}
 
 <style lang="scss">
-    .wrapper {
-        display: flex;
-        align-items: flex-start;
-        max-width: 85%;
-
-        .icon {
-            flex: 0 0 toRem(34);
-        }
-
-        .section-title {
-            margin-bottom: $sp3;
-        }
-
-        .section {
-            flex: auto;
-        }
-
-        @include mobile() {
-            max-width: unset;
-        }
-    }
-
     .section {
         margin-bottom: $sp6;
-    }
-
-    .choose-gate {
-        margin-bottom: $sp3;
     }
 
     .info {

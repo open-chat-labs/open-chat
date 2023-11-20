@@ -179,7 +179,7 @@ import {
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
-import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
+import { formatTokens, parseBigInt, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
     toDateString,
@@ -362,7 +362,7 @@ import {
     MessageContextMap,
     messageContextsEqual,
     communityRoles,
-    isSnsGate,
+    isNeuronGate,
     toTitleCase,
     CommonResponses,
     defaultChatRules,
@@ -421,6 +421,7 @@ import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
 import { verifyCredential } from "./utils/credentials";
 import { networkStatus } from "./stores/network";
+import { isPaymentGate } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1270,6 +1271,7 @@ export class OpenChat extends OpenChatAgentWorker {
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
+    parseBigInt = parseBigInt;
     toShortTimeString = toShortTimeString;
     toMonthString = toMonthString;
     formatMessageDate = formatMessageDate;
@@ -2304,23 +2306,32 @@ export class OpenChat extends OpenChatAgentWorker {
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
-        if (isSnsGate(current) && isSnsGate(original)) {
+        if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
+                current.governanceCanister !== original.governanceCanister ||
                 current.minDissolveDelay !== original.minDissolveDelay ||
                 current.minStakeE8s !== original.minStakeE8s
+            );
+        }
+        if (isPaymentGate(current) && isPaymentGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.amount !== original.amount
             );
         }
         return false;
     }
 
     getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
-        if (gate.kind === "sns_gate") {
+        if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
+        } else if (gate.kind === "payment_gate") {
+            return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
-        if (isSnsGate(gate)) {
+        if (isNeuronGate(gate)) {
             return gate.minDissolveDelay
                 ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
                 : undefined;
@@ -2328,8 +2339,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return undefined;
     }
 
+    getPaymentAmount(gate: AccessGate): bigint | undefined {
+        return isPaymentGate(gate) ? gate.amount : undefined;
+    }
+    
     getMinStakeInTokens(gate: AccessGate): number | undefined {
-        if (isSnsGate(gate)) {
+        if (isNeuronGate(gate)) {
             return gate.minStakeE8s ? gate.minStakeE8s / E8S_PER_TOKEN : undefined;
         }
         return undefined;
@@ -4989,6 +5004,30 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
+        registry.tokenDetails.push({
+            name: "CHAT",
+            symbol: "CHAT",
+            ledger: "some_ledger_id",
+            decimals: 8,
+            transferFee: BigInt(1000),
+            logo: "chat_logo.png",
+            howToBuyUrl: "https://test.com",
+            infoUrl: "https://test.com",
+            transactionUrlFormat: "",
+            added: BigInt(0),
+            lastUpdated: BigInt(0),
+        });
+
+        registry.nervousSystemSummary.push({
+            rootCanisterId: "some_root_id",
+            governanceCanisterId: "some_governance_id",
+            ledgerCanisterId: "some_ledger_id",
+            indexCanisterId: "some_index_id",
+            isNns: false,
+            proposalRejectionFee: BigInt(400000000),
+            submittingProposalsEnabled: true,
+        });
+        
         const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
         nervousSystemLookup.set(
@@ -5015,6 +5054,15 @@ export class OpenChat extends OpenChatAgentWorker {
             const nsLookup = get(nervousSystemLookup);
             if (governanceCanisterId in nsLookup) {
                 return nsLookup[governanceCanisterId];
+            }
+        }
+    }
+
+    tryGetCryptocurrency(ledgerCanisterId: string | undefined): CryptocurrencyDetails | undefined {
+        if (ledgerCanisterId !== undefined) {
+            const lookup = get(cryptoLookup);
+            if (ledgerCanisterId in lookup) {
+                return lookup[ledgerCanisterId];
             }
         }
     }

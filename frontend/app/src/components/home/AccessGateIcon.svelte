@@ -2,7 +2,7 @@
     import { _ } from "svelte-i18n";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { type AccessGate, isSnsGate, OpenChat } from "openchat-client";
+    import { type AccessGate, isNeuronGate, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
 
@@ -19,7 +19,7 @@
 
     function formatParams(gate: AccessGate): string {
         const parts = [];
-        if (isSnsGate(gate)) {
+        if (isNeuronGate(gate)) {
             if (gate.minDissolveDelay) {
                 parts.push(
                     `${$_("access.minDissolveDelayN", {
@@ -29,7 +29,15 @@
             }
             if (gate.minStakeE8s) {
                 parts.push(
-                    `${$_("access.minStakeN", { values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) } })}`
+                    `${$_("access.minStakeN", {
+                        values: {
+                            n: client.formatTokens(
+                                BigInt(gate.minStakeE8s),
+                                0,
+                                tokenDetails?.decimals ?? 8
+                            ),
+                        },
+                    })}`
                 );
             }
         }
@@ -58,13 +66,13 @@
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
-    {:else if isSnsGate(gate)}
+    {:else if isNeuronGate(gate)}
         <TooltipWrapper {position} {align}>
             <img slot="target" class="icon" class:small src={tokenDetails?.logo} />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>
-                        {`${$_("access.snsHolderInfo", {
+                        {`${$_("access.neuronHolderInfo", {
                             values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
                         })}`}
                     </p>

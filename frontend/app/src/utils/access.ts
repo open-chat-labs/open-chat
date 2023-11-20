@@ -1,30 +1,52 @@
-import type { AccessGate, InterpolationValues, NervousSystemDetails } from "openchat-client";
+import { get } from "svelte/store";
+import { _ } from "svelte-i18n";
+import type { AccessGate, CryptocurrencyDetails, NervousSystemDetails } from "openchat-client";
 
 export type GateBinding = {
     key: string;
     label: string;
-    gate: AccessGate;
     enabled: boolean;
-    cssClass: string;
-    labelParams?: InterpolationValues;
+    gate: AccessGate;
 };
 
-function getSnsGateBindings(
-    nervousSystemLookup: Record<string, NervousSystemDetails>,
-): GateBinding[] {
+export function getGateBindings(): GateBinding[] {
+    return [
+        noGate,
+        diamondGate,
+        neuronGateFolder,
+        paymentGateFolder,
+        // credentialGate,
+        nftGate,
+    ];
+}
+
+export function getNeuronGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
     return Object.values(nervousSystemLookup)
-        .filter((ns) => !ns.isNns)
         .map((ns) => {
             return {
-                label: "access.snsHolder",
+                label: ns.isNns ? get(_)("access.nnsHolder") : ns.token.name,
                 gate: {
-                    kind: "sns_gate",
+                    kind: "neuron_gate",
                     governanceCanister: ns.governanceCanisterId,
                 },
                 key: ns.governanceCanisterId,
+                enabled: !ns.isNns,
+            };
+        });
+}
+
+export function getPaymentGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>): GateBinding[] {
+    return Object.values(cryptoLookup)
+        .map((c) => {
+            return {
+                label: c.symbol,
+                gate: {
+                    kind: "payment_gate",
+                    ledgerCanister: c.ledger,
+                    amount: BigInt(100) * c.transferFee,
+                },
+                key: c.ledger,
                 enabled: true,
-                cssClass: ns.token.symbol.toLowerCase(),
-                labelParams: { token: ns.token.symbol },
             };
         });
 }
@@ -34,7 +56,6 @@ const noGate: GateBinding = {
     key: "no_gate",
     gate: { kind: "no_gate" },
     enabled: true,
-    cssClass: "open",
 };
 
 const diamondGate: GateBinding = {
@@ -42,15 +63,20 @@ const diamondGate: GateBinding = {
     key: "diamond_gate",
     gate: { kind: "diamond_gate" },
     enabled: true,
-    cssClass: "diamond",
 };
 
-const nnsGate: GateBinding = {
-    label: "access.nnsHolder",
-    key: "nns_gate",
-    gate: { kind: "nns_gate" },
-    enabled: false,
-    cssClass: "nns",
+const neuronGateFolder: GateBinding = {
+    label: "access.neuronHolder",
+    key: "neuron_gate_folder",
+    gate: { kind: "no_gate" },
+    enabled: true,
+};
+
+const paymentGateFolder: GateBinding = {
+    label: "access.payment",
+    key: "payment_gate_folder",
+    gate: { kind: "no_gate" },
+    enabled: true,
 };
 
 const nftGate: GateBinding = {
@@ -58,7 +84,6 @@ const nftGate: GateBinding = {
     key: "nft_gate",
     gate: { kind: "nft_gate" },
     enabled: false,
-    cssClass: "nft",
 };
 
 // const credentialGate: GateBinding = {
@@ -66,21 +91,7 @@ const nftGate: GateBinding = {
 //     key: "credential_gate",
 //     gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
 //     enabled: true,
-//     cssClass: "credential",
 // };
-
-export function getGateBindings(
-    nervousSystemLookup: Record<string, NervousSystemDetails>,
-): GateBinding[] {
-    return [
-        noGate,
-        diamondGate,
-        // credentialGate,
-        ...getSnsGateBindings(nervousSystemLookup),
-        nnsGate,
-        nftGate,
-    ];
-}
 
 export type Credential = {
     name: string;

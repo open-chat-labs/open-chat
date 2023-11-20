@@ -1266,7 +1266,7 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
-    if (domain.kind === "nns_gate") return []; // TODO
+    if (domain.kind === "payment_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
     if (domain.kind === "credential_gate")
         return [
@@ -1277,7 +1277,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
                 },
             },
         ];
-    if (domain.kind === "sns_gate") {
+    if (domain.kind === "neuron_gate") {
         return [
             {
                 SnsNeuron: {
@@ -1300,7 +1300,7 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
                 credential: domain.credentialId,
             },
         };
-    if (domain.kind === "sns_gate") {
+    if (domain.kind === "neuron_gate") {
         return {
             SnsNeuron: {
                 governance_canister_id: Principal.fromText(domain.governanceCanister),
@@ -1315,7 +1315,7 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
         return {
-            kind: "sns_gate",
+            kind: "neuron_gate",
             minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
             minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
             governanceCanister: candid.SnsNeuron.governance_canister_id.toString(),
