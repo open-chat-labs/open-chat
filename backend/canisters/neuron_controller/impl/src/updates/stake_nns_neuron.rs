@@ -1,5 +1,5 @@
 use crate::guards::caller_is_governance_principal;
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -10,7 +10,7 @@ use neuron_controller_canister::stake_nns_neuron::{Response::*, *};
 use nns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{manage_neuron_response, ManageNeuron};
-use tracing::error;
+use tracing::{error, info};
 use types::CanisterId;
 use utils::canister::get_random_seed;
 
@@ -70,7 +70,7 @@ async fn stake_nns_neuron(_args: Args) -> Response {
         Ok(response) => match response.command {
             Some(manage_neuron_response::Command::ClaimOrRefresh(c)) => {
                 let neuron_id = c.refreshed_neuron_id.unwrap().id;
-                mutate_state(|state| state.data.neurons.push(neuron_id));
+                info!(neuron_id, "Staked new NNS neuron");
                 Success(neuron_id)
             }
             response => {

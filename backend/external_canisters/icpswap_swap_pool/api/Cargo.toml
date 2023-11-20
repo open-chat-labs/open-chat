@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 serde = { workspace = true }
+types = { path = "../../../libraries/types" }

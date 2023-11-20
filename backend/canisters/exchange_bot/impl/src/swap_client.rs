@@ -8,8 +8,8 @@ pub trait SwapClientFactory {
     fn build(
         &self,
         this_canister_id: CanisterId,
-        input_token: TokenInfo,
-        output_token: TokenInfo,
+        input_token: &TokenInfo,
+        output_token: &TokenInfo,
     ) -> Option<Box<dyn SwapClient>>;
 }
 

@@ -145,16 +145,14 @@ impl SwapCommand {
                     let clients: Vec<_> = self
                         .exchange_ids
                         .iter()
-                        .filter_map(|e| state.get_swap_client(*e, self.input_token.clone(), self.output_token.clone()))
+                        .filter_map(|e| state.get_swap_client(*e, &self.input_token, &self.output_token))
                         .collect();
 
                     trace!(%message_id, "Getting quotes");
                     ic_cdk::spawn(self.get_quotes(clients, amount_to_dex));
                 }
                 CommandSubTaskResult::Complete(exchange_id, _) => {
-                    if let Some(client) =
-                        state.get_swap_client(exchange_id, self.input_token.clone(), self.output_token.clone())
-                    {
+                    if let Some(client) = state.get_swap_client(exchange_id, &self.input_token, &self.output_token) {
                         if self.sub_tasks.transfer_to_dex.is_pending() {
                             trace!(%message_id, "Transferring to dex");
                             ic_cdk::spawn(self.transfer_to_dex(client, amount_to_dex));
@@ -279,8 +277,11 @@ impl SwapCommand {
     }
 
     async fn notify_dex(mut self, client: Box<dyn SwapClient>, amount: u128) {
-        self.sub_tasks.notify_dex = match client.deposit(amount).await {
-            Ok(_) => CommandSubTaskResult::Complete((), None),
+        match client.deposit(amount).await {
+            Ok(_) => {
+                self.sub_tasks.notify_dex = CommandSubTaskResult::Complete((), None);
+                mutate_state(|state| self.on_updated(state));
+            }
             Err(error) => {
                 error!(
                     error = format!("{error:?}").as_str(),
@@ -290,11 +291,9 @@ impl SwapCommand {
                     amount,
                     "Failed to notify dex, retrying"
                 );
-                CommandSubTaskResult::Pending
+                mutate_state(|state| self.enqueue(state));
             }
         };
-
-        mutate_state(|state| self.on_updated(state));
     }
 
     async fn perform_swap(mut self, client: Box<dyn SwapClient>, amount: u128) {
