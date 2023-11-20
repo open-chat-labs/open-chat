@@ -225,6 +225,15 @@ type UnblockUserResponse = variant {
     UserSuspended;
 };
 
+type DeleteDirectChatArgs = record {
+    user_id : UserId;
+};
+
+type DeleteDirectChatResponse = variant {
+    Success;
+    ChatNotFound;
+};
+
 type CreateGroupArgs = record {
     is_public : bool;
     name : text;
@@ -731,6 +740,7 @@ type UpdatesResponse = variant {
 type DirectChatsUpdates = record {
     added : vec DirectChatSummary;
     updated : vec DirectChatSummaryUpdates;
+    removed : vec ChatId;
     pinned : opt vec ChatId;
 };
 
@@ -931,6 +941,7 @@ service : {
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
+    delete_direct_chat : (DeleteDirectChatArgs) -> (DeleteDirectChatResponse);
     create_group : (CreateGroupArgs) -> (CreateGroupResponse);
     leave_group : (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group : (DeleteGroupArgs) -> (DeleteGroupResponse);
