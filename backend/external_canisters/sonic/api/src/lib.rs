@@ -1,11 +1,11 @@
 use candid::{CandidType, Int, Nat, Principal};
 use serde::{Deserialize, Serialize};
+use types::ResultLowercase;
 
 mod queries;
 mod updates;
 
 pub use queries::*;
-use types::ResultLowercase;
 pub use updates::*;
 
 pub type SonicResult<T, E> = ResultLowercase<T, E>;
