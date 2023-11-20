@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
 ## [[2.0.934](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.934-user_index)] - 2023-11-15
 
 ### Added
