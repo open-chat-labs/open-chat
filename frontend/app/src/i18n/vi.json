@@ -1060,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
         "searchUserGroups": "Tìm kiếm nhóm người dùng...",
         "userGroupName": "Tên nhóm người dùng",
-        "noSpaces": "không còn khoảng trống cho phép"
+        "noSpaces": "không còn khoảng trống cho phép",
+        "noMatch": "Không tìm thấy cộng đồng phù hợp",
+        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

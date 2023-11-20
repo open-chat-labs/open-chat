@@ -740,7 +740,7 @@ export class CommunityClient extends CandidService {
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
         if (fromCache !== undefined) {
-            if (fromCache.lastUpdated >= communityLastUpdated) {
+            if (fromCache.lastUpdated >= communityLastUpdated || !navigator.onLine) {
                 return fromCache;
             } else {
                 return this.getCommunityDetailsUpdates(id, fromCache);
