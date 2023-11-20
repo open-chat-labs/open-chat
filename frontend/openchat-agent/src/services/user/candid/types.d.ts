@@ -68,7 +68,7 @@ export type ApproveError = {
 export interface ApproveTransferArgs {
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
-  'expires_at' : [] | [Milliseconds],
+  'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
 export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |

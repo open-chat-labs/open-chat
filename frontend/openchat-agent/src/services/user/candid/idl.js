@@ -41,7 +41,7 @@ export const idlFactory = ({ IDL }) => {
   const ApproveTransferArgs = IDL.Record({
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
-    'expires_at' : IDL.Opt(Milliseconds),
+    'expires_in' : IDL.Opt(Milliseconds),
     'spender' : Account,
   });
   const ApproveError = IDL.Variant({
