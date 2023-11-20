@@ -1,23 +1,25 @@
 use crate::ecdsa::{get_key_id, sign_envelope};
 use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::management_canister::ecdsa::EcdsaKeyId;
 use ic_cdk::api::management_canister::http_request::{
     CanisterHttpRequestArgument, HttpHeader, HttpMethod, HttpResponse, TransformArgs, TransformContext, TransformFunc,
 };
-use ic_cdk::{query, update};
+use ic_cdk::query;
 use ic_transport_types::EnvelopeContent;
-use neuron_controller_canister::manage_neuron::{Response::*, *};
+use neuron_controller_canister::manage_nns_neuron::{Response::*, *};
+use nns_governance_canister::types::ManageNeuron;
 use rand::Rng;
 use types::CanisterId;
 use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 const IC_URL: &str = "https://icp-api.io";
 
-#[update(guard = "caller_is_governance_principal")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-async fn manage_neuron(args: Args) -> Response {
+async fn manage_nns_neuron(args: Args) -> Response {
     let PrepareResult {
         envelope_content,
         request_url,
@@ -55,11 +57,6 @@ async fn manage_neuron(args: Args) -> Response {
 }
 
 #[query]
-fn manage_neuron_validate(args: Args) -> Result<String, String> {
-    serde_json::to_string(&args).map_err(|e| format!("Serialization error: {e:?}"))
-}
-
-#[query]
 fn transform_response(args: TransformArgs) -> HttpResponse {
     let mut response = args.response;
     response.headers.clear();
@@ -84,7 +81,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> PrepareResult {
         sender: state.data.get_principal(),
         canister_id: nns_governance_canister_id,
         method_name: "manage_neuron".to_string(),
-        arg: candid::encode_one(args).unwrap(),
+        arg: candid::encode_one(ManageNeuron::from(args)).unwrap(),
     };
 
     PrepareResult {

@@ -746,6 +746,7 @@
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
         "registryAction": "Registry Actions",
+        "neuronControllerAction": "Neuron Controller Actions",
         "unknownActionCategory": "Other Actions",
         "makeProposal": "Make proposal",
         "maker": {

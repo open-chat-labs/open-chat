@@ -27,10 +27,10 @@ impl SwapClientFactory for ICPSwapClientFactory {
     fn build(
         &self,
         this_canister_id: CanisterId,
-        input_token: TokenInfo,
-        output_token: TokenInfo,
+        input_token: &TokenInfo,
+        output_token: &TokenInfo,
     ) -> Option<Box<dyn SwapClient>> {
-        if let Some(swap_canister_id) = self.lookup_swap_canister_id(&input_token, &output_token) {
+        if let Some(swap_canister_id) = self.lookup_swap_canister_id(input_token, output_token) {
             Some(Box::new(ICPSwapClient::new(
                 this_canister_id,
                 swap_canister_id,
@@ -38,7 +38,7 @@ impl SwapClientFactory for ICPSwapClientFactory {
                 output_token.clone(),
                 true,
             )))
-        } else if let Some(swap_canister_id) = self.lookup_swap_canister_id(&output_token, &input_token) {
+        } else if let Some(swap_canister_id) = self.lookup_swap_canister_id(output_token, input_token) {
             Some(Box::new(ICPSwapClient::new(
                 this_canister_id,
                 swap_canister_id,
