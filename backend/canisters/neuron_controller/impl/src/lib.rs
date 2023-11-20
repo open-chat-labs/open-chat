@@ -2,6 +2,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
+use nns_governance_canister::types::Neuron;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -9,6 +10,7 @@ use utils::env::Environment;
 
 mod ecdsa;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod queries;
@@ -46,7 +48,13 @@ impl RuntimeState {
             public_key_der: hex::encode(self.data.get_public_key_der()),
             principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
-            neurons: self.data.neurons.clone(),
+            neurons: self
+                .data
+                .neurons
+                .value
+                .iter()
+                .filter_map(|n| n.id.as_ref().map(|i| i.id))
+                .collect(),
             canister_ids: CanisterIds {
                 nns_governance_canister_id: self.data.nns_governance_canister_id,
                 nns_ledger_canister_id: self.data.nns_ledger_canister_id,
@@ -63,7 +71,8 @@ struct Data {
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub neurons: Vec<u64>,
+    #[serde(skip_deserializing)]
+    pub neurons: Timestamped<Vec<Neuron>>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -82,7 +91,7 @@ impl Data {
             nns_governance_canister_id,
             nns_ledger_canister_id,
             cycles_dispenser_canister_id,
-            neurons: Vec::new(),
+            neurons: Timestamped::default(),
             rng_seed: [0; 32],
             test_mode,
         }
