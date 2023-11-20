@@ -26,6 +26,7 @@ icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc-ledger-types = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }

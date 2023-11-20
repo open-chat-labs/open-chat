@@ -27,6 +27,7 @@ ic-stable-structures = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_group_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
