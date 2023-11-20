@@ -34,7 +34,7 @@ impl ICPSwapClient {
 
     pub fn deposit_account(&self) -> (CanisterId, Account) {
         (
-            self.get_ledger(self.zero_for_one),
+            self.input_token().ledger,
             Account {
                 owner: self.swap_canister_id,
                 subaccount: Some(convert_to_subaccount(&self.this_canister_id).0),
@@ -74,7 +74,7 @@ impl ICPSwapClient {
 
     pub async fn deposit(&self, amount: u128) -> CallResult<u128> {
         let args = icpswap_swap_pool_canister::deposit::Args {
-            token: self.get_ledger(self.zero_for_one).to_string(),
+            token: self.input_token().ledger.to_string(),
             amount: amount.into(),
         };
         match icpswap_swap_pool_canister_c2c_client::deposit(self.swap_canister_id, &args).await? {
@@ -98,20 +98,12 @@ impl ICPSwapClient {
 
     pub async fn withdraw(&self, amount: u128) -> CallResult<u128> {
         let args = icpswap_swap_pool_canister::withdraw::Args {
-            token: self.get_ledger(!self.zero_for_one).to_string(),
+            token: self.output_token().ledger.to_string(),
             amount: amount.into(),
         };
         match icpswap_swap_pool_canister_c2c_client::withdraw(self.swap_canister_id, &args).await? {
             ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),
             ICPSwapResult::Err(error) => Err(convert_error(error)),
-        }
-    }
-
-    fn get_ledger(&self, token0: bool) -> CanisterId {
-        if token0 {
-            self.token0.ledger
-        } else {
-            self.token1.ledger
         }
     }
 }

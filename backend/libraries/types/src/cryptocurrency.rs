@@ -345,10 +345,8 @@ pub mod nns {
 }
 
 pub mod icrc1 {
-    use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
-
     use super::*;
-    //    use icrc_ledger_types::{Memo, Subaccount};
+    use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum CryptoAccount {
