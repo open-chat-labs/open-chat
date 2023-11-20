@@ -115,6 +115,7 @@ impl RuntimeState {
             queued_commands: self.data.commands_pending.len() as u32,
             queued_messages: self.data.messages_pending.len() as u32,
             swap_metrics: self.data.swaps_log.metrics(),
+            unique_users: self.data.known_callers.len() as u32,
             canister_ids: CanisterIds {
                 local_user_index: self.data.local_user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -157,7 +158,6 @@ struct Data {
     display_name: Option<String>,
     is_registered: bool,
     sonic_subaccount: Option<[u8; 32]>,
-    #[serde(default)]
     swaps_log: SwapsLog,
     rng_seed: [u8; 32],
     test_mode: bool,
@@ -245,6 +245,7 @@ pub struct Metrics {
     pub queued_commands: u32,
     pub queued_messages: u32,
     pub swap_metrics: Vec<AggregatedSwapMetrics>,
+    pub unique_users: u32,
     pub canister_ids: CanisterIds,
 }
 
