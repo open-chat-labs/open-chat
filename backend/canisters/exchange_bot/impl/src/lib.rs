@@ -137,7 +137,7 @@ impl RuntimeState {
     ) -> Option<Box<dyn SwapClient>> {
         self.data
             .sonic_subaccount
-            .and_then(|sa| SonicClientFactory::new(sa).build(this_canister_id, &input_token, &output_token))
+            .and_then(|sa| SonicClientFactory::new(sa).build(this_canister_id, input_token, output_token))
     }
 }
 
