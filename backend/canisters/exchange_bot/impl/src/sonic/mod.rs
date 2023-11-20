@@ -2,8 +2,8 @@ use crate::swap_client::{SwapClient, SwapClientFactory};
 use async_trait::async_trait;
 use exchange_bot_canister::ExchangeId;
 use ic_cdk::api::call::CallResult;
+use icrc_ledger_types::icrc1::account::Account;
 use sonic_client::SonicClient;
-use types::icrc1::Account;
 use types::{CanisterId, Cryptocurrency, TokenInfo};
 
 pub fn sonic_canister_id() -> CanisterId {

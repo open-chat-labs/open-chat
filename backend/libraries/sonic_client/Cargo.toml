@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 ic-cdk = { workspace = true }
+icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 serde = { workspace = true }
 sonic_canister = { path = "../../external_canisters/sonic/api" }

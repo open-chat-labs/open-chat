@@ -1,11 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::ResultLowercase;
 
 mod queries;
 mod updates;
 
 pub use queries::*;
-use types::ResultLowercase;
 pub use updates::*;
 
 pub type ICPSwapResult<T> = ResultLowercase<T, ICPSwapError>;

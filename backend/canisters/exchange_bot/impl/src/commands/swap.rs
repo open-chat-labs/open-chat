@@ -283,15 +283,15 @@ impl SwapCommand {
                 mutate_state(|state| self.on_updated(state));
             }
             Err(error) => {
-                // error!(
-                //     error = format!("{error:?}").as_str(),
-                //     message_id = %self.message_id,
-                //     exchange = %client.exchange_id(),
-                //     token = self.input_token.token.token_symbol(),
-                //     amount,
-                //     "Failed to notify dex, retrying"
-                // );
-                // mutate_state(|state| self.enqueue(state));
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange = %client.exchange_id(),
+                    token = self.input_token.token.token_symbol(),
+                    amount,
+                    "Failed to notify dex, retrying"
+                );
+                mutate_state(|state| self.enqueue(state));
             }
         };
     }
@@ -306,16 +306,16 @@ impl SwapCommand {
                 mutate_state(|state| self.on_updated(state));
             }
             Err(error) => {
-                // error!(
-                //     error = format!("{error:?}").as_str(),
-                //     message_id = %self.message_id,
-                //     exchange = %client.exchange_id(),
-                //     input_token = self.input_token.token.token_symbol(),
-                //     output_token = self.output_token.token.token_symbol(),
-                //     amount,
-                //     "Failed to perform swap, retrying"
-                // );
-                // mutate_state(|state| self.enqueue(state));
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange = %client.exchange_id(),
+                    input_token = self.input_token.token.token_symbol(),
+                    output_token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to perform swap, retrying"
+                );
+                mutate_state(|state| self.enqueue(state));
             }
         }
     }
@@ -330,15 +330,15 @@ impl SwapCommand {
                 mutate_state(|state| self.on_updated(state))
             }
             Err(error) => {
-                // error!(
-                //     error = format!("{error:?}").as_str(),
-                //     message_id = %self.message_id,
-                //     exchange = %client.exchange_id(),
-                //     token = self.output_token.token.token_symbol(),
-                //     amount,
-                //     "Failed to withdraw from dex, retrying"
-                // );
-                // mutate_state(|state| self.enqueue(state));
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    exchange = %client.exchange_id(),
+                    token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to withdraw from dex, retrying"
+                );
+                mutate_state(|state| self.enqueue(state));
             }
         };
     }
@@ -346,14 +346,14 @@ impl SwapCommand {
     async fn transfer_funds_to_user(mut self, amount: u128, now_nanos: TimestampNanos) {
         match withdraw(self.user_id, &self.output_token, amount, true, now_nanos).await {
             CommandSubTaskResult::Failed(error) => {
-                // error!(
-                //     error = format!("{error:?}").as_str(),
-                //     message_id = %self.message_id,
-                //     token = self.output_token.token.token_symbol(),
-                //     amount,
-                //     "Failed to transfer funds to user, retrying"
-                // );
-                // mutate_state(|state| self.enqueue(state));
+                error!(
+                    error = format!("{error:?}").as_str(),
+                    message_id = %self.message_id,
+                    token = self.output_token.token.token_symbol(),
+                    amount,
+                    "Failed to transfer funds to user, retrying"
+                );
+                mutate_state(|state| self.enqueue(state));
             }
             result => {
                 self.sub_tasks.transfer_to_user = result;

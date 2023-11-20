@@ -1,10 +1,9 @@
 use candid::{Int, Nat};
 use ic_cdk::api::call::{CallResult, RejectionCode};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use sonic_canister::SonicResult;
 use std::cell::Cell;
-use tracing::trace;
-use types::icrc1::Account;
 use types::{CanisterId, TokenInfo};
 
 const FEE_DECIMAL: f64 = 0.003; // 0.3%
@@ -123,7 +122,9 @@ impl SonicClient {
             .await?
             .0
         {
-            SonicResult::Ok(tx_id) => {}
+            SonicResult::Ok(_tx_id) => {
+                unimplemented!()
+            }
             SonicResult::Err(error) => Err(convert_error(error)),
         }
     }

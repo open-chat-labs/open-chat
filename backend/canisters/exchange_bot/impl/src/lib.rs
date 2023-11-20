@@ -49,8 +49,8 @@ impl RuntimeState {
         let this_canister_id = self.env.canister_id();
 
         vec![
-            // self.build_icpswap_client(this_canister_id, &input_token, &output_token),
-            self.build_sonic_client(this_canister_id, &input_token, &output_token),
+            self.build_icpswap_client(this_canister_id, &input_token, &output_token),
+            // self.build_sonic_client(this_canister_id, &input_token, &output_token),
         ]
         .into_iter()
         .flatten()
