@@ -138,7 +138,7 @@ type ApproveTransferArgs = record {
     spender : Account;
     ledger_canister_id : CanisterId;
     amount : nat;
-    expires_at : opt Milliseconds;
+    expires_in : opt Milliseconds;
 };
 
 type ApproveTransferResponse = variant {

@@ -8,7 +8,7 @@ pub struct Args {
     pub spender: Account,
     pub ledger_canister_id: CanisterId,
     pub amount: u128,
-    pub expires_at: Option<Milliseconds>,
+    pub expires_in: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

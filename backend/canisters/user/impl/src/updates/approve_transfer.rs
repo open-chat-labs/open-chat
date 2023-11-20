@@ -20,7 +20,9 @@ async fn approve_transfer(args: Args) -> Response {
             spender: args.spender,
             amount: args.amount.into(),
             expected_allowance: None,
-            expires_at: args.expires_at.map(|expires_at| expires_at * NANOS_PER_MILLISECOND),
+            expires_at: args
+                .expires_in
+                .map(|expires_in| now_nanos + expires_in * NANOS_PER_MILLISECOND),
             fee: None,
             memo: None,
             created_at_time: Some(now_nanos),
