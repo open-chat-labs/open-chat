@@ -1,26 +1,27 @@
 use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use types::{TimestampMillis, Timestamped};
 use user_canister::token_swap_status::TokenSwapStatus;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct TokenSwaps {
     swaps: HashMap<u128, TokenSwap>,
-    queued: VecDeque<u128>,
 }
 
 impl TokenSwaps {
+    pub fn push_new(&mut self, args: user_canister::swap_tokens::Args, now: TimestampMillis) -> TokenSwap {
+        let token_swap = TokenSwap::new(args, now);
+        self.upsert(token_swap.clone());
+        token_swap
+    }
+
     pub fn upsert(&mut self, swap: TokenSwap) {
         self.swaps.insert(swap.args.swap_id, swap);
     }
 
     pub fn get(&self, swap_id: u128) -> Option<&TokenSwap> {
         self.swaps.get(&swap_id)
-    }
-
-    pub fn enqueue(&mut self, swap_id: u128) {
-        self.queued.push_back(swap_id)
     }
 }
 
