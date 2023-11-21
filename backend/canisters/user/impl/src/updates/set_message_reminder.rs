@@ -57,14 +57,14 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
     .message_index;
 
     state.data.timer_jobs.enqueue_job(
-        TimerJob::MessageReminder(MessageReminderJob {
+        TimerJob::MessageReminder(Box::new(MessageReminderJob {
             reminder_id,
             chat: args.chat,
             thread_root_message_index: args.thread_root_message_index,
             event_index: args.event_index,
             notes: args.notes,
             reminder_created_message_index,
-        }),
+        })),
         args.remind_at,
         now,
     );

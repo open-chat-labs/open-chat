@@ -14,9 +14,9 @@ pub enum TimerJob {
     RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
-    MessageReminder(MessageReminderJob),
+    MessageReminder(Box<MessageReminderJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
-    ProcessTokenSwap(ProcessTokenSwapJob),
+    ProcessTokenSwap(Box<ProcessTokenSwapJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]

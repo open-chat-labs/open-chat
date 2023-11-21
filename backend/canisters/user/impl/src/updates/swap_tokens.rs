@@ -188,10 +188,10 @@ fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
 fn enqueue_token_swap(token_swap: TokenSwap, attempt: u32, now: TimestampMillis, data: &mut Data) {
     if attempt < 20 {
         data.timer_jobs.enqueue_job(
-            TimerJob::ProcessTokenSwap(ProcessTokenSwapJob {
+            TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
                 token_swap,
                 attempt: attempt + 1,
-            }),
+            })),
             now + 5 * SECOND_IN_MS,
             now,
         );
