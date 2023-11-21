@@ -1,6 +1,7 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
+use std::cmp::min;
 use types::{
     DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
     Timestamped, UserId,
@@ -55,13 +56,15 @@ impl DirectChat {
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
-        let val = if me { &mut self.read_by_me_up_to } else { &mut self.read_by_them_up_to };
-        if val.value < Some(message_index) {
-            *val = Timestamped::new(Some(message_index), now);
-            true
-        } else {
-            false
+        if let Some(latest_message_index) = self.events.main_events_list().latest_message_index() {
+            let val = if me { &mut self.read_by_me_up_to } else { &mut self.read_by_them_up_to };
+            let read_up_to = min(message_index, latest_message_index);
+            if val.value < Some(read_up_to) {
+                *val = Timestamped::new(Some(read_up_to), now);
+                return true;
+            }
         }
+        false
     }
 
     // TODO (maybe?)

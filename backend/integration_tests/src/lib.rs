@@ -9,6 +9,7 @@ mod change_group_role_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;
+mod delete_direct_chat_tests;
 mod delete_group_tests;
 mod delete_message_tests;
 mod diamond_membership_tests;

@@ -25,6 +25,7 @@ fn main() {
     generate_candid_method!(user, create_community, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_community, update);
+    generate_candid_method!(user, delete_direct_chat, update);
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
