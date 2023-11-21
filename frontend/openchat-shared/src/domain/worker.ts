@@ -148,7 +148,16 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
     correlationId: string;
 };
 
-export type WorkerRequest =
+export type PromiseChain<T> = Promise<{ value: T; continuation?: PromiseChain<T> }>;
+
+export function promiseChain<T>(promise: Promise<T>, continuation?: Promise<T>): PromiseChain<T> {
+    return promise.then((value) => ({
+        value,
+        continuation: continuation ? promiseChain(continuation) : undefined,
+    }));
+}
+
+export type WorkerRequest = { onResponse?: (resp: unknown, final: boolean) => void } & (
     | DismissRecommendations
     | SearchGroups
     | GetRecommendedGroups
@@ -292,7 +301,8 @@ export type WorkerRequest =
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
     | SubmitProposal
-    | TipMessage;
+    | TipMessage
+);
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1107,6 +1117,7 @@ type Response<T> = {
     kind: "worker_response";
     correlationId: string;
     response: T;
+    final: boolean;
 };
 
 export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;

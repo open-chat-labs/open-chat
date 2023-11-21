@@ -470,6 +470,9 @@
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
+                    // TODO - with the streaming approach this leaves us with a problem because the message we are looking for might not be there yet
+                    // but might already have been requested - at the moment we can't tell when that is the case, if it's not there we are going to
+                    // try to look it up
                     await client.loadEventWindow(context.chatId, index, threadRootEvent);
                     return scrollToMessageIndex(context, index, preserveFocus, filling, true);
                 }

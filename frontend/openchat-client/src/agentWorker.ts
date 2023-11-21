@@ -19,7 +19,7 @@ type UnresolvedRequest = {
 };
 
 type PromiseResolver<T> = {
-    resolve: (val: T | PromiseLike<T>) => void;
+    resolve: (val: T | PromiseLike<T>, final: boolean) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: (reason?: any) => void;
     timeout: number;
@@ -65,7 +65,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
                 },
-                true
+                true,
             ).then(() => {
                 resolve(true);
                 this._connectedToWorker = true;
@@ -87,8 +87,8 @@ export class OpenChatAgentWorker extends EventTarget {
                             data.event.chatId,
                             data.event.readByMeUpTo,
                             data.event.threadsRead,
-                            data.event.dateReadPinned
-                        )
+                            data.event.dateReadPinned,
+                        ),
                     );
                 }
                 if (data.event.subkind === "storage_updated") {
@@ -119,16 +119,18 @@ export class OpenChatAgentWorker extends EventTarget {
                       Date.now() - unresolved.sentAt
                   }ms`;
         console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`
+            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
         );
     }
 
     private resolveResponse(data: WorkerResponse): void {
         const promise = this._pending.get(data.correlationId);
         if (promise !== undefined) {
-            promise.resolve(data.response);
-            window.clearTimeout(promise.timeout);
-            this._pending.delete(data.correlationId);
+            promise.resolve(data.response, data.final);
+            if (data.final) {
+                window.clearTimeout(promise.timeout);
+                this._pending.delete(data.correlationId);
+            }
         } else {
             this.logUnexpected(data.correlationId);
         }
@@ -149,7 +151,7 @@ export class OpenChatAgentWorker extends EventTarget {
 
     async sendRequest<Req extends WorkerRequest>(
         req: Req,
-        connecting = false
+        connecting = false,
     ): Promise<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -158,17 +160,18 @@ export class OpenChatAgentWorker extends EventTarget {
         const correlated = {
             ...req,
             correlationId: v4(),
+            onResponse: undefined,
         };
 
         this._worker.postMessage(correlated);
         const promise = new Promise<WorkerResult<Req>>((resolve, reject) => {
             const sentAt = Date.now();
             this._pending.set(correlated.correlationId, {
-                resolve,
+                resolve: req.onResponse ? req.onResponse : (v, _final: boolean) => resolve(v),
                 reject,
                 timeout: window.setTimeout(() => {
                     reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
+                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
                     );
                     this._unresolved.set(correlated.correlationId, {
                         kind: req.kind,

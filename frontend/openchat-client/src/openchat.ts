@@ -630,7 +630,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        this._cachePrimer = new CachePrimer(this);
+        // this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -1849,31 +1849,40 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const range = indexRangeForChat(clientChat);
-            const eventsResponse = await this.sendRequest({
+
+            clearServerEvents(chatId);
+            chatStateStore.setProp(chatId, "userGroupKeys", new Set<string>());
+
+            this.sendRequest({
                 kind: "chatEventsWindow",
                 eventIndexRange: range,
                 chatId,
                 messageIndex,
                 threadRootMessageIndex: undefined,
                 latestKnownUpdate: serverChat?.lastUpdated,
+                onResponse: async (resp, final) => {
+                    const eventsResponse = resp as EventsResponse<ChatEvent>;
+                    if (eventsResponse === undefined || eventsResponse === "events_failed") {
+                        return undefined;
+                    }
+
+                    if (
+                        (await this.handleEventsResponse(clientChat, eventsResponse, true)) &&
+                        final
+                    ) {
+                        this.dispatchEvent(
+                            new LoadedMessageWindow(
+                                {
+                                    chatId: clientChat.id,
+                                    threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+                                },
+                                messageIndex,
+                                initialLoad,
+                            ),
+                        );
+                    }
+                },
             });
-
-            if (eventsResponse === undefined || eventsResponse === "events_failed") {
-                return undefined;
-            }
-
-            if (await this.handleEventsResponse(clientChat, eventsResponse, false)) {
-                this.dispatchEvent(
-                    new LoadedMessageWindow(
-                        {
-                            chatId: clientChat.id,
-                            threadRootMessageIndex: threadRootEvent?.event.messageIndex,
-                        },
-                        messageIndex,
-                        initialLoad,
-                    ),
-                );
-            }
 
             return messageIndex;
         }

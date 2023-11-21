@@ -174,6 +174,7 @@ import type {
     SubmitProposalResponse,
     AccountTransactionResult,
     OptionalChatPermissions,
+    PromiseChain,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -196,6 +197,7 @@ import {
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
+import { currentUserResponse } from "./userIndex/mappers";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -611,17 +613,19 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<ChatEvent>> {
+    ): PromiseChain<EventsResponse<ChatEvent>> {
         latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
 
         switch (chatId.kind) {
-            case "direct_chat":
-                return this.directChatEventsWindow(
-                    eventIndexRange,
-                    chatId,
-                    messageIndex,
-                    latestKnownUpdate,
-                );
+            // case "direct_chat":
+            //     return [
+            //         this.directChatEventsWindow(
+            //             eventIndexRange,
+            //             chatId,
+            //             messageIndex,
+            //             latestKnownUpdate,
+            //         ),
+            //     ];
             case "group_chat":
                 return this.groupChatEventsWindow(
                     eventIndexRange,
@@ -630,14 +634,18 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     latestKnownUpdate,
                 );
-            case "channel":
-                return this.channelEventsWindow(
-                    eventIndexRange,
-                    chatId,
-                    messageIndex,
-                    threadRootMessageIndex,
-                    latestKnownUpdate,
-                );
+            // case "channel":
+            //     return [
+            //         this.channelEventsWindow(
+            //             eventIndexRange,
+            //             chatId,
+            //             messageIndex,
+            //             threadRootMessageIndex,
+            //             latestKnownUpdate,
+            //         ),
+            //     ];
+            default:
+                throw new Error("TODO - wip");
         }
     }
 
@@ -771,15 +779,16 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.rehydrateEventResponse(
+    ): PromiseChain<EventsResponse<ChatEvent>> {
+        const rawEvents = this.getGroupClient(chatId.groupId).chatEventsWindow(
+            eventIndexRange,
+            messageIndex,
+            threadRootMessageIndex,
+            latestKnownUpdate,
+        );
+        return this.rehydrateEventResponse2(
             chatId,
-            this.getGroupClient(chatId.groupId).chatEventsWindow(
-                eventIndexRange,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
+            rawEvents,
             threadRootMessageIndex,
             latestKnownUpdate,
         );
@@ -1109,6 +1118,39 @@ export class OpenChatAgent extends EventTarget {
             }
         }
         return ev;
+    }
+
+    private async rehydrateEventResponse2<T extends ChatEvent>(
+        currentChatId: ChatIdentifier,
+        eventsPromise: PromiseChain<EventsResponse<T>>,
+        threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
+    ): PromiseChain<EventsResponse<T>> {
+        const { value, continuation } = await eventsPromise;
+
+        if (value !== "events_failed") {
+            const missing = await this.resolveMissingIndexes(
+                currentChatId,
+                value.events,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            );
+
+            value.events = value.events.map((e) =>
+                this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
+            );
+        }
+        return {
+            value,
+            continuation: continuation
+                ? this.rehydrateEventResponse2(
+                      currentChatId,
+                      continuation,
+                      threadRootMessageIndex,
+                      latestKnownUpdate,
+                  )
+                : undefined,
+        };
     }
 
     private async rehydrateEventResponse<T extends ChatEvent>(

@@ -47,8 +47,9 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     ToggleMuteNotificationResponse,
+    PromiseChain,
 } from "openchat-shared";
-import { DestinationInvalidError, textToCode } from "openchat-shared";
+import { DestinationInvalidError, promiseChain, textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -190,6 +191,20 @@ export class GroupClient extends CandidService {
         return resp;
     }
 
+    private handleMissingEvents2(
+        missing: Set<number>,
+        threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<GroupChatEvent>> | undefined {
+        if (missing.size === 0) return undefined;
+
+        return this.chatEventsByIndexFromBackend(
+            [...missing],
+            threadRootMessageIndex,
+            latestKnownUpdate,
+        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+    }
+
     private handleMissingEvents(
         [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
@@ -236,7 +251,7 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): PromiseChain<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] =
             await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
                 this.db,
@@ -252,13 +267,28 @@ export class GroupClient extends CandidService {
                 missing.size,
                 totalMiss,
             );
-            return this.chatEventsWindowFromBackend(
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+            return promiseChain(
+                this.chatEventsWindowFromBackend(
+                    messageIndex,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex)),
+            );
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], undefined, latestKnownUpdate);
+            return promiseChain(
+                Promise.resolve(cachedEvents),
+                new Promise((resolve) => {
+                    setTimeout(() => {
+                        this.handleMissingEvents2(missing, undefined, latestKnownUpdate)?.then(
+                            (p) => {
+                                if (p !== "events_failed") {
+                                    resolve(p);
+                                }
+                            },
+                        );
+                    }, 5000);
+                }),
+            );
         }
     }
 
