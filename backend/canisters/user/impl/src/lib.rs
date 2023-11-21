@@ -37,6 +37,7 @@ mod openchat_bot;
 mod queries;
 mod regular_jobs;
 mod timer_job_types;
+mod token_swaps;
 mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;

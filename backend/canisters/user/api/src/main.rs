@@ -49,6 +49,7 @@ fn main() {
     generate_candid_method!(user, set_contact, update);
     generate_candid_method!(user, set_message_reminder_v2, update);
     generate_candid_method!(user, submit_proposal, update);
+    generate_candid_method!(user, swap_tokens, update);
     generate_candid_method!(user, tip_message, update);
     generate_candid_method!(user, unblock_user, update);
     generate_candid_method!(user, undelete_messages, update);

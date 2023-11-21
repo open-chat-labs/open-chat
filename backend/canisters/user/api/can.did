@@ -147,6 +147,33 @@ type ApproveTransferResponse = variant {
     InternalError : text;
 };
 
+type SwapTokensArgs = record {
+    input_token : TokenInfo;
+    output_token : TokenInfo;
+    input_amount : nat;
+    exchange_args : variant {
+        ICPSwap : record {
+            swap_canister_id : CanisterId;
+            zero_for_one : bool;
+        };
+    };
+    min_output_amount : nat;
+};
+
+type SwapTokensResponse = variant {
+    Success : record {
+        amount_out : nat;
+    };
+    InternalError : text;
+};
+
+type TokenInfo = record {
+    token : Cryptocurrency;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee: nat;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -969,6 +996,7 @@ service : {
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
+    swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
