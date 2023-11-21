@@ -97,12 +97,6 @@
       "wasm": "wasms/market_maker.wasm.gz",
       "build": "./scripts/generate-wasm.sh market_maker"
     },
-    "exchange_bot": {
-      "type": "custom",
-      "candid": "backend/canisters/exchange_bot/api/can.did",
-      "wasm": "wasms/exchange_bot.wasm.gz",
-      "build": "./scripts/generate-wasm.sh exchange_bot"
-    },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"

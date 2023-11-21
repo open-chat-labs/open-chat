@@ -14,7 +14,6 @@ use types::{BuildVersion, CanisterId, CanisterWasm};
 pub enum CanisterName {
     Community,
     CyclesDispenser,
-    ExchangeBot,
     Group,
     GroupIndex,
     LocalGroupIndex,
@@ -39,7 +38,6 @@ impl FromStr for CanisterName {
         match s {
             "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
-            "exchange_bot" => Ok(CanisterName::ExchangeBot),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "local_group_index" => Ok(CanisterName::LocalGroupIndex),
@@ -65,7 +63,6 @@ impl Display for CanisterName {
         let name = match self {
             CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
-            CanisterName::ExchangeBot => "exchange_bot",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::LocalGroupIndex => "local_group_index",
@@ -101,7 +98,6 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
     pub market_maker: CanisterId,
-    pub exchange_bot: CanisterId,
     pub neuron_controller: CanisterId,
     pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
