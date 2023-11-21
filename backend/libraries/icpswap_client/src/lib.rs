@@ -73,9 +73,11 @@ impl ICPSwapClient {
     }
 
     pub async fn deposit(&self, amount: u128) -> CallResult<u128> {
+        let token = self.input_token();
         let args = icpswap_swap_pool_canister::deposit::Args {
-            token: self.input_token().ledger.to_string(),
+            token: token.ledger.to_string(),
             amount: amount.into(),
+            fee: token.fee.into(),
         };
         match icpswap_swap_pool_canister_c2c_client::deposit(self.swap_canister_id, &args).await? {
             ICPSwapResult::Ok(amount_deposited) => Ok(nat_to_u128(amount_deposited)),
@@ -97,9 +99,11 @@ impl ICPSwapClient {
     }
 
     pub async fn withdraw(&self, amount: u128) -> CallResult<u128> {
+        let token = self.output_token();
         let args = icpswap_swap_pool_canister::withdraw::Args {
-            token: self.output_token().ledger.to_string(),
+            token: token.ledger.to_string(),
             amount: amount.into(),
+            fee: token.fee.into(),
         };
         match icpswap_swap_pool_canister_c2c_client::withdraw(self.swap_canister_id, &args).await? {
             ICPSwapResult::Ok(amount_out) => Ok(nat_to_u128(amount_out)),

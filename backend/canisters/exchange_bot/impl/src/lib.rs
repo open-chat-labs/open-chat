@@ -2,6 +2,7 @@ use crate::commands::Command;
 use crate::icpswap::ICPSwapClientFactory;
 use crate::model::commands_pending::CommandsPending;
 use crate::model::messages_pending::{MessagePending, MessagesPending};
+use crate::model::swaps_log::{AggregatedSwapMetrics, SwapsLog};
 use crate::sonic::SonicClientFactory;
 use crate::swap_client::{SwapClient, SwapClientFactory};
 use candid::Principal;
@@ -113,6 +114,8 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             queued_commands: self.data.commands_pending.len() as u32,
             queued_messages: self.data.messages_pending.len() as u32,
+            swap_metrics: self.data.swaps_log.metrics(),
+            unique_users: self.data.known_callers.len() as u32,
             canister_ids: CanisterIds {
                 local_user_index: self.data.local_user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -154,11 +157,10 @@ struct Data {
     username: String,
     display_name: Option<String>,
     is_registered: bool,
-    #[serde(default)]
+    sonic_subaccount: Option<[u8; 32]>,
+    swaps_log: SwapsLog,
     rng_seed: [u8; 32],
     test_mode: bool,
-    #[serde(default)]
-    sonic_subaccount: Option<[u8; 32]>,
 }
 
 impl Data {
@@ -181,9 +183,10 @@ impl Data {
             username: "".to_string(),
             display_name: None,
             is_registered: false,
+            sonic_subaccount: None,
+            swaps_log: SwapsLog::default(),
             rng_seed: [0; 32],
             test_mode,
-            sonic_subaccount: None,
         }
     }
 
@@ -241,6 +244,8 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub queued_commands: u32,
     pub queued_messages: u32,
+    pub swap_metrics: Vec<AggregatedSwapMetrics>,
+    pub unique_users: u32,
     pub canister_ids: CanisterIds,
 }
 
