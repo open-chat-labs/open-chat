@@ -24,6 +24,7 @@ ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../api" }
 notifications_index_canister = { path = "../../notifications_index/api" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }

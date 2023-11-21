@@ -32,6 +32,7 @@ icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }

@@ -32,6 +32,7 @@ pub struct SuccessResult {
 pub struct DirectChatsUpdates {
     pub added: Vec<DirectChatSummary>,
     pub updated: Vec<DirectChatSummaryUpdates>,
+    pub removed: Vec<ChatId>,
     pub pinned: Option<Vec<ChatId>>,
 }
 

@@ -26,6 +26,7 @@ pub mod cancel_message_reminder;
 pub mod create_community;
 pub mod create_group;
 pub mod delete_community;
+pub mod delete_direct_chat;
 pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;

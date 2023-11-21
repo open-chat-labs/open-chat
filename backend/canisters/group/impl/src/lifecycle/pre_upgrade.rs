@@ -3,6 +3,7 @@ use crate::take_state;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
 use instruction_counts_log::InstructionCountFunctionId;
+use rand::Rng;
 use stable_memory::get_writer;
 use tracing::info;
 
@@ -11,7 +12,9 @@ use tracing::info;
 fn pre_upgrade() {
     info!("Pre-upgrade starting");
 
-    let state = take_state();
+    let mut state = take_state();
+    state.data.rng_seed = state.env.rng().gen();
+
     let logs = canister_logger::export_logs();
     let traces = canister_logger::export_traces();
 

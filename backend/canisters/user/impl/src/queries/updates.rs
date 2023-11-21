@@ -66,6 +66,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let direct_chats = DirectChatsUpdates {
         added: direct_chats_added,
         updated: direct_chats_updated,
+        removed: state.data.direct_chats.removed_since(updates_since),
         pinned: state.data.direct_chats.pinned_if_updated(updates_since),
     };
 
