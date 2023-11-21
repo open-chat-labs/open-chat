@@ -49,6 +49,7 @@ pub mod set_community_indexes;
 pub mod set_contact;
 pub mod set_message_reminder;
 pub mod submit_proposal;
+pub mod swap_tokens;
 pub mod tip_message;
 pub mod unblock_user;
 pub mod undelete_messages;

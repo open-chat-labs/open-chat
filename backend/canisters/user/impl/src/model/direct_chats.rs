@@ -10,6 +10,7 @@ pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
+    #[serde(default)]
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
 }
 
