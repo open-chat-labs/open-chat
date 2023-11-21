@@ -3,27 +3,10 @@ use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::account::Account;
-use types::{CanisterId, ExchangeId, TokenInfo};
 
 #[async_trait]
 impl SwapClient for ICPSwapClient {
-    fn exchange_id(&self) -> ExchangeId {
-        ExchangeId::ICPSwap
-    }
-
-    fn input_token(&self) -> &TokenInfo {
-        self.input_token()
-    }
-
-    fn output_token(&self) -> &TokenInfo {
-        self.output_token()
-    }
-
-    async fn quote(&self, amount: u128) -> CallResult<u128> {
-        self.quote(amount).await
-    }
-
-    async fn deposit_account(&self) -> CallResult<(CanisterId, Account)> {
+    async fn deposit_account(&self) -> CallResult<Account> {
         Ok(self.deposit_account())
     }
 
@@ -31,8 +14,8 @@ impl SwapClient for ICPSwapClient {
         self.deposit(amount).await.map(|_| ())
     }
 
-    async fn swap(&self, amount: u128) -> CallResult<u128> {
-        self.swap(amount).await
+    async fn swap(&self, amount: u128, min_amount_out: u128) -> CallResult<u128> {
+        self.swap(amount, min_amount_out).await
     }
 
     async fn withdraw(&self, amount: u128) -> CallResult<u128> {

@@ -1,11 +1,12 @@
 use crate::guards::caller_is_owner;
+use crate::model::token_swaps::TokenSwap;
 use crate::token_swaps::swap_client::SwapClient;
-use crate::{read_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use icpswap_client::ICPSwapClient;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::TimestampMillis;
+use types::{TimestampMillis, Timestamped};
 use user_canister::swap_tokens::{Response::*, *};
 use utils::consts::MEMO_SWAP;
 use utils::time::NANOS_PER_MILLISECOND;
@@ -15,15 +16,35 @@ use utils::time::NANOS_PER_MILLISECOND;
 async fn swap_tokens(args: Args) -> Response {
     run_regular_jobs();
 
-    let PrepareResult { swap_client, now } = read_state(|state| prepare(&args, state));
+    let PrepareResult {
+        swap_client,
+        mut token_swap,
+        now,
+    } = mutate_state(|state| prepare(&args, state));
 
-    let (ledger, account) = match swap_client.deposit_account().await {
-        Ok(da) => da,
-        Err(error) => return InternalError(format!("{error:?}")),
+    let account = match swap_client.deposit_account().await {
+        Ok(a) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.deposit_account = Some(Timestamped::new(Ok(a), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+            });
+            a
+        }
+        Err(error) => {
+            let msg = format!("{error:?}");
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.deposit_account = Some(Timestamped::new(Err(msg.clone()), now));
+                token_swap.success = Some(Timestamped::new(false, now));
+                state.data.token_swaps.upsert(token_swap);
+            });
+            return InternalError(msg);
+        }
     };
 
-    match icrc_ledger_canister_c2c_client::icrc1_transfer(
-        ledger,
+    let transfer_result = match icrc_ledger_canister_c2c_client::icrc1_transfer(
+        args.input_token.ledger,
         &TransferArg {
             from_subaccount: None,
             to: account,
@@ -35,24 +56,91 @@ async fn swap_tokens(args: Args) -> Response {
     )
     .await
     {
-        Ok(Ok(_)) => {}
-        Ok(Err(error)) => return InternalError(format!("{error:?}")),
-        Err(error) => return InternalError(format!("{error:?}")),
+        Ok(Ok(index)) => Ok(index),
+        Ok(Err(error)) => Err(format!("{error:?}")),
+        Err(error) => Err(format!("{error:?}")),
     };
-
-    if let Err(error) = swap_client.deposit(args.input_amount).await {
-        return InternalError(format!("{error:?}"));
+    match transfer_result {
+        Ok(index) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.transfer = Some(Timestamped::new(Ok(index.0.try_into().unwrap()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+            });
+        }
+        Err(msg) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+                token_swap.success = Some(Timestamped::new(false, now));
+                state.data.token_swaps.upsert(token_swap);
+            });
+            return InternalError(msg);
+        }
     }
 
-    let amount_swapped = match swap_client.swap(args.input_amount.saturating_sub(args.input_token.fee)).await {
-        Ok(a) => a,
-        Err(error) => return InternalError(format!("{error:?}")),
+    if let Err(error) = swap_client.deposit(args.input_amount).await {
+        let msg = format!("{error:?}");
+        mutate_state(|state| {
+            let now = state.env.now();
+            token_swap.transfer = Some(Timestamped::new(Err(msg.clone()), now));
+            state.data.token_swaps.upsert(token_swap);
+            state.data.token_swaps.enqueue(args.swap_id);
+            // Start job to retry swap
+        });
+        return InternalError(msg);
+    } else {
+        mutate_state(|state| {
+            let now = state.env.now();
+            token_swap.notified_dex_at = Some(Timestamped::new(Ok(()), now));
+            state.data.token_swaps.upsert(token_swap.clone());
+        });
+    }
+
+    let amount_swapped = match swap_client
+        .swap(args.input_amount.saturating_sub(args.input_token.fee), args.min_output_amount)
+        .await
+    {
+        Ok(a) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.amount_swapped = Some(Timestamped::new(Ok(a), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+            });
+            a
+        }
+        Err(error) => {
+            let msg = format!("{error:?}");
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.amount_swapped = Some(Timestamped::new(Err(msg.clone()), now));
+                state.data.token_swaps.upsert(token_swap);
+                state.data.token_swaps.enqueue(args.swap_id);
+                // Start job to retry swap
+            });
+            return InternalError(msg);
+        }
     };
 
     let amount_out = amount_swapped.saturating_sub(args.output_token.fee);
 
     if let Err(error) = swap_client.withdraw(amount_out).await {
-        return InternalError(format!("{error:?}"));
+        let msg = format!("{error:?}");
+        mutate_state(|state| {
+            let now = state.env.now();
+            token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+            state.data.token_swaps.upsert(token_swap);
+            state.data.token_swaps.enqueue(args.swap_id);
+            // Start job to retry swap
+        });
+        return InternalError(msg);
+    } else {
+        mutate_state(|state| {
+            let now = state.env.now();
+            token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(()), now));
+            token_swap.success = Some(Timestamped::new(true, now));
+            state.data.token_swaps.upsert(token_swap);
+        });
     }
 
     Success(SuccessResult { amount_out })
@@ -60,11 +148,13 @@ async fn swap_tokens(args: Args) -> Response {
 
 struct PrepareResult {
     swap_client: Box<dyn SwapClient>,
+    token_swap: TokenSwap,
     now: TimestampMillis,
 }
 
-fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
+fn prepare(args: &Args, state: &mut RuntimeState) -> PrepareResult {
     let this_canister_id = state.env.canister_id();
+    let now = state.env.now();
     let input_token = args.input_token.clone();
     let output_token = args.output_token.clone();
 
@@ -81,8 +171,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
         }
     };
 
+    let token_swap = TokenSwap::new(args.clone(), now);
+    state.data.token_swaps.upsert(token_swap.clone());
+
     PrepareResult {
         swap_client,
-        now: state.env.now(),
+        token_swap,
+        now,
     }
 }

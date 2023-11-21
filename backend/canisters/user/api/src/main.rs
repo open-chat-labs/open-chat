@@ -14,6 +14,7 @@ fn main() {
     generate_candid_method!(user, public_profile, query);
     generate_candid_method!(user, search_messages, query);
     generate_candid_method!(user, saved_crypto_accounts, query);
+    generate_candid_method!(user, token_swap_status, query);
     generate_candid_method!(user, updates, query);
 
     generate_candid_method!(user, add_hot_group_exclusions, update);

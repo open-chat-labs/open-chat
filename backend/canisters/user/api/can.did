@@ -148,6 +148,7 @@ type ApproveTransferResponse = variant {
 };
 
 type SwapTokensArgs = record {
+    swap_id : nat;
     input_token : TokenInfo;
     output_token : TokenInfo;
     input_amount : nat;
@@ -172,6 +173,39 @@ type TokenInfo = record {
     ledger : CanisterId;
     decimals : nat8;
     fee: nat;
+};
+
+type TokenSwapStatusArgs = record {
+    swap_id : nat;
+};
+
+type TokenSwapStatusResponse = variant {
+    Success : record {
+        status : record {
+            started : TimestampMillis;
+            deposit_account : opt variant {
+                Ok : Account;
+                Err : text;
+            };
+            transfer : opt variant {
+                Ok : nat64;
+                Err : text;
+            };
+            notified_dex : opt variant {
+                Ok;
+                Err : text;
+            };
+            amount_swapped : opt variant {
+                Ok : nat;
+                Err : text;
+            };
+            withdrawn_from_dex : opt variant {
+                Ok;
+                Err : text;
+            };
+        };
+    };
+    NotFound;
 };
 
 type TipMessageArgs = record {
@@ -1015,4 +1049,5 @@ service : {
     public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
+    token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
 };

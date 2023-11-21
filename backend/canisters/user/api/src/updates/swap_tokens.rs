@@ -2,8 +2,9 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, TokenInfo};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
+    pub swap_id: u128,
     pub input_token: TokenInfo,
     pub output_token: TokenInfo,
     pub input_amount: u128,
@@ -11,12 +12,12 @@ pub struct Args {
     pub min_output_amount: u128,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ICPSwapArgs {
     pub swap_canister_id: CanisterId,
     pub zero_for_one: bool,
