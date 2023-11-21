@@ -5,6 +5,7 @@ use types::UserId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
+    pub block_user: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

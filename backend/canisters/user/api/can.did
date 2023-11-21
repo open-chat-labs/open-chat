@@ -227,6 +227,7 @@ type UnblockUserResponse = variant {
 
 type DeleteDirectChatArgs = record {
     user_id : UserId;
+    block_user : bool;
 };
 
 type DeleteDirectChatResponse = variant {

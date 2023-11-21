@@ -15,6 +15,9 @@ fn delete_direct_chat(args: Args) -> Response {
 fn delete_direct_chat_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
     if state.data.direct_chats.remove(args.user_id.into(), now).is_some() {
+        if args.block_user {
+            state.data.block_user(args.user_id, now);
+        }
         Success
     } else {
         ChatNotFound
