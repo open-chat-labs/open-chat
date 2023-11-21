@@ -23,7 +23,10 @@ fn delete_direct_chat_succeeds() {
         env,
         user1.principal,
         user1.canister(),
-        &user_canister::delete_direct_chat::Args { user_id: user2.user_id },
+        &user_canister::delete_direct_chat::Args {
+            user_id: user2.user_id,
+            block_user: false,
+        },
     );
 
     assert!(
