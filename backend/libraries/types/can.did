@@ -121,6 +121,7 @@ type DirectChatSummary = record {
     last_updated : TimestampMillis;
     latest_message : MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : MessageIndex;
     date_created : TimestampMillis;
     read_by_me_up_to : opt MessageIndex;
     read_by_them_up_to : opt MessageIndex;
@@ -129,6 +130,7 @@ type DirectChatSummary = record {
     my_metrics : ChatMetrics;
     archived : bool;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
 };
 
 type DirectChatSummaryUpdates = record {
@@ -136,6 +138,7 @@ type DirectChatSummaryUpdates = record {
     last_updated : TimestampMillis;
     latest_message : opt MessageEventWrapper;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     read_by_me_up_to : opt MessageIndex;
     read_by_them_up_to : opt MessageIndex;
     notifications_muted : opt bool;
@@ -144,6 +147,7 @@ type DirectChatSummaryUpdates = record {
     my_metrics : opt ChatMetrics;
     archived : opt bool;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
 };
 
 type DirectMessageNotification = record {
@@ -256,13 +260,14 @@ type GroupChatSummary = record {
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     joined : TimestampMillis;
     read_by_me_up_to : opt MessageIndex;
     notifications_muted : bool;
     participant_count : nat32;
     role : GroupRole;
     mentions : vec Mention;
-    permissions : GroupPermissions;
+    permissions_v2 : GroupPermissions;
     metrics : ChatMetrics;
     my_metrics : ChatMetrics;
     latest_threads : vec ThreadSyncDetails;
@@ -272,6 +277,7 @@ type GroupChatSummary = record {
     date_last_pinned : opt TimestampMillis;
     date_read_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
 };
@@ -289,11 +295,12 @@ type GroupCanisterGroupChatSummary = record {
     min_visible_message_index : MessageIndex;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     joined : TimestampMillis;
     participant_count : nat32;
     role : GroupRole;
     mentions : vec Mention;
-    permissions : GroupPermissions;
+    permissions_v2 : GroupPermissions;
     notifications_muted : bool;
     metrics : ChatMetrics;
     my_metrics : ChatMetrics;
@@ -302,8 +309,10 @@ type GroupCanisterGroupChatSummary = record {
     wasm_version : BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     rules_accepted : bool;
+    membership : opt GroupMembership;
 };
 
 type GroupCanisterGroupChatSummaryUpdates = record {
@@ -315,10 +324,11 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     avatar_id : DocumentIdUpdate;
     latest_message : opt MessageEventWrapper;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     participant_count : opt nat32;
     role : opt GroupRole;
     mentions : vec Mention;
-    permissions : opt GroupPermissions;
+    permissions_v2 : opt GroupPermissions;
     updated_events : vec record { opt nat32; nat32; nat64 };
     metrics : opt ChatMetrics;
     my_metrics : opt ChatMetrics;
@@ -330,8 +340,10 @@ type GroupCanisterGroupChatSummaryUpdates = record {
     wasm_version : opt BuildVersion;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
     rules_accepted : opt bool;
+    membership : opt GroupMembershipUpdates;
 };
 
 type CommunityCanisterCommunitySummary = record {
@@ -381,16 +393,18 @@ type CommunityCanisterChannelSummary = record {
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     member_count : nat32;
-    permissions : GroupPermissions;
+    permissions_v2 : GroupPermissions;
     metrics : ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
-    membership : opt ChannelMembership;
+    membership : opt GroupMembership;
 };
 
-type ChannelMembership = record {
+type GroupMembership = record {
     joined : TimestampMillis;
     role : GroupRole;
     mentions : vec Mention;
@@ -440,17 +454,19 @@ type CommunityCanisterChannelSummaryUpdates = record {
     latest_message : opt MessageEventWrapper;
     latest_message_sender_display_name : opt text;
     latest_event_index : opt EventIndex;
+    latest_message_index : opt MessageIndex;
     member_count : opt nat32;
-    permissions : opt GroupPermissions;
+    permissions_v2 : opt GroupPermissions;
     updated_events : vec record { opt nat32; nat32; nat64 };
     metrics : opt ChatMetrics;
     date_last_pinned : opt TimestampMillis;
     events_ttl : EventsTimeToLiveUpdate;
+    events_ttl_last_updated : opt TimestampMillis;
     gate : AccessGateUpdate;
-    membership : opt ChannelMembershipUpdates;
+    membership : opt GroupMembershipUpdates;
 };
 
-type ChannelMembershipUpdates = record {
+type GroupMembershipUpdates = record {
     role : opt GroupRole;
     mentions : vec Mention;
     notifications_muted : opt bool;
@@ -462,6 +478,7 @@ type ChannelMembershipUpdates = record {
 
 type SelectedGroupUpdates = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members_added_or_updated : vec Participant;
     members_removed : vec UserId;
@@ -702,10 +719,12 @@ type PublicGroupSummary = record {
     avatar_id : opt nat;
     latest_message : opt MessageEventWrapper;
     latest_event_index : EventIndex;
+    latest_message_index : opt MessageIndex;
     participant_count : nat32;
     is_public : bool;
     frozen : opt FrozenGroupInfo;
     events_ttl : opt Milliseconds;
+    events_ttl_last_updated : TimestampMillis;
     gate : opt AccessGate;
     wasm_version : BuildVersion;
 };
@@ -844,8 +863,8 @@ type ParticipantsAdded = record {
 };
 
 type PermissionsChanged = record {
-    old_permissions : GroupPermissions;
-    new_permissions : GroupPermissions;
+    old_permissions_v2 : GroupPermissions;
+    new_permissions_v2 : GroupPermissions;
     changed_by : UserId;
 };
 
@@ -872,6 +891,7 @@ type PollConfig = record {
     anonymous : bool;
     show_votes_before_end_date : bool;
     allow_multiple_votes_per_user : bool;
+    allow_user_to_change_vote: bool;
 };
 
 type PollContent = record {
@@ -1187,39 +1207,68 @@ type User = record {
 };
 
 type GroupPermissions = record {
-    change_permissions : PermissionRole;
     change_roles : PermissionRole;
     add_members : PermissionRole;
     remove_members : PermissionRole;
-    block_users : PermissionRole;
     delete_messages : PermissionRole;
     update_group : PermissionRole;
     pin_messages : PermissionRole;
     invite_users : PermissionRole;
-    create_polls : PermissionRole;
-    send_messages : PermissionRole;
     react_to_messages : PermissionRole;
-    reply_in_thread : PermissionRole;
     mention_all_members : PermissionRole;
+    message_permissions : MessagePermissions;
+    thread_permissions : opt MessagePermissions;
+};
+
+type MessagePermissions = record {
+    default : PermissionRole;
+    text : opt PermissionRole;
+    image : opt PermissionRole;
+    video : opt PermissionRole;
+    audio : opt PermissionRole;
+    file : opt PermissionRole;
+    poll : opt PermissionRole;
+    crypto : opt PermissionRole;
+    giphy : opt PermissionRole;
+    prize : opt PermissionRole;
+    custom : vec CustomPermission;
+};
+
+type CustomPermission = record {
+    subtype : text;
+    role : PermissionRole;
 };
 
 type OptionalGroupPermissions = record {
-    change_permissions : opt PermissionRole;
     change_roles : opt PermissionRole;
     remove_members : opt PermissionRole;
-    block_users : opt PermissionRole;
     delete_messages : opt PermissionRole;
     update_group : opt PermissionRole;
     pin_messages : opt PermissionRole;
     invite_users : opt PermissionRole;
-    create_polls : opt PermissionRole;
-    send_messages : opt PermissionRole;
     react_to_messages : opt PermissionRole;
-    reply_in_thread : opt PermissionRole;
     mention_all_members : opt PermissionRole;
+    message_permissions : opt OptionalMessagePermissions;
+    thread_permissions : OptionalMessagePermissionsUpdate;
+};
+
+type OptionalMessagePermissions = record {
+    default : opt PermissionRole;
+    text : PermissionRoleUpdate;
+    image : PermissionRoleUpdate;
+    video : PermissionRoleUpdate;
+    audio : PermissionRoleUpdate;
+    file : PermissionRoleUpdate;
+    poll : PermissionRoleUpdate;
+    crypto : PermissionRoleUpdate;
+    giphy : PermissionRoleUpdate;
+    prize : PermissionRoleUpdate;
+    custom_updated : vec CustomPermission;
+    custom_deleted : vec text;
 };
 
 type PermissionRole = variant {
+    None;
     Owner;
     Admins;
     Moderators;
@@ -1332,14 +1381,16 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
+    expired_event_ranges: vec record { EventIndex; EventIndex };
+    expired_message_ranges: vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
-    timestamp : TimestampMillis;
+    chat_last_updated : TimestampMillis;
 };
 
 type MessagesSuccessResult = record {
     messages : vec MessageEventWrapper;
     latest_event_index : EventIndex;
-    timestamp : TimestampMillis;
+    chat_last_updated : TimestampMillis;
 };
 
 type MessageIndexRange = record {
@@ -1352,6 +1403,7 @@ type PrizeContentInitial = record {
     transfer : CryptoTransaction;
     end_date : TimestampMillis;
     caption : opt text;
+    diamond_only : bool;
 };
 
 type PrizeContent = record {
@@ -1361,6 +1413,7 @@ type PrizeContent = record {
     token : Cryptocurrency;
     end_date : TimestampMillis;
     caption : opt text;
+    diamond_only : bool;
 };
 
 type PrizeWinnerContent = record {
@@ -1382,6 +1435,7 @@ type DiamondMembershipPlanDuration = variant {
 
 type AccessGate = variant {
     DiamondMember;
+    VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
 };
 
@@ -1394,6 +1448,11 @@ type AccessGateUpdate = variant {
 type GroupGateUpdated = record {
     updated_by : UserId;
     new_gate : opt AccessGate;
+};
+
+type VerifiedCredentialGate = record {
+    issuer : text;
+    credential : text;
 };
 
 type SnsNeuronGate = record {
@@ -1492,4 +1551,16 @@ type CommunityMember = record {
     date_added : TimestampMillis;
     role : CommunityRole;
     display_name : opt text;
+};
+
+type PermissionRoleUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : PermissionRole;
+};
+
+type OptionalMessagePermissionsUpdate = variant {
+    NoChange;
+    SetToNone;
+    SetToSome : OptionalMessagePermissions;
 };

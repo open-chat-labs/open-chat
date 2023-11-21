@@ -11,9 +11,25 @@ import type {
     ChatListScope,
     CryptocurrencyDetails,
     VersionedRules,
+    AccountTransaction,
+    AttachmentContent,
+    MessagePermission,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
+
+export function userIdsFromTransactions(transactions: AccountTransaction[]): Set<string> {
+    return transactions.reduce<Set<string>>((userIds, t) => {
+        // these are not necessarily userIds, but they *might* be
+        if (t.from !== undefined) {
+            userIds.add(t.from);
+        }
+        if (t.to !== undefined) {
+            userIds.add(t.to);
+        }
+        return userIds;
+    }, new Set<string>());
+}
 
 export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string> {
     const fakeFormatter = (k: string) => k;
@@ -165,22 +181,29 @@ export function getMinVisibleEventIndex(chat: ChatSummary): number {
 }
 
 export function getDisplayDate(chat: ChatSummary): bigint {
-    let started = BigInt(0);
+    let latestUpdate = BigInt(0);
+
     switch (chat.kind) {
         case "direct_chat":
-            started = chat.dateCreated;
+            latestUpdate = chat.dateCreated;
             break;
         case "group_chat":
-            started = chat.membership?.joined ?? started;
-            break;
         case "channel":
-            started = chat.membership?.joined ?? started;
+            if (chat.membership?.joined !== undefined) {
+                latestUpdate = chat.membership.joined;
+            }
             break;
     }
 
-    return chat.latestMessage && chat.latestMessage.timestamp > started
-        ? chat.latestMessage.timestamp
-        : started;
+    if (chat.latestMessage !== undefined && chat.latestMessage.timestamp > latestUpdate) {
+        latestUpdate = chat.latestMessage.timestamp;
+    }
+
+    if (chat.eventsTtlLastUpdated > latestUpdate) {
+        latestUpdate = chat.eventsTtlLastUpdated;
+    }
+
+    return latestUpdate;
 }
 
 export function compareChats(a: ChatSummary, b: ChatSummary): number {
@@ -269,5 +292,20 @@ export function chatIdentifierToString(chatId: ChatIdentifier): string {
             return `${chatId.communityId}_${chatId.channelId}`;
         default:
             throw new UnsupportedValueError("Unknown chatId kind", chatId);
+    }
+}
+
+export function contentTypeToPermission(contentType: AttachmentContent["kind"]): MessagePermission {
+    switch (contentType) {
+        case "image_content":
+            return "image";
+        case "video_content":
+            return "video";
+        case "audio_content":
+            return "audio";
+        case "file_content":
+            return "file";
+        default:
+            throw new UnsupportedValueError("Unknown attachment content type", contentType);
     }
 }

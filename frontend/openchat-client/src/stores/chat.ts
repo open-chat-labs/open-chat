@@ -8,12 +8,12 @@ import type {
     EventWrapper,
     Message,
     ThreadSyncDetails,
-    CreatedUser,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
     ChatListScope,
     AttachmentContent,
+    ExpiredEventsRange,
 } from "openchat-shared";
 import {
     compareChats,
@@ -35,7 +35,7 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { userStore } from "./user";
+import { currentUser, userStore } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -60,7 +60,6 @@ import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore } from "./community";
 import { translationStore } from "./translation";
 
-export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
@@ -152,7 +151,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         serverChatSummariesStore,
         localChatSummaryUpdates,
         unconfirmed,
-        currentUserStore,
+        currentUser,
         localMessageUpdates,
         translationStore,
     ],
@@ -166,19 +165,17 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         return mergedSummaries
             .entries()
             .reduce<ChatMap<ChatSummary>>((result, [chatId, summary]) => {
-                if (currentUser !== undefined) {
-                    result.set(
-                        chatId,
-                        mergeUnconfirmedIntoSummary(
-                            (k) => k,
-                            currentUser.userId,
-                            summary,
-                            unconfirmed,
-                            localUpdates,
-                            translations,
-                        ),
-                    );
-                }
+                result.set(
+                    chatId,
+                    mergeUnconfirmedIntoSummary(
+                        (k) => k,
+                        currentUser.userId,
+                        summary,
+                        unconfirmed,
+                        localUpdates,
+                        translations,
+                    ),
+                );
                 return result;
             }, new ChatMap<ChatSummary>());
     },
@@ -300,13 +297,6 @@ export const threadsByChatStore = derived([chatSummariesListStore], ([summaries]
     }, new ChatMap<ThreadSyncDetails[]>());
 });
 
-export const staleThreadsCount = derived(
-    [threadsByChatStore, messagesRead],
-    ([$threadsByChat, _messagesRead]) => {
-        return messagesRead.staleThreadsCount($threadsByChat);
-    },
-);
-
 export const threadsFollowedByMeStore = derived([threadsByChatStore], ([threadsByChat]) => {
     return threadsByChat.entries().reduce<ChatMap<Set<number>>>((result, [chatId, threads]) => {
         const set = new Set<number>();
@@ -380,6 +370,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
         confirmedEventIndexesLoaded: new DRange(),
         serverEvents: [],
         expandedDeletedMessages: new Set(),
+        expiredEventRanges: new DRange(),
     }),
 );
 
@@ -414,6 +405,7 @@ export const threadEvents = derived(
             $serverEvents,
             [...unconfirmed, ...failed],
             $localUpdates,
+            new DRange(),
             $proposalTallies,
             $translationStore,
         );
@@ -463,19 +455,6 @@ export const confirmedThreadEventIndexesLoadedStore = derived(
     },
 );
 
-const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
-    const ranges = new DRange();
-    serverEvents.forEach((e) => ranges.add(e.index));
-    return ranges;
-});
-
-export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
-    const selected = get(selectedChatId);
-    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
-        ? get(confirmedEventIndexesLoadedStore)
-        : new DRange();
-}
-
 export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
     chatStateStore,
     "rules",
@@ -504,6 +483,28 @@ export const currentChatPinnedMessages = createDerivedPropStore<
     ChatSpecificState,
     "pinnedMessages"
 >(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
+
+export const expiredEventRangesStore = createDerivedPropStore<
+    ChatSpecificState,
+    "expiredEventRanges"
+>(chatStateStore, "expiredEventRanges", () => new DRange());
+
+const confirmedEventIndexesLoadedStore = derived(
+    [serverEventsStore, expiredEventRangesStore],
+    ([serverEvents, expiredEventRanges]) => {
+        const ranges = new DRange();
+        serverEvents.forEach((e) => ranges.add(e.index));
+        ranges.add(expiredEventRanges);
+        return ranges;
+    },
+);
+
+export function confirmedEventIndexesLoaded(chatId: ChatIdentifier): DRange {
+    const selected = get(selectedChatId);
+    return selected !== undefined && chatIdentifiersEqual(selected, chatId)
+        ? get(confirmedEventIndexesLoadedStore)
+        : new DRange();
+}
 
 export function setSelectedChat(
     api: OpenChat,
@@ -580,9 +581,12 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             readByThemUpTo: undefined,
             latestMessage: undefined,
             latestEventIndex: 0,
+            latestMessageIndex: undefined,
             lastUpdated: BigInt(Date.now()),
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
+            eventsTTL: undefined,
+            eventsTtlLastUpdated: BigInt(0),
             membership: {
                 ...nullMembership(),
                 role: "owner",
@@ -619,6 +623,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         serverEventsStore,
         unconfirmed,
         localMessageUpdates,
+        expiredEventRangesStore,
         failedMessagesStore,
         proposalTallies,
         translationStore,
@@ -627,6 +632,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $serverEventsForSelectedChat,
         $unconfirmed,
         $localMessageUpdates,
+        $expiredEventRanges,
         $failedMessages,
         $proposalTallies,
         $translationStore,
@@ -640,18 +646,23 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $serverEventsForSelectedChat,
             [...unconfirmed, ...failed],
             $localMessageUpdates,
+            $expiredEventRanges,
             $proposalTallies,
             $translationStore,
         );
     },
 );
 
-function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]): boolean {
+function isContiguousInternal(
+    range: DRange,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
     if (range.length === 0 || events.length === 0) return true;
 
     const indexes = [events[0].index, events[events.length - 1].index];
-    const minIndex = Math.min(...indexes);
-    const maxIndex = Math.max(...indexes);
+    const minIndex = Math.min(...indexes, ...expiredEventRanges.map((e) => e.start));
+    const maxIndex = Math.max(...indexes, ...expiredEventRanges.map((e) => e.end));
     const contiguousCheck = new DRange(minIndex - 1, maxIndex + 1);
 
     const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
@@ -669,15 +680,20 @@ function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]):
 }
 
 export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
-    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events);
+    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events, []);
 }
 
-export function isContiguous(chatId: ChatIdentifier, events: EventWrapper<ChatEvent>[]): boolean {
-    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events);
+export function isContiguous(
+    chatId: ChatIdentifier,
+    events: EventWrapper<ChatEvent>[],
+    expiredEventRanges: ExpiredEventsRange[],
+): boolean {
+    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events, expiredEventRanges);
 }
 
 export function clearServerEvents(id: ChatIdentifier): void {
     chatStateStore.setProp(id, "serverEvents", []);
+    chatStateStore.setProp(id, "expiredEventRanges", new DRange());
 }
 
 /**

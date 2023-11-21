@@ -1,10 +1,10 @@
 use crate::guards::caller_is_platform_moderator;
-use crate::timer_job_types::{SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
+use crate::timer_job_types::{SetUserSuspendedInCommunity, SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UserSuspended};
-use types::{ChatId, Milliseconds, SuspensionDuration, UserId};
+use types::{ChatId, CommunityId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
 #[update(guard = "caller_is_platform_moderator")]
@@ -27,7 +27,17 @@ pub(crate) async fn suspend_user_impl(
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: true };
     match user_canister_c2c_client::c2c_set_user_suspended(user_id.into(), &c2c_args).await {
         Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {
-            mutate_state(|state| commit(user_id, duration, reason, result.groups, suspended_by, state));
+            mutate_state(|state| {
+                commit(
+                    user_id,
+                    duration,
+                    reason,
+                    result.groups,
+                    result.communities,
+                    suspended_by,
+                    state,
+                )
+            });
             Success
         }
         Err(error) => InternalError(format!("{error:?}")),
@@ -50,6 +60,7 @@ fn commit(
     duration: Option<Milliseconds>,
     reason: String,
     groups: Vec<ChatId>,
+    communities: Vec<CommunityId>,
     suspended_by: UserId,
     state: &mut RuntimeState,
 ) {
@@ -59,6 +70,19 @@ fn commit(
             TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
                 user_id,
                 group,
+                suspended: true,
+                attempt: 0,
+            }),
+            now,
+            now,
+        );
+    }
+
+    for community in communities {
+        state.data.timer_jobs.enqueue_job(
+            TimerJob::SetUserSuspendedInCommunity(SetUserSuspendedInCommunity {
+                user_id,
+                community,
                 suspended: true,
                 attempt: 0,
             }),

@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 ic-cdk = { workspace = true }
-serde = { workspace = true }
-serializer = { path = "../serializer" }
+ic-stable-structures = { workspace = true }

@@ -5,6 +5,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+## [[2.0.934](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.934-user_index)] - 2023-11-15
+
+### Added
+
+- Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+- Return Diamond membership fees from UserIndex ([#4751](https://github.com/open-chat-labs/open-chat/pull/4751))
+- Implement modclub integration for reporting ([#4726](https://github.com/open-chat-labs/open-chat/pull/4726))
+
+### Changed
+
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+
+### Fixed
+
+- Fix text formatting in OpenChat Bot message ([#4706](https://github.com/open-chat-labs/open-chat/pull/4706))
+
+## [[2.0.905](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.905-user_index)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` to group/channel summary ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+## [[2.0.893](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.893-user_index)] - 2023-10-19
+
+### Changed
+
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+
 ## [[2.0.877](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.877-user_index)] - 2023-10-09
 
 ### Changed

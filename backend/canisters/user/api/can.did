@@ -1,4 +1,5 @@
 import "../../../libraries/types/can.did";
+import "../../../external_canisters/icrc_ledger/api/can.did";
 
 type SendMessageV2Args = record {
     recipient : UserId;
@@ -118,6 +119,34 @@ type RemoveReactionResponse = variant {
     UserSuspended;
 };
 
+type ReportMessageArgs = record {
+    them : UserId;
+    message_id : MessageId;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    UserSuspended;
+    ChatNotFound;
+    MessageNotFound;
+    AlreadyReported;
+    InternalError : text;
+};
+
+type ApproveTransferArgs = record {
+    spender : Account;
+    ledger_canister_id : CanisterId;
+    amount : nat;
+    expires_in : opt Milliseconds;
+};
+
+type ApproveTransferResponse = variant {
+    Success;
+    ApproveError : ApproveError;
+    InternalError : text;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -127,6 +156,7 @@ type TipMessageArgs = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
+    decimals : opt nat8;
 };
 
 type TipMessageResponse = variant {
@@ -195,13 +225,23 @@ type UnblockUserResponse = variant {
     UserSuspended;
 };
 
+type DeleteDirectChatArgs = record {
+    user_id : UserId;
+    block_user : bool;
+};
+
+type DeleteDirectChatResponse = variant {
+    Success;
+    ChatNotFound;
+};
+
 type CreateGroupArgs = record {
     is_public : bool;
     name : text;
     description : text;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissions;
+    permissions_v2 : opt GroupPermissions;
     rules : Rules;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
@@ -568,6 +608,10 @@ type SavedCryptoAccountsResponse = variant {
 type SubmitProposalArgs = record {
     governance_canister_id : CanisterId;
     proposal : ProposalToSubmit;
+    ledger : CanisterId;
+    token : Cryptocurrency;
+    proposal_rejection_fee : nat;
+    transaction_fee : nat;
 };
 
 type ProposalToSubmit = record {
@@ -580,7 +624,7 @@ type ProposalToSubmit = record {
 type ProposalToSubmitAction = variant {
     Motion;
     TransferSnsTreasuryFunds : record {
-        treasury: variant {
+        treasury : variant {
             ICP;
             SNS;
         };
@@ -588,12 +632,26 @@ type ProposalToSubmitAction = variant {
         to : Icrc1Account;
         memo : opt nat64;
     };
+    UpgradeSnsToNextVersion;
+    UpgradeSnsControlledCanister : record {
+        canister_id : CanisterId;
+        new_canister_wasm : blob;
+        mode : variant {
+            Install;
+            Reinstall;
+            Upgrade;
+        };
+    };
+    ExecuteGenericNervousSystemFunction : record {
+        function_id : nat64;
+        payload : blob;
+    };
 };
 
 type SubmitProposalResponse = variant {
     Success;
     GovernanceCanisterNotSupported;
-    Unauthorized;
+    InsufficientPayment : nat;
     UserSuspended;
     TransferFailed : text;
     Retrying : text;
@@ -631,6 +689,7 @@ type InitialStateResponse = variant {
         communities : CommunitiesInitial;
         avatar_id : opt nat;
         blocked_users : vec UserId;
+        suspended : bool;
     };
 };
 
@@ -674,6 +733,7 @@ type UpdatesResponse = variant {
         communities : CommunitiesUpdates;
         avatar_id : DocumentIdUpdate;
         blocked_users : opt vec UserId;
+        suspended : opt bool;
     };
     SuccessNoUpdates;
 };
@@ -681,6 +741,7 @@ type UpdatesResponse = variant {
 type DirectChatsUpdates = record {
     added : vec DirectChatSummary;
     updated : vec DirectChatSummaryUpdates;
+    removed : vec ChatId;
     pinned : opt vec ChatId;
 };
 
@@ -757,14 +818,14 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsByIndexArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsWindowArgs = record {
@@ -773,29 +834,26 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsResponse = variant {
     Success : EventsSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type MessagesByMessageIndexArgs = record {
     user_id : UserId;
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type MessagesByMessageIndexResponse = variant {
-    Success : record {
-        messages : vec MessageEventWrapper;
-        latest_event_index : EventIndex;
-    };
+    Success : MessagesSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type SearchMessagesArgs = record {
@@ -884,6 +942,7 @@ service : {
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
+    delete_direct_chat : (DeleteDirectChatArgs) -> (DeleteDirectChatResponse);
     create_group : (CreateGroupArgs) -> (CreateGroupResponse);
     leave_group : (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group : (DeleteGroupArgs) -> (DeleteGroupResponse);
@@ -908,6 +967,8 @@ service : {
     archive_unarchive_chats : (ArchiveUnarchiveChatsArgs) -> (ArchiveUnarchiveChatsResponse);
     save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
+    approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

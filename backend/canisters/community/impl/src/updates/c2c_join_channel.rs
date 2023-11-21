@@ -28,11 +28,11 @@ async fn c2c_join_channel(args: Args) -> Response {
     .await
     {
         community_canister::c2c_join_community::Response::Success(_) => {
-            let response = join_channel_impl(args.channel_id, args.principal).await;
+            let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
             if matches!(response, Success(_) | AlreadyInChannel(_)) {
                 let summary = read_state(|state| {
                     let member = state.data.members.get_by_user_id(&args.user_id);
-                    state.summary(member, state.env.now())
+                    state.summary(member)
                 });
                 SuccessJoinedCommunity(Box::new(summary))
             } else {
@@ -40,7 +40,7 @@ async fn c2c_join_channel(args: Args) -> Response {
             }
         }
         community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-            join_channel_impl(args.channel_id, args.principal).await
+            check_gate_then_join_channel(args.channel_id, args.principal).await
         }
         community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
         community_canister::c2c_join_community::Response::NotInvited => NotInvited,
@@ -51,7 +51,16 @@ async fn c2c_join_channel(args: Args) -> Response {
     }
 }
 
-pub(crate) async fn join_channel_impl(channel_id: ChannelId, user_principal: Principal) -> Response {
+pub(crate) fn join_channel_auto(channel_id: ChannelId, user_principal: Principal) {
+    match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
+        Ok(None) => {}
+        _ => return,
+    };
+
+    mutate_state(|state| commit(channel_id, user_principal, state));
+}
+
+async fn check_gate_then_join_channel(channel_id: ChannelId, user_principal: Principal) -> Response {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
             match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
@@ -85,16 +94,10 @@ fn is_permitted_to_join(
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
                 Err(AlreadyInChannel(Box::new(
                     channel
-                        .summary(
-                            Some(channel_member.user_id),
-                            true,
-                            state.data.is_public,
-                            &state.data.members,
-                            state.env.now(),
-                        )
+                        .summary(Some(channel_member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap(),
                 )))
-            } else if !channel.chat.is_public && channel.chat.invited_users.get(&member.user_id).is_none() {
+            } else if !channel.chat.is_public.value && channel.chat.invited_users.get(&member.user_id).is_none() {
                 Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
@@ -120,14 +123,14 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
             match join_channel_unchecked(channel, member, state.data.is_public, now) {
                 AddResult::Success(_) => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members, now)
+                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
                     handle_activity_notification(state);
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
                     let summary = channel
-                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members, now)
+                        .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
                     AlreadyInChannel(Box::new(summary))
                 }
@@ -178,7 +181,7 @@ pub(crate) fn join_channel_unchecked(
         AddResult::Success(_) => {
             let invitation = channel.chat.invited_users.remove(&member.user_id, now);
 
-            if channel.chat.is_public {
+            if channel.chat.is_public.value {
                 channel.chat.events.mark_member_added_to_public_channel(member.user_id, now);
             } else {
                 channel.chat.events.push_main_event(

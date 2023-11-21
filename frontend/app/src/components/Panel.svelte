@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { fullWidth } from "../stores/layout";
+    import { fullWidth, layoutStore } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
     import { navOpen } from "../stores/layout";
+    import { currentTheme } from "../theme/themes";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -21,12 +22,18 @@
     class:right
     class:middle
     class:modal
+    class:offset={$layoutStore.showNav}
     class:hovering={$navOpen}
+    class:halloween={$currentTheme.name === "halloween"}
     class:empty>
     <slot />
 </section>
 
 <style lang="scss">
+    :global(body.witch section.right.empty) {
+        background: var(--panel-right-bg);
+    }
+
     $left-width: 40%;
     $right-width: 500px;
 
@@ -36,7 +43,7 @@
         overflow-x: hidden;
 
         // whichever panel is the 2nd panel should be nudged right to accommodate the nav
-        &:nth-child(2) {
+        &.offset:nth-child(2) {
             margin-inline-start: toRem(80);
             @include mobile() {
                 margin-inline-start: toRem(60);
@@ -67,12 +74,12 @@
 
         &.left {
             position: relative;
-            border-right: 1px solid var(--bd);
+            border-right: var(--bw) solid var(--bd);
             background: var(--panel-left-bg);
 
             &.rtl {
                 border-right: none;
-                border-left: 1px solid var(--bd);
+                border-left: var(--bw) solid var(--bd);
             }
 
             @include mobile() {
@@ -95,13 +102,13 @@
             background: var(--panel-left-bg);
             background: var(--panel-right-modal);
             padding: $sp2 0;
-            border-right: 1px solid var(--bd);
+            border-right: var(--bw) solid var(--bd);
             @include z-index("left-nav");
             transition: width 250ms ease-in-out;
 
             &.rtl {
                 border-right: none;
-                border-left: 1px solid var(--bd);
+                border-left: var(--bw) solid var(--bd);
             }
 
             @include mobile() {
@@ -122,7 +129,7 @@
         &.right {
             // background: var(--panel-right-bg);
             padding: 0px;
-            border-left: 1px solid var(--bd);
+            border-left: var(--bw) solid var(--bd);
             background: var(--panel-right-bg);
 
             &.modal.right {
@@ -144,6 +151,13 @@
             &.empty {
                 background: transparent;
             }
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 0;
+            right: 0;
+            transform: scaleY(-1);
         }
     }
 </style>

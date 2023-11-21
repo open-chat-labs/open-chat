@@ -7,7 +7,7 @@ use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
 use types::{CanisterId, CompletedCryptoTransaction, GroupMessageNotification, Notification, PendingCryptoTransaction, UserId};
-use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
+use utils::consts::{MEMO_PRIZE_CLAIM, OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
 #[update]
 #[trace]
@@ -80,7 +80,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
                 ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
             };
 
-        let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, now_nanos);
+        let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, Some(&MEMO_PRIZE_CLAIM), now_nanos);
 
         Ok(PrepareResult {
             group: state.env.canister_id(),
@@ -117,7 +117,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
                 thread_root_message_index: None,
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
-                group_name: state.data.chat.name.clone(),
+                group_name: state.data.chat.name.value.clone(),
                 sender: OPENCHAT_BOT_USER_ID,
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 sender_display_name: None,

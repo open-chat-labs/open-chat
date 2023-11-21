@@ -5,6 +5,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+## [[2.0.933](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.933-group_index)] - 2023-11-10
+
+### Changed
+
+- Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
+- Implement `group_index::c2c_report_message` ([#4723](https://github.com/open-chat-labs/open-chat/pull/4723))
+- Don't collect reason or notes from reporter ([#4724](https://github.com/open-chat-labs/open-chat/pull/4724))
+
+## [[2.0.926](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.926-group_index)] - 2023-11-03
+
+### Changed
+
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Add `latest_message_index` to chat summaries ([#4693](https://github.com/open-chat-labs/open-chat/pull/4693))
+
+### Removed
+
+- Removed old permissions code ([#4667](https://github.com/open-chat-labs/open-chat/pull/4667))
+
+## [[2.0.907](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.907-group_index)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` to `c2c_create_group` ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+## [[2.0.894](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.894-group_index)] - 2023-10-19
+
+### Changed
+
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+
 ### Removed
 
 - Removed `filter_groups` and `c2c_filter_groups` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))

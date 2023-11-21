@@ -4,8 +4,10 @@ use chat_events::ChatEvents;
 use serde::de::{SeqAccess, Visitor};
 use serde::ser::SerializeSeq;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::cmp::max;
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::fmt::Formatter;
 use types::{
     is_default, is_empty_btreemap, is_empty_hashset, is_empty_slice, EventIndex, GroupMember, GroupPermissions,
@@ -22,6 +24,18 @@ pub struct GroupMembers {
     pub moderator_count: u32,
     pub admin_count: u32,
     pub owner_count: u32,
+    #[serde(default)]
+    updates: BTreeSet<(TimestampMillis, UserId, MemberUpdate)>,
+}
+
+#[derive(Serialize_repr, Deserialize_repr, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum MemberUpdate {
+    Added = 1,
+    Removed = 2,
+    RoleChanged = 3,
+    Blocked = 4,
+    Unblocked = 5,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -30,7 +44,7 @@ impl GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
             date_added: now,
-            role: GroupRoleInternal::Owner,
+            role: Timestamped::new(GroupRoleInternal::Owner, now),
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
@@ -49,6 +63,7 @@ impl GroupMembers {
             moderator_count: 0,
             admin_count: 0,
             owner_count: 1,
+            updates: BTreeSet::new(),
         }
     }
 
@@ -71,7 +86,7 @@ impl GroupMembers {
                     let member = GroupMemberInternal {
                         user_id,
                         date_added: now,
-                        role: GroupRoleInternal::Member,
+                        role: Timestamped::new(GroupRoleInternal::Member, now),
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
@@ -84,6 +99,7 @@ impl GroupMembers {
                         is_bot,
                     };
                     e.insert(member.clone());
+                    self.updates.insert((now, user_id, MemberUpdate::Added));
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInGroup,
@@ -91,41 +107,38 @@ impl GroupMembers {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
+    pub fn remove(&mut self, user_id: UserId, now: TimestampMillis) -> Option<GroupMemberInternal> {
         if let Some(member) = self.members.remove(&user_id) {
-            match member.role {
+            match member.role.value {
                 GroupRoleInternal::Owner => self.owner_count -= 1,
                 GroupRoleInternal::Admin => self.admin_count -= 1,
                 GroupRoleInternal::Moderator => self.moderator_count -= 1,
                 _ => (),
             }
 
+            self.updates.insert((now, user_id, MemberUpdate::Removed));
             Some(member)
         } else {
             None
         }
     }
 
-    pub fn try_undo_remove(&mut self, member: GroupMemberInternal) {
-        let user_id = member.user_id;
-        let role = member.role;
-        if let Vacant(e) = self.members.entry(user_id) {
-            e.insert(member);
-            match role {
-                GroupRoleInternal::Owner => self.owner_count += 1,
-                GroupRoleInternal::Admin => self.admin_count += 1,
-                GroupRoleInternal::Moderator => self.moderator_count += 1,
-                _ => (),
-            }
+    pub fn block(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.insert(user_id) {
+            self.updates.insert((now, user_id, MemberUpdate::Blocked));
+            true
+        } else {
+            false
         }
     }
 
-    pub fn block(&mut self, user_id: UserId) -> bool {
-        self.blocked.insert(user_id)
-    }
-
-    pub fn unblock(&mut self, user_id: &UserId) -> bool {
-        self.blocked.remove(user_id)
+    pub fn unblock(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if self.blocked.remove(&user_id) {
+            self.updates.insert((now, user_id, MemberUpdate::Unblocked));
+            true
+        } else {
+            false
+        }
     }
 
     pub fn blocked(&self) -> Vec<UserId> {
@@ -180,6 +193,7 @@ impl GroupMembers {
         permissions: &GroupPermissions,
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
+        now: TimestampMillis,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
         match self.get(&caller_id) {
@@ -214,22 +228,22 @@ impl GroupMembers {
             return ChangeRoleResult::Invalid;
         }
 
-        let prev_role = member.role;
+        let prev_role = member.role.value;
 
         if prev_role == new_role {
             return ChangeRoleResult::Unchanged;
         }
 
-        match member.role {
+        match prev_role {
             GroupRoleInternal::Owner => owner_count -= 1,
             GroupRoleInternal::Admin => admin_count -= 1,
             GroupRoleInternal::Moderator => moderator_count -= 1,
             _ => (),
         }
 
-        member.role = new_role;
+        member.role = Timestamped::new(new_role, now);
 
-        match member.role {
+        match new_role {
             GroupRoleInternal::Owner => owner_count += 1,
             GroupRoleInternal::Admin => admin_count += 1,
             GroupRoleInternal::Moderator => moderator_count += 1,
@@ -239,6 +253,7 @@ impl GroupMembers {
         self.owner_count = owner_count;
         self.admin_count = admin_count;
         self.moderator_count = moderator_count;
+        self.updates.insert((now, user_id, MemberUpdate::RoleChanged));
 
         ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
@@ -259,6 +274,19 @@ impl GroupMembers {
         if let Some(p) = self.get_mut(user_id) {
             p.threads.insert(root_message_index);
         }
+    }
+
+    pub fn has_membership_changed(&self, since: TimestampMillis) -> bool {
+        self.iter_latest_updates(since)
+            .any(|(_, u)| matches!(u, MemberUpdate::Added | MemberUpdate::Removed))
+    }
+
+    pub fn iter_latest_updates(&self, since: TimestampMillis) -> impl Iterator<Item = (UserId, MemberUpdate)> + '_ {
+        self.updates
+            .iter()
+            .rev()
+            .take_while(move |(ts, _, _)| *ts > since)
+            .map(|(_, user_id, update)| (*user_id, *update))
     }
 }
 
@@ -290,8 +318,8 @@ pub struct GroupMemberInternal {
     pub user_id: UserId,
     #[serde(rename = "d")]
     pub date_added: TimestampMillis,
-    #[serde(rename = "r", default, skip_serializing_if = "is_default")]
-    pub role: GroupRoleInternal,
+    #[serde(rename = "r", alias = "r2", default, skip_serializing_if = "is_default")]
+    pub role: Timestamped<GroupRoleInternal>,
     #[serde(rename = "n")]
     pub notifications_muted: Timestamped<bool>,
     #[serde(rename = "m", default, skip_serializing_if = "mentions_are_empty")]
@@ -316,6 +344,19 @@ pub struct GroupMemberInternal {
 }
 
 impl GroupMemberInternal {
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.date_added,
+            self.role.timestamp,
+            self.notifications_muted.timestamp,
+            self.suspended.timestamp,
+            self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
+    }
+
     pub fn min_visible_event_index(&self) -> EventIndex {
         if self.role.can_view_full_message_history() {
             EventIndex::default()
@@ -343,24 +384,13 @@ impl GroupMemberInternal {
     }
 
     pub fn accept_rules(&mut self, version: Version, now: TimestampMillis) {
-        let already_accepted = self
+        let current_version = self
             .rules_accepted
             .as_ref()
-            .map_or(false, |accepted| version <= accepted.value);
+            .map(|accepted| accepted.value)
+            .unwrap_or_default();
 
-        if !already_accepted {
-            self.rules_accepted = Some(Timestamped::new(version, now));
-        }
-    }
-}
-
-impl From<GroupMemberInternal> for GroupMember {
-    fn from(p: GroupMemberInternal) -> Self {
-        GroupMember {
-            user_id: p.user_id,
-            date_added: p.date_added,
-            role: p.role.into(),
-        }
+        self.rules_accepted = Some(Timestamped::new(max(version, current_version), now));
     }
 }
 
@@ -369,7 +399,7 @@ impl From<&GroupMemberInternal> for GroupMember {
         GroupMember {
             user_id: p.user_id,
             date_added: p.date_added,
-            role: p.role.into(),
+            role: p.role.value.into(),
         }
     }
 }
@@ -424,7 +454,7 @@ mod tests {
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             date_added: 1,
-            role: GroupRoleInternal::Member,
+            role: Timestamped::new(GroupRoleInternal::Member, 0),
             notifications_muted: Timestamped::new(true, 1),
             mentions: Mentions::default(),
             threads: HashSet::new(),
@@ -440,8 +470,6 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 232 (? - this has now changed)
-        // After optimisation: 37
         assert_eq!(member_bytes_len, 37);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
@@ -455,7 +483,7 @@ mod tests {
         let member = GroupMemberInternal {
             user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
             date_added: 1,
-            role: GroupRoleInternal::Owner,
+            role: Timestamped::new(GroupRoleInternal::Owner, 1),
             notifications_muted: Timestamped::new(true, 1),
             mentions,
             threads: HashSet::from([1.into()]),
@@ -471,9 +499,7 @@ mod tests {
         let member_bytes = msgpack::serialize_then_unwrap(&member);
         let member_bytes_len = member_bytes.len();
 
-        // Before optimisation: 278 (? - this has now changed)
-        // After optimisation: 114
-        assert_eq!(member_bytes_len, 114);
+        assert_eq!(member_bytes_len, 120);
 
         let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }

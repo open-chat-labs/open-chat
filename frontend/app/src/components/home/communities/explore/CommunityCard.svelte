@@ -48,11 +48,9 @@
 <div class:header on:click class="card">
     <IntersectionObserver let:intersecting>
         <CommunityBanner {intersecting} square={header} {banner}>
-            {#if !header}
-                <div class="gate">
-                    <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
-                </div>
-            {/if}
+            <div class="gate">
+                <AccessGateIcon position={"bottom"} align={"end"} on:upgrade {gate} />
+            </div>
             <div class="avatar">
                 <Avatar
                     url={client.communityAvatarUrl(id, avatar)}
@@ -93,8 +91,9 @@
     .card {
         cursor: pointer;
         background-color: var(--recommended-bg);
-        border: 1px solid var(--bd);
-        border-radius: $sp3;
+        border: var(--bw) solid var(--bd);
+        border-radius: var(--card-rd);
+        box-shadow: var(--card-sh);
 
         .avatar {
             width: toRem(48);
@@ -116,8 +115,8 @@
         }
 
         .content {
-            padding: $sp4;
-            padding-top: $sp5;
+            padding: toRem(16);
+            padding-top: toRem(28);
 
             .name {
                 @include font(bold, normal, fs-130);
@@ -130,6 +129,7 @@
                 margin-bottom: $sp4;
                 max-height: toRem(130);
                 @include nice-scrollbar();
+                overflow-wrap: anywhere;
 
                 &.fixed {
                     height: toRem(130);
@@ -150,7 +150,7 @@
                     .channels {
                         background-color: var(--input-bg);
                         padding: $sp1 $sp3;
-                        border-radius: $sp2;
+                        border-radius: var(--rd);
                         .number {
                             font-weight: 500;
                         }
@@ -172,7 +172,7 @@
                 .flag {
                     background-color: var(--primary);
                     padding: $sp1 $sp3;
-                    border-radius: $sp2;
+                    border-radius: var(--rd);
                 }
             }
         }

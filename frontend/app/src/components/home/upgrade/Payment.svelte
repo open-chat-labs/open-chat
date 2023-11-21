@@ -58,6 +58,7 @@
     const token = ICP_SYMBOL;
     const ledger = LEDGER_CANISTER_ICP;
 
+    $: user = client.user;
     $: icpBalance = accountBalance / E8S_PER_TOKEN; //balance in the user's account expressed as ICP
     $: toPay = selectedOption?.amount ?? 0;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
@@ -123,7 +124,7 @@
                 {/each}
             </div>
             <div class="right">
-                <AccountInfo border={false} centered {ledger} user={client.user} />
+                <AccountInfo fullWidthOnMobile border={false} centered {ledger} user={$user} />
             </div>
         </div>
 

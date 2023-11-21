@@ -32,7 +32,6 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
         set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
         set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.exchange_bot, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -106,6 +105,7 @@ async fn install_service_canisters_impl(
         service_owner_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         group_index_canister_id: canister_ids.group_index,
+        registry_canister_id: canister_ids.registry,
         nns_governance_canister_id: canister_ids.nns_governance,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
@@ -153,10 +153,12 @@ async fn install_service_canisters_impl(
     let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![principal],
+        proposals_bot_canister_id: canister_ids.proposals_bot,
         nns_ledger_canister_id: canister_ids.nns_ledger,
         nns_governance_canister_id: canister_ids.nns_governance,
         nns_root_canister_id: canister_ids.nns_root,
         sns_wasm_canister_id: canister_ids.nns_sns_wasm,
+        nns_index_canister_id: canister_ids.nns_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -172,11 +174,11 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let exchange_bot_canister_wasm = get_canister_wasm(CanisterName::ExchangeBot, version);
-    let exchange_bot_init_args = exchange_bot_canister::init::Args {
+    let neuron_controller_canister_wasm = get_canister_wasm(CanisterName::NeuronController, version);
+    let neuron_controller_init_args = neuron_controller_canister::init::Args {
         governance_principals: vec![principal],
-        user_index_canister_id: canister_ids.user_index,
-        local_user_index_canister_id: canister_ids.local_user_index,
+        nns_governance_canister_id: canister_ids.nns_governance,
+        nns_ledger_canister_id: canister_ids.nns_ledger,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -243,9 +245,9 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.exchange_bot,
-            &exchange_bot_canister_wasm.module,
-            exchange_bot_init_args,
+            &canister_ids.neuron_controller,
+            &neuron_controller_canister_wasm.module,
+            neuron_controller_init_args,
         ),
     )
     .await;

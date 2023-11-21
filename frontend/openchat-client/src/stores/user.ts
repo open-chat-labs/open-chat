@@ -1,4 +1,13 @@
-import type { UserSummary, UserLookup } from "openchat-shared";
+import {
+    type UserSummary,
+    type UserLookup,
+    ANON_USER_ID,
+    ANON_USERNAME,
+    ANON_DISPLAY_NAME,
+    ANON_AVATAR_URL,
+    type CreatedUser,
+    anonymousUser,
+} from "openchat-shared";
 import { derived, writable } from "svelte/store";
 
 export const currentUserKey = Symbol();
@@ -13,6 +22,17 @@ export const openChatBotUser: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
+    diamond: false,
+};
+
+export const anonymousUserSummary: UserSummary = {
+    kind: "user",
+    userId: ANON_USER_ID,
+    username: ANON_USERNAME,
+    displayName: ANON_DISPLAY_NAME,
+    updated: BigInt(0),
+    suspended: false,
+    blobUrl: ANON_AVATAR_URL,
     diamond: false,
 };
 
@@ -75,3 +95,17 @@ export const userStore = {
         });
     },
 };
+
+export const currentUser = writable<CreatedUser>(anonymousUser());
+export const anonUser = derived(
+    currentUser,
+    ($currentUser) => $currentUser.userId === ANON_USER_ID,
+);
+export const suspendedUser = derived(
+    currentUser,
+    ($currentUser) => $currentUser.suspensionDetails !== undefined,
+);
+export const platformModerator = derived(
+    currentUser,
+    ($currentUser) => $currentUser.isPlatformModerator,
+);

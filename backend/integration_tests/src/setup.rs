@@ -1,20 +1,44 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::utils::{local_bin, tick_many};
+use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
-use ic_test_state_machine_client::StateMachine;
-use icrc1_ledger_canister::MetadataValue;
+use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
+use icrc_ledger_types::icrc1::account::Account;
+use pocket_ic::PocketIc;
 use std::collections::{HashMap, HashSet};
+use std::env;
+use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::icrc1::Account;
 use types::{BuildVersion, CanisterId};
 
+pub static POCKET_IC_BIN: &str = "./pocket-ic";
+
 pub fn setup_new_env() -> TestEnv {
-    let mut file_path = local_bin();
-    file_path.push("ic-test-state-machine");
-    let mut env = StateMachine::new(file_path.to_str().unwrap(), false);
+    let path = match env::var_os("POCKET_IC_BIN") {
+        None => {
+            env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
+            POCKET_IC_BIN.to_string()
+        }
+        Some(path) => path
+            .clone()
+            .into_string()
+            .unwrap_or_else(|_| panic!("Invalid string path for {path:?}")),
+    };
+
+    if !Path::new(&path).exists() {
+        println!("
+        Could not find the PocketIC binary to run canister integration tests.
+
+        I looked for it at {:?}. You can specify another path with the environment variable POCKET_IC_BIN (note that I run from {:?}).
+
+        Running the testing script will automatically place the PocketIC binary at the right place to be run without setting the POCKET_IC_BIN environment variable:
+            ./scripts/run-integration-tests.sh
+        ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
+    }
+
+    let mut env = PocketIc::new();
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -25,13 +49,14 @@ pub fn setup_new_env() -> TestEnv {
     }
 }
 
-fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..11).map(|_| create_canister(env, controller)).collect();
+fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
+    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
     let nns_governance_canister_id = nns_canister_ids[1];
     let nns_ledger_canister_id = nns_canister_ids[2];
     let nns_root_canister_id = nns_canister_ids[3];
     let cycles_minting_canister_id = nns_canister_ids[4];
     let sns_wasm_canister_id = nns_canister_ids[10];
+    let nns_index_canister_id = nns_canister_ids[11];
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -141,6 +166,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         service_owner_principals: vec![controller],
         user_index_canister_id,
         group_index_canister_id,
+        registry_canister_id,
         nns_governance_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
@@ -206,9 +232,11 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let registry_init_args = registry_canister::init::Args {
         governance_principals: vec![controller],
+        proposals_bot_canister_id,
         nns_ledger_canister_id,
         nns_root_canister_id,
         nns_governance_canister_id,
+        nns_index_canister_id,
         sns_wasm_canister_id,
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
@@ -334,7 +362,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 }
 
 pub fn install_icrc1_ledger(
-    env: &mut StateMachine,
+    env: &mut PocketIc,
     controller: Principal,
     token_name: String,
     token_symbol: String,
@@ -379,7 +407,7 @@ pub fn install_icrc1_ledger(
     });
 
     let canister_id = create_canister(env, controller);
-    install_canister(env, controller, canister_id, wasms::ICRC1_LEDGER.clone(), args);
+    install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id
 }

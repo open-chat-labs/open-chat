@@ -6,7 +6,9 @@ use canister_timer_jobs::Job;
 use ic_ledger_types::Tokens;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
-use types::{ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId};
+use types::{
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId,
+};
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -14,6 +16,7 @@ pub enum TimerJob {
     RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment),
     SetUserSuspended(SetUserSuspended),
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
+    SetUserSuspendedInCommunity(SetUserSuspendedInCommunity),
     UnsuspendUser(UnsuspendUser),
     JoinUserToGroup(JoinUserToGroup),
 }
@@ -27,6 +30,14 @@ pub struct RecurringDiamondMembershipPayment {
 pub struct SetUserSuspendedInGroup {
     pub user_id: UserId,
     pub group: ChatId,
+    pub suspended: bool,
+    pub attempt: usize,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SetUserSuspendedInCommunity {
+    pub user_id: UserId,
+    pub community: CommunityId,
     pub suspended: bool,
     pub attempt: usize,
 }
@@ -57,6 +68,7 @@ impl Job for TimerJob {
             TimerJob::RecurringDiamondMembershipPayment(job) => job.execute(),
             TimerJob::SetUserSuspended(job) => job.execute(),
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
+            TimerJob::SetUserSuspendedInCommunity(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
             TimerJob::JoinUserToGroup(job) => job.execute(),
         }
@@ -99,10 +111,10 @@ impl Job for RecurringDiamondMembershipPayment {
                                 user_id,
                                 message: MessageContent::Text(TextContent {
                                     text: format!(
-                                        "Failed to take payment for Diamond membership due to insufficient funds.\
-Payment amount: {}\
-Balance: {}\
-\
+                                        "Failed to take payment for Diamond membership due to insufficient funds.
+Payment amount: {}
+Balance: {}
+
 If you would like to extend your Diamond membership you will need to top up your account and pay manually.",
                                         Tokens::from_e8s(price_e8s),
                                         Tokens::from_e8s(balance)
@@ -169,6 +181,40 @@ impl Job for SetUserSuspendedInGroup {
                         TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
                             user_id,
                             group,
+                            suspended,
+                            attempt: attempt + 1,
+                        }),
+                        now + (30 * SECOND_IN_MS), // Try again in 30 seconds
+                        now,
+                    );
+                });
+            }
+        }
+    }
+}
+
+impl Job for SetUserSuspendedInCommunity {
+    fn execute(self) {
+        ic_cdk::spawn(set_user_suspended_in_community(
+            self.user_id,
+            self.community,
+            self.suspended,
+            self.attempt,
+        ));
+
+        async fn set_user_suspended_in_community(user_id: UserId, community: CommunityId, suspended: bool, attempt: usize) {
+            let args = community_canister::c2c_set_user_suspended::Args { user_id, suspended };
+            if community_canister_c2c_client::c2c_set_user_suspended(community.into(), &args)
+                .await
+                .is_err()
+                && attempt < 10
+            {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::SetUserSuspendedInCommunity(SetUserSuspendedInCommunity {
+                            user_id,
+                            community,
                             suspended,
                             attempt: attempt + 1,
                         }),

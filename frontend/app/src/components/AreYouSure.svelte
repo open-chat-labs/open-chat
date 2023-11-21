@@ -52,11 +52,8 @@
         </span>
         <span slot="footer">
             <ButtonGroup>
-                <Button
-                    disabled={inProgress}
-                    small
-                    on:click={() => onClick(false)}
-                    secondary>{noLabel ?? $_("noThanks")}</Button>
+                <Button disabled={inProgress} small on:click={() => onClick(false)} secondary
+                    >{noLabel ?? $_("noThanks")}</Button>
                 <Button
                     loading={inProgress}
                     disabled={!canConfirm}

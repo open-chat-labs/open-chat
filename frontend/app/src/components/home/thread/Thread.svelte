@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import type {
@@ -29,7 +30,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
@@ -46,6 +46,7 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
 
+    $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
@@ -65,21 +66,23 @@
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
     $: attachment = derived(draftMessage, (d) => d.attachment);
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
-    $: canSend = client.canReplyInThread(chat.id);
+    $: canSendAny = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
     $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: timeline = client.groupEvents(
         reverseScroll ? [...events].reverse() : events,
-        user.userId,
+        $user.userId,
         $expandedDeletedMessages,
         reverseScroll
     ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
     $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
-    $: isFollowedByMe = thread !== undefined && (thread.followedByMe || thread.participantIds.has(user.userId));
+    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
+    $: isFollowedByMe =
+        $threadsFollowedByMeStore.get(chat.id)?.has(threadRootMessageIndex) ?? false;
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -96,7 +99,7 @@
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        if (!canSend) return;
+        if (!canSendAny) return;
         let [text, mentioned] = ev.detail;
         if ($editingEvent !== undefined) {
             client
@@ -141,11 +144,11 @@
     }
 
     function onStartTyping() {
-        client.startTyping(chat, user.userId, threadRootMessageIndex);
+        client.startTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
     function onStopTyping() {
-        client.stopTyping(chat, user.userId, threadRootMessageIndex);
+        client.stopTyping(chat, $user.userId, threadRootMessageIndex);
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
@@ -160,7 +163,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat.id)) return;
+        if (!client.canSendMessage(chat.id, "thread", "poll")) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -264,18 +267,16 @@
                         <ChatEvent
                             chatId={chat.id}
                             chatType={chat.kind}
-                            {user}
+                            user={$user}
                             event={evt}
                             first={reverseScroll ? i + 1 === userGroup.length : i === 0}
                             last={reverseScroll ? i === 0 : i + 1 === userGroup.length}
-                            me={evt.event.sender === user.userId}
+                            me={evt.event.sender === $user.userId}
                             confirmed={isConfirmed($unconfirmed, evt)}
                             failed={isFailed($failedMessagesStore, evt)}
-                            readByMe={
-                                evt.event.messageId === rootEvent.event.messageId ||
+                            readByMe={evt.event.messageId === rootEvent.event.messageId ||
                                 !isFollowedByMe ||
-                                isReadByMe($messagesRead, evt)
-                            }
+                                isReadByMe($messagesRead, evt)}
                             readByThem
                             observer={messageObserver}
                             focused={evt.event.kind === "message" &&
@@ -291,7 +292,7 @@
                             publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                                 chat.public}
                             editing={$editingEvent === evt}
-                            {canSend}
+                            canSendAny
                             {canReact}
                             canInvite={false}
                             canReplyInThread={false}
@@ -319,7 +320,7 @@
         editingEvent={$editingEvent}
         replyingTo={$replyingTo}
         textContent={$textContent}
-        {user}
+        user={$user}
         joining={undefined}
         preview={false}
         mode={"thread"}

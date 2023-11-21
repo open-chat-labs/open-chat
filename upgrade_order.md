@@ -1,3 +1,1 @@
-Website -> GroupIndex
-
-Website before GroupIndex because the `chat_id` field has been removed from `GroupMatch`
+UserIndex -> User because `ledger_canister_id` has been added to `c2c_charge_user_account` args

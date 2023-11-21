@@ -15,6 +15,7 @@ pub struct DirectChatSummary {
     pub last_updated: TimestampMillis,
     pub latest_message: EventWrapper<Message>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: MessageIndex,
     pub date_created: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
@@ -23,6 +24,8 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
 }
 
 impl DirectChatSummary {
@@ -31,7 +34,6 @@ impl DirectChatSummary {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
@@ -46,6 +48,7 @@ pub struct GroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
@@ -53,7 +56,7 @@ pub struct GroupChatSummary {
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: BuildVersion,
-    pub permissions: GroupPermissions,
+    pub permissions_v2: GroupPermissions,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<ThreadSyncDetails>,
@@ -62,6 +65,8 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
 }
@@ -72,6 +77,7 @@ pub struct DirectChatSummaryUpdates {
     pub last_updated: TimestampMillis,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
@@ -80,6 +86,8 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
 }
 
 // TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
@@ -96,11 +104,14 @@ pub struct PublicGroupSummary {
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub wasm_version: BuildVersion,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
 
@@ -118,12 +129,13 @@ pub struct GroupCanisterGroupChatSummary {
     pub min_visible_message_index: MessageIndex,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
     pub joined: TimestampMillis,
     pub participant_count: u32,
     pub role: GroupRole,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: BuildVersion,
-    pub permissions: GroupPermissions,
+    pub permissions_v2: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
@@ -131,8 +143,12 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
+    #[serde(default)]
+    pub membership: Option<GroupMembership>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -164,6 +180,16 @@ impl GroupCanisterGroupChatSummary {
             .take(MAX_THREADS_IN_SUMMARY)
             .collect();
 
+        let membership = GroupMembership {
+            joined: self.joined,
+            role: updates.role.unwrap_or(self.role),
+            mentions,
+            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
+            my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
+            latest_threads,
+            rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
+        };
+
         GroupCanisterGroupChatSummary {
             chat_id: self.chat_id,
             last_updated: updates.last_updated,
@@ -177,21 +203,24 @@ impl GroupCanisterGroupChatSummary {
             min_visible_message_index: self.min_visible_message_index,
             latest_message: updates.latest_message.or(self.latest_message),
             latest_event_index: updates.latest_event_index.unwrap_or(self.latest_event_index),
+            latest_message_index: updates.latest_message_index,
             joined: self.joined,
             participant_count: updates.participant_count.unwrap_or(self.participant_count),
             role: updates.role.unwrap_or(self.role),
-            mentions,
+            mentions: membership.mentions.clone(),
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
-            permissions: updates.permissions.unwrap_or(self.permissions),
-            notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
+            permissions_v2: updates.permissions_v2.unwrap_or(self.permissions_v2),
+            notifications_muted: membership.notifications_muted,
             metrics: updates.metrics.unwrap_or(self.metrics),
-            my_metrics: updates.my_metrics.unwrap_or(self.my_metrics),
-            latest_threads,
+            my_metrics: membership.my_metrics.clone(),
+            latest_threads: membership.latest_threads.clone(),
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
+            events_ttl_last_updated: updates.events_ttl_last_updated.unwrap_or(self.events_ttl_last_updated),
             gate: updates.gate.apply_to(self.gate),
-            rules_accepted: updates.rules_accepted.unwrap_or(self.rules_accepted),
+            rules_accepted: membership.rules_accepted,
+            membership: Some(membership),
         }
     }
 }
@@ -206,11 +235,12 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
+    pub latest_message_index: Option<MessageIndex>,
     pub participant_count: Option<u32>,
     pub role: Option<GroupRole>,
     pub mentions: Vec<HydratedMention>,
     pub wasm_version: Option<BuildVersion>,
-    pub permissions: Option<GroupPermissions>,
+    pub permissions_v2: Option<GroupPermissions>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
@@ -221,13 +251,40 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
+    pub rules_accepted: Option<bool>,
+    #[serde(default)]
+    pub membership: Option<GroupMembershipUpdates>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupMembership {
+    pub joined: TimestampMillis,
+    pub role: GroupRole,
+    pub mentions: Vec<HydratedMention>,
+    pub notifications_muted: bool,
+    pub my_metrics: ChatMetrics,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    pub rules_accepted: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupMembershipUpdates {
+    pub role: Option<GroupRole>,
+    pub mentions: Vec<HydratedMention>,
+    pub notifications_muted: Option<bool>,
+    pub my_metrics: Option<ChatMetrics>,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    pub unfollowed_threads: Vec<MessageIndex>,
     pub rules_accepted: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct SelectedGroupUpdates {
     pub timestamp: TimestampMillis,
+    pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
     pub members_added_or_updated: Vec<GroupMember>,
     pub members_removed: Vec<UserId>,

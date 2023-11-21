@@ -38,15 +38,15 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{
         ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
-        CommunityCanisterCommunitySummaryUpdates, CommunityId, EventIndex, EventsResponse, MessageContentInitial, MessageId,
-        MessageIndex, Rules, TextContent, TimestampMillis, UserId,
+        CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
+        MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn create_channel(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         community_id: CommunityId,
         is_public: bool,
@@ -64,7 +64,7 @@ pub mod happy_path {
                 subtype: None,
                 avatar: None,
                 history_visible_to_new_joiners: is_public,
-                permissions: None,
+                permissions_v2: None,
                 events_ttl: None,
                 gate: None,
             },
@@ -76,7 +76,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn leave_channel(env: &mut StateMachine, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+    pub fn leave_channel(env: &mut PocketIc, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
         let response = super::leave_channel(
             env,
             sender,
@@ -90,7 +90,7 @@ pub mod happy_path {
     }
 
     pub fn send_text_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         community_id: CommunityId,
         channel_id: ChannelId,
@@ -124,7 +124,7 @@ pub mod happy_path {
     }
 
     pub fn update_community(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         community_id: CommunityId,
         args: &community_canister::update_community::Args,
@@ -138,7 +138,7 @@ pub mod happy_path {
     }
 
     pub fn update_channel(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         community_id: CommunityId,
         args: &community_canister::update_channel::Args,
@@ -151,8 +151,28 @@ pub mod happy_path {
         }
     }
 
+    pub fn change_role(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        user_id: UserId,
+        new_role: CommunityRole,
+    ) {
+        let response = super::change_role(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::change_role::Args { user_id, new_role },
+        );
+
+        match response {
+            community_canister::change_role::Response::Success => {}
+            response => panic!("'change_role' error: {response:?}"),
+        }
+    }
+
     pub fn create_user_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         community_id: CommunityId,
         name: String,
@@ -172,7 +192,7 @@ pub mod happy_path {
     }
 
     pub fn events_by_index(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         community_id: CommunityId,
         channel_id: ChannelId,
@@ -186,7 +206,7 @@ pub mod happy_path {
                 channel_id,
                 thread_root_message_index: None,
                 events,
-                latest_client_event_index: None,
+                latest_known_update: None,
             },
         );
 
@@ -196,7 +216,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &StateMachine, sender: &User, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
+    pub fn summary(env: &PocketIc, sender: &User, community_id: CommunityId) -> CommunityCanisterCommunitySummary {
         let response = super::summary(
             env,
             sender.principal,
@@ -211,7 +231,7 @@ pub mod happy_path {
     }
 
     pub fn summary_updates(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         community_id: CommunityId,
         updates_since: TimestampMillis,
@@ -232,7 +252,7 @@ pub mod happy_path {
     }
 
     pub fn selected_initial(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         community_id: CommunityId,
     ) -> community_canister::selected_initial::SuccessResult {
@@ -250,7 +270,7 @@ pub mod happy_path {
     }
 
     pub fn channel_summary(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         community_id: CommunityId,
         channel_id: ChannelId,
@@ -272,7 +292,7 @@ pub mod happy_path {
     }
 
     pub fn selected_channel_initial(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         community_id: CommunityId,
         channel_id: ChannelId,

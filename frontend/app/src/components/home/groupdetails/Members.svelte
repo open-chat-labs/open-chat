@@ -21,7 +21,6 @@
     import UserGroups from "../communities/details/UserGroups.svelte";
 
     const client = getContext<OpenChat>("client");
-    const userId = client.user.userId;
 
     export let closeIcon: "close" | "back";
     export let collection: CommunitySummary | MultiUserChat;
@@ -32,6 +31,9 @@
 
     let userGroups: UserGroups | undefined;
 
+    $: user = client.user;
+    $: platformModerator = client.platformModerator;
+    $: userId = $user.userId;
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, members);
     $: me = knownUsers.find((u) => u.userId === userId);
@@ -45,8 +47,8 @@
         .map((userId) => $userStore[userId])
         .filter((u) => matchesSearch(searchTermLower, u) && u.userId !== userId);
     $: publicCollection = collection.public;
-    $: showBlocked = publicCollection && blocked.size > 0;
-    $: showInvited = !publicCollection && invited.size > 0;
+    $: showBlocked = publicCollection && blockedUsers.length > 0;
+    $: showInvited = !publicCollection && invitedUsers.length > 0;
     $: canInvite = client.canInviteUsers(collection.id);
 
     let searchTerm = "";
@@ -194,7 +196,7 @@
             <Member
                 me
                 member={me}
-                canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
+                canPromoteToOwner={me.role !== "owner" && $platformModerator}
                 canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
                 canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
                 canDemoteToMember={client.canDemote(collection.id, me.role, "member")}

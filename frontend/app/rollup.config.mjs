@@ -6,7 +6,7 @@ import html from "@rollup/plugin-html";
 import resolve from "@rollup/plugin-node-resolve";
 import copy from "rollup-plugin-copy";
 import livereload from "rollup-plugin-livereload";
-import { terser } from "rollup-plugin-terser";
+import terser from "@rollup/plugin-terser";
 import typescript from "@rollup/plugin-typescript";
 import dfxJson from "../../dfx.json" assert { type: "json" };
 import inject from "rollup-plugin-inject";
@@ -14,7 +14,7 @@ import dev from "rollup-plugin-dev";
 import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
-import styles from "rollup-plugin-styles";
+import styles from "rollup-styles";
 import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
@@ -205,7 +205,7 @@ export default {
             },
         }),
 
-        styles({ mode: "extract", plugins: [autoprefixer()] }),
+        styles({ mode: "inject", plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
@@ -330,22 +330,9 @@ export default {
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
-                                ${files.css
-                                    .map((f) => `<link rel="stylesheet" href="/${f.fileName}" />`)
-                                    .join("")}
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
                             </head>
-                            <template id="profile-link-template">
-                                <style>
-                                    .profile-link {
-                                        cursor: pointer;
-                                        font-weight: 700;
-                                        text-decoration: underline;
-                                    }
-                                </style>
-                                <strong class="profile-link"></strong>
-                            </template>
-
+                            <template id="profile-link-template" style="cursor: pointer; font-weight: 700; text-decoration: underline;"></template>
                             <body></body>
                         </html>
                     `;

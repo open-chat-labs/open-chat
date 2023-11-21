@@ -13,7 +13,8 @@
         AvatarSize,
         type CommunitySummary,
         type OpenChat,
-        emptyUnreadCounts,
+        type UserSummary,
+        emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -29,20 +30,22 @@
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    const createdUser = client.user;
     const flipDurationMs = 300;
 
+    $: createdUser = client.user;
     $: userStore = client.userStore;
-    $: user = $userStore[createdUser.userId];
+    $: user = $userStore[$createdUser.userId] as UserSummary | undefined; // annoying that this annotation is necessary
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: communities = client.communitiesList;
     $: selectedCommunity = client.selectedCommunity;
     $: chatListScope = client.chatListScope;
-    $: unreadDirectChats = client.unreadDirectChats;
-    $: unreadGroupChats = client.unreadGroupChats;
-    $: unreadFavouriteChats = client.unreadFavouriteChats;
-    $: unreadCommunityChannels = client.unreadCommunityChannels;
+    $: unreadDirectCounts = client.unreadDirectCounts;
+    $: unreadGroupCounts = client.unreadGroupCounts;
+    $: unreadFavouriteCounts = client.unreadFavouriteCounts;
+    $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
+    $: anonUser = client.anonUser;
+    $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -94,6 +97,10 @@
         }
     }
 
+    function viewProfile() {
+        dispatch("profile");
+    }
+
     function exploreCommunities() {
         page("/communities");
     }
@@ -134,14 +141,14 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:wallet on:halloffame on:logout on:upgrade on:profile />
+                        <MainMenu on:wallet on:halloffame on:upgrade on:profile />
                     </span>
                 </MenuIcon>
             </div>
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.title")} on:click={() => dispatch("profile")}>
+            <LeftNavItem label={$_("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
@@ -149,7 +156,8 @@
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
             label={$_("communities.directChats")}
-            unread={$unreadDirectChats}
+            disabled={$anonUser}
+            unread={$unreadDirectCounts.chats}
             on:click={directChats}>
             <div class="hover direct">
                 <MessageOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -159,7 +167,7 @@
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
             label={$_("communities.groupChats")}
-            unread={$unreadGroupChats}
+            unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             on:click={groupChats}>
             <div class="hover direct">
                 <ForumOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -169,8 +177,9 @@
         <LeftNavItem
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
+            disabled={$anonUser}
             label={$_("communities.favourites")}
-            unread={$unreadFavouriteChats}
+            unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
             on:click={favouriteChats}>
             <div class="hover favs">
                 <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
@@ -191,14 +200,17 @@
         {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
-                    selected={community === $selectedCommunity &&
+                    selected={community.id.communityId === selectedCommunityId &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
-                    unread={$unreadCommunityChannels.get(community.id) ?? emptyUnreadCounts()}
+                    unread={client.mergeCombinedUnreadCounts(
+                        $unreadCommunityChannelCounts.get(community.id) ??
+                            emptyCombinedUnreadCounts()
+                    )}
                     label={community.name}
                     on:click={() => selectCommunity(community)}>
                     <Avatar
-                        selected={community === $selectedCommunity &&
+                        selected={community.id.communityId === selectedCommunityId &&
                             $chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}

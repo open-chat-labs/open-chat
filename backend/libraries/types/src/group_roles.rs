@@ -1,3 +1,4 @@
+use crate::OptionUpdate;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -12,75 +13,125 @@ pub enum GroupRole {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
-    #[deprecated]
-    #[serde(default = "group_permission_role_owner")]
-    pub change_permissions: GroupPermissionRole,
     pub change_roles: GroupPermissionRole,
     pub update_group: GroupPermissionRole,
     pub add_members: GroupPermissionRole,
     pub invite_users: GroupPermissionRole,
     pub remove_members: GroupPermissionRole,
-    #[deprecated]
-    #[serde(default = "group_permission_role_owner")]
-    pub block_users: GroupPermissionRole,
     pub delete_messages: GroupPermissionRole,
     pub pin_messages: GroupPermissionRole,
-    pub create_polls: GroupPermissionRole,
-    pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
-    pub reply_in_thread: GroupPermissionRole,
     pub mention_all_members: GroupPermissionRole,
+    pub message_permissions: MessagePermissions,
+    pub thread_permissions: Option<MessagePermissions>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessagePermissions {
+    pub default: GroupPermissionRole,
+    pub text: Option<GroupPermissionRole>,
+    pub image: Option<GroupPermissionRole>,
+    pub video: Option<GroupPermissionRole>,
+    pub audio: Option<GroupPermissionRole>,
+    pub file: Option<GroupPermissionRole>,
+    pub poll: Option<GroupPermissionRole>,
+    pub crypto: Option<GroupPermissionRole>,
+    pub giphy: Option<GroupPermissionRole>,
+    pub prize: Option<GroupPermissionRole>,
+    pub custom: Vec<CustomPermission>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CustomPermission {
+    pub subtype: String,
+    pub role: GroupPermissionRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalGroupPermissions {
-    #[deprecated]
-    pub change_permissions: Option<GroupPermissionRole>,
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
     pub invite_users: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
-    #[deprecated]
-    pub block_users: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
     pub pin_messages: Option<GroupPermissionRole>,
-    pub create_polls: Option<GroupPermissionRole>,
-    pub send_messages: Option<GroupPermissionRole>,
     pub react_to_messages: Option<GroupPermissionRole>,
-    pub reply_in_thread: Option<GroupPermissionRole>,
     pub mention_all_members: Option<GroupPermissionRole>,
+    pub message_permissions: Option<OptionalMessagePermissions>,
+    pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct OptionalMessagePermissions {
+    pub default: Option<GroupPermissionRole>,
+    pub text: OptionUpdate<GroupPermissionRole>,
+    pub image: OptionUpdate<GroupPermissionRole>,
+    pub video: OptionUpdate<GroupPermissionRole>,
+    pub audio: OptionUpdate<GroupPermissionRole>,
+    pub file: OptionUpdate<GroupPermissionRole>,
+    pub poll: OptionUpdate<GroupPermissionRole>,
+    pub crypto: OptionUpdate<GroupPermissionRole>,
+    pub giphy: OptionUpdate<GroupPermissionRole>,
+    pub prize: OptionUpdate<GroupPermissionRole>,
+    pub custom_updated: Vec<CustomPermission>,
+    pub custom_deleted: Vec<String>,
 }
 
 impl Default for GroupPermissions {
-    #[allow(deprecated)]
     fn default() -> Self {
         GroupPermissions {
-            change_permissions: GroupPermissionRole::Admins,
             change_roles: GroupPermissionRole::Admins,
-            add_members: GroupPermissionRole::Admins,
+            add_members: GroupPermissionRole::Owner,
             mention_all_members: GroupPermissionRole::Admins,
             remove_members: GroupPermissionRole::Moderators,
-            block_users: GroupPermissionRole::Moderators,
             delete_messages: GroupPermissionRole::Moderators,
             update_group: GroupPermissionRole::Admins,
             pin_messages: GroupPermissionRole::Admins,
             invite_users: GroupPermissionRole::Admins,
-            create_polls: GroupPermissionRole::Members,
-            send_messages: GroupPermissionRole::Members,
             react_to_messages: GroupPermissionRole::Members,
-            reply_in_thread: GroupPermissionRole::Members,
+            message_permissions: MessagePermissions::default(),
+            thread_permissions: None,
         }
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+impl Default for MessagePermissions {
+    fn default() -> Self {
+        MessagePermissions {
+            default: GroupPermissionRole::Members,
+            text: None,
+            image: None,
+            video: None,
+            audio: None,
+            file: None,
+            poll: None,
+            crypto: None,
+            giphy: None,
+            prize: None,
+            custom: Vec::new(),
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum GroupPermissionRole {
+    None,
     Owner,
     Admins,
     Moderators,
     Members,
 }
 
-fn group_permission_role_owner() -> GroupPermissionRole {
-    GroupPermissionRole::Owner
+impl GroupPermissionRole {
+    pub fn equals(&self, other: &GroupPermissionRole) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+
+    pub fn gte(&self, other: &GroupPermissionRole) -> bool {
+        self.index() <= other.index()
+    }
+
+    fn index(&self) -> usize {
+        *self as usize
+    }
 }

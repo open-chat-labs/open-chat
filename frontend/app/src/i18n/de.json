@@ -206,7 +206,7 @@
         "voting_q": "Wie stimme ich über Vorschläge ab?",
         "voting_a": "Treten Sie der <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat-Vorschlagsgruppe</a> bei und lesen Sie <a href=\"/blog/governance\">diesen Blogpost</a>, der einen Überblick gibt der OpenChat-Governance und hat eine Schritt-für-Schritt-Anleitung zur Abstimmung.",
         "buychat_q": "Wie kaufe ich CHAT-Token?",
-        "buychat_a": "Im Moment müssen Sie zuerst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a>, gegen das Sie dann tauschen können CHAT auf verschiedenen dezentralen Börsen (DEXes).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Token hinzu (die enthält CHAT), wodurch sie viel einfacher in Centralized Exchanges (CEXes) integriert werden können. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXs für ICP oder USDT verfügbar sein wird.",
+        "buychat_a": "Im Moment müssen Sie zuerst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a>, gegen das Sie dann tauschen können CHAT auf verschiedenen dezentralen Börsen (DEXes).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Token hinzu (die enthält CHAT), wodurch sie viel einfacher in Centralized Exchanges (CEXes) integriert werden können. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXs für ICP oder USDT verfügbar sein wird.",
         "shortcuts_q": "Welche Shortcut-Befehle sind verfügbar?",
         "shortcuts_a": "Es gibt mehrere Kurzbefehle, die Sie im Eingabefeld für die Nachrichteneingabe verwenden können. <br /><br /> `/poll` - um eine neue Umfrage zu erstellen <br /> `/search xyz` - um den aktuellen Chat nach dem Begriff \"xyz\" zu durchsuchen <br />`/gif kittens` - um Suche nach Kätzchen-Gifs <br />`/icp 0.1` - um 0,1 ICP an jemanden zu senden <br />`/faq question_id*` - um einen formatierten Link zu einer bestimmten FAQ-Frage zu erstellen und zu posten <br />`/diamond ` - um einen formatierten Link mit den Details der Diamond-Mitgliedschaft zu erstellen und zu posten <br/> <br/>Befehle, die ein Argument akzeptieren, können auch ohne das Argument verwendet werden.<br /><br />* Verfügbare FAQ-Frage-IDs sind : airdrop, vote, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts",
         "content_q": "Welche Inhalte sind zulässig?",
@@ -227,13 +227,6 @@
     "chatSummary": {
         "unread": "{count} ungelesene Nachricht(en)",
         "mentions": "{count} ungelesene Erwähnung(en)"
-    },
-    "login": {
-        "welcomeTo": "Willkommen zu ...",
-        "blurbPartOne": "Eine sichere, intuitive, dezentralisierte Chat-App, die vollständig auf läuft",
-        "blurbPartTwo": " - die weltweit erste Blockchain im Internetmaßstab. Weiterlesen",
-        "signIn": "Anmelden",
-        "signInOrRegister": "Einloggen oder Registrieren"
     },
     "reactions": {
         "greaterThan99People": "99+ Leute",
@@ -325,13 +318,16 @@
         "oneVote": "1 Stimme",
         "oneVoteBy": "1 Stimme von",
         "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner",
-        "atLeastTwo": "Mindestens 2"
+        "atLeastTwo": "Mindestens 2",
+        "allowChangeVotes": "Benutzern erlauben, ihre Stimme zu ändern"
     },
     "role": {
         "admin": "Admins",
         "member": "Mitglieder",
         "moderator": "Moderatoren",
-        "owner": "Eigentümer"
+        "owner": "Eigentümer",
+        "default": "Standard",
+        "none": "Niemand"
     },
     "permissions": {
         "whoCan": "Wer kann",
@@ -356,7 +352,38 @@
         "createPublicChannel": "Erstellen Sie öffentliche Kanäle",
         "createPrivateChannel": "Erstellen Sie private Kanäle",
         "manageUserGroups": "Benutzergruppen verwalten",
-        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})"
+        "mentionAllMembers": "Erwähnen Sie alle Mitglieder ({mention})",
+        "nobody": "Niemand kann",
+        "general": "Allgemein",
+        "message": "Mitteilungen",
+        "thread": "Themen",
+        "overrideChatMessages": "Chat-Nachrichtenberechtigungen überschreiben",
+        "messagePermissions": {
+            "default": "Senden Sie standardmäßig Nachrichten",
+            "text": "sende Textnachrichten",
+            "image": "Bildnachrichten senden",
+            "video": "Videonachrichten verschicken",
+            "audio": "Audionachrichten senden",
+            "file": "Dateinachrichten senden",
+            "poll": "Umfragenachrichten erstellen",
+            "crypto": "Krypto-Nachrichten senden",
+            "giphy": "Senden Sie Giphy-Nachrichten",
+            "prize": "Senden Sie Preisnachrichten",
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten"
+        },
+        "threadPermissions": {
+            "default": "Senden Sie Nachrichten standardmäßig in Threads",
+            "text": "Senden Sie Textnachrichten in Threads",
+            "image": "Senden Sie Bildnachrichten in Threads",
+            "video": "Senden Sie Videonachrichten in Threads",
+            "audio": "Senden Sie Audionachrichten in Threads",
+            "file": "Senden Sie Dateinachrichten in Threads",
+            "poll": "Erstellen Sie Umfragenachrichten in Threads",
+            "crypto": "Senden Sie Kryptonachrichten in Threads",
+            "giphy": "Senden Sie Giphy-Nachrichten in Threads",
+            "prize": "Versenden Sie Preisnachrichten in Threads",
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads"
+        }
     },
     "rules": {
         "enable": "Regeln aktivieren",
@@ -380,9 +407,7 @@
         "welcome": "Willkommen zu {groupName}",
         "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar",
         "privateGroupInfo": "Benutzer können diesem {level} nicht frei beitreten. Sie müssen entweder von einem autorisierten Mitglied hinzugefügt oder eingeladen werden.",
-        "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen",
         "groupRules": "Gruppenregeln",
-        "rulesUpdateFailed": "Leider konnten wir Ihre {level}-Regeln nicht aktualisieren",
         "getRulesFailed": "{level}-Regeln konnten nicht abgerufen werden",
         "createTitle": "Neues {level} erstellen",
         "back": "Der Rücken",
@@ -475,7 +500,22 @@
         "scan": "QR-Code scannen",
         "receiveToken": "Erhalte {symbol}",
         "sendToken": "Senden Sie {symbol}",
-        "receive": "Anfordern"
+        "receive": "Anfordern",
+        "showZeroBalance": "Zeig mehr",
+        "hideZeroBalance": "zeige weniger",
+        "transactions": "Transaktionen",
+        "transactionError": "Leider konnten wir Ihre Transaktionen nicht laden",
+        "unknownTransactionType": "Unbekannt",
+        "loadMoreTransactions": "Mehr laden",
+        "transactionHeaders": {
+            "id": "AUSWEIS",
+            "amount": "Menge",
+            "kind": "Art",
+            "timestamp": "Zeitstempel",
+            "from": "Aus",
+            "to": "Zu",
+            "type": "Typ"
+        }
     },
     "searchChat": "Suche",
     "search": "Suche...",
@@ -609,15 +649,27 @@
             "summaryRules": "unterstützt Markdown",
             "urlRules": "Link zu ergänzenden Details",
             "unexpectedError": "Unerwarteter Fehler beim Senden des Angebots",
-            "toPrincipal": "Hauptkonto des Empfängers",
-            "enterToPrincipal": "Geben Sie einen Empfängerkontoprinzipal ein",
             "amount": "Menge",
             "amountRules": "mindestens 1 {token}-Token",
             "enterAmount": "Geben Sie eine Menge von {token} Token ein",
             "type": "Vorschlagstyp",
             "treasury": "Token zur Übertragung aus der Schatzkammer",
-            "message": "Um einen Vorschlag einzureichen, ist eine Anzahlung von {cost} {token} Token (einschließlich zweier Transfergebühren) erforderlich, die zurückerstattet wird, wenn der Vorschlag angenommen wird."
-        }
+            "message": "Um einen Vorschlag einzureichen, ist eine Anzahlung von {cost} {token} Token (einschließlich zweier Transfergebühren) erforderlich, die zurückerstattet wird, wenn der Vorschlag angenommen wird.",
+            "recipientOwner": "Hauptkonto des Empfängers",
+            "recipientSubaccount": "Unterkonto des Empfängers",
+            "recipientSubaccountRules": "muss eine Hex-Zeichenfolge sein",
+            "enterRecipientOwner": "Geben Sie den Kontoinhaber des Empfängers ein",
+            "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein",
+            "ledgerCanisterId": "Hauptbuchkanister-ID",
+            "enterLedgerCanisterId": "Geben Sie die Hauptbuchkanister-ID ein",
+            "tokenInfoUrl": "Token-Info-URL",
+            "enterTokenInfoUrl": "Geben Sie eine URL mit den Token-Informationen ein",
+            "howToBuyUrl": "So kaufen Sie eine URL",
+            "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
+            "transactionUrlFormat": "Transaktions-URL-Format",
+            "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
+        },
+        "neuronControllerAction": "Neuron-Controller-Aktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",
@@ -657,7 +709,9 @@
         "label": "Profil",
         "communities": "Gemeinschaften",
         "selectCommunity": "Wählen Sie eine Community aus",
-        "global": "Global"
+        "global": "Global",
+        "block": "Block",
+        "unblock": "Entsperren"
     },
     "undeleteMessage": "Wiederherstellen",
     "undeletingMessage": "Nachricht von {username} auf {timestamp} wird gelöscht",
@@ -724,7 +778,10 @@
         "distribution": "Wie sollen die Preise verteilt werden?",
         "equalDistribution": "Gleichmäßige Verteilung",
         "randomDistribution": "Zufällige Verteilung",
-        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen"
+        "creatingYourPrizeMessage": "Bitte warten Sie, während wir Ihre Gewinnnachricht erstellen",
+        "whoCanWin": "Wer kann einen Anteil beanspruchen?",
+        "onlyDiamond": "Nur Diamond-Benutzer",
+        "anyone": "Jeder Benutzer"
     },
     "upgrade": {
         "blurb": "Einige OpenChat-Funktionen sind nur für Premium-Konten verfügbar. Sie können Ihr Konto upgraden, indem Sie entweder eine Telefonnummer per SMS verifizieren oder eine kleine ICP-Gebühr zahlen.",
@@ -832,7 +889,6 @@
         "optional": "Optional",
         "note": "Füg ein Notiz hinzu",
         "notePlaceholder": "Teilen Sie uns mit, warum Sie diesen Inhalt melden",
-        "advice": "Wenn Sie der Meinung sind, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur zur Plattformmoderation, wenn Sie der Meinung sind, dass sie gegen die [Plattformrichtlinien](/guidelines) verstößt.",
         "threat": "Nachricht ist bedrohlich",
         "child": "Die Nachricht enthält jugendgefährdende Inhalte",
         "nonConsensual": "Die Nachricht enthält nicht einvernehmliche sexuelle Inhalte",
@@ -844,7 +900,8 @@
         "failure": "Es tut uns leid, dass wir diese Nachricht nicht an die Moderatoren der Plattform melden konnten",
         "deleteMessage": "Gemeldete Nachricht löschen",
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
-        "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
+        "showing": "Anzeige der neusten {count} von {total} Bericht(en)",
+        "advice": "Wenn Sie glauben, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur dann zur Plattformmoderation, wenn Sie der Meinung sind, dass sie gegen die [Plattformregeln]({rules}) verstößt."
     },
     "invitedBy": "{changedBy} hat {changed} zum {level} eingeladen",
     "halloffame": {
@@ -876,7 +933,7 @@
         "chooseGate": "Wählen Sie ein Zugangstor",
         "diamondMember": "Diamond-Mitgliedschaft",
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
-        "nnsHolder": "NNS-Neuronenhalter (in Kürze verfügbar)",
+        "nnsHolder": "ICP-Neuronenhalter (in Kürze verfügbar)",
         "nftHolder": "NFT-Inhaber (in Kürze verfügbar)",
         "openAccess": "Offener Zugang",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
@@ -888,7 +945,16 @@
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
         "snsHolder": "{token} Neuronenhalter",
-        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten"
+        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten",
+        "initiateCredentialCheck": "Anmeldeinformationen überprüfen",
+        "verify": "Verifizieren",
+        "credential": "Verifizierter Berechtigungsnachweis",
+        "credentialParamIssuer": "Emittent: {issuer}",
+        "credentialParamCredential": "Anmeldedaten: {credential}",
+        "credentialIssuer": "Aussteller der Berechtigungsnachweise",
+        "requiredCredential": "Erforderlicher Ausweis",
+        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ vom Aussteller {issuer} überprüfen.",
+        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
@@ -995,7 +1061,9 @@
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
         "searchUserGroups": "Benutzergruppen durchsuchen...",
         "userGroupName": "Name der Benutzergruppe",
-        "noSpaces": "Keine Leerzeichen erlaubt"
+        "noSpaces": "Keine Leerzeichen erlaubt",
+        "noMatch": "Keine passenden Communities gefunden",
+        "refineSearch": "Versuchen Sie, Ihre Suche zu verfeinern"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -1064,5 +1132,30 @@
     "followThreadFailed": "Dem Thread folgen ist fehlgeschlagen",
     "unfollowThreadFailed": "Das Entfolgen des Threads ist fehlgeschlagen",
     "doubleClickReply": "Doppelklicken Sie auf die Nachricht, um sie zu beantworten/zu bearbeiten",
-    "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten"
+    "doubleTapReply": "Tippen Sie doppelt auf die Nachricht, um zu antworten/bearbeiten",
+    "minimumAmount": "Minimum: {amount} {symbol}",
+    "sendTextDisabled": "Textnachrichten sind deaktiviert",
+    "disappearingMessages": {
+        "label": "Verschwindende Nachrichten",
+        "hours": "Std)",
+        "minutes": "Protokoll)",
+        "days": "Tage)",
+        "summary": "Nachrichten verschwinden nach {duration}",
+        "timeUpdatedBy": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
+        "disabledBy": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
+        "durationMinutes": "{duration} Minuten",
+        "oneMinute": "1 Minute",
+        "timeUpdated": "Die Zeit für das Verschwinden der Nachricht wurde auf {duration} festgelegt.",
+        "disabled": "Verschwindende Nachrichten deaktiviert"
+    },
+    "login": "Anmeldung",
+    "loginToOpenChat": "Melden Sie sich bei OpenChat an",
+    "tapToLogin": "Gastmodus – tippen Sie hier, um sich anzumelden",
+    "loginProviderChanged": "Anscheinend haben Sie sich zuvor beim Anbieter {previous} angemeldet. Bitte überprüfen Sie noch einmal, ob Sie dieses Mal {next} verwenden möchten.",
+    "guestUser": "Gastbenutzer",
+    "showAuthProviders": "Optionen anzeigen",
+    "hideAuthProviders": "Optionen ausblenden",
+    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }",
+    "offlineMessage": "Offline",
+    "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline"
 }

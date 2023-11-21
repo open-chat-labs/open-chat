@@ -6,17 +6,18 @@ import type {
     ApiSendMessageResponse,
     ApiRole,
     ApiMessagesByMessageIndexResponse,
-    ApiMessageEventWrapper,
     ApiGroupCanisterGroupChatSummary,
     ApiGroupCanisterGroupChatSummaryUpdates,
     ApiGroupCanisterSummaryResponse,
     ApiGroupCanisterSummaryUpdatesResponse,
-    ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
     ApiConvertIntoCommunityResponse,
     ApiUpdatedRules,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
+    ApiOptionalMessagePermissions,
+    ApiBlockUserResponse,
+    ApiUnblockUserResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -33,23 +34,20 @@ import type {
     MemberRole,
     Message,
     GroupInviteCodeChange,
-    ChatPermissions,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
-    ClaimPrizeResponse,
     UpdatedEvent,
     ChatIdentifier,
     MultiUserChatIdentifier,
     ConvertToCommunityResponse,
     UpdatedRules,
     FollowThreadResponse,
+    OptionalChatPermissions,
+    OptionalMessagePermissions,
 } from "openchat-shared";
-import {
-    CommonResponses,
-    UnsupportedValueError,
-} from "openchat-shared";
+import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
     apiOptional,
@@ -63,12 +61,13 @@ import {
     messageEvent,
     threadDetails,
     mention,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { ApiBlockUserResponse, ApiUnblockUserResponse } from "../group/candid/idl";
-import { identity, optional, optionUpdate } from "../../utils/mapping";
+import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
-import type { OptionalGroupPermissions } from "./candid/types";
+import type { OptionalGroupPermissions, ReportMessageResponse } from "./candid/types";
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -85,42 +84,8 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
     }
 }
 
-export function claimPrizeResponse(candid: ApiClaimPrizeResponse): ClaimPrizeResponse {
-    if ("PrizeFullyClaimed" in candid) {
-        return { kind: "prize_fully_claimed" };
-    }
-    if ("MessageNotFound" in candid) {
-        return { kind: "message_not_found" };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return { kind: "caller_not_in_group" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    if ("AlreadyClaimed" in candid) {
-        return { kind: "already_claimed" };
-    }
-    if ("Success" in candid) {
-        return { kind: "success" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("PrizeEnded" in candid) {
-        return { kind: "prize_ended" };
-    }
-    if ("FailedAfterTransfer" in candid) {
-        return { kind: "failed_after_transfer" };
-    }
-    if ("TransferFailed" in candid) {
-        return { kind: "transfer_failed" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiClaimPrizeResponse type received", candid);
-}
-
 export function summaryResponse(
-    candid: ApiGroupCanisterSummaryResponse
+    candid: ApiGroupCanisterSummaryResponse,
 ): GroupCanisterSummaryResponse {
     if ("Success" in candid) {
         return groupChatSummary(candid.Success.summary);
@@ -130,7 +95,7 @@ export function summaryResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGroupCanisterSummaryResponse type received",
-        candid
+        candid,
     );
 }
 
@@ -148,13 +113,14 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         joined: candid.joined,
         memberCount: candid.participant_count,
         myRole: memberRole(candid.role),
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),
@@ -163,11 +129,13 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         rulesAccepted: candid.rules_accepted,
+        eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
     };
 }
 
 export function summaryUpdatesResponse(
-    candid: ApiGroupCanisterSummaryUpdatesResponse
+    candid: ApiGroupCanisterSummaryUpdatesResponse,
 ): GroupCanisterSummaryUpdatesResponse {
     if ("Success" in candid) {
         return groupChatSummaryUpdates(candid.Success.updates);
@@ -180,12 +148,12 @@ export function summaryUpdatesResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
-        candid
+        candid,
     );
 }
 
 function groupChatSummaryUpdates(
-    candid: ApiGroupCanisterGroupChatSummaryUpdates
+    candid: ApiGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -197,12 +165,13 @@ function groupChatSummaryUpdates(
         public: optional(candid.is_public, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         memberCount: optional(candid.participant_count, identity),
         myRole: optional(candid.role, memberRole),
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
-        permissions: optional(candid.permissions, groupPermissions),
+        permissions: optional(candid.permissions_v2, groupPermissions),
         notificationsMuted: optional(candid.notifications_muted, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
@@ -213,13 +182,15 @@ function groupChatSummaryUpdates(
         dateLastPinned: optional(candid.date_last_pinned, identity),
         gate: optionUpdate(candid.gate, accessGate),
         rulesAccepted: optional(candid.rules_accepted, identity),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
     };
 }
 
 function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     [] | [number],
     number,
-    bigint
+    bigint,
 ]): UpdatedEvent {
     return {
         eventIndex,
@@ -229,22 +200,49 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
 }
 
 export function apiOptionalGroupPermissions(
-    permissions: Partial<ChatPermissions>
+    permissions: OptionalChatPermissions,
 ): OptionalGroupPermissions {
     return {
-        block_users: [],
-        change_permissions: [],
         delete_messages: apiOptional(apiPermissionRole, permissions.deleteMessages),
-        send_messages: apiOptional(apiPermissionRole, permissions.sendMessages),
         remove_members: apiOptional(apiPermissionRole, permissions.removeMembers),
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-        create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
-        reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
         mention_all_members: apiOptional(apiPermissionRole, permissions.mentionAllMembers),
+        message_permissions: apiOptional(
+            apiOptionalMessagePermissions,
+            permissions.messagePermissions,
+        ),
+        thread_permissions: apiOptionUpdate(
+            apiOptionalMessagePermissions,
+            permissions.threadPermissions,
+        ),
+    };
+}
+
+function apiOptionalMessagePermissions(
+    permissions: OptionalMessagePermissions,
+): ApiOptionalMessagePermissions {
+    const custom_updated =
+        permissions.memeFighter !== undefined && permissions.memeFighter !== "set_to_none"
+            ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter.value) }]
+            : [];
+    const custom_deleted = permissions.memeFighter === "set_to_none" ? ["meme_fighter"] : [];
+    return {
+        default: apiOptional(apiPermissionRole, permissions.default),
+        text: apiOptionUpdate(apiPermissionRole, permissions.text),
+        image: apiOptionUpdate(apiPermissionRole, permissions.image),
+        video: apiOptionUpdate(apiPermissionRole, permissions.video),
+        audio: apiOptionUpdate(apiPermissionRole, permissions.audio),
+        file: apiOptionUpdate(apiPermissionRole, permissions.file),
+        poll: apiOptionUpdate(apiPermissionRole, permissions.poll),
+        crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
+        giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
+        prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
+        custom_updated,
+        custom_deleted,
     };
 }
 
@@ -319,6 +317,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("CallerNotInGroup" in candid) {
@@ -368,23 +367,16 @@ export async function getMessagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse | ApiCommunityMessagesByMessageIndexResponse,
     chatId: MultiUserChatIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
-            latestEventIndex,
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if (
@@ -397,55 +389,40 @@ export async function getMessagesByMessageIndexResponse(
     ) {
         return "events_failed";
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
         );
     }
     throw new UnsupportedValueError(
         "Unexpected ApiMessagesByMessageIndexResponse type received",
-        candid
+        candid,
     );
-}
-
-export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Message> {
-    return {
-        event: message(candid.event),
-        timestamp: candid.timestamp,
-        index: candid.index,
-    };
 }
 
 export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<GroupChatEvent>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.events.map(event),
-            latestEventIndex,
+            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
-            false
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
+            false,
         );
     }
     console.warn("GetGroupChatEvents failed with ", candid);
@@ -578,8 +555,8 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     if ("PermissionsChanged" in candid) {
         return {
             kind: "permissions_changed",
-            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions),
-            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions),
+            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions_v2),
+            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions_v2),
             changedBy: candid.PermissionsChanged.changed_by.toString(),
         };
     }
@@ -656,11 +633,12 @@ function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
         event: groupChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 
 export function convertToCommunityReponse(
-    candid: ApiConvertIntoCommunityResponse
+    candid: ApiConvertIntoCommunityResponse,
 ): ConvertToCommunityResponse {
     if ("Success" in candid) {
         return {
@@ -681,11 +659,13 @@ export function apiUpdatedRules(rules: UpdatedRules): ApiUpdatedRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
-        new_version: rules.newVersion,  
+        new_version: rules.newVersion,
     };
 }
 
-export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+export function followThreadResponse(
+    candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
+): FollowThreadResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -695,4 +675,8 @@ export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfoll
         console.warn("followThread failed with", candid);
         return "failed";
     }
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

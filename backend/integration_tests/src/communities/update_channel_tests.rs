@@ -36,7 +36,7 @@ fn make_private_channel_public_succeeds() {
             description: None,
             rules: None,
             avatar: OptionUpdate::NoChange,
-            permissions: None,
+            permissions_v2: None,
             events_ttl: OptionUpdate::NoChange,
             gate: OptionUpdate::NoChange,
             public: Some(true),

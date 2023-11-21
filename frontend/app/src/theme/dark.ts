@@ -31,12 +31,15 @@ export function darkTheme(defaultTheme: Theme): Theme {
         name: "dark",
         label: "Default dark",
         burst: true,
+        logo: true,
         mode: "dark",
 
         bg: backgroundBlack,
         txt: txt,
         "txt-light": textBodyDark,
         bd: borderDark,
+        rd: "4px",
+        bw: "1px",
         error: "#CF6679",
         warn: "#f36D28",
         accent: "#ff2e2e",
@@ -107,6 +110,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: textBlack,
             sh: "inset 0px 2px 4px rgba(0,0,0,0.8)",
             accent: primary,
+            bd: "none",
         },
 
         members: {
@@ -119,6 +123,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
             input: {
                 bg: textBlack,
                 sh: "inset 0px 2px 4px rgba(0, 0, 0, 0.8)",
+                rd: "8px",
+                bd: "none",
             },
         },
 
@@ -176,12 +182,17 @@ export function darkTheme(defaultTheme: Theme): Theme {
             spinner: dark60,
             "disabled-txt": txtLow,
             "disabled-bd": "#999999",
+            rd: "4px",
+            sh: "none",
+            "hv-sh": "none",
         },
 
         modal: {
             filter: "blur(5px)",
             bg: backgroundBlack,
             bd: `1px solid ${borderDark}`,
+            rd: "16px",
+            sh: "none",
         },
 
         modalPage: {
@@ -211,12 +222,16 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 inert: textBlack,
                 bd: "none",
                 sh: "none",
+                r1: "8px",
+                r2: "4px",
+                separator: "rgba(255,255,255,0.2)",
 
                 me: {
                     bg: blueAccent,
                     muted: "rgba(255,255,255,0.5)",
                     txt: "rgba(255,255,255,0.8)",
                     bd: "rgba(255,255,255,0.2)",
+                    separator: "rgba(255,255,255,0.2)",
                 },
             },
         },
@@ -224,6 +239,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
         time: {
             txt: "#ffffff",
             icon: "#ffffff",
+            bg: "rgba(255,255,255,0.2)",
+            me: {
+                txt: "#ffffff",
+                icon: "#ffffff",
+                bg: "rgba(255,255,255,0.2)",
+            },
         },
 
         icon: {
@@ -278,6 +299,11 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bright: txt,
                 muted: textBodyLight,
             },
+        },
+
+        card: {
+            rd: "8px",
+            sh: "none",
         },
 
         landing: {

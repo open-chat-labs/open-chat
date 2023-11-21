@@ -205,13 +205,6 @@
         "unread": "{count} הודעות שלא נקראו",
         "mentions": "{count} אזכור(ים) שלא נקראו"
     },
-    "login": {
-        "welcomeTo": "ברוך הבא ל ...",
-        "blurbPartOne": "אפליקציית צ'אט מאובטחת, אינטואיטיבית, מבוזרת פועלת כולה",
-        "blurbPartTwo": " - הבלוקצ'יין הראשון בעולם בקנה מידה אינטרנטי. קרא עוד",
-        "signIn": "להתחבר",
-        "signInOrRegister": "היכנס או הירשם"
-    },
     "reactions": {
         "greaterThan99People": "99+ אנשים",
         "youClickToRemove": "אתה (לחץ כדי להסיר)",
@@ -279,7 +272,7 @@
         "voting_q": "איך אני מצביע על הצעות?",
         "voting_a": "הצטרף ל<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">קבוצת ההצעות של OpenChat</a> וקרא את <a href=\"/blog/governance\">פוסט הבלוג הזה</a> שנותן סקירה כללית של ממשל OpenChat ויש לו מדריך שלב אחר שלב להצבעה.",
         "buychat_q": "איך אני קונה אסימוני CHAT?",
-        "buychat_a": "כעת עליך תחילה <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">לקנות ICP</a> אשר לאחר מכן תוכל להחליף עבורו CHAT בבורסה מבוזרת (DEXes) שונות.<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY מוסיפים תמיכה עבור <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> עבור אסימוני ICRC1 (אשר כולל CHAT) מה שהופך אותם להרבה יותר קלים לשילוב עם חילופים מרכזיים (CEXes). ברגע שזה קרה, סביר להניח ש-CHAT יהיה זמין למסחר ב-CEXes עבור ICP או USDT.",
+        "buychat_a": "כעת עליך תחילה <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">לקנות ICP</a> אשר לאחר מכן תוכל להחליף עבורו CHAT בבורסה מבוזרת (DEXes) שונות.<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY מוסיפים תמיכה עבור <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> עבור אסימוני ICRC1 (אשר כולל CHAT) מה שהופך אותם להרבה יותר קלים לשילוב עם חילופים מרכזיים (CEXes). ברגע שזה קרה, סביר להניח ש-CHAT יהיה זמין למסחר ב-CEXes עבור ICP או USDT.",
         "shortcuts_q": "אילו פקודות קיצור זמינות?",
         "shortcuts_a": "ישנן מספר פקודות קיצור שבהן אתה יכול להשתמש מתיבת הזנת ההודעה. <br /><br /> `/poll` - כדי ליצור סקר חדש <br /> `/search xyz` - כדי לחפש בצ'אט הנוכחי את המונח \"xyz\" <br />`/gif kittens` - כדי חפש גיפים של חתלתולים <br />`/icp 0.1` - כדי לשלוח 0.1 ICP למישהו <br />`/faq question_id*` - כדי ליצור ולפרסם קישור מעוצב לשאלת שאלות נפוצות ספציפיות <br />`/diamond ` - כדי ליצור ולפרסם קישור מעוצב עם פרטי החברות ב-Diamond <br/> <br/>ניתן להשתמש בפקודות שמקבלות ארגומנט גם ללא הארגומנט.<br /><br />* מזהי שאלות נפוצות זמינים הם : airdrop, הצבעה, ארנק, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, אחסון, אבטחה, מפת דרכים, קיצורי דרך",
         "content_q": "איזה סוג תוכן מותר?",
@@ -331,13 +324,16 @@
         "oneVote": "הצבעה אחת",
         "oneVoteBy": "הצבעה 1 מאת",
         "numVotesIncludingYours": "{votes} הצבעות כולל שלך",
-        "atLeastTwo": "מינימום 2"
+        "atLeastTwo": "מינימום 2",
+        "allowChangeVotes": "אפשר למשתמשים לשנות הצבעה"
     },
     "role": {
         "admin": "מנהלי מערכת",
         "member": "חברים",
         "moderator": "מנחים",
-        "owner": "בעלים"
+        "owner": "בעלים",
+        "default": "בְּרִירַת מֶחדָל",
+        "none": "אף אחד"
     },
     "permissions": {
         "whoCan": "מי יכול",
@@ -362,7 +358,38 @@
         "createPublicChannel": "ליצור ערוצים ציבוריים",
         "createPrivateChannel": "ליצור ערוצים פרטיים",
         "manageUserGroups": "לנהל קבוצות משתמשים",
-        "mentionAllMembers": "ציין את כל החברים ({mention})"
+        "mentionAllMembers": "ציין את כל החברים ({mention})",
+        "nobody": "אף אחד לא יכול",
+        "general": "כללי",
+        "message": "הודעות",
+        "thread": "חוטים",
+        "overrideChatMessages": "ביטול הרשאות הודעת צ'אט",
+        "messagePermissions": {
+            "default": "לשלוח הודעות כברירת מחדל",
+            "text": "שלח הודעות טקסט",
+            "image": "לשלוח הודעות תמונה",
+            "video": "לשלוח הודעות וידאו",
+            "audio": "לשלוח הודעות שמע",
+            "file": "לשלוח הודעות קובץ",
+            "poll": "ליצור הודעות סקר",
+            "crypto": "לשלוח הודעות קריפטו",
+            "giphy": "לשלוח הודעות giphy",
+            "prize": "לשלוח הודעות פרס",
+            "memeFighter": "לשלוח הודעות Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "לשלוח הודעות בשרשורים כברירת מחדל",
+            "text": "לשלוח הודעות טקסט באשכולות",
+            "image": "לשלוח הודעות תמונה באשכולות",
+            "video": "לשלוח הודעות וידאו בשרשורים",
+            "audio": "לשלוח הודעות אודיו באשכולות",
+            "file": "לשלוח הודעות קבצים בשרשורים",
+            "poll": "ליצור הודעות סקר בשרשורים",
+            "crypto": "לשלוח הודעות קריפטו בשרשורים",
+            "giphy": "לשלוח הודעות giphy בשרשורים",
+            "prize": "שלח הודעות פרס בשרשורים",
+            "memeFighter": "שלח הודעות Meme Fighter בשרשורים"
+        }
     },
     "rules": {
         "enable": "אפשר כללים",
@@ -386,9 +413,7 @@
         "welcome": "ברוך הבא ל {groupName}",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף ל-{level} הזה באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
-        "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
         "groupRules": "חוקי הקבוצה",
-        "rulesUpdateFailed": "מצטערים שלא הצלחנו לעדכן את כללי {level} שלך",
         "getRulesFailed": "קבלת הכללים של {level} נכשלה",
         "createTitle": "צור {level} חדש",
         "back": "חזור",
@@ -473,7 +498,22 @@
         "scan": "סרוק קוד QR",
         "receiveToken": "קבל {symbol}",
         "sendToken": "שלח {symbol}",
-        "receive": "לְקַבֵּל"
+        "receive": "לְקַבֵּל",
+        "showZeroBalance": "להראות יותר",
+        "hideZeroBalance": "הראי פחות",
+        "transactions": "עסקאות",
+        "transactionError": "מצטערים שלא הצלחנו לטעון את העסקאות שלך",
+        "unknownTransactionType": "לא ידוע",
+        "loadMoreTransactions": "טען עוד",
+        "transactionHeaders": {
+            "id": "תְעוּדַת זֶהוּת",
+            "amount": "כמות",
+            "kind": "סוג",
+            "timestamp": "חותמת זמן",
+            "from": "מ",
+            "to": "ל",
+            "type": "סוּג"
+        }
     },
     "searchChat": "לחפש",
     "search": "לחפש...",
@@ -603,15 +643,27 @@
             "summaryRules": "תומך ב-markdown",
             "urlRules": "קישור לפרטים משלימים",
             "unexpectedError": "שגיאה לא צפויה בהגשת ההצעה",
-            "toPrincipal": "מנהל חשבון הנמען",
-            "enterToPrincipal": "הזן מנהל חשבון נמען",
             "amount": "כמות",
             "amountRules": "לפחות אסימון {token} אחד",
             "enterAmount": "הזן כמות של {token} אסימונים",
             "type": "סוג ההצעה",
             "treasury": "אסימון להעברה מאוצר",
-            "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל."
-        }
+            "message": "נדרשת הפקדה של {cost} {token} אסימונים (כולל שתי קבוצות של עמלות העברה) כדי להגיש הצעה שתוחזר אם ההצעה תתקבל.",
+            "recipientOwner": "מנהל החשבון של הנמען",
+            "recipientSubaccount": "חשבון המשנה של הנמען",
+            "recipientSubaccountRules": "חייב להיות מחרוזת משושה",
+            "enterRecipientOwner": "הזן את מנהל החשבון של הנמען",
+            "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען",
+            "ledgerCanisterId": "מזהה מיכל פנקס",
+            "enterLedgerCanisterId": "הזן את מזהה מיכל הפנקס",
+            "tokenInfoUrl": "כתובת אתר של מידע אסימון",
+            "enterTokenInfoUrl": "הזן כתובת אתר המציגה את פרטי האסימון",
+            "howToBuyUrl": "איך לקנות כתובת אתר",
+            "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
+            "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
+            "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}"
+        },
+        "neuronControllerAction": "פעולות בקר נוירון"
     },
     "yes": "כן",
     "no": "לא",
@@ -653,7 +705,9 @@
         "label": "פּרוֹפִיל",
         "communities": "קהילות",
         "selectCommunity": "בחר קהילה",
-        "global": "גלוֹבָּלִי"
+        "global": "גלוֹבָּלִי",
+        "block": "לַחסוֹם",
+        "unblock": "בטל את החסימה"
     },
     "undeleteMessage": "בטל מחיקה",
     "undeletingMessage": "ביטול מחיקת הודעה מאת {username} ב-{timestamp}",
@@ -720,7 +774,10 @@
         "distribution": "כיצד יש לחלק את הפרסים?",
         "equalDistribution": "חלוקה שווה",
         "randomDistribution": "הפצה אקראית",
-        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך"
+        "creatingYourPrizeMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הפרס שלך",
+        "whoCanWin": "מי יכול לתבוע מניה?",
+        "onlyDiamond": "רק משתמשי Diamond",
+        "anyone": "כל משתמש"
     },
     "upgrade": {
         "blurb": "חלק מתכונות OpenChat זמינות רק לחשבונות פרימיום. אתה יכול לשדרג את חשבונך על ידי אימות מספר טלפון באמצעות SMS או על ידי תשלום עמלת ICP קטנה.",
@@ -828,7 +885,6 @@
         "optional": "אופציונאלי",
         "note": "הוסף הערה",
         "notePlaceholder": "ספר לנו מדוע אתה מדווח על תוכן זה",
-        "advice": "אם אתה סבור שהודעה זו מפרה את הכללים של הקבוצה הזו, אנא צור קשר עם הבעלים והמנהלים של הקבוצה בשלב ראשון. דווח על הודעה לניהול פלטפורמה רק אם אתה מרגיש שהיא מפרה את [הנחיות הפלטפורמה](/guidelines).",
         "threat": "ההודעה מאיימת",
         "child": "ההודעה מכילה תוכן מיני לילדים",
         "nonConsensual": "ההודעה מכילה תוכן מיני ללא הסכמה",
@@ -840,7 +896,8 @@
         "failure": "מצטערים שלא הצלחנו לדווח על הודעה זו למנהלי הפלטפורמה",
         "deleteMessage": "מחק הודעה שדווחה",
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
-        "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות"
+        "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות",
+        "advice": "אם אתה סבור שהודעה זו מפרה את הכללים של הקבוצה הזו, אנא צור קשר עם הבעלים והמנהלים של הקבוצה בשלב ראשון. דווח על הודעה לניהול פלטפורמה רק אם אתה מרגיש שהיא מפרה את [כללי הפלטפורמה]({rules})."
     },
     "invitedBy": "{changedBy} הזמין את {changed} ל-{level}",
     "halloffame": {
@@ -872,7 +929,7 @@
         "chooseGate": "בחר שער גישה",
         "diamondMember": "חברות יהלום",
         "diamondGateInfo": "רק משתמשים עם חברות Diamond יורשו להצטרף",
-        "nnsHolder": "מחזיק נוירון NNS (בקרוב)",
+        "nnsHolder": "מחזיק נוירון ICP (בקרוב)",
         "nftHolder": "מחזיק NFT (בקרוב)",
         "openAccess": "גישה חופשית",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
@@ -884,7 +941,16 @@
         "gateCheckFailed": "שער הגישה לא נפגש",
         "cannotMakePublic": "אינך יכול להפוך {level} פרטי לציבורי מכיוון שזה יסכן את הפרטיות של החברים הקיימים.",
         "snsHolder": "מחזיק נוירון {token}",
-        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף"
+        "snsHolderInfo": "רק בעלי נוירונים {token} יורשו להצטרף",
+        "initiateCredentialCheck": "אמת את האישור",
+        "verify": "תאשר",
+        "credential": "אישור מאומת",
+        "credentialParamIssuer": "מנפיק: {issuer}",
+        "credentialParamCredential": "אישור: {credential}",
+        "credentialIssuer": "מנפיק אישורים",
+        "requiredCredential": "אישור נדרש",
+        "credentialCheckMessage": "על מנת להצטרף ל-{level} הזה, עליך לאמת את האישור \"{credential}\" מהמנפיק {issuer}",
+        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",
@@ -991,7 +1057,9 @@
         "namedUserGroupMembers": "**{name}** חברי הקבוצה",
         "searchUserGroups": "חפש קבוצות משתמשים...",
         "userGroupName": "שם קבוצת משתמשים",
-        "noSpaces": "אין רווחים"
+        "noSpaces": "אין רווחים",
+        "noMatch": "לא נמצאו קהילות תואמות",
+        "refineSearch": "נסה לצמצם את החיפוש שלך"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",
@@ -1060,5 +1128,30 @@
     "followThreadFailed": "שרשור המעקב נכשל",
     "unfollowThreadFailed": "ביטול המעקב נכשל",
     "doubleClickReply": "לחץ פעמיים על ההודעה כדי להשיב/לערוך",
-    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך"
+    "doubleTapReply": "הקש פעמיים על הודעה כדי להשיב/לערוך",
+    "minimumAmount": "מינימום: {amount} {symbol}",
+    "sendTextDisabled": "הודעות טקסט מושבתות",
+    "disappearingMessages": {
+        "label": "הודעות נעלמות",
+        "hours": "שעה (ות)",
+        "minutes": "דקות)",
+        "days": "ימים",
+        "summary": "ההודעות ייעלמו לאחר {duration}",
+        "timeUpdatedBy": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
+        "disabledBy": "{changedBy} השבית הודעות נעלמות",
+        "durationMinutes": "{duration} דקות",
+        "oneMinute": "דקה 1",
+        "timeUpdated": "זמן ההודעה הנעלמת מוגדר ל-{duration}",
+        "disabled": "הודעות נעלמות מושבתות"
+    },
+    "login": "התחברות",
+    "loginToOpenChat": "היכנס ל-OpenChat",
+    "tapToLogin": "מצב אורח - הקש כאן כדי להיכנס",
+    "loginProviderChanged": "נראה שנכנסת בעבר עם הספק {previous}. בדוק שוב שברצונך להשתמש ב-{next} הפעם?",
+    "guestUser": "משתמש אורח",
+    "showAuthProviders": "הצג אפשרויות",
+    "hideAuthProviders": "הסתר אפשרויות",
+    "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }",
+    "offlineMessage": "לא מקוון",
+    "offlineError": "סליחה - נראה שאתה במצב לא מקוון כרגע"
 }

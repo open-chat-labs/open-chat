@@ -77,6 +77,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         communities,
         avatar_id,
         blocked_users,
+        suspended: state.data.suspended.value,
     })
 }
 
@@ -111,13 +112,14 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         min_visible_message_index: cached.min_visible_message_index,
         latest_message: cached.latest_message.clone(),
         latest_event_index: cached.latest_event_index,
+        latest_message_index: cached.latest_message_index,
         joined: cached.joined,
         read_by_me_up_to: user_details.messages_read.read_by_me_up_to.value,
         notifications_muted: cached.notifications_muted,
         participant_count: cached.participant_count,
         role: cached.role,
         mentions: cached.mentions.clone(),
-        permissions: cached.permissions.clone(),
+        permissions_v2: cached.permissions_v2.clone(),
         metrics: cached.metrics.clone(),
         my_metrics: cached.my_metrics.clone(),
         latest_threads: threads.into_values().collect(),
@@ -127,6 +129,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         date_last_pinned: cached.date_last_pinned,
         date_read_pinned: user_details.messages_read.date_read_pinned.value,
         events_ttl: cached.events_ttl,
+        events_ttl_last_updated: cached.events_ttl_last_updated,
         gate: cached.gate.clone(),
         rules_accepted: cached.rules_accepted,
     }

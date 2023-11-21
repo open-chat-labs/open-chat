@@ -1,22 +1,28 @@
 <script lang="ts">
     export let logo: string;
     export let mirror: boolean = true;
-    export let size: "large" | "small" = "large";
+    export let size: "large" | "small" | "tiny" = "large";
+    export let spin = true;
 
     let middle = new Array(9);
 </script>
 
-<div class={`purse ${size}`} class:mirror style="--size: {size === 'large' ? '6rem' : '3.5rem'}">
-    <div class="coin">
-        <div class="back face">
+<div
+    class={`purse ${size}`}
+    class:mirror
+    style="--size: {size === 'large' ? '6rem' : size === 'small' ? '3.5rem' : '2.2rem'}">
+    <div class="coin" class:spin>
+        <div class:flip={!spin} class="back face">
             <div style={`background-image: url(${logo})`} class="inner" />
         </div>
-        {#each middle as _}
-            <div class="middle face" />
-        {/each}
-        <div class="front face">
-            <div style={`background-image: url(${logo})`} class="inner" />
-        </div>
+        {#if spin}
+            {#each middle as _}
+                <div class="middle face" />
+            {/each}
+            <div class="front face">
+                <div style={`background-image: url(${logo})`} class="inner" />
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -40,8 +46,11 @@
     .coin {
         position: relative;
         transform-style: preserve-3d;
-        animation: spin 2.5s linear infinite;
         text-align: center;
+
+        &.spin {
+            animation: spin 2.5s linear infinite;
+        }
     }
 
     .inner {
@@ -61,7 +70,7 @@
         box-shadow: inset 0 $shadow_size $shadow_size hsl(42, 30%, 50%);
     }
 
-    .back {
+    .back:not(.flip) {
         transform: scaleX(-1);
     }
 

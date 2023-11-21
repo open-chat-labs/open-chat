@@ -8,6 +8,7 @@ use ic_cdk_macros::update;
 use serde::Serialize;
 use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};
+use utils::consts::MEMO_TIP;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -25,7 +26,7 @@ async fn tip_message(args: Args) -> Response {
         amount: args.amount,
         to: Principal::from(args.recipient).into(),
         fee: args.fee,
-        memo: None,
+        memo: Some(MEMO_TIP.to_vec().into()),
         created: now_nanos,
     });
     // Make the crypto transfer
@@ -34,7 +35,9 @@ async fn tip_message(args: Args) -> Response {
     }
 
     match prepare_result {
-        PrepareResult::Direct(tip_message_args) => mutate_state(|state| tip_direct_chat_message(tip_message_args, state)),
+        PrepareResult::Direct(tip_message_args) => {
+            mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals.unwrap_or(8), state))
+        }
         PrepareResult::Group(group_id, c2c_args) => {
             use group_canister::c2c_tip_message::Response;
             match group_canister_c2c_client::c2c_tip_message(group_id.into(), &c2c_args).await {
@@ -112,6 +115,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
+                        decimals: args.decimals.unwrap_or(8),
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },
@@ -129,6 +133,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
+                        decimals: args.decimals.unwrap_or(8),
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },
@@ -140,7 +145,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
     }
 }
 
-fn tip_direct_chat_message(args: TipMessageArgs, state: &mut RuntimeState) -> Response {
+fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut RuntimeState) -> Response {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
         match chat.events.tip_message(args.clone(), EventIndex::default()) {
             TipMessageResult::Success => {
@@ -150,6 +155,7 @@ fn tip_direct_chat_message(args: TipMessageArgs, state: &mut RuntimeState) -> Re
                     ledger: args.ledger,
                     token: args.token,
                     amount: args.amount,
+                    decimals,
                     username: state.data.username.value.clone(),
                     display_name: state.data.display_name.value.clone(),
                     user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),

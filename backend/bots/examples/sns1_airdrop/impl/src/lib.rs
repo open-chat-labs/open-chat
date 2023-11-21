@@ -38,7 +38,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
         }
     }
@@ -54,6 +54,8 @@ struct Data {
     pub principals: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
     pub completed: bool,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -68,6 +70,7 @@ impl Data {
             principals: HashSet::new(),
             avatar: Timestamped::default(),
             completed: false,
+            rng_seed: [0; 32],
             test_mode,
         }
     }

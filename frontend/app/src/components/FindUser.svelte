@@ -26,6 +26,8 @@
     let searching: boolean = false;
     let hovering = false;
 
+    $: createdUser = client.user;
+
     onMount(() => {
         // this focus seems to cause a problem with the animation of the right panel without
         // this setTimeout. Pretty horrible and who knows if 300 ms will be enough on other machines?
@@ -106,7 +108,7 @@
                     <h4 class:diamond={user.diamond}>
                         <FilteredUsername
                             {searchTerm}
-                            me={user.userId === client.user.userId}
+                            me={user.userId === $createdUser.userId}
                             username={user.displayName ?? user.username} />
                     </h4>
                     <div class="username">
@@ -126,7 +128,7 @@
         align-items: center;
         position: relative;
         padding: $sp2 $sp4;
-        border-radius: $sp2;
+        border-radius: var(--rd);
 
         &.add {
             margin: 0;

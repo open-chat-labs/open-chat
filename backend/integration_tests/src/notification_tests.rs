@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::{SubscriptionInfo, SubscriptionKeys};
 
@@ -156,7 +156,7 @@ fn group_message_notification_muted() {
     assert!(notifications_response.notifications.is_empty());
 }
 
-fn latest_notification_index(env: &StateMachine, notifications_canister_id: Principal, controller: Principal) -> u64 {
+fn latest_notification_index(env: &PocketIc, notifications_canister_id: Principal, controller: Principal) -> u64 {
     let notifications_canister::latest_notification_index::Response::Success(latest_notification_index) =
         client::notifications::latest_notification_index(
             env,
@@ -168,7 +168,7 @@ fn latest_notification_index(env: &StateMachine, notifications_canister_id: Prin
     latest_notification_index
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 

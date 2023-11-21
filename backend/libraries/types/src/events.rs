@@ -38,15 +38,51 @@ pub enum ChatEvent {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct EventsResponse {
     pub events: Vec<EventWrapper<ChatEvent>>,
+    pub expired_event_ranges: Vec<(EventIndex, EventIndex)>,
+    pub expired_message_ranges: Vec<(MessageIndex, MessageIndex)>,
     pub latest_event_index: EventIndex,
-    pub timestamp: TimestampMillis,
+    pub chat_last_updated: TimestampMillis,
+}
+
+#[allow(clippy::large_enum_variant)]
+pub enum EventOrExpiredRange {
+    Event(EventWrapper<ChatEvent>),
+    ExpiredEventRange(EventIndex, EventIndex),
+}
+
+impl EventOrExpiredRange {
+    pub fn as_event(&self) -> Option<&EventWrapper<ChatEvent>> {
+        if let EventOrExpiredRange::Event(event) = self {
+            Some(event)
+        } else {
+            None
+        }
+    }
+
+    pub fn split(
+        events_and_expired_ranges: Vec<EventOrExpiredRange>,
+    ) -> (Vec<EventWrapper<ChatEvent>>, Vec<(EventIndex, EventIndex)>) {
+        let mut events = Vec::new();
+        let mut expired_ranges = Vec::new();
+
+        for event_or_expired_range in events_and_expired_ranges {
+            match event_or_expired_range {
+                EventOrExpiredRange::Event(e) => events.push(e),
+                EventOrExpiredRange::ExpiredEventRange(from, to) => expired_ranges.push((from, to)),
+            }
+        }
+
+        expired_ranges.sort();
+
+        (events, expired_ranges)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct MessagesResponse {
     pub messages: Vec<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
-    pub timestamp: TimestampMillis,
+    pub chat_last_updated: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -158,8 +194,8 @@ pub struct MessageUnpinned {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PermissionsChanged {
-    pub old_permissions: GroupPermissions,
-    pub new_permissions: GroupPermissions,
+    pub old_permissions_v2: GroupPermissions,
+    pub new_permissions_v2: GroupPermissions,
     pub changed_by: UserId,
 }
 

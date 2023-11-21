@@ -22,9 +22,8 @@ fn summary_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let member = state.data.members.get(caller);
-    let now = state.env.now();
 
-    let summary = state.summary(member, now);
+    let summary = state.summary(member);
 
     Success(summary)
 }

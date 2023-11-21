@@ -91,13 +91,15 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     let gate = args.gate.as_ref().apply_to(state.data.chat.gate.value.as_ref());
 
     if let Some(member) = state.data.get_member(caller) {
+        let permissions = args.permissions_v2.as_ref();
+
         match state.data.chat.can_update(
             &member.user_id,
             &args.name,
             &args.description,
             &args.rules,
             &args.avatar,
-            &args.permissions,
+            permissions,
             &args.public,
         ) {
             Ok(_) => {
@@ -106,7 +108,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 Ok(PrepareResult {
                     my_user_id: member.user_id,
                     group_index_canister_id: state.data.group_index_canister_id,
-                    is_public: args.public.unwrap_or(state.data.chat.is_public),
+                    is_public: args.public.unwrap_or(state.data.chat.is_public.value),
                     chat_id: state.env.canister_id().into(),
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
@@ -140,7 +142,7 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) -> SuccessRe
         args.description,
         args.rules,
         args.avatar,
-        args.permissions,
+        args.permissions_v2,
         args.gate,
         args.public,
         args.events_ttl,

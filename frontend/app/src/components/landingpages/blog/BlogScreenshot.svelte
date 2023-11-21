@@ -46,7 +46,7 @@
         gap: $sp3;
         align-items: center;
         padding: 0 $sp3;
-        border-radius: $sp2;
+        border-radius: var(--rd);
 
         &.selected {
             background-color: var(--primary);

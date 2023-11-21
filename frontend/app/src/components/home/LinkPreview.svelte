@@ -14,6 +14,7 @@
     export let text: string;
     export let pinned: boolean;
     export let fill: boolean;
+    export let me: boolean;
 
     let rendered = false;
     let previewsPromise: Promise<LinkInfo[]> | undefined = undefined;
@@ -22,6 +23,7 @@
 
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
+    $: networkStatus = client.networkStatus;
 
     function closestAncestor(
         el: HTMLElement | null | undefined,
@@ -52,7 +54,8 @@
             !youtubeMatch &&
             intersecting &&
             !$eventListScrolling &&
-            !rendered
+            !rendered &&
+            $networkStatus === "online"
         ) {
             // make sure we only actually *load* the preview(s) once
             previewsPromise = previewsPromise ?? loadPreviews(links);
@@ -72,6 +75,6 @@
     <YouTubePreview {pinned} {fill} {youtubeMatch} />
 {:else if rendered}
     {#await previewsPromise then previews}
-        <GenericPreview {previews} on:rendered={previewLoaded} />
+        <GenericPreview {me} {previews} on:rendered={previewLoaded} />
     {/await}
 {/if}

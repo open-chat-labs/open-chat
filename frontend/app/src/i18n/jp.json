@@ -194,13 +194,6 @@
         "unread": "{count} 件の未読メッセージ",
         "mentions": "{count}件の未読メンション"
     },
-    "login": {
-        "welcomeTo": "ようこそ...",
-        "blurbPartOne": "のみで動作する安全で直感的な分散型チャットアプリです。 ",
-        "blurbPartTwo": " - 世界初のインターネットスケールブロックチェーン 続きを読む ",
-        "signIn": "サインイン",
-        "signInOrRegister": "サインインまたは登録"
-    },
     "reactions": {
         "greaterThan99People": "99名以上",
         "youClickToRemove": "あなた（クリックすると削除されます）",
@@ -268,7 +261,7 @@
         "voting_q": "提案に投票するにはどうすればよいですか?",
         "voting_a": "<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat 提案グループ</a>に参加し、<a href=\"/blog/governance\">このブログ投稿</a>を読んで概要を説明しますOpenChat ガバナンスの説明と、投票に関するステップバイステップのガイドがあります。",
         "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
-        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
+        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
         "shortcuts_q": "どのショートカット コマンドを使用できますか?",
         "shortcuts_a": "メッセージ エントリ入力ボックスから使用できるショートカット コマンドがいくつかあります。 <br /><br /> `/poll` - 新しい投票を作成します <br /> `/search xyz` - 現在のチャットで用語「xyz」を検索します <br />`/gif 子猫` - に子猫の gif を検索する <br />`/icp 0.1` - 誰かに 0.1 ICP を送る <br />`/faq question_id*` - 特定の FAQ 質問への書式付きリンクを作成して投稿する <br />`/diamond ` - ダイヤモンド メンバーシップの詳細を含む書式付きリンクを作成して投稿する <br/> <br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /><br />* 利用可能な FAQ 質問 ID は次のとおりです。 : エアドロップ、投票、ウォレット、buychat、send_tokens、ダイヤモンド、ios_app、android_app、find_groups、style_messages、ストレージ、セキュリティ、ロードマップ、ショートカット",
         "content_q": "どのようなコンテンツが許可されますか?",
@@ -323,13 +316,16 @@
         "oneVote": "1票",
         "oneVoteBy": "1票",
         "numVotesIncludingYours": "{votes}あなたを含む投票",
-        "atLeastTwo": "最小 2"
+        "atLeastTwo": "最小 2",
+        "allowChangeVotes": "ユーザーが投票を変更できるようにする"
     },
     "role": {
         "admin": "管理者",
         "member": "メンバー",
         "moderator": "モデレーター",
-        "owner": "所有者"
+        "owner": "所有者",
+        "default": "デフォルト",
+        "none": "誰でもない"
     },
     "permissions": {
         "whoCan": "誰ができますか",
@@ -354,7 +350,38 @@
         "createPublicChannel": "パブリックチャンネルを作成する",
         "createPrivateChannel": "プライベートチャンネルを作成する",
         "manageUserGroups": "ユーザーグループを管理する",
-        "mentionAllMembers": "すべてのメンバーに言及する ({mention})"
+        "mentionAllMembers": "すべてのメンバーに言及する ({mention})",
+        "nobody": "誰もできません",
+        "general": "一般的な",
+        "message": "メッセージ",
+        "thread": "スレッド",
+        "overrideChatMessages": "チャットメッセージの権限を上書きする",
+        "messagePermissions": {
+            "default": "デフォルトでメッセージを送信する",
+            "text": "テキストメッセージを送信する",
+            "image": "画像メッセージを送信する",
+            "video": "ビデオメッセージを送信する",
+            "audio": "音声メッセージを送信する",
+            "file": "ファイルメッセージを送信する",
+            "poll": "投票メッセージを作成する",
+            "crypto": "暗号メッセージを送信する",
+            "giphy": "giphy メッセージを送信する",
+            "prize": "賞品メッセージを送信する",
+            "memeFighter": "ミームファイターメッセージを送信する"
+        },
+        "threadPermissions": {
+            "default": "デフォルトでメッセージをスレッドに送信する",
+            "text": "スレッドでテキストメッセージを送信する",
+            "image": "スレッドで画像メッセージを送信する",
+            "video": "スレッドでビデオメッセージを送信する",
+            "audio": "スレッドで音声メッセージを送信する",
+            "file": "スレッドでファイルメッセージを送信する",
+            "poll": "スレッド内にポーリングメッセージを作成する",
+            "crypto": "スレッドで暗号メッセージを送信する",
+            "giphy": "スレッドで giphy メッセージを送信する",
+            "prize": "スレッドで賞品メッセージを送信する",
+            "memeFighter": "ミームファイターのメッセージをスレッドに送信する"
+        }
     },
     "rules": {
         "enable": "ルールを有効にする",
@@ -378,9 +405,7 @@
         "welcome": "ようこそ {groupName}",
         "historyPrivateMessage": "古いメッセージは新しいメンバーには表示されません",
         "privateGroupInfo": "ユーザーはこの {level} に自由に参加することはできません。これらは、承認されたメンバーによって追加または招待される必要があります。",
-        "permissionsUpdateFailed": "権限の更新に失敗しました",
         "groupRules": "グループルール",
-        "rulesUpdateFailed": "申し訳ありませんが、{level} ルールを更新できませんでした",
         "getRulesFailed": "{level} ルールを取得できませんでした",
         "createTitle": "新しい {level} を作成する",
         "back": "戻る",
@@ -473,7 +498,22 @@
         "scan": "QRコードをスキャン",
         "receiveToken": "{symbol}を受け取る",
         "sendToken": "{symbol}を送る",
-        "receive": "受け取る"
+        "receive": "受け取る",
+        "showZeroBalance": "もっと見せる",
+        "hideZeroBalance": "あまり見せない",
+        "transactions": "取引",
+        "transactionError": "申し訳ありませんが、トランザクションを読み込むことができませんでした",
+        "unknownTransactionType": "未知",
+        "loadMoreTransactions": "もっと読み込む",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "額",
+            "kind": "親切",
+            "timestamp": "タイムスタンプ",
+            "from": "から",
+            "to": "に",
+            "type": "タイプ"
+        }
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -605,15 +645,27 @@
             "summaryRules": "マークダウンをサポート",
             "urlRules": "補足詳細へのリンク",
             "unexpectedError": "プロポーザル送信時の予期しないエラー",
-            "toPrincipal": "受信者のアカウント本人",
-            "enterToPrincipal": "受信者のアカウント プリンシパルを入力します",
             "amount": "額",
             "amountRules": "少なくとも 1 つの {token} トークン",
             "enterAmount": "{token} トークンの数量を入力してください",
             "type": "提案型",
             "treasury": "財務省から送金するトークン",
-            "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。"
-        }
+            "message": "提案を提出するには、{cost} {token} トークンのデポジット (2 セットの送金手数料を含む) が必要です。提案が採用された場合、デポジットは返金されます。",
+            "recipientOwner": "受信者のアカウント本人",
+            "recipientSubaccount": "受信者のサブアカウント",
+            "recipientSubaccountRules": "16 進文字列である必要があります",
+            "enterRecipientOwner": "受信者のアカウントプリンシパルを入力してください",
+            "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します",
+            "ledgerCanisterId": "レジャーキャニスターID",
+            "enterLedgerCanisterId": "レジャー キャニスター ID を入力してください",
+            "tokenInfoUrl": "トークン情報のURL",
+            "enterTokenInfoUrl": "トークン情報を示す URL を入力してください",
+            "howToBuyUrl": "購入方法URL",
+            "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
+            "transactionUrlFormat": "トランザクションURL形式",
+            "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
+        },
+        "neuronControllerAction": "ニューロン コントローラーのアクション"
     },
     "yes": "はい",
     "no": "いいえ",
@@ -656,7 +708,9 @@
         "label": "プロフィール",
         "communities": "コミュニティ",
         "selectCommunity": "コミュニティを選択してください",
-        "global": "グローバル"
+        "global": "グローバル",
+        "block": "ブロック",
+        "unblock": "ブロックを解除する"
     },
     "undeleteMessage": "削除を取り消す",
     "undeletingMessage": "{username} の {timestamp} によるメッセージの削除を取り消しています",
@@ -723,7 +777,10 @@
         "distribution": "賞品はどのように配布されるべきですか？",
         "equalDistribution": "均等配分",
         "randomDistribution": "ランダム配布",
-        "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください"
+        "creatingYourPrizeMessage": "賞品メッセージを作成するまでお待ちください",
+        "whoCanWin": "誰がシェアを請求できるのでしょうか?",
+        "onlyDiamond": "ダイヤモンドユーザーのみ",
+        "anyone": "任意のユーザー"
     },
     "upgrade": {
         "blurb": "一部のOpenChat機能は、プレミアムアカウントでのみ利用できます。 SMSで電話番号を確認するか、少額のICP料金を支払うことで、アカウントをアップグレードできます。",
@@ -831,7 +888,6 @@
         "optional": "オプション",
         "note": "メモを追加",
         "notePlaceholder": "このコンテンツを報告する理由を教えてください",
-        "advice": "このメッセージがこのグループのルールに違反していると思われる場合は、まずグループの所有者と管理者に連絡してください。 [プラットフォーム ガイドライン](/guidelines) に違反していると思われる場合にのみ、プラットフォーム モデレートのためにメッセージを報告してください。",
         "threat": "メッセージは脅迫的です",
         "child": "メッセージには児童の性的コンテンツが含まれています",
         "nonConsensual": "メッセージに同意のない性的コンテンツが含まれています",
@@ -843,7 +899,8 @@
         "failure": "申し訳ありませんが、このメッセージをプラットフォームのモデレーターに報告できませんでした",
         "deleteMessage": "報告されたメッセージを削除",
         "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
-        "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています"
+        "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています",
+        "advice": "このメッセージがこのグループのルールに違反していると思われる場合は、まずグループの所有者と管理者に連絡してください。 [プラットフォーム ルール]({rules}) に違反していると思われる場合にのみ、プラットフォームのモデレートのためにメッセージを報告してください。"
     },
     "invitedBy": "{changedBy} が {changed} を {level} に招待しました",
     "halloffame": {
@@ -875,7 +932,7 @@
         "chooseGate": "アクセスゲートを選択してください",
         "diamondMember": "ダイヤモンド会員",
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
-        "nnsHolder": "NNS ニューロン ホルダー (近日公開予定)",
+        "nnsHolder": "ICP ニューロン ホルダー (近日公開予定)",
         "nftHolder": "NFTホルダー（近日公開予定）",
         "openAccess": "オープンアクセス",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
@@ -887,7 +944,16 @@
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
         "snsHolder": "{token} ニューロン ホルダー",
-        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます"
+        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます",
+        "initiateCredentialCheck": "資格情報の検証",
+        "verify": "確認する",
+        "credential": "検証された資格情報",
+        "credentialParamIssuer": "発行者: {issuer}",
+        "credentialParamCredential": "資格情報: {credential}",
+        "credentialIssuer": "資格情報の発行者",
+        "requiredCredential": "必要な資格情報",
+        "credentialCheckMessage": "この {level} に参加するには、発行者 {credential} からの「{issuer}」資格情報を確認する必要があります。",
+        "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます"
     },
     "communities": {
         "explore": "コミュニティを探索する",
@@ -994,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** グループのメンバー",
         "searchUserGroups": "ユーザーグループを検索...",
         "userGroupName": "ユーザーグループ名",
-        "noSpaces": "スペースは使用できません"
+        "noSpaces": "スペースは使用できません",
+        "noMatch": "一致するコミュニティが見つかりませんでした",
+        "refineSearch": "検索を絞り込んでみてください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -1063,5 +1131,30 @@
     "followThreadFailed": "スレッドのフォローに失敗しました",
     "unfollowThreadFailed": "スレッドのフォローを解除できませんでした",
     "doubleClickReply": "メッセージをダブルクリックして返信/編集します",
-    "doubleTapReply": "メッセージをダブルタップして返信/編集します"
+    "doubleTapReply": "メッセージをダブルタップして返信/編集します",
+    "minimumAmount": "最小値: {amount} {symbol}",
+    "sendTextDisabled": "テキストメッセージが無効になっています",
+    "disappearingMessages": {
+        "label": "消えるメッセージ",
+        "hours": "時間）",
+        "minutes": "分）",
+        "days": "日々）",
+        "summary": "メッセージは {duration} 後に消えます",
+        "timeUpdatedBy": "{changedBy} はメッセージが消える時間を {duration} に設定します",
+        "disabledBy": "{changedBy} は消えるメッセージを無効にしました",
+        "durationMinutes": "{duration}分",
+        "oneMinute": "1分",
+        "timeUpdated": "メッセージが消える時間を {duration} に設定しました",
+        "disabled": "消えるメッセージの無効化"
+    },
+    "login": "ログイン",
+    "loginToOpenChat": "オープンチャットにログインする",
+    "tapToLogin": "ゲスト モード - ここをタップしてログインします",
+    "loginProviderChanged": "以前に {previous} プロバイダーを使用してログインしたようです。今回は {next} を使用したいことを再確認してください?",
+    "guestUser": "ゲストユーザー",
+    "showAuthProviders": "オプションを表示",
+    "hideAuthProviders": "オプションを非表示にする",
+    "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
+    "offlineMessage": "オフライン",
+    "offlineError": "申し訳ありませんが、現在オフラインのようです"
 }

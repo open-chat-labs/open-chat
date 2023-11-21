@@ -66,7 +66,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
@@ -121,6 +121,8 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -159,6 +161,7 @@ impl Data {
             group_upgrade_concurrency: 10,
             max_concurrent_community_upgrades: 10,
             community_upgrade_concurrency: 2,
+            rng_seed: [0; 32],
         }
     }
 }

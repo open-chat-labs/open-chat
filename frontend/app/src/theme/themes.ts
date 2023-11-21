@@ -8,6 +8,8 @@ import { getTheme as getMatteBlackGoldTheme } from "./community/matteblackgold";
 import { getTheme as getBarbieTheme } from "./community/barbie";
 import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
 import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
+import { getTheme as getHalloweenTheme } from "./community/halloween";
+import { getTheme as getSignalsTheme } from "./community/signals";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 
@@ -23,6 +25,8 @@ export const communityThemes = [
     getBarbieTheme(cloneTheme(defaultTheme)),
     getTokyoNightTheme(cloneTheme(dark)),
     getSolarizedDarkTheme(cloneTheme(dark)),
+    getHalloweenTheme(cloneTheme(dark)),
+    getSignalsTheme(cloneTheme(defaultTheme)),
 ];
 
 export const themes: Themes = {
@@ -64,7 +68,7 @@ export function setModifiedTheme(
     newName: string,
     overrides: Partial<Theme>,
 ): void {
-    const base = themes[baseName];
+    const base = themes[newName] ?? themes[baseName];
     if (base) {
         const overridden = deepMerge(base, overrides);
         themes[newName] = overridden;
@@ -72,7 +76,7 @@ export function setModifiedTheme(
     }
 }
 
-const themeOverride = writable<string>(undefined);
+export const themeOverride = writable<string>(undefined);
 export const themeType = createLocalStorageStore("openchat_theme", "system");
 export const preferredDarkThemeName = createLocalStorageStore("openchat_dark_theme", "dark");
 export const preferredLightThemeName = createLocalStorageStore("openchat_light_theme", "light");

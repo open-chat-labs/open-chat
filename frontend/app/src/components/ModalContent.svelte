@@ -8,6 +8,7 @@
     import { rtlStore } from "../stores/rtl";
     import { mobileWidth } from "../stores/screenDimensions";
     import { menuStore } from "../stores/menu";
+    import { currentTheme } from "../theme/themes";
 
     const dispatch = createEventDispatcher();
 
@@ -86,6 +87,7 @@
     class:square
     class:large
     class:overflows
+    class:halloween={$currentTheme.name === "halloween"}
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
@@ -127,9 +129,17 @@
         justify-content: space-between;
         background: var(--modal-bg);
         border: var(--modal-bd);
-        border-radius: $sp4;
+        border-radius: var(--modal-rd);
         position: relative;
         max-height: 100%;
+        box-shadow: var(--modal-sh);
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 4px;
+            left: 4px;
+            transform: scaleY(-1) scaleX(-1);
+        }
 
         &.square {
             border-radius: $sp3;
@@ -139,7 +149,7 @@
             &:not(.fit_to_content) {
                 width: 100%;
                 max-height: calc(100% - 20px);
-                border-radius: $sp4 $sp4 0 0;
+                border-radius: var(--modal-rd) var(--modal-rd) 0 0;
             }
             &.overflows {
                 height: 100%;

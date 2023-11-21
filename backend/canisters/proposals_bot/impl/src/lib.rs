@@ -3,11 +3,14 @@ use crate::timer_job_types::TimerJob;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{BuildVersion, CanisterId, Cycles, MessageId, MultiUserChat, ProposalId, TimestampMillis, Timestamped};
+use types::{
+    BuildVersion, CanisterId, Cycles, MessageId, Milliseconds, MultiUserChat, ProposalId, TimestampMillis, Timestamped,
+};
 use utils::env::Environment;
 
 mod governance_clients;
@@ -46,17 +49,18 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             finished_proposals_to_process: self.data.finished_proposals_to_process.iter().copied().collect(),
+            registry_synced_up_to: self.data.registry_synced_up_to,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
+                registry: self.data.registry_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 nns_governance: self.data.nns_governance_canister_id,
-                sns_wasm: self.data.sns_wasm_canister_id,
             },
         }
     }
@@ -70,10 +74,13 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
-    pub sns_wasm_canister_id: CanisterId,
+    pub registry_canister_id: CanisterId,
     pub finished_proposals_to_process: VecDeque<(CanisterId, ProposalId)>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub failed_sns_launches: HashSet<CanisterId>,
+    pub registry_synced_up_to: TimestampMillis,
+    pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -82,9 +89,9 @@ impl Data {
         governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
+        registry_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
-        sns_wasm_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -92,12 +99,14 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             group_index_canister_id,
+            registry_canister_id,
             cycles_dispenser_canister_id,
             nns_governance_canister_id,
-            sns_wasm_canister_id,
             finished_proposals_to_process: VecDeque::new(),
             timer_jobs: TimerJobs::default(),
-            failed_sns_launches: HashSet::default(),
+            registry_synced_up_to: 0,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }
@@ -113,12 +122,14 @@ pub struct Metrics {
     pub nervous_systems: Vec<NervousSystemMetrics>,
     pub governance_principals: Vec<Principal>,
     pub finished_proposals_to_process: Vec<(CanisterId, ProposalId)>,
+    pub registry_synced_up_to: TimestampMillis,
     pub canister_ids: CanisterIds,
 }
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct NervousSystemMetrics {
     pub governance_canister_id: CanisterId,
+    pub ledger_canister_id: CanisterId,
     pub chat_id: MultiUserChat,
     pub latest_successful_sync: Option<TimestampMillis>,
     pub latest_failed_sync: Option<TimestampMillis>,
@@ -127,15 +138,20 @@ pub struct NervousSystemMetrics {
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
     pub neuron_for_submitting_proposals: Option<String>,
+    pub neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
+    pub transaction_fee: u64,
+    pub min_neuron_stake: u64,
+    pub min_dissolve_delay_to_vote: Milliseconds,
+    pub proposal_rejection_fee: u64,
 }
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub registry: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
-    pub sns_wasm: CanisterId,
 }
 
 // Deterministically generate each MessageId so that there is never any chance of a proposal

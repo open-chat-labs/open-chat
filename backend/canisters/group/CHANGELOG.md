@@ -5,6 +5,83 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add msgpack endpoint for `delete_messages` ([#4742](https://github.com/open-chat-labs/open-chat/pull/4742))
+- Platform mods can delete group messages despite not being member ([#4744](https://github.com/open-chat-labs/open-chat/pull/4744))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Use current timestamp in 'replica up to date' check ([#4763](https://github.com/open-chat-labs/open-chat/pull/4763))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+- Pass up number of decimals when tipping to fix notification text ([#4796](https://github.com/open-chat-labs/open-chat/pull/4796))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+### Removed
+
+- Remove `latest_client_event_index` from args to get events ([#4747](https://github.com/open-chat-labs/open-chat/pull/4747))
+
+## [[2.0.931](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.931-group)] - 2023-11-09
+
+### Changed
+
+- Refund remaining prizes early if message gets deleted ([#4708](https://github.com/open-chat-labs/open-chat/pull/4708))
+- Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
+- Support UserIndex calling `delete_messages` ([#4713](https://github.com/open-chat-labs/open-chat/pull/4713))
+- Simplify and improve the @everyone Regex ([#4714](https://github.com/open-chat-labs/open-chat/pull/4714))
+- Extend `c2c_report_message` endpoint ([#4719](https://github.com/open-chat-labs/open-chat/pull/4719))
+- Don't collect reason or notes from reporter ([#4724](https://github.com/open-chat-labs/open-chat/pull/4724))
+- Improve `ReplicaNotUpToDate` check to avoid displaying outdated events ([#4727](https://github.com/open-chat-labs/open-chat/pull/4727))
+- Add `membership` to group summaries to support anonymous mode ([#4730](https://github.com/open-chat-labs/open-chat/pull/4730))
+- Consolidate logic to update thread summaries ([#4736](https://github.com/open-chat-labs/open-chat/pull/4736))
+
+## [[2.0.922](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.922-group)] - 2023-11-02
+
+### Added
+
+- Add `report_message` endpoint ([#4691](https://github.com/open-chat-labs/open-chat/pull/4691))
+
+### Changed
+
+- Reduce size of message content when serialized ([#4680](https://github.com/open-chat-labs/open-chat/pull/4680))
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Make `events_map` generic in preparation for moving it to stable memory ([#4689](https://github.com/open-chat-labs/open-chat/pull/4689))
+- Add `latest_message_index` to chat summaries ([#4693](https://github.com/open-chat-labs/open-chat/pull/4693))
+- Allow deleting all message types ([#4697](https://github.com/open-chat-labs/open-chat/pull/4697))
+
+## [[2.0.914](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.914-group)] - 2023-10-27
+
+### Fixed
+
+- Fix sending of proposal messages ([#4662](https://github.com/open-chat-labs/open-chat/pull/4662))
+
+## [[2.0.910](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.910-group)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` in and out of APIs ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+### Changed
+
+- Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
+- Bump `rules_accepted` timestamp even if version already accepted ([#4635](https://github.com/open-chat-labs/open-chat/pull/4635))
+- Add timestamps to fields included in chat summaries ([#4637](https://github.com/open-chat-labs/open-chat/pull/4637))
+- Avoid iterating events to get summary updates ([#4638](https://github.com/open-chat-labs/open-chat/pull/4638))
+- Avoid iterating events to get chat member updates ([#4639](https://github.com/open-chat-labs/open-chat/pull/4639))
+- Avoid iterating events to get pinned message updates ([#4643](https://github.com/open-chat-labs/open-chat/pull/4643))
+- Avoid setting expiry for some event types ([#4647](https://github.com/open-chat-labs/open-chat/pull/4647))
+- Return expired event + message ranges when getting events ([#4646](https://github.com/open-chat-labs/open-chat/pull/4646))
+
+## [[2.0.888](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.888-group)] - 2023-10-18
+
+### Added
+
+- Add optional `diamond_only` filter to prize messages ([#4587](https://github.com/open-chat-labs/open-chat/pull/4587))
+
+### Changed
+
+- Allow @everyone to be followed by some punctuation ([#4553](https://github.com/open-chat-labs/open-chat/pull/4553))
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+- Set memo based on transaction type ([#4603](https://github.com/open-chat-labs/open-chat/pull/4603))
+
 ### Removed
 
 - Removed `c2c_toggle_mute_notifications` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))

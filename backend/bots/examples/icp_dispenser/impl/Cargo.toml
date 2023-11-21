@@ -26,9 +26,11 @@ icp_dispenser_bot = { path = "../api" }
 icp_ledger_canister_c2c_client = { path = "../../../../external_canisters/icp_ledger/c2c_client" }
 ledger_utils = { path = "../../../../libraries/ledger_utils" }
 msgpack = { path = "../../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { path = "../../../../libraries/serializer" }
+stable_memory = { path = "../../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../../libraries/types" }
 user_canister = { path = "../../../../canisters/user/api" }

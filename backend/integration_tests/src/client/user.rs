@@ -15,6 +15,7 @@ generate_update_call!(cancel_message_reminder);
 generate_update_call!(create_community);
 generate_update_call!(create_group);
 generate_update_call!(delete_community);
+generate_update_call!(delete_direct_chat);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
@@ -35,14 +36,14 @@ generate_update_call!(undelete_messages);
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{
         CanisterId, Chat, ChatId, CommunityId, Cryptocurrency, EventIndex, EventsResponse, MessageContentInitial, MessageId,
         Reaction, Rules, TextContent, TimestampMillis, UserId,
     };
 
     pub fn send_text_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         recipient: UserId,
         text: impl ToString,
@@ -70,7 +71,7 @@ pub mod happy_path {
     }
 
     pub fn create_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         name: &str,
         is_public: bool,
@@ -86,7 +87,7 @@ pub mod happy_path {
                 description: format!("{name}_description"),
                 avatar: None,
                 history_visible_to_new_joiners,
-                permissions: None,
+                permissions_v2: None,
                 rules: Rules::default(),
                 events_ttl: None,
                 gate: None,
@@ -100,7 +101,7 @@ pub mod happy_path {
     }
 
     pub fn create_community(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         name: &str,
         is_public: bool,
@@ -132,13 +133,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn add_reaction(
-        env: &mut StateMachine,
-        sender: &User,
-        user_id: UserId,
-        reaction: impl ToString,
-        message_id: MessageId,
-    ) {
+    pub fn add_reaction(env: &mut PocketIc, sender: &User, user_id: UserId, reaction: impl ToString, message_id: MessageId) {
         let response = super::add_reaction(
             env,
             sender.principal,
@@ -154,7 +149,7 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::add_reaction::Response::Success));
     }
 
-    pub fn initial_state(env: &StateMachine, sender: &User) -> user_canister::initial_state::SuccessResult {
+    pub fn initial_state(env: &PocketIc, sender: &User) -> user_canister::initial_state::SuccessResult {
         let response = super::initial_state(
             env,
             sender.principal,
@@ -167,7 +162,7 @@ pub mod happy_path {
     }
 
     pub fn events(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         user_id: UserId,
         start_index: EventIndex,
@@ -186,7 +181,7 @@ pub mod happy_path {
                 ascending,
                 max_messages,
                 max_events,
-                latest_client_event_index: None,
+                latest_known_update: None,
             },
         );
 
@@ -196,7 +191,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(env: &StateMachine, sender: &User, user_id: UserId, events: Vec<EventIndex>) -> EventsResponse {
+    pub fn events_by_index(env: &PocketIc, sender: &User, user_id: UserId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,
@@ -205,7 +200,7 @@ pub mod happy_path {
                 user_id,
                 thread_root_message_index: None,
                 events,
-                latest_client_event_index: None,
+                latest_known_update: None,
             },
         );
 
@@ -215,7 +210,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn leave_group(env: &mut StateMachine, user: &User, group_id: ChatId) {
+    pub fn leave_group(env: &mut PocketIc, user: &User, group_id: ChatId) {
         let response = super::leave_group(
             env,
             user.principal,
@@ -229,8 +224,19 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::leave_group::Response::Success));
     }
 
+    pub fn leave_community(env: &mut PocketIc, user: &User, community_id: CommunityId) {
+        let response = super::leave_community(
+            env,
+            user.principal,
+            user.canister(),
+            &user_canister::leave_community::Args { community_id },
+        );
+
+        assert!(matches!(response, user_canister::leave_community::Response::Success));
+    }
+
     pub fn updates(
-        env: &StateMachine,
+        env: &PocketIc,
         user: &User,
         updates_since: TimestampMillis,
     ) -> Option<user_canister::updates::SuccessResult> {
@@ -249,7 +255,7 @@ pub mod happy_path {
 
     #[allow(clippy::too_many_arguments)]
     pub fn tip_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         recipient: UserId,
         chat: Chat,
@@ -257,7 +263,6 @@ pub mod happy_path {
         ledger: CanisterId,
         token: Cryptocurrency,
         amount: u128,
-        fee: u128,
     ) {
         let response = super::tip_message(
             env,
@@ -269,9 +274,10 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 ledger,
-                token,
                 amount,
-                fee,
+                fee: token.fee().unwrap(),
+                decimals: token.decimals(),
+                token,
             },
         );
 

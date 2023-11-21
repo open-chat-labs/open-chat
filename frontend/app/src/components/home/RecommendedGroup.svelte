@@ -25,6 +25,7 @@
     export let group: GroupChatSummary;
     export let joining: MultiUserChat | undefined;
 
+    $: suspendedUser = client.suspendedUser;
     $: chatListScope = client.chatListScope;
     $: chatSummariesStore = client.chatSummariesStore;
     $: member = $chatSummariesStore.has(group.id);
@@ -81,7 +82,7 @@
         {#if member}
             <Button tiny on:click={() => leaveGroup(group)}>{$_("leave")}</Button>
         {:else}
-            {#if !client.isReadOnly()}
+            {#if !$suspendedUser}
                 <Button
                     disabled={joining === group}
                     loading={joining === group}

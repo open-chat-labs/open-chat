@@ -1,13 +1,10 @@
 #!/bin/sh
 
-WASM_SRC=$1
-VERSION=$2
-TITLE=$3
-URL=$4
-SUMMARY_PATH=$5
+VERSION=$1
+SUMMARY_PATH=$2
 
+TITLE="Upgrade Notifications canisters to $VERSION"
 SUMMARY=`cat $SUMMARY_PATH`
-
 FUNCTION_ID=3000
 CANISTER_NAME=notifications
 
@@ -17,4 +14,4 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Submit the proposal
-./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME $WASM_SRC "$VERSION" "$TITLE" "$URL" "$SUMMARY"
+./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$SUMMARY"

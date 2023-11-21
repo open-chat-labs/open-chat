@@ -29,13 +29,14 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let member = state.data.members.get(caller);
+    let member_last_updated = member.as_ref().map(|m| m.last_updated()).unwrap_or_default();
 
     let (channels_with_updates, channels_removed) = if let Some(m) = member {
         let channels_with_updates: Vec<_> = m
             .channels
             .iter()
             .filter_map(|c| state.data.channels.get(c))
-            .filter(|c| c.has_updates_since(Some(m.user_id), args.updates_since))
+            .filter(|c| c.last_updated(Some(m.user_id)) > args.updates_since)
             .collect();
 
         let channels_removed = m.channels_removed_since(args.updates_since);
@@ -47,7 +48,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .channels
             .public_channels()
             .into_iter()
-            .filter(|c| c.has_updates_since(None, args.updates_since))
+            .filter(|c| c.last_updated(None) > args.updates_since)
             .collect();
 
         (channels_with_updates, Vec::new())
@@ -56,16 +57,13 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     if channels_with_updates.is_empty()
         && channels_removed.is_empty()
         && state.data.events.latest_event_timestamp() <= args.updates_since
-        && state.data.cached_chat_metrics.timestamp <= args.updates_since
         && state.data.members.user_groups_last_updated() <= args.updates_since
-        && !member.map_or(false, |m| m.has_summary_updates_since(args.updates_since))
+        && member_last_updated <= args.updates_since
     {
         return SuccessNoUpdates;
     }
 
     let updates_from_events = process_events(args.updates_since, member, &state.data);
-
-    let now = state.env.now();
 
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
@@ -75,8 +73,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     for channel in channels_with_updates {
         if channel.date_imported.map_or(false, |ts| ts > args.updates_since) {
-            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members, now)
-            {
+            if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members) {
                 channels_added.push(summary);
             }
         } else {
@@ -86,7 +83,6 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 is_community_member,
                 state.data.is_public,
                 &state.data.members,
-                now,
             ) {
                 ChannelUpdates::Added(s) => channels_added.push(s),
                 ChannelUpdates::Updated(s) => channels_updated.push(s),
@@ -110,9 +106,20 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             }),
     });
 
+    let last_updated = [
+        member_last_updated,
+        state.data.events.latest_event_timestamp(),
+        state.data.members.user_groups_last_updated(),
+    ]
+    .into_iter()
+    .chain(channels_added.iter().map(|c| c.last_updated))
+    .chain(channels_updated.iter().map(|c| c.last_updated))
+    .max()
+    .unwrap_or_default();
+
     Success(CommunityCanisterCommunitySummaryUpdates {
         community_id: state.env.canister_id().into(),
-        last_updated: now,
+        last_updated,
         name: updates_from_events.name,
         description: updates_from_events.description,
         avatar_id: updates_from_events.avatar_id,

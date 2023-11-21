@@ -1,8 +1,11 @@
-use types::icrc1::{Account, TransferArg};
-use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
+use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
+use types::{
+    icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
+    CanisterId,
+};
 
 pub async fn process_transaction(
-    transaction: types::icrc1::PendingCryptoTransaction,
+    transaction: PendingCryptoTransaction,
     sender: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let from = Account::from(sender);
@@ -16,8 +19,8 @@ pub async fn process_transaction(
         amount: transaction.amount.into(),
     };
 
-    match icrc1_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
-        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction::ICRC1(types::icrc1::CompletedCryptoTransaction {
+    match icrc_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
+        Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
             token: transaction.token.clone(),
             amount: transaction.amount,
@@ -27,7 +30,7 @@ pub async fn process_transaction(
             memo: transaction.memo.clone(),
             created: transaction.created,
             block_index: block_index.0.try_into().unwrap(),
-        })),
+        }),
         Ok(Err(transfer_error)) => {
             let error_message = format!("Transfer failed. {transfer_error:?}");
             Err(error_message)
@@ -37,17 +40,15 @@ pub async fn process_transaction(
             Err(error_message)
         }
     }
-    .map_err(|error| {
-        FailedCryptoTransaction::ICRC1(types::icrc1::FailedCryptoTransaction {
-            ledger: transaction.ledger,
-            token: transaction.token,
-            amount: transaction.amount,
-            fee: transaction.fee,
-            from: types::icrc1::CryptoAccount::Account(from),
-            to: types::icrc1::CryptoAccount::Account(transaction.to),
-            memo: transaction.memo,
-            created: transaction.created,
-            error_message: error,
-        })
+    .map_err(|error| FailedCryptoTransaction {
+        ledger: transaction.ledger,
+        token: transaction.token,
+        amount: transaction.amount,
+        fee: transaction.fee,
+        from: types::icrc1::CryptoAccount::Account(from),
+        to: types::icrc1::CryptoAccount::Account(transaction.to),
+        memo: transaction.memo,
+        created: transaction.created,
+        error_message: error,
     })
 }

@@ -5,10 +5,13 @@
     import { createEventDispatcher, getContext } from "svelte";
     import {
         routeForChatIdentifier,
+        type CandidateProposalAction,
         type MultiUserChat,
+        type NervousSystemDetails,
         type OpenChat,
         type Treasury,
     } from "openchat-client";
+    import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -16,55 +19,59 @@
     import TextArea from "../TextArea.svelte";
     import Select from "../Select.svelte";
     import Radio from "../Radio.svelte";
-    import { isPrincipalValid } from "../../utils/sns";
     import PencilIcon from "svelte-material-icons/PencilOutline.svelte";
     import EyeIcon from "svelte-material-icons/EyeOutline.svelte";
     import Markdown from "./Markdown.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
+    import { createAddTokenPayload } from "../../utils/sns";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
     const MAX_URL_LENGTH = 2000;
     const MIN_SUMMARY_LENGTH = 3;
     const MAX_SUMMARY_LENGTH = 5000;
-    const MIN_AMOUNT = 1;
+    const CANISTER_ID_LENGTH = 27;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
-    const user = client.user;
-    const proposalCost = BigInt(400000000);
 
     export let selectedMultiUserChat: MultiUserChat;
-    export let governanceCanisterId: string;
+    export let nervousSystem: NervousSystemDetails;
 
     let title = "";
     let url = "";
     let summary = "";
     let treasury: Treasury = "SNS";
-    let amount = "";
-    let recipient = "";
+    let amountText = "";
+    let recipientOwner = "";
+    let recipientSubaccount = "";
     let step = -1;
     let actualWidth = 0;
     let summaryPreview = false;
     let busy = true;
-    let selectedProposalType: "motion" | "transfer_sns_funds" = "motion";
+    let selectedProposalType:
+        | "motion"
+        | "transfer_sns_funds"
+        | "upgrade_sns_to_next_version"
+        | "add_token" = "motion";
     let message = "";
     let error = true;
-    let recipientValid = false;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
     let refreshingBalance = false;
     let balanceWithRefresh: BalanceWithRefresh;
 
-    $: tokenDetails = client.getTokenByGovernanceCanister(governanceCanisterId);
+    $: user = client.user;
+    $: tokenDetails = nervousSystem.token;
     $: ledger = tokenDetails.ledger;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: transferFees = tokenDetails.transferFee;
-    $: requiredFunds = proposalCost + transferFees + transferFees;
+    $: transferFee = tokenDetails.transferFee;
+    $: proposalCost = nervousSystem.proposalRejectionFee;
+    $: requiredFunds = proposalCost + transferFee + transferFee;
     $: insufficientFunds = cryptoBalance < requiredFunds;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -72,15 +79,35 @@
     $: titleValid = title.length >= MIN_TITLE_LENGTH && title.length <= MAX_TITLE_LENGTH;
     $: urlValid = url.length <= MAX_URL_LENGTH;
     $: summaryValid = summary.length >= MIN_SUMMARY_LENGTH && summary.length <= MAX_SUMMARY_LENGTH;
-    $: amountValid = isAmountValid(amount);
-    $: recipientValid = isPrincipalValid(recipient);
+    $: amount = Number(amountText) * Number(Math.pow(10, tokenDetails.decimals));
+    $: amountValid = amount >= transferFee;
+    $: recipientOwnerValid = isPrincipalValid(recipientOwner);
+    $: recipientSubaccountValid =
+        recipientSubaccount.length === 0 || isSubAccountValid(recipientSubaccount);
+    $: addTokenLedgerCanisterId = "";
+    $: addTokenHowToBuyUrl = "";
+    $: addTokenInfoUrl = "";
+    $: addTokenTransactionUrlFormat = "";
     $: valid =
         !insufficientFunds &&
         titleValid &&
         urlValid &&
         summaryValid &&
-        (selectedProposalType === "motion" || (amountValid && recipientValid));
-    $: canSubmit = step === 2 || (step === 1 && selectedProposalType === "motion");
+        (selectedProposalType === "motion" ||
+            selectedProposalType === "upgrade_sns_to_next_version" ||
+            (selectedProposalType === "transfer_sns_funds" &&
+                amountValid &&
+                recipientOwnerValid &&
+                recipientSubaccountValid) ||
+            (selectedProposalType === "add_token" &&
+                isPrincipalValid(addTokenLedgerCanisterId) &&
+                addTokenHowToBuyUrl.length > 0 &&
+                addTokenTransactionUrlFormat.length > 0));
+    $: canSubmit =
+        step === 2 ||
+        (step === 1 &&
+            (selectedProposalType === "motion" ||
+                selectedProposalType === "upgrade_sns_to_next_version"));
 
     $: {
         if (tokenDetails !== undefined) {
@@ -95,11 +122,6 @@
 
     function onClose() {
         dispatch("close");
-    }
-
-    function isAmountValid(value: string): boolean {
-        const amount = Number(value);
-        return amount >= MIN_AMOUNT;
     }
 
     function onClickPrimary() {
@@ -117,18 +139,10 @@
 
         busy = true;
 
-        const action =
-            selectedProposalType === "motion"
-                ? { kind: selectedProposalType }
-                : {
-                      kind: selectedProposalType,
-                      toPrincipal: recipient,
-                      amount: BigInt(amount),
-                      treasury,
-                  };
+        const action = convertAction();
 
         client
-            .submitProposal(governanceCanisterId, {
+            .submitProposal(nervousSystem.governanceCanisterId, {
                 title,
                 url: url === "" ? undefined : url,
                 summary,
@@ -143,6 +157,40 @@
                     message = $_("proposal.maker.unexpectedError");
                 }
             });
+    }
+
+    function convertAction(): CandidateProposalAction {
+        switch (selectedProposalType) {
+            case "motion":
+            case "upgrade_sns_to_next_version":
+                return { kind: selectedProposalType };
+            case "transfer_sns_funds": {
+                return {
+                    kind: "transfer_sns_funds",
+                    recipient: {
+                        owner: recipientOwner,
+                        subaccount:
+                            recipientSubaccount.length > 0
+                                ? recipientSubaccount.padStart(64, "0")
+                                : undefined,
+                    },
+                    amount: BigInt(Math.floor(amount)),
+                    treasury,
+                };
+            }
+            case "add_token": {
+                return {
+                    kind: "execute_generic_nervous_system_function",
+                    functionId: BigInt(7000),
+                    payload: createAddTokenPayload(
+                        addTokenLedgerCanisterId,
+                        addTokenInfoUrl,
+                        addTokenHowToBuyUrl,
+                        addTokenTransactionUrlFormat
+                    ),
+                };
+            }
+        }
     }
 
     function onStartRefreshingBalance() {
@@ -178,7 +226,7 @@
 
         return `${summary}
 
-> Submitted by [@${user.username}](https://oc.app/user/${user.userId}) on [OpenChat](https://oc.app${groupPath})`;
+> Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
     }
 </script>
 
@@ -198,7 +246,7 @@
     <div class="body" slot="body">
         <div class="sections" style={`left: -${left}px`}>
             <div class="topup hidden" class:visible={step === 0}>
-                <AccountInfo {ledger} {user} />
+                <AccountInfo {ledger} user={$user} />
                 <p>{$_("tokenTransfer.makeDeposit")}</p>
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol } })}
@@ -210,6 +258,11 @@
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
+                        <option value={"upgrade_sns_to_next_version"}
+                            >Upgrade SNS to next version</option>
+                        {#if symbol === "CHAT"}
+                            <option value={"add_token"}>Add token</option>
+                        {/if}
                     </Select>
                 </section>
                 <section>
@@ -280,53 +333,107 @@
                 </section>
             </div>
             <div class="action hidden" class:visible={step === 2}>
-                <div class="hidden" class:visible={selectedProposalType === "transfer_sns_funds"}>
-                    <section>
-                        <Legend label={$_("proposal.maker.treasury")} required />
-                        <Radio
-                            id="chat_treasury"
-                            group="treasury"
-                            value={symbol}
-                            label={symbol}
-                            disabled={busy}
-                            checked={treasury === "SNS"}
-                            on:change={() => (treasury = "SNS")} />
-                        <Radio
-                            id="icp_treasury"
-                            group="treasury"
-                            value="ICP"
-                            label="ICP"
-                            disabled={busy}
-                            checked={treasury === "ICP"}
-                            on:change={() => (treasury = "ICP")} />
-                    </section>
-                    <section>
-                        <Legend label={$_("proposal.maker.toPrincipal")} required />
-                        <Input
-                            disabled={busy}
-                            invalid={recipient.length > 0 && !recipientValid}
-                            bind:value={recipient}
-                            minlength={MIN_TITLE_LENGTH}
-                            maxlength={MAX_TITLE_LENGTH}
-                            countdown
-                            placeholder={$_("proposal.maker.enterToPrincipal")} />
-                    </section>
-                    <section>
-                        <Legend
-                            label={$_("proposal.maker.amount")}
-                            rules={$_("proposal.maker.amountRules", { values: { token } })}
-                            required />
-                        <Input
-                            disabled={busy}
-                            invalid={amount.length > 0 && !amountValid}
-                            minlength={1}
-                            maxlength={20}
-                            bind:value={amount}
-                            placeholder={$_("proposal.maker.enterAmount", {
-                                values: { token },
-                            })} />
-                    </section>
-                </div>
+                {#if selectedProposalType === "transfer_sns_funds"}
+                    <div>
+                        <section>
+                            <Legend label={$_("proposal.maker.treasury")} required />
+                            <Radio
+                                id="chat_treasury"
+                                group="treasury"
+                                value={symbol}
+                                label={symbol}
+                                disabled={busy}
+                                checked={treasury === "SNS"}
+                                on:change={() => (treasury = "SNS")} />
+                            <Radio
+                                id="icp_treasury"
+                                group="treasury"
+                                value="ICP"
+                                label="ICP"
+                                disabled={busy}
+                                checked={treasury === "ICP"}
+                                on:change={() => (treasury = "ICP")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.recipientOwner")} required />
+                            <Input
+                                disabled={busy}
+                                invalid={recipientOwner.length > 0 && !recipientOwnerValid}
+                                maxlength={63}
+                                bind:value={recipientOwner}
+                                placeholder={$_("proposal.maker.enterRecipientOwner")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={$_("proposal.maker.recipientSubaccount")}
+                                rules={$_("proposal.maker.recipientSubaccountRules")} />
+                            <Input
+                                disabled={busy}
+                                invalid={!recipientSubaccountValid}
+                                maxlength={64}
+                                bind:value={recipientSubaccount}
+                                placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
+                        </section>
+                        <section>
+                            <Legend
+                                label={$_("proposal.maker.amount")}
+                                rules={$_("proposal.maker.amountRules", { values: { token } })}
+                                required />
+                            <Input
+                                disabled={busy}
+                                invalid={amountText.length > 0 && !amountValid}
+                                minlength={1}
+                                maxlength={20}
+                                bind:value={amountText}
+                                placeholder={$_("proposal.maker.enterAmount", {
+                                    values: { token },
+                                })} />
+                        </section>
+                    </div>
+                {:else if selectedProposalType === "add_token"}
+                    <div>
+                        <section>
+                            <Legend label={$_("proposal.maker.ledgerCanisterId")} required />
+                            <Input
+                                autofocus
+                                disabled={busy}
+                                invalid={addTokenLedgerCanisterId.length > 0 &&
+                                    !isPrincipalValid(addTokenLedgerCanisterId)}
+                                bind:value={addTokenLedgerCanisterId}
+                                minlength={CANISTER_ID_LENGTH}
+                                maxlength={CANISTER_ID_LENGTH}
+                                countdown
+                                placeholder={$_("proposal.maker.enterLedgerCanisterId")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenInfoUrl}
+                                placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.howToBuyUrl")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenHowToBuyUrl}
+                                placeholder={$_("proposal.maker.enterHowToBuyUrl")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.transactionUrlFormat")} required />
+                            <Input
+                                disabled={busy}
+                                minlength={1}
+                                maxlength={100}
+                                bind:value={addTokenTransactionUrlFormat}
+                                placeholder={$_("proposal.maker.enterTransactionUrlFormat")} />
+                        </section>
+                    </div>
+                {/if}
             </div>
         </div>
     </div>

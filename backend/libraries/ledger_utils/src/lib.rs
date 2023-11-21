@@ -1,8 +1,9 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use sha256::sha256;
-use types::icrc1::Account;
 use types::{
     nns::UserOrAccount, CanisterId, CompletedCryptoTransaction, Cryptocurrency, FailedCryptoTransaction,
     PendingCryptoTransaction, TimestampNanos, TransactionHash, UserId,
@@ -17,9 +18,10 @@ pub fn create_pending_transaction(
     amount: u128,
     fee: u128,
     user_id: UserId,
+    memo: Option<&[u8]>,
     now_nanos: TimestampNanos,
 ) -> PendingCryptoTransaction {
-    match token {
+    let transaction = match token {
         Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
             ledger,
             token,
@@ -38,6 +40,11 @@ pub fn create_pending_transaction(
             memo: None,
             created: now_nanos,
         }),
+    };
+    if let Some(memo) = memo {
+        transaction.set_memo(memo)
+    } else {
+        transaction
     }
 }
 
@@ -47,7 +54,16 @@ pub async fn process_transaction(
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     match transaction {
         PendingCryptoTransaction::NNS(t) => nns::process_transaction(t, sender).await,
-        PendingCryptoTransaction::ICRC1(t) => icrc1::process_transaction(t, sender).await,
+        PendingCryptoTransaction::ICRC1(t) => {
+            if t.token == Cryptocurrency::InternetComputer {
+                nns::process_transaction(t.into(), sender).await
+            } else {
+                match icrc1::process_transaction(t, sender).await {
+                    Ok(c) => Ok(c.into()),
+                    Err(f) => Err(f.into()),
+                }
+            }
+        }
     }
 }
 
@@ -94,6 +110,18 @@ pub fn format_crypto_amount(units: u128, decimals: u8) -> String {
         .trim_end_matches('0')
         .trim_end_matches('.')
         .to_string()
+}
+
+pub fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
+    const DOMAIN: &[u8] = b"neuron-stake";
+    const DOMAIN_LENGTH: [u8; 1] = [0x0c];
+
+    let mut hasher = Sha256::new();
+    hasher.update(DOMAIN_LENGTH);
+    hasher.update(DOMAIN);
+    hasher.update(controller.as_slice());
+    hasher.update(nonce.to_be_bytes());
+    hasher.finalize().into()
 }
 
 /// An operation which modifies account balances

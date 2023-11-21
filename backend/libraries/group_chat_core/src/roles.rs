@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{GroupPermissionRole, GroupPermissions, GroupRole};
+use types::{GroupPermissionRole, GroupPermissions, GroupRole, MessageContentInitial};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
@@ -93,20 +93,40 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.pin_messages)
     }
 
-    pub fn can_create_polls(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.create_polls)
-    }
+    pub fn can_send_message(&self, message: &MessageContentInitial, is_thread: bool, permissions: &GroupPermissions) -> bool {
+        let ps = if is_thread && permissions.thread_permissions.is_some() {
+            permissions.thread_permissions.as_ref().unwrap()
+        } else {
+            &permissions.message_permissions
+        };
 
-    pub fn can_send_messages(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.send_messages)
+        let sender_role = match message {
+            MessageContentInitial::Text(_) => ps.text.unwrap_or(ps.default),
+            MessageContentInitial::Image(_) => ps.image.unwrap_or(ps.default),
+            MessageContentInitial::Video(_) => ps.video.unwrap_or(ps.default),
+            MessageContentInitial::Audio(_) => ps.audio.unwrap_or(ps.default),
+            MessageContentInitial::File(_) => ps.file.unwrap_or(ps.default),
+            MessageContentInitial::Poll(_) => ps.poll.unwrap_or(ps.default),
+            MessageContentInitial::Crypto(_) => ps.crypto.unwrap_or(ps.default),
+            MessageContentInitial::Deleted(_) => GroupPermissionRole::None,
+            MessageContentInitial::Giphy(_) => ps.giphy.unwrap_or(ps.default),
+            MessageContentInitial::GovernanceProposal(_) => GroupPermissionRole::Owner,
+            MessageContentInitial::Prize(_) => ps.prize.unwrap_or(ps.default),
+            MessageContentInitial::MessageReminderCreated(_) => GroupPermissionRole::None,
+            MessageContentInitial::MessageReminder(_) => GroupPermissionRole::Members,
+            MessageContentInitial::Custom(mc) => ps
+                .custom
+                .iter()
+                .find(|cp| cp.subtype == mc.kind)
+                .map(|cp| cp.role)
+                .unwrap_or(ps.default),
+        };
+
+        self.is_permitted(sender_role)
     }
 
     pub fn can_react_to_messages(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.react_to_messages)
-    }
-
-    pub fn can_reply_in_thread(&self, permissions: &GroupPermissions) -> bool {
-        self.is_permitted(permissions.reply_in_thread)
     }
 
     pub fn can_delete_group(&self) -> bool {
@@ -131,6 +151,7 @@ impl GroupRoleInternal {
 
     pub fn is_permitted(&self, permission_role: GroupPermissionRole) -> bool {
         match permission_role {
+            GroupPermissionRole::None => false,
             GroupPermissionRole::Owner => self.is_owner(),
             GroupPermissionRole::Admins => self.has_admin_rights(),
             GroupPermissionRole::Moderators => self.has_moderator_rights(),

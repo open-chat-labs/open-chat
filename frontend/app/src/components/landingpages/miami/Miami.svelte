@@ -38,8 +38,7 @@
                                     <div class="launch-wrapper">
                                         <Launch
                                             text="Let's go!"
-                                            rootPath={`/user/${OPENCHAT_BOT_USER_ID}`}
-                                            on:login />
+                                            rootPath={`/user/${OPENCHAT_BOT_USER_ID}`} />
                                     </div>
                                 {/if}
                             </div>
@@ -49,7 +48,7 @@
             </Content>
             {#if $mobileWidth}
                 <div class="launch-wrapper">
-                    <Launch text="Let's go!" rootPath={`/user/${OPENCHAT_BOT_USER_ID}`} on:login />
+                    <Launch text="Let's go!" rootPath={`/user/${OPENCHAT_BOT_USER_ID}`} />
                 </div>
             {/if}
         </div>
@@ -262,7 +261,7 @@
             padding: $sp4;
             .launch-wrapper {
                 width: 230px;
-                border-radius: $sp2;
+                border-radius: var(--rd);
                 text-align: center;
                 bottom: -36px;
                 margin: toRem(30) 0 toRem(10) 0;

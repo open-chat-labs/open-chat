@@ -101,6 +101,8 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
         } else {
             let now = state.env.now();
             let channel_id: ChannelId = state.env.rng().gen();
+            let permissions = args.permissions_v2.unwrap_or_default();
+
             let chat = GroupChatCore::new(
                 member.user_id,
                 args.is_public,
@@ -110,7 +112,7 @@ fn create_channel_impl(args: Args, is_proposals_channel: bool, state: &mut Runti
                 subtype,
                 args.avatar,
                 args.history_visible_to_new_joiners,
-                args.permissions.unwrap_or_default(),
+                permissions,
                 args.gate,
                 args.events_ttl,
                 member.is_bot,

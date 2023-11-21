@@ -8,13 +8,21 @@
     import Menu from "../../Menu.svelte";
     import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
+    import type { OpenChat } from "openchat-client";
 
+    const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: anonUser = client.anonUser;
+
     function newGroup() {
-        dispatch("newGroup");
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+        } else {
+            dispatch("newGroup");
+        }
     }
 </script>
 

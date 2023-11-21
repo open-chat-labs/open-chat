@@ -20,11 +20,11 @@
     import LinkButton from "../../LinkButton.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: user = client.user;
     $: chatListScope = client.chatListScope;
     $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
@@ -32,6 +32,7 @@
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
     $: threadRootMessageIndex = thread.rootMessage.event.messageIndex;
     $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
+    $: muted = chat?.membership?.notificationsMuted || false;
     $: syncDetails = chat?.membership?.latestThreads?.find(
         (t) => t.threadRootMessageIndex === threadRootMessageIndex
     );
@@ -116,6 +117,7 @@
                         title={$_("chatSummary.unread", {
                             values: { count: unreadCount.toString() },
                         })}
+                        class:muted
                         class="unread">
                         {unreadCount > 999 ? "999+" : unreadCount}
                     </div>
@@ -135,8 +137,8 @@
                             readByThem
                             chatId={thread.chatId}
                             chatType={chat.kind}
-                            {user}
-                            me={thread.rootMessage.event.sender === user.userId}
+                            user={$user}
+                            me={thread.rootMessage.event.sender === $user.userId}
                             first
                             last
                             readonly
@@ -154,6 +156,7 @@
                             editing={false}
                             eventIndex={thread.rootMessage.index}
                             timestamp={thread.rootMessage.timestamp}
+                            expiresAt={thread.rootMessage.expiresAt}
                             dateFormatter={client.toDatetimeString}
                             msg={thread.rootMessage.event} />
                     </div>
@@ -177,8 +180,8 @@
                                 readByThem
                                 chatId={thread.chatId}
                                 chatType={chat.kind}
-                                {user}
-                                me={evt.event.sender === user.userId}
+                                user={$user}
+                                me={evt.event.sender === $user.userId}
                                 first={i === 0}
                                 last={i === userGroup.length - 1}
                                 readonly
@@ -196,6 +199,7 @@
                                 editing={false}
                                 eventIndex={evt.index}
                                 timestamp={evt.timestamp}
+                                expiresAt={evt.expiresAt}
                                 dateFormatter={client.toDatetimeString}
                                 msg={evt.event} />
                         {/each}
@@ -264,5 +268,10 @@
     .unread {
         @include unread();
         margin: 0 $sp2;
+
+        &.muted {
+            background-color: var(--unread-mute);
+            text-shadow: none;
+        }
     }
 </style>

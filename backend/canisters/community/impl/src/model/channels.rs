@@ -1,13 +1,13 @@
 use chat_events::Reader;
-use group_chat_core::{GroupChatCore, GroupMemberInternal, LeaveResult};
+use group_chat_core::{CanLeaveResult, GroupChatCore, GroupMemberInternal, LeaveResult};
 use search::*;
 use serde::{Deserialize, Serialize};
-use std::cmp::Reverse;
+use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelMatch, ChannelMembership, ChannelMembershipUpdates, CommunityCanisterChannelSummary,
-    CommunityCanisterChannelSummaryUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
+    ChannelId, ChannelMatch, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupMembership,
+    GroupMembershipUpdates, GroupPermissionRole, GroupPermissions, Rules, TimestampMillis, Timestamped, UserId,
     MAX_THREADS_IN_SUMMARY,
 };
 
@@ -68,7 +68,7 @@ impl Channels {
     pub fn public_channel_ids(&self) -> Vec<ChannelId> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.chat.is_public)
+            .filter(|(_, c)| c.chat.is_public.value)
             .map(|(id, _)| id)
             .copied()
             .collect()
@@ -77,9 +77,18 @@ impl Channels {
     pub fn public_channels(&self) -> Vec<&Channel> {
         self.channels
             .iter()
-            .filter(|(_, c)| c.chat.is_public)
+            .filter(|(_, c)| c.chat.is_public.value)
             .map(|(_, c)| c)
             .collect()
+    }
+
+    pub fn can_leave_all_channels(&self, user_id: UserId) -> bool {
+        self.channels.values().all(|c| {
+            matches!(
+                c.chat.can_leave(user_id),
+                CanLeaveResult::Yes | CanLeaveResult::UserNotInGroup
+            )
+        })
     }
 
     pub fn leave_all_channels(&mut self, user_id: UserId, now: TimestampMillis) -> HashMap<ChannelId, GroupMemberInternal> {
@@ -111,7 +120,7 @@ impl Channels {
         let mut matches: Vec<_> = self
             .channels
             .values()
-            .filter(|c| c.chat.is_public)
+            .filter(|c| c.chat.is_public.value)
             .map(|c| {
                 let score = if let Some(query) = &query {
                     let document: Document = c.into();
@@ -190,14 +199,13 @@ impl Channel {
         is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
-        now: TimestampMillis,
     ) -> Option<CommunityCanisterChannelSummary> {
         let chat = &self.chat;
         let member = user_id.and_then(|user_id| chat.members.get(&user_id));
 
         let (min_visible_event_index, min_visible_message_index) = if let Some(member) = member {
             (member.min_visible_event_index(), member.min_visible_message_index())
-        } else if chat.is_public {
+        } else if chat.is_public.value {
             chat.min_visible_indexes_for_new_members.unwrap_or_default()
         } else if let Some(invitation) = user_id.and_then(|user_id| chat.invited_users.get(&user_id)) {
             (invitation.min_visible_event_index, invitation.min_visible_message_index)
@@ -208,17 +216,17 @@ impl Channel {
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
 
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
-        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
         let latest_message = if can_view_latest_message { main_events_reader.latest_message_event(user_id) } else { None };
+        let events_ttl = chat.events.get_events_time_to_live();
 
         let latest_message_sender_display_name = latest_message
             .as_ref()
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembership {
+        let membership = member.map(|m| GroupMembership {
             joined: m.date_added,
-            role: m.role.into(),
+            role: m.role.value.into(),
             mentions: m.most_recent_mentions(None, &chat.events),
             notifications_muted: m.notifications_muted.value,
             my_metrics: chat
@@ -241,30 +249,32 @@ impl Channel {
 
         Some(CommunityCanisterChannelSummary {
             channel_id: self.id,
-            last_updated: now,
-            name: chat.name.clone(),
-            description: chat.description.clone(),
+            last_updated: self.chat.last_updated(user_id),
+            name: chat.name.value.clone(),
+            description: chat.description.value.clone(),
             subtype: chat.subtype.value.clone(),
             avatar_id: types::Document::id(&chat.avatar),
-            is_public: chat.is_public,
+            is_public: chat.is_public.value,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
             latest_message,
             latest_message_sender_display_name,
-            latest_event_index,
+            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: main_events_reader.latest_message_index(),
             member_count: chat.members.len(),
-            permissions: chat.permissions.clone(),
+            permissions_v2: chat.permissions.value.clone(),
             metrics: chat.events.metrics().hydrate(),
             date_last_pinned: chat.date_last_pinned,
-            events_ttl: chat.events.get_events_time_to_live().value,
+            events_ttl: events_ttl.value,
+            events_ttl_last_updated: events_ttl.timestamp,
             gate: chat.gate.value.clone(),
             membership,
         })
     }
 
-    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        self.chat.has_updates_since(user_id, since) || self.date_imported.unwrap_or_default() > since
+    pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(self.chat.last_updated(user_id), self.date_imported.unwrap_or_default())
     }
 
     pub fn summary_updates(
@@ -274,7 +284,6 @@ impl Channel {
         is_community_member: bool,
         is_public_community: bool,
         community_members: &CommunityMembers,
-        now: TimestampMillis,
     ) -> ChannelUpdates {
         let chat = &self.chat;
         let member = user_id.and_then(|id| chat.members.get(&id));
@@ -282,27 +291,25 @@ impl Channel {
         if let Some(m) = member {
             if m.date_added > since {
                 return ChannelUpdates::Added(
-                    self.summary(user_id, is_community_member, is_public_community, community_members, now)
+                    self.summary(user_id, is_community_member, is_public_community, community_members)
                         .expect("Channel should be accessible"),
                 );
             }
         }
 
         let can_view_latest_message = self.can_view_latest_message(member.is_some(), is_community_member, is_public_community);
-        let updates_from_events = chat.summary_updates_from_events(since, user_id);
+        let updates = chat.summary_updates(since, user_id);
 
-        let latest_message = can_view_latest_message
-            .then_some(updates_from_events.latest_message)
-            .flatten();
+        let latest_message = can_view_latest_message.then_some(updates.latest_message).flatten();
 
         let latest_message_sender_display_name = latest_message
             .as_ref()
             .and_then(|m| community_members.get_by_user_id(&m.event.sender))
             .and_then(|m| m.display_name().value.clone());
 
-        let membership = member.map(|m| ChannelMembershipUpdates {
-            role: updates_from_events.role_changed.then_some(m.role.into()),
-            mentions: updates_from_events.mentions,
+        let membership = member.map(|m| GroupMembershipUpdates {
+            role: updates.role_changed.then_some(m.role.value.into()),
+            mentions: updates.mentions,
             notifications_muted: m.notifications_muted.if_set_after(since).cloned(),
             my_metrics: self.chat.events.user_metrics(&m.user_id, Some(since)).map(|m| m.hydrate()),
             latest_threads: self.chat.events.latest_threads(
@@ -319,28 +326,30 @@ impl Channel {
             rules_accepted: m
                 .rules_accepted
                 .as_ref()
-                .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > since)
+                .filter(|accepted| updates.rules_changed || accepted.timestamp > since)
                 .map(|accepted| accepted.value >= chat.rules.text.version),
         });
 
         ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
             channel_id: self.id,
-            last_updated: now,
-            name: updates_from_events.name,
-            description: updates_from_events.description,
-            subtype: updates_from_events.subtype,
-            avatar_id: updates_from_events.avatar_id,
-            is_public: updates_from_events.is_public,
+            last_updated: self.last_updated(user_id),
+            name: updates.name,
+            description: updates.description,
+            subtype: updates.subtype,
+            avatar_id: updates.avatar_id,
+            is_public: updates.is_public,
             latest_message,
             latest_message_sender_display_name,
-            latest_event_index: updates_from_events.latest_event_index,
-            member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
-            permissions: updates_from_events.permissions,
-            updated_events: updates_from_events.updated_events,
+            latest_event_index: updates.latest_event_index,
+            latest_message_index: updates.latest_message_index,
+            member_count: updates.member_count,
+            permissions_v2: updates.permissions,
+            updated_events: updates.updated_events,
             metrics: Some(self.chat.events.metrics().hydrate()),
-            date_last_pinned: updates_from_events.date_last_pinned,
-            events_ttl: updates_from_events.events_ttl,
-            gate: updates_from_events.gate,
+            date_last_pinned: updates.date_last_pinned,
+            events_ttl: updates.events_ttl,
+            events_ttl_last_updated: updates.events_ttl_last_updated,
+            gate: updates.gate,
             membership,
         })
     }
@@ -361,7 +370,7 @@ impl Channel {
     }
 
     fn can_view_latest_message(&self, is_channel_member: bool, is_community_member: bool, is_community_public: bool) -> bool {
-        is_channel_member || (self.chat.is_public && (is_community_member || is_community_public))
+        is_channel_member || (self.chat.is_public.value && (is_community_member || is_community_public))
     }
 }
 
@@ -374,8 +383,8 @@ impl From<&Channel> for ChannelMatch {
     fn from(channel: &Channel) -> Self {
         ChannelMatch {
             id: channel.id,
-            name: channel.chat.name.clone(),
-            description: channel.chat.description.clone(),
+            name: channel.chat.name.value.clone(),
+            description: channel.chat.description.value.clone(),
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
@@ -386,9 +395,11 @@ impl From<&Channel> for ChannelMatch {
 impl From<&Channel> for Document {
     fn from(channel: &Channel) -> Self {
         let mut document = Document::default();
-        document
-            .add_field(channel.chat.name.clone(), 5.0, true)
-            .add_field(channel.chat.description.clone(), 1.0, true);
+        document.add_field(channel.chat.name.value.clone(), 5.0, true).add_field(
+            channel.chat.description.value.clone(),
+            1.0,
+            true,
+        );
         document
     }
 }

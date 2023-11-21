@@ -20,7 +20,6 @@
     import CryptoSelector from "./CryptoSelector.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let draftAmount: bigint;
@@ -28,6 +27,7 @@
     export let chat: ChatSummary;
     export let defaultReceiver: string | undefined;
 
+    $: user = client.user;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
@@ -56,7 +56,7 @@
         // default the receiver to the other user in a direct chat
         if (chat.kind === "direct_chat") {
             receiver = $userStore[chat.them.userId];
-        } else if (defaultReceiver !== undefined && defaultReceiver !== user.userId) {
+        } else if (defaultReceiver !== undefined && defaultReceiver !== $user.userId) {
             receiver = $userStore[defaultReceiver];
         }
     });
@@ -150,7 +150,7 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
+                    <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
                     {/if}
@@ -261,7 +261,7 @@
         display: flex;
         align-items: flex-start;
         gap: $sp3;
-        border-radius: $sp2;
+        border-radius: var(--rd);
 
         .alert {
             flex: 0 0 25px;

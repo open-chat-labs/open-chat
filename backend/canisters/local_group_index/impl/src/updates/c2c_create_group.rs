@@ -72,7 +72,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         subtype: args.subtype,
         // History is always visible on public groups
         history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
-        permissions: args.permissions,
+        permissions_v2: args.permissions_v2,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
         events_ttl: args.events_ttl,

@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::{Chat, ChatEvent, ChatId, MessageContent, MultiUserChat};
 
@@ -82,7 +82,7 @@ fn report_message_succeeds() {
             ascending: true,
             max_messages: 10,
             max_events: 10,
-            latest_client_event_index: None,
+            latest_known_update: None,
         },
     );
     let mut success = false;
@@ -109,7 +109,7 @@ fn report_message_succeeds() {
     }
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::register_diamond_user(env, canister_ids, controller);
 

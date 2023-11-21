@@ -9,7 +9,7 @@ wasms/
 **/*.env_v1
 **/*.pem
 **/*.rs.bk
-ic-test-state-machine*
+pocket-ic*
 msg.json
 notes.md
 notification.did

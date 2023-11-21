@@ -14,10 +14,10 @@ generate_update_call!(unfreeze_group);
 
 pub mod happy_path {
     use crate::User;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{CanisterId, CommunityMatch, GroupMatch};
 
-    pub fn explore_communities(env: &StateMachine, sender: &User, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
+    pub fn explore_communities(env: &PocketIc, sender: &User, group_index_canister_id: CanisterId) -> Vec<CommunityMatch> {
         let response = super::explore_communities(
             env,
             sender.principal,
@@ -38,7 +38,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn explore_groups(env: &StateMachine, sender: &User, group_index_canister_id: CanisterId) -> Vec<GroupMatch> {
+    pub fn explore_groups(env: &PocketIc, sender: &User, group_index_canister_id: CanisterId) -> Vec<GroupMatch> {
         let response = super::explore_groups(
             env,
             sender.principal,

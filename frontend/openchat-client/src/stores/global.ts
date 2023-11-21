@@ -51,7 +51,12 @@ export const chatListScopeStore = safeWritable<ChatListScope>({ kind: "none" }, 
 
 export const favouritesStore = derived(globalStateStore, (state) => state.favourites);
 
-type UnreadCounts = {
+export type CombinedUnreadCounts = {
+    threads: UnreadCounts;
+    chats: UnreadCounts;
+};
+
+export type UnreadCounts = {
     muted: number;
     unmuted: number;
     mentions: boolean;
@@ -65,6 +70,13 @@ export function emptyUnreadCounts(): UnreadCounts {
     };
 }
 
+export function emptyCombinedUnreadCounts(): CombinedUnreadCounts {
+    return {
+        chats: emptyUnreadCounts(),
+        threads: emptyUnreadCounts(),
+    };
+}
+
 function hasUnreadMentions(chat: ChatSummary): boolean {
     if (chat.kind === "direct_chat") return false;
     return (
@@ -74,39 +86,94 @@ function hasUnreadMentions(chat: ChatSummary): boolean {
     );
 }
 
-function unreadCountForChatList(chats: (ChatSummary | undefined)[]): UnreadCounts {
+function mergeUnreadCounts(
+    unreadMessages: number,
+    muted: boolean,
+    mentions: boolean,
+    counts: UnreadCounts,
+    increment: number = 1,
+): UnreadCounts {
+    const toAdd = unreadMessages > 0 ? increment : 0;
+    return {
+        mentions: counts.mentions || mentions,
+        unmuted: muted ? counts.unmuted : counts.unmuted + toAdd,
+        muted: muted ? counts.muted + toAdd : counts.muted,
+    };
+}
+
+function combinedUnreadCountForChats(chats: (ChatSummary | undefined)[]): CombinedUnreadCounts {
     return chats.reduce(
         (counts, chat) => {
             if (chat === undefined) return counts;
-            const unread = messagesRead.unreadMessageCount(
+
+            const muted = chat.membership.notificationsMuted;
+            const mentions = hasUnreadMentions(chat);
+            const unreadMessages = messagesRead.unreadMessageCount(
                 chat.id,
                 chat.latestMessage?.event.messageIndex,
             );
-            const increment = unread > 0 ? 1 : 0;
+            const unreadThreads = messagesRead.staleThreadCountForChat(
+                chat.id,
+                chat.membership.latestThreads,
+            );
             return {
-                mentions: counts.mentions || hasUnreadMentions(chat),
-                unmuted: chat.membership.notificationsMuted
-                    ? counts.unmuted
-                    : counts.unmuted + increment,
-                muted: chat.membership.notificationsMuted ? counts.muted + increment : counts.muted,
+                chats: mergeUnreadCounts(unreadMessages, muted, mentions, counts.chats),
+                threads: mergeUnreadCounts(
+                    unreadThreads,
+                    muted,
+                    false,
+                    counts.threads,
+                    unreadThreads,
+                ),
             };
         },
-        { muted: 0, unmuted: 0, mentions: false } as UnreadCounts,
+        { chats: emptyUnreadCounts(), threads: emptyUnreadCounts() } as CombinedUnreadCounts,
     );
 }
 
+export function mergeCombinedUnreadCounts({ chats, threads }: CombinedUnreadCounts): UnreadCounts {
+    return mergePairOfUnreadCounts(chats, threads);
+}
+
+export function mergeListOfCombinedUnreadCounts(
+    counts: CombinedUnreadCounts[],
+): CombinedUnreadCounts {
+    return counts.reduce(
+        (result, count) => mergePairOfCombinedUnreadCounts(result, count),
+        emptyCombinedUnreadCounts(),
+    );
+}
+
+export function mergePairOfCombinedUnreadCounts(
+    a: CombinedUnreadCounts,
+    b: CombinedUnreadCounts,
+): CombinedUnreadCounts {
+    return {
+        chats: mergePairOfUnreadCounts(a.chats, b.chats),
+        threads: mergePairOfUnreadCounts(a.threads, b.threads),
+    };
+}
+
+export function mergePairOfUnreadCounts(a: UnreadCounts, b: UnreadCounts): UnreadCounts {
+    return {
+        muted: a.muted + b.muted,
+        unmuted: a.unmuted + b.unmuted,
+        mentions: a.mentions || b.mentions,
+    };
+}
+
 // the messagesRead store is used as part of the derivation so that it gets recomputed when messages are read
-export const unreadGroupChats = derived(
+export const unreadGroupCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return unreadCountForChatList($global.groupChats.values());
+        return combinedUnreadCountForChats($global.groupChats.values());
     },
 );
 
-export const unreadDirectChats = derived(
+export const unreadDirectCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
-        return unreadCountForChatList($global.directChats.values());
+        return combinedUnreadCountForChats($global.directChats.values());
     },
 );
 
@@ -121,43 +188,33 @@ export const allServerChats = derived(globalStateStore, ($global) => {
     return getAllServerChats($global);
 });
 
-export const unreadFavouriteChats = derived(
+export const unreadFavouriteCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         const allChats = getAllServerChats($global);
         const chats = $global.favourites.values().map((id) => allChats.get(id));
-        return unreadCountForChatList(chats);
+        return combinedUnreadCountForChats(chats);
     },
 );
 
-export const unreadCommunityChannels = derived(
+export const unreadCommunityChannelCounts = derived(
     [globalStateStore, messagesRead],
     ([$global, _$messagesRead]) => {
         return $global.communities.values().reduce((map, community) => {
-            map.set(community.id, unreadCountForChatList(community.channels));
+            map.set(community.id, combinedUnreadCountForChats(community.channels));
             return map;
-        }, new CommunityMap<UnreadCounts>());
+        }, new CommunityMap<CombinedUnreadCounts>());
     },
 );
 
 export const globalUnreadCount = derived(
-    [unreadGroupChats, unreadDirectChats, unreadCommunityChannels],
-    ([groupCounts, directCounts, $communities]) => {
-        const communityCounts = $communities.values().reduce(
-            (agg, counts) => {
-                return {
-                    unmuted: agg.unmuted + counts.unmuted,
-                    muted: agg.muted + counts.muted,
-                    mentions: agg.mentions || counts.mentions,
-                };
-            },
-            { muted: 0, unmuted: 0, mentions: false },
-        );
-        return {
-            unmuted: groupCounts.unmuted + directCounts.unmuted + communityCounts.unmuted,
-            muted: groupCounts.muted + directCounts.muted + communityCounts.muted,
-            mentions: groupCounts.mentions || directCounts.mentions || communityCounts.mentions,
-        };
+    [unreadGroupCounts, unreadDirectCounts, unreadCommunityChannelCounts],
+    ([$groupCounts, $directCounts, $communities]) => {
+        return mergeListOfCombinedUnreadCounts([
+            $groupCounts,
+            $directCounts,
+            mergeListOfCombinedUnreadCounts($communities.values()),
+        ]);
     },
 );
 

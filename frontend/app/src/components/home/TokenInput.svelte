@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
-    import { E8S_PER_TOKEN, type OpenChat } from "openchat-client";
+    import { type OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
@@ -10,9 +10,11 @@
 
     export let amount: bigint = BigInt(0);
     export let autofocus: boolean = false;
+    export let minAmount: bigint = BigInt(0);
     export let maxAmount: bigint;
     export let ledger: string;
     export let valid: boolean = false;
+    export let state: "ok" | "zero" | "too_low" | "too_high" = "zero";
     export let label: string = "tokenTransfer.amount";
     export let transferFees: bigint;
 
@@ -40,14 +42,14 @@
     }
 
     $: {
-        // Re-validate whenever maxAmount changes
-        if (maxAmount) {
+        // Re-validate whenever minAmount or maxAmount changes
+        if (minAmount || maxAmount) {
         }
         validate();
     }
 
     function onKeyup() {
-        const inputAmount = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
+        const inputAmount = Math.round(Number(inputElement.value) * Math.pow(10, tokenDecimals));
         if (!isNaN(inputAmount)) {
             amount = BigInt(inputAmount);
         }
@@ -55,15 +57,20 @@
 
     function max() {
         amount = maxAmount;
-        valid = true;
+        validate();
     }
 
     function validate() {
-        if (amount <= 0 || amount > maxAmount) {
-            valid = false;
+        if (amount === BigInt(0)) {
+            state = "zero";
+        } else if (amount < minAmount) {
+            state = "too_low";
+        } else if (amount > maxAmount) {
+            state = "too_high";
         } else {
-            valid = true;
+            state = "ok";
         }
+        valid = state === "ok";
     }
 </script>
 
@@ -86,8 +93,8 @@
     <input
         {autofocus}
         class="amount-val"
-        min={0}
-        max={Number(maxAmount) / E8S_PER_TOKEN}
+        min={Number(maxAmount) / Math.pow(10, tokenDecimals)}
+        max={Number(maxAmount) / Math.pow(10, tokenDecimals)}
         type="number"
         step="0.00000001"
         bind:this={inputElement}
@@ -110,7 +117,7 @@
             background: var(--button-bg);
             color: var(--button-txt);
             padding: 0 $sp3;
-            border-radius: $sp2;
+            border-radius: var(--rd);
             cursor: pointer;
             border: none;
             @include font(book, normal, fs-50, 20);

@@ -2,13 +2,14 @@
 
 use crate::utils::principal_to_username;
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use types::{CanisterId, Cycles, UserId};
 
 mod change_group_role_tests;
 mod client;
 mod communities;
 mod cycles_dispenser_tests;
+mod delete_direct_chat_tests;
 mod delete_group_tests;
 mod delete_message_tests;
 mod diamond_membership_tests;
@@ -22,6 +23,7 @@ mod last_online_date_tests;
 mod notification_tests;
 mod platform_moderator_tests;
 mod poll_tests;
+mod prize_message_tests;
 mod register_user_tests;
 mod registry_tests;
 mod remove_from_group_tests;
@@ -40,7 +42,7 @@ mod utils;
 mod wasms;
 
 pub struct TestEnv {
-    pub env: StateMachine,
+    pub env: PocketIc,
     pub canister_ids: CanisterIds,
     pub controller: Principal,
 }

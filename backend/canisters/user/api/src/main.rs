@@ -18,12 +18,14 @@ fn main() {
 
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
+    generate_candid_method!(user, approve_transfer, update);
     generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);
     generate_candid_method!(user, create_community, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_community, update);
+    generate_candid_method!(user, delete_direct_chat, update);
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
@@ -36,6 +38,7 @@ fn main() {
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);
+    generate_candid_method!(user, report_message, update);
     generate_candid_method!(user, save_crypto_account, update);
     generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);

@@ -62,7 +62,6 @@
     let loadingFromUserScroll = false;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
-    let user = client.user;
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
     let destroyed = false;
@@ -70,10 +69,14 @@
     let labelObserver: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
 
+    $: user = client.user;
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
-    $: messageContext = { chatId: chat.id, threadRootMessageIndex: threadRootEvent?.event.messageIndex };
+    $: messageContext = {
+        chatId: chat.id,
+        threadRootMessageIndex: threadRootEvent?.event.messageIndex,
+    };
 
     const keyMeasurements = () => ({
         scrollHeight: messagesDiv!.scrollHeight,
@@ -280,7 +283,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([user.userId]),
+                participantIds: new Set<string>([$user.userId]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -414,6 +417,7 @@
                     $pathParams.kind === "selected_channel_route") &&
                 ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
             ) {
+                client.setFocusThreadMessageIndex(chat.id, $pathParams.threadMessageIndex);
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -605,7 +609,10 @@
         if (threadSummary !== undefined) {
             loadIndexThenScrollToBottom(messageContext, threadSummary.numberOfReplies - 1);
         } else {
-            loadIndexThenScrollToBottom(messageContext, chat.latestMessage?.event.messageIndex ?? -1);
+            loadIndexThenScrollToBottom(
+                messageContext,
+                chat.latestMessage?.event.messageIndex ?? -1
+            );
         }
     }
 

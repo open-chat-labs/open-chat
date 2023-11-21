@@ -5,6 +5,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Refund ckBTC which Dfinity provided for the Bitcoin Miami promotion ([#4795](https://github.com/open-chat-labs/open-chat/pull/4795))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+## [[2.0.936](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.936-local_user_index)] - 2023-11-16
+
+### Changed
+
+- Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+
+## [[2.0.924](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.924-local_user_index)] - 2023-11-03
+
+### Changed
+
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+
+### Removed
+
+- Removed old permissions code ([#4667](https://github.com/open-chat-labs/open-chat/pull/4667))
+
+## [[2.0.906](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.906-local_user_index)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` to group/channel summary ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+## [[2.0.895](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.895-local_user_index)] - 2023-10-19
+
+### Changed
+
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+
 ## [[2.0.878](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.878-local_user_index)] - 2023-10-09
 
 ### Removed

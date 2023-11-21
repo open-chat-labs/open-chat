@@ -1,9 +1,11 @@
 use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state};
 use canister_timer_jobs::Job;
+use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction};
+use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -62,8 +64,9 @@ impl Job for TimerJob {
 
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
+        let mut follow_on_jobs = Vec::new();
         mutate_state(|state| {
-            if let Some(content) = state
+            if let Some((content, sender)) = state
                 .data
                 .chat
                 .events
@@ -81,8 +84,42 @@ impl Job for HardDeleteMessageContentJob {
                     });
                     ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                 }
+                if let MessageContentInternal::Prize(prize) = content {
+                    if let Some(message_index) = state
+                        .data
+                        .chat
+                        .events
+                        .message_ids(self.thread_root_message_index, self.message_id.into())
+                        .map(|(_, m, _)| m)
+                    {
+                        // If there was already a job queued up to refund the prize, cancel it, and make the refund
+                        if state
+                            .data
+                            .timer_jobs
+                            .cancel_job(|job| {
+                                if let TimerJob::RefundPrize(j) = job {
+                                    j.thread_root_message_index == self.thread_root_message_index
+                                        && j.message_index == message_index
+                                } else {
+                                    false
+                                }
+                            })
+                            .is_some()
+                        {
+                            if let Some(pending_transaction) =
+                                prize.prize_refund(sender, &MEMO_PRIZE_REFUND, state.env.now_nanos())
+                            {
+                                follow_on_jobs.push(TimerJob::MakeTransfer(MakeTransferJob { pending_transaction }));
+                            }
+                        }
+                    }
+                }
             }
         });
+
+        for job in follow_on_jobs {
+            job.execute();
+        }
     }
 }
 
@@ -110,11 +147,12 @@ impl Job for EndPollJob {
 impl Job for RefundPrizeJob {
     fn execute(self) {
         if let Some(pending_transaction) = read_state(|state| {
-            state
-                .data
-                .chat
-                .events
-                .prize_refund(self.thread_root_message_index, self.message_index, state.env.now_nanos())
+            state.data.chat.events.prize_refund(
+                self.thread_root_message_index,
+                self.message_index,
+                &MEMO_PRIZE_REFUND,
+                state.env.now_nanos(),
+            )
         }) {
             let make_transfer_job = MakeTransferJob { pending_transaction };
             make_transfer_job.execute();

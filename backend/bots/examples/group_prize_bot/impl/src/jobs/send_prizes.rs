@@ -1,10 +1,10 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::icrc1;
 use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
-use types::icrc1::Account;
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
@@ -159,6 +159,7 @@ async fn transfer_prize_funds_to_group(
 
     match icrc1::process_transaction(pending_transaction, group).await {
         Ok(completed_transaction) => mutate_state(|state| {
+            let completed_transaction = CompletedCryptoTransaction::from(completed_transaction);
             state.data.prizes_sent.push(Prize {
                 group,
                 transaction: completed_transaction.clone(),
@@ -182,6 +183,7 @@ async fn send_prize_message_to_group(
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,
         caption: None,
+        diamond_only: false,
     });
 
     let c2c_args = group_canister::send_message_v2::Args {

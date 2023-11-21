@@ -5,21 +5,41 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat } from "openchat-client";
+    import InitiateCredentialCheck from "../InitiateCredentialCheck.svelte";
 
     const client = getContext<OpenChat>("client");
 
+    $: anonUser = client.anonUser;
     $: selectedCommunity = client.selectedCommunity;
     $: previewingCommunity = $selectedCommunity?.membership.role === "none";
     $: communityGate = $selectedCommunity?.gate;
 
     let joiningCommunity = false;
     let gateCheckFailed = false;
+    let checkingCredential = false;
 
-    function joinCommunity(): Promise<void> {
+    function credentialReceived(ev: CustomEvent<string>) {
+        doJoinCommunity(ev.detail);
+    }
+
+    function joinCommunity() {
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+            return;
+        }
+        doJoinCommunity(undefined);
+    }
+
+    function doJoinCommunity(credential: string | undefined): Promise<void> {
         if (previewingCommunity && $selectedCommunity) {
+            if ($selectedCommunity.gate.kind === "credential_gate" && credential === undefined) {
+                checkingCredential = true;
+                return Promise.resolve();
+            }
+            checkingCredential = false;
             joiningCommunity = true;
             return client
-                .joinCommunity($selectedCommunity.id)
+                .joinCommunity($selectedCommunity)
                 .then((resp) => {
                     if (resp === "gate_check_failed") {
                         gateCheckFailed = true;
@@ -32,6 +52,16 @@
         return Promise.resolve();
     }
 </script>
+
+{#if checkingCredential && $selectedCommunity?.gate?.kind === "credential_gate"}
+    <Overlay dismissible on:close={() => (checkingCredential = false)}>
+        <InitiateCredentialCheck
+            level="community"
+            on:close={() => (checkingCredential = false)}
+            on:credentialReceived={credentialReceived}
+            gate={$selectedCommunity.gate} />
+    </Overlay>
+{/if}
 
 {#if communityGate !== undefined && gateCheckFailed}
     <Overlay dismissible on:close={() => (gateCheckFailed = false)}>

@@ -7,9 +7,12 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
+use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::reported_messages::{ReportedMessages, ReportingMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -23,6 +26,7 @@ use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
 mod guards;
+mod initialize_modclub;
 mod jobs;
 mod lifecycle;
 mod memory;
@@ -57,6 +61,11 @@ impl RuntimeState {
     pub fn is_caller_openchat_user(&self) -> bool {
         let caller = self.env.caller();
         self.data.users.get(&caller).is_some()
+    }
+
+    pub fn is_caller_user_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.users.get_by_user_id(&caller.into()).is_some()
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {
@@ -97,6 +106,18 @@ impl RuntimeState {
         caller == DEV_TEAM_DFX_PRINCIPAL
     }
 
+    pub fn is_caller_modclub(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.modclub_canister_id()
+    }
+
+    pub fn modclub_canister_id(&self) -> CanisterId {
+        let modclub_canister_id =
+            if self.data.test_mode { "d7isk-4aaaa-aaaah-qdbsa-cai" } else { "gwuzc-waaaa-aaaah-qdboa-cai" };
+
+        Principal::from_text(modclub_canister_id).unwrap()
+    }
+
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
@@ -118,6 +139,11 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
+    pub fn queue_modclub_submission(&mut self, pending_submission: PendingModclubSubmission) {
+        self.data.pending_modclub_submissions_queue.push(pending_submission);
+        jobs::submit_message_to_modclub::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -125,7 +151,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             users_created: self.data.users.len() as u64,
@@ -153,6 +179,8 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
+            reporting_metrics: self.data.reported_messages.metrics(),
         }
     }
 }
@@ -175,6 +203,7 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub pending_payments_queue: PendingPaymentsQueue,
+    pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
@@ -186,6 +215,10 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
+    pub reported_messages: ReportedMessages,
+    pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -219,6 +252,7 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
+            pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode,
@@ -230,6 +264,9 @@ impl Data {
             internet_identity_canister_id,
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
+            reported_messages: ReportedMessages::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         };
 
         // Register the ProposalsBot
@@ -267,6 +304,7 @@ impl Default for Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
+            pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode: true,
@@ -278,6 +316,9 @@ impl Default for Data {
             internet_identity_canister_id: Principal::anonymous(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
+            reported_messages: ReportedMessages::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 }
@@ -306,6 +347,8 @@ pub struct Metrics {
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
     pub canister_ids: CanisterIds,
+    pub pending_modclub_submissions: usize,
+    pub reporting_metrics: ReportingMetrics,
 }
 
 #[derive(Serialize, Debug, Default)]

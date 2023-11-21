@@ -202,7 +202,7 @@
         "voting_q": "Làm cách nào để bỏ phiếu cho các đề xuất?",
         "voting_a": "Tham gia <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">Nhóm đề xuất OpenChat</a> và đọc <a href=\"/blog/governance\">bài đăng trên blog này</a> để biết tổng quan về quản trị OpenChat và có hướng dẫn từng bước về bỏ phiếu.",
         "buychat_q": "Làm cách nào để mua mã thông báo CHAT?",
-        "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> mà sau đó bạn có thể đổi lấy CHAT trên nhiều Sàn giao dịch phi tập trung (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY đang thêm hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> dành cho mã thông báo ICRC1 (mà bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn với Sàn giao dịch tập trung (CEXes). Khi điều này xảy ra, có khả năng CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
+        "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> mà sau đó bạn có thể đổi lấy CHAT trên nhiều Sàn giao dịch phi tập trung (DEX).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY đang thêm hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> dành cho mã thông báo ICRC1 (mà bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn với Sàn giao dịch tập trung (CEXes). Khi điều này xảy ra, có khả năng CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
         "shortcuts_q": "Có những lệnh tắt nào?",
         "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /><br /> `/poll` - để tạo một cuộc thăm dò mới <br /> `/search xyz` - để tìm kiếm cụm từ \"xyz\" <br />`/gif kitty` trong cuộc trò chuyện hiện tại tìm kiếm gif mèo con <br />`/icp 0.1` - để gửi 0,1 ICP cho ai đó <br />`/faq question_id*` - để tạo và đăng liên kết được định dạng tới một câu hỏi thường gặp cụ thể <br />`/diamond ` - để tạo và đăng một liên kết được định dạng với các chi tiết về tư cách thành viên Kim cương <br/> <br/>Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số.<br /><br />* ID câu hỏi thường gặp có sẵn là : airdrop, bỏ phiếu, ví, buychat, send_tokens, kim cương, ios_app, android_app, find_groups, style_messages, lưu trữ, bảo mật, lộ trình, phím tắt",
         "content_q": "Loại nội dung nào được phép?",
@@ -223,13 +223,6 @@
     "chatSummary": {
         "unread": "{count} tin nhắn chưa đọc",
         "mentions": "{count} đề cập chưa đọc"
-    },
-    "login": {
-        "welcomeTo": "Chào mừng bạn đến với ...",
-        "blurbPartOne": "Một ứng dụng trò chuyện phi tập trung, trực quan, an toàn chạy hoàn toàn trên ",
-        "blurbPartTwo": " - một blockchain với quy mô internet đầu tiên trên thế giới. Tìm hiểu thêm ",
-        "signIn": "Đăng nhập",
-        "signInOrRegister": "Đăng nhập hoặc Đăng ký"
     },
     "reactions": {
         "greaterThan99People": "99+ người dùng",
@@ -324,13 +317,16 @@
         "oneVote": "1 phiếu bầu",
         "oneVoteBy": "1 phiếu bầu của",
         "numVotesIncludingYours": "{votes} phiếu bầu bao gồm cả của bạn",
-        "atLeastTwo": "Tối thiểu 2"
+        "atLeastTwo": "Tối thiểu 2",
+        "allowChangeVotes": "Cho phép người dùng thay đổi phiếu bầu"
     },
     "role": {
         "admin": "Quản trị viên",
         "member": "Các thành viên",
         "moderator": "người điều hành",
-        "owner": "Những chủ sở hữu"
+        "owner": "Những chủ sở hữu",
+        "default": "Mặc định",
+        "none": "Không ai"
     },
     "permissions": {
         "whoCan": "Ai có thể",
@@ -355,7 +351,38 @@
         "createPublicChannel": "tạo các kênh công cộng",
         "createPrivateChannel": "tạo kênh riêng",
         "manageUserGroups": "quản lý nhóm người dùng",
-        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})"
+        "mentionAllMembers": "đề cập đến tất cả các thành viên ({mention})",
+        "nobody": "Không ai có thể",
+        "general": "Tổng quan",
+        "message": "Tin nhắn",
+        "thread": "chủ đề",
+        "overrideChatMessages": "Ghi đè quyền tin nhắn trò chuyện",
+        "messagePermissions": {
+            "default": "gửi tin nhắn theo mặc định",
+            "text": "gửi tin nhắn văn bản",
+            "image": "gửi tin nhắn hình ảnh",
+            "video": "gửi tin nhắn video",
+            "audio": "gửi tin nhắn âm thanh",
+            "file": "gửi tin nhắn tập tin",
+            "poll": "tạo tin nhắn thăm dò ý kiến",
+            "crypto": "gửi tin nhắn mật mã",
+            "giphy": "gửi tin nhắn giphy",
+            "prize": "gửi tin nhắn trúng thưởng",
+            "memeFighter": "gửi tin nhắn Meme Fighter"
+        },
+        "threadPermissions": {
+            "default": "gửi tin nhắn theo chủ đề theo mặc định",
+            "text": "gửi tin nhắn văn bản trong chủ đề",
+            "image": "gửi tin nhắn hình ảnh trong chủ đề",
+            "video": "gửi tin nhắn video trong chủ đề",
+            "audio": "gửi tin nhắn âm thanh trong chủ đề",
+            "file": "gửi tin nhắn tập tin trong chủ đề",
+            "poll": "tạo tin nhắn thăm dò ý kiến trong chủ đề",
+            "crypto": "gửi tin nhắn mật mã trong chuỗi",
+            "giphy": "gửi tin nhắn giphy trong chủ đề",
+            "prize": "gửi tin nhắn giải thưởng trong chủ đề",
+            "memeFighter": "gửi tin nhắn Meme Fighter trong chủ đề"
+        }
     },
     "rules": {
         "enable": "Bật quy tắc",
@@ -379,9 +406,7 @@
         "welcome": "Chào mừng bạn đến {groupName}",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tự do tham gia {level} này. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
-        "permissionsUpdateFailed": "Cập nhật quyền không thành công",
         "groupRules": "Quy tắc nhóm",
-        "rulesUpdateFailed": "Xin lỗi, chúng tôi không thể cập nhật quy tắc {level} của bạn",
         "getRulesFailed": "Không lấy được quy tắc {level}",
         "createTitle": "Tạo {level} mới",
         "back": "Trở lại",
@@ -474,7 +499,22 @@
         "scan": "Quét mã QR",
         "receiveToken": "Nhận {symbol}",
         "sendToken": "Gửi {symbol}",
-        "receive": "Nhận được"
+        "receive": "Nhận được",
+        "showZeroBalance": "Cho xem nhiều hơn",
+        "hideZeroBalance": "hiện ít hơn",
+        "transactions": "Giao dịch",
+        "transactionError": "Rất tiếc, chúng tôi không thể tải giao dịch của bạn",
+        "unknownTransactionType": "không xác định",
+        "loadMoreTransactions": "Tải thêm",
+        "transactionHeaders": {
+            "id": "NHẬN DẠNG",
+            "amount": "Số lượng",
+            "kind": "Loại",
+            "timestamp": "Dấu thời gian",
+            "from": "Từ",
+            "to": "ĐẾN",
+            "type": "Kiểu"
+        }
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -606,15 +646,27 @@
             "summaryRules": "hỗ trợ đánh dấu",
             "urlRules": "liên kết đến chi tiết bổ sung",
             "unexpectedError": "Lỗi không mong đợi khi gửi đề xuất",
-            "toPrincipal": "Tiền gốc tài khoản người nhận",
-            "enterToPrincipal": "Nhập tiền gốc của tài khoản người nhận",
             "amount": "Số lượng",
             "amountRules": "ít nhất 1 mã thông báo {token}",
             "enterAmount": "Nhập số lượng mã thông báo {token}",
             "type": "Loại đề xuất",
             "treasury": "Token để chuyển từ kho bạc",
-            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua."
-        }
+            "message": "Cần phải đặt cọc số token {cost} {token} (bao gồm hai bộ phí chuyển khoản) để gửi đề xuất và số tiền này sẽ được hoàn lại nếu đề xuất được thông qua.",
+            "recipientOwner": "Tiền gốc tài khoản của người nhận",
+            "recipientSubaccount": "Tài khoản phụ của người nhận",
+            "recipientSubaccountRules": "phải là một chuỗi hex",
+            "enterRecipientOwner": "Nhập số tiền gốc tài khoản của người nhận",
+            "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn",
+            "ledgerCanisterId": "Id hộp sổ cái",
+            "enterLedgerCanisterId": "Nhập Id hộp sổ cái",
+            "tokenInfoUrl": "Url thông tin mã thông báo",
+            "enterTokenInfoUrl": "Nhập url hiển thị thông tin mã thông báo",
+            "howToBuyUrl": "Làm thế nào để mua url",
+            "enterHowToBuyUrl": "Nhập url hiển thị cách mua mã thông báo",
+            "transactionUrlFormat": "Định dạng url giao dịch",
+            "enterTransactionUrlFormat": "Ví dụ. https://token.com/?index={transaction_index}"
+        },
+        "neuronControllerAction": "Hành động điều khiển nơ-ron"
     },
     "yes": "Đúng",
     "no": "Không",
@@ -656,7 +708,9 @@
         "label": "Hồ sơ",
         "communities": "Cộng đồng",
         "selectCommunity": "Chọn một cộng đồng",
-        "global": "Toàn cầu"
+        "global": "Toàn cầu",
+        "block": "Khối",
+        "unblock": "Mở khóa"
     },
     "undeleteMessage": "phục hồi xóa",
     "undeletingMessage": "Đang khôi phục tin nhắn của {username} trên {timestamp}",
@@ -723,7 +777,10 @@
         "distribution": "Giải thưởng nên được phân phối như thế nào?",
         "equalDistribution": "Phân phối bình đẳng",
         "randomDistribution": "Phân phối ngẫu nhiên",
-        "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn"
+        "creatingYourPrizeMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn giải thưởng của bạn",
+        "whoCanWin": "Ai có thể yêu cầu một phần?",
+        "onlyDiamond": "Chỉ người dùng kim cương",
+        "anyone": "Bất kỳ người dùng nào"
     },
     "upgrade": {
         "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",
@@ -831,7 +888,6 @@
         "optional": "Không bắt buộc",
         "note": "Thêm một lưu ý",
         "notePlaceholder": "Hãy cho chúng tôi biết lý do bạn báo cáo nội dung này",
-        "advice": "Nếu bạn tin rằng bài viết này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trong trường hợp đầu tiên. Chỉ báo cáo một tin nhắn để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [nguyên tắc nền tảng](/guidelines).",
         "threat": "Tin nhắn đe dọa",
         "child": "Tin nhắn chứa nội dung khiêu dâm trẻ em",
         "nonConsensual": "Tin nhắn chứa nội dung khiêu dâm không có sự đồng thuận",
@@ -843,7 +899,8 @@
         "failure": "Xin lỗi, chúng tôi không thể báo cáo tin nhắn này cho người điều hành nền tảng",
         "deleteMessage": "Xóa tin nhắn đã báo cáo",
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
-        "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
+        "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất",
+        "advice": "Nếu bạn cho rằng tin nhắn này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trước tiên. Chỉ báo cáo một thông báo để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [quy tắc nền tảng]({rules})."
     },
     "invitedBy": "{changedBy} đã mời {changed} tham gia {level}",
     "halloffame": {
@@ -875,7 +932,7 @@
         "chooseGate": "Chọn một cổng truy cập",
         "diamondMember": "thành viên kim cương",
         "diamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương mới được phép tham gia",
-        "nnsHolder": "Người giữ tế bào thần kinh NNS (sắp ra mắt)",
+        "nnsHolder": "Người giữ tế bào thần kinh ICP (sắp ra mắt)",
         "nftHolder": "Giá đỡ NFT (sắp ra mắt)",
         "openAccess": "truy cập mở",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
@@ -887,7 +944,16 @@
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "cannotMakePublic": "Bạn không thể công khai {level} riêng tư vì điều đó sẽ gây rủi ro cho quyền riêng tư của các thành viên hiện có.",
         "snsHolder": "người giữ nơ ron {token}",
-        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia"
+        "snsHolderInfo": "Chỉ những người sở hữu nơ-ron {token} mới được phép tham gia",
+        "initiateCredentialCheck": "Xác minh thông tin xác thực",
+        "verify": "Xác minh",
+        "credential": "Thông tin xác thực đã được xác minh",
+        "credentialParamIssuer": "Nhà phát hành: {issuer}",
+        "credentialParamCredential": "Thông tin xác thực: {credential}",
+        "credentialIssuer": "Nhà phát hành chứng chỉ",
+        "requiredCredential": "Thông tin xác thực bắt buộc",
+        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\" từ nhà phát hành {issuer}",
+        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ {issuer} mới được phép tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",
@@ -994,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
         "searchUserGroups": "Tìm kiếm nhóm người dùng...",
         "userGroupName": "Tên nhóm người dùng",
-        "noSpaces": "không còn khoảng trống cho phép"
+        "noSpaces": "không còn khoảng trống cho phép",
+        "noMatch": "Không tìm thấy cộng đồng phù hợp",
+        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -1063,5 +1131,30 @@
     "followThreadFailed": "Theo dõi chủ đề không thành công",
     "unfollowThreadFailed": "Hủy theo dõi chủ đề không thành công",
     "doubleClickReply": "Nhấp đúp chuột vào tin nhắn để trả lời/chỉnh sửa",
-    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa"
+    "doubleTapReply": "Nhấn đúp vào tin nhắn để trả lời/chỉnh sửa",
+    "minimumAmount": "Tối thiểu: {amount} {symbol}",
+    "sendTextDisabled": "Tin nhắn văn bản bị vô hiệu hóa",
+    "disappearingMessages": {
+        "label": "Tin nhắn biến mất",
+        "hours": "Giờ)",
+        "minutes": "Phút)",
+        "days": "(Các) ngày",
+        "summary": "Tin nhắn sẽ biến mất sau {duration}",
+        "timeUpdatedBy": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
+        "disabledBy": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
+        "durationMinutes": "{duration} phút",
+        "oneMinute": "1 phút",
+        "timeUpdated": "Thời gian tin nhắn biến mất được đặt thành {duration}",
+        "disabled": "Tin nhắn biến mất bị vô hiệu hóa"
+    },
+    "login": "Đăng nhập",
+    "loginToOpenChat": "Đăng nhập vào OpenChat",
+    "tapToLogin": "Chế độ khách - nhấn vào đây để đăng nhập",
+    "loginProviderChanged": "Có vẻ như trước đây bạn đã đăng nhập bằng nhà cung cấp {previous}. Vui lòng kiểm tra kỹ xem bạn có muốn sử dụng {next} lần này không?",
+    "guestUser": "Tài khoản khách",
+    "showAuthProviders": "Hiển thị tùy chọn",
+    "hideAuthProviders": "Ẩn tùy chọn",
+    "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}), nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }",
+    "offlineMessage": "Ngoại tuyến",
+    "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này"
 }

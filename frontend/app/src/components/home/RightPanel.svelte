@@ -38,10 +38,10 @@
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     let invitingUsers = false;
 
+    $: currentUser = client.user;
     $: selectedChatId = client.selectedChatId;
     $: selectedChat = client.selectedChatStore;
     $: currentChatMembers = client.currentChatMembers;
@@ -54,7 +54,7 @@
     $: selectedCommunity = client.selectedCommunity;
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
-    $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
+    $: user = $userStore[$currentUser.userId] ?? client.nullUser("unknown");
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: modal = !$fullWidth;
     $: multiUserChat = selectedChat as Readable<MultiUserChat>;
@@ -176,7 +176,8 @@
 
     function stripThreadFromUrl(path: string) {
         if (
-            $pathParams.kind === "global_chat_selected_route" &&
+            ($pathParams.kind === "global_chat_selected_route" ||
+                $pathParams.kind === "selected_channel_route") &&
             $pathParams.threadMessageIndex !== undefined
         ) {
             return removeThreadMessageIndex($pathParams.threadMessageIndex, path);

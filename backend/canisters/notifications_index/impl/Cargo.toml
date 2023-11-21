@@ -26,8 +26,10 @@ msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 notifications_index_canister = { path = "../api" }
+rand = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister = { path = "../../user_index/api" }

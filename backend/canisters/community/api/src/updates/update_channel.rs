@@ -12,7 +12,7 @@ pub struct Args {
     pub description: Option<String>,
     pub rules: Option<UpdatedRules>,
     pub avatar: OptionUpdate<Document>,
-    pub permissions: Option<OptionalGroupPermissions>,
+    pub permissions_v2: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub gate: OptionUpdate<AccessGate>,
     pub public: Option<bool>,

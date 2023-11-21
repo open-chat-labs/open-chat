@@ -127,6 +127,7 @@ import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat
 import {
     bytesToBigint,
     bytesToHexString,
+    hexStringToBytes,
     identity,
     optional,
     optionUpdate,
@@ -139,11 +140,19 @@ import {
     groupPermissions,
     message,
     messageContent,
+    apiOptional,
+    messageEvent,
+    expiredEventsRange,
+    expiredMessagesRange,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import { Principal } from "@dfinity/principal";
-import type { ProposalToSubmit, ProposalToSubmitAction } from "./candid/types";
+import type {
+    ProposalToSubmit,
+    ProposalToSubmitAction,
+    ReportMessageResponse,
+} from "./candid/types";
 
 export function saveCryptoAccountResponse(
     candid: ApiSaveCryptoAccountResponse,
@@ -338,6 +347,7 @@ export function sendMessageWithTransferToChannelResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -357,6 +367,7 @@ export function sendMessageWithTransferToGroupResponse(
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
             transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -375,6 +386,7 @@ export function sendMessageResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     }
     if ("TransferSuccessV2" in candid) {
@@ -384,6 +396,7 @@ export function sendMessageResponse(
             messageIndex: candid.TransferSuccessV2.message_index,
             eventIndex: candid.TransferSuccessV2.event_index,
             transfer: completedCryptoTransfer(candid.TransferSuccessV2.transfer, sender, recipient),
+            expiresAt: optional(candid.TransferSuccessV2.expires_at, Number),
         };
     }
     if ("TransferCannotBeZero" in candid) {
@@ -445,31 +458,25 @@ export async function getEventsResponse(
     principal: Principal,
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
-    latestClientEventIndexPreRequest: number | undefined,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<DirectChatEvent>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            undefined,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
             events: candid.Success.events.map(event),
-            latestEventIndex,
+            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
+            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
             false,
         );
     }
@@ -482,6 +489,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
         event: directChatEvent(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 
@@ -761,14 +769,13 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         readByMeUpTo: optional(candid.read_by_me_up_to, identity),
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         lastUpdated: candid.last_updated,
-        latestMessage: optional(candid.latest_message, (ev) => ({
-            index: ev.index,
-            timestamp: ev.timestamp,
-            event: message(ev.event),
-        })),
+        latestMessage: optional(candid.latest_message, messageEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         notificationsMuted: optional(candid.notifications_muted, identity),
         updatedEvents: candid.updated_events.map(updatedEvent),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
@@ -808,11 +815,7 @@ function mention(candid: ApiMention): Mention {
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         kind: "group_chat",
@@ -824,13 +827,14 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
         memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: false,
@@ -839,6 +843,8 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -869,16 +875,15 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
         id: { kind: "direct_chat", userId: candid.them.toString() },
         kind: "direct_chat",
-        latestMessage: {
-            index: candid.latest_message.index,
-            timestamp: candid.latest_message.timestamp,
-            event: message(candid.latest_message.event),
-        },
+        latestMessage: messageEvent(candid.latest_message),
         them: { kind: "direct_chat", userId: candid.them.toString() },
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: candid.latest_message_index,
         lastUpdated: candid.last_updated,
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
+        eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
         metrics: chatMetrics(candid.metrics),
         membership: {
             ...nullMembership(),
@@ -1069,15 +1074,26 @@ function proposalAction(action: CandidateProposalAction): ProposalToSubmitAction
         case "motion":
             return { Motion: null };
         case "transfer_sns_funds":
-            return { TransferSnsTreasuryFunds: {
-                to: {
-                    owner: Principal.fromText(action.toPrincipal),
-                    subaccount: []
+            return {
+                TransferSnsTreasuryFunds: {
+                    to: {
+                        owner: Principal.fromText(action.recipient.owner),
+                        subaccount: apiOptional(hexStringToBytes, action.recipient.subaccount),
+                    },
+                    amount: action.amount,
+                    memo: [],
+                    treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null },
                 },
-                amount: action.amount,
-                memo: [],
-                treasury: action.treasury === "ICP" ? { ICP: null } : { SNS: null }
-            }};
+            };
+        case "upgrade_sns_to_next_version":
+            return { UpgradeSnsToNextVersion: null };
+        case "execute_generic_nervous_system_function":
+            return {
+                ExecuteGenericNervousSystemFunction: {
+                    function_id: action.functionId,
+                    payload: action.payload,
+                },
+            };
     }
 }
 
@@ -1100,11 +1116,12 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }
-    if ("Unauthorized" in candid) {
-        return { kind: "not_authorized" };
+    if ("InsufficientPayment" in candid) {
+        return { kind: "insufficient_payment" };
     }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSubmitProposalResponse type received",
-        candid,
-    );
+    throw new UnsupportedValueError("Unexpected ApiSubmitProposalResponse type received", candid);
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

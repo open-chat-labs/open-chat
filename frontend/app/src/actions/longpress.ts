@@ -16,8 +16,8 @@ export function longpress(node: HTMLElement, onlongpress: () => void) {
 
     function onTouchStart(e: TouchEvent) {
         const t = e.changedTouches[0];
-        startX = t.clientX;
-        startY = t.clientY;
+        startX = t.screenX;
+        startY = t.screenY;
         clearLongPressTimer();
         longPressTimer = window.setTimeout(() => {
             const lastScroll = get(eventListLastScrolled);
@@ -29,8 +29,8 @@ export function longpress(node: HTMLElement, onlongpress: () => void) {
     }
 
     function onTouchMove({ changedTouches: [t] }: TouchEvent) {
-        const diffX = Math.abs(startX - t.clientX);
-        const diffY = Math.abs(startY - t.clientY);
+        const diffX = Math.abs(startX - t.screenX);
+        const diffY = Math.abs(startY - t.screenY);
         if (diffX >= 10 || diffY >= 10) {
             clearLongPressTimer();
         }

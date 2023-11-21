@@ -17,7 +17,6 @@
     import page from "page";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let messageId: bigint;
     export let chatId: ChatIdentifier;
@@ -25,8 +24,10 @@
     export let readonly: boolean;
 
     let debug = false;
+
+    $: currentUser = client.user;
     $: chatListScope = client.chatListScope;
-    $: me = repliesTo.senderId === currentUser.userId;
+    $: me = repliesTo.senderId === $currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = me
@@ -75,8 +76,9 @@
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}
+                truncate
                 reply
-                myUserId={currentUser.userId}
+                myUserId={$currentUser.userId}
                 content={repliesTo.content} />
             {#if debug}
                 <pre>EventIdx: {repliesTo.eventIndex}</pre>

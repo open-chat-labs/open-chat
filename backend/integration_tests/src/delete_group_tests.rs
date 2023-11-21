@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, TestEnv, User};
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{CanisterId, ChatId};
@@ -92,7 +92,7 @@ fn user_canister_notified_of_group_deleted() {
     assert!(initial_state3.group_chats.summaries.iter().any(|c| c.chat_id == group_id));
 }
 
-fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId) -> TestData {
+fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId) -> TestData {
     let user1 = client::local_user_index::happy_path::register_user(env, local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
     let user3 = client::local_user_index::happy_path::register_user(env, local_user_index);

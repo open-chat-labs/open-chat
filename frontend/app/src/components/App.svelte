@@ -4,6 +4,7 @@
     import "../i18n/i18n";
     import "../utils/markdown";
     import "../utils/i18n";
+    import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
@@ -11,11 +12,10 @@
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
-    import { mobileOperatingSystem } from "../utils/devices";
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, SessionExpiryError } from "openchat-client";
+    import { OpenChat, SessionExpiryError, UserLoggedIn } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -27,11 +27,11 @@
     import "../components/web-components/profileLink";
     import page from "page";
     import { menuStore } from "../stores/menu";
-    import { framed } from "../stores/xframe";
+    import { framed, broadcastLoggedInUser } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
+    import Witch from "./Witch.svelte";
+    import Head from "./Head.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
-
-    let viewPortContent = "width=device-width, initial-scale=1";
 
     const logger = inititaliseLogger(
         process.env.ROLLBAR_ACCESS_TOKEN!,
@@ -71,15 +71,18 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
-    $: landingPage = isLandingPageRoute($pathParams);
+    $: landingPageRoute = isLandingPageRoute($pathParams);
+    $: anonUser = client.anonUser;
+    $: homeRoute = $pathParams.kind === "home_route";
+    $: showLandingPage =
+        landingPageRoute ||
+        (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
+        (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
         if (client.captureReferralCode()) {
             page.replace(removeQueryStringParam("ref"));
-        }
-        if (mobileOperatingSystem === "iOS") {
-            viewPortContent += ", maximum-scale=1";
         }
         calculateHeight();
 
@@ -104,7 +107,14 @@
         };
 
         framed.set(window.self !== window.top);
+        client.addEventListener("openchat_event", onUserLoggedIn);
     });
+
+    function onUserLoggedIn(ev: Event) {
+        if (ev instanceof UserLoggedIn) {
+            broadcastLoggedInUser(ev.detail);
+        }
+    }
 
     function addHotGroupExclusion(chatId: string): void {
         client.addHotGroupExclusion({ kind: "group_chat", groupId: chatId }).then((success) => {
@@ -277,13 +287,7 @@
     }
 
     $: {
-        if (
-            !$notFound &&
-            (landingPage ||
-                $identityState === "requires_login" ||
-                $identityState === "logging_in" ||
-                $identityState === "registering")
-        ) {
+        if (!$notFound && showLandingPage) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
@@ -320,24 +324,24 @@
     $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
-{#if $currentTheme.burst || landingPage}
+{#if $currentTheme.burst || landingPageRoute}
     <div
         class:fixed={burstFixed}
         class="burst-wrapper"
         style={`background-image: url(${burstUrl})`} />
 {/if}
 
-<svelte:head>
-    <meta name="viewport" content={viewPortContent} />
-</svelte:head>
+<Head />
+
+<Witch background />
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
+{:else if $identityState.kind === "upgrading_user" || $identityState.kind === "upgrade_user"}
     <Upgrading />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+{:else if $identityState.kind === "anon" || $identityState.kind === "logging_in" || $identityState.kind === "registering" || $identityState.kind === "logged_in" || $identityState.kind === "loading_user"}
     {#if !$isLoading}
-        <Router />
+        <Router {showLandingPage} />
     {/if}
 {/if}
 

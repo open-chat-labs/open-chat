@@ -44,7 +44,6 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     let previousChatId: ChatIdentifier | undefined = undefined;
     let unreadMessages = 0;
@@ -61,6 +60,8 @@
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
 
+    $: user = client.user;
+    $: suspendedUser = client.suspendedUser;
     $: showChatHeader = !$mobileWidth || !$framed;
     $: messageContext = { chatId: chat.id };
     $: currentChatTextContent = client.currentChatTextContent;
@@ -72,16 +73,16 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: messagesRead = client.messagesRead;
     $: directlyBlockedUsers = client.blockedUsers;
-    $: showFooter = !showSearchHeader && !client.isReadOnly();
+    $: showFooter = !showSearchHeader && !$suspendedUser;
     $: blocked = isBlocked(chat, $directlyBlockedUsers);
     $: communities = client.communities;
 
-    $: canSend = client.canSendMessages(chat.id);
+    $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
     $: canBlockUser = client.canBlockUsers(chat.id);
     $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
-    $: canReplyInThread = client.canReplyInThread(chat.id);
+    $: canReplyInThread = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
     $: canInvite = client.canInviteUsers(chat.id);
     $: readonly = client.isChatReadOnly(chat.id);
@@ -130,7 +131,7 @@
     }
 
     function createPoll() {
-        if (!client.canCreatePolls(chat.id)) return;
+        if (!client.canSendMessage(chat.id, "message", "poll")) return;
 
         if (pollBuilder !== undefined) {
             pollBuilder.resetPoll();
@@ -192,7 +193,7 @@
     }
 
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
-        if (!canSend) return;
+        if (!canSendAny) return;
         let [text, mentioned] = ev.detail;
         if ($currentChatEditingEvent !== undefined) {
             client
@@ -315,7 +316,7 @@
         {canBlockUser}
         {canDelete}
         {canReplyInThread}
-        {canSend}
+        {canSendAny}
         {canReact}
         {canInvite}
         {readonly}
@@ -329,7 +330,7 @@
             editingEvent={$currentChatEditingEvent}
             replyingTo={$currentChatReplyingTo}
             textContent={$currentChatTextContent}
-            {user}
+            user={$user}
             mode={"message"}
             {joining}
             {preview}
@@ -340,8 +341,8 @@
             on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.id, undefined)}
             on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.id)}
             on:setTextContent={setTextContent}
-            on:startTyping={() => client.startTyping(chat, user.userId)}
-            on:stopTyping={() => client.stopTyping(chat, user.userId)}
+            on:startTyping={() => client.startTyping(chat, $user.userId)}
+            on:stopTyping={() => client.stopTyping(chat, $user.userId)}
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}

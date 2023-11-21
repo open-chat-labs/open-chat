@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 mod avatar;
 mod bots;
@@ -156,7 +156,19 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
     }
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum ResultLowercase<T, E> {
+    #[serde(rename = "ok")]
+    Ok(T),
+    #[serde(rename = "err")]
+    Err(E),
+}
+
 pub fn is_empty_slice<T>(value: &[T]) -> bool {
+    value.is_empty()
+}
+
+pub fn is_empty_hashmap<K, V>(value: &HashMap<K, V>) -> bool {
     value.is_empty()
 }
 

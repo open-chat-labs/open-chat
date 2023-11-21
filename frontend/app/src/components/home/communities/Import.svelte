@@ -80,8 +80,7 @@
             </span>
             <span slot="footer">
                 <ButtonGroup>
-                    <Button secondary on:click={() => dispatch("cancel")}
-                        >{$_("cancel")}</Button>
+                    <Button secondary on:click={() => dispatch("cancel")}>{$_("cancel")}</Button>
                     <Button loading={importing} disabled={importing} on:click={performImport}
                         >{$_("communities.importBtn")}</Button>
                 </ButtonGroup>
@@ -97,7 +96,7 @@
         gap: $sp4;
         cursor: pointer;
         padding: $sp4;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         transition: background-color 250ms ease-in-out;
         border: 1px solid transparent;
 

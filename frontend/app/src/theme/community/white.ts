@@ -15,6 +15,7 @@ export function getTheme(base: Theme): Theme {
     base.label = "White";
     base.bg = white;
     base.burst = true;
+    base.logo = false;
     base.txt = txt;
     base["txt-light"] = txt70;
     base.bd = "#ededed";
@@ -24,6 +25,11 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt70;
     base.timeline.txt = txt70;
     base.time.txt = txt60;
+    base.time.icon = "rgba(0,0,0,0.3)";
+    base.time.bg = "rgba(0,0,0,0.1)";
+    base.time.me.txt = white;
+    base.time.me.icon = white;
+    base.time.me.bg = "rgba(255,255,255,0.2)";
     base.input.bg = textBox;
     base.entry.input.bg = white;
     base.entry.input.sh = "inset 0px 2px 4px rgba(138, 138, 138, 0.5)";
@@ -45,6 +51,7 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.muted = "rgba(255,255,255,0.6)";
     base.currentChat.msg.txt = txt70;
     base.currentChat.msg.inert = "rgba(226,226,226,0.8)";
+    base.currentChat.msg.separator = "rgba(0,0,0,0.1)";
     base.currentChat.msg.me.bd = "rgba(0,0,0,0.05)";
     base.currentChat.msg.me.bg = base.primary;
     base.currentChat.date.bg = "rgba(239 239 239 / 80%)";

@@ -56,6 +56,10 @@ export const idlFactory = ({ IDL }) => {
     'languages' : IDL.Vec(IDL.Text),
     'search_term' : IDL.Opt(IDL.Text),
   });
+  const VerifiedCredentialGate = IDL.Record({
+    'credential' : IDL.Text,
+    'issuer' : IDL.Text,
+  });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -63,6 +67,7 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
   });
   const AccessGate = IDL.Variant({
+    'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
@@ -183,6 +188,7 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const MessageIndex = IDL.Nat32;
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
     'frozen_by' : UserId,
@@ -266,6 +272,7 @@ export const idlFactory = ({ IDL }) => {
     'prizes_remaining' : IDL.Nat32,
     'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
+    'diamond_only' : IDL.Bool,
     'winners' : IDL.Vec(UserId),
   });
   const CustomMessageContent = IDL.Record({
@@ -375,7 +382,6 @@ export const idlFactory = ({ IDL }) => {
     'NNS' : NnsCompletedCryptoTransaction,
     'ICRC1' : Icrc1CompletedCryptoTransaction,
   });
-  const MessageIndex = IDL.Nat32;
   const PrizeWinnerContent = IDL.Record({
     'transaction' : CompletedCryptoTransaction,
     'winner' : UserId,
@@ -535,6 +541,7 @@ export const idlFactory = ({ IDL }) => {
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'wasm_version' : BuildVersion,
+    'latest_message_index' : IDL.Opt(MessageIndex),
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
@@ -543,6 +550,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
     'chat_id' : ChatId,
+    'events_ttl_last_updated' : TimestampMillis,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });

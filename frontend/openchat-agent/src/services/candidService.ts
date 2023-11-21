@@ -16,12 +16,12 @@ export abstract class CandidService {
     protected createServiceClient<T>(
         factory: IDL.InterfaceFactory,
         canisterId: string,
-        config: AgentConfig
+        config: AgentConfig,
     ): T {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
         const isMainnet = config.icUrl.includes("icp-api.io");
-        if (!isMainnet) {
+        if (!isMainnet && navigator.onLine) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {
@@ -37,7 +37,7 @@ export abstract class CandidService {
     protected handleResponse<From, To>(
         service: Promise<From>,
         mapper: (from: From) => To,
-        args?: unknown
+        args?: unknown,
     ): Promise<To> {
         return service.then(mapper).catch((err) => {
             console.log(err, args);
@@ -49,7 +49,7 @@ export abstract class CandidService {
         serviceCall: () => Promise<From>,
         mapper: (from: From) => To | Promise<To>,
         args?: unknown,
-        retries = 0
+        retries = 0,
     ): Promise<To> {
         return serviceCall()
             .then(mapper)
@@ -57,7 +57,7 @@ export abstract class CandidService {
                 const responseErr = toCanisterResponseError(err as Error, this.identity);
                 const debugInfo = `error: ${JSON.stringify(
                     responseErr,
-                    Object.getOwnPropertyNames(responseErr)
+                    Object.getOwnPropertyNames(responseErr),
                 )}, args: ${JSON.stringify(args)}`;
                 if (
                     !(responseErr instanceof SessionExpiryError) &&
@@ -69,11 +69,11 @@ export abstract class CandidService {
 
                     if (responseErr instanceof ReplicaNotUpToDateError) {
                         debug(
-                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                            `query: replica not up to date, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
                         );
                     } else {
                         debug(
-                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`
+                            `query: error occurred, retrying in ${delay}ms. retries: ${retries}. ${debugInfo}`,
                         );
                     }
 
@@ -86,7 +86,7 @@ export abstract class CandidService {
                     });
                 } else {
                     debug(
-                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`
+                        `query: Error performing query request, exiting retry loop. retries: ${retries}. ${debugInfo}`,
                     );
                     throw responseErr;
                 }

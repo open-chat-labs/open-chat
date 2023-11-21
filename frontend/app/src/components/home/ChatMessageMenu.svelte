@@ -88,12 +88,12 @@
         msg.messageId === threadRootMessage?.messageId
             ? undefined
             : threadRootMessage?.messageIndex;
-    $: threadSummary = threadRootMessage?.thread ?? msg.thread;
-    $: canFollow =
-        threadSummary !== undefined &&
-        !threadSummary.followedByMe &&
-        !threadSummary.participantIds.has(user.userId);
-    $: canUnfollow = threadSummary !== undefined && threadSummary.followedByMe;
+    $: threadsFollowedByMeStore = client.threadsFollowedByMeStore;
+    $: isFollowedByMe =
+        threadRootMessage !== undefined &&
+        ($threadsFollowedByMeStore.get(chatId)?.has(threadRootMessage.messageIndex) ?? false);
+    $: canFollow = threadRootMessage !== undefined && !isFollowedByMe;
+    $: canUnfollow = isFollowedByMe;
 
     export function showMenu() {
         menuIcon?.showMenu();
@@ -127,8 +127,8 @@
     function shareMessage() {
         shareFunctions.shareMessage(
             $_,
-            user.userId,
-            msg.sender === user.userId,
+            $user.userId,
+            msg.sender === $user.userId,
             msg,
             $cryptoLookup
         );
@@ -182,7 +182,7 @@
             dispatch("deleteFailedMessage");
             return;
         }
-        if (!canDelete && user.userId !== msg.sender) return;
+        if (!canDelete && $user.userId !== msg.sender) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
@@ -421,7 +421,7 @@
                         <div slot="text">{$_("blockUser")}</div>
                     </MenuItem>
                 {/if}
-                {#if (canDelete || me) && !crypto && !inert}
+                {#if (canDelete || me) && !inert}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
@@ -436,7 +436,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && publicGroup && !me && !inert}
+                {#if confirmed && !me && !inert}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

@@ -14,12 +14,12 @@ use types::{BuildVersion, CanisterId, CanisterWasm};
 pub enum CanisterName {
     Community,
     CyclesDispenser,
-    ExchangeBot,
     Group,
     GroupIndex,
     LocalGroupIndex,
     LocalUserIndex,
     MarketMaker,
+    NeuronController,
     Notifications,
     NotificationsIndex,
     OnlineUsers,
@@ -38,12 +38,12 @@ impl FromStr for CanisterName {
         match s {
             "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
-            "exchange_bot" => Ok(CanisterName::ExchangeBot),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "local_group_index" => Ok(CanisterName::LocalGroupIndex),
             "local_user_index" => Ok(CanisterName::LocalUserIndex),
             "market_maker" => Ok(CanisterName::MarketMaker),
+            "neuron_controller" => Ok(CanisterName::NeuronController),
             "notifications" => Ok(CanisterName::Notifications),
             "notifications_index" => Ok(CanisterName::NotificationsIndex),
             "online_users" => Ok(CanisterName::OnlineUsers),
@@ -63,12 +63,12 @@ impl Display for CanisterName {
         let name = match self {
             CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
-            CanisterName::ExchangeBot => "exchange_bot",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::LocalGroupIndex => "local_group_index",
             CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::MarketMaker => "market_maker",
+            CanisterName::NeuronController => "neuron_controller",
             CanisterName::Notifications => "notifications",
             CanisterName::NotificationsIndex => "notifications_index",
             CanisterName::OnlineUsers => "online_users",
@@ -98,13 +98,14 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
     pub market_maker: CanisterId,
-    pub exchange_bot: CanisterId,
+    pub neuron_controller: CanisterId,
     pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_internet_identity: CanisterId,
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,
     pub nns_sns_wasm: CanisterId,
+    pub nns_index: CanisterId,
 }
 
 pub fn get_dfx_identity(name: &str) -> Box<dyn Identity> {
@@ -161,7 +162,7 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
 pub fn get_canister_wasm(canister_name: impl ToString, version: BuildVersion) -> CanisterWasm {
     let mut local_bin_path =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
-    local_bin_path.push("local-bin");
+    local_bin_path.push("wasms");
 
     let file_name = file_by_prefix(&canister_name.to_string(), &local_bin_path)
         .unwrap_or_else(|| panic!("Couldn't find file for canister '{}'", canister_name.to_string()));

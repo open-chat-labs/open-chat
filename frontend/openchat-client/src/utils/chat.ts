@@ -37,6 +37,12 @@ import type {
     TipsReceived,
     ThreadSummary,
     PrizeContent,
+    MessagePermission,
+    ChatPermissions,
+    OptionalChatPermissions,
+    MessagePermissions,
+    OptionalMessagePermissions,
+    OptionUpdate,
 } from "openchat-shared";
 import {
     emptyChatMetrics,
@@ -45,10 +51,15 @@ import {
     ChatMap,
     MessageMap,
     isAttachmentContent,
+    applyOptionUpdate,
+    updateFromOptions,
+    defaultOptionalMessagePermissions,
+    defaultOptionalChatPermissions,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
+import DRange from "drange";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID, userStore } from "../stores/user";
 import Identicon from "identicon.js";
 import md5 from "md5";
@@ -62,6 +73,7 @@ import type { TypersByKey } from "../stores/typing";
 import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
+import { bigIntMax, messagePermissionsList } from "openchat-shared";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -244,6 +256,7 @@ export function createMessage(
         edited: false,
         forwarded,
         deleted: false,
+        lastUpdated: undefined,
     };
 }
 
@@ -364,10 +377,7 @@ export function mergeLocalSummaryUpdates(
                         name: updated.name ?? current.name,
                         description: updated.description ?? current.description,
                         public: updated.public ?? current.public,
-                        permissions: {
-                            ...current.permissions,
-                            ...updated.permissions,
-                        },
+                        permissions: mergePermissions(current.permissions, updated.permissions),
                         gate: {
                             ...current.gate,
                             ...updated.gate,
@@ -378,6 +388,11 @@ export function mergeLocalSummaryUpdates(
                                 updated.notificationsMuted ?? current.membership.notificationsMuted,
                             archived: updated.archived ?? current.membership.archived,
                         },
+                        eventsTTL: updated.eventsTTL
+                            ? updated.eventsTTL === "set_to_none"
+                                ? undefined
+                                : updated.eventsTTL.value
+                            : current.eventsTTL,
                     });
                 }
             }
@@ -469,6 +484,72 @@ export function mergeUnconfirmedIntoSummary(
     }
 }
 
+function mergePermissions(
+    current: ChatPermissions,
+    updated?: OptionalChatPermissions,
+): ChatPermissions {
+    if (updated === undefined) {
+        return current;
+    }
+
+    return {
+        changeRoles: updated.changeRoles ?? current.changeRoles,
+        updateGroup: updated.updateGroup ?? current.updateGroup,
+        inviteUsers: updated.inviteUsers ?? current.inviteUsers,
+        removeMembers: updated.removeMembers ?? current.removeMembers,
+        deleteMessages: updated.deleteMessages ?? current.deleteMessages,
+        pinMessages: updated.pinMessages ?? current.pinMessages,
+        reactToMessages: updated.reactToMessages ?? current.reactToMessages,
+        mentionAllMembers: updated.mentionAllMembers ?? current.mentionAllMembers,
+        messagePermissions: mergeMessagePermissions(
+            current.messagePermissions,
+            updated.messagePermissions,
+        ),
+        threadPermissions: mergeThreadPermissions(
+            current.threadPermissions ?? { default: "member" },
+            updated.threadPermissions,
+        ),
+    };
+}
+
+function mergeMessagePermissions(
+    current: MessagePermissions,
+    updated?: OptionalMessagePermissions,
+): MessagePermissions {
+    if (updated === undefined) {
+        return current;
+    }
+
+    return {
+        default: updated.default ?? current.default,
+        text: applyOptionUpdate(current.text, updated.text),
+        image: applyOptionUpdate(current.image, updated.image),
+        video: applyOptionUpdate(current.video, updated.video),
+        audio: applyOptionUpdate(current.audio, updated.audio),
+        file: applyOptionUpdate(current.file, updated.file),
+        poll: applyOptionUpdate(current.poll, updated.poll),
+        crypto: applyOptionUpdate(current.crypto, updated.crypto),
+        giphy: applyOptionUpdate(current.giphy, updated.giphy),
+        prize: applyOptionUpdate(current.prize, updated.prize),
+        memeFighter: applyOptionUpdate(current.memeFighter, updated.memeFighter),
+    };
+}
+
+function mergeThreadPermissions(
+    current: MessagePermissions,
+    updated: OptionUpdate<OptionalMessagePermissions>,
+): MessagePermissions | undefined {
+    if (updated === undefined) {
+        return current;
+    }
+
+    if (updated === "set_to_none") {
+        return undefined;
+    }
+
+    return mergeMessagePermissions(current, updated.value);
+}
+
 function mergeMentions(existing: Mention[], incoming: Mention[]): Mention[] {
     return [
         ...existing,
@@ -540,7 +621,6 @@ export function isEventKindHidden(kind: ChatEvent["kind"]): boolean {
         case "message_pinned":
         case "message_unpinned":
         case "member_left":
-        case "events_ttl_updated":
         case "members_added_to_default_channel":
             return true;
 
@@ -734,6 +814,7 @@ export function groupChatFromCandidate(
             joined: BigInt(Date.now()),
             role: "owner",
         },
+        eventsTTL: candidate.eventsTTL,
     } as MultiUserChat;
 }
 
@@ -916,34 +997,85 @@ export function canInviteUsers(chat: ChatSummary): boolean {
     );
 }
 
-export function canCreatePolls(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat") {
-        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.createPolls);
-    } else {
-        return true;
-    }
+export function permittedMessagesInGroup(
+    chat: MultiUserChat,
+    mode: "message" | "thread",
+): Map<MessagePermission, boolean> {
+    return new Map(
+        messagePermissionsList.map((m: MessagePermission) => [
+            m,
+            canSendGroupMessage(chat, mode, m),
+        ]),
+    );
 }
 
-export function canSendMessages(
-    chat: ChatSummary,
-    userLookup: UserLookup,
-    proposalsBotUserId: string,
+export function canSendGroupMessage(
+    chat: MultiUserChat,
+    mode: "message" | "thread" | "any",
+    permission?: MessagePermission,
 ): boolean {
-    if (chat.kind !== "direct_chat") {
-        return !chat.frozen && isPermitted(chat.membership.role, chat.permissions.sendMessages);
+    if (mode === "any") {
+        return (
+            canSendGroupMessage(chat, "message", permission) ||
+            canSendGroupMessage(chat, "thread", permission)
+        );
     }
 
-    const user = userLookup[chat.them.userId];
-    if (user === undefined || user.suspended) {
+    if (permission === undefined) {
+        return messagePermissionsList.some((mp: MessagePermission) =>
+            canSendGroupMessage(chat, mode, mp as MessagePermission),
+        );
+    }
+
+    const messagePermissions =
+        mode === "thread"
+            ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
+            : chat.permissions.messagePermissions;
+
+    return (
+        !chat.frozen &&
+        isPermitted(
+            chat.membership.role,
+            messagePermissions[permission] ?? messagePermissions.default,
+        )
+    );
+}
+
+export function permittedMessagesInDirectChat(
+    recipient: UserSummary,
+    mode: "message" | "thread",
+    proposalsBotUserId: string,
+): Map<MessagePermission, boolean> {
+    return new Map(
+        messagePermissionsList.map((m: MessagePermission) => [
+            m,
+            canSendDirectMessage(recipient, mode, proposalsBotUserId, m),
+        ]),
+    );
+}
+
+export function canSendDirectMessage(
+    recipient: UserSummary,
+    mode: "message" | "thread" | "any",
+    proposalsBotUserId: string,
+    permission?: MessagePermission,
+): boolean {
+    if (mode === "thread") {
         return false;
     }
-    if (user.kind === "user") {
-        return true;
-    }
-    if (user.userId === OPENCHAT_BOT_USER_ID || user.userId === proposalsBotUserId) {
+
+    if (recipient.suspended) {
         return false;
     }
-    return true;
+
+    if (
+        (recipient.kind === "bot" && recipient.userId === OPENCHAT_BOT_USER_ID) ||
+        recipient.userId === proposalsBotUserId
+    ) {
+        return false;
+    }
+
+    return permission !== "poll" && permission !== "prize";
 }
 
 export function canReactToMessages(chat: ChatSummary): boolean {
@@ -957,14 +1089,6 @@ export function canReactToMessages(chat: ChatSummary): boolean {
 export function canMentionAllMembers(chat: ChatSummary): boolean {
     if (chat.kind !== "direct_chat" && !chat.frozen) {
         return isPermitted(chat.membership.role, chat.permissions.mentionAllMembers);
-    } else {
-        return false;
-    }
-}
-
-export function canReplyInThread(chat: ChatSummary): boolean {
-    if (chat.kind !== "direct_chat" && !chat.frozen) {
-        return isPermitted(chat.membership.role, chat.permissions.replyInThread);
     } else {
         return false;
     }
@@ -1084,6 +1208,7 @@ export function mergeSendMessageResponse(
                     token: msg.content.transfer.token,
                     endDate: msg.content.endDate,
                     caption: msg.content.caption,
+                    diamondOnly: msg.content.diamondOnly,
                 } as PrizeContent;
                 break;
         }
@@ -1091,6 +1216,7 @@ export function mergeSendMessageResponse(
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
+        expiresAt: resp.expiresAt,
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
@@ -1103,10 +1229,12 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     localUpdates: MessageMap<LocalMessageUpdates>,
+    expiredEventRanges: DRange,
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
 ): EventWrapper<ChatEvent>[] {
-    const eventIndexes = new Set<number>();
+    const eventIndexes = new DRange();
+    eventIndexes.add(expiredEventRanges);
 
     function processEvent(e: EventWrapper<ChatEvent>) {
         eventIndexes.add(e.index);
@@ -1167,10 +1295,10 @@ export function mergeEventsAndLocalUpdates(
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
             if (
-                (eventIndexes.size === 0 && message.index <= 1) ||
-                eventIndexes.has(message.index - 1) ||
-                eventIndexes.has(message.index) ||
-                eventIndexes.has(message.index + 1)
+                (eventIndexes.length === 0 && message.index <= 1) ||
+                eventIndexes
+                    .subranges()
+                    .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1)
             ) {
                 merged.push(processEvent(message));
                 anyAdded = true;
@@ -1261,9 +1389,27 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.threadSummary !== undefined) {
+        const current = message.thread ?? defaultThreadSummary();
+        const participantIds = new Set<string>([
+            ...current.participantIds,
+            ...(localUpdates.threadSummary.participantIds ?? []),
+        ]);
+
         message.thread = {
-            ...(message.thread ?? defaultThreadSummary()),
-            ...localUpdates.threadSummary,
+            participantIds,
+            followedByMe: localUpdates.threadSummary.followedByMe ?? current.followedByMe,
+            numberOfReplies: Math.max(
+                localUpdates.threadSummary.numberOfReplies ?? 0,
+                current.numberOfReplies,
+            ),
+            latestEventIndex: Math.max(
+                localUpdates.threadSummary.latestEventIndex ?? 0,
+                current.latestEventIndex,
+            ),
+            latestEventTimestamp: bigIntMax(
+                localUpdates.threadSummary.latestEventTimestamp ?? BigInt(0),
+                current.latestEventTimestamp,
+            ),
         };
     }
 
@@ -1382,6 +1528,16 @@ function applyTranslation(content: MessageContent, translation: string): Message
             };
         }
 
+        case "proposal_content": {
+            return {
+                ...content,
+                proposal: {
+                    ...content.proposal,
+                    summary: translation,
+                },
+            };
+        }
+
         default:
             return content;
     }
@@ -1441,6 +1597,7 @@ export function buildTransactionUrl(
 
     return transactionUrlFormat
         .replace("{block_index}", transfer.blockIndex.toString())
+        .replace("{transaction_index}", transfer.blockIndex.toString())
         .replace("{transaction_hash}", transfer.transactionHash ?? "");
 }
 
@@ -1542,7 +1699,91 @@ export function getMessageText(content: MessageContent): string | undefined {
         case "poll_content":
             return content.config.text;
 
+        case "proposal_content":
+            return content.proposal.summary;
+
         default:
             return undefined;
     }
+}
+
+export function diffGroupPermissions(
+    original: ChatPermissions,
+    updated: ChatPermissions,
+): OptionalChatPermissions | undefined {
+    if (JSON.stringify(original) === JSON.stringify(updated)) {
+        return undefined;
+    }
+
+    const diff: OptionalChatPermissions = defaultOptionalChatPermissions();
+
+    if (original.changeRoles !== updated.changeRoles) {
+        diff.changeRoles = updated.changeRoles;
+    }
+    if (original.updateGroup !== updated.updateGroup) {
+        diff.updateGroup = updated.updateGroup;
+    }
+    if (original.inviteUsers !== updated.inviteUsers) {
+        diff.inviteUsers = updated.inviteUsers;
+    }
+    if (original.removeMembers !== updated.removeMembers) {
+        diff.removeMembers = updated.removeMembers;
+    }
+    if (original.deleteMessages !== updated.deleteMessages) {
+        diff.deleteMessages = updated.deleteMessages;
+    }
+    if (original.pinMessages !== updated.pinMessages) {
+        diff.pinMessages = updated.pinMessages;
+    }
+    if (original.reactToMessages !== updated.reactToMessages) {
+        diff.reactToMessages = updated.reactToMessages;
+    }
+    if (original.mentionAllMembers !== updated.mentionAllMembers) {
+        diff.mentionAllMembers = updated.mentionAllMembers;
+    }
+
+    diff.messagePermissions = diffMessagePermissions(
+        original.messagePermissions,
+        updated.messagePermissions,
+    );
+
+    if (original.threadPermissions === undefined && updated.threadPermissions === undefined) {
+        diff.threadPermissions = undefined;
+    } else if (updated.threadPermissions === undefined) {
+        diff.threadPermissions = "set_to_none";
+    } else {
+        const threadPermissionsDiff = diffMessagePermissions(
+            original.threadPermissions ?? { default: "member" },
+            updated.threadPermissions,
+        );
+        diff.threadPermissions =
+            threadPermissionsDiff === undefined ? undefined : { value: threadPermissionsDiff };
+    }
+
+    return diff;
+}
+
+function diffMessagePermissions(
+    original: MessagePermissions,
+    updated: MessagePermissions,
+): OptionalMessagePermissions | undefined {
+    if (JSON.stringify(original) === JSON.stringify(updated)) {
+        return undefined;
+    }
+
+    const diff: OptionalMessagePermissions = defaultOptionalMessagePermissions();
+
+    diff.default = original.default !== updated.default ? updated.default : undefined;
+    diff.text = updateFromOptions(original.text, updated.text);
+    diff.image = updateFromOptions(original.image, updated.image);
+    diff.video = updateFromOptions(original.video, updated.video);
+    diff.audio = updateFromOptions(original.audio, updated.audio);
+    diff.file = updateFromOptions(original.file, updated.file);
+    diff.poll = updateFromOptions(original.poll, updated.poll);
+    diff.crypto = updateFromOptions(original.crypto, updated.crypto);
+    diff.giphy = updateFromOptions(original.giphy, updated.giphy);
+    diff.prize = updateFromOptions(original.prize, updated.prize);
+    diff.memeFighter = updateFromOptions(original.memeFighter, updated.memeFighter);
+
+    return diff;
 }

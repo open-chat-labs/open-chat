@@ -22,12 +22,12 @@
     import CryptoSelector from "./CryptoSelector.svelte";
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
+    import TextArea from "../TextArea.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
     const ONE_WEEK = ONE_DAY * 7;
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let draftAmount: bigint;
@@ -40,7 +40,9 @@
     const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
     type Duration = "oneHour" | "oneDay" | "oneWeek";
     let selectedDuration: Duration = "oneDay";
+    let diamondOnly = true;
 
+    $: user = client.user;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     let refreshing = false;
@@ -49,7 +51,7 @@
     let toppingUp = false;
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
-    let validAmount: boolean = false;
+    let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -59,8 +61,22 @@
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
         draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: valid = error === undefined && validAmount && !tokenChanging;
+    $: minAmount = BigInt(100) * BigInt(numberOfWinners) * transferFees;
+    $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
+
+    $: {
+        if (tokenInputState === "too_low") {
+            error = $_("minimumAmount", {
+                values: {
+                    amount: client.formatTokens(minAmount, 0, tokenDetails.decimals),
+                    symbol,
+                },
+            });
+        } else {
+            error = undefined;
+        }
+    }
 
     function reset() {
         balanceWithRefresh.refresh();
@@ -101,6 +117,7 @@
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
             endDate: getEndDate(),
+            diamondOnly,
             transfer: {
                 kind: "pending",
                 ledger,
@@ -213,7 +230,7 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
+                    <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
                     {/if}
@@ -227,10 +244,20 @@
                             {ledger}
                             label={"prizes.totalAmount"}
                             autofocus={!multiUserChat}
-                            bind:valid={validAmount}
+                            bind:state={tokenInputState}
                             transferFees={totalFees}
+                            {minAmount}
                             maxAmount={maxAmount(cryptoBalance)}
                             bind:amount={draftAmount} />
+                    </div>
+                    <div class="message">
+                        <Legend label={$_("tokenTransfer.message")} />
+                        <TextArea
+                            maxlength={200}
+                            rows={3}
+                            autofocus={false}
+                            placeholder={$_("tokenTransfer.messagePlaceholder")}
+                            bind:value={message} />
                     </div>
                     <div class="winners">
                         <Legend
@@ -261,17 +288,34 @@
                             <div class="dist-label">{$_("prizes.equalDistribution")}</div>
                         </div>
                     </div>
-                    <div class="message">
-                        <Legend label={$_("prizes.duration")} />
-                        {#each durations as d}
+                    <div class="config">
+                        <div class="duration">
+                            <Legend label={$_("prizes.duration")} />
+                            {#each durations as d}
+                                <Radio
+                                    on:change={() => (selectedDuration = d)}
+                                    value={d}
+                                    checked={selectedDuration === d}
+                                    id={`duration_${d}`}
+                                    label={$_(`poll.${d}`)}
+                                    group={"prize_duration"} />
+                            {/each}
+                        </div>
+                        <div class="restrictions">
+                            <Legend label={$_("prizes.whoCanWin")} />
                             <Radio
-                                on:change={() => (selectedDuration = d)}
-                                value={d}
-                                checked={selectedDuration === d}
-                                id={`duration_${d}`}
-                                label={$_(`poll.${d}`)}
-                                group={"poll_duration"} />
-                        {/each}
+                                on:change={() => (diamondOnly = true)}
+                                checked={diamondOnly}
+                                id={`restricted_diamond`}
+                                label={$_(`prizes.onlyDiamond`)}
+                                group={"prize_restriction"} />
+                            <Radio
+                                on:change={() => (diamondOnly = false)}
+                                checked={!diamondOnly}
+                                id={`restricted_anyone`}
+                                label={$_(`prizes.anyone`)}
+                                group={"prize_restriction"} />
+                        </div>
                     </div>
                     {#if error}
                         <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -361,6 +405,17 @@
 
         .dist-label {
             text-align: center;
+        }
+    }
+
+    .config {
+        display: flex;
+        gap: $sp5;
+        justify-content: space-between;
+
+        .restrictions,
+        .duration {
+            flex: 1;
         }
     }
 </style>

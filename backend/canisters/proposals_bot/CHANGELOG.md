@@ -7,6 +7,79 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+## [[2.0.928](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.928-proposals_bot)] - 2023-11-06
+
+### Added
+
+- Support submitting proposals of type `UpgradeSnsToNextVersion` ([#4670](https://github.com/open-chat-labs/open-chat/pull/4670))
+- Support submitting proposals of type `UpgradeSnsControlledCanister` ([#4672](https://github.com/open-chat-labs/open-chat/pull/4672))
+- Support submitting proposals of type `ExecuteGenericNervousSystemFunction` ([#4694](https://github.com/open-chat-labs/open-chat/pull/4694))
+
+### Changed
+
+- Refund deposit if proposal fails to be submitted ([#4676](https://github.com/open-chat-labs/open-chat/pull/4676))
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+
+## [[2.0.916](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.916-proposals_bot)] - 2023-10-30
+
+### Fixed
+
+- Fix dissolve delay on neurons for submitting proposals ([#4668](https://github.com/open-chat-labs/open-chat/pull/4668))
+- Refund the user whose proposal submission failed due to a bug ([#4669](https://github.com/open-chat-labs/open-chat/pull/4669))
+
+## [[2.0.915](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.915-proposals_bot)] - 2023-10-27
+
+### Changed
+
+- Retry sending proposal messages which originally failed ([#4663](https://github.com/open-chat-labs/open-chat/pull/4663))
+
+## [[2.0.911](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.911-proposals_bot)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+### Fixed
+
+- Fix Kinic's `ledger_canister_id` whose lookup originally failed ([#4633](https://github.com/open-chat-labs/open-chat/pull/4633))
+
+## [[2.0.903](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.903-proposals_bot)] - 2023-10-20
+
+### Added
+
+- Support staking a neuron for any SNS to then use to submit proposals ([#4631](https://github.com/open-chat-labs/open-chat/pull/4631))
+- Add `permissions_v2` when creating group ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+## [[2.0.891](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.891-proposals_bot)] - 2023-10-19
+
+### Added
+
+- Support submitting proposals to any governance canister ([#4579](https://github.com/open-chat-labs/open-chat/pull/4579))
+
+### Changed
+
+- Adjust `MemoryManager` bucket size ([#4601](https://github.com/open-chat-labs/open-chat/pull/4601))
+
+## [[2.0.884](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.884-proposals_bot)] - 2023-10-12
+
+### Added
+
+- Store whether submitting proposals is enabled or not in the Registry ([#4564](https://github.com/open-chat-labs/open-chat/pull/4564))
+
+### Changed
+
+- Retry submitting proposal if looking up user fails ([#4543](https://github.com/open-chat-labs/open-chat/pull/4543))
+- Store `ledger_canister_id` along with each `NervousSystem` ([#4551](https://github.com/open-chat-labs/open-chat/pull/4551))
+- Get nervous system updates from the Registry ([#4557](https://github.com/open-chat-labs/open-chat/pull/4557))
+
+## [[2.0.881](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.881-proposals_bot)] - 2023-10-10
+
+### Changed
+
 - Add logging around submitting proposals ([#4538](https://github.com/open-chat-labs/open-chat/pull/4538))
 
 ## [[2.0.879](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.879-proposals_bot)] - 2023-10-09

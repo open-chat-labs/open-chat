@@ -23,18 +23,19 @@
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
+    import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
 
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let chat: MultiUserChat;
     export let memberCount: number;
 
     // capture a snapshot of the chat as it is right now
+    $: currentUser = client.user;
     $: canEdit = client.canEditGroupDetails(chat.id);
-    $: canSend = client.canSendMessages(chat.id) || client.canReplyInThread(chat.id);
+    $: canSend = client.canSendMessage(chat.id, "any");
     $: canInvite = client.canInviteUsers(chat.id) && (chat.kind === "group_chat" || chat.public);
     $: avatarSrc = client.groupAvatarUrl(chat);
 
@@ -62,7 +63,7 @@
         let description = chat.description;
 
         if (chat.subtype?.kind === "governance_proposals" ?? false) {
-            description = description.replace("{userId}", currentUser.userId);
+            description = description.replace("{userId}", $currentUser.userId);
         }
 
         return description;
@@ -125,6 +126,7 @@
                     {/if}
                 {/if}
             </div>
+            <DisappearingMessagesSummary ttl={chat.eventsTTL} />
             <AccessGateSummary gate={chat.gate} />
         </CollapsibleCard>
         {#if combinedRulesText.length > 0}
@@ -173,7 +175,7 @@
 
     fieldset {
         border: 1px solid var(--bd);
-        border-radius: $sp2;
+        border-radius: var(--rd);
         padding: $sp3;
         @include font(light, normal, fs-100);
     }
@@ -219,7 +221,7 @@
         // background-color: var(--sub-section-bg);
         margin-bottom: $sp3;
         // border: 1px solid var(--bd);
-        border-radius: $sp2;
+        border-radius: var(--rd);
     }
 
     .info {

@@ -11,6 +11,8 @@ fn updates(args: Args) -> Response {
 
 fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Response {
     let username = state.data.username.if_set_after(updates_since).cloned();
+    let suspended = state.data.suspended.if_set_after(updates_since).cloned();
+
     let display_name = state
         .data
         .display_name
@@ -36,6 +38,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         || avatar_id.has_update()
         || blocked_users.is_some()
         || avatar_id.has_update()
+        || suspended.is_some()
         || state.data.direct_chats.any_updated(updates_since)
         || state.data.group_chats.any_updated(updates_since)
         || state.data.favourite_chats.any_updated(updates_since)
@@ -63,6 +66,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let direct_chats = DirectChatsUpdates {
         added: direct_chats_added,
         updated: direct_chats_updated,
+        removed: state.data.direct_chats.removed_since(updates_since),
         pinned: state.data.direct_chats.pinned_if_updated(updates_since),
     };
 
@@ -116,5 +120,6 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
         communities,
         avatar_id,
         blocked_users,
+        suspended,
     })
 }

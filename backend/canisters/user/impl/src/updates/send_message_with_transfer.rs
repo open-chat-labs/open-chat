@@ -11,6 +11,7 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
+use utils::consts::{MEMO_MESSAGE, MEMO_PRIZE};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -195,7 +196,7 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
                 return RecipientBlocked;
             }
             match &c.transfer {
-                CryptoTransaction::Pending(t) => t.clone(),
+                CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
                 _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
             }
         }
@@ -213,7 +214,7 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
                         return InvalidRequest("Transaction amount must equal total prize + prize fees".to_string());
                     }
 
-                    t.clone()
+                    t.clone().set_memo(&MEMO_PRIZE)
                 }
                 _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
             }
@@ -244,6 +245,7 @@ fn transform_content_with_completed_transaction(
             transfer: CryptoTransaction::Completed(completed_transaction),
             end_date: c.end_date,
             caption: c.caption,
+            diamond_only: c.diamond_only,
         }),
         _ => unreachable!("Message must include a crypto transfer"),
     }

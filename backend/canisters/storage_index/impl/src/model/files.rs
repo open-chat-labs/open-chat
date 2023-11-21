@@ -3,7 +3,8 @@ use crate::memory::{
     get_total_file_bytes_memory, Memory,
 };
 use candid::Principal;
-use ic_stable_structures::{BoundedStorable, StableBTreeMap, StableCell, Storable};
+use ic_stable_structures::storable::Bound;
+use ic_stable_structures::{StableBTreeMap, StableCell, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use types::{CanisterId, FileAdded, FileId, FileRemoved, Hash, TimestampMillis};
@@ -207,11 +208,11 @@ impl Storable for FileIdByUserThenCreated {
             file_id: u128::from_be_bytes(file_id_bytes.try_into().unwrap()),
         }
     }
-}
 
-impl BoundedStorable for FileIdByUserThenCreated {
-    const MAX_SIZE: u32 = Self::MAX_SIZE as u32;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: Self::MAX_SIZE as u32,
+        is_fixed_size: false,
+    };
 }
 
 pub struct UserFile {
@@ -246,16 +247,16 @@ impl Storable for HashAndBucket {
             bucket: Principal::from_slice(bucket_bytes),
         }
     }
+
+    const BOUND: Bound = Bound::Bounded {
+        max_size: Self::MAX_SIZE as u32,
+        is_fixed_size: false,
+    };
 }
 
 pub struct RemoveFileSuccess {
     pub hash: Hash,
     pub size: u64,
-}
-
-impl BoundedStorable for HashAndBucket {
-    const MAX_SIZE: u32 = Self::MAX_SIZE as u32;
-    const IS_FIXED_SIZE: bool = false;
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -291,11 +292,11 @@ impl Storable for BlobReference {
             canister_id: Principal::from_slice(canister_id_bytes),
         }
     }
-}
 
-impl BoundedStorable for BlobReference {
-    const MAX_SIZE: u32 = Self::MAX_SIZE as u32;
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: Bound = Bound::Bounded {
+        max_size: Self::MAX_SIZE as u32,
+        is_fixed_size: false,
+    };
 }
 
 impl Default for Files {

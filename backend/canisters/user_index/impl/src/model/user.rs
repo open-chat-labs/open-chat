@@ -24,6 +24,7 @@ pub struct User {
     pub suspension_details: Option<SuspensionDetails>,
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
     pub moderation_flags_enabled: u32,
+    pub reported_messages: Vec<u64>,
 }
 
 impl User {
@@ -75,6 +76,7 @@ impl User {
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
+            reported_messages: Vec::new(),
         }
     }
 
@@ -113,6 +115,16 @@ pub enum SuspensionDuration {
     Indefinitely,
 }
 
+impl From<SuspensionDuration> for Option<Milliseconds> {
+    fn from(value: SuspensionDuration) -> Self {
+        if let SuspensionDuration::Duration(duration) = value {
+            Some(duration)
+        } else {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 impl Default for User {
     fn default() -> Self {
@@ -135,6 +147,7 @@ impl Default for User {
             suspension_details: None,
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
+            reported_messages: Vec::new(),
         }
     }
 }

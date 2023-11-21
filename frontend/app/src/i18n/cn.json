@@ -170,13 +170,6 @@
         "unread": "{count} 未读消息",
         "mentions": "{count} 未读提及"
     },
-    "login": {
-        "welcomeTo": "欢迎来到 ...",
-        "blurbPartOne": "一个安全，易用，去中心化的聊天软件。完全搭建在",
-        "blurbPartTwo": " - 世界上首个互联网量级的区块链上. 了解更多详情 ",
-        "signIn": "登录",
-        "signInOrRegister": "登录或注册"
-    },
     "reactions": {
         "greaterThan99People": "99+ 用户",
         "youClickToRemove": "您 (点击删除)",
@@ -266,7 +259,7 @@
         "voting_q": "我如何对提案进行投票？",
         "voting_a": "加入 <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat proposals group</a> 并阅读<a href=\"/blog/governance\">这篇博文</a>，其中给出了概述OpenChat 治理，并有一个关于投票的分步指南。",
         "buychat_q": "我如何购买 CHAT 代币？",
-        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
+        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
         "shortcuts_q": "有哪些快捷命令可用？",
         "shortcuts_a": "您可以从消息条目输入框中使用多个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif 图片<br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布特定常见问题解答问题的格式化链接<br />`/diamond ` - 创建和发布带有钻石会员详细信息的格式化链接<br/> <br/>接受参数的命令也可以在没有参数的情况下使用。<br /><br />*可用的常见问题 ID 是: airdrop, voting, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts",
         "content_q": "什么样的内容是允许的？",
@@ -322,13 +315,16 @@
         "oneVote": "1 票",
         "oneVoteBy": "1 票",
         "numVotesIncludingYours": "{votes} 票，包括您的票",
-        "atLeastTwo": "至少 2 个"
+        "atLeastTwo": "至少 2 个",
+        "allowChangeVotes": "允许用户更改投票"
     },
     "role": {
         "admin": "管理员",
         "member": "成员",
         "moderator": "主持人",
-        "owner": "拥有者"
+        "owner": "拥有者",
+        "default": "默认",
+        "none": "没有人"
     },
     "permissions": {
         "whoCan": "谁可以",
@@ -353,7 +349,38 @@
         "createPublicChannel": "创建公共频道",
         "createPrivateChannel": "创建私人频道",
         "manageUserGroups": "管理用户组",
-        "mentionAllMembers": "提及所有成员 ({mention})"
+        "mentionAllMembers": "提及所有成员 ({mention})",
+        "nobody": "没有人可以",
+        "general": "一般的",
+        "message": "留言",
+        "thread": "线程数",
+        "overrideChatMessages": "覆盖聊天消息权限",
+        "messagePermissions": {
+            "default": "默认发送消息",
+            "text": "发送短信",
+            "image": "发送图像消息",
+            "video": "发送视频消息",
+            "audio": "发送音频消息",
+            "file": "发送文件消息",
+            "poll": "创建民意调查消息",
+            "crypto": "发送加密消息",
+            "giphy": "发送 giphy 消息",
+            "prize": "发送有奖短信",
+            "memeFighter": "发送 Meme Fighter 消息"
+        },
+        "threadPermissions": {
+            "default": "默认在线程中发送消息",
+            "text": "在线程中发送短信",
+            "image": "在线程中发送图像消息",
+            "video": "在线程中发送视频消息",
+            "audio": "在线程中发送音频消息",
+            "file": "在线程中发送文件消息",
+            "poll": "在线程中创建轮询消息",
+            "crypto": "在线程中发送加密消息",
+            "giphy": "在线程中发送 giphy 消息",
+            "prize": "在话题中发送有奖信息",
+            "memeFighter": "在线程中发送 Meme Fighter 消息"
+        }
     },
     "rules": {
         "enable": "启用群规",
@@ -377,9 +404,7 @@
         "welcome": "欢迎来到 {groupName}",
         "historyPrivateMessage": "旧消息对新成员不可见",
         "privateGroupInfo": "用户不能自由加入这个 {level}。他们必须由授权成员添加或邀请。",
-        "permissionsUpdateFailed": "权限更新失败",
         "groupRules": "群规",
-        "rulesUpdateFailed": "抱歉，我们无法更新您的 {level} 规则",
         "getRulesFailed": "未能获得 {level} 规则",
         "createTitle": "创建新的 {level}",
         "back": "后退",
@@ -472,7 +497,22 @@
         "scan": "扫描二维码",
         "receiveToken": "接收 {symbol}",
         "sendToken": "发送 {symbol}",
-        "receive": "收到"
+        "receive": "收到",
+        "showZeroBalance": "展示更多",
+        "hideZeroBalance": "显示较少",
+        "transactions": "交易",
+        "transactionError": "抱歉，我们无法加载您的交易",
+        "unknownTransactionType": "未知",
+        "loadMoreTransactions": "装载更多",
+        "transactionHeaders": {
+            "id": "ID",
+            "amount": "数量",
+            "kind": "种类",
+            "timestamp": "时间戳",
+            "from": "从",
+            "to": "到",
+            "type": "类型"
+        }
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -605,15 +645,27 @@
             "summaryRules": "支持降价",
             "urlRules": "补充详细信息的链接",
             "unexpectedError": "提交提案时出现意外错误",
-            "toPrincipal": "收款人账户本金",
-            "enterToPrincipal": "输入收件人帐户主体",
             "amount": "数量",
             "amountRules": "至少 1 个 {token} 令牌",
             "enterAmount": "输入 {token} 代币的数量",
             "type": "提案类型",
             "treasury": "从金库转账的代币",
-            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。"
-        }
+            "message": "提交提案需要缴纳 {cost} {token} 代币押金（包括两套转账费用），如果提案被采纳，押金将退还。",
+            "recipientOwner": "收款人账户本金",
+            "recipientSubaccount": "收款人子账户",
+            "recipientSubaccountRules": "必须是十六进制字符串",
+            "enterRecipientOwner": "输入收件人的账户主体",
+            "enterRecipientSubaccount": "输入可选的收件人子帐户",
+            "ledgerCanisterId": "分类帐容器 ID",
+            "enterLedgerCanisterId": "输入账本容器 ID",
+            "tokenInfoUrl": "代币信息网址",
+            "enterTokenInfoUrl": "输入显示令牌信息的 url",
+            "howToBuyUrl": "如何购买网址",
+            "enterHowToBuyUrl": "输入显示如何购买代币的网址",
+            "transactionUrlFormat": "交易url格式",
+            "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}"
+        },
+        "neuronControllerAction": "神经元控制器动作"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",
@@ -655,7 +707,9 @@
         "label": "个人资料",
         "communities": "社区",
         "selectCommunity": "选择一个社区",
-        "global": "全球的"
+        "global": "全球的",
+        "block": "堵塞",
+        "unblock": "解锁"
     },
     "undeleteMessage": "取消删除",
     "undeletingMessage": "{username} 在 {timestamp} 上取消删除消息",
@@ -722,7 +776,10 @@
         "distribution": "奖品应该如何分配？",
         "equalDistribution": "均等分配",
         "randomDistribution": "随机分布",
-        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候"
+        "creatingYourPrizeMessage": "我们正在创建您的奖品消息，请稍候",
+        "whoCanWin": "谁可以申请份额？",
+        "onlyDiamond": "仅限钻石用户",
+        "anyone": "任何用户"
     },
     "upgrade": {
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",
@@ -830,7 +887,6 @@
         "optional": "选修的",
         "note": "添加备注",
         "notePlaceholder": "告诉我们您举报此内容的原因",
-        "advice": "如果您认为该帖子违反了本群规则，请第一时间联系群主和管理员。如果您认为某条消息违反了[平台准则](/guidelines)，则仅将其报告给平台审核。",
         "threat": "留言有威胁",
         "child": "邮件包含儿童色情内容",
         "nonConsensual": "消息包含未经同意的色情内容",
@@ -842,7 +898,8 @@
         "failure": "抱歉，我们无法将此消息报告给平台版主",
         "deleteMessage": "删除举报的消息",
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
-        "showing": "显示最近的 {count} 份报告（共 {total} 份）"
+        "showing": "显示最近的 {count} 份报告（共 {total} 份）",
+        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息。"
     },
     "invitedBy": "{changedBy} 邀请 {changed} 参加 {level}",
     "halloffame": {
@@ -874,7 +931,7 @@
         "chooseGate": "选择一个门禁",
         "diamondMember": "钻石会员",
         "diamondGateInfo": "只有拥有钻石会员资格的用户才能加入",
-        "nnsHolder": "NNS 神经元持有者（即将推出）",
+        "nnsHolder": "ICP 神经元持有者（即将推出）",
         "nftHolder": "NFT持有者（即将推出）",
         "openAccess": "开放获取",
         "minDissolveDelay": "最小溶解延迟（天）",
@@ -886,7 +943,16 @@
         "gateCheckFailed": "未满足访问门禁",
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
         "snsHolder": "{token} 神经元支架",
-        "snsHolderInfo": "仅允许 {token} 神经元的持有者加入"
+        "snsHolderInfo": "仅允许 {token} 神经元的持有者加入",
+        "initiateCredentialCheck": "验证凭证",
+        "verify": "核实",
+        "credential": "已验证的凭证",
+        "credentialParamIssuer": "发行人：{issuer}",
+        "credentialParamCredential": "凭证：{credential}",
+        "credentialIssuer": "凭证颁发者",
+        "requiredCredential": "所需凭证",
+        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者 {credential} 的“{issuer}”凭证",
+        "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入"
     },
     "communities": {
         "explore": "探索社区",
@@ -993,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** 群组成员",
         "searchUserGroups": "搜索用户组...",
         "userGroupName": "用户组名",
-        "noSpaces": "不允许有空格"
+        "noSpaces": "不允许有空格",
+        "noMatch": "未找到匹配的社区",
+        "refineSearch": "尝试优化您的搜索"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
@@ -1063,5 +1131,30 @@
     "followThreadFailed": "关注话题失败",
     "unfollowThreadFailed": "取消关注话题失败",
     "doubleClickReply": "双击消息即可回复/编辑",
-    "doubleTapReply": "双击消息即可回复/编辑"
+    "doubleTapReply": "双击消息即可回复/编辑",
+    "minimumAmount": "最小值：{amount} {symbol}",
+    "sendTextDisabled": "短信已禁用",
+    "disappearingMessages": {
+        "label": "消失的消息",
+        "hours": "小时）",
+        "minutes": "分钟）",
+        "days": "天）",
+        "summary": "消息将在 {duration} 之后消失",
+        "timeUpdatedBy": "{changedBy} 将消息消失时间设置为 {duration}",
+        "disabledBy": "{changedBy} 禁用消失消息",
+        "durationMinutes": "{duration} 分钟",
+        "oneMinute": "1分钟",
+        "timeUpdated": "消息消失时间设置为 {duration}",
+        "disabled": "消息消失已禁用"
+    },
+    "login": "登录",
+    "loginToOpenChat": "登录 OpenChat",
+    "tapToLogin": "访客模式 - 点击此处登录",
+    "loginProviderChanged": "您之前似乎已使用 {previous} 提供商登录。请仔细检查您这次是否想使用 {next}？",
+    "guestUser": "访客用户",
+    "showAuthProviders": "显示选项",
+    "hideAuthProviders": "隐藏选项",
+    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}",
+    "offlineMessage": "离线",
+    "offlineError": "抱歉 - 您目前似乎处于离线状态"
 }

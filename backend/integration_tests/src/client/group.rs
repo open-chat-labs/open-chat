@@ -4,6 +4,7 @@ use group_canister::*;
 // Queries
 generate_query_call!(events);
 generate_query_call!(events_by_index);
+generate_query_call!(events_window);
 generate_query_call!(public_summary);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates_v2);
@@ -14,6 +15,7 @@ generate_query_call!(summary_updates);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
+generate_update_call!(claim_prize);
 generate_update_call!(convert_into_community);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
@@ -33,14 +35,14 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, GroupRole,
         MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn send_text_message(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         thread_root_message_index: Option<MessageIndex>,
@@ -72,7 +74,7 @@ pub mod happy_path {
     }
 
     pub fn update_group(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: Principal,
         group_chat_id: ChatId,
         args: &group_canister::update_group_v2::Args,
@@ -85,7 +87,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn change_role(env: &mut StateMachine, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
+    pub fn change_role(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId, user_id: UserId, new_role: GroupRole) {
         let response = super::change_role(
             env,
             sender,
@@ -104,7 +106,7 @@ pub mod happy_path {
     }
 
     pub fn register_poll_vote(
-        env: &mut StateMachine,
+        env: &mut PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         message_index: MessageIndex,
@@ -129,12 +131,36 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(
-        env: &StateMachine,
+    pub fn events(
+        env: &PocketIc,
         sender: &User,
         group_chat_id: ChatId,
-        events: Vec<EventIndex>,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
     ) -> EventsResponse {
+        let response = super::events(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events::Args {
+                thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_window' error: {response:?}"),
+        }
+    }
+
+    pub fn events_by_index(env: &PocketIc, sender: &User, group_chat_id: ChatId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,
@@ -142,7 +168,7 @@ pub mod happy_path {
             &group_canister::events_by_index::Args {
                 thread_root_message_index: None,
                 events,
-                latest_client_event_index: None,
+                latest_known_update: None,
             },
         );
 
@@ -152,8 +178,35 @@ pub mod happy_path {
         }
     }
 
+    pub fn events_window(
+        env: &PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        mid_point: MessageIndex,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events_window(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events_window::Args {
+                thread_root_message_index: None,
+                mid_point,
+                max_messages,
+                max_events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_window' error: {response:?}"),
+        }
+    }
+
     pub fn selected_initial(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         group_chat_id: ChatId,
     ) -> group_canister::selected_initial::SuccessResult {
@@ -170,7 +223,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn summary(env: &StateMachine, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+    pub fn summary(env: &PocketIc, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
         let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
 
         match response {
@@ -180,7 +233,7 @@ pub mod happy_path {
     }
 
     pub fn summary_updates(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: &User,
         group_chat_id: ChatId,
         updates_since: TimestampMillis,
@@ -196,6 +249,48 @@ pub mod happy_path {
             group_canister::summary_updates::Response::Success(result) => Some(result.updates),
             group_canister::summary_updates::Response::SuccessNoUpdates => None,
             response => panic!("'summary_updates' error: {response:?}"),
+        }
+    }
+
+    pub fn delete_messages(
+        env: &mut PocketIc,
+        sender: Principal,
+        group_chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: Vec<MessageId>,
+    ) {
+        let response = super::delete_messages(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::delete_messages::Args {
+                thread_root_message_index,
+                message_ids,
+                as_platform_moderator: None,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::delete_messages::Response::Success => {}
+            response => panic!("'delete_messages' error: {response:?}"),
+        }
+    }
+
+    pub fn claim_prize(env: &mut PocketIc, sender: Principal, group_chat_id: ChatId, message_id: MessageId) {
+        let response = super::claim_prize(
+            env,
+            sender,
+            group_chat_id.into(),
+            &group_canister::claim_prize::Args {
+                message_id,
+                correlation_id: 0,
+            },
+        );
+
+        match response {
+            group_canister::claim_prize::Response::Success => {}
+            response => panic!("'claim_prize' error: {response:?}"),
         }
     }
 }

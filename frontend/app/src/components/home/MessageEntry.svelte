@@ -24,18 +24,19 @@
         UserOrUserGroup,
         AttachmentContent,
     } from "openchat-client";
-    import { allQuestions } from "openchat-client";
+    import { allQuestions, chatIdentifiersEqual } from "openchat-client";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
+    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
+    import { scream } from "../../utils/scream";
 
     const client = getContext<OpenChat>("client");
 
     export let chat: ChatSummary;
     export let blocked: boolean;
     export let preview: boolean;
-    export let canSend: boolean;
     export let messageAction: MessageAction = undefined;
     export let joining: MultiUserChat | undefined;
     export let attachment: AttachmentContent | undefined;
@@ -47,8 +48,8 @@
     const USER_TYPING_EVENT_MIN_INTERVAL_MS = 1000; // 1 second
     const MARK_TYPING_STOPPED_INTERVAL_MS = 5000; // 5 seconds
 
-    const mentionRegex = /@([\d\w_]*)$/;
-    const emojiRegex = /:([\w_]+):?$/;
+    const mentionRegex = /@(\w*)$/;
+    const emojiRegex = /:(\w+):?$/;
     const dispatch = createEventDispatcher();
     let inp: HTMLDivElement;
     let audioMimeType = client.audioRecordingMimeType();
@@ -67,22 +68,26 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
+    let previousChatId = chat.id;
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
 
     $: userStore = client.userStore;
     $: userGroups = client.currentCommunityUserGroups;
-    $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
-    $: isMultiUser = chat.kind === "group_chat" || chat.kind === "channel";
-    $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && attachment === undefined;
-    $: pollsAllowed = isMultiUser && !isBot && client.canCreatePolls(chat.id);
     $: cryptoLookup = client.cryptoLookup;
     $: tokens = Object.values($cryptoLookup)
         .map((t) => t.symbol.toLowerCase())
         .join("|");
     $: tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\\d*[.,]?\\d*)$`);
+
+    $: canSendAny = client.canSendMessage(chat.id, mode);
+    $: permittedMessages = client.permittedMessages(chat.id, mode);
+    $: canEnterText =
+        (permittedMessages.get("text") ?? false) ||
+        editingEvent !== undefined ||
+        attachment !== undefined;
 
     $: {
         if (inp) {
@@ -117,6 +122,14 @@
     }
 
     $: {
+        // If the chat has changed, close the emoji picker or file selector
+        if (!chatIdentifiersEqual(chat.id, previousChatId)) {
+            messageAction = undefined;
+            previousChatId = chat.id;
+        }
+    }
+
+    $: {
         if (attachment !== undefined || replyingTo !== undefined) {
             inp?.focus();
         }
@@ -128,12 +141,13 @@
         }
     }
 
-    $: placeholder =
-        attachment !== undefined
-            ? $_("enterCaption")
-            : dragging
-            ? $_("dropFile")
-            : $_("enterMessage");
+    $: placeholder = !canEnterText
+        ? $_("sendTextDisabled")
+        : attachment !== undefined
+        ? $_("enterCaption")
+        : dragging
+        ? $_("dropFile")
+        : $_("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -251,10 +265,10 @@
 
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
-    // if we don't have the mapping, just leave it as is (we *will* have the mapping)
+    // if we can't find the user or user group just leave it as is
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@(\S+)/g, (match, p1) => {
+        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -267,11 +281,8 @@
                         return `@UserId(${userOrGroup.userId})`;
                 }
             } else {
-                console.log(
-                    `Could not find the userId for user: ${p1}, this should not really happen`
-                );
+                return match;
             }
-            return match;
         });
 
         let mentioned = Array.from(mentionedMap, ([_, user]) => user);
@@ -286,9 +297,26 @@
      * * /search [term]
      * * /pinned - opens pinned messages (not yet)
      * * /details - opens group details (not yet)
+     * * /witch - summon the halloween witch
      */
     function parseCommands(txt: string): boolean {
-        if (isMultiUser && /^\/poll$/.test(txt)) {
+        const summonWitch = txt.match(/^\/witch( *(.*))$/);
+        const isHalloweenTheme = $currentThemeName === "halloween";
+        if (summonWitch) {
+            if (!isHalloweenTheme) {
+                themeType.set("dark");
+                preferredDarkThemeName.set("halloween");
+            }
+            document.body.classList.add("witch");
+            scream.currentTime = 0;
+            scream.play();
+            window.setTimeout(() => {
+                document.body.classList.remove("witch");
+            }, 2000);
+            return false;
+        }
+
+        if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
             dispatch("createPoll");
             return true;
         }
@@ -305,10 +333,12 @@
             return true;
         }
 
-        const gifMatch = txt.match(/^\/gif( *(.*))$/);
-        if (gifMatch && gifMatch[2] !== undefined) {
-            dispatch("attachGif", gifMatch[2]);
-            return true;
+        if (permittedMessages.get("giphy")) {
+            const gifMatch = txt.match(/^\/gif( *(.*))$/);
+            if (gifMatch && gifMatch[2] !== undefined) {
+                dispatch("attachGif", gifMatch[2]);
+                return true;
+            }
         }
 
         const faqMatch = txt.match(/^\/faq( *(.*))$/);
@@ -328,20 +358,24 @@
             return true;
         }
 
-        const tokenMatch = txt.match(tokenMatchRegex);
-        if (tokenMatch && tokenMatch[2] !== undefined) {
-            const token = tokenMatch[1];
-            const tokenDetails = Object.values($cryptoLookup).find(
-                (t) => t.symbol.toLowerCase() === token
-            );
-            if (tokenDetails !== undefined) {
-                dispatch("tokenTransfer", {
-                    ledger: tokenDetails.ledger,
-                    amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals).amount,
-                });
+        if (permittedMessages.get("crypto")) {
+            const tokenMatch = txt.match(tokenMatchRegex);
+            if (tokenMatch && tokenMatch[2] !== undefined) {
+                const token = tokenMatch[1];
+                const tokenDetails = Object.values($cryptoLookup).find(
+                    (t) => t.symbol.toLowerCase() === token
+                );
+                if (tokenDetails !== undefined) {
+                    dispatch("tokenTransfer", {
+                        ledger: tokenDetails.ledger,
+                        amount: client.validateTokenInput(tokenMatch[2], tokenDetails.decimals)
+                            .amount,
+                    });
+                }
+                return true;
             }
-            return true;
         }
+
         return false;
     }
 
@@ -376,7 +410,7 @@
 
     function restoreSelection() {
         inp.focus();
-        if (!selectedRange) {
+        if (!selectedRange || !selectedRange.intersectsNode(inp)) {
             const range = new Range();
             range.selectNodeContents(inp);
             range.collapse(false);
@@ -480,7 +514,7 @@
         </div>
     {:else if preview && chat.kind !== "direct_chat"}
         <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
-    {:else if !canSend}
+    {:else if !canSendAny}
         <div class="disabled">
             {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
         </div>
@@ -490,27 +524,36 @@
                 <Progress percent={percentRecorded} />
             </div>
         {/if}
-        {#key textboxId}
-            <div
-                tabindex={0}
-                bind:this={inp}
-                on:blur={saveSelection}
-                class="textbox"
-                class:recording
-                class:dragging
-                contenteditable
-                on:paste
+        {#if canEnterText}
+            {#key textboxId}
+                <div
+                    data-gram="false"
+                    data-gramm_editor="false"
+                    data-enable-grammarly="false"
+                    tabindex={0}
+                    bind:this={inp}
+                    on:blur={saveSelection}
+                    class="textbox"
+                    class:recording
+                    class:dragging
+                    contenteditable
+                    on:paste
+                    {placeholder}
+                    spellcheck
+                    on:dragover={() => (dragging = true)}
+                    on:dragenter={() => (dragging = true)}
+                    on:dragleave={() => (dragging = false)}
+                    on:drop={onDrop}
+                    on:input={onInput}
+                    on:keypress={keyPress} />
+            {/key}
+        {:else}
+            <div class="textbox light">
                 {placeholder}
-                spellcheck
-                on:dragover={() => (dragging = true)}
-                on:dragenter={() => (dragging = true)}
-                on:dragleave={() => (dragging = false)}
-                on:drop={onDrop}
-                on:input={onInput}
-                on:keypress={keyPress} />
-        {/key}
+            </div>
+        {/if}
         {#if editingEvent === undefined}
-            {#if messageIsEmpty && audioMimeType !== undefined && audioSupported}
+            {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
                 <div class="record">
                     <AudioAttacher
                         mimeType={audioMimeType}
@@ -519,7 +562,7 @@
                         bind:supported={audioSupported}
                         on:audioCaptured />
                 </div>
-            {:else}
+            {:else if canEnterText}
                 <div class="send" on:click={sendMessage}>
                     <HoverIcon title={$_("sendMessage")}>
                         <Send size={$iconSize} color={"var(--icon-txt)"} />
@@ -530,9 +573,9 @@
             <MessageActions
                 bind:this={messageActions}
                 bind:messageAction
+                {permittedMessages}
                 {attachment}
                 {mode}
-                {pollsAllowed}
                 editing={editingEvent !== undefined}
                 on:tokenTransfer
                 on:createPrizeMessage
@@ -565,7 +608,7 @@
         align-items: center;
         background-color: var(--entry-bg);
         padding: $sp3;
-        border-top: 1px solid var(--bd);
+        border-top: var(--bw) solid var(--bd);
         min-height: toRem(60);
 
         &.editing {
@@ -580,7 +623,7 @@
         margin: 0 $sp3;
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
-        border-radius: $sp3;
+        border-radius: var(--entry-input-rd);
         outline: none;
         border: 0;
         max-height: 100px;
@@ -590,7 +633,7 @@
         user-select: text;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
-        border: 1px solid transparent;
+        border: var(--bw) solid var(--entry-input-bd);
         box-shadow: var(--entry-input-sh);
 
         &:empty:before {
@@ -601,11 +644,15 @@
         }
 
         &.dragging {
-            border: 1px dashed var(--txt);
+            border: var(--bw) dashed var(--txt);
         }
 
         &.recording {
             display: none;
+        }
+
+        &.light {
+            color: var(--txt-light);
         }
     }
 

@@ -1,5 +1,6 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
+    import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
@@ -36,11 +37,14 @@
     import { buildDisplayName } from "../../utils/user";
 
     const client = getContext<OpenChat>("client");
-    const userId = client.user.userId;
 
     export let chatSummary: ChatSummary;
     export let selected: boolean;
     export let visible: boolean;
+
+    $: user = client.user;
+    $: userId = $user.userId;
+    $: suspendedUser = client.suspendedUser;
 
     $: selectedChatId = client.selectedChatId;
     $: chatListScope = client.chatListScope;
@@ -72,6 +76,7 @@
                         typing
                     ),
                     fav,
+                    eventsTTL: undefined,
                 };
             default:
                 return {
@@ -85,6 +90,7 @@
                         typing
                     ),
                     fav,
+                    eventsTTL: chatSummary.eventsTTL,
                 };
         }
     }
@@ -97,8 +103,18 @@
     }
 
     function formatLatestMessage(chatSummary: ChatSummary, users: UserLookup): string {
-        if (chatSummary.latestMessage === undefined) {
+        if (chatSummary.latestMessageIndex === undefined) {
             return "";
+        }
+
+        if (chatSummary.latestMessage === undefined || chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) {
+            return chatSummary.eventsTTL !== undefined
+                ? $_("disappearingMessages.timeUpdated", {
+                      values: {
+                          duration: client.formatDuration(Number(chatSummary.eventsTTL)),
+                      },
+                  })
+                : $_("disappearingMessages.disabled");
         }
 
         const latestMessageText = client.getContentAsText(
@@ -300,6 +316,11 @@
                 showStatus
                 userId={chat.userId?.userId}
                 size={AvatarSize.Default} />
+            {#if chat.eventsTTL}
+                <div class="expires">
+                    <CameraTimer size={"1em"} color={"#fff"} />
+                </div>
+            {/if}
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
@@ -357,7 +378,7 @@
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
-            {#if !client.isReadOnly()}
+            {#if !$suspendedUser}
                 <div class="menu">
                     <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" class:rtl={$rtlStore} slot="icon">
@@ -596,7 +617,13 @@
     }
     .avatar {
         flex: 0 0 40px;
+        position: relative;
     }
+
+    .expires {
+        @include disappearing();
+    }
+
     .details {
         flex: 1;
         display: flex;

@@ -28,15 +28,8 @@ const auth = AuthClient.create({
     storage: new IdbStorage(),
 });
 
-function getIdentity(): Promise<Identity | undefined> {
-    return auth.then((a) => {
-        const id = a.getIdentity();
-        const p = id.getPrincipal();
-        if (p.isAnonymous()) {
-            return undefined;
-        }
-        return id;
-    });
+function getIdentity(): Promise<Identity> {
+    return auth.then((a) => a.getIdentity());
 }
 
 let agent: OpenChatAgent | undefined = undefined;
@@ -75,7 +68,7 @@ const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
         logger?.error("WORKER: sending error: ", error);
         if (payload !== undefined) {
-            console.error("WORKER: error caused by paylaod: ", payload);
+            console.error("WORKER: error caused by payload: ", payload);
         }
         postMessage({
             kind: "worker_error",
@@ -128,20 +121,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
     try {
         if (kind === "init") {
             getIdentity().then((id) => {
-                if (id) {
-                    logger = inititaliseLogger(
-                        payload.rollbarApiKey,
-                        payload.websiteVersion,
-                        payload.env,
-                    );
-                    logger?.debug("WORKER: constructing agent instance");
-                    agent = new OpenChatAgent(id, {
-                        ...payload,
-                        logger,
-                    });
-                    agent.addEventListener("openchat_event", handleAgentEvent);
-                    sendResponse(correlationId, undefined);
-                }
+                console.debug("anon: init worker", id, id?.getPrincipal().isAnonymous());
+                logger = inititaliseLogger(
+                    payload.rollbarApiKey,
+                    payload.websiteVersion,
+                    payload.env,
+                );
+                logger?.debug("WORKER: constructing agent instance");
+                agent = new OpenChatAgent(id, {
+                    ...payload,
+                    logger,
+                });
+                agent.addEventListener("openchat_event", handleAgentEvent);
+                sendResponse(correlationId, undefined);
             });
         }
 
@@ -194,7 +186,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.startIndex,
                         payload.ascending,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -244,7 +236,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.messageIndex,
                         payload.threadRootMessageIndex,
-                        payload.latestClientMainEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -257,7 +249,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.eventIndexes,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -270,7 +262,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -376,11 +368,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "joinGroup":
-                executeThenReply(payload, correlationId, agent.joinGroup(payload.chatId));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.joinGroup(payload.chatId, payload.credential),
+                );
                 break;
 
             case "joinCommunity":
-                executeThenReply(payload, correlationId, agent.joinCommunity(payload.id));
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.joinCommunity(payload.id, payload.credential),
+                );
                 break;
 
             case "updateGroup":
@@ -394,6 +394,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.rules,
                         payload.permissions,
                         payload.avatar,
+                        payload.eventsTimeToLive,
                         payload.gate,
                         payload.isPublic,
                     ),
@@ -691,6 +692,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getAccountTransactions":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getAccountTransactions(
+                        payload.ledgerIndex,
+                        payload.principal,
+                        payload.fromId,
+                    ),
+                );
+                break;
+
             case "threadPreviews":
                 executeThenReply(
                     payload,
@@ -750,7 +763,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     agent.getGroupMessagesByMessageIndex(
                         payload.chatId,
                         payload.messageIndexes,
-                        payload.latestClientEventIndex,
+                        payload.latestKnownUpdate,
                     ),
                 );
                 break;
@@ -876,10 +889,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "markSuspectedBot":
-                executeThenReply(payload, correlationId, agent.markSuspectedBot());
-                break;
-
             case "loadFailedMessages":
                 executeThenReply(payload, correlationId, agent.loadFailedMessages());
                 break;
@@ -959,10 +968,9 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.reportMessage(
                         payload.chatId,
-                        payload.eventIndex,
-                        payload.reasonCode,
-                        payload.notes,
                         payload.threadRootMessageIndex,
+                        payload.messageId,
+                        payload.deleteMessage,
                     ),
                 );
                 break;
@@ -1034,8 +1042,8 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         .messagesByMessageIndex(
                             payload.chatId,
                             payload.messageIndexes,
-                            payload.latestClientEventIndex,
                             payload.threadRootMessageIndex,
+                            payload.latestKnownUpdate,
                         ),
                 );
                 break;
@@ -1264,7 +1272,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.submitProposal(payload.governanceCanisterId, payload.proposal),
+                    agent.submitProposal(
+                        payload.governanceCanisterId,
+                        payload.proposal,
+                        payload.ledger,
+                        payload.token,
+                        payload.proposalRejectionFee,
+                        payload.transactionFee,
+                    ),
                 );
                 break;
 

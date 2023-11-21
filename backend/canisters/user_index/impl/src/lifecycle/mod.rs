@@ -11,11 +11,11 @@ mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
-const UPGRADE_BUFFER_SIZE: usize = 1024 * 1024; // 1MB
-
-fn init_env() -> Box<CanisterEnv> {
-    ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
-    Box::default()
+fn init_env(rng_seed: [u8; 32]) -> Box<CanisterEnv> {
+    if rng_seed == [0; 32] {
+        ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
+    }
+    Box::new(CanisterEnv::new(rng_seed))
 }
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion) {
@@ -24,7 +24,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: BuildVersion)
 
     crate::jobs::start(&state);
     crate::init_state(state);
-    WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
+    WASM_VERSION.set(Timestamped::new(wasm_version, now));
 }
 
 fn reseed_rng() {
@@ -32,7 +32,10 @@ fn reseed_rng() {
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;
-        mutate_state(|state| state.env = Box::new(CanisterEnv::new(seed)));
+        mutate_state(|state| {
+            state.data.rng_seed = seed;
+            state.env = Box::new(CanisterEnv::new(seed))
+        });
         trace!("Successfully reseeded rng");
     }
 }

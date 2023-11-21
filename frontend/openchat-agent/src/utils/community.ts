@@ -13,8 +13,13 @@ import type {
     UserCanisterChannelSummary,
     UserGroupSummary,
 } from "openchat-shared";
-import { CommunityMap, ChatMap } from "openchat-shared";
-import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
+import {
+    CommunityMap,
+    ChatMap,
+    mapOptionUpdate,
+    applyOptionUpdate,
+    bigIntMax,
+} from "openchat-shared";
 import { toRecord } from "./list";
 
 export function mergeCommunities(
@@ -53,7 +58,12 @@ export function mergeChannels(
             dateReadPinned: u?.dateReadPinned,
             membership: {
                 ...c.membership,
-                latestThreads: mergeThreads([], c.membership.latestThreads, [], u?.threadsRead ?? {}),
+                latestThreads: mergeThreads(
+                    [],
+                    c.membership.latestThreads,
+                    [],
+                    u?.threadsRead ?? {},
+                ),
                 readByMeUpTo: u?.readByMeUpTo,
                 archived: u?.archived ?? false,
             },
@@ -114,7 +124,10 @@ export function mergeCommunityUpdates(
                 archived: u?.archived ?? community.membership.archived,
                 pinned: u?.pinned ?? community.membership.pinned,
                 index: u?.index ?? community.membership.index,
-                displayName: applyOptionUpdate(community.membership.displayName, c?.membership?.displayName),
+                displayName: applyOptionUpdate(
+                    community.membership.displayName,
+                    c?.membership?.displayName,
+                ),
                 rulesAccepted: c?.membership?.rulesAccepted ?? community.membership.rulesAccepted,
             },
             channels: mergeChannelUpdates(
@@ -154,11 +167,11 @@ function mergeChannelUpdates(
     communityCanisterUpdates: CommunityCanisterChannelSummaryUpdates[],
 ): ChannelSummary[] {
     const userLookup = ChatMap.fromList(userCanisterUpdates);
-    const communityLookup = ChatMap.fromList(communityCanisterUpdates);
+    const channelLookup = ChatMap.fromList(communityCanisterUpdates);
 
     return channels.map((channel) => {
         const u = userLookup.get(channel.id);
-        const c = communityLookup.get(channel.id);
+        const c = channelLookup.get(channel.id);
 
         if (u === undefined && c === undefined) return channel;
 
@@ -186,6 +199,7 @@ function mergeChannelUpdates(
             previewed: false,
             frozen: channel.frozen, // frozen doesn't exist on CommunityCanisterChannelSummaryUpdates
             latestEventIndex: c?.latestEventIndex ?? channel.latestEventIndex,
+            latestMessageIndex: c?.latestMessageIndex ?? channel.latestMessageIndex,
             latestMessage,
             metrics: c?.metrics ?? channel.metrics,
             blobReference: applyOptionUpdate(channel.blobReference, blobReferenceUpdate),
@@ -193,6 +207,11 @@ function mergeChannelUpdates(
             dateReadPinned: u?.dateReadPinned ?? channel.dateReadPinned,
             gate: applyOptionUpdate(channel.gate, c?.gate) ?? { kind: "no_gate" },
             level: "channel",
+            eventsTTL: applyOptionUpdate(channel.eventsTTL, c?.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                channel.eventsTtlLastUpdated,
+                c?.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...channel.membership,
                 mentions:

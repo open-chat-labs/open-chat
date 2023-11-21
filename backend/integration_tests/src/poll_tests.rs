@@ -1,8 +1,8 @@
 use crate::env::ENV;
 use crate::rng::random_message_id;
 use crate::{client, TestEnv, User};
-use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
+use pocket_ic::PocketIc;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::time::{Duration, SystemTime};
@@ -22,6 +22,7 @@ fn allow_multiple_votes_per_user() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: true,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -52,6 +53,7 @@ fn single_vote_per_user() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -75,7 +77,7 @@ fn polls_ended_correctly() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let current_time = env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+    let current_time = env.get_time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 
     let poll_config1 = PollConfig {
         text: None,
@@ -84,6 +86,7 @@ fn polls_ended_correctly() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -100,6 +103,7 @@ fn polls_ended_correctly() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let create_poll_result2 = client::group::send_message_v2(
@@ -214,7 +218,7 @@ fn polls_ended_correctly() {
     }
 }
 
-fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId, poll_config: PollConfig) -> TestData {
+fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId, poll_config: PollConfig) -> TestData {
     let user1 = client::local_user_index::happy_path::register_user(env, local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
 

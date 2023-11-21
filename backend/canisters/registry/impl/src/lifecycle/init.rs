@@ -13,9 +13,10 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
-    let env = init_env();
+    let env = init_env([0; 32]);
     let mut data = Data::new(
         args.governance_principals.into_iter().collect(),
+        args.proposals_bot_canister_id,
         args.sns_wasm_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
@@ -25,6 +26,7 @@ fn init(args: Args) {
         args.nns_ledger_canister_id,
         args.nns_root_canister_id,
         args.nns_governance_canister_id,
+        args.nns_index_canister_id,
         env.now(),
     );
 

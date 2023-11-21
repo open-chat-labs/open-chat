@@ -12,7 +12,6 @@
     import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
-    const currentUser = client.user;
 
     export let prefix: string | undefined;
     export let offset: number;
@@ -20,10 +19,12 @@
     export let border = false;
     export let mentionSelf = false;
     export let supportsUserGroups = false;
+    export let usersOnly = false;
 
     let index = 0;
     let usersAndGroups: UserOrUserGroup[] = [];
 
+    $: currentUser = client.user;
     $: userStore = client.userStore;
     $: communityMembers = client.currentCommunityMembers;
     $: itemHeight = $mobileWidth ? 53 : 55;
@@ -37,15 +38,20 @@
         switch (userOrGroup.kind) {
             case "user_group":
                 return (
-                    prefixLower === undefined ||
-                    (supportsUserGroups && userOrGroup.name.toLowerCase().startsWith(prefixLower))
+                    !usersOnly &&
+                    (prefixLower === undefined ||
+                        (supportsUserGroups &&
+                            userOrGroup.name.toLowerCase().startsWith(prefixLower)))
                 );
             case "everyone": {
-                return prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower);
+                return (
+                    !usersOnly &&
+                    (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
+                );
             }
             default:
                 return (
-                    (mentionSelf || userOrGroup.userId !== currentUser.userId) &&
+                    (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
                     (prefixLower === undefined ||
                         userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
                         userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
@@ -106,49 +112,53 @@
     }
 </script>
 
-<div
-    class="mention-picker"
-    class:up={direction === "up"}
-    class:down={direction === "down"}
-    class:border
-    {style}>
-    <Menu fit>
-        <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
-            <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
-                <div class="avatar" slot="icon">
-                    {#if item.kind === "user_group" || item.kind === "everyone"}
-                        <div class="group-icon">
-                            <AccountMultiple color={"var(--menu-disabled-txt)"} size={$iconSize} />
-                        </div>
-                    {:else}
-                        <Avatar
-                            url={client.userAvatarUrl($userStore[item.userId])}
-                            userId={item.userId}
-                            size={AvatarSize.Small} />
-                    {/if}
-                </div>
-                <div slot="text">
-                    {#if item.kind === "user_group"}
-                        <span class="display-name">
-                            {item.name}
-                        </span>
-                    {:else if item.kind === "everyone"}
-                        <span class="display-name">
-                            {"everyone"}
-                        </span>
-                    {:else}
-                        <span class="display-name">
-                            {client.getDisplayName(item, $communityMembers)}
-                        </span>
-                        <span class="username">
-                            @{item.username}
-                        </span>
-                    {/if}
-                </div>
-            </MenuItem>
-        </VirtualList>
-    </Menu>
-</div>
+{#if filtered.length > 0}
+    <div
+        class="mention-picker"
+        class:up={direction === "up"}
+        class:down={direction === "down"}
+        class:border
+        {style}>
+        <Menu fit>
+            <VirtualList keyFn={(p) => p.userId} items={filtered} let:item let:itemIndex>
+                <MenuItem selected={itemIndex === index} on:click={() => mention(item)}>
+                    <div class="avatar" slot="icon">
+                        {#if item.kind === "user_group" || item.kind === "everyone"}
+                            <div class="group-icon">
+                                <AccountMultiple
+                                    color={"var(--menu-disabled-txt)"}
+                                    size={$iconSize} />
+                            </div>
+                        {:else}
+                            <Avatar
+                                url={client.userAvatarUrl($userStore[item.userId])}
+                                userId={item.userId}
+                                size={AvatarSize.Small} />
+                        {/if}
+                    </div>
+                    <div slot="text">
+                        {#if item.kind === "user_group"}
+                            <span class="display-name">
+                                {item.name}
+                            </span>
+                        {:else if item.kind === "everyone"}
+                            <span class="display-name">
+                                {"everyone"}
+                            </span>
+                        {:else}
+                            <span class="display-name">
+                                {client.getDisplayName(item, $communityMembers)}
+                            </span>
+                            <span class="username">
+                                @{item.username}
+                            </span>
+                        {/if}
+                    </div>
+                </MenuItem>
+            </VirtualList>
+        </Menu>
+    </div>
+{/if}
 
 <svelte:body on:keydown={onKeyDown} />
 

@@ -16,13 +16,13 @@ generate_update_call!(upgrade_bucket_canister_wasm);
 pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
-    use ic_test_state_machine_client::StateMachine;
+    use pocket_ic::PocketIc;
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
     use types::CanisterId;
     use utils::hasher::hash_bytes;
 
-    pub fn add_or_update_users(env: &mut StateMachine, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
+    pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
         let response = super::add_or_update_users(
             env,
             sender,
@@ -40,7 +40,7 @@ pub mod happy_path {
     }
 
     pub fn allocated_bucket(
-        env: &StateMachine,
+        env: &PocketIc,
         sender: Principal,
         canister_id: CanisterId,
         file: &[u8],
@@ -66,7 +66,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn user(env: &StateMachine, sender: Principal, canister_id: CanisterId) -> UserRecord {
+    pub fn user(env: &PocketIc, sender: Principal, canister_id: CanisterId) -> UserRecord {
         let response = super::user(env, sender, canister_id, &storage_index_canister::user::Args {});
 
         if let storage_index_canister::user::Response::Success(result) = response {

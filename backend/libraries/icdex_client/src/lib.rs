@@ -1,6 +1,6 @@
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use icdex_canister::{ICDexOrderType, MakeOrderResponse, OrderPrice, OrderQuantity, TradingOrder};
-use types::icrc1::TransferArg;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType, TokenInfo};
 
 pub struct ICDexClient<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> {
@@ -88,7 +88,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
             ),
             OrderType::Ask => (self.base_token.ledger, order.amount),
         };
-        icrc1_ledger_canister_c2c_client::icrc1_transfer(
+        icrc_ledger_canister_c2c_client::icrc1_transfer(
             ledger_canister_id,
             &TransferArg {
                 from_subaccount: None,

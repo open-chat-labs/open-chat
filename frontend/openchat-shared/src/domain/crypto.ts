@@ -1,3 +1,5 @@
+import type { Failure, Success } from "./response";
+
 export const E8S_PER_TOKEN = 100_000_000;
 
 export const CHAT_SYMBOL = "CHAT";
@@ -21,28 +23,97 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
-    governanceCanister: string | undefined;
-    rootCanister: string | undefined;
+    added: bigint;
     lastUpdated: bigint;
 };
 
+export type NervousSystemSummary = {
+    rootCanisterId: string;
+    governanceCanisterId: string;
+    ledgerCanisterId: string;
+    indexCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
+};
+
+export type NervousSystemDetails = {
+    governanceCanisterId: string;
+    rootCanisterId: string;
+    ledgerCanisterId: string;
+    indexCanisterId: string;
+    isNns: boolean;
+    proposalRejectionFee: bigint;
+    submittingProposalsEnabled: boolean;
+    token: CryptocurrencyDetails;
+};
+
 // approximate dollar exchange rates - until we come up with something better
-const dollarToICP = 0.34;
+const dollarToICP = 0.22;
 
 export const dollarExchangeRates: Record<string, number> = {
     icp: to2SigFigs(dollarToICP),
-    chat: to2SigFigs(dollarToICP / 0.04805),
-    hot: to2SigFigs(dollarToICP / 0.003),
-    kinic: to2SigFigs(dollarToICP / 0.378),
-    ckbtc: to2SigFigs(dollarToICP / 7777.004),
-    dkp: to2SigFigs(dollarToICP / 280),
-    ghost: to2SigFigs(dollarToICP / 0.00001685),
-    mod: to2SigFigs(dollarToICP / 0.0065),
-    cat: to2SigFigs(dollarToICP / 0.0068998),
-    boom: to2SigFigs(dollarToICP / 0.00339),
-    icx: to2SigFigs(dollarToICP / 0.0000001),
+    chat: to2SigFigs(dollarToICP / 0.0525),
+    hot: to2SigFigs(dollarToICP / 0.0045),
+    kinic: to2SigFigs(dollarToICP / 0.32),
+    ckbtc: to2SigFigs(dollarToICP / 8290),
+    dkp: to2SigFigs(dollarToICP / 480),
+    ghost: to2SigFigs(dollarToICP / 0.0000165),
+    mod: to2SigFigs(dollarToICP / 0.004),
+    cat: to2SigFigs(dollarToICP / 0.006),
+    boom: to2SigFigs(dollarToICP / 0.0026),
+    icx: to2SigFigs(dollarToICP / 0.0088),
+    nua: to2SigFigs(dollarToICP / 0.01),
+    sonic: to2SigFigs(dollarToICP / 0.021),
+    sneed: to2SigFigs(dollarToICP / 30),
 };
 
 function to2SigFigs(num: number): number {
     return parseFloat(num.toPrecision(2));
 }
+
+type AccountTransactionCommon = {
+    timestamp: Date;
+    id: bigint;
+    memo?: string;
+    createdAt?: Date;
+    amount: bigint;
+    to?: string;
+    from?: string;
+};
+
+type AccountTransactionBurn = AccountTransactionCommon & {
+    kind: "burn";
+    spender?: string;
+};
+
+type AccountTransactionMint = AccountTransactionCommon & {
+    kind: "mint";
+};
+
+type AccountTransactionApprove = AccountTransactionCommon & {
+    kind: "approve";
+    fee?: bigint;
+    expectedAllowance?: bigint;
+    expiredAt?: bigint;
+    spender?: string;
+};
+
+type AccountTransactionTransfer = AccountTransactionCommon & {
+    kind: "transfer";
+    fee?: bigint;
+    spender?: string;
+};
+
+export type AccountTransaction =
+    | AccountTransactionBurn
+    | AccountTransactionMint
+    | AccountTransactionTransfer
+    | AccountTransactionApprove;
+
+export type AccountTransactions = {
+    transactions: AccountTransaction[];
+    oldestTransactionId?: bigint;
+};
+
+export type AccountTransactionResult = Failure | (Success & AccountTransactions);

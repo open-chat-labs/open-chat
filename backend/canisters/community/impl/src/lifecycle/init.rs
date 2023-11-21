@@ -13,7 +13,7 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let mut env = init_env();
+    let mut env = init_env([0; 32]);
 
     let default_channels = args
         .default_channels

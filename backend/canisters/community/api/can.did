@@ -26,14 +26,14 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsByIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsWindowArgs = record {
@@ -42,7 +42,7 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsResponse = variant {
@@ -51,7 +51,7 @@ type EventsResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type ExploreChannelsArgs = record {
@@ -88,7 +88,7 @@ type MessagesByMessageIndexArgs = record {
     channel_id : ChannelId;
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type MessagesByMessageIndexResponse = variant {
@@ -97,7 +97,7 @@ type MessagesByMessageIndexResponse = variant {
     UserNotInChannel;
     ChannelNotFound;
     ThreadNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type SearchChannelArgs = record {
@@ -127,6 +127,7 @@ type SelectedChannelInitialArgs = record {
 type SelectedChannelInitialResponse = variant {
     Success : record {
         timestamp : TimestampMillis;
+        last_updated : TimestampMillis;
         latest_event_index : EventIndex;
         members : vec Participant;
         blocked_users : vec UserId;
@@ -171,6 +172,7 @@ type SelectedInitialResponse = variant {
 
 type SelectedInitialSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     members : vec CommunityMember;
     blocked_users : vec UserId;
@@ -198,6 +200,7 @@ type SelectedUpdatesV2Response = variant {
 
 type SelectedUpdatesSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     members_added_or_updated : vec CommunityMember;
     members_removed : vec UserId;
     blocked_users_added : vec UserId;
@@ -424,7 +427,7 @@ type CreateChannelArgs = record {
     subtype : opt GroupSubtype;
     avatar : opt Document;
     history_visible_to_new_joiners : bool;
-    permissions : opt GroupPermissions;
+    permissions_v2 : opt GroupPermissions;
     events_ttl : opt Milliseconds;
     gate : opt AccessGate;
 };
@@ -623,6 +626,7 @@ type RegisterPollVoteResponse = variant {
     PollNotFound;
     PollEnded;
     OptionIndexOutOfRange;
+    UserCannotChangeVote;
 };
 
 type RegisterProposalVoteArgs = record {
@@ -707,6 +711,26 @@ type RemoveReactionResponse = variant {
     NotAuthorized;
     UserSuspended;
     CommunityFrozen;
+};
+
+type ReportMessageArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    CommunityFrozen;
+    UserNotInCommunity;
+    UserSuspended;
+    ChannelNotFound;
+    NotAuthorized;
+    UserNotInChannel;
+    MessageNotFound;
+    AlreadyReported;
+    InternalError : text;
 };
 
 type SendMessageArgs = record {
@@ -811,7 +835,7 @@ type UpdateChannelArgs = record {
     description : opt text;
     rules : opt UpdatedRules;
     avatar : DocumentUpdate;
-    permissions : opt OptionalGroupPermissions;
+    permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
@@ -967,6 +991,7 @@ service : {
     remove_member : (RemoveMemberArgs) -> (RemoveMemberResponse);
     remove_member_from_channel : (RemoveMemberFromChannelArgs) -> (RemoveMemberFromChannelResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     reset_invite_code : (EmptyArgs) -> (EnableInviteCodeResponse);
     send_message : (SendMessageArgs) -> (SendMessageResponse);
     set_member_display_name : (SetMemberDisplayNameArgs) -> (SetMemberDisplayNameResponse);

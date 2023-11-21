@@ -8,11 +8,11 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{BuildVersion, CanisterId, Cycles, Milliseconds, TimestampMillis, Timestamped};
 use utils::env::Environment;
-use utils::memory;
 
 mod guards;
 mod jobs;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
 mod updates;
@@ -39,10 +39,10 @@ impl State {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             canisters: self.data.canisters.metrics(),
@@ -70,6 +70,8 @@ struct Data {
     pub ledger_canister: CanisterId,
     pub cycles_minting_canister: CanisterId,
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -98,6 +100,7 @@ impl Data {
             ledger_canister,
             cycles_minting_canister,
             cycles_top_up_pending_notification: None,
+            rng_seed: [0; 32],
             test_mode,
         }
     }

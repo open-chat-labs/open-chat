@@ -26,9 +26,9 @@
     import PrivatePreview from "./PrivatePreview.svelte";
     import TimelineDate from "./TimelineDate.svelte";
     import { reverseScroll } from "../../stores/scrollPos";
+    import Witch from "../Witch.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     export let chat: ChatSummary;
@@ -38,7 +38,7 @@
     export let canPin: boolean;
     export let canBlockUser: boolean;
     export let canDelete: boolean;
-    export let canSend: boolean;
+    export let canSendAny: boolean;
     export let canReact: boolean;
     export let canInvite: boolean;
     export let footer: boolean;
@@ -46,6 +46,7 @@
     export let events: EventWrapper<ChatEventType>[];
     export let filteredProposals: FilteredProposals | undefined;
 
+    $: user = client.user;
     $: isProposalGroup = client.isProposalGroup;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
@@ -84,7 +85,7 @@
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        if (!canSend) return;
+        if (!canSendAny) return;
         dispatch("replyTo", ev.detail);
     }
 
@@ -132,7 +133,7 @@
 
     $: timeline = client.groupEvents(
         reverseScroll ? [...events].reverse() : events,
-        user.userId,
+        $user.userId,
         $expandedDeletedMessages,
         reverseScroll,
         groupInner(filteredProposals)
@@ -165,10 +166,10 @@
 
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            return evt.event.sender === user.userId;
+            return evt.event.sender === $user.userId;
         }
         if (evt.event.kind === "group_chat_created") {
-            return evt.event.created_by === user.userId;
+            return evt.event.created_by === $user.userId;
         }
         return false;
     }
@@ -266,6 +267,8 @@
     }
 </script>
 
+<Witch />
+
 <ChatEventList
     bind:this={chatEventList}
     rootSelector={"chat-messages"}
@@ -323,7 +326,7 @@
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.id}
                         chatType={chat.kind}
-                        {user}
+                        user={$user}
                         me={isMe(evt)}
                         first={reverseScroll ? i + 1 === innerGroup.length : i === 0}
                         last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
@@ -331,7 +334,7 @@
                         {canPin}
                         {canBlockUser}
                         {canDelete}
-                        {canSend}
+                        {canSendAny}
                         {canReact}
                         {canInvite}
                         {canReplyInThread}
@@ -359,6 +362,9 @@
         {/if}
     {/each}
     {#if reverseScroll}
+        {#if privatePreview}
+            <PrivatePreview />
+        {/if}
         {#if showAvatar}
             {#if $isProposalGroup}
                 <ProposalBot />
@@ -374,9 +380,6 @@
                         size={AvatarSize.Large} />
                 </div>
             {/if}
-        {/if}
-        {#if privatePreview}
-            <PrivatePreview />
         {/if}
     {/if}
 </ChatEventList>

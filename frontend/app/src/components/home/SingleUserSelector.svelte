@@ -14,14 +14,6 @@
     let textValue: string = "";
     let inputHeight: number;
 
-    $: {
-        if (textValue !== "") {
-            showMentionPicker = true;
-        } else {
-            showMentionPicker = false;
-        }
-    }
-
     function selectReceiver(ev: CustomEvent<UserOrUserGroup>) {
         selectedReceiver = ev.detail;
         showMentionPicker = false;
@@ -30,6 +22,7 @@
 
     function removeReceiver() {
         selectedReceiver = undefined;
+        showMentionPicker = true;
         textValue = "";
     }
 
@@ -49,16 +42,17 @@
         <MentionPicker
             offset={inputHeight}
             direction={"down"}
-            on:close={() => (showMentionPicker = false)}
             on:mention={selectReceiver}
             border
-            prefix={textValue} />
+            usersOnly
+            prefix={textValue.startsWith("@") ? textValue.substring(1) : textValue} />
     {/if}
     {#if selectedReceiver !== undefined}
         <UserPill on:deleteUser={removeReceiver} userOrGroup={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <input
+                on:focus={() => (showMentionPicker = true)}
                 on:blur={blur}
                 class:showing-picker={showMentionPicker}
                 class="text-box"
@@ -82,11 +76,6 @@
         width: 100%;
 
         @include input();
-
-        &.showing-picker {
-            border-radius: $sp2 $sp2 0 0;
-            border-bottom: none;
-        }
 
         &::placeholder {
             color: var(--placeholder);

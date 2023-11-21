@@ -1,4 +1,4 @@
-use registry_canister::{NervousSystem, TokenDetails};
+use registry_canister::TokenDetails;
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, TimestampMillis};
 
@@ -9,6 +9,12 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    pub fn rename_block_index_to_transaction_index(&mut self) {
+        for token in self.tokens.iter_mut() {
+            token.transaction_url_format = token.transaction_url_format.replace("block_index", "transaction_index");
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
@@ -18,7 +24,6 @@ impl Tokens {
         decimals: u8,
         fee: u128,
         logo: String,
-        nervous_system: Option<NervousSystem>,
         info_url: String,
         how_to_buy_url: String,
         transaction_url_format: String,
@@ -34,7 +39,6 @@ impl Tokens {
                 decimals,
                 fee,
                 logo,
-                nervous_system,
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
@@ -46,8 +50,36 @@ impl Tokens {
         }
     }
 
-    pub fn get_mut(&mut self, ledger_canister_id: CanisterId) -> Option<&mut TokenDetails> {
-        self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id)
+    pub fn update(&mut self, args: registry_canister::update_token::Args, now: TimestampMillis) -> bool {
+        if let Some(token) = self
+            .tokens
+            .iter_mut()
+            .find(|t| t.ledger_canister_id == args.ledger_canister_id)
+        {
+            if let Some(name) = args.name {
+                token.name = name;
+            }
+            if let Some(symbol) = args.symbol {
+                token.symbol = symbol;
+            }
+            if let Some(info_url) = args.info_url {
+                token.info_url = info_url;
+            }
+            if let Some(how_to_buy_url) = args.how_to_buy_url {
+                token.how_to_buy_url = how_to_buy_url;
+            }
+            if let Some(transaction_url_format) = args.transaction_url_format {
+                token.transaction_url_format = transaction_url_format;
+            }
+            if let Some(logo) = args.logo {
+                token.logo = logo;
+            }
+            token.last_updated = now;
+            self.last_updated = now;
+            true
+        } else {
+            false
+        }
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
@@ -60,5 +92,38 @@ impl Tokens {
 
     pub fn exists(&self, ledger_canister_id: CanisterId) -> bool {
         self.tokens.iter().any(|t| t.ledger_canister_id == ledger_canister_id)
+    }
+}
+
+#[derive(Serialize)]
+pub struct TokenMetrics {
+    ledger_canister_id: CanisterId,
+    name: String,
+    symbol: String,
+    decimals: u8,
+    fee: u128,
+    logo_length: usize,
+    info_url: String,
+    how_to_buy_url: String,
+    transaction_url_format: String,
+    added: TimestampMillis,
+    last_updated: TimestampMillis,
+}
+
+impl From<&TokenDetails> for TokenMetrics {
+    fn from(value: &TokenDetails) -> Self {
+        TokenMetrics {
+            ledger_canister_id: value.ledger_canister_id,
+            name: value.name.clone(),
+            symbol: value.symbol.clone(),
+            decimals: value.decimals,
+            fee: value.fee,
+            logo_length: value.logo.len(),
+            info_url: value.info_url.clone(),
+            how_to_buy_url: value.how_to_buy_url.clone(),
+            transaction_url_format: value.transaction_url_format.clone(),
+            added: value.added,
+            last_updated: value.last_updated,
+        }
     }
 }

@@ -156,7 +156,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             canisters_in_pool: self.data.canister_pool.len() as u16,
@@ -206,6 +206,7 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
+    pub rng_seed: [u8; 32],
 }
 
 #[derive(Serialize, Deserialize)]
@@ -250,6 +251,7 @@ impl Data {
             referral_codes: ReferralCodes::default(),
             timer_jobs: TimerJobs::default(),
             btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
+            rng_seed: [0; 32],
         }
     }
 }

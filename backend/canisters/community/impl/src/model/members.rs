@@ -366,8 +366,17 @@ impl CommunityMemberInternal {
             .collect()
     }
 
-    pub fn has_summary_updates_since(&self, since: TimestampMillis) -> bool {
-        self.rules_accepted.as_ref().map_or(false, |t| t.timestamp > since) || self.display_name.timestamp > since
+    pub fn last_updated(&self) -> TimestampMillis {
+        [
+            self.date_added,
+            self.suspended.timestamp,
+            self.channels_removed.last().map(|c| c.timestamp).unwrap_or_default(),
+            self.rules_accepted.as_ref().map(|r| r.timestamp).unwrap_or_default(),
+            self.display_name.timestamp,
+        ]
+        .into_iter()
+        .max()
+        .unwrap()
     }
 
     pub fn display_name(&self) -> &Timestamped<Option<String>> {

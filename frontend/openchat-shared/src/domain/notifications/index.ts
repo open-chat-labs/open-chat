@@ -147,4 +147,4 @@ export type NotificationStatus =
     | "hard-denied"
     | "granted";
 
-export type ToggleMuteNotificationResponse = "success" | "failure";
+export type ToggleMuteNotificationResponse = "success" | "failure" | "offline";

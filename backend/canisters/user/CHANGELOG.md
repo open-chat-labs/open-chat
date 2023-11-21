@@ -5,6 +5,84 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
+- Add `approve_transfer` endpoint ([#4767](https://github.com/open-chat-labs/open-chat/pull/4767))
+- Support deleting direct chats (only for the current user) ([#4816](https://github.com/open-chat-labs/open-chat/pull/4816))
+
+### Changed
+
+- `c2c_set_user_suspended` also returns user's communities ([#4749](https://github.com/open-chat-labs/open-chat/pull/4749))
+- Return `suspended` in `initial_state` and `updates` ([#4750](https://github.com/open-chat-labs/open-chat/pull/4750))
+- Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
+- Use current timestamp in 'replica up to date' check ([#4763](https://github.com/open-chat-labs/open-chat/pull/4763))
+- Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+- Pass up number of decimals when tipping to fix notification text ([#4796](https://github.com/open-chat-labs/open-chat/pull/4796))
+- Change `ApproveTransferArgs` to take `expires_in` ([#4810](https://github.com/open-chat-labs/open-chat/pull/4810))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+
+### Removed
+
+- Remove `latest_client_event_index` from args to get events ([#4747](https://github.com/open-chat-labs/open-chat/pull/4747))
+
+## [[2.0.932](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.932-user)] - 2023-11-09
+
+### Changed
+
+- Add `events_ttl_last_updated` to chat summaries ([#4711](https://github.com/open-chat-labs/open-chat/pull/4711))
+- Extend `c2c_report_message` endpoint ([#4719](https://github.com/open-chat-labs/open-chat/pull/4719))
+- Don't collect reason or notes from reporter ([#4724](https://github.com/open-chat-labs/open-chat/pull/4724))
+- Improve `ReplicaNotUpToDate` check to avoid displaying outdated events ([#4727](https://github.com/open-chat-labs/open-chat/pull/4727))
+
+## [[2.0.923](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.923-user)] - 2023-11-03
+
+### Added
+
+- Support submitting proposals of type `UpgradeSnsToNextVersion` ([#4670](https://github.com/open-chat-labs/open-chat/pull/4670))
+- Support submitting proposals of type `UpgradeSnsControlledCanister` ([#4672](https://github.com/open-chat-labs/open-chat/pull/4672))
+- Add `report_message` endpoint ([#4691](https://github.com/open-chat-labs/open-chat/pull/4691))
+- Support submitting proposals of type `ExecuteGenericNervousSystemFunction` ([#4694](https://github.com/open-chat-labs/open-chat/pull/4694))
+
+### Changed
+
+- Reduce size of message content when serialized ([#4680](https://github.com/open-chat-labs/open-chat/pull/4680))
+- Use dynamic buffer size when reading from stable memory ([#4683](https://github.com/open-chat-labs/open-chat/pull/4683))
+- Make `events_map` generic in preparation for moving it to stable memory ([#4689](https://github.com/open-chat-labs/open-chat/pull/4689))
+- Add `latest_message_index` to chat summaries ([#4693](https://github.com/open-chat-labs/open-chat/pull/4693))
+- Allow deleting all message types ([#4697](https://github.com/open-chat-labs/open-chat/pull/4697))
+
+## [[2.0.912](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.912-user)] - 2023-10-27
+
+### Added
+
+- Add `permissions_v2` to cached `GroupChatSummary` and `create_group` ([#4620](https://github.com/open-chat-labs/open-chat/pull/4620))
+
+### Changed
+
+- Don't set expiry on `EventsTimeToLiveUpdated` events ([#4616](https://github.com/open-chat-labs/open-chat/pull/4616))
+- Avoid setting expiry for some event types ([#4647](https://github.com/open-chat-labs/open-chat/pull/4647))
+- Return expired event + message ranges when getting events ([#4646](https://github.com/open-chat-labs/open-chat/pull/4646))
+
+## [[2.0.890](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.890-user)] - 2023-10-19
+
+### Fixed
+
+- Add `serde(default)` attribute to fix a few failed upgrades ([#4610](https://github.com/open-chat-labs/open-chat/pull/4610))
+
+## [[2.0.887](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.887-user)] - 2023-10-17
+
+### Added
+
+- Support submitting proposals to any governance canister ([#4579](https://github.com/open-chat-labs/open-chat/pull/4579))
+- Support sending ICP to ICRC1 accounts ([#4583](https://github.com/open-chat-labs/open-chat/pull/4583))
+- Add optional `diamond_only` filter to prize messages ([#4587](https://github.com/open-chat-labs/open-chat/pull/4587))
+
+### Changed
+
+- Switch user canisters over to using `MemoryManager` ([#4600](https://github.com/open-chat-labs/open-chat/pull/4600))
+- Set memo based on transaction type ([#4603](https://github.com/open-chat-labs/open-chat/pull/4603))
+
 ### Removed
 
 - Removed calls to `c2c_toggle_mute_notifications` ([#4513](https://github.com/open-chat-labs/open-chat/pull/4513))

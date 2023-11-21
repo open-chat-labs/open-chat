@@ -286,6 +286,8 @@ $z-indexed-items: (
         "current-user",
         "right-panel",
         "date-label",
+        "witch",
+        "footer",
         "section-header",
         "fab",
         "action-list",
@@ -293,10 +295,12 @@ $z-indexed-items: (
         "features",
         "phone",
         "phone-image",
+        "spider",
         "landing-page-menu",
         "left-nav",
         "footer-overlay",
         "zoom",
+        "anon-banner",
         "overlay",
         "toast",
         "tooltip",
@@ -479,9 +483,8 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     @include font(book, normal, fs-100);
     color: var(--txt);
     background-color: var(--input-bg);
-    // border: 1px solid var(--bd);
-    border: 1px solid transparent;
-    border-radius: $sp2;
+    border: var(--bw) solid var(--input-bd);
+    border-radius: var(--rd);
     outline: none;
     box-shadow: var(--input-sh);
     white-space: $whitespace;
@@ -493,6 +496,7 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     &::after {
         content: "💎";
         margin-inline-start: 5px;
+        @include font-size(fs-80);
     }
 }
 
@@ -548,4 +552,34 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     .details h4 {
         @include font(book, normal, fs-120);
     }
+}
+
+@mixin cobweb() {
+    content: "";
+    display: block;
+    background-image: url("/assets/cobweb.svg");
+    background-repeat: no-repeat;
+    background-size: contain;
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    @include z-index("spider");
+    pointer-events: none;
+
+    @include mobile {
+        width: 80px;
+        height: 80px;
+    }
+}
+
+@mixin disappearing() {
+    height: calc(1em + 4px);
+    width: calc(1em + 4px);
+    padding: 2px;
+    border-radius: 50%;
+    backdrop-filter: blur(1px);
+    background-color: rgba(255, 255, 255, 0.2);
+    position: absolute;
+    bottom: -2px;
+    right: 2px;
 }

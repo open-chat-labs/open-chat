@@ -4,7 +4,7 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
@@ -13,12 +13,14 @@
     import { claimsStore } from "../../stores/claims";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let content: PrizeContent;
     export let chatId: ChatIdentifier;
     export let messageId: bigint;
     export let me: boolean;
 
+    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: logo =
         Object.values($cryptoLookup).find(
@@ -26,17 +28,23 @@
         )?.logo ?? "";
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
-    $: claimedByYou = content.winners.includes(client.user.userId);
+    $: claimedByYou = content.winners.includes($user.userId);
     $: finished = $now500 >= Number(content.endDate);
     $: allClaimed = content.prizesRemaining <= 0;
     $: disabled = finished || claimedByYou || allClaimed;
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now500, Number(content.endDate));
+    $: isDiamond = client.isDiamond;
+
     let progressWidth = 0;
 
     function claim(e: MouseEvent) {
-        if (e.isTrusted && chatId.kind === "group_chat" && !me) {
+        if (e.isTrusted && chatId.kind !== "direct_chat" && !me) {
+            if (!$isDiamond && content.diamondOnly) {
+                dispatch("upgrade");
+                return;
+            }
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
@@ -52,7 +60,7 @@
 
 <div class={`prize ${content.token}`}>
     <div class="top">
-        <div class="countdown" class:rtl={$rtlStore}>
+        <div class:diamond={content.diamondOnly} class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if allClaimed && !finished}
@@ -130,6 +138,10 @@
         }
     }
 
+    .prize {
+        max-width: 400px;
+    }
+
     .top {
         position: relative;
         padding: 30px 0 30px 0;
@@ -147,7 +159,7 @@
         display: flex;
         gap: $sp2;
         align-items: center;
-        border-radius: $sp2;
+        border-radius: var(--rd);
         top: 10px;
         left: 10px;
         background-color: rgba(0, 0, 0, 0.3);
@@ -157,6 +169,10 @@
         &.rtl {
             left: unset;
             right: 10px;
+        }
+
+        &.diamond::after {
+            content: "💎";
         }
     }
 
@@ -171,17 +187,13 @@
         }
     }
 
-    .caption {
-        @include font(bold, normal, fs-100);
-        margin-bottom: $sp3;
-    }
-
     .number-claimed {
         @include font(bold, normal, fs-80);
         margin-bottom: $sp3;
     }
 
-    .click {
+    .click,
+    .caption {
         @include font(book, normal, fs-80);
         color: var(--txt);
         margin-bottom: $sp4;

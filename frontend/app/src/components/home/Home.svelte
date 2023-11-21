@@ -29,6 +29,7 @@
         GroupChatSummary,
         ChannelIdentifier,
         UpdatedRules,
+        CredentialGate,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -76,6 +77,7 @@
     import { querystring } from "../../routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
+    import InitiateCredentialCheck from "./InitiateCredentialCheck.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
@@ -83,6 +85,10 @@
     import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Register from "../register/Register.svelte";
+    import LoggingInModal from "./LoggingInModal.svelte";
+    import AnonFooter from "./AnonFooter.svelte";
+    import OfflineFooter from "../OfflineFooter.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -92,7 +98,6 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: CommunitySummary | undefined;
     let candidateCommunityRules: Rules = defaultChatRules("community");
@@ -139,20 +144,30 @@
         NewGroup,
         Wallet,
         GateCheckFailed,
+        VerifyCredential,
         HallOfFame,
         EditCommunity,
         MakeProposal,
+        Registering,
+        LoggingIn,
     }
 
     let modal = ModalType.None;
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let joining: MultiUserChat | undefined = undefined;
+    let credentialCheck:
+        | { group: MultiUserChat; gate: CredentialGate; select: boolean }
+        | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
     let currentChatMessages: CurrentChatMessages | undefined;
 
+    $: user = client.user;
+    $: suspendedUser = client.suspendedUser;
+    $: anonUser = client.anonUser;
+    $: identityState = client.identityState;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: selectedChatStore = client.selectedChatStore;
@@ -173,19 +188,38 @@
         selectedMultiUserChat !== undefined
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
+    $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    $: networkStatus = client.networkStatus;
 
     $: {
-        document.title =
-            $globalUnreadCount.unmuted > 0
-                ? `OpenChat (${$globalUnreadCount.unmuted})`
-                : "OpenChat";
+        if ($identityState.kind === "registering") {
+            modal = ModalType.Registering;
+        }
+        if ($identityState.kind === "logging_in") {
+            modal = ModalType.LoggingIn;
+        }
+        if ($identityState.kind === "logged_in" && modal === ModalType.Registering) {
+            console.log("We are now logged in so we are closing the register modal");
+            modal = ModalType.None;
+        }
+    }
+
+    $: {
+        const merged = client.mergeCombinedUnreadCounts($globalUnreadCount);
+        document.title = merged.unmuted > 0 ? `OpenChat (${merged.unmuted})` : "OpenChat";
+    }
+
+    $: {
+        tick().then(() => {
+            routeChange($chatsInitialised, $pathParams);
+        });
     }
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
-        if (client.user.suspensionDetails !== undefined) {
+        if ($suspendedUser) {
             modal = ModalType.Suspended;
         }
 
@@ -213,7 +247,7 @@
                 ) {
                     return client.isMessageRead(
                         {
-                            chatId: notification.chatId
+                            chatId: notification.chatId,
                         },
                         notification.messageIndex,
                         undefined
@@ -329,6 +363,17 @@
         // wait until we have loaded the chats
         if (initialised) {
             filterRightPanelHistory((state) => state.kind !== "community_filters");
+
+            if (
+                $anonUser &&
+                pathParams.kind === "chat_list_route" &&
+                (pathParams.scope.kind === "direct_chat" || pathParams.scope.kind === "favourite")
+            ) {
+                client.identityState.set({ kind: "logging_in" });
+                page.redirect("/group");
+                return;
+            }
+
             if ("scope" in pathParams) {
                 client.setChatListScope(pathParams.scope);
             }
@@ -337,12 +382,13 @@
             if (
                 !$mobileWidth &&
                 (pathParams.kind === "selected_community_route" ||
-                    pathParams.kind === "chat_list_route") &&
-                $chatSummariesListStore.length > 0
+                    pathParams.kind === "chat_list_route")
             ) {
-                const first = $chatSummariesListStore[0];
-                page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
-                return;
+                const first = $chatSummariesListStore.find((c) => !c.membership.archived);
+                if (first !== undefined) {
+                    page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
+                    return;
+                }
             }
 
             if (pathParams.kind === "home_route") {
@@ -438,10 +484,6 @@
         }
     }
 
-    $: {
-        routeChange($chatsInitialised, $pathParams);
-    }
-
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
@@ -471,6 +513,7 @@
         candidateGroup = undefined;
         candidateCommunity = undefined;
         joining = undefined;
+        credentialCheck = undefined;
     }
 
     function closeNoAccess() {
@@ -703,20 +746,50 @@
     }
 
     function showMakeProposalModal() {
-        modal = ModalType.MakeProposal;
+        if (nervousSystem !== undefined && selectedMultiUserChat !== undefined) {
+            modal = ModalType.MakeProposal;
+        }
     }
 
     async function joinGroup(
         ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
     ): Promise<void> {
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+            return;
+        }
         const { group, select } = ev.detail;
-        doJoinGroup(group, select);
+        doJoinGroup(group, select, undefined);
     }
 
-    async function doJoinGroup(group: MultiUserChat, select: boolean): Promise<void> {
+    function credentialReceived(ev: CustomEvent<string>) {
+        if (credentialCheck !== undefined) {
+            const { group, select } = credentialCheck;
+            closeModal();
+            doJoinGroup(group, select, ev.detail);
+        }
+    }
+
+    async function doJoinGroup(
+        group: MultiUserChat,
+        select: boolean,
+        credential: string | undefined
+    ): Promise<void> {
         joining = group;
+        if (group.gate.kind === "credential_gate" && credential === undefined) {
+            credentialCheck = { group, select, gate: group.gate };
+            modal = ModalType.VerifyCredential;
+            return Promise.resolve();
+        } else if (group.kind === "channel") {
+            const community = client.getCommunityForChannel(group.id);
+            if (community?.gate.kind === "credential_gate" && credential === undefined) {
+                credentialCheck = { group, select, gate: community.gate };
+                modal = ModalType.VerifyCredential;
+                return Promise.resolve();
+            }
+        }
         return client
-            .joinGroup(group)
+            .joinGroup(group, credential)
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
@@ -822,6 +895,7 @@
         modal = ModalType.NewGroup;
         candidateGroup = {
             id,
+            kind: "candidate_group_chat",
             name: "",
             description: "",
             historyVisible: true,
@@ -836,10 +910,9 @@
                 pinMessages: "admin",
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
-                createPolls: "member",
-                sendMessages: "member",
                 reactToMessages: "member",
-                replyInThread: "member",
+                messagePermissions: { default: "member" },
+                threadPermissions: undefined,
             },
             rules: { ...defaultChatRules(level), newVersion: false },
             gate: { kind: "no_gate" },
@@ -858,6 +931,7 @@
         let rules = ev.detail.rules ?? { ...defaultChatRules(level), newVersion: false };
         candidateGroup = {
             id: chat.id,
+            kind: "candidate_group_chat",
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisible,
@@ -873,6 +947,7 @@
             gate: chat.gate,
             level,
             membership: chat.membership,
+            eventsTTL: chat.eventsTTL,
         };
     }
 
@@ -960,13 +1035,12 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main>
+<main class:anon={$anonUser} class:offline={$networkStatus === "offline"}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
             on:communityDetails={communityDetails}
             on:newChannel={newChannel}
@@ -1031,6 +1105,14 @@
     {/if}
 </main>
 
+{#if $anonUser}
+    <AnonFooter />
+{/if}
+
+{#if $networkStatus === "offline"}
+    <OfflineFooter />
+{/if}
+
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
@@ -1063,7 +1145,7 @@
 
 <Toast />
 
-{#if showUpgrade && user}
+{#if showUpgrade && $user}
     <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
@@ -1082,6 +1164,12 @@
             <NoAccess on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
+        {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}
+            <InitiateCredentialCheck
+                level={credentialCheck.group.level}
+                on:close={closeModal}
+                on:credentialReceived={credentialReceived}
+                gate={credentialCheck.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
@@ -1093,16 +1181,23 @@
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
             <HallOfFame on:close={closeModal} />
-        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && governanceCanisterId !== undefined}
-            <MakeProposalModal
-                {selectedMultiUserChat}
-                {governanceCanisterId}
-                on:close={closeModal} />
+        {:else if modal === ModalType.MakeProposal && selectedMultiUserChat !== undefined && nervousSystem !== undefined}
+            <MakeProposalModal {selectedMultiUserChat} {nervousSystem} on:close={closeModal} />
+        {:else if modal === ModalType.LoggingIn}
+            <LoggingInModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
 
-{#if $currentTheme.name !== "white"}
+{#if modal === ModalType.Registering}
+    <Overlay>
+        <Register
+            on:logout={() => client.logout()}
+            on:createdUser={(ev) => client.onCreatedUser(ev.detail)} />
+    </Overlay>
+{/if}
+
+{#if $currentTheme.logo}
     <BackgroundLogo
         width={`${bgHeight}px`}
         bottom={"unset"}
@@ -1127,6 +1222,13 @@
         width: 100%;
         display: flex;
         margin: 0 auto;
+
+        &.anon {
+            margin-bottom: toRem(50);
+        }
+        &.offline {
+            margin-bottom: toRem(40);
+        }
     }
 
     .right-wrapper {

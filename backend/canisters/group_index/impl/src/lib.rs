@@ -72,7 +72,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             public_groups: self.data.public_groups.len() as u64,
@@ -132,6 +132,8 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -169,6 +171,7 @@ impl Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 
@@ -249,6 +252,7 @@ impl Default for Data {
             cached_metrics: CachedMetrics::default(),
             local_index_map: LocalGroupIndexMap::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 }

@@ -13,7 +13,8 @@ NNS_INTERNET_IDENTITY_CANISTER_ID=$7
 NNS_LEDGER_CANISTER_ID=$8
 NNS_CMC_CANISTER_ID=$9
 NNS_SNS_WASM_CANISTER_ID=${10}
-TEST_MODE=${11}
+NNS_INDEX_CANISTER_ID=${11}
+TEST_MODE=${12}
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -39,7 +40,7 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
-EXCHANGE_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id exchange_bot)
+NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml -- \
@@ -58,10 +59,11 @@ cargo run \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
   --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
-  --exchange-bot $EXCHANGE_BOT_CANISTER_ID \
+  --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
   --nns-root $NNS_ROOT_CANISTER_ID \
   --nns-governance $NNS_GOVERNANCE_CANISTER_ID \
   --nns-internet-identity $NNS_INTERNET_IDENTITY_CANISTER_ID \
   --nns-ledger $NNS_LEDGER_CANISTER_ID \
   --nns-cmc $NNS_CMC_CANISTER_ID \
-  --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID
+  --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
+  --nns-index $NNS_INDEX_CANISTER_ID

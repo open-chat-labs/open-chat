@@ -47,7 +47,7 @@
         .val {
             padding: $sp2 $sp3;
             border: 1px solid var(--bd);
-            border-radius: $sp2;
+            border-radius: var(--rd);
             @include font(book, normal, fs-80);
         }
     }

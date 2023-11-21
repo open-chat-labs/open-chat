@@ -9,35 +9,35 @@ macro_rules! canister_state {
         const __STATE_NOT_INITIALIZED: &str = "State has not been initialized";
 
         fn init_state(state: $type) {
-            __STATE.with(|s| {
-                if s.borrow().is_some() {
+            __STATE.with_borrow_mut(|s| {
+                if s.is_some() {
                     panic!("{}", __STATE_ALREADY_INITIALIZED);
                 } else {
-                    *s.borrow_mut() = Some(state);
+                    *s = Some(state);
                 }
             });
         }
 
         fn replace_state(state: $type) -> $type {
-            __STATE.with(|s| s.replace(Some(state))).expect(__STATE_NOT_INITIALIZED)
+            __STATE.replace(Some(state)).expect(__STATE_NOT_INITIALIZED)
         }
 
         fn take_state() -> $type {
-            __STATE.with(|s| s.take()).expect(__STATE_NOT_INITIALIZED)
+            __STATE.take().expect(__STATE_NOT_INITIALIZED)
         }
 
         fn read_state<F, R>(f: F) -> R
         where
             F: FnOnce(&$type) -> R,
         {
-            __STATE.with(|s| f(s.borrow().as_ref().expect(__STATE_NOT_INITIALIZED)))
+            __STATE.with_borrow(|s| f(s.as_ref().expect(__STATE_NOT_INITIALIZED)))
         }
 
         fn mutate_state<F, R>(f: F) -> R
         where
             F: FnOnce(&mut $type) -> R,
         {
-            __STATE.with(|s| f(s.borrow_mut().as_mut().expect(__STATE_NOT_INITIALIZED)))
+            __STATE.with_borrow_mut(|s| f(s.as_mut().expect(__STATE_NOT_INITIALIZED)))
         }
 
         fn can_borrow_state() -> bool {

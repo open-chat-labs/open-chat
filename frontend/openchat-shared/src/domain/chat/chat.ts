@@ -1,3 +1,4 @@
+import type DRange from "drange";
 import type { DataContent } from "../data/data";
 import type { UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
@@ -7,6 +8,7 @@ import type {
     ChatPermissions,
     HasMembershipRole,
     MemberRole,
+    OptionalChatPermissions,
     Permissioned,
 } from "../permission";
 import type { ChatListScope, HasLevel } from "../structure";
@@ -22,6 +24,7 @@ import type {
     UserBlocked,
     TransferFailed,
     InternalError,
+    Offline,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
 import type { CommunityIdentifier, CommunitySummary } from "../community";
@@ -57,6 +60,7 @@ export type MessageContent =
 
 export interface PrizeContentInitial {
     kind: "prize_content_initial";
+    diamondOnly: boolean;
     endDate: bigint;
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
@@ -149,7 +153,8 @@ export type FailedCryptocurrencyWithdrawal = {
 export type WithdrawCryptocurrencyResponse =
     | { kind: "currency_not_supported" }
     | FailedCryptocurrencyWithdrawal
-    | CompletedCryptocurrencyWithdrawal;
+    | CompletedCryptocurrencyWithdrawal
+    | Offline;
 
 export type CryptocurrencyWithdrawal =
     | PendingCryptocurrencyWithdrawal
@@ -256,6 +261,7 @@ export interface PrizeContent {
     kind: "prize_content";
     prizesRemaining: number;
     prizesPending: number;
+    diamondOnly: boolean;
     winners: string[];
     token: string;
     endDate: bigint;
@@ -406,6 +412,7 @@ export type PollVotes = {
 
 export type PollConfig = {
     allowMultipleVotesPerUser: boolean;
+    allowUserToChangeVote: boolean;
     text?: string;
     showVotesBeforeEndDate: boolean;
     endDate?: bigint;
@@ -499,6 +506,7 @@ export type Message = {
     edited: boolean;
     forwarded: boolean;
     deleted: boolean;
+    lastUpdated: bigint | undefined;
     thread?: ThreadSummary;
 };
 
@@ -541,11 +549,12 @@ export type LocalChatSummaryUpdates = {
               name?: string;
               description?: string;
               public?: boolean;
-              permissions?: Partial<ChatPermissions>;
+              permissions?: OptionalChatPermissions;
               frozen?: boolean;
               gate?: AccessGate;
               notificationsMuted?: boolean;
               archived?: boolean;
+              eventsTTL?: OptionUpdate<bigint>;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -816,10 +825,13 @@ export type EventWrapper<T extends ChatEvent> = {
     event: T;
     timestamp: bigint;
     index: number;
+    expiresAt?: number;
 };
 
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
+    expiredEventRanges: ExpiredEventsRange[];
+    expiredMessageRanges: ExpiredMessagesRange[];
     latestEventIndex: number | undefined;
 };
 
@@ -868,6 +880,9 @@ export type DirectChatsInitial = {
 
 export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
+
+export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
+export type ExpiredMessagesRange = { kind: "expired_messages_range"; start: number; end: number };
 
 export function messageContextsEqual(
     a: MessageContext | undefined,
@@ -1062,10 +1077,13 @@ export type DirectChatSummaryUpdates = {
     readByThemUpTo?: number;
     readByMeUpTo?: number;
     lastUpdated: bigint;
-    latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
+    latestEventIndex?: number;
+    latestMessageIndex?: number;
     notificationsMuted?: boolean;
     updatedEvents: UpdatedEvent[];
+    eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated?: bigint;
     metrics?: Metrics;
     myMetrics?: Metrics;
     archived?: boolean;
@@ -1129,9 +1147,11 @@ export type ChatSpecificState = {
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
+    confirmedEventIndexesLoaded: DRange;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
+    expiredEventRanges: DRange;
 };
 
 export type GroupChatDetailsUpdates = {
@@ -1154,10 +1174,13 @@ export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = HasMembershipRole & {
     lastUpdated: bigint;
+    latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number;
-    latestMessage?: EventWrapper<Message>;
+    latestMessageIndex: number | undefined;
     metrics: Metrics;
     membership: ChatMembership;
+    eventsTTL: bigint | undefined;
+    eventsTtlLastUpdated: bigint;
 };
 
 export type ChannelSummary = DataContent &
@@ -1251,6 +1274,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         minVisibleMessageIndex: number;
         latestMessage: EventWrapper<Message> | undefined;
         latestEventIndex: number;
+        latestMessageIndex: number | undefined;
         joined: bigint;
         myRole: MemberRole;
         memberCount: number;
@@ -1261,6 +1285,8 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         latestThreads: GroupCanisterThreadDetails[];
         dateLastPinned: bigint | undefined;
         rulesAccepted: boolean;
+        eventsTTL?: bigint;
+        eventsTtlLastUpdated: bigint;
     };
 
 export type UpdatedEvent = {
@@ -1279,6 +1305,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     public: boolean | undefined;
     latestMessage: EventWrapper<Message> | undefined;
     latestEventIndex: number | undefined;
+    latestMessageIndex: number | undefined;
     memberCount: number | undefined;
     myRole: MemberRole | undefined;
     mentions: Mention[];
@@ -1293,6 +1320,8 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     dateLastPinned: bigint | undefined;
     gate: OptionUpdate<AccessGate>;
     rulesAccepted: boolean | undefined;
+    eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated?: bigint;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1327,11 +1356,13 @@ export type CandidateGroupChat = AccessControlled &
     HasMembershipRole &
     Permissioned<ChatPermissions> & {
         id: MultiUserChatIdentifier;
+        kind: "candidate_group_chat";
         name: string;
         description: string;
         rules: UpdatedRules;
         members: CandidateMember[];
         avatar?: DataContent;
+        eventsTTL?: bigint;
     };
 
 export type CandidateChannel = CandidateGroupChat;
@@ -1354,6 +1385,7 @@ export type CreateGroupResponse =
     | NotAuthorised
     | CommunityFrozen
     | UserSuspended
+    | Offline
     | DefaultMustBePublic;
 
 export type CreateGroupSuccess = {
@@ -1444,6 +1476,7 @@ export type SendMessageResponse =
     | Failure
     | ChatFrozen
     | RulesNotAccepted
+    | Offline
     | CommunityRulesNotAccepted;
 
 export type SendMessageSuccess = {
@@ -1451,6 +1484,7 @@ export type SendMessageSuccess = {
     timestamp: bigint;
     messageIndex: number;
     eventIndex: number;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type TransferSuccess = {
@@ -1459,6 +1493,7 @@ export type TransferSuccess = {
     messageIndex: number;
     eventIndex: number;
     transfer: CompletedCryptocurrencyTransfer;
+    expiresAt?: number; // Timestamp in seconds
 };
 
 export type InvalidPoll = {
@@ -1568,11 +1603,11 @@ export type EmptyEvent = {
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
-export type ChangeRoleResponse = "failure" | "success";
+export type ChangeRoleResponse = "failure" | "success" | "offline";
 
-export type DeleteGroupResponse = "success" | "failure";
+export type DeleteGroupResponse = "success" | "failure" | "offline";
 
-export type RemoveMemberResponse = "success" | "failure";
+export type RemoveMemberResponse = "success" | "failure" | "offline";
 
 export type BlockUserResponse =
     | "success"
@@ -1584,7 +1619,8 @@ export type BlockUserResponse =
     | "cannot_block_self"
     | "cannot_block_user"
     | "user_suspended"
-    | "chat_frozen";
+    | "chat_frozen"
+    | "offline";
 
 export type UnblockUserResponse =
     | "success"
@@ -1593,16 +1629,18 @@ export type UnblockUserResponse =
     | "caller_not_in_group"
     | "not_authorized"
     | "user_suspended"
-    | "chat_frozen";
+    | "chat_frozen"
+    | "offline";
 
-export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure";
+export type LeaveGroupResponse = "success" | "owner_cannot_leave" | "failure" | "offline";
 
 export type JoinGroupResponse =
     | (Success & { group: MultiUserChat })
     | SuccessJoinedCommunity
     | GateCheckFailed
     | UserBlocked
-    | Failure;
+    | Failure
+    | Offline;
 
 export type SuccessJoinedCommunity = {
     kind: "success_joined_community";
@@ -1644,27 +1682,30 @@ export type UpdateGroupResponse =
     | { kind: "user_suspended" }
     | { kind: "chat_frozen" }
     | { kind: "internal_error" }
-    | { kind: "failure" };
+    | { kind: "failure" }
+    | Offline;
 
 export type UpdatePermissionsResponse =
     | "success"
     | "not_authorized"
     | "not_in_group"
     | "user_suspended"
-    | "chat_frozen";
+    | "chat_frozen"
+    | "offline";
 
-export type AddRemoveReactionResponse = Success | Failure;
+export type AddRemoveReactionResponse = Success | Failure | Offline;
 
-export type DeleteMessageResponse = "success" | "failure";
+export type DeleteMessageResponse = "success" | "failure" | "offline";
 
 export type UndeleteMessageResponse =
     | {
           kind: "success";
           message: Message;
       }
-    | Failure;
+    | Failure
+    | Offline;
 
-export type UnpinMessageResponse = "failure" | "success";
+export type UnpinMessageResponse = "failure" | "success" | "offline";
 
 export type PinMessageResponse =
     | {
@@ -1673,14 +1714,16 @@ export type PinMessageResponse =
           timestamp: bigint;
       }
     | NoChange
-    | Failure;
+    | Failure
+    | Offline;
 
 export type DeletedGroupMessageResponse =
     | {
           kind: "success";
           content: MessageContent;
       }
-    | Failure;
+    | Failure
+    | Offline;
 
 export type DeletedDirectMessageResponse =
     | {
@@ -1691,34 +1734,35 @@ export type DeletedDirectMessageResponse =
     | { kind: "not_authorized" }
     | { kind: "message_not_found" }
     | { kind: "message_not_deleted" }
-    | { kind: "message_hard_deleted" };
+    | { kind: "message_hard_deleted" }
+    | Offline;
 
-export type RegisterPollVoteResponse = "success" | "failure";
+export type RegisterPollVoteResponse = "success" | "failure" | "offline";
 
-export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure;
+export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised | Failure | Offline;
 
 export type InviteCodeSuccess = {
     kind: "success";
     code?: string;
 };
 
-export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure;
+export type EnableInviteCodeResponse = EnableInviteCodeSuccess | NotAuthorised | Failure | Offline;
 
 export type EnableInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success";
+export type DisableInviteCodeResponse = "not_authorized" | "failure" | "success" | "offline";
 
-export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure;
+export type ResetInviteCodeResponse = ResetInviteCodeSuccess | NotAuthorised | Failure | Offline;
 
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
 };
 
-export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess;
+export type ThreadPreviewsResponse = Failure | ThreadPreviewsSuccess | Offline;
 
 export type ThreadPreviewsSuccess = {
     kind: "thread_previews_success";
@@ -1767,7 +1811,8 @@ export type RegisterProposalVoteResponse =
     | "proposal_not_accepting_votes"
     | "chat_frozen"
     | "user_suspended"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type ListNervousSystemFunctionsResponse = {
     reservedIds: bigint[];
@@ -1806,14 +1851,16 @@ export type FreezeGroupResponse =
     | "chat_already_frozen"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type UnfreezeGroupResponse =
     | EventWrapper<ChatUnfrozenEvent>
     | "chat_not_frozen"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type DeleteFrozenGroupResponse =
     | "success"
@@ -1821,47 +1868,43 @@ export type DeleteFrozenGroupResponse =
     | "chat_not_frozen_long_enough"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type AddHotGroupExclusionResponse =
     | "success"
     | "chat_already_excluded"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
 export type RemoveHotGroupExclusionResponse =
     | "success"
     | "chat_not_excluded"
     | "chat_not_found"
     | "not_authorized"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
-export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
+export type SetGroupUpgradeConcurrencyResponse =
+    | "success"
+    | "not_authorized"
+    | "internal_error"
+    | "offline";
 export type SetCommunityModerationFlagsResponse =
     | "success"
     | "community_not_found"
     | "not_authorized"
     | "invalid_flags"
-    | "internal_error";
+    | "internal_error"
+    | "offline";
 
-export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
+export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen" | "offline";
 
-export type ClaimPrizeResponse =
-    | CallerNotInGroup
-    | { kind: "message_not_found" }
-    | { kind: "chat_frozen" }
-    | { kind: "already_claimed" }
-    | { kind: "success" }
-    | { kind: "user_suspended" }
-    | { kind: "prize_ended" }
-    | { kind: "prize_fully_claimed" }
-    | { kind: "failed_after_transfer" }
-    | { kind: "transfer_failed" };
+export type ClaimPrizeResponse = Success | Failure | Offline;
 
-export type ReportMessageResponse = "success" | "failure";
-
-export type DeclineInvitationResponse = "success" | "failure";
+export type DeclineInvitationResponse = "success" | "failure" | "offline";
 
 export type PublicGroupSummaryResponse =
     | (Success & { group: GroupChatSummary })

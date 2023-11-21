@@ -6,13 +6,15 @@ use lazy_static::lazy_static;
 use regex_lite::Regex;
 use search::Query;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::cmp::{max, min};
+use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper, EventsResponse,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
-    GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype, GroupVisibilityChanged, HydratedMention,
-    InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex,
-    MessageMatch, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions,
+    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
+    EventOrExpiredRange, EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
+    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
+    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
+    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
+    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
     PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
     TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
@@ -33,19 +35,27 @@ pub use roles::*;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
-    pub is_public: bool,
-    pub name: String,
-    pub description: String,
-    pub rules: AccessRulesInternal,
+    #[serde(alias = "is_public_v2")]
+    pub is_public: Timestamped<bool>,
+    #[serde(alias = "name_v2")]
+    pub name: Timestamped<String>,
+    #[serde(alias = "description_v2")]
+    pub description: Timestamped<String>,
+    #[serde(alias = "rules_v2")]
+    pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Document>,
+    #[serde(alias = "avatar_v2")]
+    pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
-    pub pinned_messages: Vec<MessageIndex>,
-    pub permissions: GroupPermissions,
+    #[serde(alias = "pinned_messages_v2")]
+    pub pinned_messages: BTreeSet<(TimestampMillis, MessageIndex)>,
+    pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
+    #[serde(alias = "permissions_v2")]
+    pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
     pub invited_users: InvitedUsers,
@@ -73,19 +83,20 @@ impl GroupChatCore {
         let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
 
         GroupChatCore {
-            is_public,
-            name,
-            description,
-            rules: AccessRulesInternal::new(rules),
+            is_public: Timestamped::new(is_public, now),
+            name: Timestamped::new(name, now),
+            description: Timestamped::new(description, now),
+            rules: Timestamped::new(AccessRulesInternal::new(rules), now),
             subtype: Timestamped::new(subtype, now),
-            avatar,
+            avatar: Timestamped::new(avatar, now),
             history_visible_to_new_joiners,
             members,
             events,
             created_by,
             date_created: now,
-            pinned_messages: Vec::new(),
-            permissions,
+            pinned_messages: BTreeSet::new(),
+            pinned_messages_removed: BTreeSet::new(),
+            permissions: Timestamped::new(permissions, now),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
@@ -94,7 +105,7 @@ impl GroupChatCore {
     }
 
     pub fn is_accessible(&self, user_id: Option<UserId>) -> bool {
-        if self.is_public {
+        if self.is_public.value {
             true
         } else if let Some(user_id) = user_id {
             self.members.get(&user_id).is_some() || self.invited_users.get(&user_id).is_some()
@@ -106,35 +117,36 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public {
+        } else if self.is_public.value {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
         }
     }
 
-    pub fn has_updates_since(&self, user_id: Option<UserId>, since: TimestampMillis) -> bool {
-        if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
-            if member.date_added > since
-                || member.notifications_muted.timestamp > since
-                || member
-                    .rules_accepted
-                    .as_ref()
-                    .map_or(false, |accepted| accepted.timestamp > since)
-            {
-                return true;
-            }
-        }
-
-        self.events.has_updates_since(since) || self.invited_users.last_updated() > since
+    pub fn details_last_updated(&self) -> TimestampMillis {
+        max(
+            self.events.last_updated().unwrap_or_default(),
+            self.invited_users.last_updated(),
+        )
     }
 
-    pub fn summary_updates_from_events(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdatesFromEvents {
+    pub fn last_updated(&self, user_id: Option<UserId>) -> TimestampMillis {
+        max(
+            self.details_last_updated(),
+            user_id
+                .and_then(|user_id| self.members.get(&user_id))
+                .map(|m| m.last_updated())
+                .unwrap_or_default(),
+        )
+    }
+
+    pub fn summary_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> SummaryUpdates {
         let member = user_id.and_then(|user_id| self.members.get(&user_id));
 
         let min_visible_event_index = if let Some(member) = member {
             member.min_visible_event_index()
-        } else if self.is_public {
+        } else if self.is_public.value {
             EventIndex::default()
         } else if let Some(invited_user) = user_id.and_then(|user_id| self.invited_users.get(&user_id)) {
             invited_user.min_visible_event_index
@@ -147,36 +159,13 @@ impl GroupChatCore {
         let mentions = member
             .map(|m| m.most_recent_mentions(Some(since), &self.events))
             .unwrap_or_default();
-
-        let mut updates = SummaryUpdatesFromEvents {
-            // We need to handle this separately because the message may have been sent before 'since' but
-            // then subsequently updated after 'since', in this scenario the message would not be picked up
-            // during the iteration below.
-            latest_message,
-            updated_events: self
-                .events
-                .iter_recently_updated_events()
-                .take_while(|(_, _, ts)| *ts > since)
-                .take(1000)
-                .collect(),
-            mentions,
-            ..Default::default()
-        };
-
-        if self.subtype.timestamp > since {
-            updates.subtype = OptionUpdate::from_update(self.subtype.value.clone());
-        }
-
-        if self
-            .date_last_pinned
-            .map_or(false, |date_last_pinned| date_last_pinned > since)
-        {
-            updates.date_last_pinned = self.date_last_pinned;
-        }
-
-        if self.gate.timestamp > since {
-            updates.gate = OptionUpdate::from_update(self.gate.value.clone());
-        }
+        let events_ttl = self.events.get_events_time_to_live();
+        let mut updated_events: Vec<_> = self
+            .events
+            .iter_recently_updated_events()
+            .take_while(|(_, _, ts)| *ts > since)
+            .take(1000)
+            .collect();
 
         if let Some(member) = member {
             let new_proposal_votes =
@@ -192,102 +181,49 @@ impl GroupChatCore {
                             .map(move |e| (None, e, t))
                     });
 
-            updates.updated_events.extend(new_proposal_votes);
+            updated_events.extend(new_proposal_votes);
+        };
+
+        SummaryUpdates {
+            timestamp: self.last_updated(user_id),
+            name: self.name.if_set_after(since).cloned(),
+            description: self.description.if_set_after(since).cloned(),
+            subtype: self
+                .subtype
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            avatar_id: self
+                .avatar
+                .if_set_after(since)
+                .map(Document::id)
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            latest_message,
+            latest_event_index: events_reader.latest_event_index(),
+            latest_message_index: events_reader.latest_message_index(),
+            member_count: if self.members.has_membership_changed(since) { Some(self.members.len()) } else { None },
+            role_changed: member.map(|m| m.role.timestamp > since).unwrap_or_default(),
+            mentions,
+            permissions: self.permissions.if_set_after(since).cloned(),
+            updated_events,
+            is_public: self.is_public.if_set_after(since).copied(),
+            date_last_pinned: self.date_last_pinned.filter(|ts| *ts > since),
+            events_ttl: events_ttl
+                .if_set_after(since)
+                .copied()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            events_ttl_last_updated: (events_ttl.timestamp > since).then_some(events_ttl.timestamp),
+            gate: self
+                .gate
+                .if_set_after(since)
+                .cloned()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            rules_changed: self.rules.version_last_updated > since,
         }
-
-        // Iterate through events starting from most recent
-        for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
-            if updates.latest_event_index.is_none() {
-                updates.latest_event_index = Some(event_wrapper.index);
-            }
-
-            match &event_wrapper.event {
-                ChatEventInternal::GroupNameChanged(n) => {
-                    if updates.name.is_none() {
-                        updates.name = Some(n.new_name.clone());
-                    }
-                }
-                ChatEventInternal::GroupDescriptionChanged(n) => {
-                    if updates.description.is_none() {
-                        updates.description = Some(n.new_description.clone());
-                    }
-                }
-                ChatEventInternal::AvatarChanged(a) => {
-                    if !updates.avatar_id.has_update() {
-                        updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
-                    }
-                }
-                ChatEventInternal::RoleChanged(r) => {
-                    if member.map(|m| r.user_ids.contains(&m.user_id)).unwrap_or_default() {
-                        updates.role_changed = true;
-                    }
-                }
-                ChatEventInternal::MembersAddedToPublicChannel(_)
-                | ChatEventInternal::ParticipantsAdded(_)
-                | ChatEventInternal::ParticipantsRemoved(_)
-                | ChatEventInternal::ParticipantJoined(_)
-                | ChatEventInternal::ParticipantLeft(_)
-                | ChatEventInternal::UsersBlocked(_)
-                | ChatEventInternal::UsersUnblocked(_) => {
-                    updates.members_changed = true;
-                }
-                ChatEventInternal::PermissionsChanged(p) => {
-                    if updates.permissions.is_none() {
-                        updates.permissions = Some(p.new_permissions.clone());
-                    }
-                }
-                ChatEventInternal::GroupVisibilityChanged(v) => {
-                    updates.is_public = Some(v.now_public);
-                }
-                ChatEventInternal::EventsTimeToLiveUpdated(u) => {
-                    if !updates.events_ttl.has_update() {
-                        updates.events_ttl = OptionUpdate::from_update(u.new_ttl);
-                    }
-                }
-                ChatEventInternal::GroupRulesChanged(_) => {
-                    updates.rules_changed = true;
-                }
-                _ => {}
-            }
-        }
-
-        updates
     }
 
-    pub fn selected_group_updates_from_events(
-        &self,
-        since: TimestampMillis,
-        user_id: Option<UserId>,
-    ) -> Option<SelectedGroupUpdates> {
-        struct UserUpdatesHandler<'a> {
-            chat: &'a GroupChatCore,
-            users_updated: HashSet<UserId>,
-        }
-
-        impl<'a> UserUpdatesHandler<'a> {
-            pub fn mark_member_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, removed: bool) {
-                if self.users_updated.insert(user_id) {
-                    if removed {
-                        result.members_removed.push(user_id);
-                    } else if let Some(member) = self.chat.members.get(&user_id) {
-                        result.members_added_or_updated.push(member.into());
-                    }
-                }
-            }
-
-            pub fn mark_user_blocked_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, blocked: bool) {
-                if self.users_updated.insert(user_id) {
-                    if blocked {
-                        result.members_removed.push(user_id);
-                        result.blocked_users_added.push(user_id);
-                    } else {
-                        result.blocked_users_removed.push(user_id);
-                    }
-                }
-            }
-        }
-
-        let min_visible_event_index = if self.is_public {
+    pub fn selected_group_updates(&self, since: TimestampMillis, user_id: Option<UserId>) -> Option<SelectedGroupUpdates> {
+        let min_visible_event_index = if self.is_public.value {
             EventIndex::default()
         } else if let Some(member) = user_id.and_then(|user_id| self.members.get(&user_id)) {
             member.min_visible_event_index()
@@ -298,83 +234,59 @@ impl GroupChatCore {
         };
 
         let events_reader = self.events.visible_main_events_reader(min_visible_event_index);
-
         let latest_event_index = events_reader.latest_event_index().unwrap();
-        let latest_event_timestamp = self.events.latest_event_timestamp().unwrap_or_default();
-
         let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
+        let last_updated = self.details_last_updated();
 
         let mut result = SelectedGroupUpdates {
-            timestamp: latest_event_timestamp,
+            timestamp: last_updated,
+            last_updated,
             latest_event_index,
             invited_users,
+            pinned_messages_added: self
+                .pinned_messages
+                .iter()
+                .rev()
+                .take_while(|(ts, _)| *ts > since)
+                .map(|(_, m)| *m)
+                .collect(),
+            pinned_messages_removed: self
+                .pinned_messages_removed
+                .iter()
+                .rev()
+                .take_while(|(ts, _)| *ts > since)
+                .map(|(_, m)| *m)
+                .collect(),
+            chat_rules: self.rules.if_set_after(since).map(|r| r.clone().into()),
             ..Default::default()
         };
 
-        let mut user_updates_handler = UserUpdatesHandler {
-            chat: self,
-            users_updated: HashSet::new(),
-        };
-
-        // Iterate through the new events starting from most recent
-        for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
-            match &event_wrapper.event {
-                ChatEventInternal::ParticipantsAdded(p) => {
-                    for user_id in p.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
-                    }
-                    for user_id in p.unblocked.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
+        let mut users_added_updated_or_removed = HashSet::new();
+        let mut users_blocked_or_unblocked = HashSet::new();
+        for (user_id, update) in self.members.iter_latest_updates(since) {
+            match update {
+                MemberUpdate::Added | MemberUpdate::RoleChanged => {
+                    if users_added_updated_or_removed.insert(user_id) {
+                        if let Some(member) = self.members.get(&user_id) {
+                            result.members_added_or_updated.push(member.into());
+                        }
                     }
                 }
-                ChatEventInternal::ParticipantsRemoved(p) => {
-                    for user_id in p.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
+                MemberUpdate::Removed => {
+                    if users_added_updated_or_removed.insert(user_id) {
+                        result.members_removed.push(user_id);
                     }
                 }
-                ChatEventInternal::ParticipantJoined(p) => {
-                    user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
-                }
-                ChatEventInternal::ParticipantLeft(p) => {
-                    user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
-                }
-                ChatEventInternal::MembersAddedToPublicChannel(m) => {
-                    for user_id in m.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                MemberUpdate::Blocked => {
+                    if users_blocked_or_unblocked.insert(user_id) {
+                        result.blocked_users_added.push(user_id);
                     }
                 }
-                ChatEventInternal::RoleChanged(rc) => {
-                    for user_id in rc.user_ids.iter() {
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                MemberUpdate::Unblocked => {
+                    if users_blocked_or_unblocked.insert(user_id) {
+                        result.blocked_users_removed.push(user_id);
                     }
                 }
-                ChatEventInternal::UsersBlocked(ub) => {
-                    for user_id in ub.user_ids.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
-                    }
-                }
-                ChatEventInternal::UsersUnblocked(ub) => {
-                    for user_id in ub.user_ids.iter() {
-                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                    }
-                }
-                ChatEventInternal::MessagePinned(p) => {
-                    if !result.pinned_messages_removed.contains(&p.message_index) {
-                        result.pinned_messages_added.push(p.message_index);
-                    }
-                }
-                ChatEventInternal::MessageUnpinned(u) => {
-                    if !result.pinned_messages_added.contains(&u.message_index) {
-                        result.pinned_messages_removed.push(u.message_index);
-                    }
-                }
-                ChatEventInternal::GroupRulesChanged(_) => {
-                    if result.chat_rules.is_none() {
-                        result.chat_rules = Some(self.rules.clone().into());
-                    }
-                }
-                _ => {}
             }
         }
 
@@ -389,30 +301,28 @@ impl GroupChatCore {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
-        latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                    return ReplicaNotUpToDate(latest_event_index);
-                }
-
-                let events = reader.scan(
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
                     Some(start_index.into()),
                     ascending,
                     max_messages as usize,
                     max_events as usize,
                     user_id,
-                );
+                ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
+                let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -425,24 +335,22 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
-        latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                    return ReplicaNotUpToDate(latest_event_index);
-                }
-
-                let events = reader.get_by_indexes(&events, user_id);
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -457,24 +365,27 @@ impl GroupChatCore {
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
-        latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
+                let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
+                    mid_point.into(),
+                    max_messages as usize,
+                    max_events as usize,
+                    user_id,
+                ));
+                let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                    return ReplicaNotUpToDate(latest_event_index);
-                }
-
-                let events = reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id);
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
+                    expired_event_ranges,
+                    expired_message_ranges,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -487,27 +398,22 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
-        latest_client_event_index: Option<EventIndex>,
-        now: TimestampMillis,
     ) -> MessagesResult {
         use MessagesResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let latest_event_index = reader.latest_event_index().unwrap();
-                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                    return ReplicaNotUpToDate(latest_event_index);
-                }
-
                 let messages: Vec<_> = messages
                     .into_iter()
                     .filter_map(|m| reader.message_event(m.into(), user_id))
                     .collect();
+                let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(MessagesResponse {
                     messages,
                     latest_event_index,
-                    timestamp: now,
+                    chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -550,20 +456,10 @@ impl GroupChatCore {
         }
     }
 
-    pub fn thread_previews(
-        &self,
-        user_id: UserId,
-        threads: Vec<MessageIndex>,
-        latest_client_thread_update: Option<TimestampMillis>,
-        now: TimestampMillis,
-    ) -> ThreadPreviewsResult {
+    pub fn thread_previews(&self, user_id: UserId, threads: Vec<MessageIndex>) -> ThreadPreviewsResult {
         use ThreadPreviewsResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if latest_client_thread_update.map_or(false, |t| now < t) {
-                return ReplicaNotUpToDate(now);
-            }
-
             Success(
                 threads
                     .into_iter()
@@ -642,7 +538,7 @@ impl GroupChatCore {
                     return UserSuspended;
                 }
                 if let Some(version) = rules_accepted {
-                    m.accept_rules(version, now);
+                    m.accept_rules(min(version, self.rules.text.version), now);
                 }
             }
             None => return UserNotInGroup,
@@ -687,15 +583,10 @@ impl GroupChatCore {
 
         let permissions = &self.permissions;
 
-        if thread_root_message_index.is_some() {
-            if !member.role.can_reply_in_thread(permissions) {
-                return NotAuthorized;
-            }
-        } else if !member.role.can_send_messages(permissions) {
-            return NotAuthorized;
-        }
-
-        if matches!(content, MessageContentInitial::Poll(_)) && !member.role.can_create_polls(permissions) {
+        if !member
+            .role
+            .can_send_message(&content, thread_root_message_index.is_some(), permissions)
+        {
             return NotAuthorized;
         }
 
@@ -883,57 +774,60 @@ impl GroupChatCore {
     ) -> DeleteMessagesResult {
         use DeleteMessagesResult::*;
 
-        if let Some(member) = self.members.get(&user_id) {
+        let (is_admin, min_visible_event_index) = if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
                 return UserSuspended;
             }
+            (
+                member.role.can_delete_messages(&self.permissions),
+                member.min_visible_event_index(),
+            )
+        } else if as_platform_moderator {
+            (true, EventIndex::default())
+        } else {
+            return UserNotInGroup;
+        };
 
-            let min_visible_event_index = member.min_visible_event_index();
-            let is_admin = member.role.can_delete_messages(&self.permissions) || as_platform_moderator;
+        let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
+            caller: user_id,
+            is_admin,
+            min_visible_event_index,
+            thread_root_message_index,
+            message_ids,
+            now,
+        });
 
-            let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
-                caller: user_id,
-                is_admin,
-                min_visible_event_index,
-                thread_root_message_index,
-                message_ids,
-                now,
-            });
-
-            if thread_root_message_index.is_none() {
-                for message_id in results
-                    .iter()
-                    .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
-                    .map(|(message_id, _)| *message_id)
+        if thread_root_message_index.is_none() {
+            for message_id in results
+                .iter()
+                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                .map(|(message_id, _)| *message_id)
+            {
+                if let Some(message_index) = self
+                    .events
+                    .visible_main_events_reader(min_visible_event_index)
+                    .message_internal(message_id.into())
+                    .map(|m| m.message_index)
                 {
-                    if let Some(message_index) = self
-                        .events
-                        .visible_main_events_reader(min_visible_event_index)
-                        .message_internal(message_id.into())
-                        .map(|m| m.message_index)
-                    {
-                        // If the message being deleted is pinned, unpin it
-                        if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
-                            self.pinned_messages.remove(index);
+                    // If the message being deleted is pinned, unpin it
+                    if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
+                        self.pinned_messages.remove(&entry);
 
-                            self.events.push_main_event(
-                                ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
-                                    message_index,
-                                    unpinned_by: user_id,
-                                    due_to_message_deleted: true,
-                                })),
-                                0,
-                                now,
-                            );
-                        }
+                        self.events.push_main_event(
+                            ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                                message_index,
+                                unpinned_by: user_id,
+                                due_to_message_deleted: true,
+                            })),
+                            0,
+                            now,
+                        );
                     }
                 }
             }
-
-            Success(results)
-        } else {
-            UserNotInGroup
         }
+
+        Success(results)
     }
 
     pub fn undelete_messages(
@@ -999,6 +893,7 @@ impl GroupChatCore {
             &self.permissions,
             is_caller_platform_moderator,
             is_user_platform_moderator,
+            now,
         );
 
         if let ChangeRoleResult::Success(r) = &result {
@@ -1034,9 +929,7 @@ impl GroupChatCore {
                 return MessageNotFound;
             }
 
-            if let Err(index) = self.pinned_messages.binary_search(&message_index) {
-                self.pinned_messages.insert(index, message_index);
-
+            if self.add_pinned_message(message_index, now) {
                 let push_event_result = self.events.push_main_event(
                     ChatEventInternal::MessagePinned(Box::new(MessagePinned {
                         message_index,
@@ -1081,9 +974,7 @@ impl GroupChatCore {
 
             let user_id = member.user_id;
 
-            if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
-                self.pinned_messages.remove(index);
-
+            if self.remove_pinned_message(message_index, now) {
                 let push_event_result = self.events.push_main_event(
                     ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                         message_index,
@@ -1107,6 +998,34 @@ impl GroupChatCore {
         }
     }
 
+    pub fn pinned_messages(&self, min_visible_message_index: MessageIndex) -> Vec<MessageIndex> {
+        self.pinned_messages
+            .iter()
+            .map(|(_, m)| *m)
+            .filter(|m| *m >= min_visible_message_index)
+            .collect()
+    }
+
+    fn add_pinned_message(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if !self.pinned_messages.iter().any(|(_, m)| *m == message_index) {
+            self.pinned_messages_removed.retain(|(_, m)| *m != message_index);
+            self.pinned_messages.insert((now, message_index));
+            true
+        } else {
+            false
+        }
+    }
+
+    fn remove_pinned_message(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if let Some(entry) = self.pinned_messages.iter().find(|(_, m)| *m == message_index).copied() {
+            self.pinned_messages.remove(&entry);
+            self.pinned_messages_removed.insert((now, message_index));
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn invite_users(&mut self, invited_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> InvitedUsersResult {
         use InvitedUsersResult::*;
 
@@ -1118,7 +1037,7 @@ impl GroupChatCore {
             }
 
             // The original caller must be authorized to invite other users
-            if !self.is_public && !member.role.can_invite_users(&self.permissions) {
+            if !self.is_public.value && !member.role.can_invite_users(&self.permissions) {
                 return NotAuthorized;
             }
 
@@ -1129,7 +1048,7 @@ impl GroupChatCore {
                 .copied()
                 .collect();
 
-            if !self.is_public && !invited_users.is_empty() {
+            if !self.is_public.value && !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
@@ -1177,8 +1096,24 @@ impl GroupChatCore {
 
             Success(InvitedUsersSuccess {
                 invited_users: user_ids,
-                group_name: self.name.clone(),
+                group_name: self.name.value.clone(),
             })
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {
+        use CanLeaveResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                UserSuspended
+            } else if member.role.is_owner() && self.members.owner_count() == 1 {
+                LastOwnerCannotLeave
+            } else {
+                Yes
+            }
         } else {
             UserNotInGroup
         }
@@ -1187,23 +1122,18 @@ impl GroupChatCore {
     pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
         use LeaveResult::*;
 
-        if let Some(member) = self.members.get(&user_id) {
-            if member.suspended.value {
-                return UserSuspended;
+        match self.can_leave(user_id) {
+            CanLeaveResult::Yes => {
+                let removed = self.members.remove(user_id, now).unwrap();
+
+                self.events
+                    .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
+
+                Success(removed)
             }
-
-            if member.role.is_owner() && self.members.owner_count() == 1 {
-                return LastOwnerCannotLeave;
-            }
-
-            let removed = self.members.remove(user_id).unwrap();
-
-            self.events
-                .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
-
-            Success(removed)
-        } else {
-            UserNotInGroup
+            CanLeaveResult::UserSuspended => UserSuspended,
+            CanLeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
+            CanLeaveResult::UserNotInGroup => UserNotInGroup,
         }
     }
 
@@ -1226,7 +1156,7 @@ impl GroupChatCore {
             }
 
             let target_member_role = match self.members.get(&target_user_id) {
-                Some(m) => m.role,
+                Some(m) => m.role.value,
                 None if block => GroupRoleInternal::Member,
                 _ => return TargetUserNotInGroup,
             };
@@ -1236,9 +1166,9 @@ impl GroupChatCore {
                 .can_remove_members_with_role(target_member_role, &self.permissions)
             {
                 // Remove the user from the group
-                self.members.remove(target_user_id);
+                self.members.remove(target_user_id, now);
 
-                if block && !self.members.block(target_user_id) {
+                if block && !self.members.block(target_user_id, now) {
                     // Return Success if the user was already blocked
                     return Success;
                 }
@@ -1282,7 +1212,7 @@ impl GroupChatCore {
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
-        match self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions, &public) {
+        match self.can_update(&user_id, &name, &description, &rules, &avatar, permissions.as_ref(), &public) {
             Ok(_) => UpdateResult::Success(self.do_update(
                 user_id,
                 name,
@@ -1306,7 +1236,7 @@ impl GroupChatCore {
         description: &Option<String>,
         rules: &Option<UpdatedRules>,
         avatar: &OptionUpdate<Document>,
-        permissions: &Option<OptionalGroupPermissions>,
+        permissions: Option<&OptionalGroupPermissions>,
         public: &Option<bool>,
     ) -> Result<(), UpdateResult> {
         use UpdateResult::*;
@@ -1314,7 +1244,7 @@ impl GroupChatCore {
         let avatar_update = avatar.as_ref().expand();
 
         if let Some(name) = name {
-            if let Err(error) = validate_group_name(name, self.is_public, self.subtype.value.as_ref()) {
+            if let Err(error) = validate_group_name(name, self.is_public.value, self.subtype.value.as_ref()) {
                 return Err(match error {
                     NameValidationError::TooShort(s) => NameTooShort(s),
                     NameValidationError::TooLong(l) => NameTooLong(l),
@@ -1382,45 +1312,46 @@ impl GroupChatCore {
         let events = &mut self.events;
 
         if let Some(name) = name {
-            if self.name != name {
+            if self.name.value != name {
                 events.push_main_event(
                     ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                         new_name: name.clone(),
-                        previous_name: self.name.clone(),
+                        previous_name: self.name.value.clone(),
                         changed_by: user_id,
                     })),
                     0,
                     now,
                 );
 
-                self.name = name;
+                self.name = Timestamped::new(name, now);
             }
         }
 
         if let Some(description) = description {
-            if self.description != description {
+            if self.description.value != description {
                 events.push_main_event(
                     ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                         new_description: description.clone(),
-                        previous_description: self.description.clone(),
+                        previous_description: self.description.value.clone(),
                         changed_by: user_id,
                     })),
                     0,
                     now,
                 );
 
-                self.description = description;
+                self.description = Timestamped::new(description, now);
             }
         }
 
         if let Some(rules) = rules {
             let prev_enabled = self.rules.enabled;
 
-            if let Some(rules_version) = self.rules.update(rules) {
-                result.rules_version = Some(rules_version);
+            if self.rules.update(|r| r.update(rules, now).is_some(), now) {
+                let new_version = self.rules.value.text.version;
+                result.rules_version = Some(new_version);
 
                 if let Some(member) = self.members.get_mut(&user_id) {
-                    member.rules_accepted = Some(Timestamped::new(rules_version, now))
+                    member.accept_rules(new_version, now);
                 }
 
                 events.push_main_event(
@@ -1436,7 +1367,7 @@ impl GroupChatCore {
         }
 
         if let Some(avatar) = avatar.expand() {
-            let previous_avatar_id = Document::id(&self.avatar);
+            let previous_avatar_id = Document::id(&self.avatar.value);
             let new_avatar_id = Document::id(&avatar);
 
             if new_avatar_id != previous_avatar_id {
@@ -1450,19 +1381,19 @@ impl GroupChatCore {
                     now,
                 );
 
-                self.avatar = avatar;
+                self.avatar = Timestamped::new(avatar, now);
             }
         }
 
         if let Some(permissions) = permissions {
-            let old_permissions = self.permissions.clone();
-            let new_permissions = GroupChatCore::merge_permissions(permissions, &old_permissions);
-            self.permissions = new_permissions.clone();
+            let old_permissions_v2 = self.permissions.value.clone();
+            let new_permissions_v2 = GroupChatCore::merge_permissions(permissions, old_permissions_v2.clone());
+            self.permissions = Timestamped::new(new_permissions_v2.clone(), now);
 
             events.push_main_event(
                 ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
-                    old_permissions,
-                    new_permissions,
+                    old_permissions_v2,
+                    new_permissions_v2,
                     changed_by: user_id,
                 })),
                 0,
@@ -1470,17 +1401,11 @@ impl GroupChatCore {
             );
         }
 
-        if let Some(new_events_ttl) = events_ttl.expand() {
-            if new_events_ttl != events.get_events_time_to_live().value {
-                events.set_events_time_to_live(user_id, new_events_ttl, now);
-            }
-        }
-
         if let Some(gate) = gate.expand() {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
 
-                self.events.push_main_event(
+                events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                         updated_by: user_id,
                         new_gate: gate,
@@ -1492,8 +1417,8 @@ impl GroupChatCore {
         }
 
         if let Some(public) = public {
-            if self.is_public != public {
-                self.is_public = public;
+            if self.is_public.value != public {
+                self.is_public = Timestamped::new(public, now);
 
                 let event = GroupVisibilityChanged {
                     now_public: public,
@@ -1501,14 +1426,19 @@ impl GroupChatCore {
                 };
 
                 let push_event_result =
-                    self.events
-                        .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+                    events.push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
 
-                if self.is_public {
+                if self.is_public.value {
                     self.min_visible_indexes_for_new_members =
-                        Some((push_event_result.index, self.events.main_events_list().next_message_index()));
+                        Some((push_event_result.index, events.main_events_list().next_message_index()));
                     result.newly_public = true;
                 }
+            }
+        }
+
+        if let Some(new_events_ttl) = events_ttl.expand() {
+            if new_events_ttl != events.get_events_time_to_live().value {
+                events.set_events_time_to_live(user_id, new_events_ttl, now);
             }
         }
 
@@ -1618,24 +1548,67 @@ impl GroupChatCore {
             .map(|message| message.sender)
     }
 
-    fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> GroupPermissions {
-        #[allow(deprecated)]
+    fn merge_permissions(new: OptionalGroupPermissions, old: GroupPermissions) -> GroupPermissions {
+        let message_permissions = match new.message_permissions {
+            Some(mp) => GroupChatCore::merge_message_permissions(mp, old.message_permissions),
+            None => old.message_permissions,
+        };
+
+        let thread_permissions = match new.thread_permissions {
+            OptionUpdate::NoChange => old.thread_permissions,
+            OptionUpdate::SetToNone => None,
+            OptionUpdate::SetToSome(mp) => Some(GroupChatCore::merge_message_permissions(
+                mp,
+                old.thread_permissions.unwrap_or_default(),
+            )),
+        };
+
         GroupPermissions {
-            change_permissions: GroupPermissionRole::Owner,
             change_roles: new.change_roles.unwrap_or(old.change_roles),
-            add_members: GroupPermissionRole::Owner,
             remove_members: new.remove_members.unwrap_or(old.remove_members),
-            block_users: GroupPermissionRole::Owner,
             delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
             update_group: new.update_group.unwrap_or(old.update_group),
             pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
+            add_members: GroupPermissionRole::Owner,
             invite_users: new.invite_users.unwrap_or(old.invite_users),
-            create_polls: new.create_polls.unwrap_or(old.create_polls),
-            send_messages: new.send_messages.unwrap_or(old.send_messages),
             react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
-            reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
             mention_all_members: new.mention_all_members.unwrap_or(old.mention_all_members),
+            message_permissions,
+            thread_permissions,
         }
+    }
+
+    fn merge_message_permissions(new: OptionalMessagePermissions, old: MessagePermissions) -> MessagePermissions {
+        MessagePermissions {
+            default: new.default.unwrap_or(old.default),
+            text: new.text.apply_to(old.text),
+            image: new.image.apply_to(old.image),
+            video: new.video.apply_to(old.video),
+            audio: new.audio.apply_to(old.audio),
+            file: new.file.apply_to(old.file),
+            poll: new.poll.apply_to(old.poll),
+            crypto: new.crypto.apply_to(old.crypto),
+            giphy: new.giphy.apply_to(old.giphy),
+            prize: new.prize.apply_to(old.prize),
+            custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
+        }
+    }
+
+    fn merge_custom_permissions(
+        updated: Vec<CustomPermission>,
+        removed: Vec<String>,
+        old: Vec<CustomPermission>,
+    ) -> Vec<CustomPermission> {
+        let mut new: Vec<CustomPermission> = old
+            .into_iter()
+            .map(|cp| match updated.iter().find(|up| up.subtype == cp.subtype) {
+                Some(np) => np.clone(),
+                None => cp,
+            })
+            .collect();
+
+        new.retain(|cp| !removed.contains(&cp.subtype));
+        new
     }
 
     fn build_thread_preview(
@@ -1667,14 +1640,12 @@ pub enum EventsResult {
     Success(EventsResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(EventIndex),
 }
 
 pub enum MessagesResult {
     Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(EventIndex),
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1760,6 +1731,13 @@ pub enum PinUnpinMessageResult {
     UserSuspended,
 }
 
+pub enum CanLeaveResult {
+    Yes,
+    UserSuspended,
+    LastOwnerCannotLeave,
+    UserNotInGroup,
+}
+
 pub enum LeaveResult {
     Success(GroupMemberInternal),
     UserSuspended,
@@ -1821,7 +1799,6 @@ pub enum DeletedMessageResult {
 pub enum ThreadPreviewsResult {
     Success(Vec<ThreadPreview>),
     UserNotInGroup,
-    ReplicaNotUpToDate(TimestampMillis),
 }
 
 pub enum SearchResults {
@@ -1863,14 +1840,16 @@ pub enum UnfollowThreadResult {
 }
 
 #[derive(Default)]
-pub struct SummaryUpdatesFromEvents {
+pub struct SummaryUpdates {
+    pub timestamp: TimestampMillis,
     pub name: Option<String>,
     pub description: Option<String>,
     pub subtype: OptionUpdate<GroupSubtype>,
     pub avatar_id: OptionUpdate<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
-    pub members_changed: bool,
+    pub latest_message_index: Option<MessageIndex>,
+    pub member_count: Option<u32>,
     pub role_changed: bool,
     pub mentions: Vec<HydratedMention>,
     pub permissions: Option<GroupPermissions>,
@@ -1878,6 +1857,7 @@ pub struct SummaryUpdatesFromEvents {
     pub is_public: Option<bool>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
+    pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_changed: bool,
 }
@@ -1886,6 +1866,8 @@ pub struct SummaryUpdatesFromEvents {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
+    #[serde(default)]
+    pub version_last_updated: TimestampMillis,
 }
 
 impl AccessRulesInternal {
@@ -1893,13 +1875,17 @@ impl AccessRulesInternal {
         Self {
             text: Versioned::new(rules.text, Version::zero()),
             enabled: rules.enabled,
+            version_last_updated: 0,
         }
     }
 
-    pub fn update(&mut self, rules: UpdatedRules) -> Option<Version> {
+    pub fn update(&mut self, rules: UpdatedRules, now: TimestampMillis) -> Option<Version> {
         if rules.enabled != self.enabled || self.text.value != rules.text {
             if self.text.value != rules.text {
                 self.text.update(rules.text, rules.new_version);
+                if rules.new_version {
+                    self.version_last_updated = now;
+                }
             }
 
             self.enabled = rules.enabled;
@@ -1934,7 +1920,7 @@ impl From<AccessRulesInternal> for VersionedRules {
 }
 
 lazy_static! {
-    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|[\s(){}\[\]])@everyone($|[\s(){}\[\]])").unwrap();
+    static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|\W)(@everyone)($|\W)").unwrap();
 }
 
 fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {

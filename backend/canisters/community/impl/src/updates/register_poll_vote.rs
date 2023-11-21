@@ -63,5 +63,6 @@ fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
         RegisterPollVoteResult::PollEnded => PollEnded,
         RegisterPollVoteResult::PollNotFound => PollNotFound,
         RegisterPollVoteResult::OptionIndexOutOfRange => OptionIndexOutOfRange,
+        RegisterPollVoteResult::UserCannotChangeVote => UserCannotChangeVote,
     }
 }

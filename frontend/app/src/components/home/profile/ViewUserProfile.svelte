@@ -3,14 +3,21 @@
     import { _ } from "svelte-i18n";
     import Avatar from "../../Avatar.svelte";
     import Markdown from "../Markdown.svelte";
-    import { AvatarSize, type UserSummary, type PublicProfile } from "openchat-client";
+    import {
+        AvatarSize,
+        type UserSummary,
+        type PublicProfile,
+        type ChatSummary,
+        type CommunitySummary,
+        type OpenChat,
+    } from "openchat-client";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import type { OpenChat } from "openchat-client";
     import { rightPanelHistory } from "../../../stores/rightPanel";
+    import { toastStore } from "../../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,7 +31,9 @@
     let user: UserSummary | undefined;
     let lastOnline: number | undefined;
 
-    $: me = userId === client.user.userId;
+    $: createdUser = client.user;
+    $: platformModerator = client.platformModerator;
+    $: me = userId === $createdUser.userId;
     $: isSuspended = user?.suspended ?? false;
     $: modal = $mobileWidth;
     $: status =
@@ -40,6 +49,11 @@
     $: isPremium = profile?.isPremium ?? false;
     $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
+    $: selectedChat = client.selectedChatStore;
+    $: blockedUsers = client.blockedUsers;
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: currentCommunityBlockedUsers = client.currentCommunityBlockedUsers;
+    $: selectedCommunity = client.selectedCommunity;
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = client.getDisplayName(
         {
@@ -48,6 +62,20 @@
             displayName: profile?.displayName,
         },
         inGlobalContext ? undefined : $communityMembers
+    );
+    $: canBlock = canBlockUser(
+        $selectedChat,
+        $selectedCommunity,
+        $blockedUsers,
+        $currentChatBlockedUsers,
+        $currentCommunityBlockedUsers
+    );
+    $: canUnblock = canUnblockUser(
+        $selectedChat,
+        $selectedCommunity,
+        $blockedUsers,
+        $currentChatBlockedUsers,
+        $currentCommunityBlockedUsers
     );
 
     onMount(async () => {
@@ -62,6 +90,107 @@
             onClose();
         }
     });
+
+    function afterBlock(result: boolean, success: string, failure: string) {
+        if (!result) {
+            toastStore.showFailureToast(failure);
+        } else {
+            toastStore.showSuccessToast(success);
+        }
+    }
+
+    function blockUser() {
+        if ($selectedChat !== undefined) {
+            if ($selectedChat.kind === "direct_chat") {
+                client.blockUserFromDirectChat($selectedChat.them.userId).then((success) => {
+                    afterBlock(success, "blockUserSucceeded", "blockUserFailed");
+                });
+                onClose();
+                return;
+            }
+            if ($selectedChat.kind === "group_chat") {
+                client.blockUser($selectedChat.id, userId).then((success) => {
+                    afterBlock(success, "blockUserSucceeded", "blockUserFailed");
+                });
+                onClose();
+                return;
+            }
+        }
+        if ($selectedCommunity !== undefined) {
+            client
+                .blockCommunityUser($selectedCommunity.id, userId)
+                .then((success) => afterBlock(success, "blockUserSucceeded", "blockUserFailed"));
+            onClose();
+            return;
+        }
+    }
+
+    function unblockUser() {
+        if ($selectedChat !== undefined) {
+            if ($selectedChat.kind === "direct_chat") {
+                client.unblockUserFromDirectChat($selectedChat.them.userId).then((success) => {
+                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed");
+                });
+                onClose();
+                return;
+            }
+            if ($selectedChat.kind === "group_chat") {
+                client.unblockUser($selectedChat.id, userId).then((success) => {
+                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed");
+                });
+                onClose();
+                return;
+            }
+        }
+        if ($selectedCommunity !== undefined) {
+            client
+                .unblockCommunityUser($selectedCommunity.id, userId)
+                .then((success) =>
+                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed")
+                );
+            onClose();
+            return;
+        }
+    }
+
+    function canBlockUser(
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
+        blockedUsers: Set<string>,
+        blockedChatUsers: Set<string>,
+        blockedCommunityUsers: Set<string>
+    ) {
+        if (me || inGlobalContext) return false;
+
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") return !blockedUsers.has(userId);
+            if (chat.kind === "group_chat")
+                return !blockedChatUsers.has(userId) && client.canBlockUsers(chat.id);
+        }
+        if (community !== undefined) {
+            return !blockedCommunityUsers.has(userId) && client.canBlockUsers(community.id);
+        }
+        return false;
+    }
+
+    function canUnblockUser(
+        chat: ChatSummary | undefined,
+        community: CommunitySummary | undefined,
+        blockedUsers: Set<string>,
+        blockedChatUsers: Set<string>,
+        blockedCommunityUsers: Set<string>
+    ) {
+        if (me || inGlobalContext) return false;
+        if (chat !== undefined) {
+            if (chat.kind === "direct_chat") return blockedUsers.has(userId);
+            if (chat.kind === "group_chat")
+                return blockedChatUsers.has(userId) && client.canBlockUsers(chat.id);
+        }
+        if (community !== undefined) {
+            return blockedCommunityUsers.has(userId) && client.canBlockUsers(community.id);
+        }
+        return false;
+    }
 
     function handleOpenDirectChat() {
         dispatch("openDirectChat");
@@ -100,7 +229,7 @@
             fill
             square
             compactFooter
-            hideFooter={!me && !chatButton}
+            hideFooter={!me && !chatButton && !canBlock && !canUnblock}
             fixedWidth={false}
             large={modal}
             {alignTo}
@@ -133,7 +262,7 @@
                     <div class="right">
                         {joined}
                     </div>
-                    {#if client.user.isPlatformModerator}
+                    {#if $platformModerator}
                         {#if isPremium}
                             <p class="left">PREMIUM</p>
                         {/if}
@@ -150,6 +279,12 @@
                     {/if}
                     {#if me}
                         <Button on:click={showUserProfile} small>{$_("profile.settings")}</Button>
+                    {/if}
+                    {#if canBlock}
+                        <Button on:click={blockUser} small>{$_("profile.block")}</Button>
+                    {/if}
+                    {#if canUnblock}
+                        <Button on:click={unblockUser} small>{$_("profile.unblock")}</Button>
                     {/if}
                 </ButtonGroup>
             </div>

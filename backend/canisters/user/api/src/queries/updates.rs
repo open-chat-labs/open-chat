@@ -25,12 +25,14 @@ pub struct SuccessResult {
     pub communities: CommunitiesUpdates,
     pub avatar_id: OptionUpdate<u128>,
     pub blocked_users: Option<Vec<UserId>>,
+    pub suspended: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatsUpdates {
     pub added: Vec<DirectChatSummary>,
     pub updated: Vec<DirectChatSummaryUpdates>,
+    pub removed: Vec<ChatId>,
     pub pinned: Option<Vec<ChatId>>,
 }
 

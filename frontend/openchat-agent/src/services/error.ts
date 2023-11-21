@@ -8,21 +8,12 @@ import {
 } from "openchat-shared";
 
 export class ReplicaNotUpToDateError extends Error {
-    public static byEventIndex(
-        latestReplicaEventIndex: number,
-        latestClientEventIndex: number,
-        failedPostCheck: boolean
-    ): ReplicaNotUpToDateError {
-        const message = `Replica not up to date (event index). Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}. FailedPostCheck: ${failedPostCheck}`;
-
-        return new ReplicaNotUpToDateError(message);
-    }
-
     public static byTimestamp(
         replicaTimestamp: bigint,
-        clientTimestamp: bigint
+        clientTimestamp: bigint,
+        failedPostCheck: boolean,
     ): ReplicaNotUpToDateError {
-        const message = `Replica not up to date (timestamp). Client: ${clientTimestamp}. Replica: ${replicaTimestamp}.`;
+        const message = `Replica not up to date (timestamp). Client: ${clientTimestamp}. Replica: ${replicaTimestamp}. FailedPostCheck: ${failedPostCheck}`;
 
         return new ReplicaNotUpToDateError(message);
     }
@@ -34,7 +25,7 @@ export class ReplicaNotUpToDateError extends Error {
 
 export function toCanisterResponseError(
     error: Error,
-    identity: Identity
+    identity: Identity,
 ): HttpError | ReplicaNotUpToDateError {
     if (error instanceof ReplicaNotUpToDateError) {
         return error;
@@ -71,7 +62,7 @@ export function toCanisterResponseError(
     if (code === 400 && getTimeUntilSessionExpiryMs(identity) < 0) {
         console.debug(
             "SESSION: we received a 400 response and the session has timed out: ",
-            getTimeUntilSessionExpiryMs(identity)
+            getTimeUntilSessionExpiryMs(identity),
         );
         return new SessionExpiryError(code, error);
     }

@@ -3,8 +3,13 @@
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { OpenChat, Message, PendingCryptocurrencyTransfer } from "openchat-client";
-    import { E8S_PER_TOKEN, dollarExchangeRates } from "openchat-client";
+    import type {
+        CryptocurrencyDetails,
+        Message,
+        OpenChat,
+        PendingCryptocurrencyTransfer,
+    } from "openchat-client";
+    import { dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -17,7 +22,6 @@
     import TipButton from "./TipButton.svelte";
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
     const increments: Increment[] = [1, 10, 100];
     type Increment = 1 | 10 | 100;
@@ -36,21 +40,21 @@
     let dollarScale = tweened(0);
     let centAmount = 0;
 
+    $: user = client.user;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
     $: draftAmount = calculateAmount(centAmount, exchangeRate);
-    $: displayDraftAmount = (Number(draftAmount) / E8S_PER_TOKEN).toString();
-    $: displayFee = (Number(tokenDetails.transferFee) / E8S_PER_TOKEN).toString();
-    $: tokenDetails = $cryptoLookup[ledger];
+    $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
+    $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
         draftAmount > BigInt(0)
             ? cryptoBalance - draftAmount - tokenDetails.transferFee
             : cryptoBalance;
-    $: valid =
-        exchangeRate !== undefined && draftAmount > 0n && error === undefined && !tokenChanging;
+    $: valid = exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
 
     $: {
@@ -66,7 +70,7 @@
     }
 
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = (centAmount / 100) * exchangeRate * E8S_PER_TOKEN;
+        const e8s = (centAmount / 100) * exchangeRate * Math.pow(10, tokenDetails.decimals);
         return BigInt(Math.round(e8s));
     }
 
@@ -156,6 +160,10 @@
         centAmount += increment;
     }
 
+    function hasExchangeRate(token: CryptocurrencyDetails): boolean {
+        return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
+    }
+
     onMount(() => {
         let d = document.getElementById("tip-dollar");
         if (!d) {
@@ -177,7 +185,7 @@
                 <div class="main-title">
                     <div>{$_("tip.title")}</div>
                     <div>
-                        <CryptoSelector bind:ledger />
+                        <CryptoSelector bind:ledger filter={hasExchangeRate} />
                     </div>
                 </div>
             </div>
@@ -196,7 +204,7 @@
         <form slot="body">
             <div class="body" class:zero={zero || toppingUp}>
                 {#if zero || toppingUp}
-                    <AccountInfo {ledger} {user} />
+                    <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>
                             {$_("tokenTransfer.zeroBalance", {

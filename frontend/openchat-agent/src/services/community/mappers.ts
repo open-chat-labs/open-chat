@@ -4,7 +4,6 @@ import type {
     ChangeCommunityRoleResponse,
     ChannelIdentifier,
     ChannelMatch,
-    ChannelMembershipUpdates,
     ChannelMessageMatch,
     ChannelSummaryResponse,
     CommunityCanisterChannelSummaryUpdates,
@@ -21,6 +20,7 @@ import type {
     ExploreChannelsResponse,
     FollowThreadResponse,
     GateCheckFailedReason,
+    GroupMembershipUpdates,
     ImportGroupResponse,
     MemberRole,
     Message,
@@ -61,7 +61,7 @@ import type {
     ApiMessageMatch,
     ApiCommunityCanisterCommunitySummaryUpdates,
     ApiCommunityCanisterChannelSummaryUpdates,
-    ApiChannelMembershipUpdates,
+    ApiGroupMembershipUpdates,
     ApiCommunityMembershipUpdates,
     ApiExploreChannelsResponse,
     ApiChannelMatch,
@@ -98,8 +98,8 @@ import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optionUpdate, optional } from "../../utils/mapping";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
-import { messageWrapper } from "../group/mappers";
 import { ReplicaNotUpToDateError } from "../error";
+import type { ReportMessageResponse } from "./candid/types";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse,
@@ -219,23 +219,16 @@ export async function messagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
     chatId: ChannelIdentifier,
-    threadRootMessageIndex: number | undefined,
-    latestClientEventIndexPreRequest: number | undefined,
+    latestKnownUpdatePreRequest: bigint | undefined,
 ): Promise<EventsResponse<Message>> {
     if ("Success" in candid) {
-        const latestEventIndex = candid.Success.latest_event_index;
-
-        await ensureReplicaIsUpToDate(
-            principal,
-            chatId,
-            threadRootMessageIndex,
-            latestClientEventIndexPreRequest,
-            latestEventIndex,
-        );
+        await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
         return {
-            events: candid.Success.messages.map(messageWrapper),
-            latestEventIndex,
+            events: candid.Success.messages.map(messageEvent),
+            expiredEventRanges: [],
+            expiredMessageRanges: [],
+            latestEventIndex: candid.Success.latest_event_index,
         };
     }
     if (
@@ -248,10 +241,10 @@ export async function messagesByMessageIndexResponse(
     ) {
         return "events_failed";
     }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(
-            candid.ReplicaNotUpToDate,
-            latestClientEventIndexPreRequest ?? -1,
+    if ("ReplicaNotUpToDateV2" in candid) {
+        throw ReplicaNotUpToDateError.byTimestamp(
+            candid.ReplicaNotUpToDateV2,
+            latestKnownUpdatePreRequest ?? BigInt(-1),
             false,
         );
     }
@@ -298,6 +291,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
         };
     } else if ("RulesNotAccepted" in candid) {
         return { kind: "rules_not_accepted" };
@@ -447,7 +441,7 @@ export function communityChannelUpdates(
     return {
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
         public: optional(candid.is_public, identity),
-        permissions: optional(candid.permissions, groupPermissions),
+        permissions: optional(candid.permissions_v2, groupPermissions),
         metrics: optional(candid.metrics, chatMetrics),
         subtype: optionUpdate(candid.subtype, groupSubtype),
         dateLastPinned: optional(candid.date_last_pinned, identity),
@@ -456,11 +450,14 @@ export function communityChannelUpdates(
         description: optional(candid.description, identity),
         lastUpdated: candid.last_updated,
         avatarId: optionUpdate(candid.avatar_id, identity),
-        membership: optional(candid.membership, channelMembershipUpdates),
+        membership: optional(candid.membership, GroupMembershipUpdates),
         updatedEvents: candid.updated_events.map(updatedEvent),
         latestEventIndex: optional(candid.latest_event_index, identity),
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         memberCount: optional(candid.member_count, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
+        eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
     };
 }
 
@@ -476,9 +473,7 @@ function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
     };
 }
 
-export function channelMembershipUpdates(
-    candid: ApiChannelMembershipUpdates,
-): ChannelMembershipUpdates {
+export function GroupMembershipUpdates(candid: ApiGroupMembershipUpdates): GroupMembershipUpdates {
     return {
         role: optional(candid.role, memberRole),
         notificationsMuted: optional(candid.notifications_muted, identity),
@@ -728,7 +723,9 @@ export function setMemberDisplayNameResponse(
     );
 }
 
-export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse): FollowThreadResponse {
+export function followThreadResponse(
+    candid: ApiFollowThreadResponse | ApiUnfollowThreadResponse,
+): FollowThreadResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -738,4 +735,8 @@ export function followThreadResponse(candid: ApiFollowThreadResponse | ApiUnfoll
         console.warn("followThread failed with", candid);
         return "failed";
     }
+}
+
+export function reportMessageResponse(candid: ReportMessageResponse): boolean {
+    return "Success" in candid || "AlreadyReported" in candid;
 }

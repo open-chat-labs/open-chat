@@ -1,28 +1,34 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
-    import page from "page";
+    import { getContext } from "svelte";
+    import { _ } from "svelte-i18n";
     import { routeForScope } from "../../routes";
 
     const client = getContext<OpenChat>("client");
-    const dispatch = createEventDispatcher();
 
     export let rootPath = routeForScope(client.getDefaultScope());
     export let text = "Launch app";
+    export let login = false;
 
     $: identityState = client.identityState;
-    $: txt = $identityState === "logging_in" ? "Logging in..." : text;
-
-    function launch() {
-        if ($identityState === "logged_in") {
-            page(rootPath);
-        } else {
-            dispatch("login");
-        }
-    }
+    $: url = $identityState.kind === "logged_in" ? rootPath : "/communities";
+    $: busy = $identityState.kind === "logging_in" || $identityState.kind === "loading_user";
 </script>
 
-<div role="button" on:click={launch} class="launch">{txt}</div>
+{#if login}
+    <div
+        class:loading={busy}
+        role="button"
+        tabindex="0"
+        on:click={() => client.login()}
+        class="launch">
+        {#if !busy}
+            {text}
+        {/if}
+    </div>
+{:else}
+    <a href={url} class="launch">{text}</a>
+{/if}
 
 <style lang="scss">
     .launch {
@@ -34,6 +40,9 @@
         border-radius: toRem(4);
         cursor: pointer;
         text-decoration: none;
+        min-height: 45px;
+        min-width: 150px;
+        text-align: center;
         @include font(bold, normal, fs-100);
         padding: toRem(12) toRem(16) toRem(12) toRem(16);
 
@@ -45,7 +54,15 @@
             @include font(bold, normal, fs-120);
             padding: toRem(16) toRem(20);
             width: 100%;
-            text-align: center;
+        }
+
+        &.loading {
+            @include loading-spinner(
+                1em,
+                0.5em,
+                var(--button-spinner),
+                "/assets/plain-spinner.svg"
+            );
         }
     }
 </style>

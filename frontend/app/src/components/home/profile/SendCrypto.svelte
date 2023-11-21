@@ -11,6 +11,7 @@
     import Scanner from "./Scanner.svelte";
     import SaveAccount from "./SaveAccount.svelte";
     import AccountSelector from "./AccountSelector.svelte";
+    import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
 
     export let ledger: string;
     export let amountToSend: bigint;
@@ -20,7 +21,6 @@
     export let capturingAccount = false;
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
     const dispatch = createEventDispatcher();
 
     let validAmount = false;
@@ -29,18 +29,20 @@
     let accounts: NamedAccount[] = [];
     let saveAccountElement: SaveAccount;
 
+    $: user = client.user;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: account = tokenDetails.symbol === ICP_SYMBOL ? user.cryptoAccount : user.userId;
+    $: account = tokenDetails.symbol === ICP_SYMBOL ? $user.cryptoAccount : $user.userId;
     $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
-    $: validSend =
-        validAmount &&
-        amountToSend > BigInt(0) &&
-        targetAccount !== "" &&
-        targetAccount !== account;
+    $: targetAccountValid =
+        targetAccount.length > 0 &&
+        targetAccount !== account &&
+        (isPrincipalValid(targetAccount) ||
+            (symbol === "ICP" && isAccountIdentifierValid(targetAccount)));
+    $: validSend = validAmount && targetAccountValid;
     $: {
         valid = capturingAccount ? validAccountName : validSend;
     }
@@ -126,6 +128,7 @@
             bind:value={targetAccount}
             countdown={false}
             maxlength={100}
+            invalid={targetAccount.length > 0 && !targetAccountValid}
             placeholder={$_("cryptoAccount.sendTarget")} />
 
         <div class="qr" on:click={scan}>
@@ -133,9 +136,11 @@
         </div>
     </div>
 
-    <div class="accounts">
-        <AccountSelector bind:targetAccount {accounts} />
-    </div>
+    {#if accounts.length > 0}
+        <div class="accounts">
+            <AccountSelector bind:targetAccount {accounts} />
+        </div>
+    {/if}
 {/if}
 
 <style lang="scss">

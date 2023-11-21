@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{ChannelId, CommunityId};
@@ -237,7 +237,7 @@ fn send_message_mentioning_user_group() {
     );
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);

@@ -24,13 +24,15 @@ ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
 icdex_client = { path = "../../../libraries/icdex_client" }
-icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

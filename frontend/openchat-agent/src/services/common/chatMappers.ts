@@ -62,6 +62,7 @@ import type {
     ApiLeaveGroupResponse,
     ApiChat,
     ApiPrizeCotentInitial,
+    ApiMessagePermissions,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -147,24 +148,25 @@ import type {
     UserGroupSummary,
     TipsReceived,
     PrizeContentInitial,
+    ClaimPrizeResponse,
+    MessagePermissions,
+    ExpiredEventsRange,
+    ExpiredMessagesRange,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
     ProposalRewardStatus,
     UnsupportedValueError,
-    OpenChatGovernanceCanisterId,
-    Sns1GovernanceCanisterId,
     chatIdentifiersEqual,
     CommonResponses,
     emptyChatMetrics,
     codeToText,
-    KinicGovernanceCanisterId,
-    HotOrNotGovernanceCanisterId,
     CHAT_SYMBOL,
     CKBTC_SYMBOL,
     ICP_SYMBOL,
     KINIC_SYMBOL,
     SNS1_SYMBOL,
+    isAccountIdentifierValid,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 import type {
@@ -194,6 +196,7 @@ import type {
     ApiDisableInviteCodeResponse,
     ApiResetInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiGroupRegisterProposalVoteResponse,
+    ApiClaimPrizeResponse as ApiClaimGroupPrizeResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -227,6 +230,7 @@ import type {
     ApiDisableInviteCodeResponse as ApiCommunityDisableInviteCodeResponse,
     ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
+    ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -248,6 +252,7 @@ export function message(candid: ApiMessage): Message {
         edited: candid.edited,
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
+        lastUpdated: optional(candid.last_updated, identity),
         thread: optional(candid.thread_summary, threadSummary),
     };
 }
@@ -403,6 +408,7 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         kind: "prize_content",
         prizesRemaining: candid.prizes_remaining,
         prizesPending: candid.prizes_pending,
+        diamondOnly: candid.diamond_only,
         winners: candid.winners.map((u) => u.toString()),
         token: token(candid.token),
         endDate: candid.end_date,
@@ -523,6 +529,8 @@ function pollContent(candid: ApiPollContent): PollContent {
 function pollConfig(candid: ApiPollConfig): PollConfig {
     return {
         allowMultipleVotesPerUser: candid.allow_multiple_votes_per_user,
+        // allowUserToChangeVote: candid.allow_user_to_change_vote, //TODO - reinstate
+        allowUserToChangeVote: true,
         text: optional(candid.text, identity),
         showVotesBeforeEndDate: candid.show_votes_before_end_date,
         endDate: optional(candid.end_date, identity),
@@ -847,11 +855,27 @@ export function groupPermissions(candid: ApiGroupPermissions): ChatPermissions {
         removeMembers: permissionRole(candid.remove_members),
         deleteMessages: permissionRole(candid.delete_messages),
         pinMessages: permissionRole(candid.pin_messages),
-        createPolls: permissionRole(candid.create_polls),
-        sendMessages: permissionRole(candid.send_messages),
         reactToMessages: permissionRole(candid.react_to_messages),
-        replyInThread: permissionRole(candid.reply_in_thread),
         mentionAllMembers: permissionRole(candid.mention_all_members),
+        messagePermissions: messagePermissions(candid.message_permissions),
+        threadPermissions: optional(candid.thread_permissions, messagePermissions),
+    };
+}
+
+function messagePermissions(candid: ApiMessagePermissions): MessagePermissions {
+    const mf = candid.custom.find((cp) => cp.subtype === "meme_fighter")?.role;
+    return {
+        default: permissionRole(candid.default),
+        text: optional(candid.text, permissionRole),
+        image: optional(candid.image, permissionRole),
+        video: optional(candid.video, permissionRole),
+        audio: optional(candid.audio, permissionRole),
+        file: optional(candid.file, permissionRole),
+        poll: optional(candid.poll, permissionRole),
+        crypto: optional(candid.crypto, permissionRole),
+        giphy: optional(candid.giphy, permissionRole),
+        prize: optional(candid.prize, permissionRole),
+        memeFighter: mf !== undefined ? permissionRole(mf) : undefined,
     };
 }
 
@@ -905,25 +929,43 @@ export function apiCommunityPermissionRole(
 
 export function apiGroupPermissions(permissions: ChatPermissions): ApiGroupPermissions {
     return {
-        change_permissions: apiPermissionRole("owner"), // TODO remove this
         change_roles: apiPermissionRole(permissions.changeRoles),
         update_group: apiPermissionRole(permissions.updateGroup),
         invite_users: apiPermissionRole(permissions.inviteUsers),
         remove_members: apiPermissionRole(permissions.removeMembers),
-        block_users: apiPermissionRole("owner"), // TODO remove this
         delete_messages: apiPermissionRole(permissions.deleteMessages),
         pin_messages: apiPermissionRole(permissions.pinMessages),
-        create_polls: apiPermissionRole(permissions.createPolls),
-        send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
-        reply_in_thread: apiPermissionRole(permissions.replyInThread),
-        add_members: apiPermissionRole("owner"), // TODO remove this
+        add_members: apiPermissionRole("owner"),
         mention_all_members: apiPermissionRole(permissions.mentionAllMembers),
+        message_permissions: apiMessagePermissions(permissions.messagePermissions),
+        thread_permissions: apiOptional(apiMessagePermissions, permissions.threadPermissions),
+    };
+}
+
+function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermissions {
+    return {
+        default: apiPermissionRole(permissions.default),
+        text: apiOptional(apiPermissionRole, permissions.text),
+        image: apiOptional(apiPermissionRole, permissions.image),
+        video: apiOptional(apiPermissionRole, permissions.video),
+        audio: apiOptional(apiPermissionRole, permissions.audio),
+        file: apiOptional(apiPermissionRole, permissions.file),
+        poll: apiOptional(apiPermissionRole, permissions.poll),
+        crypto: apiOptional(apiPermissionRole, permissions.crypto),
+        giphy: apiOptional(apiPermissionRole, permissions.giphy),
+        prize: apiOptional(apiPermissionRole, permissions.prize),
+        custom:
+            permissions.memeFighter !== undefined
+                ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
+                : [],
     };
 }
 
 export function apiPermissionRole(permissionRole: PermissionRole): ApiPermissionRole {
     switch (permissionRole) {
+        case "none":
+            return { None: null };
         case "owner":
             return { Owner: null };
         case "admin":
@@ -939,6 +981,7 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
 }
 
 export function permissionRole(candid: ApiPermissionRole): PermissionRole {
+    if ("None" in candid) return "none";
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admin";
     if ("Moderators" in candid) return "moderator";
@@ -1145,6 +1188,7 @@ function apiPollContent(domain: PollContent): ApiPollContent {
 function apiPollConfig(domain: PollConfig): ApiPollConfig {
     return {
         allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
+        // allow_user_to_change_vote: domain.allowUserToChangeVote, //TODO - reinstate
         text: apiOptional(identity, domain.text),
         show_votes_before_end_date: domain.showVotesBeforeEndDate,
         end_date: apiOptional(identity, domain.endDate),
@@ -1224,124 +1268,69 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "nns_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
-    if (domain.kind === "openchat_gate")
+    if (domain.kind === "credential_gate")
+        return [
+            {
+                VerifiedCredential: {
+                    issuer: domain.issuerOrigin,
+                    credential: domain.credentialId,
+                },
+            },
+        ];
+    if (domain.kind === "sns_gate") {
         return [
             {
                 SnsNeuron: {
-                    governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                    governance_canister_id: Principal.fromText(domain.governanceCanister),
                     min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
                     min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
                 },
             },
         ];
-    if (domain.kind === "sns1_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
-    if (domain.kind === "kinic_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(KinicGovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
-    if (domain.kind === "hotornot_gate")
-        return [
-            {
-                SnsNeuron: {
-                    governance_canister_id: Principal.fromText(HotOrNotGovernanceCanisterId),
-                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-                },
-            },
-        ];
+    }
     return [];
 }
 
 export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
-    if (domain.kind === "openchat_gate")
+    if (domain.kind === "credential_gate")
+        return {
+            VerifiedCredential: {
+                issuer: domain.issuerOrigin,
+                credential: domain.credentialId,
+            },
+        };
+    if (domain.kind === "sns_gate") {
         return {
             SnsNeuron: {
-                governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                governance_canister_id: Principal.fromText(domain.governanceCanister),
                 min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
                 min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
             },
         };
-    if (domain.kind === "sns1_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
-    if (domain.kind === "kinic_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(KinicGovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
-    if (domain.kind === "hotornot_gate")
-        return {
-            SnsNeuron: {
-                governance_canister_id: Principal.fromText(HotOrNotGovernanceCanisterId),
-                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
-                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
-            },
-        };
+    }
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
-        const criteria = {
+        return {
+            kind: "sns_gate",
             minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
             minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
+            governanceCanister: candid.SnsNeuron.governance_canister_id.toString(),
         };
-        const canisterId = candid.SnsNeuron.governance_canister_id.toString();
-        if (canisterId === OpenChatGovernanceCanisterId) {
-            return {
-                kind: "openchat_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === Sns1GovernanceCanisterId) {
-            return {
-                kind: "sns1_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === KinicGovernanceCanisterId) {
-            return {
-                kind: "kinic_gate",
-                ...criteria,
-            };
-        }
-        if (canisterId === HotOrNotGovernanceCanisterId) {
-            return {
-                kind: "hotornot_gate",
-                ...criteria,
-            };
-        }
-        throw new Error(
-            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`,
-        );
     }
     if ("DiamondMember" in candid) {
         return {
             kind: "diamond_gate",
+        };
+    }
+    if ("VerifiedCredential" in candid) {
+        return {
+            kind: "credential_gate",
+            issuerOrigin: candid.VerifiedCredential.issuer,
+            credentialId: candid.VerifiedCredential.credential,
         };
     }
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
@@ -1369,6 +1358,7 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         caption: apiOptional(identity, domain.caption),
         transfer: apiPendingCryptoTransaction(domain.transfer),
         end_date: domain.endDate,
+        diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
     };
 }
@@ -1424,7 +1414,7 @@ export function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): Api
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal,
 ): WithdrawCryptoArgs {
-    if (domain.token === ICP_SYMBOL) {
+    if (domain.token === ICP_SYMBOL && isAccountIdentifierValid(domain.to)) {
         return {
             withdrawal: {
                 NNS: {
@@ -1488,11 +1478,7 @@ function apiICP(amountE8s: bigint): ApiICP {
 }
 
 export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         kind: "group_chat",
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
@@ -1504,13 +1490,14 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
             canisterId: candid.chat_id.toString(),
         })),
         memberCount: candid.participant_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         previewed: false,
@@ -1519,6 +1506,8 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
+        eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -1593,11 +1582,7 @@ export function communityChannelSummary(
     candid: ApiCommunityCanisterChannelSummary,
     communityId: string,
 ): ChannelSummary {
-    const latestMessage = optional(candid.latest_message, (ev) => ({
-        index: ev.index,
-        timestamp: ev.timestamp,
-        event: message(ev.event),
-    }));
+    const latestMessage = optional(candid.latest_message, messageEvent);
     return {
         kind: "channel",
         id: { kind: "channel", communityId, channelId: candid.channel_id.toString() },
@@ -1609,13 +1594,14 @@ export function communityChannelSummary(
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestEventIndex: candid.latest_event_index,
+        latestMessageIndex: optional(candid.latest_message_index, identity),
         lastUpdated: candid.last_updated,
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
             canisterId: communityId,
         })),
         memberCount: candid.member_count,
-        permissions: groupPermissions(candid.permissions),
+        permissions: groupPermissions(candid.permissions_v2),
         metrics: chatMetrics(candid.metrics),
         subtype: optional(candid.subtype, apiGroupSubtype),
         frozen: false, // TODO - doesn't exist
@@ -1623,6 +1609,8 @@ export function communityChannelSummary(
         dateReadPinned: undefined,
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "channel",
+        eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
@@ -1696,6 +1684,7 @@ export function messageEvent(candid: ApiMessageEventWrapper): EventWrapper<Messa
         event: message(candid.event),
         index: candid.index,
         timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, Number),
     };
 }
 
@@ -1714,6 +1703,22 @@ export function mention(candid: ApiMention): Mention {
         messageIndex: candid.message_index,
         eventIndex: candid.event_index,
         mentionedBy: candid.mentioned_by.toString(),
+    };
+}
+
+export function expiredEventsRange([start, end]: [number, number]): ExpiredEventsRange {
+    return {
+        kind: "expired_events_range",
+        start,
+        end,
+    };
+}
+
+export function expiredMessagesRange([start, end]: [number, number]): ExpiredMessagesRange {
+    return {
+        kind: "expired_messages_range",
+        start,
+        end,
     };
 }
 
@@ -2083,6 +2088,7 @@ export function threadPreviewsResponse(
         throw ReplicaNotUpToDateError.byTimestamp(
             candid.ReplicaNotUpToDate,
             latestClientThreadUpdate ?? BigInt(-1),
+            false,
         );
     }
     console.warn("ThreadPreviewsResponse failed with: ", candid);
@@ -2279,4 +2285,15 @@ export function registerProposalVoteResponse(
         "Unexpected ApiRegisterProposalVoteResponse type received",
         candid,
     );
+}
+
+export function claimPrizeResponse(
+    candid: ApiClaimGroupPrizeResponse | ApiClaimChannelPrizeResponse,
+): ClaimPrizeResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success();
+    } else {
+        console.warn("ClaimPrize failed with ", candid);
+        return CommonResponses.failure();
+    }
 }

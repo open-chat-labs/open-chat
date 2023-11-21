@@ -36,7 +36,7 @@
     export let reply: boolean;
 
     const client = getContext<OpenChat>("client");
-    const user = client.user;
+    const EMPTY_MOTION_PAYLOAD = "# Motion Proposal:\n## Motion Text:\n\n";
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
 
@@ -44,8 +44,9 @@
     let showNeuronInfo = false;
     let showPayload = false;
 
-    $: tokenDetails = client.getTokenByGovernanceCanister(content.governanceCanisterId);
-    $: rootCanister = tokenDetails.rootCanister ?? "";
+    $: user = client.user;
+    $: rootCanister =
+        client.tryGetNervousSystem(content.governanceCanisterId)?.rootCanisterId ?? "";
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
@@ -74,6 +75,8 @@
     $: showFullSummary = proposal.summary.length < 400;
     $: payload =
         content.proposal.kind === "sns" ? content.proposal.payloadTextRendering : undefined;
+    $: payloadEmpty =
+        payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0;
 
     $: {
         if (collapsed) {
@@ -139,20 +142,18 @@
         }
     }
 
-    function truncatedProposerId(): string {
-        const name = NamedNeurons[proposal.proposer];
+    function renderNeuronId(neuronId: string): string {
+        const name = NamedNeurons[neuronId];
         if (name !== undefined) {
             return name;
         }
 
-        if (proposal.proposer.length < 12) {
-            return proposal.proposer;
+        const length = neuronId.length;
+        if (length < 12) {
+            return neuronId;
         }
 
-        return `${proposal.proposer.slice(0, 4)}..${proposal.proposer.slice(
-            proposal.proposer.length - 4,
-            proposal.proposer.length
-        )}`;
+        return `${neuronId.slice(0, 4)}..${neuronId.slice(length - 4, length)}`;
     }
 
     export function getProposalTopicLabel(
@@ -206,7 +207,7 @@
                     </div>
                 </div>
             {/if}
-            {#if payload !== undefined}
+            {#if !payloadEmpty}
                 <div on:click={() => (showPayload = true)} class="payload">
                     <span>{$_("proposal.details")}</span>
                     <OpenInNew color="var(--icon-txt)" />
@@ -249,7 +250,8 @@
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
+            <a target="_blank" rel="noreferrer" href={proposerUrl}
+                >{renderNeuronId(proposal.proposer)}</a>
         </div>
     </div>
 {/if}
@@ -261,19 +263,19 @@
             <div slot="body">
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
-                        values: { userId: user.userId },
+                        values: { userId: $user.userId },
                     })} />
             </div>
         </ModalContent>
     </Overlay>
 {/if}
 
-{#if showPayload && payload !== undefined}
+{#if showPayload && !payloadEmpty}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
             <div slot="header">{$_("proposal.details")}</div>
             <div class="payload-body" slot="body">
-                <Markdown text={payload} inline={false} />
+                <Markdown text={payload ?? ""} inline={false} />
             </div>
         </ModalContent>
     </Overlay>
@@ -301,7 +303,7 @@
                 }
             }
             .status {
-                border-radius: $sp2;
+                border-radius: var(--rd);
                 padding: toRem(1) toRem(6);
                 height: fit-content;
                 color: white;

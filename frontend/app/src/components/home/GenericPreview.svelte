@@ -31,7 +31,7 @@
         return {
             title,
             description,
-            image,
+            image: image ? new URL(image, url).toString() : undefined,
         };
     }
 </script>
@@ -40,6 +40,7 @@
     const dispatch = createEventDispatcher();
 
     export let previews: (LinkInfo | undefined)[] = [];
+    export let me: boolean;
 
     let previewsWrapper: HTMLElement;
     let numberOfImagesLoaded = 0;
@@ -59,28 +60,39 @@
     });
 </script>
 
-<div bind:this={previewsWrapper} class="previews">
+<div bind:this={previewsWrapper}>
     {#each previews as preview}
-        {#if preview !== undefined}
-            {#if preview.title}
-                <h3 class="title">{preview.title}</h3>
-            {/if}
-            {#if preview.description}
-                <p class="desc">{preview.description}</p>
-            {/if}
-            {#if preview.image}
-                <img
-                    on:load={imageLoaded}
-                    on:error={imageLoaded}
-                    class="image"
-                    src={preview.image}
-                    alt="link preview image" />
-            {/if}
+        {#if preview?.title !== undefined || preview?.description !== undefined || preview?.image !== undefined}
+            <div class="preview" class:me>
+                {#if preview.title}
+                    <h3 class="title">{preview.title}</h3>
+                {/if}
+                {#if preview.description}
+                    <p class="desc">{preview.description}</p>
+                {/if}
+                {#if preview.image}
+                    <img
+                        on:load={imageLoaded}
+                        on:error={imageLoaded}
+                        class="image"
+                        src={preview.image}
+                        alt="link preview image" />
+                {/if}
+            </div>
         {/if}
     {/each}
 </div>
 
 <style lang="scss">
+    .preview {
+        margin-top: $sp4;
+        border-top: 1px solid var(--currentChat-msg-separator);
+
+        &.me {
+            border-color: var(--currentChat-msg-me-separator);
+        }
+    }
+
     .title {
         @include font(bold, normal, fs-120);
         margin: $sp3 0 $sp2 0;

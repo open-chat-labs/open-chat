@@ -7,7 +7,7 @@ use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{ChatEventInternal, Reader};
+use chat_events::Reader;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
@@ -20,8 +20,8 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
-    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification,
-    Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
+    Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -100,33 +100,18 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
         let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
         let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index);
-        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
+        let events_ttl = chat.events.get_events_time_to_live();
 
-        GroupCanisterGroupChatSummary {
-            chat_id: self.env.canister_id().into(),
-            last_updated: now,
-            name: chat.name.clone(),
-            description: chat.description.clone(),
-            subtype: chat.subtype.value.clone(),
-            avatar_id: Document::id(&chat.avatar),
-            is_public: chat.is_public,
-            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
-            min_visible_event_index,
-            min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
-            latest_event_index,
+        let membership = GroupMembership {
             joined: member.date_added,
-            participant_count: chat.members.len(),
-            role: member.role.into(),
+            role: member.role.value.into(),
             mentions: member.most_recent_mentions(None, &chat.events),
-            permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: chat.events.metrics().hydrate(),
             my_metrics: chat
                 .events
                 .user_metrics(&member.user_id, None)
@@ -139,15 +124,43 @@ impl RuntimeState {
                 MAX_THREADS_IN_SUMMARY,
                 member.user_id,
             ),
-            frozen: self.data.frozen.value.clone(),
-            wasm_version: BuildVersion::default(),
-            date_last_pinned: chat.date_last_pinned,
-            events_ttl: chat.events.get_events_time_to_live().value,
-            gate: chat.gate.value.clone(),
             rules_accepted: member
                 .rules_accepted
                 .as_ref()
                 .map_or(false, |version| version.value >= chat.rules.text.version),
+        };
+
+        GroupCanisterGroupChatSummary {
+            chat_id: self.env.canister_id().into(),
+            last_updated: chat.last_updated(Some(member.user_id)),
+            name: chat.name.value.clone(),
+            description: chat.description.value.clone(),
+            subtype: chat.subtype.value.clone(),
+            avatar_id: Document::id(&chat.avatar),
+            is_public: chat.is_public.value,
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
+            min_visible_event_index,
+            min_visible_message_index,
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
+            latest_event_index: main_events_reader.latest_event_index().unwrap_or_default(),
+            latest_message_index: main_events_reader.latest_message_index(),
+            joined: membership.joined,
+            participant_count: chat.members.len(),
+            role: membership.role,
+            mentions: membership.mentions.clone(),
+            permissions_v2: chat.permissions.value.clone(),
+            notifications_muted: membership.notifications_muted,
+            metrics: chat.events.metrics().hydrate(),
+            my_metrics: membership.my_metrics.clone(),
+            latest_threads: membership.latest_threads.clone(),
+            frozen: self.data.frozen.value.clone(),
+            wasm_version: BuildVersion::default(),
+            date_last_pinned: chat.date_last_pinned,
+            events_ttl: events_ttl.value,
+            events_ttl_last_updated: events_ttl.timestamp,
+            gate: chat.gate.value.clone(),
+            rules_accepted: membership.rules_accepted,
+            membership: Some(membership),
         }
     }
 
@@ -220,12 +233,10 @@ impl RuntimeState {
         let now = self.env.now();
         let messages_in_last_hour = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| e.is_message()) as u64;
         let messages_in_last_day = group_chat_core
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| e.is_message()) as u64;
         let events_in_last_hour = group_chat_core
             .events
             .event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;
@@ -237,9 +248,9 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now,
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: group_chat_core.is_public,
+            public: group_chat_core.is_public.value,
             date_created: group_chat_core.date_created,
             members: group_chat_core.members.len(),
             moderators: group_chat_core.members.moderator_count(),
@@ -302,6 +313,8 @@ struct Data {
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
     pub next_event_expiry: Option<TimestampMillis>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -370,6 +383,7 @@ impl Data {
             community_being_imported_into: None,
             serialized_chat_state: None,
             next_event_expiry: None,
+            rng_seed: [0; 32],
         }
     }
 
@@ -402,7 +416,7 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.chat.is_public
+        self.chat.is_public.value
             || self.get_member(caller).is_some()
             || self.get_invitation(caller).is_some()
             || self.is_invite_code_valid(invite_code)
@@ -451,7 +465,7 @@ impl Data {
     }
 
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
-        let wasm_version = WASM_VERSION.with(|v| **v.borrow());
+        let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();
 
         let _ = self

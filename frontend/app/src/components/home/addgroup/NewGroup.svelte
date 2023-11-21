@@ -13,7 +13,6 @@
     import {
         type CandidateGroupChat,
         type CreateGroupResponse,
-        type AccessGate,
         type OpenChat,
         UnsupportedValueError,
         type UpdateGroupResponse,
@@ -21,6 +20,7 @@
         chatIdentifierUnset,
         type MultiUserChatIdentifier,
         type UserSummary,
+        type Level,
     } from "openchat-client";
     import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
@@ -39,21 +39,19 @@
     let step = 0;
     let actualWidth = 0;
     let detailsValid = true;
-    let originalGroup = {
-        ...candidateGroup,
-        rules: { ...candidateGroup.rules },
-        permissions: { ...candidateGroup.permissions },
-        gate: { ...candidateGroup.gate },
-    };
+    let originalGroup = structuredClone(candidateGroup);
     let rulesValid = true;
     $: steps = getSteps(editing, detailsValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: canEditPermissions = !editing ? true : client.canChangePermissions(candidateGroup.id);
+    $: canEditDisappearingMessages = !editing
+        ? true
+        : client.hasOwnerRights(candidateGroup.membership.role);
     $: selectedCommunity = client.selectedCommunity;
 
-    $: permissionsDirty = client.havePermissionsChanged(
+    $: permissionsDirty = client.haveGroupPermissionsChanged(
         originalGroup.permissions,
         candidateGroup.permissions
     );
@@ -67,8 +65,9 @@
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.public !== originalGroup.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
-    $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
-    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
+    $: gateDirty = editing && client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
+    $: ttlDirty = editing && candidateGroup.eventsTTL !== originalGroup.eventsTTL;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty || ttlDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
 
@@ -92,22 +91,19 @@
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
     }
 
-    function interpolateError(error: string): string {
-        return interpolateLevel(error, candidateGroup.level, true);
+    function interpolateError(error: string, level: Level): string {
+        return interpolateLevel(error, level, true);
     }
 
-    function groupUpdateErrorMessage(
-        resp: UpdateGroupResponse,
-        isChannel: boolean
-    ): string | undefined {
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse, level: Level): string | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "unchanged") return undefined;
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "desc_too_long") return "groupDescTooLong";
-        if (resp.kind === "name_taken" && isChannel) return "channelAlreadyExists";
-        if (resp.kind === "name_taken") return "groupAlreadyExists";
+        if (resp.kind === "name_taken" && level === "group") return "groupAlreadyExists";
+        if (resp.kind === "name_taken") return "channelAlreadyExists";
         if (resp.kind === "not_in_group") return "userNotInGroup";
         if (resp.kind === "internal_error") return "groupUpdateFailed";
         if (resp.kind === "not_authorized") return "groupUpdateFailed";
@@ -117,21 +113,23 @@
         if (resp.kind === "user_suspended") return "userSuspended";
         if (resp.kind === "chat_frozen") return "chatFrozen";
         if (resp.kind === "failure") return "failure";
+        if (resp.kind === "offline") return "offlineError";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     function groupCreationErrorMessage(
         resp: CreateGroupResponse,
-        isChannel: boolean
+        level: Level
     ): string | undefined {
         if (resp.kind === "success") return undefined;
+        if (resp.kind === "offline") return "offlineError";
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
         if (resp.kind === "name_reserved") return "groupNameReserved";
         if (resp.kind === "description_too_long") return "groupDescTooLong";
-        if (resp.kind === "group_name_taken" && isChannel) return "channelAlreadyExists";
-        if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+        if (resp.kind === "group_name_taken" && level === "group") return "groupAlreadyExists";
+        if (resp.kind === "group_name_taken") return "channelAlreadyExists";
         if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
         if (resp.kind === "max_groups_created") return "maxGroupsCreated";
         if (resp.kind === "throttled") return "groupCreationFailed";
@@ -178,15 +176,38 @@
 
         confirming = false;
 
-        const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
-        const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
-        const p3 = rulesDirty && rulesValid ? doUpdateRules() : Promise.resolve();
-        const p4 = changeVisibility ? doChangeVisibility() : Promise.resolve();
-        const p5 = gateDirty ? doUpdateGate(candidateGroup.gate) : Promise.resolve();
+        const updatedGroup = { ...candidateGroup };
 
-        return Promise.all([p1, p2, p3, p4, p5])
-            .then((_) => {
-                return;
+        return client
+            .updateGroup(
+                updatedGroup.id,
+                nameDirty ? updatedGroup.name : undefined,
+                descDirty ? updatedGroup.description : undefined,
+                rulesDirty && rulesValid ? updatedGroup.rules : undefined,
+                permissionsDirty
+                    ? client.diffGroupPermissions(
+                          originalGroup.permissions,
+                          updatedGroup.permissions
+                      )
+                    : undefined,
+                avatarDirty ? updatedGroup.avatar?.blobData : undefined,
+                ttlDirty
+                    ? updatedGroup.eventsTTL === undefined
+                        ? "set_to_none"
+                        : { value: updatedGroup.eventsTTL }
+                    : undefined,
+                gateDirty ? updatedGroup.gate : undefined,
+                visDirty ? updatedGroup.public : undefined
+            )
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    originalGroup = updatedGroup;
+                } else {
+                    const err = groupUpdateErrorMessage(resp, updatedGroup.level);
+                    if (err) {
+                        toastStore.showFailureToast(interpolateError(err, updatedGroup.level));
+                    }
+                }
             })
             .finally(() => {
                 busy = false;
@@ -194,147 +215,17 @@
             });
     }
 
-    function doChangeVisibility(): Promise<void> {
-        if (!editing) return Promise.resolve();
-
-        return client
-            .updateGroup(
-                candidateGroup.id,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                candidateGroup.public
-            )
-            .then((success) => {
-                if (success) {
-                    originalGroup = {
-                        ...originalGroup,
-                        public: candidateGroup.public,
-                    };
-                } else {
-                    toastStore.showFailureToast(
-                        interpolateLevel(
-                            `makeGroup${candidateGroup.public ? "Public" : "Private"}Failed`,
-                            candidateGroup.level,
-                            true
-                        )
-                    );
-                }
-            });
-    }
-
-    function doUpdatePermissions(): Promise<void> {
-        if (!editing) return Promise.resolve();
-
-        return client
-            .updateGroupPermissions(
-                candidateGroup.id,
-                originalGroup.permissions,
-                candidateGroup.permissions
-            )
-            .then((success) => {
-                if (success) {
-                    originalGroup = {
-                        ...originalGroup,
-                        permissions: { ...candidateGroup.permissions },
-                    };
-                } else {
-                    toastStore.showFailureToast("group.permissionsUpdateFailed");
-                }
-            });
-    }
-
-    function doUpdateGate(gate: AccessGate): Promise<void> {
-        if (!editing) return Promise.resolve();
-
-        let isChannel = candidateGroup.id.kind === "channel";
-
-        return client
-            .updateGroup(
-                candidateGroup.id,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                undefined,
-                gate
-            )
-            .then((resp) => {
-                const err = groupUpdateErrorMessage(resp, isChannel);
-                if (err) {
-                    toastStore.showFailureToast(interpolateError(err));
-                } else {
-                    originalGroup = {
-                        ...originalGroup,
-                        ...candidateGroup.gate,
-                    };
-                }
-            })
-            .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed", {
-                    values: { level: candidateGroup.level },
-                });
-            });
-    }
-
-    function doUpdateRules(): Promise<void> {
-        if (!editing) return Promise.resolve();
-        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
-            }
-        });
-    }
-
-    function doUpdateInfo(): Promise<void> {
-        if (!editing) return Promise.resolve();
-
-        let isChannel = candidateGroup.id.kind === "channel";
-
-        return client
-            .updateGroup(
-                candidateGroup.id,
-                nameDirty ? candidateGroup.name : undefined,
-                descDirty ? candidateGroup.description : undefined,
-                undefined,
-                undefined,
-                avatarDirty ? candidateGroup.avatar?.blobData : undefined,
-                undefined
-            )
-            .then((resp) => {
-                const err = groupUpdateErrorMessage(resp, isChannel);
-                if (err) {
-                    toastStore.showFailureToast(interpolateError(err));
-                } else {
-                    originalGroup = {
-                        ...originalGroup,
-                        ...candidateGroup.avatar,
-                        name: candidateGroup.name,
-                        description: candidateGroup.description,
-                    };
-                }
-            })
-            .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed", {
-                    values: { level: candidateGroup.level },
-                });
-            });
-    }
-
     function createGroup() {
         busy = true;
 
-        let isChannel = candidateGroup.id.kind === "channel";
+        const level = candidateGroup.level;
 
         client
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const err = groupCreationErrorMessage(resp, isChannel);
-                    if (err) toastStore.showFailureToast(interpolateError(err));
+                    const err = groupCreationErrorMessage(resp, level);
+                    if (err) toastStore.showFailureToast(interpolateError(err, level));
                     step = 0;
                 } else if (!hideInviteUsers) {
                     return optionallyInviteUsers(resp.canisterId)
@@ -403,6 +294,7 @@
                         original={originalGroup}
                         {editing}
                         history
+                        {canEditDisappearingMessages}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>

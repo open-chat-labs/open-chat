@@ -41,7 +41,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
         }
     }
@@ -56,6 +56,8 @@ struct Data {
     pub reward_codes: RewardCodes,
     pub pending_actions: PendingActions,
     pub avatar: Timestamped<Option<Document>>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -74,6 +76,7 @@ impl Data {
             reward_codes: RewardCodes::new(this_canister_id),
             pending_actions: PendingActions::default(),
             avatar: Timestamped::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

@@ -5,6 +5,7 @@ use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
+use icrc_ledger_types::icrc1;
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
 use storage_index_canister::add_or_update_users::UserConfig;
@@ -34,7 +35,8 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
     };
 
     let c2c_args = user_canister::c2c_charge_user_account::Args {
-        amount: ICP::from_e8s(args.expected_price_e8s),
+        ledger_canister_id: args.token.ledger_canister_id().unwrap(),
+        amount: ICP::from_e8s(args.expected_price_e8s - args.token.fee().unwrap() as u64),
     };
 
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.into(), &c2c_args).await {
@@ -43,6 +45,7 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
                 mutate_state(|state| process_charge(args, user_id, block_index, manual_payment, state))
             }
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
+            user_canister::c2c_charge_user_account::Response::TransferErrorV2(error) => process_error_v2(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
         },
         Err(error) => InternalError(format!("{error:?}")),
@@ -63,11 +66,21 @@ fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(),
         Err(PaymentAlreadyInProgress)
     } else if let Err(result) = diamond_membership.can_extend(state.env.now()) {
         Err(CannotExtend(result))
-    } else if args.token != Cryptocurrency::InternetComputer {
-        Err(CurrencyNotSupported)
-    } else if args.expected_price_e8s != args.duration.icp_price_e8s() {
-        Err(PriceMismatch)
     } else {
+        match args.token {
+            Cryptocurrency::CHAT => {
+                if args.expected_price_e8s != args.duration.chat_price_e8s() {
+                    return Err(PriceMismatch);
+                }
+            }
+            Cryptocurrency::InternetComputer => {
+                if args.expected_price_e8s != args.duration.icp_price_e8s() {
+                    return Err(PriceMismatch);
+                }
+            }
+            _ => return Err(CurrencyNotSupported),
+        }
+
         diamond_membership.set_payment_in_progress(true);
         Ok(())
     }
@@ -132,18 +145,19 @@ fn process_charge(
             );
         }
 
-        let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee().unwrap() as u64);
+        let transaction_fee = args.token.fee().unwrap() as u64;
+
+        let mut amount_to_treasury = args.expected_price_e8s - (2 * transaction_fee);
 
         let now_nanos = state.env.now_nanos();
 
         if let Some(share_with) = share_with {
             let amount_to_referrer = args.expected_price_e8s / 2;
-            amount_to_treasury -= amount_to_referrer;
-            amount_to_treasury -= Cryptocurrency::InternetComputer.fee().unwrap() as u64;
+            amount_to_treasury = amount_to_treasury.saturating_sub(amount_to_referrer + transaction_fee);
 
             let referral_payment = PendingPayment {
                 amount: amount_to_referrer,
-                currency: Cryptocurrency::InternetComputer,
+                currency: args.token.clone(),
                 timestamp: now_nanos,
                 recipient: share_with.into(),
                 memo: state.env.rng().gen(),
@@ -161,7 +175,7 @@ fn process_charge(
 
         let treasury_payment = PendingPayment {
             amount: amount_to_treasury,
-            currency: Cryptocurrency::InternetComputer,
+            currency: args.token.clone(),
             timestamp: now_nanos,
             recipient: SNS_GOVERNANCE_CANISTER_ID,
             memo: state.env.rng().gen(),
@@ -223,6 +237,13 @@ fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<Us
 fn process_error(transfer_error: TransferError) -> Response {
     match transfer_error {
         TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.e8s()),
+        error => TransferFailed(format!("{error:?}")),
+    }
+}
+
+fn process_error_v2(transfer_error: icrc1::transfer::TransferError) -> Response {
+    match transfer_error {
+        icrc1::transfer::TransferError::InsufficientFunds { balance } => InsufficientFunds(balance.0.try_into().unwrap()),
         error => TransferFailed(format!("{error:?}")),
     }
 }

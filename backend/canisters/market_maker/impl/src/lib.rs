@@ -66,7 +66,7 @@ impl RuntimeState {
             memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
             my_open_orders: self.data.my_open_orders.clone(),
@@ -91,6 +91,8 @@ struct Data {
     pub orders_log: OrdersLog,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -111,6 +113,7 @@ impl Data {
             orders_log: OrdersLog::default(),
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

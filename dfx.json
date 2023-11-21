@@ -25,6 +25,12 @@
       "wasm": "wasms/local_group_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh local_user_group"
     },
+    "neuron_controller": {
+      "type": "custom",
+      "candid": "backend/canisters/neuron_controller/api/can.did",
+      "wasm": "wasms/neuron_controller.wasm.gz",
+      "build": "./scripts/generate-wasm.sh neuron_controller"
+    },
     "notifications_index": {
       "type": "custom",
       "candid": "backend/canisters/notifications_index/api/can.did",
@@ -90,12 +96,6 @@
       "candid": "backend/canisters/market_maker/api/can.did",
       "wasm": "wasms/market_maker.wasm.gz",
       "build": "./scripts/generate-wasm.sh market_maker"
-    },
-    "exchange_bot": {
-      "type": "custom",
-      "candid": "backend/canisters/exchange_bot/api/can.did",
-      "wasm": "wasms/exchange_bot.wasm.gz",
-      "build": "./scripts/generate-wasm.sh exchange_bot"
     },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],

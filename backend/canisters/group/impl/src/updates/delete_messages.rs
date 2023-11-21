@@ -2,16 +2,17 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
 use group_chat_core::DeleteMessagesResult;
-use ic_cdk_macros::update;
 use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
-#[update]
+#[update_candid_and_msgpack]
 #[trace]
 async fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
@@ -25,7 +26,7 @@ async fn delete_messages(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    if args.as_platform_moderator.unwrap_or_default() {
+    if args.as_platform_moderator.unwrap_or_default() && caller != user_index_canister_id {
         match lookup_user(caller, user_index_canister_id).await {
             Ok(u) if u.is_platform_moderator => {}
             Ok(_) => return NotPlatformModerator,
@@ -44,15 +45,19 @@ struct PrepareResult {
 
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
-        Ok(PrepareResult {
-            caller,
-            user_id,
-            user_index_canister_id: state.data.user_index_canister_id,
-        })
+    let user_id = if let Some(user_id) = state.data.lookup_user_id(caller) {
+        user_id
+    } else if caller == state.data.user_index_canister_id {
+        OPENCHAT_BOT_USER_ID
     } else {
-        Err(CallerNotInGroup)
-    }
+        return Err(CallerNotInGroup);
+    };
+
+    Ok(PrepareResult {
+        caller,
+        user_id,
+        user_index_canister_id: state.data.user_index_canister_id,
+    })
 }
 
 fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {

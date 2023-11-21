@@ -51,7 +51,7 @@ import {
     CommunityCanisterCommunitySummary,
     CommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates,
-    ChannelMembershipUpdates,
+    GroupMembershipUpdates,
     CommunityMembershipUpdates,
     ExploreChannelsResponse,
     ChannelMatch,
@@ -73,7 +73,8 @@ import {
     SetMemberDisplayNameResponse,
     VersionedRules,
     FollowThreadResponse,
-    UnfollowThreadResponse
+    UnfollowThreadResponse,
+    ClaimPrizeResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -127,7 +128,7 @@ export {
     CommunityCanisterCommunitySummary as ApiCommunityCanisterCommunitySummary,
     CommunityCanisterCommunitySummaryUpdates as ApiCommunityCanisterCommunitySummaryUpdates,
     CommunityCanisterChannelSummaryUpdates as ApiCommunityCanisterChannelSummaryUpdates,
-    ChannelMembershipUpdates as ApiChannelMembershipUpdates,
+    GroupMembershipUpdates as ApiGroupMembershipUpdates,
     CommunityMembershipUpdates as ApiCommunityMembershipUpdates,
     ExploreChannelsResponse as ApiExploreChannelsResponse,
     ChannelMatch as ApiChannelMatch,
@@ -149,6 +150,7 @@ export {
     SetMemberDisplayNameResponse as ApiSetMemberDisplayNameResponse,
     FollowThreadResponse as ApiFollowThreadResponse,
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
+    ClaimPrizeResponse as ApiClaimPrizeResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

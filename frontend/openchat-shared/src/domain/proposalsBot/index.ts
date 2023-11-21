@@ -1,3 +1,3 @@
-import type { Failure, Success } from "../response";
+import type { Failure, Offline, Success } from "../response";
 
-export type StakeNeuronForSubmittingProposalsResponse = Success | Failure;
+export type StakeNeuronForSubmittingProposalsResponse = Success | Failure | Offline;

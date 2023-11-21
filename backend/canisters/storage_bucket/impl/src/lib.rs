@@ -58,7 +58,7 @@ impl RuntimeState {
             now: self.env.now(),
             memory_used: utils::memory::used(),
             cycles_balance: self.env.cycles_balance(),
-            wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
@@ -77,6 +77,8 @@ struct Data {
     index_sync_state: IndexSyncState,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
+    #[serde(default)]
+    rng_seed: [u8; 32],
     test_mode: bool,
 }
 
@@ -89,6 +91,7 @@ impl Data {
             index_sync_state: IndexSyncState::default(),
             created: now,
             freezing_limit: Timestamped::default(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

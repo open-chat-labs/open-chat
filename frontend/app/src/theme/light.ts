@@ -7,16 +7,18 @@ const blueAccent = "#22A7F2";
 const primary = "#23a2ee";
 const textBox = "rgba(0,0,0,0.1)";
 const txt = "#ffffff";
-const txtLight = hexPercent("#ffffff", 67);
+const txtLight = hexPercent(txt, 67);
 const txtDark = "#242834";
 const txtDark75pc = hexPercent(txtDark, 75);
 const disabledTxt = txtLight;
 
 export function lightTheme(): Theme {
     return {
+        hidden: false,
         name: "light",
         label: "Default light",
         burst: false,
+        logo: true,
         mode: "light",
         warn: "#f36D28",
 
@@ -25,6 +27,8 @@ export function lightTheme(): Theme {
         txt,
         "txt-light": txtLight,
         bd: "rgba(255,255,255,0.1)",
+        rd: "4px",
+        bw: "1px",
         error: "#CF6679",
         accent: pinkAccent,
         accentDarker: "rgba(150, 50, 50, 0.8)",
@@ -94,6 +98,7 @@ export function lightTheme(): Theme {
             bg: textBox,
             sh: "none",
             accent: orangeAccent,
+            bd: "none",
         },
 
         members: {
@@ -105,6 +110,8 @@ export function lightTheme(): Theme {
             input: {
                 bg: textBox,
                 sh: "none",
+                rd: "8px",
+                bd: "none",
             },
         },
 
@@ -132,6 +139,8 @@ export function lightTheme(): Theme {
         chatSearch: {
             bg: textBox,
             sh: "none",
+            bd: "transparent",
+            rd: "8px",
         },
 
         chatSummary: {
@@ -164,6 +173,9 @@ export function lightTheme(): Theme {
             spinner: "#ffffff",
             "disabled-txt": disabledTxt,
             "disabled-bd": "transparent",
+            rd: "4px",
+            sh: "none",
+            "hv-sh": "none",
         },
 
         link: {
@@ -174,6 +186,8 @@ export function lightTheme(): Theme {
             filter: "blur(5px)",
             bg: hexPercent("#085d8c", 93),
             bd: "none",
+            rd: "16px",
+            sh: "none",
         },
 
         modalPage: {
@@ -202,12 +216,16 @@ export function lightTheme(): Theme {
                 inert: "rgba(0,0,0,0.1)",
                 bd: "none",
                 sh: "none",
+                r1: "8px",
+                r2: "4px",
+                separator: "rgba(255,255,255,0.2)",
 
                 me: {
                     bg: hexPercent(primary, 50),
                     muted: "rgba(255,255,255,0.6)",
                     txt: "#ffffff",
                     bd: "rgba(255,255,255,0.3)",
+                    separator: "rgba(255,255,255,0.2)",
                 },
             },
         },
@@ -215,6 +233,12 @@ export function lightTheme(): Theme {
         time: {
             txt: "#ffffff",
             icon: "#ffffff",
+            bg: "rgba(255,255,255,0.2)",
+            me: {
+                txt: "#ffffff",
+                icon: "#ffffff",
+                bg: "rgba(255,255,255,0.2)",
+            },
         },
 
         icon: {
@@ -281,6 +305,11 @@ export function lightTheme(): Theme {
                 bright: txt,
                 muted: txtLight,
             },
+        },
+
+        card: {
+            rd: "8px",
+            sh: "none",
         },
 
         landing: {

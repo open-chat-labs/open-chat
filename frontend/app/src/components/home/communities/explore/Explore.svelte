@@ -1,9 +1,9 @@
 <script lang="ts">
+    import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
-    import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
     import {
@@ -20,6 +20,7 @@
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import Plus from "svelte-material-icons/Plus.svelte";
     import { derived } from "svelte/store";
+    import CommunityCardLink from "./CommunityCardLink.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -30,10 +31,12 @@
     let total = 0;
     let pageIndex = 0;
 
+    $: anonUser = client.anonUser;
     $: pageSize = calculatePageSize($screenWidth);
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
+    $: networkStatus = client.networkStatus;
 
     let filters = derived(
         [communityFiltersStore, client.moderationFlags],
@@ -57,15 +60,15 @@
     }
 
     function createCommunity() {
+        if ($anonUser) {
+            client.identityState.set({ kind: "logging_in" });
+            return;
+        }
         if (!$isDiamond) {
             dispatch("upgrade");
         } else {
             dispatch("createCommunity");
         }
-    }
-
-    function selectCommunity(community: CommunityMatch) {
-        page(`/community/${community.id.communityId}`);
     }
 
     function search(reset = false) {
@@ -164,24 +167,32 @@
                     <FancyLoader />
                 </div>
             {:else if searchResults.length === 0}
-                <div class="robot">
-                    <h4 class="header">No matching communities found</h4>
-                    <p class="sub-header">try refining your search</p>
-                </div>
+                {#if $networkStatus === "offline"}
+                    <div class="no-match">
+                        <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
+                        <p class="sub-header">{$_("offlineError")}</p>
+                    </div>
+                {:else}
+                    <div class="no-match">
+                        <h4 class="header">{$_("communities.noMatch")}</h4>
+                        <p class="sub-header">{$_("communities.refineSearch")}</p>
+                    </div>
+                {/if}
             {:else}
                 {#each searchResults as community (community.id.communityId)}
-                    <CommunityCard
-                        id={community.id.communityId}
-                        name={community.name}
-                        description={community.description}
-                        avatar={community.avatar}
-                        banner={community.banner}
-                        memberCount={community.memberCount}
-                        channelCount={community.channelCount}
-                        gate={community.gate}
-                        language={community.primaryLanguage}
-                        flags={community.flags}
-                        on:click={() => selectCommunity(community)} />
+                    <CommunityCardLink url={`/community/${community.id.communityId}`}>
+                        <CommunityCard
+                            id={community.id.communityId}
+                            name={community.name}
+                            description={community.description}
+                            avatar={community.avatar}
+                            banner={community.banner}
+                            memberCount={community.memberCount}
+                            channelCount={community.channelCount}
+                            gate={community.gate}
+                            language={community.primaryLanguage}
+                            flags={community.flags} />
+                    </CommunityCardLink>
                 {/each}
             {/if}
         </div>
@@ -304,7 +315,7 @@
         margin: auto;
     }
 
-    .robot {
+    .no-match {
         .header {
             @include font(bold, normal, fs-160, 38);
         }

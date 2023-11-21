@@ -34,6 +34,7 @@ const defaultGroupChat: GroupChatSummary = {
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,
     latestEventIndex: 0,
+    latestMessageIndex: undefined,
     memberCount: 10,
     permissions: {
         changeRoles: "admin",
@@ -42,11 +43,12 @@ const defaultGroupChat: GroupChatSummary = {
         updateGroup: "admin",
         pinMessages: "admin",
         inviteUsers: "admin",
-        createPolls: "member",
-        sendMessages: "member",
         reactToMessages: "member",
-        replyInThread: "member",
         mentionAllMembers: "member",
+        messagePermissions: {
+            default: "member",
+        },
+        threadPermissions: undefined,
     },
     metrics: emptyChatMetrics(),
     subtype: undefined,
@@ -56,6 +58,8 @@ const defaultGroupChat: GroupChatSummary = {
     dateReadPinned: undefined,
     gate: { kind: "no_gate" },
     level: "group",
+    eventsTTL: undefined,
+    eventsTtlLastUpdated: BigInt(0),
     membership: {
         archived: false,
         mentions: [],
@@ -109,6 +113,7 @@ describe("thread utils", () => {
                             edited: false,
                             forwarded: false,
                             deleted: false,
+                            lastUpdated: undefined,
                         },
                     },
                 ],
@@ -149,6 +154,7 @@ describe("merging metrics", () => {
 describe("updating poll votes", () => {
     const config: PollConfig = {
         allowMultipleVotesPerUser: true,
+        allowUserToChangeVote: true,
         text: "Who's the best",
         showVotesBeforeEndDate: true,
         endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),

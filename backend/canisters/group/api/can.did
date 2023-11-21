@@ -96,6 +96,7 @@ type RegisterPollVoteResponse = variant {
     CallerNotInGroup;
     UserSuspended;
     ChatFrozen;
+    UserCannotChangeVote;
 };
 
 type AddReactionArgs = record {
@@ -133,6 +134,23 @@ type RemoveReactionResponse = variant {
     NotAuthorized;
     UserSuspended;
     ChatFrozen;
+};
+
+type ReportMessageArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+    delete : bool;
+};
+
+type ReportMessageResponse = variant {
+    Success;
+    ChatFrozen;
+    UserSuspended;
+    NotAuthorized;
+    CallerNotInGroup;
+    MessageNotFound;
+    AlreadyReported;
+    InternalError : text;
 };
 
 type BlockUserArgs = record {
@@ -207,7 +225,7 @@ type UpdateGroupV2Args = record {
     description : opt text;
     rules : opt UpdatedRules;
     avatar : DocumentUpdate;
-    permissions : opt OptionalGroupPermissions;
+    permissions_v2 : opt OptionalGroupPermissions;
     events_ttl : EventsTimeToLiveUpdate;
     gate : AccessGateUpdate;
     public : opt bool;
@@ -353,6 +371,7 @@ type SelectedInitialArgs = record {};
 
 type SelectedInitialSuccess = record {
     timestamp : TimestampMillis;
+    last_updated : TimestampMillis;
     latest_event_index : EventIndex;
     participants : vec Participant;
     blocked_users : vec UserId;
@@ -382,13 +401,13 @@ type EventsArgs = record {
     ascending : bool;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsByIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     events : vec EventIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsWindowArgs = record {
@@ -396,14 +415,14 @@ type EventsWindowArgs = record {
     mid_point : MessageIndex;
     max_messages : nat32;
     max_events : nat32;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type EventsResponse = variant {
     Success : EventsSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type LocalUserIndexArgs = record {};
@@ -415,17 +434,14 @@ type LocalUserIndexResponse = variant {
 type MessagesByMessageIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
-    latest_client_event_index : opt EventIndex;
+    latest_known_update : opt TimestampMillis;
 };
 
 type MessagesByMessageIndexResponse = variant {
-    Success : record {
-        messages : vec MessageEventWrapper;
-        latest_event_index : EventIndex;
-    };
+    Success : MessagesSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
-    ReplicaNotUpToDate : EventIndex;
+    ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
 type ThreadPreviewsArgs = record {
@@ -614,6 +630,7 @@ service : {
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
+    report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     register_proposal_vote : (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
     register_proposal_vote_v2 : (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);

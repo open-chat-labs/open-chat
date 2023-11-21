@@ -2,10 +2,11 @@ use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_cdk_timers::TimerId;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::{Account, TransferArg, TransferError};
 use types::{
     icrc1, BotMessage, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency,
     MessageContentInitial,
@@ -18,9 +19,9 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.pending_actions_queue.is_empty() {
+    if TIMER_ID.get().is_none() && !state.data.pending_actions_queue.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.with(|t| t.set(Some(timer_id)));
+        TIMER_ID.set(Some(timer_id));
         trace!("'process_pending_actions' job started");
         true
     } else {
@@ -32,7 +33,7 @@ fn run() {
     let batch = mutate_state(next_batch);
     if !batch.is_empty() {
         ic_cdk::spawn(process_actions(batch));
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+    } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'process_pending_actions' job stopped");
     }
@@ -93,7 +94,7 @@ async fn process_action(action: Action) {
                 amount: amount.into(),
             };
 
-            match icrc1_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
+            match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
                 Ok(Ok(block_index)) => {
                     if send_oc_message {
                         mutate_state(|state| {

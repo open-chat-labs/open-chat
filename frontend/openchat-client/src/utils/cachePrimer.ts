@@ -1,5 +1,11 @@
 import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
-import { ChatMap, compareChats, missingUserIds, userIdsFromEvents, chatIdentifierToString } from "openchat-shared";
+import {
+    ChatMap,
+    compareChats,
+    missingUserIds,
+    userIdsFromEvents,
+    chatIdentifierToString,
+} from "openchat-shared";
 import { Poller } from "./poller";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
@@ -46,7 +52,7 @@ export class CachePrimer {
 
             const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
                 chat.id,
-                chat.latestMessage?.event.messageIndex
+                chat.latestMessage?.event.messageIndex,
             );
 
             const userIds = new Set<string>();
@@ -72,11 +78,14 @@ export class CachePrimer {
                     debug(`${chat.id} loading ${missing.length} users`);
                     await this.api.getUsers(
                         { userGroups: [{ users: missing, updatedSince: BigInt(0) }] },
-                        true
+                        true,
                     );
                 }
             }
-            await this.api.setCachePrimerTimestamp(chatIdentifierToString(chat.id), chat.lastUpdated);
+            await this.api.setCachePrimerTimestamp(
+                chatIdentifierToString(chat.id),
+                chat.lastUpdated,
+            );
             debug(chat.id + " completed");
         } finally {
             if (this.pending.size === 0) {
@@ -89,7 +98,7 @@ export class CachePrimer {
 
     private async getEventsWindow(
         chat: ChatSummary,
-        firstUnreadMessage: number
+        firstUnreadMessage: number,
     ): Promise<EventsResponse<ChatEvent>> {
         const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
         return await this.api.sendRequest({
@@ -97,8 +106,8 @@ export class CachePrimer {
             eventIndexRange: [minVisible, chat.latestEventIndex],
             chatId: chat.id,
             messageIndex: firstUnreadMessage,
-            latestClientMainEventIndex: chat.latestEventIndex,
             threadRootMessageIndex: undefined,
+            latestKnownUpdate: chat.lastUpdated,
         });
     }
 
@@ -116,7 +125,7 @@ export class CachePrimer {
             startIndex: chat.latestEventIndex,
             ascending: false,
             threadRootMessageIndex: undefined,
-            latestClientEventIndex: chat.latestEventIndex,
+            latestKnownUpdate: chat.lastUpdated,
         });
     }
 }

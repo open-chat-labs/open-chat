@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, E8S_PER_TOKEN, type OpenChat } from "openchat-client";
+    import { AvatarSize, type OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
@@ -16,6 +16,7 @@
 
     $: userTipsList = Object.entries(userTips);
     $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
     $: userStore = client.userStore;
     $: totalAmount = userTipsList.reduce((n, [_, amount]) => n + amount, BigInt(0));
 
@@ -34,7 +35,7 @@
         on:click={onClick}
         class="tip-wrapper"
         class:canTip>
-        <img class="tip-icon" src={$cryptoLookup[ledger].logo} />
+        <img class="tip-icon" src={tokenDetails.logo} />
         <span class="tip-count">
             {userTipsList.length > 999 ? "999+" : userTipsList.length}
         </span>
@@ -53,12 +54,12 @@
                         @{$userStore[userId]?.username}
                     </div>
                     <div class="amount">
-                        {Number(amount) / E8S_PER_TOKEN}
+                        {client.formatTokens(amount, 0, tokenDetails.decimals)}
                     </div>
                 {/each}
                 {#if userTipsList.length > 1}
                     <div class="total">
-                        {Number(totalAmount) / E8S_PER_TOKEN}
+                        {client.formatTokens(totalAmount, 0, tokenDetails.decimals)}
                     </div>
                 {/if}
             </div>
@@ -90,7 +91,7 @@
     }
     .tip-wrapper {
         @include pop();
-        border-radius: $sp2;
+        border-radius: var(--rd);
         background-color: var(--reaction-bg);
         color: var(--reaction-txt);
         padding: 3px $sp2;

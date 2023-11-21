@@ -93,10 +93,12 @@ impl PublicGroups {
             avatar_id: group.avatar_id,
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
+            latest_message_index: summary.latest_message_index,
             participant_count: summary.participant_count,
             is_public: true,
             frozen: None,
             events_ttl: summary.events_ttl,
+            events_ttl_last_updated: summary.events_ttl_last_updated,
             gate: summary.gate,
             wasm_version: BuildVersion::default(),
         })

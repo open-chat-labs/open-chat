@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use ic_test_state_machine_client::StateMachine;
+use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::{ChannelId, CommunityId, MessageContent};
 
@@ -320,7 +320,7 @@ fn channel_marked_as_read_after_joining() {
     assert_eq!(user3_channel.read_by_me_up_to, Some(2.into()));
 }
 
-fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 

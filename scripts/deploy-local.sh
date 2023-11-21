@@ -12,12 +12,14 @@ cd $SCRIPT_DIR/..
 # Create and install the NNS canisters
 dfx extension install nns >& /dev/null
 dfx --identity $IDENTITY nns install
+
 NNS_ROOT_CANISTER_ID=r7inp-6aaaa-aaaaa-aaabq-cai
 NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
 NNS_INTERNET_IDENTITY_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 NNS_LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
 NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 NNS_SNS_WASM_CANISTER_ID=qaa6y-5yaaa-aaaaa-aaafa-cai
+NNS_INDEX_CANISTER_ID=qhbym-qaaaa-aaaaa-aaafq-cai
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
@@ -32,7 +34,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 cycles_dispenser
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 registry
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 market_maker
-dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 exchange_bot
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -45,4 +47,5 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     $NNS_LEDGER_CANISTER_ID \
     $NNS_CMC_CANISTER_ID \
     $NNS_SNS_WASM_CANISTER_ID \
+    $NNS_INDEX_CANISTER_ID \
     true \

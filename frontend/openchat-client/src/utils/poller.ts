@@ -1,27 +1,44 @@
-import type { Unsubscriber } from "svelte/store";
+import { derived, type Unsubscriber } from "svelte/store";
 import { background } from "../stores/background";
+import { networkStatus } from "../stores/network";
+
+type PollerEnvironment = {
+    background: boolean;
+    offline: boolean;
+};
 
 export class Poller {
     private timeoutId: number | undefined;
-    private unsubscribeBackground: Unsubscriber | undefined;
     private lastExecutionTimestamp: number | undefined;
     private stopped = false;
     // Used to ensure each Poller instance runs exactly one instance of its task
     private runnerId: symbol | undefined;
+    private unsubscribeStatus: Unsubscriber | undefined;
+    private status: PollerEnvironment = { background: false, offline: false };
 
     constructor(
         private fn: () => Promise<void>,
         private interval: number,
         // If idleInterval is undefined then the job will not run while the app is idle
         private idleInterval?: number,
-        private immediate?: boolean // whether to kick off the first iteration immediately
+        private immediate?: boolean, // whether to kick off the first iteration immediately
     ) {
-        this.unsubscribeBackground = background.subscribe((hidden) => {
-            this.start(hidden);
+        const statusStore = derived(
+            [background, networkStatus],
+            ([$background, $networkStatus]) => ({
+                background: $background,
+                offline: $networkStatus === "offline",
+            }),
+        );
+
+        // when the poller environment changes, restart
+        this.unsubscribeStatus = statusStore.subscribe((status) => {
+            this.status = status;
+            this.start();
         });
     }
 
-    private start(hidden: boolean): void {
+    private start(): void {
         const runnerId = Symbol();
         this.runnerId = runnerId;
 
@@ -30,7 +47,10 @@ export class Poller {
             this.timeoutId = undefined;
         }
 
-        const interval = hidden ? this.idleInterval : this.interval;
+        // if we are offline, bail out
+        if (this.status.offline) return;
+
+        const interval = this.status.background ? this.idleInterval : this.interval;
         if (interval === undefined) {
             return;
         }
@@ -46,6 +66,7 @@ export class Poller {
 
         const runThenLoop = () => {
             if (this.stopped || this.runnerId !== runnerId) return;
+
             this.fn().finally(() => {
                 this.lastExecutionTimestamp = Date.now();
                 this.timeoutId = window.setTimeout(runThenLoop, interval);
@@ -60,9 +81,9 @@ export class Poller {
         if (this.timeoutId !== undefined) {
             window.clearTimeout(this.timeoutId);
         }
-        if (this.unsubscribeBackground) {
+        if (this.unsubscribeStatus) {
             try {
-                this.unsubscribeBackground();
+                this.unsubscribeStatus();
                 // eslint-disable-next-line no-empty
             } catch (_err) {}
         }

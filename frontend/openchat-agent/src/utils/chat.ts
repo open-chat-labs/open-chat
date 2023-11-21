@@ -23,9 +23,9 @@ import type {
     ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
-import { ChatMap } from "openchat-shared";
+import { ChatMap, applyOptionUpdate, bigIntMax, mapOptionUpdate } from "openchat-shared";
 import { toRecord } from "./list";
-import { applyOptionUpdate, identity, mapOptionUpdate } from "./mapping";
+import { identity } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
 import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
@@ -165,7 +165,13 @@ export function mergeDirectChatUpdates(
             lastUpdated: u.lastUpdated,
             latestEventIndex: u.latestEventIndex ?? c.latestEventIndex,
             latestMessage: u.latestMessage ?? c.latestMessage,
+            latestMessageIndex: u.latestMessageIndex ?? c.latestMessageIndex,
             metrics: u.metrics ?? c.metrics,
+            eventsTTL: applyOptionUpdate(c.eventsTTL, u.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                c.eventsTtlLastUpdated ?? BigInt(0),
+                u.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...c.membership,
                 readByMeUpTo: u.readByMeUpTo ?? c.membership.readByMeUpTo,
@@ -192,7 +198,14 @@ export function mergeGroupChatUpdates(
 
         if (u === undefined && g === undefined) return c;
 
-        const latestMessage = g?.latestMessage ?? c.latestMessage;
+        const latestMessageIndex = g?.latestMessageIndex ?? c.latestMessageIndex;
+        let latestMessage = g?.latestMessage ?? c.latestMessage;
+        if (
+            latestMessage !== undefined &&
+            latestMessage.event.messageIndex !== latestMessageIndex
+        ) {
+            latestMessage = undefined;
+        }
         const readByMeUpTo = u?.readByMeUpTo ?? c.membership.readByMeUpTo;
 
         const blobReferenceUpdate = mapOptionUpdate(g?.avatarId, (avatarId) => ({
@@ -217,12 +230,18 @@ export function mergeGroupChatUpdates(
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
+            latestMessageIndex,
             metrics: g?.metrics ?? c.metrics,
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
             level: "group",
+            eventsTTL: applyOptionUpdate(c.eventsTTL, g?.eventsTTL),
+            eventsTtlLastUpdated: bigIntMax(
+                c.eventsTtlLastUpdated ?? BigInt(0),
+                g?.eventsTtlLastUpdated ?? BigInt(0),
+            ),
             membership: {
                 ...c.membership,
                 mentions:
@@ -275,6 +294,7 @@ export function mergeGroupChats(
             frozen: g.frozen,
             latestEventIndex: g.latestEventIndex,
             latestMessage: g.latestMessage,
+            latestMessageIndex: g.latestMessageIndex,
             metrics: g.metrics,
             blobReference:
                 g.avatarId !== undefined
@@ -284,6 +304,8 @@ export function mergeGroupChats(
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
             level: "group",
+            eventsTTL: g.eventsTTL,
+            eventsTtlLastUpdated: g.eventsTtlLastUpdated,
             membership: {
                 joined: g.joined,
                 role: g.myRole,
@@ -305,7 +327,9 @@ function mergeThreads(
     groupCanisterUnfollowedThreads: number[],
     readUpToUpdates: Record<number, number>,
 ): ThreadSyncDetails[] {
-    const initial = current.filter((t) => !groupCanisterUnfollowedThreads.includes(t.threadRootMessageIndex));
+    const initial = current.filter(
+        (t) => !groupCanisterUnfollowedThreads.includes(t.threadRootMessageIndex),
+    );
     const threadsRecord = toRecord(initial, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of groupCanisterUpdates) {

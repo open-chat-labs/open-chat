@@ -7,10 +7,10 @@
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-    const user = client.user;
 
     export let content: PrizeWinnerContent;
 
+    $: user = client.user;
     $: userStore = client.userStore;
     $: cryptoLookup = client.cryptoLookup;
     $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
@@ -18,10 +18,11 @@
     $: symbol = tokenDetails.symbol;
     $: amount = client.formatTokens(content.transaction.amountE8s, 0, tokenDetails.decimals);
     $: winner = `${username(content.transaction.recipient)}`;
+    $: me = $user.userId === content.transaction.recipient;
     $: transactionLinkText = client.buildTransactionLink($_, content.transaction);
 
     function username(userId: string): string {
-        return userId === user.userId
+        return userId === $user.userId
             ? $_("you")
             : `${$userStore[userId]?.username ?? $_("unknown")}`;
     }
@@ -34,34 +35,53 @@
 </script>
 
 <div role="button" tabindex="0" class="msg" on:click={zoomToMessage}>
-    <div class="graphic">
-        <img class="lid" src={"/assets/lid.png"} />
-        <div class="winner-coin">
-            <SpinningToken mirror={false} size="small" {logo} />
+    <div class="wrapper" class:other={!me}>
+        <div class="graphic" class:tiny={!me}>
+            {#if me}
+                <img class="lid" src={"/assets/lid.png"} />
+                <div class="winner-coin">
+                    <SpinningToken spin mirror={false} size={"small"} {logo} />
+                </div>
+                <img class="box" src={"/assets/box.png"} />
+            {:else}
+                <SpinningToken spin={false} mirror size={"tiny"} {logo} />
+            {/if}
         </div>
-        <img class="box" src={"/assets/box.png"} />
-    </div>
-    <div class="label">
-        <Markdown
-            text={$_("prizes.winner", { values: { recipient: winner, amount, token: symbol } })}
-            oneLine
-            suppressLinks />
-    </div>
-    {#if transactionLinkText !== undefined}
-        <div class="link">
-            <Markdown text={transactionLinkText} />
+        <div class="txt" class:other={!me}>
+            <div class="label">
+                <Markdown
+                    text={$_("prizes.winner", {
+                        values: { recipient: winner, amount, token: symbol },
+                    })} />
+            </div>
+            {#if transactionLinkText !== undefined}
+                <div class="link">
+                    <Markdown text={transactionLinkText} />
+                </div>
+            {/if}
         </div>
-    {/if}
+    </div>
 </div>
 
 <style lang="scss">
     .msg {
         cursor: pointer;
         text-align: center;
+        padding-top: $sp2;
+    }
+
+    .wrapper.other {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+    }
+
+    .txt.other {
+        text-align: start;
     }
 
     .label {
-        @include font(book, normal, fs-100, 28);
+        @include font(book, normal, fs-100);
     }
 
     .link {
@@ -73,6 +93,10 @@
         display: flex;
         flex-direction: column;
         padding: 10px 60px;
+
+        &.tiny {
+            padding: 0 10px;
+        }
 
         .winner-coin {
             margin-top: -45px;

@@ -1,7 +1,7 @@
 use crate::nns::UserOrAccount;
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
-use ic_ledger_types::{AccountIdentifier, Subaccount, DEFAULT_SUBACCOUNT};
+use ic_ledger_types::{AccountIdentifier, Subaccount, Tokens};
 use serde::{Deserialize, Serialize};
 
 const ICP_FEE: u128 = 10_000;
@@ -170,7 +170,7 @@ impl PendingCryptoTransaction {
                 }
             }
             PendingCryptoTransaction::ICRC1(t) => {
-                if t.to.subaccount.unwrap_or_default() == DEFAULT_SUBACCOUNT.0 {
+                if t.to.subaccount.unwrap_or_default() == ic_ledger_types::DEFAULT_SUBACCOUNT.0 {
                     Some(t.to.owner.into())
                 } else {
                     None
@@ -182,7 +182,9 @@ impl PendingCryptoTransaction {
     pub fn validate_recipient(&self, recipient: UserId) -> bool {
         match self {
             PendingCryptoTransaction::NNS(t) => match t.to {
-                UserOrAccount::Account(a) => a == AccountIdentifier::new(&recipient.into(), &DEFAULT_SUBACCOUNT),
+                UserOrAccount::Account(a) => {
+                    a == AccountIdentifier::new(&recipient.into(), &ic_ledger_types::DEFAULT_SUBACCOUNT)
+                }
                 UserOrAccount::User(u) => u == recipient,
             },
             PendingCryptoTransaction::ICRC1(t) => t.to.owner == recipient.into(),
@@ -197,6 +199,19 @@ impl PendingCryptoTransaction {
                 t.to.subaccount = Some(subaccount.0)
             }
         }
+    }
+
+    pub fn set_memo(mut self, memo: &[u8]) -> Self {
+        match &mut self {
+            PendingCryptoTransaction::NNS(t) => {
+                t.memo = Some(ic_ledger_types::Memo(u64_from_bytes(memo)));
+            }
+            PendingCryptoTransaction::ICRC1(t) => {
+                assert!(memo.len() <= 32);
+                t.memo = Some(memo.to_vec().into());
+            }
+        }
+        self
     }
 }
 
@@ -331,88 +346,12 @@ pub mod nns {
 
 pub mod icrc1 {
     use super::*;
-    use candid::Nat;
-    use serde_bytes::ByteBuf;
-
-    pub type Subaccount = [u8; 32];
-
-    // Account representation of ledgers supporting the ICRC1 standard
-    #[derive(Serialize, CandidType, Deserialize, Clone, Debug, Copy)]
-    pub struct Account {
-        pub owner: Principal,
-        pub subaccount: Option<Subaccount>,
-    }
-
-    impl From<Principal> for Account {
-        fn from(value: Principal) -> Self {
-            Account {
-                owner: value,
-                subaccount: None,
-            }
-        }
-    }
-
-    #[derive(Serialize, Deserialize, CandidType, Clone, Debug, Default)]
-    #[serde(transparent)]
-    pub struct Memo(pub ByteBuf);
-
-    impl From<u64> for Memo {
-        fn from(num: u64) -> Self {
-            Self(ByteBuf::from(num.to_be_bytes().to_vec()))
-        }
-    }
-
-    impl From<ByteBuf> for Memo {
-        fn from(b: ByteBuf) -> Self {
-            Self(b)
-        }
-    }
-
-    impl From<Vec<u8>> for Memo {
-        fn from(v: Vec<u8>) -> Self {
-            Self::from(ByteBuf::from(v))
-        }
-    }
-
-    impl From<Memo> for ByteBuf {
-        fn from(memo: Memo) -> Self {
-            memo.0
-        }
-    }
+    use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum CryptoAccount {
         Mint,
         Account(Account),
-    }
-
-    pub type NumTokens = Nat;
-    pub type BlockIndex = Nat;
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub struct TransferArg {
-        #[serde(default)]
-        pub from_subaccount: Option<Subaccount>,
-        pub to: Account,
-        #[serde(default)]
-        pub fee: Option<NumTokens>,
-        #[serde(default)]
-        pub created_at_time: Option<u64>,
-        #[serde(default)]
-        pub memo: Option<Memo>,
-        pub amount: NumTokens,
-    }
-
-    #[derive(CandidType, Deserialize, Clone, Debug)]
-    pub enum TransferError {
-        BadFee { expected_fee: NumTokens },
-        BadBurn { min_burn_amount: NumTokens },
-        InsufficientFunds { balance: NumTokens },
-        TooOld,
-        CreatedInFuture { ledger_time: u64 },
-        TemporarilyUnavailable,
-        Duplicate { duplicate_of: BlockIndex },
-        GenericError { error_code: Nat, message: String },
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -451,4 +390,40 @@ pub mod icrc1 {
         pub created: TimestampNanos,
         pub error_message: String,
     }
+
+    impl From<CompletedCryptoTransaction> for super::CompletedCryptoTransaction {
+        fn from(value: CompletedCryptoTransaction) -> Self {
+            super::CompletedCryptoTransaction::ICRC1(value)
+        }
+    }
+
+    impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
+        fn from(value: FailedCryptoTransaction) -> Self {
+            super::FailedCryptoTransaction::ICRC1(value)
+        }
+    }
+}
+
+impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {
+    fn from(value: icrc1::PendingCryptoTransaction) -> Self {
+        nns::PendingCryptoTransaction {
+            ledger: value.ledger,
+            token: value.token,
+            amount: Tokens::from_e8s(value.amount.try_into().unwrap()),
+            to: UserOrAccount::Account(AccountIdentifier::new(
+                &value.to.owner,
+                &ic_ledger_types::Subaccount(value.to.subaccount.unwrap_or_default()),
+            )),
+            fee: Some(Tokens::from_e8s(value.fee.try_into().unwrap())),
+            memo: value.memo.map(|m| ic_ledger_types::Memo(u64_from_bytes(m.0.as_slice()))),
+            created: value.created,
+        }
+    }
+}
+
+fn u64_from_bytes(bytes: &[u8]) -> u64 {
+    assert!(bytes.len() <= 8);
+    let mut u64_bytes = [0u8; 8];
+    u64_bytes[(8 - bytes.len())..].copy_from_slice(bytes);
+    u64::from_be_bytes(u64_bytes)
 }

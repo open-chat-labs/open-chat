@@ -1,26 +1,31 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import type { OpenChat } from "openchat-client";
+    import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let ledger: string;
+    export let filter: (details: CryptocurrencyDetails) => boolean = (_) => true;
 
     let selecting = false;
 
     $: cryptoBalance = client.cryptoBalance;
 
     $: cryptoLookup = client.cryptoLookup;
-    $: crypto = Object.values($cryptoLookup).map((t) => ({
-        ledger: t.ledger,
-        symbol: t.symbol,
-        name: t.name,
-        logo: t.logo,
-        balance: $cryptoBalance[t.ledger] ?? BigInt(0),
-    }));
+    $: crypto = Object.values($cryptoLookup)
+        .filter((t) => filter(t))
+        .map((t) => ({
+            ledger: t.ledger,
+            symbol: t.symbol,
+            name: t.name,
+            logo: t.logo,
+            balance: $cryptoBalance[t.ledger] ?? BigInt(0),
+            urlFormat: t.transactionUrlFormat,
+        }));
 
     $: {
         crypto.sort((a, b) => {
@@ -34,9 +39,10 @@
         });
     }
 
-    function selectToken(selectedLedger: string) {
+    function selectToken(selectedLedger: string, urlFormat: string) {
         selecting = false;
         ledger = selectedLedger;
+        dispatch("select", { ledger, urlFormat });
     }
 
     function onKeyDown(ev: KeyboardEvent) {
@@ -46,29 +52,31 @@
     }
 </script>
 
-<div class="selected" on:click={() => (selecting = !selecting)}>
-    <div class="symbol">
-        {$cryptoLookup[ledger].symbol}
+{#if crypto.length > 0}
+    <div class="selected" on:click={() => (selecting = !selecting)}>
+        <div class="symbol">
+            {$cryptoLookup[ledger].symbol}
+        </div>
+        <div class="icon" class:selecting>
+            <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+        </div>
     </div>
-    <div class="icon" class:selecting>
-        <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-    </div>
-</div>
 
-{#if selecting}
-    <div transition:fade|local={{ duration: 100 }} class="tokens">
-        {#each crypto as token}
-            <div class="token" on:click={() => selectToken(token.ledger)}>
-                <img class="icon" src={token.logo} />
-                <div class="name">
-                    {token.name}
+    {#if selecting}
+        <div transition:fade|local={{ duration: 100 }} class="tokens">
+            {#each crypto as token}
+                <div class="token" on:click={() => selectToken(token.ledger, token.urlFormat)}>
+                    <img class="icon" src={token.logo} />
+                    <div class="name">
+                        {token.name}
+                    </div>
+                    <div class="symbol">
+                        {token.symbol}
+                    </div>
                 </div>
-                <div class="symbol">
-                    {token.symbol}
-                </div>
-            </div>
-        {/each}
-    </div>
+            {/each}
+        </div>
+    {/if}
 {/if}
 
 <svelte:window on:click={() => (selecting = false)} on:keydown={onKeyDown} />
@@ -79,7 +87,7 @@
         background-color: var(--menu-bg);
         @include z-index("popup-menu");
         box-shadow: var(--menu-sh);
-        border-radius: $sp2;
+        border-radius: var(--rd);
         border: 1px solid var(--menu-bd);
         cursor: pointer;
         max-height: 330px;

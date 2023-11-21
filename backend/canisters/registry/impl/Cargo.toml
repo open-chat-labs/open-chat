@@ -22,15 +22,20 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
-icrc1_ledger_canister = { path = "../../../external_canisters/icrc1_ledger/api" }
-icrc1_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc1_ledger/c2c_client" }
+icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
+icrc-ledger-types = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
+sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 sns_swap_canister = { path = "../../../external_canisters/sns_swap/api" }
 sns_swap_canister_c2c_client = { path = "../../../external_canisters/sns_swap/c2c_client" }
 sns_wasm_canister = { path = "../../../external_canisters/sns_wasm/api" }
 sns_wasm_canister_c2c_client = { path = "../../../external_canisters/sns_wasm/c2c_client" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 registry_canister = { path = "../api" }
