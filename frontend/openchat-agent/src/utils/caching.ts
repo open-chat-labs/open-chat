@@ -430,7 +430,7 @@ export async function getNearestCachedEventIndexForMessageIndex(
             "EV: we didn't find the event index for ",
             messageIndex,
             " recursing to look for event index for ",
-            messageIndex + 1,
+            messageIndex - 1,
         );
         return getNearestCachedEventIndexForMessageIndex(
             db,
