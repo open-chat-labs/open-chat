@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 - Pass up number of decimals when tipping to fix notification text ([#4796](https://github.com/open-chat-labs/open-chat/pull/4796))
 - Change `ApproveTransferArgs` to take `expires_in` ([#4810](https://github.com/open-chat-labs/open-chat/pull/4810))
+- Add crypto payment access gate ([#4774](https://github.com/open-chat-labs/open-chat/pull/4774))
 
 ### Removed
 

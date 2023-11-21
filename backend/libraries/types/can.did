@@ -1467,6 +1467,7 @@ type SnsNeuronGate = record {
 type PaymentGate = record {
     ledger_canister_id : CanisterId;
     amount : nat;
+    fee : nat;
 };
 
 type GateCheckFailedReason = variant {
