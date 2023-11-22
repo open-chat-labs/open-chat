@@ -122,7 +122,7 @@ impl RuntimeState {
 
         for owner in owners {
             self.data.pending_payments_queue.push(PendingPayment {
-                amount: owner_share - gate.fee,
+                amount: owner_share.saturating_sub(gate.fee),
                 fee: gate.fee,
                 ledger_canister: gate.ledger_canister_id,
                 recipient: PaymentRecipient::Member(owner),
