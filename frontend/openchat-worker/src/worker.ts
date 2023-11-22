@@ -1325,6 +1325,37 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "getTokenSwapPools":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getTokenSwapPools(payload.inputToken, payload.outputTokens),
+                );
+                break;
+
+            case "quoteTokenSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.quoteTokenSwap(payload.inputToken, payload.outputToken, payload.amountIn),
+                );
+                break;
+
+            case "swapTokens":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.swapTokens(
+                        payload.swapId,
+                        payload.inputToken,
+                        payload.outputToken,
+                        payload.amountIn,
+                        payload.minAmountOut,
+                        payload.pool,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

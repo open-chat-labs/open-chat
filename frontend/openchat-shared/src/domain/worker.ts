@@ -139,7 +139,8 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult } from "./crypto";
+import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
+import type { DexId, SwapTokensResponse, TokenSwapPool } from "./dexes";
 /**
  * Worker request types
  */
@@ -292,7 +293,10 @@ export type WorkerRequest =
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
     | SubmitProposal
-    | TipMessage;
+    | TipMessage
+    | GetTokenSwapPools
+    | QuoteTokenSwap
+    | SwapTokens;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -308,6 +312,29 @@ type TipMessage = {
     messageContext: MessageContext;
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
+};
+
+type GetTokenSwapPools = {
+    kind: "getTokenSwapPools";
+    inputToken: string;
+    outputTokens: string[];
+};
+
+type QuoteTokenSwap = {
+    kind: "quoteTokenSwap";
+    inputToken: string;
+    outputToken: string;
+    amountIn: bigint;
+};
+
+type SwapTokens = {
+    kind: "swapTokens";
+    swapId: bigint;
+    inputToken: CryptocurrencyDetails;
+    outputToken: CryptocurrencyDetails;
+    amountIn: bigint;
+    minAmountOut: bigint;
+    pool: TokenSwapPool;
 };
 
 type SetCommunityIndexes = {
@@ -991,6 +1018,7 @@ export type WorkerResponseInner =
     | bigint
     | boolean
     | string
+    | string[]
     | undefined
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -1099,7 +1127,10 @@ export type WorkerResponseInner =
     | SaveCryptoAccountResponse
     | SubmitProposalResponse
     | AccountTransactionResult
-    | Record<string, bigint>;
+    | Record<string, bigint>
+    | TokenSwapPool[]
+    | [DexId, bigint][]
+    | SwapTokensResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1339,6 +1370,7 @@ type SubmitProposal = {
     kind: "submitProposal";
 };
 
+// prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
@@ -1621,4 +1653,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record<string, bigint>
     : T extends SetCachePrimerTimestamp
     ? void
+    : T extends GetTokenSwapPools
+    ? TokenSwapPool[]
+    : T extends QuoteTokenSwap
+    ? [DexId, bigint][]
+    : T extends SwapTokens
+    ? SwapTokensResponse
     : never;

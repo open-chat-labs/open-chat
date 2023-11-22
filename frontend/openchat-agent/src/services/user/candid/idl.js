@@ -1375,6 +1375,29 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const SwapTokensArgs = IDL.Record({
+    'input_amount' : IDL.Nat,
+    'min_output_amount' : IDL.Nat,
+    'swap_id' : IDL.Nat,
+    'input_token' : TokenInfo,
+    'exchange_args' : IDL.Variant({
+      'ICPSwap' : IDL.Record({
+        'zero_for_one' : IDL.Bool,
+        'swap_canister_id' : CanisterId,
+      }),
+    }),
+    'output_token' : TokenInfo,
+  });
+  const SwapTokensResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'amount_out' : IDL.Nat }),
+    'InternalError' : IDL.Text,
+  });
   const TipMessageArgs = IDL.Record({
     'fee' : IDL.Nat,
     'token' : Cryptocurrency,
@@ -1398,6 +1421,30 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CannotTipSelf' : IDL.Null,
+  });
+  const TokenSwapStatusArgs = IDL.Record({ 'swap_id' : IDL.Nat });
+  const TokenSwapStatusResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'status' : IDL.Record({
+        'started' : TimestampMillis,
+        'deposit_account' : IDL.Opt(
+          IDL.Variant({ 'Ok' : Account, 'Err' : IDL.Text })
+        ),
+        'withdrawn_from_dex' : IDL.Opt(
+          IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+        ),
+        'amount_swapped' : IDL.Opt(
+          IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+        ),
+        'notified_dex' : IDL.Opt(
+          IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+        ),
+        'transfer' : IDL.Opt(
+          IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })
+        ),
+      }),
+    }),
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
@@ -1681,7 +1728,13 @@ export const idlFactory = ({ IDL }) => {
         [SubmitProposalResponse],
         [],
       ),
+    'swap_tokens' : IDL.Func([SwapTokensArgs], [SwapTokensResponse], []),
     'tip_message' : IDL.Func([TipMessageArgs], [TipMessageResponse], []),
+    'token_swap_status' : IDL.Func(
+        [TokenSwapStatusArgs],
+        [TokenSwapStatusResponse],
+        ['query'],
+      ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'undelete_messages' : IDL.Func(
         [UndeleteMessagesArgs],

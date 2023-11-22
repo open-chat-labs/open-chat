@@ -61,6 +61,7 @@ import type {
     ApiSavedCryptoAccountsResponse,
     ApiSaveCryptoAccountResponse,
     ApiSubmitProposalResponse,
+    ApiSwapTokensResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -122,6 +123,7 @@ import type {
     CandidateProposal,
     CandidateProposalAction,
     SubmitProposalResponse,
+    SwapTokensResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -1124,4 +1126,20 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            amountOut: candid.Success.amount_out,
+        };
+    }
+    if ("InternalError" in candid) {
+        return {
+            kind: "error",
+            message: candid.InternalError,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
 }
