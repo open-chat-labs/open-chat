@@ -11,7 +11,7 @@ use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::{BuildVersion, CanisterId};
+use types::{BuildVersion, CanisterId, CanisterWasm};
 
 pub static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -51,12 +51,12 @@ pub fn setup_new_env() -> TestEnv {
 
 fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
-    let nns_governance_canister_id = nns_canister_ids[1];
-    let nns_ledger_canister_id = nns_canister_ids[2];
-    let nns_root_canister_id = nns_canister_ids[3];
-    let cycles_minting_canister_id = nns_canister_ids[4];
-    let sns_wasm_canister_id = nns_canister_ids[10];
-    let nns_index_canister_id = nns_canister_ids[11];
+    let nns_governance_canister_id = nns_canister_ids[1]; // rrkah-fqaaa-aaaaa-aaaaq-cai
+    let nns_ledger_canister_id = nns_canister_ids[2]; // ryjl3-tyaaa-aaaaa-aaaba-cai
+    let nns_root_canister_id = nns_canister_ids[3]; // r7inp-6aaaa-aaaaa-aaabq-cai
+    let cycles_minting_canister_id = nns_canister_ids[4]; // rkp4c-7iaaa-aaaaa-aaaca-cai
+    let sns_wasm_canister_id = nns_canister_ids[10]; // qaa6y-5yaaa-aaaaa-aaafa-cai
+    let nns_index_canister_id = nns_canister_ids[11]; // qhbym-qaaaa-aaaaa-aaafq-cai
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -92,8 +92,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![controller],
-        user_canister_wasm,
-        local_user_index_canister_wasm,
+        user_canister_wasm: CanisterWasm::default(),
+        local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id,
         notifications_index_canister_id,
         proposals_bot_canister_id,
@@ -113,9 +113,9 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
 
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![controller],
-        group_canister_wasm,
-        community_canister_wasm,
-        local_group_index_canister_wasm,
+        group_canister_wasm: CanisterWasm::default(),
+        community_canister_wasm: CanisterWasm::default(),
+        local_group_index_canister_wasm: CanisterWasm::default(),
         user_index_canister_id,
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
@@ -136,7 +136,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         authorizers: vec![user_index_canister_id, group_index_canister_id],
         cycles_dispenser_canister_id,
-        notifications_canister_wasm,
+        notifications_canister_wasm: CanisterWasm::default(),
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -184,7 +184,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let storage_index_init_args = storage_index_canister::init::Args {
         governance_principals: vec![controller],
         user_controllers: vec![user_index_canister_id, group_index_canister_id],
-        bucket_canister_wasm: storage_bucket_canister_wasm,
+        bucket_canister_wasm: CanisterWasm::default(),
         cycles_dispenser_config: CyclesDispenserConfig {
             canister_id: cycles_dispenser_canister_id,
             min_cycles_balance: 200 * T,
@@ -250,56 +250,63 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_init_args,
     );
 
-    let add_local_group_index_canister_response = client::group_index::add_local_group_index_canister(
-        env,
-        controller,
-        group_index_canister_id,
-        &group_index_canister::add_local_group_index_canister::Args {
-            canister_id: local_group_index_canister_id,
-            local_user_index_canister_id,
-            notifications_canister_id,
-        },
-    );
-    assert!(
-        matches!(
-            add_local_group_index_canister_response,
-            group_index_canister::add_local_group_index_canister::Response::Success
-        ),
-        "{add_local_group_index_canister_response:?}"
-    );
-
-    let add_local_user_index_canister_response = client::user_index::add_local_user_index_canister(
+    client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
+    client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
         controller,
         user_index_canister_id,
-        &user_index_canister::add_local_user_index_canister::Args {
-            canister_id: local_user_index_canister_id,
-            notifications_canister_id,
-        },
+        local_user_index_canister_wasm,
     );
-    assert!(
-        matches!(
-            add_local_user_index_canister_response,
-            user_index_canister::add_local_user_index_canister::Response::Success
-        ),
-        "{add_local_user_index_canister_response:?}"
+    client::user_index::happy_path::add_local_user_index_canister(
+        env,
+        controller,
+        user_index_canister_id,
+        local_user_index_canister_id,
+        notifications_canister_id,
     );
 
-    let add_notifications_canister_response = client::notifications_index::add_notifications_canister(
+    client::group_index::happy_path::upgrade_group_canister_wasm(env, controller, group_index_canister_id, group_canister_wasm);
+    client::group_index::happy_path::upgrade_community_canister_wasm(
+        env,
+        controller,
+        group_index_canister_id,
+        community_canister_wasm,
+    );
+    client::group_index::happy_path::upgrade_local_group_index_canister_wasm(
+        env,
+        controller,
+        group_index_canister_id,
+        local_group_index_canister_wasm,
+    );
+    client::group_index::happy_path::add_local_group_index_canister(
+        env,
+        controller,
+        group_index_canister_id,
+        local_group_index_canister_id,
+        local_user_index_canister_id,
+        notifications_canister_id,
+    );
+
+    client::notifications_index::happy_path::upgrade_notifications_canister_wasm(
         env,
         controller,
         notifications_index_canister_id,
-        &notifications_index_canister::add_notifications_canister::Args {
-            canister_id: notifications_canister_id,
-            authorizers: vec![local_user_index_canister_id, local_group_index_canister_id],
-        },
+        notifications_canister_wasm,
     );
-    assert!(
-        matches!(
-            add_notifications_canister_response,
-            notifications_index_canister::add_notifications_canister::Response::Success
-        ),
-        "{add_notifications_canister_response:?}"
+    client::notifications_index::happy_path::add_notifications_canister(
+        env,
+        controller,
+        notifications_index_canister_id,
+        notifications_canister_id,
+        local_user_index_canister_id,
+        local_group_index_canister_id,
+    );
+
+    client::storage_index::happy_path::upgrade_notifications_canister_wasm(
+        env,
+        controller,
+        storage_index_canister_id,
+        storage_bucket_canister_wasm,
     );
 
     let minting_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
