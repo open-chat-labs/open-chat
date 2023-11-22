@@ -9,7 +9,10 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::Reader;
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
+use group_chat_core::{
+    AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, GroupRoleInternal, InvitedUsersResult, UserInvitation,
+};
+use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use msgpack::serialize_then_unwrap;
 use notifications_canister::c2c_push_notification;
@@ -21,7 +24,7 @@ use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
-    Milliseconds, Notification, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
+    Milliseconds, Notification, PaymentGate, Rules, TimestampMillis, Timestamped, UserId, MAX_THREADS_IN_SUMMARY,
 };
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::env::Environment;
@@ -30,6 +33,7 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 mod activity_notifications;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -98,6 +102,50 @@ impl RuntimeState {
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
+    }
+
+    pub fn queue_access_gate_payments(&mut self, gate: PaymentGate) {
+        // The amount available is the gate amount less the approval fee and the transfer_from fee
+        let amount_available = gate.amount - 2 * gate.fee;
+        // Queue a payment to each owner less the fee
+        let owners: Vec<UserId> = self
+            .data
+            .chat
+            .members
+            .iter()
+            .filter(|m| matches!(m.role.value, GroupRoleInternal::Owner))
+            .map(|m| m.user_id)
+            .collect();
+
+        let owner_count = owners.len() as u128;
+        let owner_share = (amount_available * 4 / 5) / owner_count;
+        let amount = owner_share.saturating_sub(gate.fee);
+        if amount > 0 {
+            for owner in owners {
+                self.data.pending_payments_queue.push(PendingPayment {
+                    amount,
+                    fee: gate.fee,
+                    ledger_canister: gate.ledger_canister_id,
+                    recipient: PaymentRecipient::Member(owner),
+                    reason: PendingPaymentReason::AccessGate,
+                });
+            }
+        }
+
+        // Queue the remainder to the treasury less the fee
+        let treasury_share = amount_available.saturating_sub(owner_share * owner_count);
+        let amount = treasury_share.saturating_sub(gate.fee);
+        if amount > 0 {
+            self.data.pending_payments_queue.push(PendingPayment {
+                amount,
+                fee: gate.fee,
+                ledger_canister: gate.ledger_canister_id,
+                recipient: PaymentRecipient::Treasury,
+                reason: PendingPaymentReason::AccessGate,
+            });
+        }
+
+        jobs::make_pending_payments::start_job_if_required(self);
     }
 
     pub fn summary(&self, member: &GroupMemberInternal) -> GroupCanisterGroupChatSummary {
@@ -315,6 +363,10 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     #[serde(default)]
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub pending_payments_queue: PendingPaymentsQueue,
+    #[serde(default)]
+    pub total_payment_receipts: PaymentReceipts,
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -384,6 +436,8 @@ impl Data {
             serialized_chat_state: None,
             next_event_expiry: None,
             rng_seed: [0; 32],
+            pending_payments_queue: PendingPaymentsQueue::default(),
+            total_payment_receipts: PaymentReceipts::default(),
         }
     }
 

@@ -23,6 +23,7 @@ type TokenDetails = record {
     info_url : text;
     how_to_buy_url : text;
     transaction_url_format : text;
+    supported_standards : vec text;
     added : TimestampMillis;
     last_updated : TimestampMillis;
 };
@@ -34,7 +35,7 @@ type NervousSystemSummary = record {
     index_canister_id : CanisterId;
     is_nns : bool;
     proposal_rejection_fee : nat64;
-    submitting_proposals_enabled: bool;
+    submitting_proposals_enabled : bool;
 };
 
 service : {
