@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+async-trait = { workspace = true }
 bot_api = { path = "../../../bots/api" }
 bot_c2c_client = { path = "../../../bots/c2c_client" }
 candid = { workspace = true }
@@ -34,6 +35,7 @@ ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icpswap_client = { path = "../../../libraries/icpswap_client" }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
 icrc_ledger_canister = { path = "../../../external_canisters/icrc_ledger/api" }
 icrc-ledger-types = { workspace = true }
@@ -54,6 +56,7 @@ serde_bytes = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
+sonic_client = { path = "../../../libraries/sonic_client" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }

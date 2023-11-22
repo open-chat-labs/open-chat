@@ -147,6 +147,67 @@ type ApproveTransferResponse = variant {
     InternalError : text;
 };
 
+type SwapTokensArgs = record {
+    swap_id : nat;
+    input_token : TokenInfo;
+    output_token : TokenInfo;
+    input_amount : nat;
+    exchange_args : variant {
+        ICPSwap : record {
+            swap_canister_id : CanisterId;
+            zero_for_one : bool;
+        };
+    };
+    min_output_amount : nat;
+};
+
+type SwapTokensResponse = variant {
+    Success : record {
+        amount_out : nat;
+    };
+    InternalError : text;
+};
+
+type TokenInfo = record {
+    token : Cryptocurrency;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee: nat;
+};
+
+type TokenSwapStatusArgs = record {
+    swap_id : nat;
+};
+
+type TokenSwapStatusResponse = variant {
+    Success : record {
+        status : record {
+            started : TimestampMillis;
+            deposit_account : opt variant {
+                Ok : Account;
+                Err : text;
+            };
+            transfer : opt variant {
+                Ok : nat64;
+                Err : text;
+            };
+            notified_dex : opt variant {
+                Ok;
+                Err : text;
+            };
+            amount_swapped : opt variant {
+                Ok : nat;
+                Err : text;
+            };
+            withdrawn_from_dex : opt variant {
+                Ok;
+                Err : text;
+            };
+        };
+    };
+    NotFound;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -969,6 +1030,7 @@ service : {
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
+    swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
@@ -987,4 +1049,5 @@ service : {
     public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
+    token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
 };

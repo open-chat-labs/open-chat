@@ -1,0 +1,203 @@
+use crate::guards::caller_is_owner;
+use crate::model::token_swaps::TokenSwap;
+use crate::timer_job_types::{ProcessTokenSwapJob, TimerJob};
+use crate::token_swaps::swap_client::SwapClient;
+use crate::{mutate_state, read_state, run_regular_jobs, Data, RuntimeState};
+use canister_tracing_macros::trace;
+use ic_cdk_macros::update;
+use icpswap_client::ICPSwapClient;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use types::{TimestampMillis, Timestamped};
+use user_canister::swap_tokens::{Response::*, *};
+use utils::consts::MEMO_SWAP;
+use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+async fn swap_tokens(args: Args) -> Response {
+    run_regular_jobs();
+
+    let token_swap = mutate_state(|state| {
+        let now = state.env.now();
+        state.data.token_swaps.push_new(args, now)
+    });
+
+    process_token_swap(token_swap, 0).await
+}
+
+pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) -> Response {
+    let args = token_swap.args.clone();
+    let swap_client = read_state(|state| build_swap_client(&args, state));
+
+    let account = if let Some(a) = extract_result(&token_swap.deposit_account) {
+        *a
+    } else {
+        match swap_client.deposit_account().await {
+            Ok(a) => {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.deposit_account = Some(Timestamped::new(Ok(a), now));
+                    state.data.token_swaps.upsert(token_swap.clone());
+                });
+                a
+            }
+            Err(error) => {
+                let msg = format!("{error:?}");
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.deposit_account = Some(Timestamped::new(Err(msg.clone()), now));
+                    token_swap.success = Some(Timestamped::new(false, now));
+                    state.data.token_swaps.upsert(token_swap);
+                });
+                return InternalError(msg);
+            }
+        }
+    };
+
+    if extract_result(&token_swap.transfer).is_none() {
+        let now = read_state(|state| state.env.now());
+        let transfer_result = match icrc_ledger_canister_c2c_client::icrc1_transfer(
+            args.input_token.ledger,
+            &TransferArg {
+                from_subaccount: None,
+                to: account,
+                fee: Some(args.input_token.fee.into()),
+                created_at_time: Some(now * NANOS_PER_MILLISECOND),
+                memo: Some(MEMO_SWAP.to_vec().into()),
+                amount: args.input_amount.into(),
+            },
+        )
+        .await
+        {
+            Ok(Ok(index)) => Ok(index),
+            Ok(Err(error)) => Err(format!("{error:?}")),
+            Err(error) => Err(format!("{error:?}")),
+        };
+
+        match transfer_result {
+            Ok(index) => {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.transfer = Some(Timestamped::new(Ok(index.0.try_into().unwrap()), now));
+                    state.data.token_swaps.upsert(token_swap.clone());
+                });
+            }
+            Err(msg) => {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+                    token_swap.success = Some(Timestamped::new(false, now));
+                    state.data.token_swaps.upsert(token_swap);
+                });
+                return InternalError(msg);
+            }
+        }
+    }
+
+    if extract_result(&token_swap.notified_dex_at).is_none() {
+        if let Err(error) = swap_client.deposit(args.input_amount).await {
+            let msg = format!("{error:?}");
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.transfer = Some(Timestamped::new(Err(msg.clone()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+                enqueue_token_swap(token_swap, attempt, now, &mut state.data);
+            });
+            return InternalError(msg);
+        } else {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.notified_dex_at = Some(Timestamped::new(Ok(()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+            });
+        }
+    }
+
+    let amount_swapped = if let Some(a) = extract_result(&token_swap.amount_swapped) {
+        *a
+    } else {
+        match swap_client
+            .swap(args.input_amount.saturating_sub(args.input_token.fee), args.min_output_amount)
+            .await
+        {
+            Ok(a) => {
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.amount_swapped = Some(Timestamped::new(Ok(a), now));
+                    state.data.token_swaps.upsert(token_swap.clone());
+                });
+                a
+            }
+            Err(error) => {
+                let msg = format!("{error:?}");
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    token_swap.amount_swapped = Some(Timestamped::new(Err(msg.clone()), now));
+                    state.data.token_swaps.upsert(token_swap.clone());
+                    enqueue_token_swap(token_swap, attempt, now, &mut state.data);
+                });
+                return InternalError(msg);
+            }
+        }
+    };
+
+    let amount_out = amount_swapped.saturating_sub(args.output_token.fee);
+
+    if extract_result(&token_swap.withdrawn_from_dex_at).is_none() {
+        if let Err(error) = swap_client.withdraw(amount_out).await {
+            let msg = format!("{error:?}");
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+                state.data.token_swaps.upsert(token_swap.clone());
+                enqueue_token_swap(token_swap, attempt, now, &mut state.data);
+            });
+            return InternalError(msg);
+        } else {
+            mutate_state(|state| {
+                let now = state.env.now();
+                token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(()), now));
+                token_swap.success = Some(Timestamped::new(true, now));
+                state.data.token_swaps.upsert(token_swap);
+            });
+        }
+    }
+
+    Success(SuccessResult { amount_out })
+}
+
+fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
+    let this_canister_id = state.env.canister_id();
+    let input_token = args.input_token.clone();
+    let output_token = args.output_token.clone();
+
+    match &args.exchange_args {
+        ExchangeArgs::ICPSwap(icpswap) => {
+            let (token0, token1) = if icpswap.zero_for_one { (input_token, output_token) } else { (output_token, input_token) };
+            Box::new(ICPSwapClient::new(
+                this_canister_id,
+                icpswap.swap_canister_id,
+                token0,
+                token1,
+                icpswap.zero_for_one,
+            ))
+        }
+    }
+}
+
+fn enqueue_token_swap(token_swap: TokenSwap, attempt: u32, now: TimestampMillis, data: &mut Data) {
+    if attempt < 20 {
+        data.timer_jobs.enqueue_job(
+            TimerJob::ProcessTokenSwap(Box::new(ProcessTokenSwapJob {
+                token_swap,
+                attempt: attempt + 1,
+            })),
+            now + 5 * SECOND_IN_MS,
+            now,
+        );
+    }
+}
+
+fn extract_result<T>(subtask: &Option<Timestamped<Result<T, String>>>) -> Option<&T> {
+    subtask.as_ref().and_then(|t| t.value.as_ref().ok())
+}

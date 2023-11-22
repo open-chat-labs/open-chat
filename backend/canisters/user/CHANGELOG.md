@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))
 - Add `approve_transfer` endpoint ([#4767](https://github.com/open-chat-labs/open-chat/pull/4767))
 - Support deleting direct chats (only for the current user) ([#4816](https://github.com/open-chat-labs/open-chat/pull/4816))
+- Implement swapping of tokens via external DEXs ([#4819](https://github.com/open-chat-labs/open-chat/pull/4819))
 
 ### Changed
 
