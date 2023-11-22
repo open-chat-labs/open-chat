@@ -38,7 +38,7 @@ pub enum PaymentRecipient {
     Account(Account),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum PendingPaymentReason {
     AccessGate,
 }
