@@ -14,6 +14,7 @@ pub mod messages_by_message_index;
 pub mod public_profile;
 pub mod saved_crypto_accounts;
 pub mod search_messages;
+pub mod token_swap_status;
 pub mod updates;
 
 fn check_replica_up_to_date(latest_known_update: Option<TimestampMillis>, state: &RuntimeState) -> Result<(), TimestampMillis> {

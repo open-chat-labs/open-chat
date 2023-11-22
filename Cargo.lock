@@ -6918,6 +6918,7 @@ dependencies = [
 name = "user_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bot_api",
  "bot_c2c_client",
  "candid",
@@ -6942,6 +6943,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
+ "icpswap_client",
  "icrc-ledger-types",
  "icrc_ledger_canister",
  "icrc_ledger_canister_c2c_client",
@@ -6962,6 +6964,7 @@ dependencies = [
  "serializer",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
+ "sonic_client",
  "stable_memory",
  "storage_bucket_client",
  "tracing",
