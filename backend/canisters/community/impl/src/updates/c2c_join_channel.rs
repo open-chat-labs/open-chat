@@ -128,13 +128,8 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                         .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
 
-                    // If there is a payment gate on this channel then queue payments to owner(s) and treasury
-                    let payment_gate = channel.chat.gate.value.as_ref().and_then(|access_gate| match access_gate {
-                        AccessGate::Payment(g) => Some(g.clone()),
-                        _ => None,
-                    });
-
-                    if let Some(gate) = payment_gate {
+                    // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
+                    if let Some(AccessGate::Payment(gate)) = channel.chat.gate.value.as_ref().cloned() {
                         state.queue_access_gate_payments(gate);
                     }
 

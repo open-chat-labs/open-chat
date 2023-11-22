@@ -117,14 +117,9 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             let summary = state.summary(&participant);
 
-            // If there is a payment gate on this channel then queue payments to owner(s) and treasury
-            let payment_gate = state.data.chat.gate.value.as_ref().and_then(|access_gate| match access_gate {
-                AccessGate::Payment(g) => Some(g.clone()),
-                _ => None,
-            });
-
-            if let Some(gate) = payment_gate {
-                state.queue_access_gate_payments(gate);
+            // If there is a payment gate on this group then queue payments to owner(s) and treasury
+            if let Some(AccessGate::Payment(gate)) = state.data.chat.gate.value.as_ref() {
+                state.queue_access_gate_payments(gate.clone());
             }
 
             Success(Box::new(summary))
