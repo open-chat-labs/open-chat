@@ -184,7 +184,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getUpdates":
-                executeThenReply(payload, correlationId, agent.getUpdates());
+                executeChainThenReply(
+                    payload,
+                    correlationId,
+                    agent.getUpdates(payload.initialLoad),
+                );
                 break;
 
             case "createUserClient":
@@ -244,7 +248,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "chatEventsWindow":
-                executeChainThenReply(
+                executeThenReply(
                     payload,
                     correlationId,
                     agent.chatEventsWindow(

@@ -150,8 +150,11 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
 
 export type PromiseChain<T> = Promise<{ value: T; continuation?: PromiseChain<T> }>;
 
-export function promiseChain<T>(promise: Promise<T>, continuation?: Promise<T>): PromiseChain<T> {
-    return promise.then((value) => ({
+export function promiseChain<T>(
+    promise: Promise<T> | T,
+    continuation?: Promise<T>,
+): PromiseChain<T> {
+    return Promise.resolve(promise).then((value) => ({
         value,
         continuation: continuation ? promiseChain(continuation) : undefined,
     }));
@@ -938,6 +941,7 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
+    initialLoad: boolean;
 };
 
 type GetDeletedGroupMessage = {

@@ -251,6 +251,37 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
+    ): Promise<EventsResponse<GroupChatEvent>> {
+        const [cachedEvents, missing, totalMiss] =
+            await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
+                this.db,
+                eventIndexRange,
+                { chatId: this.chatId, threadRootMessageIndex },
+                messageIndex,
+            );
+
+        if (totalMiss || missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss,
+            );
+            return this.chatEventsWindowFromBackend(
+                messageIndex,
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+        } else {
+            return this.handleMissingEvents([cachedEvents, missing], undefined, latestKnownUpdate);
+        }
+    }
+
+    async chatEventsWindow2(
+        eventIndexRange: IndexRange,
+        messageIndex: number,
+        threadRootMessageIndex: number | undefined,
+        latestKnownUpdate: bigint | undefined,
     ): PromiseChain<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] =
             await getCachedEventsWindowByMessageIndex<GroupChatEvent>(

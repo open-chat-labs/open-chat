@@ -184,6 +184,7 @@ import {
     CommonResponses,
     applyOptionUpdate,
     ANON_USER_ID,
+    promiseChain,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { waitAll } from "openchat-shared";
@@ -197,7 +198,6 @@ import {
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
-import { currentUserResponse } from "./userIndex/mappers";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -613,19 +613,17 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): PromiseChain<EventsResponse<ChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
 
         switch (chatId.kind) {
-            // case "direct_chat":
-            //     return [
-            //         this.directChatEventsWindow(
-            //             eventIndexRange,
-            //             chatId,
-            //             messageIndex,
-            //             latestKnownUpdate,
-            //         ),
-            //     ];
+            case "direct_chat":
+                return this.directChatEventsWindow(
+                    eventIndexRange,
+                    chatId,
+                    messageIndex,
+                    latestKnownUpdate,
+                );
             case "group_chat":
                 return this.groupChatEventsWindow(
                     eventIndexRange,
@@ -634,20 +632,60 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     latestKnownUpdate,
                 );
-            // case "channel":
-            //     return [
-            //         this.channelEventsWindow(
-            //             eventIndexRange,
-            //             chatId,
-            //             messageIndex,
-            //             threadRootMessageIndex,
-            //             latestKnownUpdate,
-            //         ),
-            //     ];
+            case "channel":
+                return this.channelEventsWindow(
+                    eventIndexRange,
+                    chatId,
+                    messageIndex,
+                    threadRootMessageIndex,
+                    latestKnownUpdate,
+                );
             default:
                 throw new Error("TODO - wip");
         }
     }
+
+    // chatEventsWindow(
+    //     eventIndexRange: IndexRange,
+    //     chatId: ChatIdentifier,
+    //     messageIndex: number,
+    //     threadRootMessageIndex: number | undefined,
+    //     latestKnownUpdate: bigint | undefined,
+    // ): PromiseChain<EventsResponse<ChatEvent>> {
+    //     latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
+    //     switch (chatId.kind) {
+    //         // case "direct_chat":
+    //         //     return [
+    //         //         this.directChatEventsWindow(
+    //         //             eventIndexRange,
+    //         //             chatId,
+    //         //             messageIndex,
+    //         //             latestKnownUpdate,
+    //         //         ),
+    //         //     ];
+    //         case "group_chat":
+    //             return this.groupChatEventsWindow(
+    //                 eventIndexRange,
+    //                 chatId,
+    //                 messageIndex,
+    //                 threadRootMessageIndex,
+    //                 latestKnownUpdate,
+    //             );
+    //         // case "channel":
+    //         //     return [
+    //         //         this.channelEventsWindow(
+    //         //             eventIndexRange,
+    //         //             chatId,
+    //         //             messageIndex,
+    //         //             threadRootMessageIndex,
+    //         //             latestKnownUpdate,
+    //         //         ),
+    //         //     ];
+    //         default:
+    //             throw new Error("TODO - wip");
+    //     }
+    // }
 
     private directChatEventsWindow(
         eventIndexRange: IndexRange,
@@ -779,20 +817,41 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): PromiseChain<EventsResponse<ChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const rawEvents = this.getGroupClient(chatId.groupId).chatEventsWindow(
             eventIndexRange,
             messageIndex,
             threadRootMessageIndex,
             latestKnownUpdate,
         );
-        return this.rehydrateEventResponse2(
+        return this.rehydrateEventResponse(
             chatId,
             rawEvents,
             threadRootMessageIndex,
             latestKnownUpdate,
         );
     }
+
+    // private groupChatEventsWindow(
+    //     eventIndexRange: IndexRange,
+    //     chatId: GroupChatIdentifier,
+    //     messageIndex: number,
+    //     threadRootMessageIndex: number | undefined,
+    //     latestKnownUpdate: bigint | undefined,
+    // ): PromiseChain<EventsResponse<ChatEvent>> {
+    //     const rawEvents = this.getGroupClient(chatId.groupId).chatEventsWindow(
+    //         eventIndexRange,
+    //         messageIndex,
+    //         threadRootMessageIndex,
+    //         latestKnownUpdate,
+    //     );
+    //     return this.rehydrateEventResponse2(
+    //         chatId,
+    //         rawEvents,
+    //         threadRootMessageIndex,
+    //         latestKnownUpdate,
+    //     );
+    // }
 
     private channelEvents(
         eventIndexRange: IndexRange,
@@ -1120,38 +1179,38 @@ export class OpenChatAgent extends EventTarget {
         return ev;
     }
 
-    private async rehydrateEventResponse2<T extends ChatEvent>(
-        currentChatId: ChatIdentifier,
-        eventsPromise: PromiseChain<EventsResponse<T>>,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): PromiseChain<EventsResponse<T>> {
-        const { value, continuation } = await eventsPromise;
+    // private async rehydrateEventResponse2<T extends ChatEvent>(
+    //     currentChatId: ChatIdentifier,
+    //     eventsPromise: PromiseChain<EventsResponse<T>>,
+    //     threadRootMessageIndex: number | undefined,
+    //     latestKnownUpdate: bigint | undefined,
+    // ): PromiseChain<EventsResponse<T>> {
+    //     const { value, continuation } = await eventsPromise;
 
-        if (value !== "events_failed") {
-            const missing = await this.resolveMissingIndexes(
-                currentChatId,
-                value.events,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            );
+    //     if (value !== "events_failed") {
+    //         const missing = await this.resolveMissingIndexes(
+    //             currentChatId,
+    //             value.events,
+    //             threadRootMessageIndex,
+    //             latestKnownUpdate,
+    //         );
 
-            value.events = value.events.map((e) =>
-                this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
-            );
-        }
-        return {
-            value,
-            continuation: continuation
-                ? this.rehydrateEventResponse2(
-                      currentChatId,
-                      continuation,
-                      threadRootMessageIndex,
-                      latestKnownUpdate,
-                  )
-                : undefined,
-        };
-    }
+    //         value.events = value.events.map((e) =>
+    //             this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
+    //         );
+    //     }
+    //     return {
+    //         value,
+    //         continuation: continuation
+    //             ? this.rehydrateEventResponse2(
+    //                   currentChatId,
+    //                   continuation,
+    //                   threadRootMessageIndex,
+    //                   latestKnownUpdate,
+    //               )
+    //             : undefined,
+    //     };
+    // }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
         currentChatId: ChatIdentifier,
@@ -1391,11 +1450,9 @@ export class OpenChatAgent extends EventTarget {
         return [...byCommunity.values()].flat();
     }
 
-    async getUpdates(): Promise<UpdatesResult> {
+    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult> {
         const start = Date.now();
         let numberOfAsyncCalls = 0;
-
-        const current = await getCachedChats(this.db, this.principal);
 
         let directChats: DirectChatSummary[];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
@@ -1621,6 +1678,21 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
         };
+    }
+
+    async getUpdates(initialLoad: boolean): PromiseChain<UpdatesResult> {
+        return getCachedChats(this.db, this.principal).then((cachedState) => {
+            return cachedState && initialLoad
+                ? promiseChain(
+                      {
+                          state: this.hydrateChatState(cachedState),
+                          updatedEvents: new Map(),
+                          anyUpdates: false,
+                      },
+                      this._getUpdates(cachedState),
+                  )
+                : promiseChain(this._getUpdates(cachedState));
+        });
     }
 
     private removeExpiredLatestMessages(
