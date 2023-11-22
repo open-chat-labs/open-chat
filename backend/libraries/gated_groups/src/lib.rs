@@ -101,8 +101,9 @@ async fn try_transfer_from(
             spender_subaccount: None,
             from: from.into(),
             to: this_canister_id.into(),
-            amount: gate.amount.into(),
-            fee: None,
+            // The amount the gate amount less the approval fee and the transfer_from fee
+            amount: (gate.amount - 2 * gate.fee).into(),
+            fee: Some(gate.fee.into()),
             memo: Some(MEMO_JOINING_FEE.to_vec().into()),
             created_at_time: Some(now_nanos),
         },
