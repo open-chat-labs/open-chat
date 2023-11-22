@@ -4651,25 +4651,28 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadChats() {
         try {
             const init = this._liveState.chatsInitialised;
+
+            // TODO - how does this work now that we are loading in chunks
             chatsLoading.set(!init);
 
             const updateRegistryTask = !init ? this.updateRegistry() : undefined;
 
             return new Promise<void>((resolve) => {
-                this.sendRequest({
+                this.sendStreamRequest({
                     kind: "getUpdates",
                     initialLoad: !init,
-                    onResponse: async (resp, final) => {
+                })
+                    .subscribe(async (resp) => {
                         await this.loadChatsResponse(
                             updateRegistryTask,
                             init,
                             resp as UpdatesResult,
                         );
-                        if (final) {
-                            resolve();
-                        }
-                    },
-                });
+                    })
+                    .catch((err) => this.config.logger.error("Error loading chats: ", err))
+                    .finally(() => {
+                        resolve();
+                    });
             });
         } catch (err) {
             this.config.logger.error("Error loading chats", err as Error);
