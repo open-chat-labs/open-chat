@@ -1061,7 +1061,9 @@
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
         "searchUserGroups": "Benutzergruppen durchsuchen...",
         "userGroupName": "Name der Benutzergruppe",
-        "noSpaces": "Keine Leerzeichen erlaubt"
+        "noSpaces": "Keine Leerzeichen erlaubt",
+        "noMatch": "Keine passenden Communities gefunden",
+        "refineSearch": "Versuchen Sie, Ihre Suche zu verfeinern"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",

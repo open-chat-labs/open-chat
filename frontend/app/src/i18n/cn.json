@@ -1059,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** 群组成员",
         "searchUserGroups": "搜索用户组...",
         "userGroupName": "用户组名",
-        "noSpaces": "不允许有空格"
+        "noSpaces": "不允许有空格",
+        "noMatch": "未找到匹配的社区",
+        "refineSearch": "尝试优化您的搜索"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

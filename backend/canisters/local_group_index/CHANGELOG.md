@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
+- Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
 - Add crypto payment access gate ([#4774](https://github.com/open-chat-labs/open-chat/pull/4774))
 
 ## [[2.0.925](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.925-local_group_index)] - 2023-11-03

@@ -1,9 +1,54 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Empty {}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BallotInfo {
+    pub proposal_id: Option<ProposalId>,
+    pub vote: i32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Neuron {
+    pub id: Option<NeuronId>,
+    pub account: Vec<u8>,
+    pub controller: Option<Principal>,
+    pub hot_keys: Vec<Principal>,
+    pub cached_neuron_stake_e8s: u64,
+    pub neuron_fees_e8s: u64,
+    pub created_timestamp_seconds: u64,
+    pub aging_since_timestamp_seconds: u64,
+    pub spawn_at_timestamp_seconds: Option<u64>,
+    pub followees: HashMap<i32, neuron::Followees>,
+    pub recent_ballots: Vec<BallotInfo>,
+    pub kyc_verified: bool,
+    pub maturity_e8s_equivalent: u64,
+    pub staked_maturity_e8s_equivalent: Option<u64>,
+    pub auto_stake_maturity: Option<bool>,
+    pub not_for_profit: bool,
+    pub joined_community_fund_timestamp_seconds: Option<u64>,
+    pub known_neuron_data: Option<KnownNeuronData>,
+    pub dissolve_state: Option<neuron::DissolveState>,
+}
+
+pub mod neuron {
+    use super::*;
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct Followees {
+        pub followees: Vec<NeuronId>,
+    }
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub enum DissolveState {
+        WhenDissolvedTimestampSeconds(u64),
+        DissolveDelaySeconds(u64),
+    }
+}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ManageNeuron {
@@ -210,6 +255,23 @@ pub mod manage_neuron_response {
         Merge(Empty),
         StakeMaturity(Empty),
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct KnownNeuronData {
+    pub name: String,
+    pub description: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ListNeurons {
+    pub neuron_ids: Vec<u64>,
+    pub include_neurons_readable_by_caller: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ListNeuronsResponse {
+    pub full_neurons: Vec<Neuron>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -18,8 +18,6 @@ members = [
     "backend/canisters/community/impl",
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
-    "backend/canisters/exchange_bot/api",
-    "backend/canisters/exchange_bot/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",

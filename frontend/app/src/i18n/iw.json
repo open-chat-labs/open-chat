@@ -1057,7 +1057,9 @@
         "namedUserGroupMembers": "**{name}** חברי הקבוצה",
         "searchUserGroups": "חפש קבוצות משתמשים...",
         "userGroupName": "שם קבוצת משתמשים",
-        "noSpaces": "אין רווחים"
+        "noSpaces": "אין רווחים",
+        "noMatch": "לא נמצאו קהילות תואמות",
+        "refineSearch": "נסה לצמצם את החיפוש שלך"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

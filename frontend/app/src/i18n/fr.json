@@ -1059,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** membres du groupe",
         "searchUserGroups": "Rechercher des groupes d'utilisateurs...",
         "userGroupName": "Nom du groupe d'utilisateurs",
-        "noSpaces": "aucun espace autorisé"
+        "noSpaces": "aucun espace autorisé",
+        "noMatch": "Aucune communauté correspondante trouvée",
+        "refineSearch": "essayez d'affiner votre recherche"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",

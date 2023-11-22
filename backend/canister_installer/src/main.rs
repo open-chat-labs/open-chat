@@ -20,7 +20,6 @@ async fn main() {
         cycles_dispenser: opts.cycles_dispenser,
         registry: opts.registry,
         market_maker: opts.market_maker,
-        exchange_bot: opts.exchange_bot,
         neuron_controller: opts.neuron_controller,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
@@ -82,9 +81,6 @@ struct Opts {
 
     #[arg(long)]
     market_maker: CanisterId,
-
-    #[arg(long)]
-    exchange_bot: CanisterId,
 
     #[arg(long)]
     neuron_controller: CanisterId,

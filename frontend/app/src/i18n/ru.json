@@ -1059,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** участники группы",
         "searchUserGroups": "Поиск групп пользователей...",
         "userGroupName": "Имя группы пользователей",
-        "noSpaces": "пробелы не допускаются"
+        "noSpaces": "пробелы не допускаются",
+        "noMatch": "Подходящих сообществ не найдено",
+        "refineSearch": "попробуйте уточнить поиск"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",

@@ -2,7 +2,7 @@ use crate::model::direct_chat::DirectChat;
 use chat_events::{ChatInternal, ChatMetricsInternal, PushMessageArgs};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use types::{ChatId, EventWrapper, Message, MessageIndex, TimestampMillis, Timestamped, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
@@ -10,6 +10,8 @@ pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
+    #[serde(default)]
+    chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
 }
 
 impl DirectChats {
@@ -25,6 +27,15 @@ impl DirectChats {
         self.direct_chats.values().filter(move |c| c.has_updates_since(since))
     }
 
+    pub fn removed_since(&self, since: TimestampMillis) -> Vec<ChatId> {
+        self.chats_removed
+            .iter()
+            .rev()
+            .take_while(|(ts, _)| *ts > since)
+            .map(|(_, c)| *c)
+            .collect()
+    }
+
     pub fn pinned(&self) -> &Vec<ChatId> {
         &self.pinned.value
     }
@@ -34,7 +45,9 @@ impl DirectChats {
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.direct_chats.values().any(|c| c.has_updates_since(since)) || self.pinned.timestamp > since
+        self.direct_chats.values().any(|c| c.has_updates_since(since))
+            || self.pinned.timestamp > since
+            || self.chats_removed.last().map_or(false, |(ts, _)| *ts > since)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
@@ -114,6 +127,15 @@ impl DirectChats {
         if self.pinned.value.contains(chat_id) {
             self.pinned.timestamp = now;
             self.pinned.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
+        }
+    }
+
+    pub fn remove(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<DirectChat> {
+        if let Some(chat) = self.direct_chats.remove(&chat_id) {
+            self.chats_removed.insert((now, chat_id));
+            Some(chat)
+        } else {
+            None
         }
     }
 }
