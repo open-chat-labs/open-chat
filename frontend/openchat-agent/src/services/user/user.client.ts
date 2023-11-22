@@ -102,7 +102,6 @@ import {
     submitProposalResponse,
     reportMessageResponse,
 } from "./mappers";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
     type Database,
     getCachedEvents,
@@ -137,6 +136,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import type { MessageContext } from "openchat-shared";
 import type { PendingCryptocurrencyTransfer } from "openchat-shared";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
 
 export class UserClient extends CandidService {
     private userService: UserService;

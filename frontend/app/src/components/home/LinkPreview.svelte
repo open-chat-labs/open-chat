@@ -23,7 +23,7 @@
 
     $: youtubeMatch = text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
-    $: networkStatus = client.networkStatus;
+    $: offlineStore = client.offlineStore;
 
     function closestAncestor(
         el: HTMLElement | null | undefined,
@@ -55,7 +55,7 @@
             intersecting &&
             !$eventListScrolling &&
             !rendered &&
-            $networkStatus === "online"
+            !$offlineStore
         ) {
             // make sure we only actually *load* the preview(s) once
             previewsPromise = previewsPromise ?? loadPreviews(links);

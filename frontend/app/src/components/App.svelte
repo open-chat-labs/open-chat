@@ -70,6 +70,7 @@
 
     setContext<OpenChat>("client", client);
 
+    $: networkInformation = client.networkInformation;
     $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);
     $: anonUser = client.anonUser;
@@ -78,6 +79,8 @@
         landingPageRoute ||
         (homeRoute && $identityState.kind === "anon" && $anonUser) || // show landing page if the anon user hits "/"
         (($identityState.kind === "anon" || $identityState.kind === "logging_in") && $framed); // show landing page if anon and running in a frame
+
+    $: console.log("NetworkInfo: ", $networkInformation);
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();

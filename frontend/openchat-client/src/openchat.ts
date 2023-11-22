@@ -420,7 +420,7 @@ import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
 import { verifyCredential } from "./utils/credentials";
-import { networkStatus } from "./stores/network";
+import { offlineStore } from "./stores/network";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -630,7 +630,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        this._cachePrimer = new CachePrimer(this);
+        // this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -5614,7 +5614,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
-    networkStatus = networkStatus;
+    offlineStore = offlineStore;
 
     // current community stores
     chatListScope = chatListScopeStore;

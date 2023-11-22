@@ -189,7 +189,7 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
-    $: networkStatus = client.networkStatus;
+    $: offlineStore = client.offlineStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -1035,7 +1035,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main class:anon={$anonUser} class:offline={$networkStatus === "offline"}>
+<main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1109,7 +1109,7 @@
     <AnonFooter />
 {/if}
 
-{#if $networkStatus === "offline"}
+{#if $offlineStore}
     <OfflineFooter />
 {/if}
 

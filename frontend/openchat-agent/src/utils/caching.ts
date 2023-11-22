@@ -1,4 +1,3 @@
-import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
 import {
     openDB,
     type DBSchema,
@@ -35,6 +34,8 @@ import {
     chatIdentifierToString,
     ChatMap,
     MessageContextMap,
+    MAX_EVENTS,
+    MAX_MESSAGES,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 

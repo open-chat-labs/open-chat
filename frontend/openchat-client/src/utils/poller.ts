@@ -1,6 +1,6 @@
 import { derived, type Unsubscriber } from "svelte/store";
 import { background } from "../stores/background";
-import { networkStatus } from "../stores/network";
+import { offlineStore } from "../stores/network";
 
 type PollerEnvironment = {
     background: boolean;
@@ -23,13 +23,10 @@ export class Poller {
         private idleInterval?: number,
         private immediate?: boolean, // whether to kick off the first iteration immediately
     ) {
-        const statusStore = derived(
-            [background, networkStatus],
-            ([$background, $networkStatus]) => ({
-                background: $background,
-                offline: $networkStatus === "offline",
-            }),
-        );
+        const statusStore = derived([background, offlineStore], ([$background, $offlineStore]) => ({
+            background: $background,
+            offline: $offlineStore,
+        }));
 
         // when the poller environment changes, restart
         this.unsubscribeStatus = statusStore.subscribe((status) => {
@@ -61,8 +58,8 @@ export class Poller {
             this.lastExecutionTimestamp !== undefined
                 ? Math.max(0, this.lastExecutionTimestamp + interval - Date.now())
                 : this.immediate
-                ? 0
-                : interval;
+                  ? 0
+                  : interval;
 
         const runThenLoop = () => {
             if (this.stopped || this.runnerId !== runnerId) return;
