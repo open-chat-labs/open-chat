@@ -19,7 +19,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
-    use types::CanisterId;
+    use types::{CanisterId, CanisterWasm};
     use utils::hasher::hash_bytes;
 
     pub fn add_or_update_users(env: &mut PocketIc, sender: Principal, canister_id: CanisterId, users: Vec<UserConfig>) {
@@ -74,5 +74,28 @@ pub mod happy_path {
         } else {
             panic!("'user' error: {response:?}");
         }
+    }
+
+    pub fn upgrade_notifications_canister_wasm(
+        env: &mut PocketIc,
+        sender: Principal,
+        storage_index_canister_id: CanisterId,
+        wasm: CanisterWasm,
+    ) {
+        let response = super::upgrade_bucket_canister_wasm(
+            env,
+            sender,
+            storage_index_canister_id,
+            &storage_index_canister::upgrade_bucket_canister_wasm::Args {
+                wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        );
+
+        assert!(matches!(
+            response,
+            storage_index_canister::upgrade_bucket_canister_wasm::Response::Success
+        ));
     }
 }
