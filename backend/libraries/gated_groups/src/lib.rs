@@ -1,8 +1,12 @@
 use candid::Principal;
+use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
-use types::{AccessGate, CanisterId, GateCheckFailedReason, SnsNeuronGate, UserId, VerifiedCredentialGate};
+use types::{
+    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampNanos, UserId, VerifiedCredentialGate,
+};
 use user_index_canister_c2c_client::LookupUserError;
+use utils::consts::MEMO_JOINING_FEE;
 
 pub enum CheckIfPassesGateResult {
     Success,
@@ -10,15 +14,20 @@ pub enum CheckIfPassesGateResult {
     InternalError(String),
 }
 
-pub async fn check_if_passes_gate(
-    gate: &AccessGate,
-    user_id: UserId,
-    user_index_canister_id: CanisterId,
-) -> CheckIfPassesGateResult {
-    match gate {
-        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(g, user_id).await,
-        AccessGate::DiamondMember => check_diamond_member_gate(user_id, user_index_canister_id).await,
-        AccessGate::SnsNeuron(g) => check_sns_neuron_gate(g, user_id).await,
+pub struct CheckGateArgs {
+    pub gate: AccessGate,
+    pub user_index_canister: CanisterId,
+    pub user_id: UserId,
+    pub this_canister: CanisterId,
+    pub now_nanos: TimestampNanos,
+}
+
+pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResult {
+    match args.gate {
+        AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.user_id).await,
+        AccessGate::DiamondMember => check_diamond_member_gate(args.user_id, args.user_index_canister).await,
+        AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
+        AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now_nanos).await,
     }
 }
 
@@ -76,6 +85,36 @@ async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIf
             CheckIfPassesGateResult::Success
         }
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'list_neurons': {error:?}")),
+    }
+}
+
+async fn try_transfer_from(
+    gate: &PaymentGate,
+    user_id: UserId,
+    this_canister_id: CanisterId,
+    now_nanos: TimestampNanos,
+) -> CheckIfPassesGateResult {
+    let from: Principal = user_id.into();
+    match icrc_ledger_canister_c2c_client::icrc2_transfer_from(
+        gate.ledger_canister_id,
+        &TransferFromArgs {
+            spender_subaccount: None,
+            from: from.into(),
+            to: this_canister_id.into(),
+            // The amount the gate amount less the approval fee and the transfer_from fee
+            amount: (gate.amount - 2 * gate.fee).into(),
+            fee: Some(gate.fee.into()),
+            memo: Some(MEMO_JOINING_FEE.to_vec().into()),
+            created_at_time: Some(now_nanos),
+        },
+    )
+    .await
+    {
+        Ok(icrc_ledger_canister::icrc2_transfer_from::Response::Ok(_)) => CheckIfPassesGateResult::Success,
+        Ok(icrc_ledger_canister::icrc2_transfer_from::Response::Err(err)) => {
+            CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err))
+        }
+        Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
     }
 }
 
