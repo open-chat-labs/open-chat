@@ -1,28 +1,25 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{mutate_state, read_state, run_regular_jobs, AddMemberArgs, RuntimeState};
-use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_chat_core::AddResult;
-use types::{AccessGate, CanisterId, MemberJoined, UserId, UsersUnblocked};
+use types::{AccessGate, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, args.user_id, state)) {
-        Ok(Some((gate, user_index_canister_id))) => {
-            match check_if_passes_gate(&gate, args.user_id, user_index_canister_id).await {
-                CheckIfPassesGateResult::Success => {}
-                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-                CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
-            }
-        }
+    match read_state(|state| is_permitted_to_join(&args, state)) {
+        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+        },
         Ok(None) => {}
         Err(response) => return response,
     };
@@ -30,12 +27,7 @@ async fn c2c_join_group(args: Args) -> Response {
     mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-fn is_permitted_to_join(
-    invite_code: Option<u64>,
-    user_principal: Principal,
-    user_id: UserId,
-    state: &RuntimeState,
-) -> Result<Option<(AccessGate, CanisterId)>, Response> {
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<CheckGateArgs>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks
@@ -43,20 +35,21 @@ fn is_permitted_to_join(
         Ok(None)
     } else if state.data.is_frozen() {
         Err(ChatFrozen)
-    } else if !state.data.is_accessible(user_principal, invite_code) {
+    } else if !state.data.is_accessible(args.principal, args.invite_code) {
         Err(NotInvited)
     } else if let Some(limit) = state.data.chat.members.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
-    } else if let Some(member) = state.data.chat.members.get(&user_id) {
+    } else if let Some(member) = state.data.chat.members.get(&args.user_id) {
         let summary = state.summary(member);
         Err(AlreadyInGroupV2(Box::new(summary)))
     } else {
-        Ok(state
-            .data
-            .chat
-            .gate
-            .as_ref()
-            .map(|g| (g.clone(), state.data.user_index_canister_id)))
+        Ok(state.data.chat.gate.as_ref().map(|g| CheckGateArgs {
+            gate: g.clone(),
+            user_index_canister: state.data.user_index_canister_id,
+            user_id: args.user_id,
+            this_canister: state.env.canister_id(),
+            now_nanos: state.env.now_nanos(),
+        }))
     }
 }
 
@@ -123,6 +116,17 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             new_event = true;
 
             let summary = state.summary(&participant);
+
+            // If there is a payment gate on this channel then queue payments to owner(s) and treasury
+            let payment_gate = state.data.chat.gate.value.as_ref().and_then(|access_gate| match access_gate {
+                AccessGate::Payment(g) => Some(g.clone()),
+                _ => None,
+            });
+
+            if let Some(gate) = payment_gate {
+                state.queue_access_gate_payments(gate);
+            }
+
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {

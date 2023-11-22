@@ -10,6 +10,7 @@ use canister_timer_jobs::TimerJobs;
 use chat_events::ChatMetricsInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::AccessRulesInternal;
+use group_community_common::{PaymentReceipts, PaymentRecipient, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
 use instruction_counts_log::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use msgpack::serialize_then_unwrap;
@@ -20,8 +21,8 @@ use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
-    CommunityPermissions, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification, Rules,
-    TimestampMillis, Timestamped, UserId,
+    CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
+    PaymentGate, Rules, TimestampMillis, Timestamped, UserId,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -87,6 +88,42 @@ impl RuntimeState {
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
+    }
+
+    pub fn queue_access_gate_payments(&mut self, gate: PaymentGate) {
+        // Queue a payment to each owner less the fee
+        let owners: Vec<UserId> = self
+            .data
+            .members
+            .iter()
+            .filter(|m| matches!(m.role, CommunityRole::Owner))
+            .map(|m| m.user_id)
+            .collect();
+
+        let owner_count = owners.len() as u128;
+        let owner_share = (gate.amount * 4 / 5) / owner_count;
+
+        for owner in owners {
+            self.data.pending_payments_queue.push(PendingPayment {
+                amount: owner_share - gate.fee,
+                fee: gate.fee,
+                ledger_canister: gate.ledger_canister_id,
+                recipient: PaymentRecipient::Member(owner),
+                reason: PendingPaymentReason::AccessGate,
+            });
+        }
+
+        // Queue the remainder to the treasury less the fee
+        let treasury_share = gate.amount - (owner_share * owner_count);
+        self.data.pending_payments_queue.push(PendingPayment {
+            amount: treasury_share - gate.fee,
+            fee: gate.fee,
+            ledger_canister: gate.ledger_canister_id,
+            recipient: PaymentRecipient::Treasury,
+            reason: PendingPaymentReason::AccessGate,
+        });
+
+        jobs::make_pending_payments::start_job_if_required(self);
     }
 
     pub fn summary(&self, member: Option<&CommunityMemberInternal>) -> CommunityCanisterCommunitySummary {
@@ -246,6 +283,10 @@ struct Data {
     cached_chat_metrics: Timestamped<ChatMetrics>,
     #[serde(default)]
     rng_seed: [u8; 32],
+    #[serde(default)]
+    pub pending_payments_queue: PendingPaymentsQueue,
+    #[serde(default)]
+    pub total_payment_receipts: PaymentReceipts,
 }
 
 impl Data {
@@ -311,6 +352,8 @@ impl Data {
             test_mode,
             cached_chat_metrics: Timestamped::default(),
             rng_seed: [0; 32],
+            pending_payments_queue: PendingPaymentsQueue::default(),
+            total_payment_receipts: PaymentReceipts::default(),
         }
     }
 
