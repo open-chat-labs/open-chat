@@ -12,13 +12,3 @@ export type ExchangeTokenSwapArgs = {
     swapCanisterId: string;
     zeroForOne: boolean;
 };
-
-export type SwapTokensResponse =
-    | {
-          kind: "success";
-          amountOut: bigint;
-      }
-    | {
-          kind: "error";
-          message: string;
-      };

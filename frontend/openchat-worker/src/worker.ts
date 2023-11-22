@@ -1356,6 +1356,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "tokenSwapStatus":
+                executeThenReply(payload, correlationId, agent.tokenSwapStatus(payload.swapId));
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

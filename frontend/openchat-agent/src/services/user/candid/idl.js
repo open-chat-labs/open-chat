@@ -1426,24 +1426,20 @@ export const idlFactory = ({ IDL }) => {
   const TokenSwapStatusResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'Success' : IDL.Record({
-      'status' : IDL.Record({
-        'started' : TimestampMillis,
-        'deposit_account' : IDL.Opt(
-          IDL.Variant({ 'Ok' : Account, 'Err' : IDL.Text })
-        ),
-        'withdrawn_from_dex' : IDL.Opt(
-          IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
-        ),
-        'amount_swapped' : IDL.Opt(
-          IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
-        ),
-        'notified_dex' : IDL.Opt(
-          IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
-        ),
-        'transfer' : IDL.Opt(
-          IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })
-        ),
-      }),
+      'started' : TimestampMillis,
+      'deposit_account' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+      ),
+      'amount_swapped' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+      ),
+      'notify_dex' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+      ),
+      'transfer' : IDL.Opt(IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })),
+      'withdraw_from_dex' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+      ),
     }),
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });

@@ -71,6 +71,7 @@ import type {
     MessageContext,
     PendingCryptocurrencyTransfer,
     SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -107,6 +108,7 @@ import {
     submitProposalResponse,
     reportMessageResponse,
     swapTokensResponse,
+    tokenSwapStatusResponse,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -1194,6 +1196,17 @@ export class UserClient extends CandidService {
                 min_output_amount: minAmountOut,
             }),
             swapTokensResponse,
+        );
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        const args = {
+            swap_id: swapId,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.token_swap_status(args),
+            tokenSwapStatusResponse,
+            args,
         );
     }
 }

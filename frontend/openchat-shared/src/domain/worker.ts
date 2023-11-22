@@ -98,6 +98,8 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -140,7 +142,7 @@ import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
-import type { DexId, SwapTokensResponse, TokenSwapPool } from "./dexes";
+import type { DexId, TokenSwapPool } from "./dexes";
 /**
  * Worker request types
  */
@@ -296,7 +298,8 @@ export type WorkerRequest =
     | TipMessage
     | GetTokenSwapPools
     | QuoteTokenSwap
-    | SwapTokens;
+    | SwapTokens
+    | TokenSwapStatus;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -335,6 +338,11 @@ type SwapTokens = {
     amountIn: bigint;
     minAmountOut: bigint;
     pool: TokenSwapPool;
+};
+
+type TokenSwapStatus = {
+    kind: "tokenSwapStatus";
+    swapId: bigint;
 };
 
 type SetCommunityIndexes = {
@@ -1130,7 +1138,8 @@ export type WorkerResponseInner =
     | Record<string, bigint>
     | TokenSwapPool[]
     | [DexId, bigint][]
-    | SwapTokensResponse;
+    | SwapTokensResponse
+    | TokenSwapStatusResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1659,4 +1668,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? [DexId, bigint][]
     : T extends SwapTokens
     ? SwapTokensResponse
+    : T extends TokenSwapStatus
+    ? TokenSwapStatusResponse
     : never;

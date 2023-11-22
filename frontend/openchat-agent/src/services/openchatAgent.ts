@@ -109,6 +109,7 @@ import type {
     ThreadPreviewsResponse,
     ThreadSyncDetails,
     TokenSwapPool,
+    TokenSwapStatusResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -2817,8 +2818,8 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    async getTokenSwapPools(inputToken: string, outputTokens: string[]): Promise<TokenSwapPool[]> {
-        return await this._dexesAgent.getSwapPools(inputToken, new Set(outputTokens));
+    getTokenSwapPools(inputToken: string, outputTokens: string[]): Promise<TokenSwapPool[]> {
+        return this._dexesAgent.getSwapPools(inputToken, new Set(outputTokens));
     }
 
     quoteTokenSwap(
@@ -2829,7 +2830,7 @@ export class OpenChatAgent extends EventTarget {
         return this._dexesAgent.quoteSwap(inputToken, outputToken, amountIn);
     }
 
-    async swapTokens(
+    swapTokens(
         swapId: bigint,
         inputToken: CryptocurrencyDetails,
         outputToken: CryptocurrencyDetails,
@@ -2842,7 +2843,7 @@ export class OpenChatAgent extends EventTarget {
             swapCanisterId: pool.canisterId,
             zeroForOne: pool.token0 === inputToken.ledger,
         };
-        return await this.userClient.swapTokens(
+        return this.userClient.swapTokens(
             swapId,
             inputToken,
             outputToken,
@@ -2850,5 +2851,9 @@ export class OpenChatAgent extends EventTarget {
             minAmountOut,
             exchangeArgs,
         );
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        return this.userClient.tokenSwapStatus(swapId);
     }
 }

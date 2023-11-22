@@ -344,6 +344,7 @@ import type {
     TokenSwapPool,
     DexId,
     SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5161,6 +5162,13 @@ export class OpenChat extends OpenChatAgentWorker {
             amountIn,
             minAmountOut,
             pool,
+        });
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        return this.sendRequest({
+            kind: "tokenSwapStatus",
+            swapId,
         });
     }
 

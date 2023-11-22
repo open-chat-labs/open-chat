@@ -181,28 +181,26 @@ type TokenSwapStatusArgs = record {
 
 type TokenSwapStatusResponse = variant {
     Success : record {
-        status : record {
-            started : TimestampMillis;
-            deposit_account : opt variant {
-                Ok : Account;
-                Err : text;
-            };
-            transfer : opt variant {
-                Ok : nat64;
-                Err : text;
-            };
-            notified_dex : opt variant {
-                Ok;
-                Err : text;
-            };
-            amount_swapped : opt variant {
-                Ok : nat;
-                Err : text;
-            };
-            withdrawn_from_dex : opt variant {
-                Ok;
-                Err : text;
-            };
+        started : TimestampMillis;
+        deposit_account : opt variant {
+            Ok;
+            Err : text;
+        };
+        transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        notify_dex : opt variant {
+            Ok;
+            Err : text;
+        };
+        amount_swapped : opt variant {
+            Ok : nat;
+            Err : text;
+        };
+        withdraw_from_dex : opt variant {
+            Ok : nat;
+            Err : text;
         };
     };
     NotFound;
