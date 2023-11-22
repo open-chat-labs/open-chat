@@ -44,6 +44,7 @@ impl Tokens {
                 transaction_url_format,
                 added: now,
                 last_updated: now,
+                supported_standards: Vec::new(),
             });
             self.last_updated = now;
             true
@@ -79,6 +80,15 @@ impl Tokens {
             true
         } else {
             false
+        }
+    }
+
+    pub fn set_standards(&mut self, ledger_canister_id: CanisterId, supported_standards: Vec<String>, now: TimestampMillis) {
+        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+            if token.supported_standards != supported_standards {
+                token.supported_standards = supported_standards;
+                token.last_updated = now;
+            }
         }
     }
 
