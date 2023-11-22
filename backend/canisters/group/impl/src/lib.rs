@@ -131,7 +131,7 @@ impl RuntimeState {
         }
 
         // Queue the remainder to the treasury less the fee
-        let treasury_share = amount_available - (owner_share * owner_count);
+        let treasury_share = amount_available.saturating_sub(owner_share * owner_count);
         self.data.pending_payments_queue.push(PendingPayment {
             amount: treasury_share - gate.fee,
             fee: gate.fee,

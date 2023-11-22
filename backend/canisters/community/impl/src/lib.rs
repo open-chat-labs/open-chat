@@ -91,6 +91,8 @@ impl RuntimeState {
     }
 
     pub fn queue_access_gate_payments(&mut self, gate: PaymentGate) {
+        // The amount available is the gate amount less the approval fee and the transfer_from fee
+        let amount_available = gate.amount - 2 * gate.fee;
         // Queue a payment to each owner less the fee
         let owners: Vec<UserId> = self
             .data
@@ -101,7 +103,7 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (gate.amount * 4 / 5) / owner_count;
+        let owner_share = (amount_available * 4 / 5) / owner_count;
 
         for owner in owners {
             self.data.pending_payments_queue.push(PendingPayment {
@@ -114,7 +116,7 @@ impl RuntimeState {
         }
 
         // Queue the remainder to the treasury less the fee
-        let treasury_share = gate.amount - (owner_share * owner_count);
+        let treasury_share = amount_available.saturating_sub(owner_share * owner_count);
         self.data.pending_payments_queue.push(PendingPayment {
             amount: treasury_share - gate.fee,
             fee: gate.fee,
