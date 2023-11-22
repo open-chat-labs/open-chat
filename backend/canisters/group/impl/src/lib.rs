@@ -121,24 +121,30 @@ impl RuntimeState {
         let owner_share = (amount_available * 4 / 5) / owner_count;
 
         for owner in owners {
-            self.data.pending_payments_queue.push(PendingPayment {
-                amount: owner_share.saturating_sub(gate.fee),
-                fee: gate.fee,
-                ledger_canister: gate.ledger_canister_id,
-                recipient: PaymentRecipient::Member(owner),
-                reason: PendingPaymentReason::AccessGate,
-            });
+            let amount = owner_share.saturating_sub(gate.fee);
+            if amount > 0 {
+                self.data.pending_payments_queue.push(PendingPayment {
+                    amount,
+                    fee: gate.fee,
+                    ledger_canister: gate.ledger_canister_id,
+                    recipient: PaymentRecipient::Member(owner),
+                    reason: PendingPaymentReason::AccessGate,
+                });
+            }
         }
 
         // Queue the remainder to the treasury less the fee
         let treasury_share = amount_available.saturating_sub(owner_share * owner_count);
-        self.data.pending_payments_queue.push(PendingPayment {
-            amount: treasury_share - gate.fee,
-            fee: gate.fee,
-            ledger_canister: gate.ledger_canister_id,
-            recipient: PaymentRecipient::Treasury,
-            reason: PendingPaymentReason::AccessGate,
-        });
+        let amount = treasury_share.saturating_sub(gate.fee);
+        if amount > 0 {
+            self.data.pending_payments_queue.push(PendingPayment {
+                amount,
+                fee: gate.fee,
+                ledger_canister: gate.ledger_canister_id,
+                recipient: PaymentRecipient::Treasury,
+                reason: PendingPaymentReason::AccessGate,
+            });
+        }
 
         jobs::make_pending_payments::start_job_if_required(self);
     }
