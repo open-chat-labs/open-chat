@@ -119,10 +119,9 @@ impl RuntimeState {
 
         let owner_count = owners.len() as u128;
         let owner_share = (amount_available * 4 / 5) / owner_count;
-
-        for owner in owners {
-            let amount = owner_share.saturating_sub(gate.fee);
-            if amount > 0 {
+        let amount = owner_share.saturating_sub(gate.fee);
+        if amount > 0 {
+            for owner in owners {
                 self.data.pending_payments_queue.push(PendingPayment {
                     amount,
                     fee: gate.fee,
