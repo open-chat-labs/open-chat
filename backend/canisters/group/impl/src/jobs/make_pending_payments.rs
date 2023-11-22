@@ -3,8 +3,8 @@ use candid::Principal;
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::BlockIndex;
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
 use ledger_utils::convert_to_subaccount;
 use std::cell::Cell;
 use std::time::Duration;
@@ -59,12 +59,12 @@ async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNa
         to,
         fee: Some(pending_payment.fee.into()),
         created_at_time: Some(now_nanos),
-        memo: Some(MEMO_JOINING_FEE.to_vec().try_into().unwrap()),
+        memo: Some(memo(pending_payment.reason)),
         amount: pending_payment.amount.into(),
     };
 
     match make_payment(pending_payment.ledger_canister, args).await {
-        Ok(_block_index) => {
+        Ok(_) => {
             if matches!(pending_payment.reason, PendingPaymentReason::AccessGate) {
                 if let PaymentRecipient::Member(user_id) = pending_payment.recipient {
                     mutate_state(|state| {
@@ -99,5 +99,11 @@ async fn make_payment(ledger_canister: CanisterId, transfer_args: TransferArg) -
             error!(?error, ?transfer_args, "Transfer failed");
             Err(true)
         }
+    }
+}
+
+fn memo(reason: PendingPaymentReason) -> Memo {
+    match reason {
+        PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().try_into().unwrap(),
     }
 }
