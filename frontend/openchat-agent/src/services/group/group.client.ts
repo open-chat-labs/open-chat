@@ -190,19 +190,19 @@ export class GroupClient extends CandidService {
         return resp;
     }
 
-    private handleMissingEvents2(
-        missing: Set<number>,
-        threadRootMessageIndex: number | undefined,
-        latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> | undefined {
-        if (missing.size === 0) return undefined;
+    // private handleMissingEvents2(
+    //     missing: Set<number>,
+    //     threadRootMessageIndex: number | undefined,
+    //     latestKnownUpdate: bigint | undefined,
+    // ): Promise<EventsResponse<GroupChatEvent>> | undefined {
+    //     if (missing.size === 0) return undefined;
 
-        return this.chatEventsByIndexFromBackend(
-            [...missing],
-            threadRootMessageIndex,
-            latestKnownUpdate,
-        ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
-    }
+    //     return this.chatEventsByIndexFromBackend(
+    //         [...missing],
+    //         threadRootMessageIndex,
+    //         latestKnownUpdate,
+    //     ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+    // }
 
     private handleMissingEvents(
         [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
