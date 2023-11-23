@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added 
+
+- Support cancelling invites ([#4831](https://github.com/open-chat-labs/open-chat/pull/4831))
+
 ### Changed
 
 - Add msgpack endpoint for `delete_messages` ([#4742](https://github.com/open-chat-labs/open-chat/pull/4742))
