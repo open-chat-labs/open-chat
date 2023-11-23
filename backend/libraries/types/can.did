@@ -1,3 +1,5 @@
+import "../../external_canisters/icrc_ledger/api/can.did";
+
 type AccessorId = principal;
 type AccountIdentifier = blob;
 type BlockIndex = nat64;
@@ -891,7 +893,7 @@ type PollConfig = record {
     anonymous : bool;
     show_votes_before_end_date : bool;
     allow_multiple_votes_per_user : bool;
-    allow_user_to_change_vote: bool;
+    allow_user_to_change_vote : bool;
 };
 
 type PollContent = record {
@@ -1381,8 +1383,8 @@ type PushEventResult = record {
 
 type EventsSuccessResult = record {
     events : vec ChatEventWrapper;
-    expired_event_ranges: vec record { EventIndex; EventIndex };
-    expired_message_ranges: vec record { MessageIndex; MessageIndex };
+    expired_event_ranges : vec record { EventIndex; EventIndex };
+    expired_message_ranges : vec record { MessageIndex; MessageIndex };
     latest_event_index : nat32;
     chat_last_updated : TimestampMillis;
 };
@@ -1437,6 +1439,7 @@ type AccessGate = variant {
     DiamondMember;
     VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
+    Payment : PaymentGate;
 };
 
 type AccessGateUpdate = variant {
@@ -1461,11 +1464,18 @@ type SnsNeuronGate = record {
     min_dissolve_delay : opt Milliseconds;
 };
 
+type PaymentGate = record {
+    ledger_canister_id : CanisterId;
+    amount : nat;
+    fee : nat;
+};
+
 type GateCheckFailedReason = variant {
     NotDiamondMember;
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
+    PaymentFailed : TransferFromError;
 };
 
 type MessageReminderCreated = record {
