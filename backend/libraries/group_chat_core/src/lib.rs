@@ -1116,13 +1116,17 @@ impl GroupChatCore {
             }
 
             for user_id in user_ids {
-                self.invited_users.remove(&user_id, now);
+                self.cancel_invite_unchecked(&user_id, now);
             }
 
             Success
         } else {
             UserNotInGroup
         }
+    }
+
+    pub fn cancel_invite_unchecked(&mut self, user_id: &UserId, now: TimestampMillis) {
+        self.invited_users.remove(user_id, now);
     }
 
     pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {

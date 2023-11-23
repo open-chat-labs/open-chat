@@ -35,7 +35,7 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
             for user_id in args.user_ids {
                 if state.data.invited_users.remove(&user_id, now).is_some() {
                     for channel in state.data.channels.iter_mut() {
-                        channel.chat.invited_users.remove(&user_id, now);
+                        channel.chat.cancel_invite_unchecked(&user_id, now);
                     }
                 }
             }
