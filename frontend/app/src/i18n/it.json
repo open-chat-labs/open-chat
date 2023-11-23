@@ -206,7 +206,6 @@
         "voting_q": "Come voto le proposte?",
         "voting_a": "Unisciti al <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">gruppo di proposte OpenChat</a> e leggi <a href=\"/blog/governance\">questo post del blog</a> che offre una panoramica della governance di OpenChat e dispone di una guida dettagliata sul voto.",
         "buychat_q": "Come posso acquistare token CHAT?",
-        "buychat_a": "In questo momento devi prima <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acquistare ICP</a> che puoi poi scambiare CHAT su vari Decentralized Exchange (DEX).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY sta aggiungendo il supporto per <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> per i token ICRC1 (che include CHAT) rendendoli molto più facili da integrare con gli scambi centralizzati (CEX). Una volta che ciò sarà accaduto, è probabile che CHAT sarà disponibile per il trading su CEX per ICP o USDT.",
         "shortcuts_q": "Quali comandi di scelta rapida sono disponibili?",
         "shortcuts_a": "Esistono diversi comandi di scelta rapida che è possibile utilizzare dalla casella di immissione dei messaggi. <br /><br /> `/poll` - per creare un nuovo sondaggio <br /> `/search xyz` - per cercare nella chat corrente il termine \"xyz\" <br />`/gif kittens` - per cerca gif di gattini <br />`/icp 0.1` - per inviare 0,1 ICP a qualcuno <br />`/faq question_id*` - per creare e pubblicare un collegamento formattato a una domanda FAQ specifica <br />`/diamond ` - per creare e pubblicare un collegamento formattato con i dettagli dell'appartenenza Diamond <br/> <br/>I comandi che accettano un argomento possono essere utilizzati anche senza l'argomento.<br /><br />* Gli ID delle domande faq disponibili sono : airdrop, vote, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, scorciatoie",
         "content_q": "Che tipo di contenuto è consentito?",
@@ -220,7 +219,8 @@
         "info_q": "Dove posso trovare ulteriori informazioni su OpenChat?",
         "info_a": "Vai alla nostra <a href=\"/home\">home page</a> e trova i link alle <a href=\"/features\">funzionalità</a> di OpenChat, <a href=\"/roadmap\">roadmap</ a>, <a href=\"/whitepaper\">whitepaper</a>, <a href=\"/architecture\">architettura</a> e <a href=\"/blog\">blog</a>",
         "referral_rewards_q": "Cosa sono i premi di segnalazione?",
-        "referral_rewards_a": "Come membro Diamond puoi guadagnare premi per ogni utente che inviti e che diventerà a sua volta un membro Diamond. Riceverai la metà dei pagamenti Diamond effettuati entro il primo anno dall&#39;adesione a OpenChat. Puoi trovare il tuo link di riferimento nella sezione &quot;invita amici/familiari&quot; delle &quot;impostazioni del profilo&quot; dal menu principale.<br><br> Come potresti farlo? Ci sono molti modi. Puoi dirlo ad amici e parenti, twittare su OpenChat, creare un video su OpenChat descrivendo ciò che ti piace di esso e condividerlo su TikTok o YouTube. Potresti trasmettere in streaming su Twitch o scrivere un post sul blog o creare un podcast o ospitare uno spazio Twitter o persino organizzare un incontro nella vita reale. Non vediamo l&#39;ora di vedere tutte le idee creative che ti verranno in mente per spargere la voce!<br><br> In futuro offriremo premi per i referral a tutti gli utenti che inviti, indipendentemente dal fatto che diventino membri Diamond. Tuttavia, poiché questo è facilmente sfruttabile, dovremo prima introdurre un qualche tipo di &quot;prova della personalità unica&quot;."
+        "referral_rewards_a": "Come membro Diamond puoi guadagnare premi per ogni utente che inviti e che diventerà a sua volta un membro Diamond. Riceverai la metà dei pagamenti Diamond effettuati entro il primo anno dall&#39;adesione a OpenChat. Puoi trovare il tuo link di riferimento nella sezione &quot;invita amici/familiari&quot; delle &quot;impostazioni del profilo&quot; dal menu principale.<br><br> Come potresti farlo? Ci sono molti modi. Puoi dirlo ad amici e parenti, twittare su OpenChat, creare un video su OpenChat descrivendo ciò che ti piace di esso e condividerlo su TikTok o YouTube. Potresti trasmettere in streaming su Twitch o scrivere un post sul blog o creare un podcast o ospitare uno spazio Twitter o persino organizzare un incontro nella vita reale. Non vediamo l&#39;ora di vedere tutte le idee creative che ti verranno in mente per spargere la voce!<br><br> In futuro offriremo premi per i referral a tutti gli utenti che inviti, indipendentemente dal fatto che diventino membri Diamond. Tuttavia, poiché questo è facilmente sfruttabile, dovremo prima introdurre un qualche tipo di &quot;prova della personalità unica&quot;.",
+        "buychat_a": "In questo momento devi prima <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acquistare ICP</a> che potrai poi scambiare con CHAT su vari scambi decentralizzati (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY sta aggiungendo il supporto per l&#39; <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> per i token ICRC1 (che include CHAT) rendendoli molto più facili da integrare con gli scambi centralizzati (CEX). Una volta che ciò sarà accaduto, è probabile che CHAT sarà disponibile per fare trading su CEX per ICP o USDT."
     },
     "roadmap": "Tabella di marcia",
     "here": "qui",
@@ -951,7 +951,21 @@
         "credentialIssuer": "Emittente di credenziali",
         "requiredCredential": "Credenziale richiesta",
         "credentialCheckMessage": "Per aderire a questo {level} è necessario verificare le credenziali \"{credential}\" dell'emittente {issuer}",
-        "credentialGateInfo": "Solo gli utenti che possono fornire le credenziali \"{credential}\" da {issuer} potranno partecipare"
+        "credentialGateInfo": "Solo gli utenti che possono fornire le credenziali \"{credential}\" da {issuer} potranno partecipare",
+        "approvePaymentTitle": "Approva il pagamento",
+        "paymentApprovalMessage": "Per unirti a questo {level} devi pagare i token **{amount}** {token}.",
+        "paymentDistributionMessage": "Di questo, l&#39;80% va ai proprietari di {level} e il 20% alla tesoreria di OpenChat SNS.",
+        "tokenNeuronHolder": "titolare del neurone {token}",
+        "payment": "Pagamento",
+        "tokenPayment": "pagamento {token}",
+        "tokenPaymentInfo": "Gli utenti possono iscriversi solo se pagano un importo in token {token}.",
+        "chooseNervousSystem": "Scegli il sistema nervoso",
+        "chooseToken": "Scegli gettone",
+        "amount": "Importo (gettoni)",
+        "amountN": "Importo {n} token",
+        "paymentFailed": "Pagamento fallito",
+        "payAndJoin": "Paga e iscriviti a {level}",
+        "tokenComingSoon": "{token} (disponibile a breve)"
     },
     "communities": {
         "explore": "Esplora le comunità",
@@ -1013,7 +1027,9 @@
             "deleteUserGroupFailed": "Siamo spiacenti, non siamo riusciti a eliminare il gruppo utenti",
             "updateGroupFailed": "Siamo spiacenti, non siamo riusciti ad aggiornare il gruppo utenti",
             "createGroupFailed": "Siamo spiacenti, non siamo riusciti a creare il gruppo utenti",
-            "userGroupNameTaken": "Siamo spiacenti, il nome del gruppo utente è già in uso"
+            "userGroupNameTaken": "Siamo spiacenti, il nome del gruppo utente è già in uso",
+            "joinFailed": "Siamo spiacenti, non è stato possibile unirti a questa community",
+            "leaveFailed": "Siamo spiacenti, non siamo riusciti a rimuoverti da questa community"
         },
         "memberCount": "membri)",
         "channelCount": "canale(i)",
