@@ -4,10 +4,6 @@ BigInt.prototype.toJSON = function () {
     return this.toString();
 };
 
-console.log("Perf: ", performance.getEntries());
-
-performance.mark("bootstrapping_svelte");
-
 import "svelte";
 import App from "./components/App.svelte";
 

@@ -18,19 +18,3 @@ export function measure<T>(key: string, fn: () => Promise<T>): Promise<T> {
         return res;
     });
 }
-
-export function markTimeline(): string[] {
-    const marks = performance.getEntriesByType("mark");
-
-    const result: string[] = [];
-
-    marks.reduce((prev, mark) => {
-        const label = `Name: ${mark.name}, Start: ${mark.startTime}, Since prev: ${
-            mark.startTime - prev
-        }`;
-        result.push(label);
-        return mark.startTime;
-    }, 0);
-
-    return result;
-}
