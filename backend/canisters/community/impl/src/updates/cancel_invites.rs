@@ -23,7 +23,7 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
         if let Some(channel_id) = args.channel_id {
             if let Some(channel) = state.data.channels.get_mut(&channel_id) {
-                match channel.chat.cancel_invites(member.user_id, args.user_ids) {
+                match channel.chat.cancel_invites(member.user_id, args.user_ids, now) {
                     CancelInvitesResult::Success => Success,
                     CancelInvitesResult::UserSuspended => UserSuspended,
                     CancelInvitesResult::NotAuthorized | CancelInvitesResult::UserNotInGroup => NotAuthorized,
@@ -34,12 +34,13 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
         } else {
             if member.role.can_invite_users(&state.data.permissions) {
                 for user_id in args.user_ids {
-                    if state.data.invited_users.remove(&user_id, now) {
+                    if state.data.invited_users.remove(&user_id, now).is_some() {
                         for channel in state.data.channels.iter_mut() {
                             channel.chat.invited_users.remove(&user_id, now);
                         }
                     }
                 }
+                Success
             } else {
                 NotAuthorized
             }
