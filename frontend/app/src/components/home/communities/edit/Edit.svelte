@@ -50,7 +50,7 @@
     $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.haveCommunityPermissionsChanged(
         original.permissions,
-        candidate.permissions
+        candidate.permissions,
     );
     $: rulesDirty =
         editing &&
@@ -74,7 +74,7 @@
         detailsValid: boolean,
         visibilityValid: boolean,
         channelsValid: boolean,
-        rulesValid: boolean
+        rulesValid: boolean,
     ) {
         let steps = [
             { labelKey: "communities.details", valid: detailsValid },
@@ -114,7 +114,7 @@
         return client
             .inviteUsersToCommunity(
                 { kind: "community", communityId },
-                members.map((m) => m.user.userId)
+                members.map((m) => m.user.userId),
             )
             .then((resp) => {
                 if (resp !== "success") {
@@ -155,7 +155,7 @@
                     bannerDirty ? candidate.banner.blobData : undefined,
                     gateDirty ? candidate.gate : undefined,
                     candidate.public !== original.public ? candidate.public : undefined,
-                    languageDirty ? candidate.primaryLanguage : undefined
+                    languageDirty ? candidate.primaryLanguage : undefined,
                 )
                 .then((success: boolean) => {
                     if (success) {
@@ -171,7 +171,7 @@
                 .createCommunity(
                     candidate,
                     candidateRules,
-                    channels.map((c) => c.name)
+                    channels.map((c) => c.name),
                 )
                 .then((response) => {
                     if (response.kind === "success") {
@@ -270,7 +270,7 @@
 
                 {#if editing}
                     <Button
-                        disabled={!dirty || busy}
+                        disabled={!dirty || busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
