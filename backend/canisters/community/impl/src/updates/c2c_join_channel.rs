@@ -9,45 +9,49 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
-use types::{AccessGate, CanisterId, ChannelId, MemberJoined, TimestampMillis, UserId};
+use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    match join_community(community_canister::c2c_join_community::Args {
-        user_id: args.user_id,
-        principal: args.principal,
-        invite_code: args.invite_code,
-        is_platform_moderator: args.is_platform_moderator,
-        is_bot: args.is_bot,
-    })
-    .await
-    {
-        community_canister::c2c_join_community::Response::Success(_) => {
-            let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
-            if matches!(response, Success(_) | AlreadyInChannel(_)) {
-                let summary = read_state(|state| {
-                    let member = state.data.members.get_by_user_id(&args.user_id);
-                    state.summary(member)
-                });
-                SuccessJoinedCommunity(Box::new(summary))
-            } else {
-                response
+    if read_state(|state| state.data.members.get_by_user_id(&args.user_id).is_some()) {
+        check_gate_then_join_channel(args.channel_id, args.principal).await
+    } else {
+        match join_community(community_canister::c2c_join_community::Args {
+            user_id: args.user_id,
+            principal: args.principal,
+            invite_code: args.invite_code,
+            is_platform_moderator: args.is_platform_moderator,
+            is_bot: args.is_bot,
+        })
+        .await
+        {
+            community_canister::c2c_join_community::Response::Success(_) => {
+                let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
+                if matches!(response, Success(_) | AlreadyInChannel(_)) {
+                    let summary = read_state(|state| {
+                        let member = state.data.members.get_by_user_id(&args.user_id);
+                        state.summary(member)
+                    });
+                    SuccessJoinedCommunity(Box::new(summary))
+                } else {
+                    response
+                }
             }
+            community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
+                check_gate_then_join_channel(args.channel_id, args.principal).await
+            }
+            community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
+            community_canister::c2c_join_community::Response::NotInvited => NotInvited,
+            community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
+            community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
+            community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
+            community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
         }
-        community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-            check_gate_then_join_channel(args.channel_id, args.principal).await
-        }
-        community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
-        community_canister::c2c_join_community::Response::NotInvited => NotInvited,
-        community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
-        community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
-        community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
-        community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
     }
 }
 
@@ -62,13 +66,11 @@ pub(crate) fn join_channel_auto(channel_id: ChannelId, user_principal: Principal
 
 async fn check_gate_then_join_channel(channel_id: ChannelId, user_principal: Principal) -> Response {
     match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
-        Ok(Some((gate, user_index_canister_id, user_id))) => {
-            match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
-                CheckIfPassesGateResult::Success => {}
-                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-                CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
-            }
-        }
+        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+        },
         Ok(None) => {}
         Err(response) => return response,
     };
@@ -80,7 +82,7 @@ fn is_permitted_to_join(
     channel_id: ChannelId,
     user_principal: Principal,
     state: &RuntimeState,
-) -> Result<Option<(AccessGate, CanisterId, UserId)>, Response> {
+) -> Result<Option<CheckGateArgs>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
@@ -101,12 +103,16 @@ fn is_permitted_to_join(
                 Err(NotInvited)
             } else if let Some(limit) = channel.chat.members.user_limit_reached() {
                 Err(MemberLimitReached(limit))
+            } else if channel.chat.members.is_blocked(&member.user_id) {
+                Err(UserBlocked)
             } else {
-                Ok(channel
-                    .chat
-                    .gate
-                    .as_ref()
-                    .map(|g| (g.clone(), state.data.user_index_canister_id, member.user_id)))
+                Ok(channel.chat.gate.as_ref().map(|g| CheckGateArgs {
+                    gate: g.clone(),
+                    user_index_canister: state.data.user_index_canister_id,
+                    user_id: member.user_id,
+                    this_canister: state.env.canister_id(),
+                    now_nanos: state.env.now_nanos(),
+                }))
             }
         } else {
             Err(ChannelNotFound)
@@ -125,7 +131,14 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                     let summary = channel
                         .summary(Some(member.user_id), true, state.data.is_public, &state.data.members)
                         .unwrap();
+
+                    // If there is a payment gate on this channel then queue payments to *community* owner(s) and treasury
+                    if let Some(AccessGate::Payment(gate)) = channel.chat.gate.value.as_ref().cloned() {
+                        state.queue_access_gate_payments(gate);
+                    }
+
                     handle_activity_notification(state);
+
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {

@@ -1294,6 +1294,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "group_chat_core",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -1302,6 +1303,8 @@ dependencies = [
  "ic-cdk-timers",
  "ic-ledger-types",
  "ic-stable-structures",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "instruction_counts_log",
  "itertools 0.11.0",
  "lazy_static",
@@ -2254,6 +2257,9 @@ name = "gated_groups"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
+ "icrc_ledger_canister_c2c_client",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
  "types",
@@ -2375,6 +2381,7 @@ dependencies = [
  "gated_groups",
  "group_canister",
  "group_chat_core",
+ "group_community_common",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
@@ -2384,6 +2391,8 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures",
  "icp_ledger_canister_c2c_client",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
  "instruction_counts_log",
  "itertools 0.11.0",
  "ledger_utils",
@@ -2422,6 +2431,18 @@ dependencies = [
  "serde_repr",
  "types",
  "utils",
+]
+
+[[package]]
+name = "group_community_common"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "icrc-ledger-types",
+ "msgpack",
+ "serde",
+ "serde_repr",
+ "types",
 ]
 
 [[package]]
