@@ -62,7 +62,7 @@ impl From<TokenSwap> for TokenSwapStatus {
             transfer: value.transfer.map(|t| t.value),
             notify_dex: value.notified_dex_at.map(|t| t.value.map(|_| ())),
             amount_swapped: value.amount_swapped.map(|t| t.value),
-            withdraw_from_dex: value.withdrawn_from_dex_at.map(|t| t.value.map(|a| a)),
+            withdraw_from_dex: value.withdrawn_from_dex_at.map(|t| t.value),
         }
     }
 }
