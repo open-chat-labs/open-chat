@@ -4513,7 +4513,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadChatsResponse(
+    private async handleChatsResponse(
         updateRegistryTask: Promise<void> | undefined,
         initialLoad: boolean,
         chatsResponse: UpdatesResult,
@@ -4659,7 +4659,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 initialLoad,
             })
                 .subscribe(async (resp) => {
-                    await this.loadChatsResponse(
+                    await this.handleChatsResponse(
                         updateRegistryTask,
                         initialLoad,
                         resp as UpdatesResult,
