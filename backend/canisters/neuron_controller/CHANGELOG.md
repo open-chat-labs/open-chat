@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.939](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.939-neuron_controller)] - 2023-11-23
+
 ### Added
 
 - Expose full neuron data for neurons controlled by NeuronController ([#4811](https://github.com/open-chat-labs/open-chat/pull/4811))
