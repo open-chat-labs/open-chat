@@ -52,6 +52,10 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
+    } else if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+        Err(AlreadyInCommunity(Box::new(state.summary(Some(member)))))
+    } else if state.data.members.is_blocked(&args.user_id) {
+        Err(UserBlocked)
     } else if state.data.is_frozen() {
         Err(CommunityFrozen)
     } else if !state.data.is_accessible(args.principal, args.invite_code) {
