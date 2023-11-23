@@ -11,7 +11,7 @@ import {
     inititaliseLogger,
     type WorkerResponseInner,
     type WorkerRequest,
-    type PromiseChain,
+    Stream,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -79,18 +79,23 @@ const sendError = (correlationId: string, payload?: unknown) => {
     };
 };
 
-function executeChainThenReply(
+function streamReplies(
     payload: WorkerRequest,
     correlationId: string,
-    chain: PromiseChain<WorkerResponseInner>,
+    chain: Stream<WorkerResponseInner>,
 ) {
-    chain.then(({ value, continuation }) => {
-        console.debug("EV: sending response: ", correlationId, value, Date.now());
-        sendResponse(correlationId, value, continuation === undefined);
-        if (continuation !== undefined) {
-            executeChainThenReply(payload, correlationId, continuation);
-        }
-    });
+    chain
+        .subscribe((value, final) => {
+            console.debug(
+                "WORKER: sending streamed reply: ",
+                correlationId,
+                value,
+                Date.now(),
+                final,
+            );
+            sendResponse(correlationId, value, final);
+        })
+        .catch(sendError(correlationId, payload));
 }
 
 function executeThenReply(
@@ -184,11 +189,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getUpdates":
-                executeChainThenReply(
-                    payload,
-                    correlationId,
-                    agent.getUpdates(payload.initialLoad),
-                );
+                streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
                 break;
 
             case "createUserClient":

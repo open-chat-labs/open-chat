@@ -7,11 +7,6 @@ type OnStreamEnd = () => void;
  * The function passed into subscribe will then be called each time new data is available.
  * The onResult fn will also be given a `final` param in case the calling code needs to know
  * if the final chunk of data has been received.
- *
- *
- *
- * Wait a second - can we use this instead of PromiseChain on the other side of the worker divide?
- * I think that we can.
  */
 export class Stream<T> {
     private onResult?: OnStreamResult<T>;

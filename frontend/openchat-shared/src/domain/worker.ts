@@ -148,18 +148,6 @@ export type CorrelatedWorkerRequest = WorkerRequest & {
     correlationId: string;
 };
 
-export type PromiseChain<T> = Promise<{ value: T; continuation?: PromiseChain<T> }>;
-
-export function promiseChain<T>(
-    promise: Promise<T> | T,
-    continuation?: Promise<T>,
-): PromiseChain<T> {
-    return Promise.resolve(promise).then((value) => ({
-        value,
-        continuation: continuation ? promiseChain(continuation) : undefined,
-    }));
-}
-
 export type WorkerRequest =
     | DismissRecommendations
     | SearchGroups
