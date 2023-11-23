@@ -15,6 +15,7 @@ generate_query_call!(summary_updates);
 // Updates
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
+generate_update_call!(cancel_invites);
 generate_update_call!(change_role);
 generate_update_call!(create_channel);
 generate_update_call!(create_user_group);
@@ -307,6 +308,26 @@ pub mod happy_path {
         match response {
             community_canister::selected_channel_initial::Response::Success(result) => result,
             response => panic!("'selected_channel_initial' error: {response:?}"),
+        }
+    }
+
+    pub fn cancel_invites(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        user_ids: Vec<UserId>,
+        channel_id: Option<ChannelId>,
+    ) {
+        let response = super::cancel_invites(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::cancel_invites::Args { channel_id, user_ids },
+        );
+
+        match response {
+            community_canister::cancel_invites::Response::Success => {}
+            response => panic!("'cancel_invites' error: {response:?}"),
         }
     }
 }

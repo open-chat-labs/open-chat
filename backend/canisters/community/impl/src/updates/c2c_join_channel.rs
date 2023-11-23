@@ -18,36 +18,40 @@ use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis};
 async fn c2c_join_channel(args: Args) -> Response {
     run_regular_jobs();
 
-    match join_community(community_canister::c2c_join_community::Args {
-        user_id: args.user_id,
-        principal: args.principal,
-        invite_code: args.invite_code,
-        is_platform_moderator: args.is_platform_moderator,
-        is_bot: args.is_bot,
-    })
-    .await
-    {
-        community_canister::c2c_join_community::Response::Success(_) => {
-            let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
-            if matches!(response, Success(_) | AlreadyInChannel(_)) {
-                let summary = read_state(|state| {
-                    let member = state.data.members.get_by_user_id(&args.user_id);
-                    state.summary(member)
-                });
-                SuccessJoinedCommunity(Box::new(summary))
-            } else {
-                response
+    if read_state(|state| state.data.members.get_by_user_id(&args.user_id).is_some()) {
+        check_gate_then_join_channel(args.channel_id, args.principal).await
+    } else {
+        match join_community(community_canister::c2c_join_community::Args {
+            user_id: args.user_id,
+            principal: args.principal,
+            invite_code: args.invite_code,
+            is_platform_moderator: args.is_platform_moderator,
+            is_bot: args.is_bot,
+        })
+        .await
+        {
+            community_canister::c2c_join_community::Response::Success(_) => {
+                let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
+                if matches!(response, Success(_) | AlreadyInChannel(_)) {
+                    let summary = read_state(|state| {
+                        let member = state.data.members.get_by_user_id(&args.user_id);
+                        state.summary(member)
+                    });
+                    SuccessJoinedCommunity(Box::new(summary))
+                } else {
+                    response
+                }
             }
+            community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
+                check_gate_then_join_channel(args.channel_id, args.principal).await
+            }
+            community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
+            community_canister::c2c_join_community::Response::NotInvited => NotInvited,
+            community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
+            community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
+            community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
+            community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
         }
-        community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-            check_gate_then_join_channel(args.channel_id, args.principal).await
-        }
-        community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
-        community_canister::c2c_join_community::Response::NotInvited => NotInvited,
-        community_canister::c2c_join_community::Response::UserBlocked => UserBlocked,
-        community_canister::c2c_join_community::Response::MemberLimitReached(l) => MemberLimitReached(l),
-        community_canister::c2c_join_community::Response::CommunityFrozen => CommunityFrozen,
-        community_canister::c2c_join_community::Response::InternalError(error) => InternalError(error),
     }
 }
 

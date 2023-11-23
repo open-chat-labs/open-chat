@@ -116,6 +116,7 @@ pub struct TokenMetrics {
     info_url: String,
     how_to_buy_url: String,
     transaction_url_format: String,
+    supported_standards: Vec<String>,
     added: TimestampMillis,
     last_updated: TimestampMillis,
 }
@@ -132,6 +133,7 @@ impl From<&TokenDetails> for TokenMetrics {
             info_url: value.info_url.clone(),
             how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),
+            supported_standards: value.supported_standards.clone(),
             added: value.added,
             last_updated: value.last_updated,
         }

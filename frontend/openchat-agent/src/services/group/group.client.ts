@@ -478,8 +478,8 @@ export class GroupClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
             }),
             updateGroupResponse,
         );

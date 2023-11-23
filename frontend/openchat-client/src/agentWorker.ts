@@ -10,6 +10,7 @@ import {
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
+import { Stream } from "openchat-shared";
 
 const WORKER_TIMEOUT = 1000 * 90;
 
@@ -19,7 +20,7 @@ type UnresolvedRequest = {
 };
 
 type PromiseResolver<T> = {
-    resolve: (val: T | PromiseLike<T>) => void;
+    resolve: (val: T | PromiseLike<T>, final: boolean) => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reject: (reason?: any) => void;
     timeout: number;
@@ -65,7 +66,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,
                 },
-                true
+                true,
             ).then(() => {
                 resolve(true);
                 this._connectedToWorker = true;
@@ -87,8 +88,8 @@ export class OpenChatAgentWorker extends EventTarget {
                             data.event.chatId,
                             data.event.readByMeUpTo,
                             data.event.threadsRead,
-                            data.event.dateReadPinned
-                        )
+                            data.event.dateReadPinned,
+                        ),
                     );
                 }
                 if (data.event.subkind === "storage_updated") {
@@ -119,16 +120,18 @@ export class OpenChatAgentWorker extends EventTarget {
                       Date.now() - unresolved.sentAt
                   }ms`;
         console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`
+            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
         );
     }
 
     private resolveResponse(data: WorkerResponse): void {
         const promise = this._pending.get(data.correlationId);
         if (promise !== undefined) {
-            promise.resolve(data.response);
-            window.clearTimeout(promise.timeout);
-            this._pending.delete(data.correlationId);
+            promise.resolve(data.response, data.final);
+            if (data.final) {
+                window.clearTimeout(promise.timeout);
+                this._pending.delete(data.correlationId);
+            }
         } else {
             this.logUnexpected(data.correlationId);
         }
@@ -147,37 +150,56 @@ export class OpenChatAgentWorker extends EventTarget {
         this._unresolved.delete(data.correlationId);
     }
 
-    async sendRequest<Req extends WorkerRequest>(
+    responseHandler<Req extends WorkerRequest, T>(
         req: Req,
-        connecting = false
-    ): Promise<WorkerResult<Req>> {
-        if (!connecting && !this._connectedToWorker) {
-            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
-        }
-
-        const correlated = {
-            ...req,
-            correlationId: v4(),
-        };
-
-        this._worker.postMessage(correlated);
-        const promise = new Promise<WorkerResult<Req>>((resolve, reject) => {
+        correlationId: string,
+    ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
+        return (resolve, reject) => {
             const sentAt = Date.now();
-            this._pending.set(correlated.correlationId, {
+            this._pending.set(correlationId, {
                 resolve,
                 reject,
                 timeout: window.setTimeout(() => {
                     reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`
+                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
                     );
-                    this._unresolved.set(correlated.correlationId, {
+                    this._unresolved.set(correlationId, {
                         kind: req.kind,
                         sentAt,
                     });
-                    this._pending.delete(correlated.correlationId);
+                    this._pending.delete(correlationId);
                 }, WORKER_TIMEOUT),
             });
+        };
+    }
+
+    sendStreamRequest<Req extends WorkerRequest>(
+        req: Req,
+        connecting = false,
+    ): Stream<WorkerResult<Req>> {
+        if (!connecting && !this._connectedToWorker) {
+            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
+        }
+        const correlationId = v4();
+        this._worker.postMessage({
+            ...req,
+            correlationId,
         });
-        return promise;
+        return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId));
+    }
+
+    async sendRequest<Req extends WorkerRequest>(
+        req: Req,
+        connecting = false,
+    ): Promise<WorkerResult<Req>> {
+        if (!connecting && !this._connectedToWorker) {
+            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
+        }
+        const correlationId = v4();
+        this._worker.postMessage({
+            ...req,
+            correlationId,
+        });
+        return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId));
     }
 }
