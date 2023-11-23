@@ -3,7 +3,8 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -67,7 +68,7 @@ export type ApproveError = {
 export interface ApproveTransferArgs {
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
-  'expires_at' : [] | [Milliseconds],
+  'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
 export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |
@@ -506,6 +507,12 @@ export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InternalError' : string };
+export interface DeleteDirectChatArgs {
+  'block_user' : boolean,
+  'user_id' : UserId,
+}
+export type DeleteDirectChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -583,6 +590,7 @@ export interface DirectChatsUpdates {
   'added' : Array<DirectChatSummary>,
   'pinned' : [] | [Array<ChatId>],
   'updated' : Array<DirectChatSummaryUpdates>,
+  'removed' : Array<ChatId>,
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
@@ -718,6 +726,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -1046,6 +1055,7 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1365,6 +1375,11 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PaymentGate {
+  'fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+}
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
@@ -1392,6 +1407,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1770,6 +1786,18 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SwapTokensArgs {
+  'input_amount' : bigint,
+  'min_output_amount' : bigint,
+  'swap_id' : bigint,
+  'input_token' : TokenInfo,
+  'exchange_args' : {
+      'ICPSwap' : { 'zero_for_one' : boolean, 'swap_canister_id' : CanisterId }
+    },
+  'output_token' : TokenInfo,
+}
+export type SwapTokensResponse = { 'Success' : { 'amount_out' : bigint } } |
+  { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1811,6 +1839,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'decimals' : [] | [number],
   'token' : Cryptocurrency,
   'chat' : Chat,
   'recipient' : UserId,
@@ -1831,6 +1860,26 @@ export type TipMessageResponse = { 'Retrying' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CannotTipSelf' : null };
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
+export interface TokenSwapStatusArgs { 'swap_id' : bigint }
+export type TokenSwapStatusResponse = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'status' : {
+        'started' : TimestampMillis,
+        'deposit_account' : [] | [{ 'Ok' : Account } | { 'Err' : string }],
+        'withdrawn_from_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+        'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+        'notified_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+        'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      },
+    }
+  };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1910,6 +1959,7 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -2042,6 +2092,10 @@ export interface _SERVICE {
     [DeleteCommunityArgs],
     DeleteCommunityResponse
   >,
+  'delete_direct_chat' : ActorMethod<
+    [DeleteDirectChatArgs],
+    DeleteDirectChatResponse
+  >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
@@ -2111,7 +2165,12 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
+  'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
+  'token_swap_status' : ActorMethod<
+    [TokenSwapStatusArgs],
+    TokenSwapStatusResponse
+  >,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

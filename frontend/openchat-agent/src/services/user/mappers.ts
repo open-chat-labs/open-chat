@@ -61,6 +61,7 @@ import type {
     ApiSavedCryptoAccountsResponse,
     ApiSaveCryptoAccountResponse,
     ApiSubmitProposalResponse,
+    ApiApproveTransferResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -122,6 +123,7 @@ import type {
     CandidateProposal,
     CandidateProposalAction,
     SubmitProposalResponse,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -1124,4 +1126,17 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function approveTransferResponse(candid: ApiApproveTransferResponse): ApproveTransferResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error", error: candid.InternalError };
+    }
+    if ("ApproveError" in candid) {
+        return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
+    }
+    throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
 }

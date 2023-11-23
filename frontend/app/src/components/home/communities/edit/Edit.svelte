@@ -45,7 +45,8 @@
     let channelsValid = true;
     let detailsValid = true;
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
+    let visibilityValid = true;
+    $: steps = getSteps(editing, detailsValid, visibilityValid, channelsValid, rulesValid);
     $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.haveCommunityPermissionsChanged(
         original.permissions,
@@ -66,17 +67,18 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
-    $: valid = detailsValid && channelsValid && rulesValid;
+    $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
 
     function getSteps(
         editing: boolean,
         detailsValid: boolean,
+        visibilityValid: boolean,
         channelsValid: boolean,
         rulesValid: boolean
     ) {
         let steps = [
             { labelKey: "communities.details", valid: detailsValid },
-            { labelKey: "communities.visibility", valid: true },
+            { labelKey: "communities.visibility", valid: visibilityValid },
             { labelKey: "communities.rules", valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
@@ -213,6 +215,7 @@
                     <VisibilityControl
                         canEditDisappearingMessages={false}
                         bind:candidate
+                        bind:valid={visibilityValid}
                         {original}
                         {editing}
                         history={false} />

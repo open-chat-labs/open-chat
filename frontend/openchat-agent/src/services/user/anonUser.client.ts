@@ -52,6 +52,7 @@ import {
     type MessageContext,
     type PendingCryptocurrencyTransfer,
     AnonymousOperationError,
+    type ApproveTransferResponse,
 } from "openchat-shared";
 
 export class AnonUserClient {
@@ -368,6 +369,15 @@ export class AnonUserClient {
         _messageId: bigint, 
         _deleteMessage: boolean
     ): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    approveTransfer(
+        _spender: string, 
+        _ledger: string, 
+        _amount: bigint, 
+        _expiresIn: bigint | undefined
+    ): Promise<ApproveTransferResponse> {
         throw new AnonymousOperationError();
     }
 }

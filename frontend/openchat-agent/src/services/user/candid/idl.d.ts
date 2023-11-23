@@ -141,6 +141,7 @@ import {
     NamedAccount,
     SubmitProposalResponse,
     MessagePermissions,
+    ApproveTransferResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -284,6 +285,7 @@ export {
     SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
     NamedAccount as ApiNamedAccount,
     MessagePermissions as ApiMessagePermissions,
+    ApproveTransferResponse as ApiApproveTransferResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

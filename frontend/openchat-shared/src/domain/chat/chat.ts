@@ -1554,7 +1554,8 @@ export type GateCheckFailedReason =
     | "not_diamond"
     | "no_sns_neuron_found"
     | "dissolve_delay_not_met"
-    | "min_stake_not_met";
+    | "min_stake_not_met"
+    | "payment_failed";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";

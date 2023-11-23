@@ -98,6 +98,7 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     SubmitProposalResponse,
+    ApproveTransferResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -292,7 +293,8 @@ export type WorkerRequest =
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
     | SubmitProposal
-    | TipMessage;
+    | TipMessage
+    | ApproveTransfer;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1099,6 +1101,7 @@ export type WorkerResponseInner =
     | NamedAccount[]
     | SaveCryptoAccountResponse
     | SubmitProposalResponse
+    | ApproveTransferResponse
     | AccountTransactionResult
     | Record<string, bigint>;
 
@@ -1190,6 +1193,14 @@ type ReportMessage = {
     messageId: bigint;
     deleteMessage: boolean;
     kind: "reportMessage";
+};
+
+type ApproveTransfer = {
+    spender: string, 
+    ledger: string, 
+    amount: bigint, 
+    expiresIn: bigint | undefined,
+    kind: "approveTransfer";
 };
 
 type DeclineInvitation = {
@@ -1550,6 +1561,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? ReferralLeaderboardResponse
     : T extends ReportMessage
     ? boolean
+    : T extends ApproveTransfer
+    ? ApproveTransferResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
     : T extends AddMembersToChannel

@@ -320,3 +320,8 @@ export type GovernanceCanisterNotSupported = {
 export type InsufficientPayment = {
     kind: "insufficient_payment";
 };
+
+export type ApproveTransferResponse = 
+    | Success    
+    | { kind: "approve_error", error: string }
+    | InternalError;

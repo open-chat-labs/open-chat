@@ -174,6 +174,7 @@ import type {
     SubmitProposalResponse,
     AccountTransactionResult,
     OptionalChatPermissions,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2829,5 +2830,14 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.reportMessage(chatId, messageId, deleteMessage);
         }
+    }
+
+    approveTransfer(
+        spender: string, 
+        ledger: string, 
+        amount: bigint, 
+        expiresIn: bigint | undefined
+    ): Promise<ApproveTransferResponse> {
+        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn);
     }
 }

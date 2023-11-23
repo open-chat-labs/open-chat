@@ -996,6 +996,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "approveTransfer":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTransfer(
+                        payload.spender,
+                        payload.ledger,
+                        payload.amount,
+                        payload.expiresIn,
+                    ),
+                );
+                break;
+
             case "declineInvitation":
                 executeThenReply(payload, correlationId, agent.declineInvitation(payload.chatId));
                 break;
