@@ -33,7 +33,9 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     return {
         error(message?: unknown, ...optionalParams: unknown[]): void {
             console.error(message as string, optionalParams);
-            rollbar?.error(message as string, optionalParams);
+            if (navigator.onLine) {
+                rollbar?.error(message as string, optionalParams);
+            }
         },
         log(message?: unknown, ...optionalParams: unknown[]): void {
             console.log(message as string, optionalParams);

@@ -88,6 +88,7 @@
     import Register from "../register/Register.svelte";
     import LoggingInModal from "./LoggingInModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
+    import OfflineFooter from "../OfflineFooter.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -188,6 +189,7 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    $: networkStatus = client.networkStatus;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -1033,7 +1035,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main class:anon={$anonUser}>
+<main class:anon={$anonUser} class:offline={$networkStatus === "offline"}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1105,6 +1107,10 @@
 
 {#if $anonUser}
     <AnonFooter />
+{/if}
+
+{#if $networkStatus === "offline"}
+    <OfflineFooter />
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}
@@ -1219,6 +1225,9 @@
 
         &.anon {
             margin-bottom: toRem(50);
+        }
+        &.offline {
+            margin-bottom: toRem(40);
         }
     }
 

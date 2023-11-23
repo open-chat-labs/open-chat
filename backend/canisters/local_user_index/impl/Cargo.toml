@@ -28,10 +28,11 @@ ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { path = "../../../libraries/icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }

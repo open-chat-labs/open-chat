@@ -586,6 +586,7 @@ export function createDirectChat(chatId: DirectChatIdentifier): void {
             dateCreated: BigInt(Date.now()),
             metrics: emptyChatMetrics(),
             eventsTTL: undefined,
+            eventsTtlLastUpdated: BigInt(0),
             membership: {
                 ...nullMembership(),
                 role: "owner",

@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
             "transactionUrlFormat": "トランザクションURL形式",
             "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "ニューロン コントローラーのアクション"
     },
     "yes": "はい",
     "no": "いいえ",
@@ -1059,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** グループのメンバー",
         "searchUserGroups": "ユーザーグループを検索...",
         "userGroupName": "ユーザーグループ名",
-        "noSpaces": "スペースは使用できません"
+        "noSpaces": "スペースは使用できません",
+        "noMatch": "一致するコミュニティが見つかりませんでした",
+        "refineSearch": "検索を絞り込んでみてください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -1151,5 +1154,7 @@
     "guestUser": "ゲストユーザー",
     "showAuthProviders": "オプションを表示",
     "hideAuthProviders": "オプションを非表示にする",
-    "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }"
+    "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
+    "offlineMessage": "オフライン",
+    "offlineError": "申し訳ありませんが、現在オフラインのようです"
 }

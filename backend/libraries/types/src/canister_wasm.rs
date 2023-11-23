@@ -1,8 +1,6 @@
 use crate::{BuildVersion, CanisterId};
 use candid::CandidType;
-use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
-use sha256::sha256_string;
 use std::fmt::{Debug, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -41,55 +39,4 @@ impl Debug for CanisterWasm {
 pub struct UpgradesFilter {
     pub include: Vec<CanisterId>,
     pub exclude: Vec<CanisterId>,
-}
-
-#[derive(Serialize)]
-pub struct HumanReadableUpgradeCanisterWasmArgs {
-    wasm: CanisterWasmTrimmed,
-    filter: Option<HumanReadableUpgradesFilter>,
-    use_for_new_canisters: Option<bool>,
-}
-
-#[derive(Serialize)]
-pub struct CanisterWasmTrimmed {
-    version: BuildVersion,
-    module_hash: String,
-    byte_length: u64,
-}
-
-impl ToHumanReadable for UpgradeCanisterWasmArgs {
-    type Target = HumanReadableUpgradeCanisterWasmArgs;
-
-    fn to_human_readable(&self) -> Self::Target {
-        HumanReadableUpgradeCanisterWasmArgs {
-            wasm: (&self.wasm).into(),
-            filter: self.filter.as_ref().map(|f| f.into()),
-            use_for_new_canisters: self.use_for_new_canisters,
-        }
-    }
-}
-
-impl From<&CanisterWasm> for CanisterWasmTrimmed {
-    fn from(value: &CanisterWasm) -> Self {
-        CanisterWasmTrimmed {
-            version: value.version,
-            module_hash: sha256_string(&value.module),
-            byte_length: value.module.len() as u64,
-        }
-    }
-}
-
-#[derive(Serialize)]
-struct HumanReadableUpgradesFilter {
-    include: Vec<HumanReadablePrincipal>,
-    exclude: Vec<HumanReadablePrincipal>,
-}
-
-impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
-    fn from(value: &UpgradesFilter) -> Self {
-        HumanReadableUpgradesFilter {
-            include: value.include.iter().copied().map(|c| c.into()).collect(),
-            exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
-        }
-    }
 }

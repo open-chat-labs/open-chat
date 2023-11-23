@@ -10,7 +10,7 @@ candid = { workspace = true }
 ic-cdk = { workspace = true }
 icpswap_swap_pool_canister = { path = "../../external_canisters/icpswap_swap_pool/api" }
 icpswap_swap_pool_canister_c2c_client = { path = "../../external_canisters/icpswap_swap_pool/c2c_client" }
-icrc-ledger-types = { path = "../icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 serde = { workspace = true }
 types = { path = "../types" }

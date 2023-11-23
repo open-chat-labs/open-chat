@@ -341,6 +341,7 @@ import type {
     MessagePermission,
     OptionalChatPermissions,
     ExpiredEventsRange,
+    UpdatesResult,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -420,6 +421,7 @@ import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import type { VersionedRules } from "openchat-shared";
 import { verifyCredential } from "./utils/credentials";
+import { networkStatus } from "./stores/network";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -4525,150 +4527,167 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private async loadChats() {
-        try {
-            const init = this._liveState.chatsInitialised;
-            chatsLoading.set(!init);
-
-            const updateRegistryTask = !init ? this.updateRegistry() : undefined;
-
-            const chatsResponse = await this.sendRequest({
-                kind: "getUpdates",
-            });
-
-            if (!init || chatsResponse.anyUpdates) {
-                if (updateRegistryTask !== undefined) {
-                    // We need the registry to be loaded before we attempt to render chats / events
-                    await updateRegistryTask;
-                }
-
-                const chats = (chatsResponse.state.directChats as ChatSummary[])
-                    .concat(chatsResponse.state.groupChats)
-                    .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
-
-                this.updateReadUpToStore(chats);
-
-                this._cachePrimer?.processChats(chats);
-
-                const userIds = this.userIdsFromChatSummaries(chats);
-                if (!init) {
-                    for (const userId of this._liveState.user.referrals) {
-                        userIds.add(userId);
-                    }
-                }
-                if (this._liveState.anonUser === false) {
-                    userIds.add(this._liveState.user.userId);
-                }
-                await this.getMissingUsers(userIds);
-
-                if (chatsResponse.state.blockedUsers !== undefined) {
-                    blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
-                }
-
-                // if the selected community has updates, reload the details
-                const selectedCommunity = this._liveState.selectedCommunity;
-                if (selectedCommunity !== undefined) {
-                    const updatedCommunity = chatsResponse.state.communities.find(
-                        (c) => c.id.communityId === selectedCommunity.id.communityId,
-                    );
-                    if (
-                        updatedCommunity !== undefined &&
-                        updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
-                    ) {
-                        this.loadCommunityDetails(updatedCommunity);
-                    }
-                }
-
-                // If we are still previewing a community we are a member of then remove the preview
-                for (const community of chatsResponse.state.communities) {
-                    if (
-                        community?.membership !== undefined &&
-                        this._liveState.communityPreviews.has(community.id)
-                    ) {
-                        removeCommunityPreview(community.id);
-                    }
-                }
-
-                if (this._liveState.uninitializedDirectChats.size > 0) {
-                    for (const chat of chats) {
-                        if (this._liveState.uninitializedDirectChats.has(chat.id)) {
-                            removeUninitializedDirectChat(chat.id);
-                        }
-                    }
-                }
-
-                setGlobalState(
-                    chatsResponse.state.communities,
-                    chats,
-                    chatsResponse.state.favouriteChats,
-                    {
-                        group_chat: chatsResponse.state.pinnedGroupChats,
-                        direct_chat: chatsResponse.state.pinnedDirectChats,
-                        favourite: chatsResponse.state.pinnedFavouriteChats,
-                        community: chatsResponse.state.pinnedChannels,
-                        none: [],
-                    },
-                );
-
-                const selectedChatId = this._liveState.selectedChatId;
-
-                if (selectedChatId !== undefined) {
-                    if (this._liveState.chatSummaries.get(selectedChatId) === undefined) {
-                        clearSelectedChat();
-                        this.dispatchEvent(new SelectedChatInvalid());
-                    } else {
-                        const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
-                        this.chatUpdated(selectedChatId, updatedEvents.get(selectedChatId) ?? []);
-                    }
-                }
-
-                const avatarId =
-                    this._liveState.userStore[this._liveState.user.userId]?.blobReference?.blobId;
-                if (chatsResponse.state.avatarId !== avatarId) {
-                    const blobReference =
-                        chatsResponse.state.avatarId === undefined
-                            ? undefined
-                            : {
-                                  canisterId: this._liveState.user.userId,
-                                  blobId: chatsResponse.state.avatarId,
-                              };
-                    const dataContent = {
-                        blobReference,
-                        blobData: undefined,
-                        blobUrl: undefined,
-                    };
-                    const user = {
-                        ...this._liveState.userStore[this._liveState.user.userId],
-                        ...dataContent,
-                    };
-                    userStore.add(this.rehydrateDataContent(user, "avatar"));
-                }
-
-                // If the latest message in a chat is sent by the current user, then we know they must have read up to
-                // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
-                // user sends a message on one device then looks at OpenChat on another.
-                for (const chat of chats) {
-                    const latestMessage = chat.latestMessage?.event;
-                    if (
-                        latestMessage !== undefined &&
-                        latestMessage.sender === this._liveState.user.userId &&
-                        (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
-                        !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
-                    ) {
-                        messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
-                    }
-                }
-
-                chatsInitialised.set(true);
-
-                this.dispatchEvent(new ChatsUpdated());
+    private async handleChatsResponse(
+        updateRegistryTask: Promise<void> | undefined,
+        initialLoad: boolean,
+        chatsResponse: UpdatesResult,
+    ): Promise<void> {
+        if (initialLoad || chatsResponse.anyUpdates) {
+            if (updateRegistryTask !== undefined) {
+                // We need the registry to be loaded before we attempt to render chats / events
+                await updateRegistryTask;
             }
-        } catch (err) {
-            this.config.logger.error("Error loading chats", err as Error);
-            throw err;
-        } finally {
-            chatsLoading.set(false);
+
+            const chats = (chatsResponse.state.directChats as ChatSummary[])
+                .concat(chatsResponse.state.groupChats)
+                .concat(chatsResponse.state.communities.flatMap((c) => c.channels));
+
+            this.updateReadUpToStore(chats);
+
+            this._cachePrimer?.processChats(chats);
+
+            const userIds = this.userIdsFromChatSummaries(chats);
+            if (initialLoad) {
+                for (const userId of this._liveState.user.referrals) {
+                    userIds.add(userId);
+                }
+            }
+            if (this._liveState.anonUser === false) {
+                userIds.add(this._liveState.user.userId);
+            }
+            await this.getMissingUsers(userIds);
+
+            if (chatsResponse.state.blockedUsers !== undefined) {
+                blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
+            }
+
+            // if the selected community has updates, reload the details
+            const selectedCommunity = this._liveState.selectedCommunity;
+            if (selectedCommunity !== undefined) {
+                const updatedCommunity = chatsResponse.state.communities.find(
+                    (c) => c.id.communityId === selectedCommunity.id.communityId,
+                );
+                if (
+                    updatedCommunity !== undefined &&
+                    updatedCommunity.latestEventIndex > selectedCommunity.latestEventIndex
+                ) {
+                    this.loadCommunityDetails(updatedCommunity);
+                }
+            }
+
+            // If we are still previewing a community we are a member of then remove the preview
+            for (const community of chatsResponse.state.communities) {
+                if (
+                    community?.membership !== undefined &&
+                    this._liveState.communityPreviews.has(community.id)
+                ) {
+                    removeCommunityPreview(community.id);
+                }
+            }
+
+            if (this._liveState.uninitializedDirectChats.size > 0) {
+                for (const chat of chats) {
+                    if (this._liveState.uninitializedDirectChats.has(chat.id)) {
+                        removeUninitializedDirectChat(chat.id);
+                    }
+                }
+            }
+
+            setGlobalState(
+                chatsResponse.state.communities,
+                chats,
+                chatsResponse.state.favouriteChats,
+                {
+                    group_chat: chatsResponse.state.pinnedGroupChats,
+                    direct_chat: chatsResponse.state.pinnedDirectChats,
+                    favourite: chatsResponse.state.pinnedFavouriteChats,
+                    community: chatsResponse.state.pinnedChannels,
+                    none: [],
+                },
+            );
+
+            const selectedChatId = this._liveState.selectedChatId;
+
+            if (selectedChatId !== undefined) {
+                if (this._liveState.chatSummaries.get(selectedChatId) === undefined) {
+                    clearSelectedChat();
+                    this.dispatchEvent(new SelectedChatInvalid());
+                } else {
+                    const updatedEvents = ChatMap.fromMap(chatsResponse.updatedEvents);
+                    this.chatUpdated(selectedChatId, updatedEvents.get(selectedChatId) ?? []);
+                }
+            }
+
+            const avatarId =
+                this._liveState.userStore[this._liveState.user.userId]?.blobReference?.blobId;
+            if (chatsResponse.state.avatarId !== avatarId) {
+                const blobReference =
+                    chatsResponse.state.avatarId === undefined
+                        ? undefined
+                        : {
+                              canisterId: this._liveState.user.userId,
+                              blobId: chatsResponse.state.avatarId,
+                          };
+                const dataContent = {
+                    blobReference,
+                    blobData: undefined,
+                    blobUrl: undefined,
+                };
+                const user = {
+                    ...this._liveState.userStore[this._liveState.user.userId],
+                    ...dataContent,
+                };
+                userStore.add(this.rehydrateDataContent(user, "avatar"));
+            }
+
+            // If the latest message in a chat is sent by the current user, then we know they must have read up to
+            // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
+            // user sends a message on one device then looks at OpenChat on another.
+            for (const chat of chats) {
+                const latestMessage = chat.latestMessage?.event;
+                if (
+                    latestMessage !== undefined &&
+                    latestMessage.sender === this._liveState.user.userId &&
+                    (chat.membership?.readByMeUpTo ?? -1) < latestMessage.messageIndex &&
+                    !unconfirmed.contains({ chatId: chat.id }, latestMessage.messageId)
+                ) {
+                    messagesRead.markReadUpTo({ chatId: chat.id }, latestMessage.messageIndex);
+                }
+            }
+
+            chatsInitialised.set(true);
+
+            this.dispatchEvent(new ChatsUpdated());
         }
+    }
+
+    private async loadChats() {
+        const initialLoad = !this._liveState.chatsInitialised;
+        chatsLoading.set(initialLoad);
+
+        const updateRegistryTask = initialLoad ? this.updateRegistry() : undefined;
+
+        return new Promise<void>((resolve) => {
+            this.sendStreamRequest({
+                kind: "getUpdates",
+                initialLoad,
+            })
+                .subscribe(async (resp) => {
+                    await this.handleChatsResponse(
+                        updateRegistryTask,
+                        initialLoad,
+                        resp as UpdatesResult,
+                    );
+                    chatsLoading.set(!this._liveState.chatsInitialised);
+                })
+                .catch((err) => {
+                    this.config.logger.error("Error loading chats: ", err);
+                    throw err;
+                })
+                .finally(() => {
+                    resolve();
+                });
+        });
     }
 
     private async getLastOnlineDatesBatched(userIds: string[]): Promise<Record<string, number>> {
@@ -5627,6 +5646,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
+    networkStatus = networkStatus;
 
     // current community stores
     chatListScope = chatListScopeStore;

@@ -15,7 +15,7 @@ export { toRecord } from "./utils/list";
 export type { MessageFormatter, InterpolationValues } from "./utils/i18n";
 export { createMapStore } from "./stores/mapStore";
 export { createSetStore } from "./stores/setStore";
-export type { GlobalState } from "./stores/global";
+export type { GlobalState, CombinedUnreadCounts, UnreadCounts } from "./stores/global";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
 export type { FailedMessages } from "./stores/failedMessages";

@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "输入显示如何购买代币的网址",
             "transactionUrlFormat": "交易url格式",
             "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "神经元控制器动作"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "{level} 名称太短",
@@ -1058,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** 群组成员",
         "searchUserGroups": "搜索用户组...",
         "userGroupName": "用户组名",
-        "noSpaces": "不允许有空格"
+        "noSpaces": "不允许有空格",
+        "noMatch": "未找到匹配的社区",
+        "refineSearch": "尝试优化您的搜索"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",
@@ -1151,5 +1154,7 @@
     "guestUser": "访客用户",
     "showAuthProviders": "显示选项",
     "hideAuthProviders": "隐藏选项",
-    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}"
+    "messageDeletedByOpenChatBot": "此消息首先由 OpenChat 用户报告，然后发送到 [Modclub]({modclub})，在那里，该消息被判定违反了 [平台规则]({rules})，最后被 {username} 在 {timestamp} 上删除}",
+    "offlineMessage": "离线",
+    "offlineError": "抱歉 - 您目前似乎处于离线状态"
 }

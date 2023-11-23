@@ -5,6 +5,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
+use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -37,6 +38,7 @@ mod openchat_bot;
 mod queries;
 mod regular_jobs;
 mod timer_job_types;
+mod token_swaps;
 mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
@@ -177,6 +179,8 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     #[serde(default)]
+    pub token_swaps: TokenSwaps,
+    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
@@ -225,6 +229,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
+            token_swaps: TokenSwaps::default(),
             rng_seed: [0; 32],
         }
     }

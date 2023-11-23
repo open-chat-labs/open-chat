@@ -993,7 +993,6 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
-      'suspended' : IDL.Bool,
     }),
   });
   const LeaveCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
@@ -1506,7 +1505,6 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
-      'suspended' : IDL.Opt(IDL.Bool),
     }),
     'SuccessNoUpdates' : IDL.Null,
   });

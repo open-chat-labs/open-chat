@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "Inserisci un URL che mostri come acquistare il token",
             "transactionUrlFormat": "Formato dell'URL della transazione",
             "enterTransactionUrlFormat": "Per esempio. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Azioni del controller neuronale"
     },
     "yes": "sì",
     "no": "No",
@@ -1058,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** membri del gruppo",
         "searchUserGroups": "Cerca gruppi di utenti...",
         "userGroupName": "Nome del gruppo utenti",
-        "noSpaces": "non sono ammessi spazi"
+        "noSpaces": "non sono ammessi spazi",
+        "noMatch": "Nessuna comunità corrispondente trovata",
+        "refineSearch": "prova a perfezionare la ricerca"
     },
     "groupCreatedBy": "{username} ha creato {level}",
     "groupName": "{level} nome",
@@ -1150,5 +1153,7 @@
     "guestUser": "Utente ospite",
     "showAuthProviders": "Mostra opzioni",
     "hideAuthProviders": "Nascondi opzioni",
-    "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }"
+    "messageDeletedByOpenChatBot": "Questo messaggio è stato segnalato per la prima volta da un utente OpenChat, quindi inviato a [Modclub]({modclub}) dove è stato deciso che il messaggio violava una [regola della piattaforma]({rules}) e infine eliminato da {username} su {xyz }",
+    "offlineMessage": "disconnesso",
+    "offlineError": "Siamo spiacenti, sembra che tu sia offline al momento"
 }

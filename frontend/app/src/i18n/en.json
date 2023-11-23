@@ -739,6 +739,7 @@
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
         "registryAction": "Registry Actions",
+        "neuronControllerAction": "Neuron Controller Actions",
         "unknownActionCategory": "Other Actions",
         "makeProposal": "Make proposal",
         "maker": {
@@ -781,6 +782,7 @@
     "loadingTweetPreview": "Loading tweet preview...",
     "displayWidth": "Display width",
     "apply": "Apply",
+    "offlineError": "Sorry - it looks like you are offline at the moment",
     "archiveChat": "Archive chat",
     "archiveChatFailed": "Failed to archive chat",
     "unarchiveChatFailed": "Failed to un-archive chat",
@@ -1087,7 +1089,9 @@
         "publicChannels": "Public channels",
         "underReview": "Under review",
         "communityLabel": "Community",
-        "confirmDeleteUserGroup": "Are you sure you want to delete this user group?"
+        "confirmDeleteUserGroup": "Are you sure you want to delete this user group?",
+        "noMatch": "No matching communities found",
+        "refineSearch": "try refining your search"
     },
     "unableToSaveUserProfile": "Unable to save user profile",
     "noAccess": "No access",
@@ -1142,5 +1146,6 @@
         "oneMinute": "1 minute",
         "timeUpdated": "Disappearing message time set to {duration}",
         "disabled": "Disappearing messages disabled"
-    }
+    },
+    "offlineMessage": "Offline"
 }

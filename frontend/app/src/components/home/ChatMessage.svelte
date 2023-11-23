@@ -106,7 +106,10 @@
     let messageMenu: ChatMessageMenu;
     let tipping: string | undefined = undefined;
     let percentageExpired = 100;
+    let mediaCalculatedHeight = undefined as number | undefined;
+    let msgBubbleCalculatedWidth = undefined as number | undefined;
 
+    $: maxWidthFraction = $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8;
     $: canTip = !me && confirmed && !inert && !failed;
     $: chatListScope = client.chatListScope;
     $: inThread = threadRootMessage !== undefined;
@@ -117,8 +120,6 @@
     $: translationStore = client.translationStore;
     $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
     $: mediaDimensions = extractDimensions(msg.content);
-    $: mediaCalculatedHeight = undefined as number | undefined;
-    $: msgBubbleCalculatedWidth = undefined as number | undefined;
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(msg.messageId);
@@ -296,7 +297,7 @@
     }
 
     function recalculateMediaDimensions() {
-        if (mediaDimensions === undefined) {
+        if (mediaDimensions === undefined || !msgBubbleElement) {
             return;
         }
 
@@ -310,14 +311,14 @@
                 parseFloat(msgBubbleStyle.borderLeftWidth);
         }
 
-        const parentWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
+        const messageWrapperWidth = msgBubbleElement.parentElement?.offsetWidth ?? 0;
 
         let targetMediaDimensions = client.calculateMediaDimensions(
             mediaDimensions,
-            parentWidth,
+            messageWrapperWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            inThread ? 0.9 : $screenWidth === ScreenWidth.ExtraLarge ? 0.7 : 0.8
+            maxWidthFraction
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -437,9 +438,11 @@
             <!-- svelte-ignore a11y-no-static-element-interactions -->
             <div
                 bind:this={msgBubbleElement}
-                style={msgBubbleCalculatedWidth !== undefined
-                    ? `width: ${msgBubbleCalculatedWidth}px`
-                    : undefined}
+                style={`--max-width: ${maxWidthFraction * 100}%; ${
+                    msgBubbleCalculatedWidth !== undefined
+                        ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
+                        : undefined
+                }`}
                 on:dblclick={doubleClickMessage}
                 use:longpress={() => messageMenu?.showMenu()}
                 class="message-bubble"
@@ -797,20 +800,12 @@
         color: var(--currentChat-msg-txt);
         @include font(book, normal, fs-100);
         border-radius: $radius;
-        max-width: 80%;
+        max-width: var(--max-width);
         min-width: 90px;
         overflow: hidden;
         overflow-wrap: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
-
-        @include size-above(xl) {
-            max-width: 70%;
-        }
-
-        &.thread {
-            max-width: 90%;
-        }
 
         &.proposal {
             max-width: 800px;

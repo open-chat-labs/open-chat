@@ -299,7 +299,7 @@
 
     async function scrollBottom(
         behavior: ScrollBehavior = "auto",
-        retries: number = 0
+        retries: number = 0,
     ): Promise<void> {
         if (messagesDiv) {
             messagesDiv?.scrollTo({
@@ -359,7 +359,7 @@
 
     function scrollToElement(
         element: Element | null,
-        behavior: ScrollBehavior = "auto"
+        behavior: ScrollBehavior = "auto",
     ): Promise<void> {
         return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });
@@ -372,7 +372,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId))
+                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -430,7 +430,7 @@
         index: number,
         preserveFocus: boolean,
         filling: boolean = false,
-        hasLookedUpEvent: boolean = false
+        hasLookedUpEvent: boolean = false,
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
@@ -490,7 +490,7 @@
     export async function onMessageWindowLoaded(
         context: MessageContext,
         messageIndex: number | undefined,
-        initialLoad = false
+        initialLoad = false,
     ) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
@@ -611,7 +611,7 @@
         } else {
             loadIndexThenScrollToBottom(
                 messageContext,
-                chat.latestMessage?.event.messageIndex ?? -1
+                chat.latestMessage?.event.messageIndex ?? -1,
             );
         }
     }

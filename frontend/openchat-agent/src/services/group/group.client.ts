@@ -244,6 +244,7 @@ export class GroupClient extends CandidService {
                 { chatId: this.chatId, threadRootMessageIndex },
                 messageIndex,
             );
+
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -299,7 +300,7 @@ export class GroupClient extends CandidService {
         // we may or may not have all of the requested events
         if (missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.log("We didn't get enough back from the cache, going to the api", missing.size);
             return this.chatEventsFromBackend(
                 startIndex,
                 ascending,
@@ -477,8 +478,8 @@ export class GroupClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
             }),
             updateGroupResponse,
         );
@@ -573,7 +574,7 @@ export class GroupClient extends CandidService {
     async getGroupDetails(chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated) {
+            if (fromCache.timestamp >= chatLastUpdated || !navigator.onLine) {
                 return fromCache;
             } else {
                 return this.getGroupDetailsUpdates(fromCache);

@@ -668,7 +668,8 @@
             "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
             "transactionUrlFormat": "Transaktions-URL-Format",
             "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Neuron-Controller-Aktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",
@@ -1060,7 +1061,9 @@
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
         "searchUserGroups": "Benutzergruppen durchsuchen...",
         "userGroupName": "Name der Benutzergruppe",
-        "noSpaces": "Keine Leerzeichen erlaubt"
+        "noSpaces": "Keine Leerzeichen erlaubt",
+        "noMatch": "Keine passenden Communities gefunden",
+        "refineSearch": "Versuchen Sie, Ihre Suche zu verfeinern"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -1152,5 +1155,7 @@
     "guestUser": "Gastbenutzer",
     "showAuthProviders": "Optionen anzeigen",
     "hideAuthProviders": "Optionen ausblenden",
-    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }"
+    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }",
+    "offlineMessage": "Offline",
+    "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline"
 }

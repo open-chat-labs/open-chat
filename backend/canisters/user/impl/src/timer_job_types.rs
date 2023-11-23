@@ -1,4 +1,6 @@
+use crate::model::token_swaps::TokenSwap;
 use crate::updates::send_message::send_to_recipients_canister;
+use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
@@ -12,8 +14,9 @@ pub enum TimerJob {
     RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
-    MessageReminder(MessageReminderJob),
+    MessageReminder(Box<MessageReminderJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
+    ProcessTokenSwap(Box<ProcessTokenSwapJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -48,6 +51,12 @@ pub struct MessageReminderJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoveExpiredEventsJob;
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProcessTokenSwapJob {
+    pub token_swap: TokenSwap,
+    pub attempt: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -56,6 +65,7 @@ impl Job for TimerJob {
             TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
+            TimerJob::ProcessTokenSwap(job) => job.execute(),
         }
     }
 }
@@ -137,5 +147,13 @@ impl Job for MessageReminderJob {
 impl Job for RemoveExpiredEventsJob {
     fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
+    }
+}
+
+impl Job for ProcessTokenSwapJob {
+    fn execute(self) {
+        ic_cdk::spawn(async move {
+            process_token_swap(self.token_swap, self.attempt).await;
+        });
     }
 }

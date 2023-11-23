@@ -25,7 +25,7 @@ ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_ledger_canister = { path = "../../../../external_canisters/icrc_ledger/api" }
 icrc_ledger_canister_c2c_client = { path = "../../../../external_canisters/icrc_ledger/c2c_client" }
-icrc-ledger-types = { path = "../../../../libraries/icrc-ledger-types" }
+icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../../../canisters/local_user_index/c2c_client" }

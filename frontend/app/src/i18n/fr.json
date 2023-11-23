@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "Entrez une URL montrant comment acheter le jeton",
             "transactionUrlFormat": "Format de l'URL de la transaction",
             "enterTransactionUrlFormat": "Par exemple. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Actions du contrôleur de neurones"
     },
     "yes": "Oui",
     "no": "Non",
@@ -1058,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** membres du groupe",
         "searchUserGroups": "Rechercher des groupes d'utilisateurs...",
         "userGroupName": "Nom du groupe d'utilisateurs",
-        "noSpaces": "aucun espace autorisé"
+        "noSpaces": "aucun espace autorisé",
+        "noMatch": "Aucune communauté correspondante trouvée",
+        "refineSearch": "essayez d'affiner votre recherche"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
@@ -1150,5 +1153,7 @@
     "guestUser": "Utilisateur invité",
     "showAuthProviders": "Afficher les options",
     "hideAuthProviders": "Masquer les options",
-    "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }"
+    "messageDeletedByOpenChatBot": "Ce message a d'abord été signalé par un utilisateur d'OpenChat, puis envoyé au [Modclub]({modclub}) où il a été décidé que le message enfreignait une [règle de la plateforme]({rules}), et finalement supprimé par le {username} sur {xyz }",
+    "offlineMessage": "Hors ligne",
+    "offlineError": "Désolé, il semble que vous soyez hors ligne pour le moment"
 }

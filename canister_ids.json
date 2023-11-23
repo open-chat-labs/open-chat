@@ -8,10 +8,6 @@
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
   },
-  "exchange_bot": {
-    "ic_test": "tz2or-siaaa-aaaaf-biffa-cai",
-    "ic": "no74g-2qaaa-aaaaf-bihlq-cai"
-  },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
@@ -27,6 +23,10 @@
   "market_maker": {
     "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
     "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
+  },
+  "neuron_controller": {
+    "ic": "tktqu-nyaaa-aaaar-qackq-cai",
+    "ic_test": "tdq3i-3qaaa-aaaar-qacla-cai"
   },
   "notifications": {
     "ic": "dobi3-tyaaa-aaaaf-adnna-cai",

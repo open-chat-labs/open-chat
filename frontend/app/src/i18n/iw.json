@@ -662,7 +662,8 @@
             "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
             "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
             "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "פעולות בקר נוירון"
     },
     "yes": "כן",
     "no": "לא",
@@ -1056,7 +1057,9 @@
         "namedUserGroupMembers": "**{name}** חברי הקבוצה",
         "searchUserGroups": "חפש קבוצות משתמשים...",
         "userGroupName": "שם קבוצת משתמשים",
-        "noSpaces": "אין רווחים"
+        "noSpaces": "אין רווחים",
+        "noMatch": "לא נמצאו קהילות תואמות",
+        "refineSearch": "נסה לצמצם את החיפוש שלך"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",
@@ -1148,5 +1151,7 @@
     "guestUser": "משתמש אורח",
     "showAuthProviders": "הצג אפשרויות",
     "hideAuthProviders": "הסתר אפשרויות",
-    "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }"
+    "messageDeletedByOpenChatBot": "הודעה זו דווחה לראשונה על ידי משתמש OpenChat, לאחר מכן נשלחה אל [Modclub]({modclub}), שם הוחלט שההודעה מפרה [כלל פלטפורמה]({rules}), ולבסוף נמחקה על ידי {username} ב-{xyz }",
+    "offlineMessage": "לא מקוון",
+    "offlineError": "סליחה - נראה שאתה במצב לא מקוון כרגע"
 }

@@ -775,6 +775,7 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         notificationsMuted: optional(candid.notifications_muted, identity),
         updatedEvents: candid.updated_events.map(updatedEvent),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
@@ -842,7 +843,8 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
-        eventsTTL: undefined,
+        eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -881,6 +883,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
         readByThemUpTo: optional(candid.read_by_them_up_to, identity),
         dateCreated: candid.date_created,
         eventsTTL: undefined,
+        eventsTtlLastUpdated: BigInt(0),
         metrics: chatMetrics(candid.metrics),
         membership: {
             ...nullMembership(),

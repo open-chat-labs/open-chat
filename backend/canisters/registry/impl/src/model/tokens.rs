@@ -44,6 +44,7 @@ impl Tokens {
                 transaction_url_format,
                 added: now,
                 last_updated: now,
+                supported_standards: Vec::new(),
             });
             self.last_updated = now;
             true
@@ -82,6 +83,15 @@ impl Tokens {
         }
     }
 
+    pub fn set_standards(&mut self, ledger_canister_id: CanisterId, supported_standards: Vec<String>, now: TimestampMillis) {
+        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+            if token.supported_standards != supported_standards {
+                token.supported_standards = supported_standards;
+                token.last_updated = now;
+            }
+        }
+    }
+
     pub fn last_updated(&self) -> TimestampMillis {
         self.last_updated
     }
@@ -106,6 +116,7 @@ pub struct TokenMetrics {
     info_url: String,
     how_to_buy_url: String,
     transaction_url_format: String,
+    supported_standards: Vec<String>,
     added: TimestampMillis,
     last_updated: TimestampMillis,
 }
@@ -122,6 +133,7 @@ impl From<&TokenDetails> for TokenMetrics {
             info_url: value.info_url.clone(),
             how_to_buy_url: value.how_to_buy_url.clone(),
             transaction_url_format: value.transaction_url_format.clone(),
+            supported_standards: value.supported_standards.clone(),
             added: value.added,
             last_updated: value.last_updated,
         }

@@ -287,7 +287,8 @@ export async function getCachedEventsWindowByMessageIndex<T extends ChatEvent>(
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
-    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
+
     if (eventIndex === undefined) {
         return [
             {
@@ -424,7 +425,34 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
     ];
 }
 
-export async function getCachedEventIndexByMessageIndex(
+// If we don't find the precise index we are looking for, look for the previous index
+// This optimises the case where we looking for the next unread message. We won't have that
+// but we probably *will* have the message before.
+export async function getNearestCachedEventIndexForMessageIndex(
+    db: Database,
+    context: MessageContext,
+    messageIndex: number,
+    iterations = 0,
+): Promise<number | undefined> {
+    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    if (eventIndex === undefined && iterations === 0) {
+        console.debug(
+            "EV: we didn't find the event index for ",
+            messageIndex,
+            " recursing to look for event index for ",
+            messageIndex - 1,
+        );
+        return getNearestCachedEventIndexForMessageIndex(
+            db,
+            context,
+            messageIndex - 1,
+            iterations + 1,
+        );
+    }
+    return eventIndex;
+}
+
+async function getCachedEventIndexByMessageIndex(
     db: Database,
     context: MessageContext,
     messageIndex: number,

@@ -665,7 +665,8 @@
             "enterHowToBuyUrl": "Nhập url hiển thị cách mua mã thông báo",
             "transactionUrlFormat": "Định dạng url giao dịch",
             "enterTransactionUrlFormat": "Ví dụ. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Hành động điều khiển nơ-ron"
     },
     "yes": "Đúng",
     "no": "Không",
@@ -1059,7 +1060,9 @@
         "namedUserGroupMembers": "**{name}** thành viên nhóm",
         "searchUserGroups": "Tìm kiếm nhóm người dùng...",
         "userGroupName": "Tên nhóm người dùng",
-        "noSpaces": "không còn khoảng trống cho phép"
+        "noSpaces": "không còn khoảng trống cho phép",
+        "noMatch": "Không tìm thấy cộng đồng phù hợp",
+        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -1151,5 +1154,7 @@
     "guestUser": "Tài khoản khách",
     "showAuthProviders": "Hiển thị tùy chọn",
     "hideAuthProviders": "Ẩn tùy chọn",
-    "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}), nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }"
+    "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}), nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }",
+    "offlineMessage": "Ngoại tuyến",
+    "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này"
 }

@@ -30,9 +30,8 @@
     import { framed, broadcastLoggedInUser } from "../stores/xframe";
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
+    import Head from "./Head.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
-
-    let viewPortContent = "width=device-width, initial-scale=1";
 
     const logger = inititaliseLogger(
         process.env.ROLLBAR_ACCESS_TOKEN!,
@@ -332,9 +331,7 @@
         style={`background-image: url(${burstUrl})`} />
 {/if}
 
-<svelte:head>
-    <meta name="viewport" content={viewPortContent} />
-</svelte:head>
+<Head />
 
 <Witch background />
 

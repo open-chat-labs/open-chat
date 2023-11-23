@@ -664,7 +664,8 @@
             "enterHowToBuyUrl": "Введите URL-адрес, показывающий, как купить токен",
             "transactionUrlFormat": "Формат URL транзакции",
             "enterTransactionUrlFormat": "Например. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Действия нейронного контроллера"
     },
     "yes": "Да",
     "no": "Нет",
@@ -1058,7 +1059,9 @@
         "namedUserGroupMembers": "**{name}** участники группы",
         "searchUserGroups": "Поиск групп пользователей...",
         "userGroupName": "Имя группы пользователей",
-        "noSpaces": "пробелы не допускаются"
+        "noSpaces": "пробелы не допускаются",
+        "noMatch": "Подходящих сообществ не найдено",
+        "refineSearch": "попробуйте уточнить поиск"
     },
     "groupCreatedBy": "{username} создал {level}",
     "groupName": "{level} имя",
@@ -1150,5 +1153,7 @@
     "guestUser": "Гость пользователь",
     "showAuthProviders": "Показать параметры",
     "hideAuthProviders": "Скрыть параметры",
-    "messageDeletedByOpenChatBot": "Об этом сообщении сначала сообщил пользователь OpenChat, затем он был отправлен в [Modclub]({modclub}), где было решено, что сообщение нарушает [правило платформы]({rules}), и наконец удалено пользователем {username} на {xyz }"
+    "messageDeletedByOpenChatBot": "Об этом сообщении сначала сообщил пользователь OpenChat, затем он был отправлен в [Modclub]({modclub}), где было решено, что сообщение нарушает [правило платформы]({rules}), и наконец удалено пользователем {username} на {xyz }",
+    "offlineMessage": "Не в сети",
+    "offlineError": "Извините, похоже, вы сейчас не в сети."
 }

@@ -1,5 +1,7 @@
 use candid::Principal;
 use serde::{Serialize, Serializer};
+use sha256::sha256_string;
+use types::{BuildVersion, CanisterWasm, Empty, UpgradeCanisterWasmArgs, UpgradesFilter};
 
 pub use human_readable_derive::HumanReadable;
 
@@ -33,6 +35,14 @@ impl ToHumanReadable for () {
     }
 }
 
+impl ToHumanReadable for Empty {
+    type Target = String;
+
+    fn to_human_readable(&self) -> Self::Target {
+        "".to_string()
+    }
+}
+
 pub struct HumanReadablePrincipal(Principal);
 
 impl From<Principal> for HumanReadablePrincipal {
@@ -47,5 +57,56 @@ impl Serialize for HumanReadablePrincipal {
         S: Serializer,
     {
         self.0.to_string().serialize(serializer)
+    }
+}
+
+#[derive(Serialize)]
+pub struct HumanReadableUpgradeCanisterWasmArgs {
+    wasm: CanisterWasmTrimmed,
+    filter: Option<HumanReadableUpgradesFilter>,
+    use_for_new_canisters: Option<bool>,
+}
+
+#[derive(Serialize)]
+pub struct CanisterWasmTrimmed {
+    version: BuildVersion,
+    module_hash: String,
+    byte_length: u64,
+}
+
+impl ToHumanReadable for UpgradeCanisterWasmArgs {
+    type Target = HumanReadableUpgradeCanisterWasmArgs;
+
+    fn to_human_readable(&self) -> Self::Target {
+        HumanReadableUpgradeCanisterWasmArgs {
+            wasm: (&self.wasm).into(),
+            filter: self.filter.as_ref().map(|f| f.into()),
+            use_for_new_canisters: self.use_for_new_canisters,
+        }
+    }
+}
+
+impl From<&CanisterWasm> for CanisterWasmTrimmed {
+    fn from(value: &CanisterWasm) -> Self {
+        CanisterWasmTrimmed {
+            version: value.version,
+            module_hash: sha256_string(&value.module),
+            byte_length: value.module.len() as u64,
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct HumanReadableUpgradesFilter {
+    include: Vec<HumanReadablePrincipal>,
+    exclude: Vec<HumanReadablePrincipal>,
+}
+
+impl From<&UpgradesFilter> for HumanReadableUpgradesFilter {
+    fn from(value: &UpgradesFilter) -> Self {
+        HumanReadableUpgradesFilter {
+            include: value.include.iter().copied().map(|c| c.into()).collect(),
+            exclude: value.exclude.iter().copied().map(|c| c.into()).collect(),
+        }
     }
 }

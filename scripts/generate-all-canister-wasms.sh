@@ -6,12 +6,12 @@ cd $SCRIPT_DIR/..
 
 ./scripts/generate-wasm.sh community
 ./scripts/generate-wasm.sh cycles_dispenser
-./scripts/generate-wasm.sh exchange_bot
 ./scripts/generate-wasm.sh group
 ./scripts/generate-wasm.sh group_index
 ./scripts/generate-wasm.sh local_group_index
 ./scripts/generate-wasm.sh local_user_index
 ./scripts/generate-wasm.sh market_maker
+./scripts/generate-wasm.sh neuron_controller
 ./scripts/generate-wasm.sh notifications
 ./scripts/generate-wasm.sh notifications_index
 ./scripts/generate-wasm.sh online_users
