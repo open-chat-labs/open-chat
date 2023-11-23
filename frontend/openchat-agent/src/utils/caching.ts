@@ -39,7 +39,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 90;
+const CACHE_VERSION = 91;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;

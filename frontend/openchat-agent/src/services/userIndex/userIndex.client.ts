@@ -18,6 +18,7 @@ import type {
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
 } from "openchat-shared";
+import { Stream } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
@@ -58,21 +59,28 @@ export class UserIndexClient extends CandidService {
         );
     }
 
-    async getCurrentUser(): Promise<CurrentUserResponse> {
-        const principal = this.identity.getPrincipal().toString();
-        const cachedUser = await getCachedCurrentUser(principal);
+    getCurrentUser(): Stream<CurrentUserResponse> {
+        return new Stream(async (resolve, reject) => {
+            try {
+                const principal = this.identity.getPrincipal().toString();
+                const cachedUser = await getCachedCurrentUser(principal);
 
-        const liveUser = this.handleQueryResponse(
-            () => this.userIndexService.current_user({}),
-            currentUserResponse,
-        ).then((liveUser) => {
-            if (liveUser.kind === "created_user") {
-                setCachedCurrentUser(principal, liveUser);
+                if (cachedUser !== undefined) {
+                    resolve(cachedUser, false);
+                }
+
+                const liveUser = await this.handleQueryResponse(
+                    () => this.userIndexService.current_user({}),
+                    currentUserResponse,
+                );
+                if (liveUser.kind === "created_user") {
+                    setCachedCurrentUser(principal, liveUser);
+                }
+                resolve(liveUser, true);
+            } catch (err) {
+                reject(err);
             }
-            return liveUser;
         });
-
-        return cachedUser ?? liveUser;
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
