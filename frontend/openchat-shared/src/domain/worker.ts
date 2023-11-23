@@ -963,6 +963,7 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
+    initialLoad: boolean;
 };
 
 type GetDeletedGroupMessage = {
@@ -1147,6 +1148,7 @@ type Response<T> = {
     kind: "worker_response";
     correlationId: string;
     response: T;
+    final: boolean;
 };
 
 export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;
@@ -1477,7 +1479,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ListNervousSystemFunctions
     ? ListNervousSystemFunctionsResponse
     : T extends SendMessage
-    ? [SendMessageResponse, Message]
+    ? [ SendMessageResponse, Message ]
     : T extends EditMessage
     ? EditMessageResponse
     : T extends RegisterUser
@@ -1571,7 +1573,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
-    ? Map<string, Record<number, EventWrapper<Message>>>
+    ? Map< string, Record< number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends ClaimPrize
@@ -1659,7 +1661,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends FollowThread
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
-    ? Record<string, bigint>
+    ? Record< string, bigint >
     : T extends SetCachePrimerTimestamp
     ? void
     : T extends GetTokenSwapPools

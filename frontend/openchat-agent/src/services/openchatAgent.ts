@@ -191,6 +191,8 @@ import {
     applyOptionUpdate,
     waitAll,
     ANON_USER_ID,
+    Stream,
+    waitAll,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { AsyncMessageContextMap } from "../utils/messageContext";
@@ -780,15 +782,16 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
+        const rawEvents = this.getGroupClient(chatId.groupId).chatEventsWindow(
+            eventIndexRange,
+            messageIndex,
+            threadRootMessageIndex,
+            latestKnownUpdate,
+        );
         return this.rehydrateEventResponse(
             chatId,
-            this.getGroupClient(chatId.groupId).chatEventsWindow(
-                eventIndexRange,
-                messageIndex,
-                threadRootMessageIndex,
-                latestKnownUpdate,
-            ),
+            rawEvents,
             threadRootMessageIndex,
             latestKnownUpdate,
         );
@@ -1358,11 +1361,9 @@ export class OpenChatAgent extends EventTarget {
         return [...byCommunity.values()].flat();
     }
 
-    async getUpdates(): Promise<UpdatesResult> {
+    private async _getUpdates(current: ChatStateFull | undefined): Promise<UpdatesResult> {
         const start = Date.now();
         let numberOfAsyncCalls = 0;
-
-        const current = await getCachedChats(this.db, this.principal);
 
         let directChats: DirectChatSummary[];
         let directChatUpdates: DirectChatSummaryUpdates[] = [];
@@ -1588,6 +1589,28 @@ export class OpenChatAgent extends EventTarget {
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
         };
+    }
+
+    getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
+        return new Stream(async (resolve, reject) => {
+            const cachedState = await getCachedChats(this.db, this.principal);
+            if (cachedState && initialLoad) {
+                resolve(
+                    {
+                        state: this.hydrateChatState(cachedState),
+                        updatedEvents: new Map(),
+                        anyUpdates: false,
+                    },
+                    false,
+                );
+            }
+            try {
+                const updates = await this._getUpdates(cachedState);
+                resolve(updates, true);
+            } catch (err) {
+                reject(err);
+            }
+        });
     }
 
     private removeExpiredLatestMessages(
