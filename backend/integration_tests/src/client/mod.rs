@@ -2,7 +2,6 @@
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
-use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use serde::de::DeserializeOwned;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
@@ -27,29 +26,29 @@ pub mod user_index;
 const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
 
 pub fn create_canister(env: &mut PocketIc, controller: Principal) -> CanisterId {
-    let canister_id = env.create_canister_with_settings(None, Some(controller));
+    let canister_id = env.create_canister_with_settings(Some(controller), None);
+    env.add_cycles(canister_id, INIT_CYCLES_BALANCE);
+    canister_id
+}
+
+pub fn create_canister_with_id(env: &mut PocketIc, controller: Principal, canister_id: &str) -> CanisterId {
+    let canister_id = env
+        .create_canister_with_id(
+            Some(controller),
+            None,
+            Principal::from_text(canister_id).expect("Invalid canister ID"),
+        )
+        .expect("Create canister with ID failed");
     env.add_cycles(canister_id, INIT_CYCLES_BALANCE);
     canister_id
 }
 
 pub fn start_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId) {
-    env.update_call(
-        Principal::management_canister(),
-        sender,
-        "start_canister",
-        candid::encode_one(StartStopArgs::new(canister_id)).unwrap(),
-    )
-    .unwrap();
+    env.start_canister(canister_id, Some(sender)).unwrap();
 }
 
 pub fn stop_canister(env: &mut PocketIc, sender: Principal, canister_id: CanisterId) {
-    env.update_call(
-        Principal::management_canister(),
-        sender,
-        "stop_canister",
-        candid::encode_one(StartStopArgs::new(canister_id)).unwrap(),
-    )
-    .unwrap();
+    env.stop_canister(canister_id, Some(sender)).unwrap();
 }
 
 pub fn install_canister<P: CandidType>(
@@ -59,18 +58,7 @@ pub fn install_canister<P: CandidType>(
     wasm: CanisterWasm,
     payload: P,
 ) {
-    execute_update_no_response(
-        env,
-        sender,
-        Principal::management_canister(),
-        "install_code",
-        &InstallCodeArgument {
-            mode: CanisterInstallMode::Install,
-            canister_id,
-            wasm_module: wasm.module,
-            arg: candid::encode_one(&payload).unwrap(),
-        },
-    )
+    env.install_canister(canister_id, wasm.module, candid::encode_one(&payload).unwrap(), Some(sender))
 }
 
 pub fn execute_query<P: CandidType, R: CandidType + DeserializeOwned>(
@@ -145,7 +133,7 @@ pub fn upgrade_user(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds,
         true,
     );
 
-    tick_many(env, 3);
+    tick_many(env, 4);
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
