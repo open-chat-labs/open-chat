@@ -26,7 +26,6 @@ use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
 mod guards;
-mod initialize_modclub;
 mod jobs;
 mod lifecycle;
 mod memory;

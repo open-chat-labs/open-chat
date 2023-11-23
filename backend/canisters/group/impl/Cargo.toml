@@ -23,6 +23,7 @@ futures = { workspace = true }
 gated_groups = { path = "../../../libraries/gated_groups" }
 group_canister = { path = "../api" }
 group_chat_core = { path = "../../../libraries/group_chat_core" }
+group_community_common = { path = "../../../libraries/group_community_common" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
@@ -32,6 +33,8 @@ ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 icp_ledger_canister_c2c_client = { path = "../../../external_canisters/icp_ledger/c2c_client" }
+icrc_ledger_canister_c2c_client = { path = "../../../external_canisters/icrc_ledger/c2c_client" }
+icrc-ledger-types = { workspace = true }
 instruction_counts_log = { path = "../../../libraries/instruction_counts_log" }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
