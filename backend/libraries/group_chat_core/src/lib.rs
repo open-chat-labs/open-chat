@@ -1103,6 +1103,28 @@ impl GroupChatCore {
         }
     }
 
+    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> CancelInvitesResult {
+        use CancelInvitesResult::*;
+
+        if let Some(member) = self.members.get(&cancelled_by) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if !member.role.can_invite_users(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            for user_id in user_ids {
+                self.invited_users.remove(&user_id, now);
+            }
+
+            Success
+        } else {
+            UserNotInGroup
+        }
+    }
+
     pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {
         use CanLeaveResult::*;
 
@@ -1821,6 +1843,13 @@ pub enum InvitedUsersResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+}
+
+pub enum CancelInvitesResult {
+    Success,
+    UserNotInGroup,
+    UserSuspended,
+    NotAuthorized,
 }
 
 pub enum FollowThreadResult {
