@@ -68,6 +68,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.bg = trolleyGray;
     base.menu.bd = darkGray;
     base.menu["disabled-txt"] = txt60;
+    base.menu.warn = errorRed;
 
     base.button["disabled-txt"] = disabledTxt;
     base.button.bg = msBlue;
