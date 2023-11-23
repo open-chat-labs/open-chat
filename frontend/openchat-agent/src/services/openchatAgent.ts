@@ -639,8 +639,6 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     latestKnownUpdate,
                 );
-            default:
-                throw new Error("TODO - wip");
         }
     }
 

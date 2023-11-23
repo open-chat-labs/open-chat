@@ -150,6 +150,29 @@ export class OpenChatAgentWorker extends EventTarget {
         this._unresolved.delete(data.correlationId);
     }
 
+    responseHandler<Req extends WorkerRequest, T>(
+        req: Req,
+        correlationId: string,
+    ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
+        return (resolve, reject) => {
+            const sentAt = Date.now();
+            this._pending.set(correlationId, {
+                resolve,
+                reject,
+                timeout: window.setTimeout(() => {
+                    reject(
+                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
+                    );
+                    this._unresolved.set(correlationId, {
+                        kind: req.kind,
+                        sentAt,
+                    });
+                    this._pending.delete(correlationId);
+                }, WORKER_TIMEOUT),
+            });
+        };
+    }
+
     sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
@@ -157,30 +180,12 @@ export class OpenChatAgentWorker extends EventTarget {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
-
-        const correlated = {
+        const correlationId = v4();
+        this._worker.postMessage({
             ...req,
-            correlationId: v4(),
-        };
-
-        this._worker.postMessage(correlated);
-        return new Stream<WorkerResult<Req>>((resolve, reject) => {
-            const sentAt = Date.now();
-            this._pending.set(correlated.correlationId, {
-                resolve,
-                reject,
-                timeout: window.setTimeout(() => {
-                    reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
-                    );
-                    this._unresolved.set(correlated.correlationId, {
-                        kind: req.kind,
-                        sentAt,
-                    });
-                    this._pending.delete(correlated.correlationId);
-                }, WORKER_TIMEOUT),
-            });
+            correlationId,
         });
+        return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId));
     }
 
     async sendRequest<Req extends WorkerRequest>(
@@ -190,29 +195,11 @@ export class OpenChatAgentWorker extends EventTarget {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
         }
-
-        const correlated = {
+        const correlationId = v4();
+        this._worker.postMessage({
             ...req,
-            correlationId: v4(),
-        };
-
-        this._worker.postMessage(correlated);
-        return new Promise<WorkerResult<Req>>((resolve, reject) => {
-            const sentAt = Date.now();
-            this._pending.set(correlated.correlationId, {
-                resolve,
-                reject,
-                timeout: window.setTimeout(() => {
-                    reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlated.correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
-                    );
-                    this._unresolved.set(correlated.correlationId, {
-                        kind: req.kind,
-                        sentAt,
-                    });
-                    this._pending.delete(correlated.correlationId);
-                }, WORKER_TIMEOUT),
-            });
+            correlationId,
         });
+        return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId));
     }
 }
