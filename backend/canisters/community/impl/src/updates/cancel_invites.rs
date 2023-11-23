@@ -31,19 +31,17 @@ fn cancel_invites_impl(args: Args, state: &mut RuntimeState) -> Response {
             } else {
                 ChannelNotFound
             }
-        } else {
-            if member.role.can_invite_users(&state.data.permissions) {
-                for user_id in args.user_ids {
-                    if state.data.invited_users.remove(&user_id, now).is_some() {
-                        for channel in state.data.channels.iter_mut() {
-                            channel.chat.invited_users.remove(&user_id, now);
-                        }
+        } else if member.role.can_invite_users(&state.data.permissions) {
+            for user_id in args.user_ids {
+                if state.data.invited_users.remove(&user_id, now).is_some() {
+                    for channel in state.data.channels.iter_mut() {
+                        channel.chat.invited_users.remove(&user_id, now);
                     }
                 }
-                Success
-            } else {
-                NotAuthorized
             }
+            Success
+        } else {
+            NotAuthorized
         }
     } else {
         UserNotInCommunity
