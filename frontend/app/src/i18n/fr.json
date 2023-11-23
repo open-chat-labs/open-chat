@@ -964,8 +964,8 @@
         "amount": "Montant (jetons)",
         "amountN": "Montant {n} jetons",
         "paymentFailed": "Paiement échoué",
-        "payAndJoin": "Payez et rejoignez {level}",
-        "tokenComingSoon": "{token} (à venir)"
+        "tokenComingSoon": "{token} (à venir)",
+        "payAndJoin": "Payez et adhérez"
     },
     "communities": {
         "explore": "Explorer les communautés",

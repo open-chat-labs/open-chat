@@ -966,8 +966,8 @@
         "amount": "Cantidad (fichas)",
         "amountN": "Cantidad de tokens {n}",
         "paymentFailed": "Pago fallido",
-        "payAndJoin": "Paga y únete a {level}",
-        "tokenComingSoon": "{token} (próximamente)"
+        "tokenComingSoon": "{token} (próximamente)",
+        "payAndJoin": "Paga y únete"
     },
     "communities": {
         "explore": "Explora comunidades",

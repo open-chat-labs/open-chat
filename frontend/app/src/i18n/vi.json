@@ -965,8 +965,8 @@
         "amount": "Số lượng (token)",
         "amountN": "Số lượng mã thông báo {n}",
         "paymentFailed": "Thanh toán không thành công",
-        "payAndJoin": "Thanh toán và tham gia {level}",
-        "tokenComingSoon": "{token} (sắp ra mắt)"
+        "tokenComingSoon": "{token} (sắp ra mắt)",
+        "payAndJoin": "Thanh toán và tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",

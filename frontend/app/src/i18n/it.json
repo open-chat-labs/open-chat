@@ -964,8 +964,8 @@
         "amount": "Importo (gettoni)",
         "amountN": "Importo {n} token",
         "paymentFailed": "Pagamento fallito",
-        "payAndJoin": "Paga e iscriviti a {level}",
-        "tokenComingSoon": "{token} (disponibile a breve)"
+        "tokenComingSoon": "{token} (disponibile a breve)",
+        "payAndJoin": "Paga e iscriviti"
     },
     "communities": {
         "explore": "Esplora le comunità",

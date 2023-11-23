@@ -965,8 +965,8 @@
         "amount": "金額（トークン）",
         "amountN": "量 {n} トークン",
         "paymentFailed": "支払いに失敗しました",
-        "payAndJoin": "支払いをして {level} に参加してください",
-        "tokenComingSoon": "{token} (近日公開予定)"
+        "tokenComingSoon": "{token} (近日公開予定)",
+        "payAndJoin": "お金を払って参加する"
     },
     "communities": {
         "explore": "コミュニティを探索する",

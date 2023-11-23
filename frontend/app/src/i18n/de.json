@@ -966,8 +966,8 @@
         "amount": "Betrag (Tokens)",
         "amountN": "Anzahl {n} Token",
         "paymentFailed": "Bezahlung fehlgeschlagen",
-        "payAndJoin": "Zahlen Sie und treten Sie {level} bei",
-        "tokenComingSoon": "{token} (bald verfügbar)"
+        "tokenComingSoon": "{token} (bald verfügbar)",
+        "payAndJoin": "Bezahlen und mitmachen"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

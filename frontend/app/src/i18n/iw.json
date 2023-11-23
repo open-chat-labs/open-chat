@@ -962,8 +962,8 @@
         "amount": "כמות (אסימונים)",
         "amountN": "כמות {n} אסימונים",
         "paymentFailed": "התשלום נכשל",
-        "payAndJoin": "שלם והצטרף ל-{level}",
-        "tokenComingSoon": "{token} (בקרוב)"
+        "tokenComingSoon": "{token} (בקרוב)",
+        "payAndJoin": "שלם והצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",

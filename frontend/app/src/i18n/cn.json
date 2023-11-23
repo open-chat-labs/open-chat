@@ -964,8 +964,8 @@
         "amount": "金额（代币）",
         "amountN": "{n} 代币数量",
         "paymentFailed": "支付失败",
-        "payAndJoin": "付款并加入 {level}",
-        "tokenComingSoon": "{token}（即将推出）"
+        "tokenComingSoon": "{token}（即将推出）",
+        "payAndJoin": "付款并加入"
     },
     "communities": {
         "explore": "探索社区",

@@ -127,9 +127,7 @@
                 loading={joining || refreshingBalance}
                 disabled={joining}
                 on:click={onClickPrimary}
-                >{insufficientFunds
-                    ? "Refresh"
-                    : $_("access.payAndJoin", { values: { level: group.level } })}</Button>
+                >{insufficientFunds ? "Refresh" : $_("access.payAndJoin")}</Button>
         </ButtonGroup>
     </div>
 </ModalContent>

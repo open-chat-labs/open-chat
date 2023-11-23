@@ -553,7 +553,7 @@
         "neuronHolderInfo": "Only holders of {token} neurons will be allowed to join",
         "payment": "Payment",
         "tokenPayment": "{token} payment",
-        "tokenPaymentInfo": "Users can only join if they pay an amount in {token} tokens. ",
+        "tokenPaymentInfo": "Users can only join if they pay an amount in {token} tokens.",
         "chooseNervousSystem": "Choose nervous system",
         "chooseToken": "Choose token",
         "amount": "Amount (tokens)",
@@ -571,7 +571,7 @@
         "credentialIssuer": "Credential issuer",
         "requiredCredential": "Required credential",
         "paymentFailed": "Payment failed",
-        "payAndJoin": "Pay and join {level}",
+        "payAndJoin": "Pay and join",
         "tokenComingSoon": "{token} (coming soon)"
     },
     "updateNow": "reload now",

@@ -964,8 +964,8 @@
         "amount": "Сумма (токены)",
         "amountN": "Количество токенов {n}",
         "paymentFailed": "Платеж не прошел",
-        "payAndJoin": "Оплатите и присоединяйтесь к {level}",
-        "tokenComingSoon": "{token} (скоро)"
+        "tokenComingSoon": "{token} (скоро)",
+        "payAndJoin": "Оплатите и присоединяйтесь"
     },
     "communities": {
         "explore": "Исследуйте сообщества",
