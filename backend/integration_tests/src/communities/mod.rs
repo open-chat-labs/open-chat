@@ -1,3 +1,4 @@
+mod cancel_invites_tests;
 mod convert_group_into_community_tests;
 mod create_channel_tests;
 mod disappearing_message_tests;

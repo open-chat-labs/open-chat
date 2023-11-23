@@ -40,7 +40,9 @@ pub(crate) fn invite_users_to_community_impl(args: Args, state: &mut RuntimeStat
             .users
             .iter()
             .filter(|(user_id, principal)| {
-                state.data.members.get(*principal).is_none() && !state.data.invited_users.contains(user_id)
+                state.data.members.get(*principal).is_none()
+                    && !state.data.invited_users.contains(user_id)
+                    && !state.data.members.is_blocked(user_id)
             })
             .copied()
             .collect();

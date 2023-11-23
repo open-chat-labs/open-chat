@@ -11,6 +11,7 @@ pub mod c2c_set_user_suspended;
 pub mod c2c_tip_message;
 pub mod c2c_unfreeze_community;
 pub mod c2c_update_proposals;
+pub mod cancel_invites;
 pub mod change_channel_role;
 pub mod change_role;
 pub mod claim_prize;
