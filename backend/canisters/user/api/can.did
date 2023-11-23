@@ -1,5 +1,4 @@
 import "../../../libraries/types/can.did";
-import "../../../external_canisters/icrc_ledger/api/can.did";
 
 type SendMessageV2Args = record {
     recipient : UserId;

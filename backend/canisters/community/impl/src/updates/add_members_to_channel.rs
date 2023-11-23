@@ -2,12 +2,13 @@ use crate::{activity_notifications::handle_activity_notification, mutate_state, 
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
 use ic_cdk_macros::update;
 use std::iter::zip;
 use types::{
-    AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId,
+    AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification,
+    TimestampNanos, UserId,
 };
 
 #[update]
@@ -28,7 +29,15 @@ async fn add_members_to_channel(args: Args) -> Response {
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
-            .map(|user_id| check_if_passes_gate(&gate, *user_id, prepare_result.user_index_canister_id))
+            .map(|user_id| {
+                check_if_passes_gate(CheckGateArgs {
+                    gate: gate.clone(),
+                    user_index_canister: prepare_result.user_index_canister,
+                    user_id: *user_id,
+                    this_canister: prepare_result.this_canister,
+                    now_nanos: prepare_result.now_nanos,
+                })
+            })
             .collect();
 
         let results = futures::future::join_all(futures).await;
@@ -69,9 +78,11 @@ struct PrepareResult {
     users_to_add: Vec<UserId>,
     users_already_in_channel: Vec<UserId>,
     gate: Option<AccessGate>,
-    user_index_canister_id: CanisterId,
+    user_index_canister: CanisterId,
     is_bot: bool,
     member_display_name: Option<String>,
+    this_canister: CanisterId,
+    now_nanos: TimestampNanos,
 }
 
 #[allow(clippy::result_large_err)]
@@ -109,9 +120,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     users_to_add,
                     users_already_in_channel,
                     gate: channel.chat.gate.as_ref().cloned(),
-                    user_index_canister_id: state.data.user_index_canister_id,
+                    user_index_canister: state.data.user_index_canister_id,
                     is_bot: member.is_bot,
                     member_display_name: member.display_name().value.clone(),
+                    this_canister: state.env.canister_id(),
+                    now_nanos: state.env.now_nanos(),
                 })
             } else {
                 Err(UserNotInChannel)

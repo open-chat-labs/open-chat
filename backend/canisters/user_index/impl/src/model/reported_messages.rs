@@ -9,15 +9,10 @@ use types::{Chat, MessageContent, MessageId, MessageIndex, TextContent, Timestam
 pub struct ReportedMessages {
     messages: Vec<ReportedMessage>,
     lookup: HashMap<(Chat, Option<MessageIndex>, MessageIndex), usize>,
-    #[serde(default)]
     rules: Vec<Rule>,
 }
 
 impl ReportedMessages {
-    pub fn set_rules(&mut self, rules: Vec<Rule>) {
-        self.rules = rules;
-    }
-
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
         if let Some(index) = self
             .lookup
@@ -93,10 +88,6 @@ impl ReportedMessages {
             messages_pending_outcome: self.messages.iter().filter(|m| m.outcome.is_none()).count(),
             rules: self.rules.clone(),
         }
-    }
-
-    pub fn rules(&self) -> &Vec<Rule> {
-        &self.rules
     }
 
     fn index_from_rule_id(&self, rule_id: String) -> usize {
