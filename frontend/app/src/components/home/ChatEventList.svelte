@@ -299,7 +299,7 @@
 
     async function scrollBottom(
         behavior: ScrollBehavior = "auto",
-        retries: number = 0
+        retries: number = 0,
     ): Promise<void> {
         if (messagesDiv) {
             messagesDiv?.scrollTo({
@@ -359,7 +359,7 @@
 
     function scrollToElement(
         element: Element | null,
-        behavior: ScrollBehavior = "auto"
+        behavior: ScrollBehavior = "auto",
     ): Promise<void> {
         return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });
@@ -372,7 +372,7 @@
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
                 (messageContext === undefined ||
-                    !failedMessagesStore.contains(messageContext, ev.event.messageId))
+                    !failedMessagesStore.contains(messageContext, ev.event.messageId)),
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -430,7 +430,7 @@
         index: number,
         preserveFocus: boolean,
         filling: boolean = false,
-        hasLookedUpEvent: boolean = false
+        hasLookedUpEvent: boolean = false,
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
         if (!messageContextsEqual(context, messageContext)) return Promise.resolve();
@@ -470,9 +470,6 @@
             if (loaded === undefined) {
                 if (!hasLookedUpEvent) {
                     // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
-                    // TODO - with the streaming approach this leaves us with a problem because the message we are looking for might not be there yet
-                    // but might already have been requested - at the moment we can't tell when that is the case, if it's not there we are going to
-                    // try to look it up
                     await client.loadEventWindow(context.chatId, index, threadRootEvent);
                     return scrollToMessageIndex(context, index, preserveFocus, filling, true);
                 }
@@ -493,7 +490,7 @@
     export async function onMessageWindowLoaded(
         context: MessageContext,
         messageIndex: number | undefined,
-        initialLoad = false
+        initialLoad = false,
     ) {
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
@@ -614,7 +611,7 @@
         } else {
             loadIndexThenScrollToBottom(
                 messageContext,
-                chat.latestMessage?.event.messageIndex ?? -1
+                chat.latestMessage?.event.messageIndex ?? -1,
             );
         }
     }

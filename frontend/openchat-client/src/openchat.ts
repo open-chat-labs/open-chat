@@ -341,7 +341,6 @@ import type {
     MessagePermission,
     OptionalChatPermissions,
     ExpiredEventsRange,
-    // UpdatesResponse,
     UpdatesResult,
 } from "openchat-shared";
 import {
@@ -632,7 +631,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        // this._cachePrimer = new CachePrimer(this);
+        this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -4649,37 +4648,28 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadChats() {
-        try {
-            const init = this._liveState.chatsInitialised;
+        const init = this._liveState.chatsInitialised;
+        chatsLoading.set(!init);
 
-            // TODO - how does this work now that we are loading in chunks
-            chatsLoading.set(!init);
+        const updateRegistryTask = !init ? this.updateRegistry() : undefined;
 
-            const updateRegistryTask = !init ? this.updateRegistry() : undefined;
-
-            return new Promise<void>((resolve) => {
-                this.sendStreamRequest({
-                    kind: "getUpdates",
-                    initialLoad: !init,
+        return new Promise<void>((resolve) => {
+            this.sendStreamRequest({
+                kind: "getUpdates",
+                initialLoad: !init,
+            })
+                .subscribe(async (resp) => {
+                    await this.loadChatsResponse(updateRegistryTask, init, resp as UpdatesResult);
+                    chatsLoading.set(!this._liveState.chatsInitialised);
                 })
-                    .subscribe(async (resp) => {
-                        await this.loadChatsResponse(
-                            updateRegistryTask,
-                            init,
-                            resp as UpdatesResult,
-                        );
-                    })
-                    .catch((err) => this.config.logger.error("Error loading chats: ", err))
-                    .finally(() => {
-                        resolve();
-                    });
-            });
-        } catch (err) {
-            this.config.logger.error("Error loading chats", err as Error);
-            throw err;
-        } finally {
-            chatsLoading.set(false);
-        }
+                .catch((err) => {
+                    this.config.logger.error("Error loading chats: ", err);
+                    throw err;
+                })
+                .finally(() => {
+                    resolve();
+                });
+        });
     }
 
     private async getLastOnlineDatesBatched(userIds: string[]): Promise<Record<string, number>> {

@@ -190,20 +190,6 @@ export class GroupClient extends CandidService {
         return resp;
     }
 
-    // private handleMissingEvents2(
-    //     missing: Set<number>,
-    //     threadRootMessageIndex: number | undefined,
-    //     latestKnownUpdate: bigint | undefined,
-    // ): Promise<EventsResponse<GroupChatEvent>> | undefined {
-    //     if (missing.size === 0) return undefined;
-
-    //     return this.chatEventsByIndexFromBackend(
-    //         [...missing],
-    //         threadRootMessageIndex,
-    //         latestKnownUpdate,
-    //     ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
-    // }
-
     private handleMissingEvents(
         [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
@@ -275,52 +261,6 @@ export class GroupClient extends CandidService {
             return this.handleMissingEvents([cachedEvents, missing], undefined, latestKnownUpdate);
         }
     }
-
-    // async chatEventsWindow2(
-    //     eventIndexRange: IndexRange,
-    //     messageIndex: number,
-    //     threadRootMessageIndex: number | undefined,
-    //     latestKnownUpdate: bigint | undefined,
-    // ): PromiseChain<EventsResponse<GroupChatEvent>> {
-    //     const [cachedEvents, missing, totalMiss] =
-    //         await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
-    //             this.db,
-    //             eventIndexRange,
-    //             { chatId: this.chatId, threadRootMessageIndex },
-    //             messageIndex,
-    //         );
-
-    //     if (totalMiss || missing.size >= MAX_MISSING) {
-    //         // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-    //         console.log(
-    //             "We didn't get enough back from the cache, going to the api",
-    //             missing.size,
-    //             totalMiss,
-    //         );
-    //         return promiseChain(
-    //             this.chatEventsWindowFromBackend(
-    //                 messageIndex,
-    //                 threadRootMessageIndex,
-    //                 latestKnownUpdate,
-    //             ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex)),
-    //         );
-    //     } else {
-    //         return promiseChain(
-    //             Promise.resolve(cachedEvents),
-    //             new Promise((resolve) => {
-    //                 setTimeout(() => {
-    //                     this.handleMissingEvents2(missing, undefined, latestKnownUpdate)?.then(
-    //                         (p) => {
-    //                             if (p !== "events_failed") {
-    //                                 resolve(p);
-    //                             }
-    //                         },
-    //                     );
-    //                 }, 5000);
-    //             }),
-    //         );
-    //     }
-    // }
 
     private async chatEventsWindowFromBackend(
         messageIndex: number,
