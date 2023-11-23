@@ -787,27 +787,6 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    // private groupChatEventsWindow(
-    //     eventIndexRange: IndexRange,
-    //     chatId: GroupChatIdentifier,
-    //     messageIndex: number,
-    //     threadRootMessageIndex: number | undefined,
-    //     latestKnownUpdate: bigint | undefined,
-    // ): PromiseChain<EventsResponse<ChatEvent>> {
-    //     const rawEvents = this.getGroupClient(chatId.groupId).chatEventsWindow(
-    //         eventIndexRange,
-    //         messageIndex,
-    //         threadRootMessageIndex,
-    //         latestKnownUpdate,
-    //     );
-    //     return this.rehydrateEventResponse2(
-    //         chatId,
-    //         rawEvents,
-    //         threadRootMessageIndex,
-    //         latestKnownUpdate,
-    //     );
-    // }
-
     private channelEvents(
         eventIndexRange: IndexRange,
         chatId: ChannelIdentifier,
@@ -1133,39 +1112,6 @@ export class OpenChatAgent extends EventTarget {
         }
         return ev;
     }
-
-    // private async rehydrateEventResponse2<T extends ChatEvent>(
-    //     currentChatId: ChatIdentifier,
-    //     eventsPromise: PromiseChain<EventsResponse<T>>,
-    //     threadRootMessageIndex: number | undefined,
-    //     latestKnownUpdate: bigint | undefined,
-    // ): PromiseChain<EventsResponse<T>> {
-    //     const { value, continuation } = await eventsPromise;
-
-    //     if (value !== "events_failed") {
-    //         const missing = await this.resolveMissingIndexes(
-    //             currentChatId,
-    //             value.events,
-    //             threadRootMessageIndex,
-    //             latestKnownUpdate,
-    //         );
-
-    //         value.events = value.events.map((e) =>
-    //             this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex),
-    //         );
-    //     }
-    //     return {
-    //         value,
-    //         continuation: continuation
-    //             ? this.rehydrateEventResponse2(
-    //                   currentChatId,
-    //                   continuation,
-    //                   threadRootMessageIndex,
-    //                   latestKnownUpdate,
-    //               )
-    //             : undefined,
-    //     };
-    // }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
         currentChatId: ChatIdentifier,
