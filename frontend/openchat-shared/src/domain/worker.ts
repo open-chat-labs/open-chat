@@ -1341,300 +1341,287 @@ type SubmitProposal = {
     kind: "submitProposal";
 };
 
+//prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
-      ? NamedAccount[]
-      : T extends SaveCryptoAccount
-        ? SaveCryptoAccountResponse
-        : T extends TipMessage
-          ? TipMessageResponse
-          : T extends UnpinMessage
-            ? UnpinMessageResponse
-            : T extends GetUpdates
-              ? UpdatesResult
-              : T extends GetDeletedDirectMessage
-                ? DeletedDirectMessageResponse
-                : T extends GetDeletedGroupMessage
-                  ? DeletedGroupMessageResponse
-                  : T extends CreateUserClient
-                    ? void
-                    : T extends ChatEvents
-                      ? EventsResponse<ChatEvent>
-                      : T extends GetUsers
-                        ? UsersResponse
-                        : T extends MarkMessagesRead
-                          ? MarkReadResponse
-                          : T extends GetGroupDetails
-                            ? GroupChatDetailsResponse
-                            : T extends CurrentUser
-                              ? CurrentUserResponse
-                              : T extends CreateUserClient
-                                ? void
-                                : T extends GetAllCachedUsers
-                                  ? UserLookup
-                                  : T extends LastOnline
-                                    ? Record<string, number>
-                                    : T extends MarkAsOnline
-                                      ? void
-                                      : T extends ChatEventsWindow
-                                        ? EventsResponse<ChatEvent>
-                                        : T extends ChatEventsByEventIndex
-                                          ? EventsResponse<ChatEvent>
-                                          : T extends RehydrateMessage
-                                            ? EventWrapper<Message>
-                                            : T extends CheckUsername
-                                              ? CheckUsernameResponse
-                                              : T extends SearchUsers
-                                                ? UserSummary[]
-                                                : T extends MigrateUserPrincipal
-                                                  ? MigrateUserPrincipalResponse
-                                                  : T extends InitUserPrincipalMigration
-                                                    ? void
-                                                    : T extends GetUserStorageLimits
-                                                      ? StorageStatus
-                                                      : T extends GetPublicGroupSummary
-                                                        ? PublicGroupSummaryResponse
-                                                        : T extends ToggleMuteNotifications
-                                                          ? ToggleMuteNotificationResponse
-                                                          : T extends ArchiveChat
-                                                            ? ArchiveChatResponse
-                                                            : T extends UnArchiveChat
-                                                              ? ArchiveChatResponse
-                                                              : T extends PinChat
-                                                                ? PinChatResponse
-                                                                : T extends UnpinChat
-                                                                  ? UnpinChatResponse
-                                                                  : T extends BlockUserFromDirectChat
-                                                                    ? BlockUserResponse
-                                                                    : T extends UnblockUserFromDirectChat
-                                                                      ? UnblockUserResponse
-                                                                      : T extends SetUserAvatar
-                                                                        ? BlobReference
-                                                                        : T extends DeleteGroup
-                                                                          ? DeleteGroupResponse
-                                                                          : T extends LeaveGroup
-                                                                            ? LeaveGroupResponse
-                                                                            : T extends JoinGroup
-                                                                              ? JoinGroupResponse
-                                                                              : T extends UpdateGroup
-                                                                                ? UpdateGroupResponse
-                                                                                : T extends RegisterPollVote
-                                                                                  ? RegisterPollVoteResponse
-                                                                                  : T extends DeleteMessage
-                                                                                    ? DeleteMessageResponse
-                                                                                    : T extends UndeleteMessage
-                                                                                      ? UndeleteMessageResponse
-                                                                                      : T extends AddReaction
-                                                                                        ? AddRemoveReactionResponse
-                                                                                        : T extends RemoveReaction
-                                                                                          ? AddRemoveReactionResponse
-                                                                                          : T extends BlockUserFromGroup
-                                                                                            ? BlockUserResponse
-                                                                                            : T extends UnblockUserFromGroup
-                                                                                              ? UnblockUserResponse
-                                                                                              : T extends GetProposalVoteDetailsRequest
-                                                                                                ? ProposalVoteDetails
-                                                                                                : T extends ListNervousSystemFunctions
-                                                                                                  ? ListNervousSystemFunctionsResponse
-                                                                                                  : T extends SendMessage
-                                                                                                    ? [
-                                                                                                          SendMessageResponse,
-                                                                                                          Message,
-                                                                                                      ]
-                                                                                                    : T extends EditMessage
-                                                                                                      ? EditMessageResponse
-                                                                                                      : T extends RegisterUser
-                                                                                                        ? RegisterUserResponse
-                                                                                                        : T extends SubscriptionExists
-                                                                                                          ? boolean
-                                                                                                          : T extends PushSub
-                                                                                                            ? void
-                                                                                                            : T extends RemoveSub
-                                                                                                              ? void
-                                                                                                              : T extends InviteUsers
-                                                                                                                ? InviteUsersResponse
-                                                                                                                : T extends InviteUsersToCommunity
-                                                                                                                  ? InviteUsersResponse
-                                                                                                                  : T extends RemoveMember
-                                                                                                                    ? RemoveMemberResponse
-                                                                                                                    : T extends ChangeRole
-                                                                                                                      ? ChangeRoleResponse
-                                                                                                                      : T extends RegisterProposalVote
-                                                                                                                        ? RegisterProposalVoteResponse
-                                                                                                                        : T extends GetRecommendedGroups
-                                                                                                                          ? GroupChatSummary[]
-                                                                                                                          : T extends ExploreCommunities
-                                                                                                                            ? ExploreCommunitiesResponse
-                                                                                                                            : T extends DismissRecommendations
-                                                                                                                              ? void
-                                                                                                                              : T extends GroupInvite
-                                                                                                                                ? void
-                                                                                                                                : T extends CommunityInvite
-                                                                                                                                  ? void
-                                                                                                                                  : T extends SearchGroupChat
-                                                                                                                                    ? SearchGroupChatResponse
-                                                                                                                                    : T extends SearchDirectChat
-                                                                                                                                      ? SearchDirectChatResponse
-                                                                                                                                      : T extends RefreshAccountBalance
-                                                                                                                                        ? bigint
-                                                                                                                                        : T extends GetAccountTransactions
-                                                                                                                                          ? AccountTransactionResult
-                                                                                                                                          : T extends GetThreadPreviews
-                                                                                                                                            ? ThreadPreview[]
-                                                                                                                                            : T extends GetUser
-                                                                                                                                              ?
-                                                                                                                                                    | UserSummary
-                                                                                                                                                    | undefined
-                                                                                                                                              : T extends GetPublicProfile
-                                                                                                                                                ? PublicProfile
-                                                                                                                                                : T extends SetUsername
-                                                                                                                                                  ? SetUsernameResponse
-                                                                                                                                                  : T extends SetDisplayName
-                                                                                                                                                    ? SetDisplayNameResponse
-                                                                                                                                                    : T extends SetBio
-                                                                                                                                                      ? SetBioResponse
-                                                                                                                                                      : T extends GetBio
-                                                                                                                                                        ? string
-                                                                                                                                                        : T extends WithdrawCrypto
-                                                                                                                                                          ? WithdrawCryptocurrencyResponse
-                                                                                                                                                          : T extends GroupMessagesByMessageIndex
-                                                                                                                                                            ? EventsResponse<Message>
-                                                                                                                                                            : T extends GetInviteCode
-                                                                                                                                                              ? InviteCodeResponse
-                                                                                                                                                              : T extends EnableInviteCode
-                                                                                                                                                                ? EnableInviteCodeResponse
-                                                                                                                                                                : T extends DisableInviteCode
-                                                                                                                                                                  ? DisableInviteCodeResponse
-                                                                                                                                                                  : T extends ResetInviteCode
-                                                                                                                                                                    ? ResetInviteCodeResponse
-                                                                                                                                                                    : T extends CreateGroupChat
-                                                                                                                                                                      ? CreateGroupResponse
-                                                                                                                                                                      : T extends SetCachedMessageFromNotification
-                                                                                                                                                                        ? void
-                                                                                                                                                                        : T extends FreezeGroup
-                                                                                                                                                                          ? FreezeGroupResponse
-                                                                                                                                                                          : T extends UnfreezeGroup
-                                                                                                                                                                            ? UnfreezeGroupResponse
-                                                                                                                                                                            : T extends AddHotGroupExclusion
-                                                                                                                                                                              ? AddHotGroupExclusionResponse
-                                                                                                                                                                              : T extends RemoveHotGroupExclusion
-                                                                                                                                                                                ? RemoveHotGroupExclusionResponse
-                                                                                                                                                                                : T extends DeleteFrozenGroup
-                                                                                                                                                                                  ? DeleteFrozenGroupResponse
-                                                                                                                                                                                  : T extends SuspendUser
-                                                                                                                                                                                    ? SuspendUserResponse
-                                                                                                                                                                                    : T extends UnsuspendUser
-                                                                                                                                                                                      ? UnsuspendUserResponse
-                                                                                                                                                                                      : T extends SetCommunityModerationFlags
-                                                                                                                                                                                        ? SetCommunityModerationFlagsResponse
-                                                                                                                                                                                        : T extends SetGroupUpgradeConcurrency
-                                                                                                                                                                                          ? SetGroupUpgradeConcurrencyResponse
-                                                                                                                                                                                          : T extends SetCommunityUpgradeConcurrency
-                                                                                                                                                                                            ? SetGroupUpgradeConcurrencyResponse
-                                                                                                                                                                                            : T extends SetUserUpgradeConcurrency
-                                                                                                                                                                                              ? SetUserUpgradeConcurrencyResponse
-                                                                                                                                                                                              : T extends StakeNeuronForSubmittingProposals
-                                                                                                                                                                                                ? StakeNeuronForSubmittingProposalsResponse
-                                                                                                                                                                                                : T extends LoadFailedMessages
-                                                                                                                                                                                                  ? Map<
-                                                                                                                                                                                                        string,
-                                                                                                                                                                                                        Record<
-                                                                                                                                                                                                            number,
-                                                                                                                                                                                                            EventWrapper<Message>
-                                                                                                                                                                                                        >
-                                                                                                                                                                                                    >
-                                                                                                                                                                                                  : T extends DeleteFailedMessage
-                                                                                                                                                                                                    ? void
-                                                                                                                                                                                                    : T extends ClaimPrize
-                                                                                                                                                                                                      ? ClaimPrizeResponse
-                                                                                                                                                                                                      : T extends PayForDiamondMembership
-                                                                                                                                                                                                        ? PayForDiamondMembershipResponse
-                                                                                                                                                                                                        : T extends UpdateMarketMakerConfig
-                                                                                                                                                                                                          ? UpdateMarketMakerConfigResponse
-                                                                                                                                                                                                          : T extends SetMessageReminder
-                                                                                                                                                                                                            ? SetMessageReminderResponse
-                                                                                                                                                                                                            : T extends CancelMessageReminder
-                                                                                                                                                                                                              ? boolean
-                                                                                                                                                                                                              : T extends ReferralLeaderboard
-                                                                                                                                                                                                                ? ReferralLeaderboardResponse
-                                                                                                                                                                                                                : T extends ReportMessage
-                                                                                                                                                                                                                  ? boolean
-                                                                                                                                                                                                                  : T extends DeclineInvitation
-                                                                                                                                                                                                                    ? DeclineInvitationResponse
-                                                                                                                                                                                                                    : T extends AddMembersToChannel
-                                                                                                                                                                                                                      ? AddMembersToChannelResponse
-                                                                                                                                                                                                                      : T extends BlockCommunityUser
-                                                                                                                                                                                                                        ? BlockCommunityUserResponse
-                                                                                                                                                                                                                        : T extends ChangeChannelRole
-                                                                                                                                                                                                                          ? ChangeRoleResponse
-                                                                                                                                                                                                                          : T extends ChangeCommunityRole
-                                                                                                                                                                                                                            ? ChangeCommunityRoleResponse
-                                                                                                                                                                                                                            : T extends DeclineChannelInvitation
-                                                                                                                                                                                                                              ? DeclineInvitationResponse
-                                                                                                                                                                                                                              : T extends ChannelEvents
-                                                                                                                                                                                                                                ? EventsResponse<GroupChatEvent>
-                                                                                                                                                                                                                                : T extends ChannelEventsByIndex
-                                                                                                                                                                                                                                  ? EventsResponse<GroupChatEvent>
-                                                                                                                                                                                                                                  : T extends ChannelEventsWindow
-                                                                                                                                                                                                                                    ? EventsResponse<GroupChatEvent>
-                                                                                                                                                                                                                                    : T extends ChannelMessagesByMessageIndex
-                                                                                                                                                                                                                                      ? EventsResponse<Message>
-                                                                                                                                                                                                                                      : T extends RemoveCommunityMember
-                                                                                                                                                                                                                                        ? RemoveMemberResponse
-                                                                                                                                                                                                                                        : T extends ToggleMuteCommunityNotifications
-                                                                                                                                                                                                                                          ? ToggleMuteCommunityNotificationsResponse
-                                                                                                                                                                                                                                          : T extends UnblockCommunityUser
-                                                                                                                                                                                                                                            ? UnblockCommunityUserResponse
-                                                                                                                                                                                                                                            : T extends UpdateCommunity
-                                                                                                                                                                                                                                              ? UpdateCommunityResponse
-                                                                                                                                                                                                                                              : T extends CreateCommunity
-                                                                                                                                                                                                                                                ? CreateCommunityResponse
-                                                                                                                                                                                                                                                : T extends JoinCommunity
-                                                                                                                                                                                                                                                  ? JoinCommunityResponse
-                                                                                                                                                                                                                                                  : T extends SearchGroups
-                                                                                                                                                                                                                                                    ? GroupSearchResponse
-                                                                                                                                                                                                                                                    : T extends GetCommunitySummary
-                                                                                                                                                                                                                                                      ? CommunitySummaryResponse
-                                                                                                                                                                                                                                                      : T extends ExploreChannels
-                                                                                                                                                                                                                                                        ? ExploreChannelsResponse
-                                                                                                                                                                                                                                                        : T extends GetCommunityDetails
-                                                                                                                                                                                                                                                          ? CommunityDetailsResponse
-                                                                                                                                                                                                                                                          : T extends GetChannelSummary
-                                                                                                                                                                                                                                                            ? ChannelSummaryResponse
-                                                                                                                                                                                                                                                            : T extends AddToFavourites
-                                                                                                                                                                                                                                                              ? ManageFavouritesResponse
-                                                                                                                                                                                                                                                              : T extends RemoveFromFavourites
-                                                                                                                                                                                                                                                                ? ManageFavouritesResponse
-                                                                                                                                                                                                                                                                : T extends LeaveCommunity
-                                                                                                                                                                                                                                                                  ? LeaveCommunityResponse
-                                                                                                                                                                                                                                                                  : T extends DeleteCommunity
-                                                                                                                                                                                                                                                                    ? DeleteCommunityResponse
-                                                                                                                                                                                                                                                                    : T extends ConvertGroupToCommunity
-                                                                                                                                                                                                                                                                      ? ConvertToCommunityResponse
-                                                                                                                                                                                                                                                                      : T extends ImportGroupToCommunity
-                                                                                                                                                                                                                                                                        ? ImportGroupResponse
-                                                                                                                                                                                                                                                                        : T extends UpdateRegistry
-                                                                                                                                                                                                                                                                          ? RegistryValue
-                                                                                                                                                                                                                                                                          : T extends SetCommunityIndexes
-                                                                                                                                                                                                                                                                            ? boolean
-                                                                                                                                                                                                                                                                            : T extends CreateUserGroup
-                                                                                                                                                                                                                                                                              ? CreateUserGroupResponse
-                                                                                                                                                                                                                                                                              : T extends UpdateUserGroup
-                                                                                                                                                                                                                                                                                ? UpdateUserGroupResponse
-                                                                                                                                                                                                                                                                                : T extends DeleteUserGroups
-                                                                                                                                                                                                                                                                                  ? DeleteUserGroupsResponse
-                                                                                                                                                                                                                                                                                  : T extends SetMemberDisplayName
-                                                                                                                                                                                                                                                                                    ? SetMemberDisplayNameResponse
-                                                                                                                                                                                                                                                                                    : T extends SubmitProposal
-                                                                                                                                                                                                                                                                                      ? SubmitProposalResponse
-                                                                                                                                                                                                                                                                                      : T extends FollowThread
-                                                                                                                                                                                                                                                                                        ? FollowThreadResponse
-                                                                                                                                                                                                                                                                                        : T extends GetCachePrimerTimestamps
-                                                                                                                                                                                                                                                                                          ? Record<
-                                                                                                                                                                                                                                                                                                string,
-                                                                                                                                                                                                                                                                                                bigint
-                                                                                                                                                                                                                                                                                            >
-                                                                                                                                                                                                                                                                                          : T extends SetCachePrimerTimestamp
-                                                                                                                                                                                                                                                                                            ? void
-                                                                                                                                                                                                                                                                                            : never;
+    ? NamedAccount[]
+    : T extends SaveCryptoAccount
+    ? SaveCryptoAccountResponse
+    : T extends TipMessage
+    ? TipMessageResponse
+    : T extends UnpinMessage
+    ? UnpinMessageResponse
+    : T extends GetUpdates
+    ? UpdatesResult
+    : T extends GetDeletedDirectMessage
+    ? DeletedDirectMessageResponse
+    : T extends GetDeletedGroupMessage
+    ? DeletedGroupMessageResponse
+    : T extends CreateUserClient
+    ? void
+    : T extends ChatEvents
+    ? EventsResponse<ChatEvent>
+    : T extends GetUsers
+    ? UsersResponse
+    : T extends MarkMessagesRead
+    ? MarkReadResponse
+    : T extends GetGroupDetails
+    ? GroupChatDetailsResponse
+    : T extends CurrentUser
+    ? CurrentUserResponse
+    : T extends CreateUserClient
+    ? void
+    : T extends GetAllCachedUsers
+    ? UserLookup
+    : T extends LastOnline
+    ? Record<string, number>
+    : T extends MarkAsOnline
+    ? void
+    : T extends ChatEventsWindow
+    ? EventsResponse<ChatEvent>
+    : T extends ChatEventsByEventIndex
+    ? EventsResponse<ChatEvent>
+    : T extends RehydrateMessage
+    ? EventWrapper<Message>
+    : T extends CheckUsername
+    ? CheckUsernameResponse
+    : T extends SearchUsers
+    ? UserSummary[]
+    : T extends MigrateUserPrincipal
+    ? MigrateUserPrincipalResponse
+    : T extends InitUserPrincipalMigration
+    ? void
+    : T extends GetUserStorageLimits
+    ? StorageStatus
+    : T extends GetPublicGroupSummary
+    ? PublicGroupSummaryResponse
+    : T extends ToggleMuteNotifications
+    ? ToggleMuteNotificationResponse
+    : T extends ArchiveChat
+    ? ArchiveChatResponse
+    : T extends UnArchiveChat
+    ? ArchiveChatResponse
+    : T extends PinChat
+    ? PinChatResponse
+    : T extends UnpinChat
+    ? UnpinChatResponse
+    : T extends BlockUserFromDirectChat
+    ? BlockUserResponse
+    : T extends UnblockUserFromDirectChat
+    ? UnblockUserResponse
+    : T extends SetUserAvatar
+    ? BlobReference
+    : T extends DeleteGroup
+    ? DeleteGroupResponse
+    : T extends LeaveGroup
+    ? LeaveGroupResponse
+    : T extends JoinGroup
+    ? JoinGroupResponse
+    : T extends UpdateGroup
+    ? UpdateGroupResponse
+    : T extends RegisterPollVote
+    ? RegisterPollVoteResponse
+    : T extends DeleteMessage
+    ? DeleteMessageResponse
+    : T extends UndeleteMessage
+    ? UndeleteMessageResponse
+    : T extends AddReaction
+    ? AddRemoveReactionResponse
+    : T extends RemoveReaction
+    ? AddRemoveReactionResponse
+    : T extends BlockUserFromGroup
+    ? BlockUserResponse
+    : T extends UnblockUserFromGroup
+    ? UnblockUserResponse
+    : T extends GetProposalVoteDetailsRequest
+    ? ProposalVoteDetails
+    : T extends ListNervousSystemFunctions
+    ? ListNervousSystemFunctionsResponse
+    : T extends SendMessage
+    ? [ SendMessageResponse, Message ]
+    : T extends EditMessage
+    ? EditMessageResponse
+    : T extends RegisterUser
+    ? RegisterUserResponse
+    : T extends SubscriptionExists
+    ? boolean
+    : T extends PushSub
+    ? void
+    : T extends RemoveSub
+    ? void
+    : T extends InviteUsers
+    ? InviteUsersResponse
+    : T extends InviteUsersToCommunity
+    ? InviteUsersResponse
+    : T extends RemoveMember
+    ? RemoveMemberResponse
+    : T extends ChangeRole
+    ? ChangeRoleResponse
+    : T extends RegisterProposalVote
+    ? RegisterProposalVoteResponse
+    : T extends GetRecommendedGroups
+    ? GroupChatSummary[]
+    : T extends ExploreCommunities
+    ? ExploreCommunitiesResponse
+    : T extends DismissRecommendations
+    ? void
+    : T extends GroupInvite
+    ? void
+    : T extends CommunityInvite
+    ? void
+    : T extends SearchGroupChat
+    ? SearchGroupChatResponse
+    : T extends SearchDirectChat
+    ? SearchDirectChatResponse
+    : T extends RefreshAccountBalance
+    ? bigint
+    : T extends GetAccountTransactions
+    ? AccountTransactionResult
+    : T extends GetThreadPreviews
+    ? ThreadPreview[]
+    : T extends GetUser
+    ? UserSummary | undefined
+    : T extends GetPublicProfile
+    ? PublicProfile
+    : T extends SetUsername
+    ? SetUsernameResponse
+    : T extends SetDisplayName
+    ? SetDisplayNameResponse
+    : T extends SetBio
+    ? SetBioResponse
+    : T extends GetBio
+    ? string
+    : T extends WithdrawCrypto
+    ? WithdrawCryptocurrencyResponse
+    : T extends GroupMessagesByMessageIndex
+    ? EventsResponse<Message>
+    : T extends GetInviteCode
+    ? InviteCodeResponse
+    : T extends EnableInviteCode
+    ? EnableInviteCodeResponse
+    : T extends DisableInviteCode
+    ? DisableInviteCodeResponse
+    : T extends ResetInviteCode
+    ? ResetInviteCodeResponse
+    : T extends CreateGroupChat
+    ? CreateGroupResponse
+    : T extends SetCachedMessageFromNotification
+    ? void
+    : T extends FreezeGroup
+    ? FreezeGroupResponse
+    : T extends UnfreezeGroup
+    ? UnfreezeGroupResponse
+    : T extends AddHotGroupExclusion
+    ? AddHotGroupExclusionResponse
+    : T extends RemoveHotGroupExclusion
+    ? RemoveHotGroupExclusionResponse
+    : T extends DeleteFrozenGroup
+    ? DeleteFrozenGroupResponse
+    : T extends SuspendUser
+    ? SuspendUserResponse
+    : T extends UnsuspendUser
+    ? UnsuspendUserResponse
+    : T extends SetCommunityModerationFlags
+    ? SetCommunityModerationFlagsResponse
+    : T extends SetGroupUpgradeConcurrency
+    ? SetGroupUpgradeConcurrencyResponse
+    : T extends SetCommunityUpgradeConcurrency
+    ? SetGroupUpgradeConcurrencyResponse
+    : T extends SetUserUpgradeConcurrency
+    ? SetUserUpgradeConcurrencyResponse
+    : T extends StakeNeuronForSubmittingProposals
+    ? StakeNeuronForSubmittingProposalsResponse
+    : T extends LoadFailedMessages
+    ? Map< string, Record< number, EventWrapper<Message>>>
+    : T extends DeleteFailedMessage
+    ? void
+    : T extends ClaimPrize
+    ? ClaimPrizeResponse
+    : T extends PayForDiamondMembership
+    ? PayForDiamondMembershipResponse
+    : T extends UpdateMarketMakerConfig
+    ? UpdateMarketMakerConfigResponse
+    : T extends SetMessageReminder
+    ? SetMessageReminderResponse
+    : T extends CancelMessageReminder
+    ? boolean
+    : T extends ReferralLeaderboard
+    ? ReferralLeaderboardResponse
+    : T extends ReportMessage
+    ? boolean
+    : T extends DeclineInvitation
+    ? DeclineInvitationResponse
+    : T extends AddMembersToChannel
+    ? AddMembersToChannelResponse
+    : T extends BlockCommunityUser
+    ? BlockCommunityUserResponse
+    : T extends ChangeChannelRole
+    ? ChangeRoleResponse
+    : T extends ChangeCommunityRole
+    ? ChangeCommunityRoleResponse
+    : T extends DeclineChannelInvitation
+    ? DeclineInvitationResponse
+    : T extends ChannelEvents
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsByIndex
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsWindow
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelMessagesByMessageIndex
+    ? EventsResponse<Message>
+    : T extends RemoveCommunityMember
+    ? RemoveMemberResponse
+    : T extends ToggleMuteCommunityNotifications
+    ? ToggleMuteCommunityNotificationsResponse
+    : T extends UnblockCommunityUser
+    ? UnblockCommunityUserResponse
+    : T extends UpdateCommunity
+    ? UpdateCommunityResponse
+    : T extends CreateCommunity
+    ? CreateCommunityResponse
+    : T extends JoinCommunity
+    ? JoinCommunityResponse
+    : T extends SearchGroups
+    ? GroupSearchResponse
+    : T extends GetCommunitySummary
+    ? CommunitySummaryResponse
+    : T extends ExploreChannels
+    ? ExploreChannelsResponse
+    : T extends GetCommunityDetails
+    ? CommunityDetailsResponse
+    : T extends GetChannelSummary
+    ? ChannelSummaryResponse
+    : T extends AddToFavourites
+    ? ManageFavouritesResponse
+    : T extends RemoveFromFavourites
+    ? ManageFavouritesResponse
+    : T extends LeaveCommunity
+    ? LeaveCommunityResponse
+    : T extends DeleteCommunity
+    ? DeleteCommunityResponse
+    : T extends ConvertGroupToCommunity
+    ? ConvertToCommunityResponse
+    : T extends ImportGroupToCommunity
+    ? ImportGroupResponse
+    : T extends UpdateRegistry
+    ? RegistryValue
+    : T extends SetCommunityIndexes
+    ? boolean
+    : T extends CreateUserGroup
+    ? CreateUserGroupResponse
+    : T extends UpdateUserGroup
+    ? UpdateUserGroupResponse
+    : T extends DeleteUserGroups
+    ? DeleteUserGroupsResponse
+    : T extends SetMemberDisplayName
+    ? SetMemberDisplayNameResponse
+    : T extends SubmitProposal
+    ? SubmitProposalResponse
+    : T extends FollowThread
+    ? FollowThreadResponse
+    : T extends GetCachePrimerTimestamps
+    ? Record< string, bigint >
+    : T extends SetCachePrimerTimestamp
+    ? void
+    : never;

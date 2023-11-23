@@ -4515,10 +4515,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadChatsResponse(
         updateRegistryTask: Promise<void> | undefined,
-        init: boolean,
+        initialLoad: boolean,
         chatsResponse: UpdatesResult,
     ): Promise<void> {
-        if (!init || chatsResponse.anyUpdates) {
+        if (initialLoad || chatsResponse.anyUpdates) {
             if (updateRegistryTask !== undefined) {
                 // We need the registry to be loaded before we attempt to render chats / events
                 await updateRegistryTask;
@@ -4533,7 +4533,7 @@ export class OpenChat extends OpenChatAgentWorker {
             this._cachePrimer?.processChats(chats);
 
             const userIds = this.userIdsFromChatSummaries(chats);
-            if (!init) {
+            if (initialLoad) {
                 for (const userId of this._liveState.user.referrals) {
                     userIds.add(userId);
                 }
@@ -4648,18 +4648,22 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadChats() {
-        const init = this._liveState.chatsInitialised;
-        chatsLoading.set(!init);
+        const initialLoad = !this._liveState.chatsInitialised;
+        chatsLoading.set(!initialLoad);
 
-        const updateRegistryTask = !init ? this.updateRegistry() : undefined;
+        const updateRegistryTask = initialLoad ? this.updateRegistry() : undefined;
 
         return new Promise<void>((resolve) => {
             this.sendStreamRequest({
                 kind: "getUpdates",
-                initialLoad: !init,
+                initialLoad,
             })
                 .subscribe(async (resp) => {
-                    await this.loadChatsResponse(updateRegistryTask, init, resp as UpdatesResult);
+                    await this.loadChatsResponse(
+                        updateRegistryTask,
+                        initialLoad,
+                        resp as UpdatesResult,
+                    );
                     chatsLoading.set(!this._liveState.chatsInitialised);
                 })
                 .catch((err) => {
