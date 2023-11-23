@@ -4649,7 +4649,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async loadChats() {
         const initialLoad = !this._liveState.chatsInitialised;
-        chatsLoading.set(!initialLoad);
+        chatsLoading.set(initialLoad);
 
         const updateRegistryTask = initialLoad ? this.updateRegistry() : undefined;
 
