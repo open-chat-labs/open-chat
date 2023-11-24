@@ -1,0 +1,25 @@
+// This is a trimmed down version of the full candid file which can be found here -
+// https://dashboard.internetcomputer.org/canister/4mmnk-kiaaa-aaaag-qbllq-cai
+
+type Token = record {
+  address: text;
+  standard: text;
+};
+type GetPoolsResponse = variant {
+  err: Error;
+  ok: vec PoolData;
+};
+type PoolData = record {
+  canisterId: principal;
+  token0: Token;
+  token1: Token;
+};
+type Error = variant {
+  CommonError;
+  InsufficientFunds;
+  InternalError: text;
+  UnsupportedToken: text;
+};
+service : {
+  getPools: () -> (GetPoolsResponse) query;
+}

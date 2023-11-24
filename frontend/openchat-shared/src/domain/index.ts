@@ -6,6 +6,7 @@ export * from "./data";
 export * from "./auth";
 export * from "./faq";
 export * from "./crypto";
+export * from "./dexes";
 export * from "./giphy";
 export * from "./marketMaker";
 export * from "./notifications";

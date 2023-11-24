@@ -27,6 +27,7 @@ import { LedgerIndexClient } from "./ledgerIndex/ledgerIndex.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
+import { DexesAgent } from "./dexes";
 import { distinctBy, toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
@@ -59,6 +60,7 @@ import type {
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
+    DexId,
     DirectChatEvent,
     DirectChatSummary,
     DirectChatSummaryUpdates,
@@ -67,6 +69,7 @@ import type {
     EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
+    ExchangeTokenSwapArgs,
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
@@ -101,9 +104,12 @@ import type {
     StakeNeuronForSubmittingProposalsResponse,
     StorageStatus,
     SuspendUserResponse,
+    SwapTokensResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
+    TokenSwapPool,
+    TokenSwapStatusResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -174,6 +180,7 @@ import type {
     SubmitProposalResponse,
     AccountTransactionResult,
     OptionalChatPermissions,
+    CryptocurrencyDetails,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -211,6 +218,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
+    private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
     private db: Database;
@@ -234,6 +242,7 @@ export class OpenChatAgent extends EventTarget {
         this._ledgerIndexClients = {};
         this._groupClients = {};
         this._communityClients = {};
+        this._dexesAgent = new DexesAgent(config);
     }
 
     private get principal(): Principal {
@@ -2829,5 +2838,44 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.reportMessage(chatId, messageId, deleteMessage);
         }
+    }
+
+    getTokenSwapPools(inputToken: string, outputTokens: string[]): Promise<TokenSwapPool[]> {
+        return this._dexesAgent.getSwapPools(inputToken, new Set(outputTokens));
+    }
+
+    quoteTokenSwap(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+    ): Promise<[DexId, bigint][]> {
+        return this._dexesAgent.quoteSwap(inputToken, outputToken, amountIn);
+    }
+
+    swapTokens(
+        swapId: bigint,
+        inputToken: CryptocurrencyDetails,
+        outputToken: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        pool: TokenSwapPool,
+    ): Promise<SwapTokensResponse> {
+        const exchangeArgs: ExchangeTokenSwapArgs = {
+            dex: "icpswap",
+            swapCanisterId: pool.canisterId,
+            zeroForOne: pool.token0 === inputToken.ledger,
+        };
+        return this.userClient.swapTokens(
+            swapId,
+            inputToken,
+            outputToken,
+            amountIn,
+            minAmountOut,
+            exchangeArgs,
+        );
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        return this.userClient.tokenSwapStatus(swapId);
     }
 }
