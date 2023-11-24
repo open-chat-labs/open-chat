@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Make events private for payment gated chats ([#4843](https://github.com/open-chat-labs/open-chat/pull/4843))
+
 ## [[2.0.946](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.946-group)] - 2023-11-24
 
 ### Added

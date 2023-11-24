@@ -423,6 +423,14 @@ impl Data {
         .unwrap()
     }
 
+    pub fn has_payment_gate(&self) -> bool {
+        self.gate
+            .value
+            .as_ref()
+            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .unwrap_or_default()
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
