@@ -71,7 +71,6 @@ struct Data {
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(skip_deserializing)]
     pub neurons: Timestamped<Vec<Neuron>>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
