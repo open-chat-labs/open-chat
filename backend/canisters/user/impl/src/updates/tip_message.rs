@@ -36,7 +36,7 @@ async fn tip_message(args: Args) -> Response {
 
     match prepare_result {
         PrepareResult::Direct(tip_message_args) => {
-            mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals.unwrap_or(8), state))
+            mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals, state))
         }
         PrepareResult::Group(group_id, c2c_args) => {
             use group_canister::c2c_tip_message::Response;
@@ -115,7 +115,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
-                        decimals: args.decimals.unwrap_or(8),
+                        decimals: args.decimals,
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },
@@ -133,7 +133,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
-                        decimals: args.decimals.unwrap_or(8),
+                        decimals: args.decimals,
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },

@@ -317,6 +317,7 @@ type TipMessage = {
     messageContext: MessageContext;
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
+    decimals: number;
 };
 
 type GetTokenSwapPools = {

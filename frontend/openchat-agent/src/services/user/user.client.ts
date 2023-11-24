@@ -827,13 +827,14 @@ export class UserClient extends CandidService {
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
-                decimals: [],
+                decimals,
                 token: apiToken(transfer.token),
                 recipient: Principal.fromText(transfer.recipient),
                 ledger: Principal.fromText(transfer.ledger),
