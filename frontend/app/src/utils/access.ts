@@ -14,7 +14,7 @@ export function getGateBindings(): GateBinding[] {
         noGate,
         diamondGate,
         neuronGateFolder,
-        paymentGateFolder,
+        // paymentGateFolder,
         // credentialGate,
         nftGate,
     ];
@@ -39,7 +39,7 @@ export function getPaymentGateBindings(cryptoLookup: Record<string, Cryptocurren
     return Object.values(cryptoLookup)
         .filter((c) => c.supportedStandards.includes("ICRC-2") || nsLedgers.has(c.ledger))
         .map((c) => {
-            const enabled = c.supportedStandards.includes("ICRC-2");
+            const enabled = c.supportedStandards.includes("ICRC-2") || c.symbol === "ICP";
             return {
                 label: formatLabel(c.symbol, !enabled),
                 gate: {
@@ -79,12 +79,12 @@ const neuronGateFolder: GateBinding = {
     enabled: true,
 };
 
-const paymentGateFolder: GateBinding = {
-    label: "access.payment",
-    key: "payment_gate_folder",
-    gate: { kind: "no_gate" },
-    enabled: true,
-};
+// const paymentGateFolder: GateBinding = {
+//     label: "access.payment",
+//     key: "payment_gate_folder",
+//     gate: { kind: "no_gate" },
+//     enabled: true,
+// };
 
 const nftGate: GateBinding = {
     label: "access.nftHolder",
