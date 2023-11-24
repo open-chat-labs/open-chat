@@ -12,9 +12,7 @@ const black = "#000000";
 const silver = "#C0C0C0";
 const trolleyGray = "#818181";
 const msBlue = "#010081";
-const darkGray = "#696969";
 const magenta = "#ff0081";
-const teal = "#008080";
 const successGreen = "#28a745";
 const errorRed = "#dc3545";
 
@@ -27,17 +25,12 @@ export function getTheme(base: Theme): Theme {
     base.logo = false;
     base.txt = txt80;
     base["txt-light"] = txt60;
-    base.bd = silver;
+    base.bd = "#b0b0b0";
     base.rd = "0";
-    base.link.underline = msBlue;
-    base.disabledTxt = txt40;
-    base.placeholder = txt60;
-    base.progress.bd = "rgba(0,0,0,0.2)";
-    base.collapsible.closed.header.txt = txt40;
     base.primary = "#0884CE";
     base.accent = magenta;
-    base.scrollbar.bg = trolleyGray;
-
+    base.disabledTxt = txt40;
+    base.placeholder = txt60;
 
     base.timeline.txt = txt40;
     base.time.txt = txt60;
@@ -65,8 +58,9 @@ export function getTheme(base: Theme): Theme {
     base.chatSummary["bg-selected"] = "rgba(255,255,255,0.6)";
 
     base.menu.txt = txt80;
-    base.menu.bg = trolleyGray;
-    base.menu.bd = darkGray;
+    base.menu.bg = silver;
+    base.menu.bd = trolleyGray;
+    base.menu.separator = trolleyGray;
     base.menu["disabled-txt"] = txt60;
     base.menu.warn = errorRed;
 
@@ -74,12 +68,12 @@ export function getTheme(base: Theme): Theme {
     base.button.bg = msBlue;
     base.button.hv = magenta;
 
-    base.card.rd = "0";
     base.modal.filter = "blur(5px)";
     base.modal.bg = silver;
     base.modal.bd = silver;
     base.modalPage.bg = trolleyGray;
     base.modalPage.txt = txt;
+    base.modal.rd = "0";
 
     base.currentChat.msg.bd = trolleyGray;
     base.currentChat.msg.bg = silver;
@@ -90,7 +84,9 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.msg.me.bd = "rgba(255,255,255,0.05)";
     base.currentChat.msg.me.bg = msBlue;
     base.currentChat.date.bg = "rgba(239 239 239 / 80%)";
-
+    base.currentChat.msg.r1 = "0";
+    base.currentChat.msg.r2 = "0";
+    
     base.icon.txt = black;
     base.icon.inverted.txt = black;
     base.icon.selected = white;
@@ -102,6 +98,16 @@ export function getTheme(base: Theme): Theme {
 
     base.vote.yes.color = successGreen;
     base.vote.no.color = errorRed;
+
+    base.notificationBar.bg = magenta;  
+    base.notificationBar.txt = white;
+
+    // misc
+    base.link.underline = msBlue;
+    base.progress.bd = "rgba(0,0,0,0.2)";
+    base.collapsible.closed.header.txt = txt40;
+    base.scrollbar.bg = trolleyGray;
+    base.card.rd = "0";
 
     return base;
 }
