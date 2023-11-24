@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::utils::{now_millis, now_nanos};
+use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, TestEnv};
 use candid::Principal;
 use ic_ledger_types::Tokens;
@@ -160,7 +160,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     let user1_balance_before_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id.into());
 
     env.advance_time(Duration::from_millis(1));
-    env.tick();
+    tick_many(env, 2);
 
     let user1_balance_after_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id.into());
 
