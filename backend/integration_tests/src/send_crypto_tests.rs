@@ -3,9 +3,9 @@ use crate::rng::{random_message_id, random_string};
 use crate::utils::now_nanos;
 use crate::{client, TestEnv};
 use candid::Principal;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
-use types::icrc1::Account;
 use types::{
     ChatEvent, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, PendingCryptoTransaction,

@@ -25,6 +25,7 @@ mod event_index;
 mod event_result;
 mod event_wrapper;
 mod events;
+mod exchange_id;
 mod exchanges;
 mod field_invalid;
 mod file;
@@ -87,6 +88,7 @@ pub use event_index::*;
 pub use event_result::*;
 pub use event_wrapper::*;
 pub use events::*;
+pub use exchange_id::*;
 pub use exchanges::*;
 pub use field_invalid::*;
 pub use file::*;
@@ -154,6 +156,14 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
             false
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum ResultLowercase<T, E> {
+    #[serde(rename = "ok")]
+    Ok(T),
+    #[serde(rename = "err")]
+    Err(E),
 }
 
 pub fn is_empty_slice<T>(value: &[T]) -> bool {

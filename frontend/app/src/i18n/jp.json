@@ -261,7 +261,6 @@
         "voting_q": "提案に投票するにはどうすればよいですか?",
         "voting_a": "<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat 提案グループ</a>に参加し、<a href=\"/blog/governance\">このブログ投稿</a>を読んで概要を説明しますOpenChat ガバナンスの説明と、投票に関するステップバイステップのガイドがあります。",
         "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
-        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
         "shortcuts_q": "どのショートカット コマンドを使用できますか?",
         "shortcuts_a": "メッセージ エントリ入力ボックスから使用できるショートカット コマンドがいくつかあります。 <br /><br /> `/poll` - 新しい投票を作成します <br /> `/search xyz` - 現在のチャットで用語「xyz」を検索します <br />`/gif 子猫` - に子猫の gif を検索する <br />`/icp 0.1` - 誰かに 0.1 ICP を送る <br />`/faq question_id*` - 特定の FAQ 質問への書式付きリンクを作成して投稿する <br />`/diamond ` - ダイヤモンド メンバーシップの詳細を含む書式付きリンクを作成して投稿する <br/> <br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /><br />* 利用可能な FAQ 質問 ID は次のとおりです。 : エアドロップ、投票、ウォレット、buychat、send_tokens、ダイヤモンド、ios_app、android_app、find_groups、style_messages、ストレージ、セキュリティ、ロードマップ、ショートカット",
         "content_q": "どのようなコンテンツが許可されますか?",
@@ -275,7 +274,8 @@
         "info_q": "OpenChat について詳しくはどこで確認できますか?",
         "info_a": "<a href=\"/home\">ホームページ</a>にアクセスし、OpenChatの<a href=\"/features\">機能</a>や<a href=\"/roadmap\">ロードマップ</a>へのリンクを見つけてください。 a>、<a href=\"/whitepaper\">ホワイトペーパー</a>、<a href=\"/architecture\">アーキテクチャ</a>、および<a href=\"/blog\">ブログ</a>",
         "referral_rewards_q": "紹介報酬とは何ですか?",
-        "referral_rewards_a": "ダイヤモンド メンバーは、紹介したユーザーがダイヤモンド メンバーになるたびに特典を獲得できます。 OpenChat に参加してから 1 年以内にダイヤモンドの支払いの半分を受け取ります。紹介リンクは、メインメニューの「プロフィール設定」の「友達/家族を招待」セクションにあります。<br><br>どうすればこんなことができるでしょうか？たくさんの方法があります。友達や家族に伝えたり、OpenChat についてツイートしたり、OpenChat の気に入っている点を説明するビデオを作成して、TikTok や YouTube に共有したりできます。 Twitch でストリーミングしたり、ブログ投稿を書いたり、ポッドキャストを作成したり、Twitter スペースをホストしたり、実際の交流会を開催したりすることもできます。この情報を広めるために皆さんが思いついた創造的なアイデアをお待ちしています。<br><br>将来的には、ダイヤモンド メンバーになるかどうかに関係なく、紹介したすべてのユーザーに紹介報酬を提供できるようになります。ただし、これは簡単に悪用できるため、最初に何らかの「ユニークな人格の証明」を導入する必要があります。"
+        "referral_rewards_a": "ダイヤモンド メンバーは、紹介したユーザーがダイヤモンド メンバーになるたびに特典を獲得できます。 OpenChat に参加してから 1 年以内にダイヤモンドの支払いの半分を受け取ります。紹介リンクは、メインメニューの「プロフィール設定」の「友達/家族を招待」セクションにあります。<br><br>どうすればこんなことができるでしょうか？たくさんの方法があります。友達や家族に伝えたり、OpenChat についてツイートしたり、OpenChat の気に入っている点を説明するビデオを作成して、TikTok や YouTube に共有したりできます。 Twitch でストリーミングしたり、ブログ投稿を書いたり、ポッドキャストを作成したり、Twitter スペースをホストしたり、実際の交流会を開催したりすることもできます。この情報を広めるために皆さんが思いついた創造的なアイデアをお待ちしています。<br><br>将来的には、ダイヤモンド メンバーになるかどうかに関係なく、紹介したすべてのユーザーに紹介報酬を提供できるようになります。ただし、これは簡単に悪用できるため、最初に何らかの「ユニークな人格の証明」を導入する必要があります。",
+        "buychat_a": "現時点では、まず<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入する</a>必要があります。その後、さまざまな分散型取引所 (DEX) で CHAT と交換できます。<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSワップ</a></li></ul>DFINITY は、ICRC1 トークン (CHAT を含む) の<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>のサポートを追加し、集中型取引所 (CEX) との統合をより簡単にします。これが実現すると、CHAT で ICP または USDT の CEX を取引できるようになる可能性があります。"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
@@ -316,7 +316,8 @@
         "oneVote": "1票",
         "oneVoteBy": "1票",
         "numVotesIncludingYours": "{votes}あなたを含む投票",
-        "atLeastTwo": "最小 2"
+        "atLeastTwo": "最小 2",
+        "allowChangeVotes": "ユーザーが投票を変更できるようにする"
     },
     "role": {
         "admin": "管理者",
@@ -663,7 +664,8 @@
             "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
             "transactionUrlFormat": "トランザクションURL形式",
             "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "ニューロン コントローラーのアクション"
     },
     "yes": "はい",
     "no": "いいえ",
@@ -930,9 +932,7 @@
         "chooseGate": "アクセスゲートを選択してください",
         "diamondMember": "ダイヤモンド会員",
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
-        "nnsHolder": "ICP ニューロン ホルダー (近日公開予定)",
         "nftHolder": "NFTホルダー（近日公開予定）",
-        "openAccess": "オープンアクセス",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minStake": "最小ステーク (トークン)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
@@ -941,8 +941,8 @@
         "openAccessInfo": "参加するための特別なアクセス要件はありません",
         "gateCheckFailed": "アクセスゲートが満たされていません",
         "cannotMakePublic": "既存のメンバーのプライバシーが危険にさらされるため、非公開の {level} を公開することはできません。",
-        "snsHolder": "{token} ニューロン ホルダー",
-        "snsHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます",
+        "neuronHolder": "{token} ニューロン ホルダー",
+        "neuronHolderInfo": "{token} ニューロンの所有者のみが参加を許可されます",
         "initiateCredentialCheck": "資格情報の検証",
         "verify": "確認する",
         "credential": "検証された資格情報",
@@ -951,7 +951,22 @@
         "credentialIssuer": "資格情報の発行者",
         "requiredCredential": "必要な資格情報",
         "credentialCheckMessage": "この {level} に参加するには、発行者 {credential} からの「{issuer}」資格情報を確認する必要があります。",
-        "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます"
+        "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます",
+        "approvePaymentTitle": "支払いの承認",
+        "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
+        "paymentDistributionMessage": "このうち 80% は {level} の所有者に、20% は OpenChat SNS の財務省に寄付されます。",
+        "tokenNeuronHolder": "{token} ニューロン ホルダー",
+        "payment": "支払い",
+        "tokenPayment": "{token} の支払い",
+        "tokenPaymentInfo": "ユーザーは、{token} トークンで金額を支払った場合にのみ参加できます。",
+        "chooseNervousSystem": "神経系を選択する",
+        "chooseToken": "トークンを選択",
+        "amount": "金額（トークン）",
+        "amountN": "量 {n} トークン",
+        "paymentFailed": "支払いに失敗しました",
+        "tokenComingSoon": "{token} (近日公開予定)",
+        "payAndJoin": "お金を払って参加する",
+        "openAccess": "なし（オープンアクセス）"
     },
     "communities": {
         "explore": "コミュニティを探索する",
@@ -1007,15 +1022,15 @@
             "failure": "申し訳ありませんが、コミュニティを作成できませんでした",
             "saveFailed": "申し訳ありませんが、更新を保存できませんでした",
             "inviteUsers": "申し訳ありませんが、これらのユーザーを招待できませんでした",
-            "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした",
-            "leaveFailed": "申し訳ありませんが、このコミュニティを離れることができませんでした",
             "deleteFailed": "申し訳ありませんが、このコミュニティを削除できませんでした",
             "convertFailed": "申し訳ありませんが、グループをコミュニティに変換できませんでした",
             "importFailed": "申し訳ありませんが、グループをインポートできませんでした",
             "deleteUserGroupFailed": "申し訳ありませんが、ユーザー グループを削除できませんでした",
             "updateGroupFailed": "申し訳ありませんが、ユーザー グループを更新できませんでした",
             "createGroupFailed": "申し訳ありませんが、ユーザー グループを作成できませんでした",
-            "userGroupNameTaken": "申し訳ありませんが、ユーザー グループ名はすでに使用されています"
+            "userGroupNameTaken": "申し訳ありませんが、ユーザー グループ名はすでに使用されています",
+            "joinFailed": "申し訳ありませんが、このコミュニティに参加できませんでした",
+            "leaveFailed": "申し訳ありませんが、このコミュニティからあなたを削除できませんでした"
         },
         "memberCount": "メンバー",
         "channelCount": "チャンネル",
@@ -1058,7 +1073,9 @@
         "namedUserGroupMembers": "**{name}** グループのメンバー",
         "searchUserGroups": "ユーザーグループを検索...",
         "userGroupName": "ユーザーグループ名",
-        "noSpaces": "スペースは使用できません"
+        "noSpaces": "スペースは使用できません",
+        "noMatch": "一致するコミュニティが見つかりませんでした",
+        "refineSearch": "検索を絞り込んでみてください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -1150,5 +1167,7 @@
     "guestUser": "ゲストユーザー",
     "showAuthProviders": "オプションを表示",
     "hideAuthProviders": "オプションを非表示にする",
-    "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }"
+    "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
+    "offlineMessage": "オフライン",
+    "offlineError": "申し訳ありませんが、現在オフラインのようです"
 }

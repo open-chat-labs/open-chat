@@ -8,16 +8,6 @@ import {
 } from "openchat-shared";
 
 export class ReplicaNotUpToDateError extends Error {
-    public static byEventIndex(
-        latestReplicaEventIndex: number,
-        latestClientEventIndex: number,
-        failedPostCheck: boolean,
-    ): ReplicaNotUpToDateError {
-        const message = `Replica not up to date (event index). Client: ${latestClientEventIndex}. Replica: ${latestReplicaEventIndex}. FailedPostCheck: ${failedPostCheck}`;
-
-        return new ReplicaNotUpToDateError(message);
-    }
-
     public static byTimestamp(
         replicaTimestamp: bigint,
         clientTimestamp: bigint,

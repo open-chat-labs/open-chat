@@ -46,8 +46,16 @@ import type {
     UpdatedRules,
     FollowThreadResponse,
     OptionalChatPermissions,
+    ToggleMuteNotificationResponse,
 } from "openchat-shared";
-import { DestinationInvalidError, textToCode } from "openchat-shared";
+import {
+    DestinationInvalidError,
+    offline,
+    textToCode,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MAX_MISSING,
+} from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -108,12 +116,12 @@ import {
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { apiOptionUpdate, identity } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
+import { muteNotificationsResponse } from "../notifications/mappers";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -242,6 +250,7 @@ export class GroupClient extends CandidService {
                 { chatId: this.chatId, threadRootMessageIndex },
                 messageIndex,
             );
+
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -297,7 +306,7 @@ export class GroupClient extends CandidService {
         // we may or may not have all of the requested events
         if (missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
-            console.log("We didn't get enough back from the cache, going to the api");
+            console.log("We didn't get enough back from the cache, going to the api", missing.size);
             return this.chatEventsFromBackend(
                 startIndex,
                 ascending,
@@ -475,8 +484,8 @@ export class GroupClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
             }),
             updateGroupResponse,
         );
@@ -571,7 +580,7 @@ export class GroupClient extends CandidService {
     async getGroupDetails(chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated) {
+            if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
                 return this.getGroupDetailsUpdates(fromCache);
@@ -850,10 +859,10 @@ export class GroupClient extends CandidService {
         );
     }
 
-    toggleMuteNotifications(mute: boolean): Promise<undefined> {
+    toggleMuteNotifications(mute: boolean): Promise<ToggleMuteNotificationResponse> {
         return this.handleResponse(
             this.groupService.toggle_mute_notifications({ mute }),
-            (_) => undefined,
+            muteNotificationsResponse,
         );
     }
 
@@ -882,17 +891,17 @@ export class GroupClient extends CandidService {
     }
 
     reportMessage(
-        threadRootMessageIndex: number | undefined, 
-        messageId: bigint, 
-        deleteMessage: boolean
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.groupService.report_message({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
         );
     }
 }

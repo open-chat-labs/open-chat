@@ -22,6 +22,7 @@ fn allow_multiple_votes_per_user() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: true,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -52,6 +53,7 @@ fn single_vote_per_user() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -84,6 +86,7 @@ fn polls_ended_correctly() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let TestData {
@@ -100,6 +103,7 @@ fn polls_ended_correctly() {
         anonymous: false,
         show_votes_before_end_date: false,
         allow_multiple_votes_per_user: false,
+        allow_user_to_change_vote: true,
     };
 
     let create_poll_result2 = client::group::send_message_v2(

@@ -91,6 +91,8 @@ struct Data {
     pub orders_log: OrdersLog,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
@@ -111,6 +113,7 @@ impl Data {
             orders_log: OrdersLog::default(),
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

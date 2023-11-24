@@ -177,6 +177,10 @@ function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFaile
     if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
         return "min_stake_not_met";
     }
+    if ("PaymentFailed" in candid) {
+        console.warn("PaymentFailed: ", candid);
+        return "payment_failed";
+    }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 
@@ -240,9 +244,6 @@ export async function messagesByMessageIndexResponse(
         "UserNotInCommunity" in candid
     ) {
         return "events_failed";
-    }
-    if ("ReplicaNotUpToDate" in candid) {
-        throw ReplicaNotUpToDateError.byEventIndex(candid.ReplicaNotUpToDate, -1, false);
     }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
@@ -460,6 +461,7 @@ export function communityChannelUpdates(
         memberCount: optional(candid.member_count, identity),
         latestMessage: optional(candid.latest_message, messageEvent),
         eventsTTL: optionUpdate(candid.events_ttl, identity),
+        eventsTtlLastUpdated: optional(candid.events_ttl_last_updated, identity),
     };
 }
 

@@ -64,7 +64,7 @@
             if ($rtlStore) {
                 let right = Math.min(
                     window.innerWidth - alignTo.left + 8,
-                    window.innerWidth - modalRect.width - 10
+                    window.innerWidth - modalRect.width - 10,
                 );
                 style += `right: ${right}px;`;
             } else {
@@ -91,8 +91,7 @@
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
-    class:fit_to_content={fitToContent}
-    on:click|stopPropagation>
+    class:fit_to_content={fitToContent}>
     {#if !hideHeader}
         <div class="header">
             <h4>

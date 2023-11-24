@@ -33,6 +33,36 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const Subaccount = IDL.Vec(IDL.Nat8);
+  const Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(Subaccount),
+  });
+  const ApproveTransferArgs = IDL.Record({
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+    'expires_in' : IDL.Opt(Milliseconds),
+    'spender' : Account,
+  });
+  const ApproveError = IDL.Variant({
+    'GenericError' : IDL.Record({
+      'message' : IDL.Text,
+      'error_code' : IDL.Nat,
+    }),
+    'TemporarilyUnavailable' : IDL.Null,
+    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
+    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
+    'AllowanceChanged' : IDL.Record({ 'current_allowance' : IDL.Nat }),
+    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'TooOld' : IDL.Null,
+    'Expired' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
+  });
+  const ApproveTransferResponse = IDL.Variant({
+    'ApproveError' : ApproveError,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const Chat = IDL.Variant({
@@ -91,10 +121,16 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const PaymentGate = IDL.Record({
+    'fee' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const Document = IDL.Record({
     'id' : IDL.Nat,
@@ -217,6 +253,14 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const DeleteDirectChatArgs = IDL.Record({
+    'block_user' : IDL.Bool,
+    'user_id' : UserId,
+  });
+  const DeleteDirectChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
     'ChatFrozen' : IDL.Null,
@@ -288,6 +332,7 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
+    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
@@ -766,12 +811,10 @@ export const idlFactory = ({ IDL }) => {
     'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'chat_last_updated' : TimestampMillis,
     'events' : IDL.Vec(ChatEventWrapper),
-    'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
     'expired_event_ranges' : IDL.Vec(IDL.Tuple(EventIndex, EventIndex)),
   });
   const EventsResponse = IDL.Variant({
-    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : EventsSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
@@ -1035,11 +1078,9 @@ export const idlFactory = ({ IDL }) => {
   const MessagesSuccessResult = IDL.Record({
     'messages' : IDL.Vec(MessageEventWrapper),
     'chat_last_updated' : TimestampMillis,
-    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
-    'ReplicaNotUpToDate' : EventIndex,
     'ChatNotFound' : IDL.Null,
     'Success' : MessagesSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
@@ -1350,8 +1391,32 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const SwapTokensArgs = IDL.Record({
+    'input_amount' : IDL.Nat,
+    'min_output_amount' : IDL.Nat,
+    'swap_id' : IDL.Nat,
+    'input_token' : TokenInfo,
+    'exchange_args' : IDL.Variant({
+      'ICPSwap' : IDL.Record({
+        'zero_for_one' : IDL.Bool,
+        'swap_canister_id' : CanisterId,
+      }),
+    }),
+    'output_token' : TokenInfo,
+  });
+  const SwapTokensResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'amount_out' : IDL.Nat }),
+    'InternalError' : IDL.Text,
+  });
   const TipMessageArgs = IDL.Record({
     'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
     'token' : Cryptocurrency,
     'chat' : Chat,
     'recipient' : UserId,
@@ -1373,6 +1438,26 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'CannotTipSelf' : IDL.Null,
+  });
+  const TokenSwapStatusArgs = IDL.Record({ 'swap_id' : IDL.Nat });
+  const TokenSwapStatusResponse = IDL.Variant({
+    'NotFound' : IDL.Null,
+    'Success' : IDL.Record({
+      'started' : TimestampMillis,
+      'deposit_account' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+      ),
+      'amount_swapped' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+      ),
+      'notify_dex' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
+      ),
+      'transfer' : IDL.Opt(IDL.Variant({ 'Ok' : IDL.Nat64, 'Err' : IDL.Text })),
+      'withdraw_from_dex' : IDL.Opt(
+        IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+      ),
+    }),
   });
   const UnblockUserArgs = IDL.Record({ 'user_id' : UserId });
   const UnblockUserResponse = IDL.Variant({
@@ -1468,6 +1553,7 @@ export const idlFactory = ({ IDL }) => {
     'added' : IDL.Vec(DirectChatSummary),
     'pinned' : IDL.Opt(IDL.Vec(ChatId)),
     'updated' : IDL.Vec(DirectChatSummaryUpdates),
+    'removed' : IDL.Vec(ChatId),
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -1499,6 +1585,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
+    'approve_transfer' : IDL.Func(
+        [ApproveTransferArgs],
+        [ApproveTransferResponse],
+        [],
+      ),
     'archive_unarchive_chats' : IDL.Func(
         [ArchiveUnarchiveChatsArgs],
         [ArchiveUnarchiveChatsResponse],
@@ -1521,6 +1612,11 @@ export const idlFactory = ({ IDL }) => {
     'delete_community' : IDL.Func(
         [DeleteCommunityArgs],
         [DeleteCommunityResponse],
+        [],
+      ),
+    'delete_direct_chat' : IDL.Func(
+        [DeleteDirectChatArgs],
+        [DeleteDirectChatResponse],
         [],
       ),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
@@ -1652,7 +1748,13 @@ export const idlFactory = ({ IDL }) => {
         [SubmitProposalResponse],
         [],
       ),
+    'swap_tokens' : IDL.Func([SwapTokensArgs], [SwapTokensResponse], []),
     'tip_message' : IDL.Func([TipMessageArgs], [TipMessageResponse], []),
+    'token_swap_status' : IDL.Func(
+        [TokenSwapStatusArgs],
+        [TokenSwapStatusResponse],
+        ['query'],
+      ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'undelete_messages' : IDL.Func(
         [UndeleteMessagesArgs],

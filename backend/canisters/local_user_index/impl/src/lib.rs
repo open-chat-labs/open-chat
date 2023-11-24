@@ -206,6 +206,7 @@ struct Data {
     pub referral_codes: ReferralCodes,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
+    pub rng_seed: [u8; 32],
 }
 
 #[derive(Serialize, Deserialize)]
@@ -250,6 +251,7 @@ impl Data {
             referral_codes: ReferralCodes::default(),
             timer_jobs: TimerJobs::default(),
             btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
+            rng_seed: [0; 32],
         }
     }
 }

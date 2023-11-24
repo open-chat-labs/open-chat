@@ -29,6 +29,7 @@ import type {
     CommunityFrozen,
     Failure,
     NotAuthorised,
+    Offline,
     Success,
     SuccessNoUpdates,
     UserLimitReached,
@@ -122,11 +123,12 @@ export type AddMembersToChannelResponse =
     | Success
     | UserNotInCommunity
     | UserSuspended
-    | CommunityFrozen;
+    | CommunityFrozen
+    | Offline;
 
-export type BlockCommunityUserResponse = Success | Failure;
+export type BlockCommunityUserResponse = Success | Failure | Offline;
 
-export type ChangeCommunityRoleResponse = "success" | "failure";
+export type ChangeCommunityRoleResponse = "success" | "failure" | "offline";
 
 export type DeleteChannelResponse =
     | UserNotInChat
@@ -135,7 +137,8 @@ export type DeleteChannelResponse =
     | Success
     | UserNotInCommunity
     | UserSuspended
-    | CommunityFrozen;
+    | CommunityFrozen
+    | Offline;
 
 export type ChannelMessageMatch = {
     content: MessageContent;
@@ -144,18 +147,24 @@ export type ChannelMessageMatch = {
     messageIndex: number;
 };
 
-export type UnblockCommunityUserResponse = Failure | Success;
+export type UnblockCommunityUserResponse = Failure | Success | Offline;
 
 export type UpdateCommunityResponse =
     | Failure
+    | Offline
     | { kind: "success"; rulesVersion: number | undefined };
 
-export type ToggleMuteCommunityNotificationsResponse = Failure | Success;
+export type ToggleMuteCommunityNotificationsResponse = Failure | Success | Offline;
 
-export type CreateCommunityResponse = Failure | (Success & { id: string }) | { kind: "name_taken" };
+export type CreateCommunityResponse =
+    | Offline
+    | Failure
+    | (Success & { id: string })
+    | { kind: "name_taken" };
 
 export type JoinCommunityResponse =
     | Failure
+    | Offline
     | GateCheckFailed
     | (Success & { community: CommunitySummary });
 
@@ -208,6 +217,7 @@ export type CommunityCanisterChannelSummaryUpdates = {
     latestMessage: EventWrapper<Message> | undefined;
     updatedEvents: UpdatedEvent[];
     eventsTTL: OptionUpdate<bigint>;
+    eventsTtlLastUpdated: bigint | undefined;
 };
 
 export type CommunityMembershipUpdates = {
@@ -270,9 +280,9 @@ export type CommunityDetailsUpdates = {
 
 export type ChannelSummaryResponse = Failure | ChannelSummary | CanisterNotFound;
 
-export type LeaveCommunityResponse = "success" | "failure";
+export type LeaveCommunityResponse = "success" | "failure" | "offline";
 
-export type DeleteCommunityResponse = "success" | "failure";
+export type DeleteCommunityResponse = "success" | "failure" | "offline";
 
 export type LocalCommunitySummaryUpdates = {
     added?: CommunitySummary;
@@ -283,16 +293,17 @@ export type LocalCommunitySummaryUpdates = {
     rulesAccepted?: boolean;
 };
 
-export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure;
+export type ConvertToCommunityResponse = (Success & { id: ChannelIdentifier }) | Failure | Offline;
 
-export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure;
+export type ImportGroupResponse = (Success & { channelId: ChannelIdentifier }) | Failure | Offline;
 
 export type CreateUserGroupResponse =
     | { kind: "success"; userGroupId: number }
     | { kind: "name_taken" }
-    | Failure;
-export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure;
-export type DeleteUserGroupsResponse = Success | Failure;
+    | Failure
+    | Offline;
+export type UpdateUserGroupResponse = Success | { kind: "name_taken" } | Failure | Offline;
+export type DeleteUserGroupsResponse = Success | Failure | Offline;
 
 export type SetMemberDisplayNameResponse =
     | "success"
@@ -301,6 +312,7 @@ export type SetMemberDisplayNameResponse =
     | "community_frozen"
     | "display_name_too_short"
     | "display_name_too_long"
-    | "display_name_invalid";
+    | "display_name_invalid"
+    | "offline";
 
-export type FollowThreadResponse = "success" | "unchanged" | "failed";
+export type FollowThreadResponse = "success" | "unchanged" | "failed" | "offline";

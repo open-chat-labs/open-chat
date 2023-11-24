@@ -3,6 +3,7 @@ import type { Subscriber, Unsubscriber } from "svelte/store";
 import {
     ChatMap,
     MessageContextMap,
+    bigIntMax,
     type ChatIdentifier,
     type ChatSummary,
     type MarkReadRequest,
@@ -13,8 +14,8 @@ import {
     type ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import { bigIntMax } from "../utils/bigint";
 import type { OpenChat } from "../openchat";
+import { offlineStore } from "./network";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -115,6 +116,7 @@ export class MessageReadTracker {
     }
 
     start(api: OpenChat): void {
+        console.log("starting the mark read poller");
         if (process.env.NODE_ENV !== "test") {
             this.triggerLoop(api);
         }
@@ -124,8 +126,8 @@ export class MessageReadTracker {
     }
 
     stop(): void {
+        console.log("stopping the mark read poller");
         if (this.timeout !== undefined) {
-            console.log("stopping the mark read poller");
             window.clearTimeout(this.timeout);
         }
     }
@@ -409,7 +411,17 @@ export class MessageReadTracker {
 
 export const messagesRead = new MessageReadTracker();
 
+let networkUnsub: Unsubscriber | undefined;
+
 export function startMessagesReadTracker(api: OpenChat): void {
-    messagesRead.stop();
-    messagesRead.start(api);
+    if (networkUnsub !== undefined) {
+        networkUnsub();
+    }
+    networkUnsub = offlineStore.subscribe((offline) => {
+        if (offline) {
+            messagesRead.stop();
+        } else {
+            messagesRead.start(api);
+        }
+    });
 }

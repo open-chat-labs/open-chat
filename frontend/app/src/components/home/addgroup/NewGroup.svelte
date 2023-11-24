@@ -39,9 +39,10 @@
     let step = 0;
     let actualWidth = 0;
     let detailsValid = true;
+    let visibilityValid = true;
     let originalGroup = structuredClone(candidateGroup);
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid, hideInviteUsers);
+    $: steps = getSteps(editing, detailsValid, visibilityValid, rulesValid, hideInviteUsers);
     $: editing = !chatIdentifierUnset(candidateGroup.id);
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -53,7 +54,7 @@
 
     $: permissionsDirty = client.haveGroupPermissionsChanged(
         originalGroup.permissions,
-        candidateGroup.permissions
+        candidateGroup.permissions,
     );
     $: rulesDirty =
         editing &&
@@ -70,12 +71,19 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty || ttlDirty;
     $: chatListScope = client.chatListScope;
     $: hideInviteUsers = candidateGroup.level === "channel" && candidateGroup.public;
+    $: valid = detailsValid && visibilityValid && rulesValid;
 
-    function getSteps(editing: boolean, detailsValid: boolean, hideInviteUsers: boolean) {
+    function getSteps(
+        editing: boolean,
+        detailsValid: boolean,
+        visibilityValid: boolean,
+        rulesValid: boolean,
+        hideInviteUsers: boolean,
+    ) {
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
-            { labelKey: "access.visibility", valid: true },
-            { labelKey: $_("rules.rules"), valid: true },
+            { labelKey: "access.visibility", valid: visibilityValid },
+            { labelKey: $_("rules.rules"), valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -113,14 +121,16 @@
         if (resp.kind === "user_suspended") return "userSuspended";
         if (resp.kind === "chat_frozen") return "chatFrozen";
         if (resp.kind === "failure") return "failure";
+        if (resp.kind === "offline") return "offlineError";
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     function groupCreationErrorMessage(
         resp: CreateGroupResponse,
-        level: Level
+        level: Level,
     ): string | undefined {
         if (resp.kind === "success") return undefined;
+        if (resp.kind === "offline") return "offlineError";
         if (resp.kind === "internal_error") return "groupCreationFailed";
         if (resp.kind === "name_too_short") return "groupNameTooShort";
         if (resp.kind === "name_too_long") return "groupNameTooLong";
@@ -147,7 +157,7 @@
         return client
             .inviteUsers(
                 chatId,
-                candidateGroup.members.map((m) => m.user.userId)
+                candidateGroup.members.map((m) => m.user.userId),
             )
             .then((resp) => {
                 if (resp !== "success") {
@@ -185,7 +195,7 @@
                 permissionsDirty
                     ? client.diffGroupPermissions(
                           originalGroup.permissions,
-                          updatedGroup.permissions
+                          updatedGroup.permissions,
                       )
                     : undefined,
                 avatarDirty ? updatedGroup.avatar?.blobData : undefined,
@@ -195,7 +205,7 @@
                         : { value: updatedGroup.eventsTTL }
                     : undefined,
                 gateDirty ? updatedGroup.gate : undefined,
-                visDirty ? updatedGroup.public : undefined
+                visDirty ? updatedGroup.public : undefined,
             )
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -268,7 +278,7 @@
         message={interpolateLevel(
             `confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`,
             candidateGroup.level,
-            true
+            true,
         )}
         action={updateGroup} />
 {/if}
@@ -293,6 +303,7 @@
                         {editing}
                         history
                         {canEditDisappearingMessages}
+                        bind:valid={visibilityValid}
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
@@ -346,7 +357,7 @@
 
                 {#if editing}
                     <Button
-                        disabled={!dirty || busy}
+                        disabled={!dirty || busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
@@ -361,7 +372,7 @@
                     </Button>
                 {:else}
                     <Button
-                        disabled={busy || !detailsValid}
+                        disabled={busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}

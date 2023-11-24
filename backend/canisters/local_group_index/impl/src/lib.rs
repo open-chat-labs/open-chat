@@ -121,6 +121,7 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -159,6 +160,7 @@ impl Data {
             group_upgrade_concurrency: 10,
             max_concurrent_community_upgrades: 10,
             community_upgrade_concurrency: 2,
+            rng_seed: [0; 32],
         }
     }
 }

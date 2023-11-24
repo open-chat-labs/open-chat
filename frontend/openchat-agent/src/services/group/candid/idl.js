@@ -262,6 +262,7 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
+    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
@@ -656,10 +657,16 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const PaymentGate = IDL.Record({
+    'fee' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
@@ -725,13 +732,11 @@ export const idlFactory = ({ IDL }) => {
     'expired_message_ranges' : IDL.Vec(IDL.Tuple(MessageIndex, MessageIndex)),
     'chat_last_updated' : TimestampMillis,
     'events' : IDL.Vec(ChatEventWrapper),
-    'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
     'expired_event_ranges' : IDL.Vec(IDL.Tuple(EventIndex, EventIndex)),
   });
   const EventsResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
-    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : EventsSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
@@ -781,12 +786,10 @@ export const idlFactory = ({ IDL }) => {
   const MessagesSuccessResult = IDL.Record({
     'messages' : IDL.Vec(MessageEventWrapper),
     'chat_last_updated' : TimestampMillis,
-    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
-    'ReplicaNotUpToDate' : EventIndex,
     'CallerNotInGroup' : IDL.Null,
     'Success' : MessagesSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
@@ -864,6 +867,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const RegisterPollVoteResponse = IDL.Variant({
+    'UserCannotChangeVote' : IDL.Null,
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'PollEnded' : IDL.Null,

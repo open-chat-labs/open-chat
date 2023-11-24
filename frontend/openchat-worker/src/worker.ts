@@ -11,6 +11,7 @@ import {
     inititaliseLogger,
     type WorkerResponseInner,
     type WorkerRequest,
+    Stream,
 } from "openchat-shared";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -78,6 +79,26 @@ const sendError = (correlationId: string, payload?: unknown) => {
     };
 };
 
+function streamReplies(
+    payload: WorkerRequest,
+    correlationId: string,
+    chain: Stream<WorkerResponseInner>,
+) {
+    const start = Date.now();
+    chain
+        .subscribe((value, final) => {
+            console.debug(
+                `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
+                correlationId,
+                value,
+                Date.now(),
+                final,
+            );
+            sendResponse(correlationId, value, final);
+        })
+        .catch(sendError(correlationId, payload));
+}
+
 function executeThenReply(
     payload: WorkerRequest,
     correlationId: string,
@@ -88,12 +109,13 @@ function executeThenReply(
         .catch(sendError(correlationId, payload));
 }
 
-function sendResponse(correlationId: string, response: WorkerResponseInner): void {
+function sendResponse(correlationId: string, response: WorkerResponseInner, final = true): void {
     logger?.debug("WORKER: sending response: ", correlationId);
     postMessage({
         kind: "worker_response",
         correlationId,
         response,
+        final,
     });
 }
 
@@ -144,7 +166,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         switch (kind) {
             case "getCurrentUser":
-                executeThenReply(payload, correlationId, agent.getCurrentUser());
+                streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
 
             case "getDeletedGroupMessage":
@@ -168,7 +190,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "getUpdates":
-                executeThenReply(payload, correlationId, agent.getUpdates());
+                streamReplies(payload, correlationId, agent.getUpdates(payload.initialLoad));
                 break;
 
             case "createUserClient":
@@ -975,6 +997,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "approveTransfer":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTransfer(
+                        payload.spender,
+                        payload.ledger,
+                        payload.amount,
+                        payload.expiresIn,
+                    ),
+                );
+                break;
+
             case "declineInvitation":
                 executeThenReply(payload, correlationId, agent.declineInvitation(payload.chatId));
                 break;
@@ -1305,6 +1340,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageContext,
                         payload.messageId,
                         payload.transfer,
+                        payload.decimals,
                     ),
                 );
                 break;
@@ -1323,6 +1359,41 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.userClient.saveCryptoAccount(payload.namedAccount),
                 );
+                break;
+
+            case "getTokenSwapPools":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getTokenSwapPools(payload.inputToken, payload.outputTokens),
+                );
+                break;
+
+            case "quoteTokenSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.quoteTokenSwap(payload.inputToken, payload.outputToken, payload.amountIn),
+                );
+                break;
+
+            case "swapTokens":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.swapTokens(
+                        payload.swapId,
+                        payload.inputToken,
+                        payload.outputToken,
+                        payload.amountIn,
+                        payload.minAmountOut,
+                        payload.pool,
+                    ),
+                );
+                break;
+
+            case "tokenSwapStatus":
+                executeThenReply(payload, correlationId, agent.tokenSwapStatus(payload.swapId));
                 break;
 
             default:

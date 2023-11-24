@@ -57,7 +57,7 @@
 {/if}
 
 {#if $framed}
-    <HostedLandingPage on:login={() => client.login()} />
+    <HostedLandingPage />
 {:else}
     {#if showMenu}
         <Header on:logout={logout} />

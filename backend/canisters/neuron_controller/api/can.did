@@ -1,0 +1,98 @@
+type AccountIdentifier = vec nat8;
+type AddHotKey = record { new_hot_key : opt principal };
+type Amount = record { e8s : nat64 };
+type By = variant {
+  NeuronIdOrSubaccount : record {};
+  MemoAndController : ClaimOrRefreshNeuronFromAccount;
+  Memo : nat64;
+};
+type ChangeAutoStakeMaturity = record {
+  requested_setting_for_auto_stake_maturity : bool;
+};
+type ClaimOrRefresh = record { by : opt By };
+type ClaimOrRefreshNeuronFromAccount = record {
+  controller : opt principal;
+  memo : nat64;
+};
+type Command = variant {
+  Spawn : Spawn;
+  Split : Split;
+  Follow : Follow;
+  ClaimOrRefresh : ClaimOrRefresh;
+  Configure : Configure;
+  RegisterVote : RegisterVote;
+  Merge : Merge;
+  DisburseToNeuron : DisburseToNeuron;
+  StakeMaturity : StakeMaturity;
+  MergeMaturity : MergeMaturity;
+  Disburse : Disburse;
+};
+type Configure = record { operation : opt Operation };
+type Disburse = record {
+  to_account : opt AccountIdentifier;
+  amount : opt Amount;
+};
+type DisburseToNeuron = record {
+  dissolve_delay_seconds : nat64;
+  kyc_verified : bool;
+  amount_e8s : nat64;
+  new_controller : opt principal;
+  nonce : nat64;
+};
+type Follow = record { topic : int32; followees : vec NeuronId };
+type IncreaseDissolveDelay = record {
+  additional_dissolve_delay_seconds : nat32;
+};
+type ManageNeuron = record {
+  id : opt NeuronId;
+  command : opt Command;
+  neuron_id_or_subaccount : opt NeuronIdOrSubaccount;
+};
+type Merge = record { source_neuron_id : opt NeuronId };
+type MergeMaturity = record { percentage_to_merge : nat32 };
+type NeuronId = record { id : nat64 };
+type NeuronIdOrSubaccount = variant {
+  Subaccount : vec nat8;
+  NeuronId : NeuronId;
+};
+type Operation = variant {
+  RemoveHotKey : RemoveHotKey;
+  AddHotKey : AddHotKey;
+  ChangeAutoStakeMaturity : ChangeAutoStakeMaturity;
+  StopDissolving : record {};
+  StartDissolving : record {};
+  IncreaseDissolveDelay : IncreaseDissolveDelay;
+  JoinCommunityFund : record {};
+  LeaveCommunityFund : record {};
+  SetDissolveTimestamp : SetDissolveTimestamp;
+};
+type RegisterVote = record { vote : int32; proposal : opt NeuronId };
+type RemoveHotKey = record { hot_key_to_remove : opt principal };
+type SetDissolveTimestamp = record { dissolve_timestamp_seconds : nat64 };
+type Spawn = record {
+  percentage_to_spawn : opt nat32;
+  new_controller : opt principal;
+  nonce : opt nat64;
+};
+type Split = record { amount_e8s : nat64 };
+type StakeMaturity = record { percentage_to_stake : opt nat32 };
+
+type ManageNnsNeuronArgs = record {
+    neuron_id : nat64;
+    command : Command;
+};
+
+type ManageNnsNeuronResponse = variant {
+    Success: text;
+    InternalError : text;
+};
+
+type StakeNnsNeuronResponse = variant {
+    Success : nat64;
+    InternalError : text;
+};
+
+service : {
+  manage_nns_neuron : (ManageNnsNeuronArgs) -> (ManageNnsNeuronResponse);
+  stake_nns_neuron : (record {}) -> (StakeNnsNeuronResponse);
+}

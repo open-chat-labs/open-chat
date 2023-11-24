@@ -98,6 +98,9 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    ApproveTransferResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -139,7 +142,8 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult } from "./crypto";
+import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
+import type { DexId, TokenSwapPool } from "./dexes";
 /**
  * Worker request types
  */
@@ -292,7 +296,12 @@ export type WorkerRequest =
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
     | SubmitProposal
-    | TipMessage;
+    | TipMessage
+    | GetTokenSwapPools
+    | QuoteTokenSwap
+    | SwapTokens
+    | TokenSwapStatus
+    | ApproveTransfer;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -308,6 +317,35 @@ type TipMessage = {
     messageContext: MessageContext;
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
+    decimals: number;
+};
+
+type GetTokenSwapPools = {
+    kind: "getTokenSwapPools";
+    inputToken: string;
+    outputTokens: string[];
+};
+
+type QuoteTokenSwap = {
+    kind: "quoteTokenSwap";
+    inputToken: string;
+    outputToken: string;
+    amountIn: bigint;
+};
+
+type SwapTokens = {
+    kind: "swapTokens";
+    swapId: bigint;
+    inputToken: CryptocurrencyDetails;
+    outputToken: CryptocurrencyDetails;
+    amountIn: bigint;
+    minAmountOut: bigint;
+    pool: TokenSwapPool;
+};
+
+type TokenSwapStatus = {
+    kind: "tokenSwapStatus";
+    swapId: bigint;
 };
 
 type SetCommunityIndexes = {
@@ -928,6 +966,7 @@ type CreateUserClient = {
 
 type GetUpdates = {
     kind: "getUpdates";
+    initialLoad: boolean;
 };
 
 type GetDeletedGroupMessage = {
@@ -991,6 +1030,7 @@ export type WorkerResponseInner =
     | bigint
     | boolean
     | string
+    | string[]
     | undefined
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -1098,8 +1138,13 @@ export type WorkerResponseInner =
     | NamedAccount[]
     | SaveCryptoAccountResponse
     | SubmitProposalResponse
+    | ApproveTransferResponse
     | AccountTransactionResult
-    | Record<string, bigint>;
+    | Record<string, bigint>
+    | TokenSwapPool[]
+    | [DexId, bigint][]
+    | SwapTokensResponse
+    | TokenSwapStatusResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1107,6 +1152,7 @@ type Response<T> = {
     kind: "worker_response";
     correlationId: string;
     response: T;
+    final: boolean;
 };
 
 export type FromWorker = WorkerResponse | WorkerEvent | WorkerError;
@@ -1188,6 +1234,14 @@ type ReportMessage = {
     messageId: bigint;
     deleteMessage: boolean;
     kind: "reportMessage";
+};
+
+type ApproveTransfer = {
+    spender: string, 
+    ledger: string, 
+    amount: bigint, 
+    expiresIn: bigint | undefined,
+    kind: "approveTransfer";
 };
 
 type DeclineInvitation = {
@@ -1339,6 +1393,7 @@ type SubmitProposal = {
     kind: "submitProposal";
 };
 
+// prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
@@ -1436,7 +1491,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ListNervousSystemFunctions
     ? ListNervousSystemFunctionsResponse
     : T extends SendMessage
-    ? [SendMessageResponse, Message]
+    ? [ SendMessageResponse, Message ]
     : T extends EditMessage
     ? EditMessageResponse
     : T extends RegisterUser
@@ -1530,7 +1585,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
-    ? Map<string, Record<number, EventWrapper<Message>>>
+    ? Map< string, Record< number, EventWrapper<Message>>>
     : T extends DeleteFailedMessage
     ? void
     : T extends ClaimPrize
@@ -1547,6 +1602,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? ReferralLeaderboardResponse
     : T extends ReportMessage
     ? boolean
+    : T extends ApproveTransfer
+    ? ApproveTransferResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
     : T extends AddMembersToChannel
@@ -1618,7 +1675,15 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends FollowThread
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
-    ? Record<string, bigint>
+    ? Record< string, bigint >
     : T extends SetCachePrimerTimestamp
     ? void
+    : T extends GetTokenSwapPools
+    ? TokenSwapPool[]
+    : T extends QuoteTokenSwap
+    ? [DexId, bigint][]
+    : T extends SwapTokens
+    ? SwapTokensResponse
+    : T extends TokenSwapStatus
+    ? TokenSwapStatusResponse
     : never;

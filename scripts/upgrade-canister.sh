@@ -31,7 +31,7 @@ STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
-EXCHANGE_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id exchange_bot)
+NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml -- \
@@ -46,6 +46,6 @@ cargo run \
   --cycles-dispenser $CYCLES_DISPENSER_CANISTER_ID \
   --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
-  --exchange-bot $EXCHANGE_BOT_CANISTER_ID \
+  --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

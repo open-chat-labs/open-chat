@@ -12,60 +12,67 @@ import type {
     UserService,
 } from "./candid/idl";
 import { idlFactory } from "./candid/idl";
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type ChatEvent,
-    type EventsSuccessResult,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ThreadRead,
-    type ManageFavouritesResponse,
-    type CommunityIdentifier,
-    type LeaveCommunityResponse,
-    type DeleteCommunityResponse,
-    type ChannelIdentifier,
-    type Rules,
-    type TipMessageResponse,
-    type NamedAccount,
-    type SaveCryptoAccountResponse,
-    type CandidateProposal,
-    type SubmitProposalResponse,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    DirectChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
+    CommunitySummary,
+    CreateCommunityResponse,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
+    ManageFavouritesResponse,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
+    ChannelIdentifier,
+    Rules,
+    TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
+    CryptocurrencyDetails,
+    ExchangeTokenSwapArgs,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    ApproveTransferResponse,
+    MessageContext,
+    PendingCryptocurrencyTransfer,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -101,8 +108,10 @@ import {
     proposalToSubmit,
     submitProposalResponse,
     reportMessageResponse,
+    swapTokensResponse,
+    tokenSwapStatusResponse,
+    approveTransferResponse,
 } from "./mappers";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
     type Database,
     getCachedEvents,
@@ -135,8 +144,7 @@ import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import type { MessageContext } from "openchat-shared";
-import type { PendingCryptocurrencyTransfer } from "openchat-shared";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -819,12 +827,14 @@ export class UserClient extends CandidService {
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
+                decimals,
                 token: apiToken(transfer.token),
                 recipient: Principal.fromText(transfer.recipient),
                 ledger: Principal.fromText(transfer.ledger),
@@ -1144,16 +1154,83 @@ export class UserClient extends CandidService {
 
     reportMessage(
         chatId: DirectChatIdentifier,
-        messageId: bigint, 
-        deleteMessage: boolean
+        messageId: bigint,
+        deleteMessage: boolean,
     ): Promise<boolean> {
         return this.handleResponse(
             this.userService.report_message({
                 them: Principal.fromText(chatId.userId),
                 message_id: messageId,
-                delete: deleteMessage
+                delete: deleteMessage,
             }),
-            reportMessageResponse
+            reportMessageResponse,
+        );
+    }
+
+    swapTokens(
+        swapId: bigint,
+        inputToken: CryptocurrencyDetails,
+        outputToken: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<SwapTokensResponse> {
+        return this.handleResponse(
+            this.userService.swap_tokens({
+                swap_id: swapId,
+                input_token: {
+                    token: apiToken(inputToken.symbol),
+                    ledger: Principal.fromText(inputToken.ledger),
+                    decimals: inputToken.decimals,
+                    fee: inputToken.transferFee,
+                },
+                output_token: {
+                    token: apiToken(outputToken.symbol),
+                    ledger: Principal.fromText(outputToken.ledger),
+                    decimals: outputToken.decimals,
+                    fee: outputToken.transferFee,
+                },
+                input_amount: amountIn,
+                exchange_args: {
+                    ICPSwap: {
+                        swap_canister_id: Principal.fromText(exchangeArgs.swapCanisterId),
+                        zero_for_one: exchangeArgs.zeroForOne,
+                    },
+                },
+                min_output_amount: minAmountOut,
+            }),
+            swapTokensResponse,
+        );
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        const args = {
+            swap_id: swapId,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.token_swap_status(args),
+            tokenSwapStatusResponse,
+            args,
+        );
+    }
+
+    approveTransfer(
+        spender: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint | undefined,
+    ): Promise<ApproveTransferResponse> {
+        return this.handleResponse(
+            this.userService.approve_transfer({
+                spender: {
+                    owner: Principal.fromText(spender),
+                    subaccount: [],
+                },
+                ledger_canister_id: Principal.fromText(ledger),
+                amount,
+                expires_in: apiOptional(identity, expiresIn),
+            }),
+            approveTransferResponse,
         );
     }
 }

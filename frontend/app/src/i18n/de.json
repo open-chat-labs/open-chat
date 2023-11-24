@@ -206,7 +206,6 @@
         "voting_q": "Wie stimme ich über Vorschläge ab?",
         "voting_a": "Treten Sie der <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat-Vorschlagsgruppe</a> bei und lesen Sie <a href=\"/blog/governance\">diesen Blogpost</a>, der einen Überblick gibt der OpenChat-Governance und hat eine Schritt-für-Schritt-Anleitung zur Abstimmung.",
         "buychat_q": "Wie kaufe ich CHAT-Token?",
-        "buychat_a": "Im Moment müssen Sie zuerst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a>, gegen das Sie dann tauschen können CHAT auf verschiedenen dezentralen Börsen (DEXes).<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Token hinzu (die enthält CHAT), wodurch sie viel einfacher in Centralized Exchanges (CEXes) integriert werden können. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXs für ICP oder USDT verfügbar sein wird.",
         "shortcuts_q": "Welche Shortcut-Befehle sind verfügbar?",
         "shortcuts_a": "Es gibt mehrere Kurzbefehle, die Sie im Eingabefeld für die Nachrichteneingabe verwenden können. <br /><br /> `/poll` - um eine neue Umfrage zu erstellen <br /> `/search xyz` - um den aktuellen Chat nach dem Begriff \"xyz\" zu durchsuchen <br />`/gif kittens` - um Suche nach Kätzchen-Gifs <br />`/icp 0.1` - um 0,1 ICP an jemanden zu senden <br />`/faq question_id*` - um einen formatierten Link zu einer bestimmten FAQ-Frage zu erstellen und zu posten <br />`/diamond ` - um einen formatierten Link mit den Details der Diamond-Mitgliedschaft zu erstellen und zu posten <br/> <br/>Befehle, die ein Argument akzeptieren, können auch ohne das Argument verwendet werden.<br /><br />* Verfügbare FAQ-Frage-IDs sind : airdrop, vote, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts",
         "content_q": "Welche Inhalte sind zulässig?",
@@ -220,7 +219,8 @@
         "info_q": "Wo kann ich mehr über OpenChat erfahren?",
         "info_a": "Gehen Sie zu unserer <a href=\"/home\">Homepage</a> und finden Sie Links zu OpenChat <a href=\"/features\">Funktionen</a>, <a href=\"/roadmap\">Roadmap</ a>, <a href=\"/whitepaper\">Whitepaper</a>, <a href=\"/architecture\">Architektur</a> und <a href=\"/blog\">Blog</a>",
         "referral_rewards_q": "Was sind Empfehlungsprämien?",
-        "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br> Wie könnten Sie das tun? Es gibt viele Möglichkeiten. Sie können Freunden und Familie davon erzählen, über OpenChat twittern, ein Video über OpenChat erstellen, in dem Sie beschreiben, was Sie daran lieben, und es auf TikTok oder YouTube teilen. Sie könnten auf Twitch streamen, einen Blog-Beitrag schreiben, einen Podcast erstellen, einen Twitter-Bereich hosten oder sogar ein echtes Treffen veranstalten. Wir freuen uns darauf, all die kreativen Ideen zu sehen, die Sie haben, um die Nachricht bekannt zu machen!<br><br> In Zukunft bieten wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer an, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen."
+        "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br> Wie könnten Sie das tun? Es gibt viele Möglichkeiten. Sie können Freunden und Familie davon erzählen, über OpenChat twittern, ein Video über OpenChat erstellen, in dem Sie beschreiben, was Sie daran lieben, und es auf TikTok oder YouTube teilen. Sie könnten auf Twitch streamen, einen Blog-Beitrag schreiben, einen Podcast erstellen, einen Twitter-Bereich hosten oder sogar ein echtes Treffen veranstalten. Wir freuen uns darauf, all die kreativen Ideen zu sehen, die Sie haben, um die Nachricht bekannt zu machen!<br><br> In Zukunft bieten wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer an, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen.",
+        "buychat_a": "Im Moment müssen Sie zunächst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a> , das Sie dann an verschiedenen dezentralen Börsen (DEXes) gegen CHAT eintauschen können.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Tokens (einschließlich CHAT) hinzu, wodurch die Integration in Centralized Exchanges (CEXes) erheblich vereinfacht wird. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXes für ICP oder USDT verfügbar sein wird."
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -318,7 +318,8 @@
         "oneVote": "1 Stimme",
         "oneVoteBy": "1 Stimme von",
         "numVotesIncludingYours": "{votes} Stimmen einschließlich deiner",
-        "atLeastTwo": "Mindestens 2"
+        "atLeastTwo": "Mindestens 2",
+        "allowChangeVotes": "Benutzern erlauben, ihre Stimme zu ändern"
     },
     "role": {
         "admin": "Admins",
@@ -667,7 +668,8 @@
             "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
             "transactionUrlFormat": "Transaktions-URL-Format",
             "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
-        }
+        },
+        "neuronControllerAction": "Neuron-Controller-Aktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Name {level} ist zu kurz",
@@ -931,9 +933,7 @@
         "chooseGate": "Wählen Sie ein Zugangstor",
         "diamondMember": "Diamond-Mitgliedschaft",
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
-        "nnsHolder": "ICP-Neuronenhalter (in Kürze verfügbar)",
         "nftHolder": "NFT-Inhaber (in Kürze verfügbar)",
-        "openAccess": "Offener Zugang",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
         "minStake": "Mindesteinsatz (Token)",
         "minDissolveDelayN": "Min. Auflösungsverzögerung {n} Tage",
@@ -942,8 +942,8 @@
         "openAccessInfo": "Für den Beitritt sind keine besonderen Zugangsvoraussetzungen erforderlich",
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "cannotMakePublic": "Sie können ein privates {level} nicht öffentlich machen, da dies die Privatsphäre der bestehenden Mitglieder gefährden würde.",
-        "snsHolder": "{token} Neuronenhalter",
-        "snsHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten",
+        "neuronHolder": "{token} Neuronenhalter",
+        "neuronHolderInfo": "Nur Inhaber von {token}-Neuronen dürfen beitreten",
         "initiateCredentialCheck": "Anmeldeinformationen überprüfen",
         "verify": "Verifizieren",
         "credential": "Verifizierter Berechtigungsnachweis",
@@ -952,7 +952,22 @@
         "credentialIssuer": "Aussteller der Berechtigungsnachweise",
         "requiredCredential": "Erforderlicher Ausweis",
         "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ vom Aussteller {issuer} überprüfen.",
-        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten"
+        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten",
+        "approvePaymentTitle": "Zahlung genehmigen",
+        "paymentApprovalMessage": "Um diesem {level} beizutreten, müssen Sie **{amount}** {token}-Token bezahlen.",
+        "paymentDistributionMessage": "Davon gehen 80 % an den/die Eigentümer von {level} und 20 % an die Kasse von OpenChat SNS.",
+        "tokenNeuronHolder": "{token} Neuronenhalter",
+        "payment": "Zahlung",
+        "tokenPayment": "{token} Zahlung",
+        "tokenPaymentInfo": "Benutzer können nur beitreten, wenn sie einen Betrag in {token}-Tokens bezahlen.",
+        "chooseNervousSystem": "Wählen Sie das Nervensystem",
+        "chooseToken": "Wählen Sie Token",
+        "amount": "Betrag (Tokens)",
+        "amountN": "Anzahl {n} Token",
+        "paymentFailed": "Bezahlung fehlgeschlagen",
+        "tokenComingSoon": "{token} (bald verfügbar)",
+        "payAndJoin": "Bezahlen und mitmachen",
+        "openAccess": "Keine (Open Access)"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
@@ -1008,15 +1023,15 @@
             "failure": "Es tut uns leid, dass wir Ihre Community nicht erstellen konnten",
             "saveFailed": "Leider konnten wir Ihre Aktualisierungen nicht speichern",
             "inviteUsers": "Leider konnten wir diese Benutzer nicht einladen",
-            "joinFailed": "Es tut uns leid, dass wir dieser Community nicht beitreten konnten",
-            "leaveFailed": "Es tut uns leid, dass wir diese Community nicht verlassen konnten",
             "deleteFailed": "Leider konnten wir diese Community nicht löschen",
             "convertFailed": "Leider konnten wir Ihre Gruppen nicht in eine Community umwandeln",
             "importFailed": "Leider konnten wir Ihre Gruppe nicht importieren",
             "deleteUserGroupFailed": "Leider konnten wir die Benutzergruppe nicht löschen",
             "updateGroupFailed": "Leider konnten wir die Benutzergruppe nicht aktualisieren",
             "createGroupFailed": "Leider konnten wir die Benutzergruppe nicht erstellen",
-            "userGroupNameTaken": "Es tut uns leid, dass der Name der Benutzergruppe bereits vergeben ist"
+            "userGroupNameTaken": "Es tut uns leid, dass der Name der Benutzergruppe bereits vergeben ist",
+            "joinFailed": "Es tut uns leid, dass wir Sie dieser Community nicht beitreten konnten",
+            "leaveFailed": "Es tut uns leid, dass wir Sie nicht aus dieser Community entfernen konnten"
         },
         "memberCount": "Mitglied(er)",
         "channelCount": "Kanal(e)",
@@ -1059,7 +1074,9 @@
         "namedUserGroupMembers": "**{name}** Gruppenmitglieder",
         "searchUserGroups": "Benutzergruppen durchsuchen...",
         "userGroupName": "Name der Benutzergruppe",
-        "noSpaces": "Keine Leerzeichen erlaubt"
+        "noSpaces": "Keine Leerzeichen erlaubt",
+        "noMatch": "Keine passenden Communities gefunden",
+        "refineSearch": "Versuchen Sie, Ihre Suche zu verfeinern"
     },
     "groupCreatedBy": "{username} hat den {level} erstellt",
     "groupName": "{level} Name",
@@ -1151,5 +1168,7 @@
     "guestUser": "Gastbenutzer",
     "showAuthProviders": "Optionen anzeigen",
     "hideAuthProviders": "Optionen ausblenden",
-    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }"
+    "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }",
+    "offlineMessage": "Offline",
+    "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline"
 }

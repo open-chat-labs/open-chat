@@ -133,6 +133,78 @@ type ReportMessageResponse = variant {
     InternalError : text;
 };
 
+type ApproveTransferArgs = record {
+    spender : Account;
+    ledger_canister_id : CanisterId;
+    amount : nat;
+    expires_in : opt Milliseconds;
+};
+
+type ApproveTransferResponse = variant {
+    Success;
+    ApproveError : ApproveError;
+    InternalError : text;
+};
+
+type SwapTokensArgs = record {
+    swap_id : nat;
+    input_token : TokenInfo;
+    output_token : TokenInfo;
+    input_amount : nat;
+    exchange_args : variant {
+        ICPSwap : record {
+            swap_canister_id : CanisterId;
+            zero_for_one : bool;
+        };
+    };
+    min_output_amount : nat;
+};
+
+type SwapTokensResponse = variant {
+    Success : record {
+        amount_out : nat;
+    };
+    InternalError : text;
+};
+
+type TokenInfo = record {
+    token : Cryptocurrency;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee: nat;
+};
+
+type TokenSwapStatusArgs = record {
+    swap_id : nat;
+};
+
+type TokenSwapStatusResponse = variant {
+    Success : record {
+        started : TimestampMillis;
+        deposit_account : opt variant {
+            Ok;
+            Err : text;
+        };
+        transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        notify_dex : opt variant {
+            Ok;
+            Err : text;
+        };
+        amount_swapped : opt variant {
+            Ok : nat;
+            Err : text;
+        };
+        withdraw_from_dex : opt variant {
+            Ok : nat;
+            Err : text;
+        };
+    };
+    NotFound;
+};
+
 type TipMessageArgs = record {
     chat : Chat;
     recipient : UserId;
@@ -142,6 +214,7 @@ type TipMessageArgs = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
+    decimals : nat8;
 };
 
 type TipMessageResponse = variant {
@@ -208,6 +281,16 @@ type UnblockUserArgs = record {
 type UnblockUserResponse = variant {
     Success;
     UserSuspended;
+};
+
+type DeleteDirectChatArgs = record {
+    user_id : UserId;
+    block_user : bool;
+};
+
+type DeleteDirectChatResponse = variant {
+    Success;
+    ChatNotFound;
 };
 
 type CreateGroupArgs = record {
@@ -716,6 +799,7 @@ type UpdatesResponse = variant {
 type DirectChatsUpdates = record {
     added : vec DirectChatSummary;
     updated : vec DirectChatSummaryUpdates;
+    removed : vec ChatId;
     pinned : opt vec ChatId;
 };
 
@@ -814,7 +898,6 @@ type EventsWindowArgs = record {
 type EventsResponse = variant {
     Success : EventsSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -828,7 +911,6 @@ type MessagesByMessageIndexArgs = record {
 type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     ChatNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -918,6 +1000,7 @@ service : {
     mark_read : (MarkReadArgs) -> (MarkReadResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
     unblock_user : (UnblockUserArgs) -> (UnblockUserResponse);
+    delete_direct_chat : (DeleteDirectChatArgs) -> (DeleteDirectChatResponse);
     create_group : (CreateGroupArgs) -> (CreateGroupResponse);
     leave_group : (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group : (DeleteGroupArgs) -> (DeleteGroupResponse);
@@ -943,6 +1026,8 @@ service : {
     save_crypto_account : (NamedAccount) -> (SaveCryptoAccountResponse);
     submit_proposal : (SubmitProposalArgs) -> (SubmitProposalResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
+    approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
+    swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
@@ -961,4 +1046,5 @@ service : {
     public_profile : (PublicProfileArgs) -> (PublicProfileResponse) query;
     hot_group_exclusions : (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
     saved_crypto_accounts : (EmptyArgs) -> (SavedCryptoAccountsResponse) query;
+    token_swap_status : (TokenSwapStatusArgs) -> (TokenSwapStatusResponse) query;
 };

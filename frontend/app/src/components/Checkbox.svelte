@@ -117,7 +117,7 @@
             height: 36px;
             background: var(--toggle-bg);
             display: block;
-            border-radius: 18px;
+            border-radius: var(--toggle-rd-track);
             position: relative;
 
             &.small {
@@ -134,7 +134,7 @@
             width: $size !important;
             height: $size;
             background: #fff;
-            border-radius: 50%;
+            border-radius: var(--toggle-rd-thumb);
             transition: 150ms ease-in-out;
         }
 

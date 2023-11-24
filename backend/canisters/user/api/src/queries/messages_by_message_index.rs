@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, MessageIndex, MessagesResponse, TimestampMillis, UserId};
+use types::{MessageIndex, MessagesResponse, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -14,6 +14,5 @@ pub struct Args {
 pub enum Response {
     Success(MessagesResponse),
     ChatNotFound,
-    ReplicaNotUpToDate(EventIndex),
     ReplicaNotUpToDateV2(TimestampMillis),
 }

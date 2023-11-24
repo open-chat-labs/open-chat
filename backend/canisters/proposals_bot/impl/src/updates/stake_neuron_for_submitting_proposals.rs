@@ -3,16 +3,17 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_macros::update;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use ledger_utils::compute_neuron_staking_subaccount_bytes;
 use proposals_bot_canister::stake_neuron_for_submitting_proposals::{Response::*, *};
 use rand::Rng;
-use sha2::{Digest, Sha256};
 use sns_governance_canister::types::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use sns_governance_canister::types::manage_neuron::configure::Operation;
 use sns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command, IncreaseDissolveDelay};
 use sns_governance_canister::types::{manage_neuron_response, ManageNeuron};
 use sns_governance_canister_c2c_client::configure_neuron;
-use types::icrc1::Account;
-use types::{icrc1, CanisterId, SnsNeuronId};
+use types::{CanisterId, SnsNeuronId};
 use user_index_canister_c2c_client::LookupUserError;
 
 #[update]
@@ -104,9 +105,9 @@ async fn stake_neuron_impl(
 ) -> CallResult<Response> {
     let subaccount = compute_neuron_staking_subaccount_bytes(this_canister_id, nonce);
 
-    if let Err(transfer_error) = icrc1_ledger_canister_c2c_client::icrc1_transfer(
+    if let Err(transfer_error) = icrc_ledger_canister_c2c_client::icrc1_transfer(
         ledger_canister_id,
-        &icrc1::TransferArg {
+        &TransferArg {
             from_subaccount: None,
             to: Account {
                 owner: args.governance_canister_id,
@@ -155,16 +156,4 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
         manage_neuron_response::Command::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
         _ => unreachable!(),
     }
-}
-
-fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
-    const DOMAIN: &[u8] = b"neuron-stake";
-    const DOMAIN_LENGTH: [u8; 1] = [0x0c];
-
-    let mut hasher = Sha256::new();
-    hasher.update(DOMAIN_LENGTH);
-    hasher.update(DOMAIN);
-    hasher.update(controller.as_slice());
-    hasher.update(nonce.to_be_bytes());
-    hasher.finalize().into()
 }

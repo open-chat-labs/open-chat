@@ -69,9 +69,9 @@
                 const match = matches[index];
                 if (match) {
                     select(match.unicode);
+                    ev.preventDefault();
+                    ev.stopPropagation();
                 }
-                ev.preventDefault();
-                ev.stopPropagation();
                 break;
         }
     }

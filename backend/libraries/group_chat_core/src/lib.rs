@@ -117,7 +117,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public.value {
+        } else if self.is_public.value && !self.has_payment_gate() {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -301,17 +301,11 @@ impl GroupChatCore {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
-        latest_known_update: Option<TimestampMillis>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let chat_last_updated = self.last_updated(user_id);
-                if chat_last_updated < latest_known_update.unwrap_or_default() {
-                    return ReplicaNotUpToDate(chat_last_updated);
-                }
-
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.scan(
                     Some(start_index.into()),
                     ascending,
@@ -321,6 +315,7 @@ impl GroupChatCore {
                 ));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
@@ -328,7 +323,6 @@ impl GroupChatCore {
                     expired_message_ranges,
                     latest_event_index,
                     chat_last_updated,
-                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -341,20 +335,15 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         events: Vec<EventIndex>,
-        latest_known_update: Option<TimestampMillis>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let chat_last_updated = self.last_updated(user_id);
-                if chat_last_updated < latest_known_update.unwrap_or_default() {
-                    return ReplicaNotUpToDate(chat_last_updated);
-                }
-
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.get_by_indexes(&events, user_id));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
@@ -362,7 +351,6 @@ impl GroupChatCore {
                     expired_message_ranges,
                     latest_event_index,
                     chat_last_updated,
-                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -377,17 +365,11 @@ impl GroupChatCore {
         mid_point: MessageIndex,
         max_messages: u32,
         max_events: u32,
-        latest_known_update: Option<TimestampMillis>,
     ) -> EventsResult {
         use EventsResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let chat_last_updated = self.last_updated(user_id);
-                if chat_last_updated < latest_known_update.unwrap_or_default() {
-                    return ReplicaNotUpToDate(chat_last_updated);
-                }
-
                 let (events, expired_event_ranges) = EventOrExpiredRange::split(reader.window(
                     mid_point.into(),
                     max_messages as usize,
@@ -396,6 +378,7 @@ impl GroupChatCore {
                 ));
                 let expired_message_ranges = self.events.convert_to_message_ranges(&expired_event_ranges);
                 let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(EventsResponse {
                     events,
@@ -403,7 +386,6 @@ impl GroupChatCore {
                     expired_message_ranges,
                     latest_event_index,
                     chat_last_updated,
-                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -416,28 +398,22 @@ impl GroupChatCore {
         user_id: Option<UserId>,
         thread_root_message_index: Option<MessageIndex>,
         messages: Vec<MessageIndex>,
-        latest_known_update: Option<TimestampMillis>,
     ) -> MessagesResult {
         use MessagesResult::*;
 
         match self.events_reader(user_id, thread_root_message_index) {
             EventsReaderResult::Success(reader) => {
-                let chat_last_updated = self.last_updated(user_id);
-                if chat_last_updated < latest_known_update.unwrap_or_default() {
-                    return ReplicaNotUpToDate(chat_last_updated);
-                }
-
                 let messages: Vec<_> = messages
                     .into_iter()
                     .filter_map(|m| reader.message_event(m.into(), user_id))
                     .collect();
                 let latest_event_index = reader.latest_event_index().unwrap();
+                let chat_last_updated = self.last_updated(user_id);
 
                 Success(MessagesResponse {
                     messages,
                     latest_event_index,
                     chat_last_updated,
-                    timestamp: chat_last_updated,
                 })
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
@@ -480,20 +456,10 @@ impl GroupChatCore {
         }
     }
 
-    pub fn thread_previews(
-        &self,
-        user_id: UserId,
-        threads: Vec<MessageIndex>,
-        latest_client_thread_update: Option<TimestampMillis>,
-        now: TimestampMillis,
-    ) -> ThreadPreviewsResult {
+    pub fn thread_previews(&self, user_id: UserId, threads: Vec<MessageIndex>) -> ThreadPreviewsResult {
         use ThreadPreviewsResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
-            if latest_client_thread_update.map_or(false, |t| now < t) {
-                return ReplicaNotUpToDate(now);
-            }
-
             Success(
                 threads
                     .into_iter()
@@ -1137,6 +1103,32 @@ impl GroupChatCore {
         }
     }
 
+    pub fn cancel_invites(&mut self, cancelled_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> CancelInvitesResult {
+        use CancelInvitesResult::*;
+
+        if let Some(member) = self.members.get(&cancelled_by) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if !member.role.can_invite_users(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            for user_id in user_ids {
+                self.cancel_invite_unchecked(&user_id, now);
+            }
+
+            Success
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn cancel_invite_unchecked(&mut self, user_id: &UserId, now: TimestampMillis) {
+        self.invited_users.remove(user_id, now);
+    }
+
     pub fn can_leave(&self, user_id: UserId) -> CanLeaveResult {
         use CanLeaveResult::*;
 
@@ -1641,7 +1633,7 @@ impl GroupChatCore {
             })
             .collect();
 
-        new.retain(|cp| removed.contains(&cp.subtype));
+        new.retain(|cp| !removed.contains(&cp.subtype));
         new
     }
 
@@ -1668,20 +1660,26 @@ impl GroupChatCore {
             total_replies: thread_events_reader.next_message_index().into(),
         })
     }
+
+    fn has_payment_gate(&self) -> bool {
+        self.gate
+            .value
+            .as_ref()
+            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .unwrap_or_default()
+    }
 }
 
 pub enum EventsResult {
     Success(EventsResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(TimestampMillis),
 }
 
 pub enum MessagesResult {
     Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
-    ReplicaNotUpToDate(TimestampMillis),
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -1835,7 +1833,6 @@ pub enum DeletedMessageResult {
 pub enum ThreadPreviewsResult {
     Success(Vec<ThreadPreview>),
     UserNotInGroup,
-    ReplicaNotUpToDate(TimestampMillis),
 }
 
 pub enum SearchResults {
@@ -1858,6 +1855,13 @@ pub enum InvitedUsersResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+}
+
+pub enum CancelInvitesResult {
+    Success,
+    UserNotInGroup,
+    UserSuspended,
+    NotAuthorized,
 }
 
 pub enum FollowThreadResult {
@@ -1903,7 +1907,6 @@ pub struct SummaryUpdates {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
-    #[serde(default)]
     pub version_last_updated: TimestampMillis,
 }
 

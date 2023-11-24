@@ -96,6 +96,7 @@ type RegisterPollVoteResponse = variant {
     CallerNotInGroup;
     UserSuspended;
     ChatFrozen;
+    UserCannotChangeVote;
 };
 
 type AddReactionArgs = record {
@@ -421,7 +422,6 @@ type EventsResponse = variant {
     Success : EventsSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
@@ -441,7 +441,6 @@ type MessagesByMessageIndexResponse = variant {
     Success : MessagesSuccessResult;
     CallerNotInGroup;
     ThreadMessageNotFound;
-    ReplicaNotUpToDate : EventIndex;
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 

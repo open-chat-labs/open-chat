@@ -59,6 +59,7 @@ const defaultGroupChat: GroupChatSummary = {
     gate: { kind: "no_gate" },
     level: "group",
     eventsTTL: undefined,
+    eventsTtlLastUpdated: BigInt(0),
     membership: {
         archived: false,
         mentions: [],
@@ -153,6 +154,7 @@ describe("merging metrics", () => {
 describe("updating poll votes", () => {
     const config: PollConfig = {
         allowMultipleVotesPerUser: true,
+        allowUserToChangeVote: true,
         text: "Who's the best",
         showVotesBeforeEndDate: true,
         endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),

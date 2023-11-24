@@ -1,4 +1,5 @@
 <script lang="ts">
+    import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
     import Tune from "svelte-material-icons/Tune.svelte";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
@@ -35,6 +36,7 @@
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
+    $: offlineStore = client.offlineStore;
 
     let filters = derived(
         [communityFiltersStore, client.moderationFlags],
@@ -165,10 +167,17 @@
                     <FancyLoader />
                 </div>
             {:else if searchResults.length === 0}
-                <div class="robot">
-                    <h4 class="header">No matching communities found</h4>
-                    <p class="sub-header">try refining your search</p>
-                </div>
+                {#if $offlineStore}
+                    <div class="no-match">
+                        <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
+                        <p class="sub-header">{$_("offlineError")}</p>
+                    </div>
+                {:else}
+                    <div class="no-match">
+                        <h4 class="header">{$_("communities.noMatch")}</h4>
+                        <p class="sub-header">{$_("communities.refineSearch")}</p>
+                    </div>
+                {/if}
             {:else}
                 {#each searchResults as community (community.id.communityId)}
                     <CommunityCardLink url={`/community/${community.id.communityId}`}>
@@ -306,7 +315,7 @@
         margin: auto;
     }
 
-    .robot {
+    .no-match {
         .header {
             @include font(bold, normal, fs-160, 38);
         }

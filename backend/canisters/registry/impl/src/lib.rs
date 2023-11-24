@@ -73,6 +73,7 @@ struct Data {
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
+    rng_seed: [u8; 32],
     test_mode: bool,
 }
 
@@ -92,6 +93,7 @@ impl Data {
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
             failed_sns_launches: HashSet::new(),
+            rng_seed: [0; 32],
             test_mode,
         }
     }

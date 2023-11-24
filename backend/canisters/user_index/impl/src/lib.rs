@@ -26,7 +26,6 @@ use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
 mod guards;
-mod initialize_modclub;
 mod jobs;
 mod lifecycle;
 mod memory;
@@ -203,7 +202,6 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
@@ -216,10 +214,10 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
-    #[serde(default)]
     pub reported_messages: ReportedMessages,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
+    #[serde(default)]
+    pub rng_seed: [u8; 32],
 }
 
 impl Data {
@@ -267,6 +265,7 @@ impl Data {
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         };
 
         // Register the ProposalsBot
@@ -318,6 +317,7 @@ impl Default for Data {
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            rng_seed: [0; 32],
         }
     }
 }

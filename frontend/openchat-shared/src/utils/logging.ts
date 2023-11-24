@@ -5,6 +5,7 @@ export type Logger = {
 };
 
 import Rollbar from "rollbar";
+import { offline } from "./network";
 
 let rollbar: Rollbar | undefined;
 
@@ -33,7 +34,9 @@ export function inititaliseLogger(apikey: string, version: string, env: string):
     return {
         error(message?: unknown, ...optionalParams: unknown[]): void {
             console.error(message as string, optionalParams);
-            rollbar?.error(message as string, optionalParams);
+            if (!offline()) {
+                rollbar?.error(message as string, optionalParams);
+            }
         },
         log(message?: unknown, ...optionalParams: unknown[]): void {
             console.log(message as string, optionalParams);

@@ -11,6 +11,7 @@ pub struct PollConfig {
     pub anonymous: bool,
     pub show_votes_before_end_date: bool,
     pub allow_multiple_votes_per_user: bool,
+    pub allow_user_to_change_vote: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

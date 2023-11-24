@@ -25,11 +25,9 @@ impl InvitedUsers {
     }
 
     pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<UserInvitation> {
-        let invitation = self.users.remove(user_id);
-        if invitation.is_some() {
-            self.last_updated = now;
-        }
-        invitation
+        let invitation = self.users.remove(user_id)?;
+        self.last_updated = now;
+        Some(invitation)
     }
 
     pub fn get(&self, user_id: &UserId) -> Option<&UserInvitation> {

@@ -3,11 +3,16 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessorId = Principal;
+export interface Account {
+  'owner' : Principal,
+  'subaccount' : [] | [Subaccount],
+}
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddHotGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
@@ -39,6 +44,36 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
+export interface ApproveArgs {
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+  'expected_allowance' : [] | [bigint],
+  'expires_at' : [] | [bigint],
+  'spender' : Account,
+}
+export type ApproveError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'Expired' : { 'ledger_time' : bigint } } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface ApproveTransferArgs {
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+  'expires_in' : [] | [Milliseconds],
+  'spender' : Account,
+}
+export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface ArchiveUnarchiveChatsArgs {
   'to_archive' : Array<Chat>,
   'to_unarchive' : Array<Chat>,
@@ -472,6 +507,12 @@ export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InternalError' : string };
+export interface DeleteDirectChatArgs {
+  'block_user' : boolean,
+  'user_id' : UserId,
+}
+export type DeleteDirectChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -549,6 +590,7 @@ export interface DirectChatsUpdates {
   'added' : Array<DirectChatSummary>,
   'pinned' : [] | [Array<ChatId>],
   'updated' : Array<DirectChatSummaryUpdates>,
+  'removed' : Array<ChatId>,
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
@@ -594,6 +636,7 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
+export type Duration = bigint;
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
@@ -623,15 +666,13 @@ export interface EventsByIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
-  { 'ChatNotFound' : null } |
+export type EventsResponse = { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
   'events' : Array<ChatEventWrapper>,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
   'expired_event_ranges' : Array<[EventIndex, EventIndex]>,
 }
@@ -685,6 +726,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -1169,16 +1211,12 @@ export interface MessagesByMessageIndexArgs {
   'thread_root_message_index' : [] | [MessageIndex],
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type MessagesByMessageIndexResponse = {
-    'ReplicaNotUpToDate' : EventIndex
-  } |
-  { 'ChatNotFound' : null } |
+export type MessagesByMessageIndexResponse = { 'ChatNotFound' : null } |
   { 'Success' : MessagesSuccessResult } |
   { 'ReplicaNotUpToDateV2' : TimestampMillis };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'chat_last_updated' : TimestampMillis,
-  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
 }
 export type MigrateUserPrincipalArgs = {};
@@ -1337,6 +1375,11 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PaymentGate {
+  'fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+}
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
@@ -1364,6 +1407,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1717,6 +1761,7 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
+export type Subaccount = Uint8Array | number[];
 export interface SubmitProposalArgs {
   'token' : Cryptocurrency,
   'transaction_fee' : bigint,
@@ -1741,6 +1786,18 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SwapTokensArgs {
+  'input_amount' : bigint,
+  'min_output_amount' : bigint,
+  'swap_id' : bigint,
+  'input_token' : TokenInfo,
+  'exchange_args' : {
+      'ICPSwap' : { 'zero_for_one' : boolean, 'swap_canister_id' : CanisterId }
+    },
+  'output_token' : TokenInfo,
+}
+export type SwapTokensResponse = { 'Success' : { 'amount_out' : bigint } } |
+  { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1774,6 +1831,7 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
+export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
@@ -1781,6 +1839,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'decimals' : number,
   'token' : Cryptocurrency,
   'chat' : Chat,
   'recipient' : UserId,
@@ -1801,11 +1860,67 @@ export type TipMessageResponse = { 'Retrying' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CannotTipSelf' : null };
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
+export interface TokenSwapStatusArgs { 'swap_id' : bigint }
+export type TokenSwapStatusResponse = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'started' : TimestampMillis,
+      'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+    }
+  };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface TransferArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Subaccount],
+  'created_at_time' : [] | [Timestamp],
+  'amount' : bigint,
+}
+export type TransferError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface TransferFromArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'spender_subaccount' : [] | [Uint8Array | number[]],
+  'from' : Account,
+  'memo' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+}
+export type TransferFromError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
@@ -1916,6 +2031,10 @@ export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
 }
+export type Value = { 'Int' : bigint } |
+  { 'Nat' : bigint } |
+  { 'Blob' : Uint8Array | number[] } |
+  { 'Text' : string };
 export interface VerifiedCredentialGate {
   'credential' : string,
   'issuer' : string,
@@ -1947,6 +2066,10 @@ export interface _SERVICE {
     AddHotGroupExclusionsResponse
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
+  'approve_transfer' : ActorMethod<
+    [ApproveTransferArgs],
+    ApproveTransferResponse
+  >,
   'archive_unarchive_chats' : ActorMethod<
     [ArchiveUnarchiveChatsArgs],
     ArchiveUnarchiveChatsResponse
@@ -1966,6 +2089,10 @@ export interface _SERVICE {
   'delete_community' : ActorMethod<
     [DeleteCommunityArgs],
     DeleteCommunityResponse
+  >,
+  'delete_direct_chat' : ActorMethod<
+    [DeleteDirectChatArgs],
+    DeleteDirectChatResponse
   >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
@@ -2036,7 +2163,12 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
+  'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
+  'token_swap_status' : ActorMethod<
+    [TokenSwapStatusArgs],
+    TokenSwapStatusResponse
+  >,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

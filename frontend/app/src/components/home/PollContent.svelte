@@ -24,13 +24,16 @@
 
     $: numberOfVotes = totalVotes(content);
 
+    $: cannotVote =
+        content.ended || readonly || (haveIVoted && !content.config.allowUserToChangeVote);
+
     $: showVotes =
         content.ended ||
         ((haveIVoted || senderId === myUserId) &&
             (content.config.showVotesBeforeEndDate || content.config.endDate === undefined));
 
     function vote(idx: number) {
-        if (content.ended || readonly) return;
+        if (cannotVote) return;
 
         dispatch("registerVote", {
             type: votedFor(idx) ? "delete" : "register",

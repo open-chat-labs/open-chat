@@ -6,6 +6,7 @@
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat } from "openchat-client";
     import InitiateCredentialCheck from "../InitiateCredentialCheck.svelte";
+    import ApproveJoiningPaymentModal from "../ApproveJoiningPaymentModal.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -17,6 +18,7 @@
     let joiningCommunity = false;
     let gateCheckFailed = false;
     let checkingCredential = false;
+    let showPaymentModal = false;
 
     function credentialReceived(ev: CustomEvent<string>) {
         doJoinCommunity(ev.detail);
@@ -35,8 +37,11 @@
             if ($selectedCommunity.gate.kind === "credential_gate" && credential === undefined) {
                 checkingCredential = true;
                 return Promise.resolve();
+            } else if ($selectedCommunity.gate.kind === "payment_gate") {
+                showPaymentModal = true;
+                return Promise.resolve();
             }
-            checkingCredential = false;
+            closeModals();
             joiningCommunity = true;
             return client
                 .joinCommunity($selectedCommunity)
@@ -51,14 +56,27 @@
         }
         return Promise.resolve();
     }
+
+    function closeModals() {
+        showPaymentModal = false;
+        checkingCredential = false;
+    }
 </script>
 
 {#if checkingCredential && $selectedCommunity?.gate?.kind === "credential_gate"}
     <Overlay dismissible on:close={() => (checkingCredential = false)}>
         <InitiateCredentialCheck
             level="community"
-            on:close={() => (checkingCredential = false)}
+            on:close={closeModals}
             on:credentialReceived={credentialReceived}
+            gate={$selectedCommunity.gate} />
+    </Overlay>
+{:else if showPaymentModal && $selectedCommunity?.gate?.kind === "payment_gate"}
+    <Overlay dismissible on:close={() => (checkingCredential = false)}>
+        <ApproveJoiningPaymentModal
+            on:close={closeModals}
+            on:joined={closeModals}
+            group={$selectedCommunity}
             gate={$selectedCommunity.gate} />
     </Overlay>
 {/if}

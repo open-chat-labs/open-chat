@@ -15,6 +15,7 @@ generate_update_call!(cancel_message_reminder);
 generate_update_call!(create_community);
 generate_update_call!(create_group);
 generate_update_call!(delete_community);
+generate_update_call!(delete_direct_chat);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
@@ -262,7 +263,6 @@ pub mod happy_path {
         ledger: CanisterId,
         token: Cryptocurrency,
         amount: u128,
-        fee: u128,
     ) {
         let response = super::tip_message(
             env,
@@ -274,9 +274,10 @@ pub mod happy_path {
                 thread_root_message_index: None,
                 message_id,
                 ledger,
-                token,
                 amount,
-                fee,
+                fee: token.fee().unwrap(),
+                decimals: token.decimals().unwrap(),
+                token,
             },
         );
 

@@ -45,6 +45,7 @@
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
     $: communityExplorer = $pathParams.kind === "communities_route";
     $: anonUser = client.anonUser;
+    $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -199,17 +200,17 @@
         {#each communityItems as community (community._id)}
             <div animate:flip={{ duration: flipDurationMs }}>
                 <LeftNavItem
-                    selected={community === $selectedCommunity &&
+                    selected={community.id.communityId === selectedCommunityId &&
                         $chatListScope.kind !== "favourite" &&
                         !communityExplorer}
                     unread={client.mergeCombinedUnreadCounts(
                         $unreadCommunityChannelCounts.get(community.id) ??
-                            emptyCombinedUnreadCounts()
+                            emptyCombinedUnreadCounts(),
                     )}
                     label={community.name}
                     on:click={() => selectCommunity(community)}>
                     <Avatar
-                        selected={community === $selectedCommunity &&
+                        selected={community.id.communityId === selectedCommunityId &&
                             $chatListScope.kind !== "favourite" &&
                             !communityExplorer}
                         url={client.communityAvatarUrl(community.id.communityId, community.avatar)}
@@ -295,7 +296,7 @@
         width: $size;
         height: $size;
         border: 1px solid transparent;
-        border-radius: 50%;
+        border-radius: var(--nav-icon-rd);
         background: var(--icon-hv);
         display: flex;
         align-items: center;

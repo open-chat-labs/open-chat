@@ -1,58 +1,63 @@
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ManageFavouritesResponse,
-    type CommunityIdentifier,
-    type LeaveCommunityResponse,
-    type DeleteCommunityResponse,
-    type ChannelIdentifier,
-    type Rules,
-    type TipMessageResponse,
-    type NamedAccount,
-    type SaveCryptoAccountResponse,
-    type CandidateProposal,
-    type SubmitProposalResponse,
-    type MessageContext,
-    type PendingCryptocurrencyTransfer,
-    AnonymousOperationError,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    DirectChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    MigrateUserPrincipalResponse,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    CommunitySummary,
+    CreateCommunityResponse,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ManageFavouritesResponse,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
+    ChannelIdentifier,
+    Rules,
+    TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
+    MessageContext,
+    PendingCryptocurrencyTransfer,
+    CryptocurrencyDetails,
+    ExchangeTokenSwapArgs,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+	ApproveTransferResponse,
 } from "openchat-shared";
+import { AnonymousOperationError } from "openchat-shared";
 
 export class AnonUserClient {
     static create(): AnonUserClient {
@@ -366,9 +371,33 @@ export class AnonUserClient {
 
     reportMessage(
         _chatId: DirectChatIdentifier,
-        _messageId: bigint, 
-        _deleteMessage: boolean
+        _messageId: bigint,
+        _deleteMessage: boolean,
     ): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    swapTokens(
+        _swapId: bigint,
+        _inputToken: CryptocurrencyDetails,
+        _outputToken: CryptocurrencyDetails,
+        _amountIn: bigint,
+        _minAmountOut: bigint,
+        _exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<SwapTokensResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    tokenSwapStatus(_swapId: bigint): Promise<TokenSwapStatusResponse> {
+        throw new AnonymousOperationError();
+    }
+
+	approveTransfer(
+        _spender: string, 
+        _ledger: string, 
+        _amount: bigint, 
+        _expiresIn: bigint | undefined
+    ): Promise<ApproveTransferResponse> {
         throw new AnonymousOperationError();
     }
 }

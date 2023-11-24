@@ -1,6 +1,5 @@
 <script lang="ts">
     import {
-        E8S_PER_TOKEN,
         type AccountTransactions,
         type OpenChat,
         type NamedAccount,
@@ -32,6 +31,8 @@
     let transationData: RemoteData = { kind: "loading" };
     let accounts: NamedAccount[] = [];
     $: accountLookup = toRecord(accounts, (a) => a.account);
+    $: cryptoLookup = client.cryptoLookup;
+    $: tokenDetails = $cryptoLookup[ledger];
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: moreAvailable = moreTransactionsAvailable(transationData);
     $: loading = transationData.kind === "loading" || transationData.kind === "loading_more";
@@ -136,10 +137,6 @@
             console.warn("Could not find ledger index for ledger", ledger, $nervousSystemLookup);
         }
     }
-
-    function fromE8s(e8s: bigint): number {
-        return Number(e8s) / E8S_PER_TOKEN;
-    }
 </script>
 
 <Overlay dismissible on:close={() => dispatch("close")}>
@@ -173,7 +170,7 @@
                             {#each transationData.data.transactions as transaction (transaction.id)}
                                 <tr on:click={() => openDashboard(transaction.id)}>
                                     <td>{transaction.id}</td>
-                                    <td>{fromE8s(transaction.amount)}</td>
+                                    <td>{client.formatTokens(transaction.amount, 0, tokenDetails.decimals)}</td>
                                     <td class="truncate">{translateMemo(transaction)}</td>
                                     <td>{client.toDatetimeString(transaction.timestamp)}</td>
                                     <td class="truncate">

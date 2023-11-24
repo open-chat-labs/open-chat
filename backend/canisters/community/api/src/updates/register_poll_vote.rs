@@ -19,6 +19,7 @@ pub enum Response {
     UserSuspended,
     ChannelNotFound,
     UserNotInChannel,
+    UserCannotChangeVote,
     PollNotFound,
     PollEnded,
     OptionIndexOutOfRange,

@@ -1,4 +1,4 @@
-use types::icrc1::{Account, TransferArg};
+use icrc_ledger_types::icrc1::{account::Account, transfer::TransferArg};
 use types::{
     icrc1::{CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction},
     CanisterId,
@@ -19,7 +19,7 @@ pub async fn process_transaction(
         amount: transaction.amount.into(),
     };
 
-    match icrc1_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
+    match icrc_ledger_canister_c2c_client::icrc1_transfer(transaction.ledger, &args).await {
         Ok(Ok(block_index)) => Ok(CompletedCryptoTransaction {
             ledger: transaction.ledger,
             token: transaction.token.clone(),

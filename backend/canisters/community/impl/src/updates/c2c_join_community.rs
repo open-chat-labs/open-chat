@@ -4,12 +4,11 @@ use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
 use crate::updates::c2c_join_channel::join_channel_auto;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
-use types::{AccessGate, CanisterId, ChannelId, MemberJoined, UsersUnblocked};
+use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
+use types::{AccessGate, ChannelId, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -20,14 +19,12 @@ async fn c2c_join_community(args: Args) -> Response {
 }
 
 pub(crate) async fn join_community(args: Args) -> Response {
-    match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, state)) {
-        Ok(Some((gate, user_index_canister_id))) => {
-            match check_if_passes_gate(&gate, args.user_id, user_index_canister_id).await {
-                CheckIfPassesGateResult::Success => {}
-                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
-                CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
-            }
-        }
+    match read_state(|state| is_permitted_to_join(&args, state)) {
+        Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
+            CheckIfPassesGateResult::Success => {}
+            CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
+            CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
+        },
         Ok(None) => {}
         Err(response) => return response,
     };
@@ -49,28 +46,30 @@ pub(crate) async fn join_community(args: Args) -> Response {
     }
 }
 
-fn is_permitted_to_join(
-    invite_code: Option<u64>,
-    user_principal: Principal,
-    state: &RuntimeState,
-) -> Result<Option<(AccessGate, CanisterId)>, Response> {
+fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<CheckGateArgs>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks
     if caller == state.data.user_index_canister_id {
         Ok(None)
+    } else if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+        Err(AlreadyInCommunity(Box::new(state.summary(Some(member)))))
+    } else if state.data.members.is_blocked(&args.user_id) {
+        Err(UserBlocked)
     } else if state.data.is_frozen() {
         Err(CommunityFrozen)
-    } else if !state.data.is_accessible(user_principal, invite_code) {
+    } else if !state.data.is_accessible(args.principal, args.invite_code) {
         Err(NotInvited)
     } else if let Some(limit) = state.data.members.user_limit_reached() {
         Err(MemberLimitReached(limit))
     } else {
-        Ok(state
-            .data
-            .gate
-            .as_ref()
-            .map(|g| (g.clone(), state.data.user_index_canister_id)))
+        Ok(state.data.gate.as_ref().map(|g| CheckGateArgs {
+            gate: g.clone(),
+            user_index_canister: state.data.user_index_canister_id,
+            user_id: args.user_id,
+            this_canister: state.env.canister_id(),
+            now_nanos: state.env.now_nanos(),
+        }))
     }
 }
 
@@ -103,6 +102,11 @@ pub(crate) fn join_community_impl(args: &Args, state: &mut RuntimeState) -> Resu
                 })),
                 now,
             );
+
+            // If there is a payment gate on this community then queue payments to owner(s) and treasury
+            if let Some(AccessGate::Payment(gate)) = state.data.gate.value.as_ref() {
+                state.queue_access_gate_payments(gate.clone());
+            }
 
             handle_activity_notification(state);
 

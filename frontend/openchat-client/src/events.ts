@@ -92,3 +92,11 @@ export class ThreadClosed extends Event {
         super("openchat_event");
     }
 }
+
+export class UserLoggedIn extends CustomEvent<string> {
+    constructor(userId: string) {
+        super("openchat_event", {
+            detail: userId,
+        });
+    }
+}

@@ -529,6 +529,7 @@ function pollContent(candid: ApiPollContent): PollContent {
 function pollConfig(candid: ApiPollConfig): PollConfig {
     return {
         allowMultipleVotesPerUser: candid.allow_multiple_votes_per_user,
+        allowUserToChangeVote: candid.allow_user_to_change_vote,
         text: optional(candid.text, identity),
         showVotesBeforeEndDate: candid.show_votes_before_end_date,
         endDate: optional(candid.end_date, identity),
@@ -1186,6 +1187,7 @@ function apiPollContent(domain: PollContent): ApiPollContent {
 function apiPollConfig(domain: PollConfig): ApiPollConfig {
     return {
         allow_multiple_votes_per_user: domain.allowMultipleVotesPerUser,
+        allow_user_to_change_vote: domain.allowUserToChangeVote,
         text: apiOptional(identity, domain.text),
         show_votes_before_end_date: domain.showVotesBeforeEndDate,
         end_date: apiOptional(identity, domain.endDate),
@@ -1263,7 +1265,6 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
 export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
-    if (domain.kind === "nns_gate") return []; // TODO
     if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
     if (domain.kind === "credential_gate")
         return [
@@ -1274,7 +1275,7 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
                 },
             },
         ];
-    if (domain.kind === "sns_gate") {
+    if (domain.kind === "neuron_gate") {
         return [
             {
                 SnsNeuron: {
@@ -1284,6 +1285,17 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
                 },
             },
         ];
+    }
+    if (domain.kind === "payment_gate") {
+        return [
+            {
+                Payment: {
+                    ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                    amount: domain.amount,
+                    fee: domain.fee,
+                }               
+            }
+        ];    
     }
     return [];
 }
@@ -1297,12 +1309,21 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
                 credential: domain.credentialId,
             },
         };
-    if (domain.kind === "sns_gate") {
+    if (domain.kind === "neuron_gate") {
         return {
             SnsNeuron: {
                 governance_canister_id: Principal.fromText(domain.governanceCanister),
                 min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
                 min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
+            },
+        };
+    }
+    if (domain.kind === "payment_gate") {
+        return {
+            Payment: {
+                ledger_canister_id: Principal.fromText(domain.ledgerCanister),
+                amount: domain.amount,
+                fee: domain.fee,
             },
         };
     }
@@ -1312,7 +1333,7 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
         return {
-            kind: "sns_gate",
+            kind: "neuron_gate",
             minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
             minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
             governanceCanister: candid.SnsNeuron.governance_canister_id.toString(),
@@ -1329,6 +1350,14 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             issuerOrigin: candid.VerifiedCredential.issuer,
             credentialId: candid.VerifiedCredential.credential,
         };
+    }
+    if ("Payment" in candid) {
+        return {
+            kind: "payment_gate",
+            ledgerCanister: candid.Payment.ledger_canister_id.toString(),
+            amount: candid.Payment.amount,
+            fee: candid.Payment.fee,
+        }
     }
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
@@ -1504,6 +1533,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: candid.joined,
             role: memberRole(candid.role),
@@ -1606,6 +1636,7 @@ export function communityChannelSummary(
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "channel",
         eventsTTL: optional(candid.events_ttl, identity),
+        eventsTtlLastUpdated: candid.events_ttl_last_updated,
         membership: {
             joined: optional(candid.membership, (m) => m.joined) ?? BigInt(0),
             notificationsMuted: optional(candid.membership, (m) => m.notifications_muted) ?? false,
@@ -1643,6 +1674,10 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     }
     if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
         return "min_stake_not_met";
+    }
+    if ("PaymentFailed" in candid) {
+        console.warn("PaymentFailed: ", candid);
+        return "payment_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

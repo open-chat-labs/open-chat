@@ -361,6 +361,7 @@ impl ChatEvents {
                     }
                     RegisterVoteResult::PollEnded => RegisterPollVoteResult::PollEnded,
                     RegisterVoteResult::OptionIndexOutOfRange => RegisterPollVoteResult::OptionIndexOutOfRange,
+                    RegisterVoteResult::UserCannotChangeVote => RegisterPollVoteResult::UserCannotChangeVote,
                 };
             }
         }
@@ -1403,6 +1404,7 @@ pub enum RegisterPollVoteResult {
     PollEnded,
     PollNotFound,
     OptionIndexOutOfRange,
+    UserCannotChangeVote,
 }
 
 pub enum EndPollResult {

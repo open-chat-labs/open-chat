@@ -30,6 +30,7 @@
         ChannelIdentifier,
         UpdatedRules,
         CredentialGate,
+        PaymentGate,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -89,6 +90,8 @@
     import Register from "../register/Register.svelte";
     import LoggingInModal from "./LoggingInModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
+    import OfflineFooter from "../OfflineFooter.svelte";
+    import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -145,6 +148,7 @@
         Wallet,
         GateCheckFailed,
         VerifyCredential,
+        ApproveJoinPayment,
         HallOfFame,
         EditCommunity,
         MakeProposal,
@@ -157,6 +161,9 @@
     let joining: MultiUserChat | undefined = undefined;
     let credentialCheck:
         | { group: MultiUserChat; gate: CredentialGate; select: boolean }
+        | undefined = undefined;
+    let joinPaymentDetails:
+        | { group: MultiUserChat; gate: PaymentGate; select: boolean }
         | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
@@ -189,6 +196,7 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
+    $: offlineStore = client.offlineStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -516,6 +524,7 @@
         candidateCommunity = undefined;
         joining = undefined;
         credentialCheck = undefined;
+        joinPaymentDetails = undefined;
     }
 
     function closeNoAccess() {
@@ -772,6 +781,13 @@
         }
     }
 
+    function onJoined() {
+        if (joinPaymentDetails?.select) {
+            page(routeForChatIdentifier($chatListScope.kind, joinPaymentDetails.group.id));
+        }
+        closeModal();
+    }
+
     async function doJoinGroup(
         group: MultiUserChat,
         select: boolean,
@@ -782,14 +798,23 @@
             credentialCheck = { group, select, gate: group.gate };
             modal = ModalType.VerifyCredential;
             return Promise.resolve();
+        } else if (group.gate.kind === "payment_gate") {
+            joinPaymentDetails = { group, select, gate: group.gate };
+            modal = ModalType.ApproveJoinPayment;
+            return Promise.resolve();
         } else if (group.kind === "channel") {
             const community = client.getCommunityForChannel(group.id);
             if (community?.gate.kind === "credential_gate" && credential === undefined) {
                 credentialCheck = { group, select, gate: community.gate };
                 modal = ModalType.VerifyCredential;
                 return Promise.resolve();
+            } else if (community?.gate.kind === "payment_gate") {
+                joinPaymentDetails = { group, select, gate: community.gate };
+                modal = ModalType.ApproveJoinPayment;
+                return Promise.resolve();
             }
         }
+
         return client
             .joinGroup(group, credential)
             .then((resp) => {
@@ -1037,7 +1062,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main class:anon={$anonUser}>
+<main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1111,6 +1136,10 @@
     <AnonFooter />
 {/if}
 
+{#if $offlineStore}
+    <OfflineFooter />
+{/if}
+
 {#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
@@ -1168,6 +1197,12 @@
                 on:close={closeModal}
                 on:credentialReceived={credentialReceived}
                 gate={credentialCheck.gate} />
+        {:else if modal === ModalType.ApproveJoinPayment && joinPaymentDetails !== undefined}
+            <ApproveJoiningPaymentModal
+                on:close={closeModal}
+                on:joined={onJoined}
+                group={joinPaymentDetails.group}
+                gate={joinPaymentDetails.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
@@ -1223,6 +1258,9 @@
 
         &.anon {
             margin-bottom: toRem(50);
+        }
+        &.offline {
+            margin-bottom: toRem(40);
         }
     }
 

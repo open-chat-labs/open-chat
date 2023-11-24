@@ -1,4 +1,3 @@
-import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
 import {
     openDB,
     type DBSchema,
@@ -29,16 +28,19 @@ import type {
     CommunityDetails,
     CommunitySummary,
     DataContent,
+    CreatedUser,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
     chatIdentifierToString,
     ChatMap,
     MessageContextMap,
+    MAX_EVENTS,
+    MAX_MESSAGES,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 88;
+const CACHE_VERSION = 91;
 const MAX_INDEX = 9999999999;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
@@ -101,6 +103,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: bigint;
     };
+
+    currentUser: {
+        key: string;
+        value: CreatedUser;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -156,6 +163,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("cachePrimer")) {
                 db.deleteObjectStore("cachePrimer");
             }
+            if (db.objectStoreNames.contains("currentUser")) {
+                db.deleteObjectStore("currentUser");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             chatEvents.createIndex("expiresAt", "expiresAt");
@@ -167,6 +177,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("failed_chat_messages");
             db.createObjectStore("failed_thread_messages");
             db.createObjectStore("cachePrimer");
+            db.createObjectStore("currentUser");
         },
     });
 }
@@ -277,7 +288,8 @@ export async function getCachedEventsWindowByMessageIndex<T extends ChatEvent>(
     maxMessages = MAX_MESSAGES,
     maxMissing = 50,
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
-    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    const eventIndex = await getNearestCachedEventIndexForMessageIndex(db, context, messageIndex);
+
     if (eventIndex === undefined) {
         return [
             {
@@ -414,7 +426,34 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
     ];
 }
 
-export async function getCachedEventIndexByMessageIndex(
+// If we don't find the precise index we are looking for, look for the previous index
+// This optimises the case where we looking for the next unread message. We won't have that
+// but we probably *will* have the message before.
+export async function getNearestCachedEventIndexForMessageIndex(
+    db: Database,
+    context: MessageContext,
+    messageIndex: number,
+    iterations = 0,
+): Promise<number | undefined> {
+    const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
+    if (eventIndex === undefined && iterations === 0) {
+        console.debug(
+            "EV: we didn't find the event index for ",
+            messageIndex,
+            " recursing to look for event index for ",
+            messageIndex - 1,
+        );
+        return getNearestCachedEventIndexForMessageIndex(
+            db,
+            context,
+            messageIndex - 1,
+            iterations + 1,
+        );
+    }
+    return eventIndex;
+}
+
+async function getCachedEventIndexByMessageIndex(
     db: Database,
     context: MessageContext,
     messageIndex: number,
@@ -1078,4 +1117,14 @@ async function runExpiredEventSweeper() {
     if (expiredKeys.length === batchSize) {
         tryStartExpiredEventSweeper();
     }
+}
+
+export async function getCachedCurrentUser(principal: string): Promise<CreatedUser | undefined> {
+    if (db === undefined) return;
+    return (await db).get("currentUser", principal);
+}
+
+export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
+    if (db === undefined) return;
+    (await db).put("currentUser", user, principal);
 }
