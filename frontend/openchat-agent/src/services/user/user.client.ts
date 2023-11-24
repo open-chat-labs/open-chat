@@ -825,6 +825,7 @@ export class UserClient extends CandidService {
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
@@ -839,6 +840,7 @@ export class UserClient extends CandidService {
                     identity,
                     messageContext.threadRootMessageIndex,
                 ),
+                decimals,
             }),
             tipMessageResponse,
         );

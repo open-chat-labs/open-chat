@@ -4975,12 +4975,13 @@ export class OpenChat extends OpenChatAgentWorker {
         currentTip: bigint,
     ): Promise<TipMessageResponse> {
         const chat = this._liveState.chatSummaries.get(messageContext.chatId);
-        const userId = this._liveState.user.userId;
-        const totalTip = transfer.amountE8s + currentTip;
-
         if (chat === undefined) {
             return Promise.resolve({ kind: "failure" });
         }
+
+        const userId = this._liveState.user.userId;
+        const totalTip = transfer.amountE8s + currentTip;
+        const decimals = get(cryptoLookup)[transfer.ledger].decimals;
 
         localMessageUpdates.markTip(messageId, transfer.ledger, userId, totalTip);
 
@@ -4993,6 +4994,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageContext,
             messageId,
             transfer,
+            decimals,
         })
             .then((resp) => {
                 if (resp.kind !== "success") {

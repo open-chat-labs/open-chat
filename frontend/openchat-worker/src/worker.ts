@@ -1327,6 +1327,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageContext,
                         payload.messageId,
                         payload.transfer,
+                        payload.decimals,
                     ),
                 );
                 break;

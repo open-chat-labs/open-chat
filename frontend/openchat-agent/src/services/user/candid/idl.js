@@ -1400,6 +1400,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TipMessageArgs = IDL.Record({
     'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
     'token' : Cryptocurrency,
     'chat' : Chat,
     'recipient' : UserId,
