@@ -559,7 +559,7 @@
         "amount": "Amount (tokens)",
         "amountN": "Amount {n} tokens",
         "nftHolder": "NFT holder (coming soon)",
-        "openAccess": "Open access",
+        "openAccess": "None (open access)",
         "minDissolveDelay": "Min dissolve delay (days)",
         "minStake": "Min stake (tokens)",
         "minDissolveDelayN": "Min dissolve delay {n} days",

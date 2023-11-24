@@ -932,7 +932,6 @@
         "diamondMember": "钻石会员",
         "diamondGateInfo": "只有拥有钻石会员资格的用户才能加入",
         "nftHolder": "NFT持有者（即将推出）",
-        "openAccess": "开放获取",
         "minDissolveDelay": "最小溶解延迟（天）",
         "minStake": "最小股份（代币）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
@@ -965,7 +964,8 @@
         "amountN": "{n} 代币数量",
         "paymentFailed": "支付失败",
         "tokenComingSoon": "{token}（即将推出）",
-        "payAndJoin": "付款并加入"
+        "payAndJoin": "付款并加入",
+        "openAccess": "无（开放获取）"
     },
     "communities": {
         "explore": "探索社区",

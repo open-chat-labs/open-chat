@@ -930,7 +930,6 @@
         "diamondMember": "חברות יהלום",
         "diamondGateInfo": "רק משתמשים עם חברות Diamond יורשו להצטרף",
         "nftHolder": "מחזיק NFT (בקרוב)",
-        "openAccess": "גישה חופשית",
         "minDissolveDelay": "עיכוב פירוק מינימלי (ימים)",
         "minStake": "הימור מינימלי (אסימונים)",
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
@@ -963,7 +962,8 @@
         "amountN": "כמות {n} אסימונים",
         "paymentFailed": "התשלום נכשל",
         "tokenComingSoon": "{token} (בקרוב)",
-        "payAndJoin": "שלם והצטרף"
+        "payAndJoin": "שלם והצטרף",
+        "openAccess": "אין (גישה פתוחה)"
     },
     "communities": {
         "explore": "חקור קהילות",

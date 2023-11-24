@@ -933,7 +933,6 @@
         "diamondMember": "ダイヤモンド会員",
         "diamondGateInfo": "ダイヤモンドメンバーシップを持つユーザーのみが参加できます",
         "nftHolder": "NFTホルダー（近日公開予定）",
-        "openAccess": "オープンアクセス",
         "minDissolveDelay": "最小ディゾルブ遅延 (日)",
         "minStake": "最小ステーク (トークン)",
         "minDissolveDelayN": "最小ディゾルブ遅延 {n} 日",
@@ -966,7 +965,8 @@
         "amountN": "量 {n} トークン",
         "paymentFailed": "支払いに失敗しました",
         "tokenComingSoon": "{token} (近日公開予定)",
-        "payAndJoin": "お金を払って参加する"
+        "payAndJoin": "お金を払って参加する",
+        "openAccess": "なし（オープンアクセス）"
     },
     "communities": {
         "explore": "コミュニティを探索する",

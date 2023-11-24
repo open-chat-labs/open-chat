@@ -933,7 +933,6 @@
         "diamondMember": "thành viên kim cương",
         "diamondGateInfo": "Chỉ những người dùng có tư cách thành viên Kim cương mới được phép tham gia",
         "nftHolder": "Giá đỡ NFT (sắp ra mắt)",
-        "openAccess": "truy cập mở",
         "minDissolveDelay": "Độ trễ hòa tan tối thiểu (ngày)",
         "minStake": "Cổ phần tối thiểu (token)",
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
@@ -966,7 +965,8 @@
         "amountN": "Số lượng mã thông báo {n}",
         "paymentFailed": "Thanh toán không thành công",
         "tokenComingSoon": "{token} (sắp ra mắt)",
-        "payAndJoin": "Thanh toán và tham gia"
+        "payAndJoin": "Thanh toán và tham gia",
+        "openAccess": "Không có (truy cập mở)"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",

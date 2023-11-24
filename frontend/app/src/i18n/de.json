@@ -934,7 +934,6 @@
         "diamondMember": "Diamond-Mitgliedschaft",
         "diamondGateInfo": "Nur Benutzer mit Diamond-Mitgliedschaft können beitreten",
         "nftHolder": "NFT-Inhaber (in Kürze verfügbar)",
-        "openAccess": "Offener Zugang",
         "minDissolveDelay": "Min. Auflösungsverzögerung (Tage)",
         "minStake": "Mindesteinsatz (Token)",
         "minDissolveDelayN": "Min. Auflösungsverzögerung {n} Tage",
@@ -967,7 +966,8 @@
         "amountN": "Anzahl {n} Token",
         "paymentFailed": "Bezahlung fehlgeschlagen",
         "tokenComingSoon": "{token} (bald verfügbar)",
-        "payAndJoin": "Bezahlen und mitmachen"
+        "payAndJoin": "Bezahlen und mitmachen",
+        "openAccess": "Keine (Open Access)"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
