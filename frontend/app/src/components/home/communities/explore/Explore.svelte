@@ -36,7 +36,7 @@
     $: more = total > searchResults.length;
     $: isDiamond = client.isDiamond;
     $: loading = searching && searchResults.length === 0;
-    $: networkStatus = client.networkStatus;
+    $: offlineStore = client.offlineStore;
 
     let filters = derived(
         [communityFiltersStore, client.moderationFlags],
@@ -167,7 +167,7 @@
                     <FancyLoader />
                 </div>
             {:else if searchResults.length === 0}
-                {#if $networkStatus === "offline"}
+                {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
                         <p class="sub-header">{$_("offlineError")}</p>
