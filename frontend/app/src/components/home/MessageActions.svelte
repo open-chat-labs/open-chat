@@ -90,7 +90,7 @@
 
     function buildListOfActions(
         permissions: Map<MessagePermission, boolean>,
-        messageAction: MessageAction
+        messageAction: MessageAction,
     ): Map<string, number> {
         const actions = new Map<string, number>();
         if (permissions.get("text") || messageAction === "file") {
@@ -119,13 +119,13 @@
 
     function cssVars(key: string): string {
         return `--top: ${top(supportedActions.get(key))}px; --transition-delay: ${delay(
-            supportedActions.get(key)
+            supportedActions.get(key),
         )}ms`;
     }
 
     function top(i: number | undefined): number {
         if (i === undefined) return 0;
-        return -75 - i * 45;
+        return -55 - i * 45;
     }
 
     function delay(i: number | undefined): number {
@@ -284,7 +284,9 @@
                 left: toRem(-44);
                 opacity: 0;
                 position: absolute;
-                transition: top 200ms ease-in, opacity 200ms ease-in;
+                transition:
+                    top 200ms ease-in,
+                    opacity 200ms ease-in;
                 @include z-index("action-list");
             }
 

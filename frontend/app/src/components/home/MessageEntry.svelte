@@ -94,7 +94,7 @@
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(editingEvent.event.content.text)
+                        formatUserMentions(editingEvent.event.content.text),
                     );
                     selectedRange = undefined;
                     restoreSelection();
@@ -144,10 +144,10 @@
     $: placeholder = !canEnterText
         ? $_("sendTextDisabled")
         : attachment !== undefined
-        ? $_("enterCaption")
-        : dragging
-        ? $_("dropFile")
-        : $_("enterMessage");
+          ? $_("enterCaption")
+          : dragging
+            ? $_("dropFile")
+            : $_("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -171,7 +171,7 @@
 
     function uptoCaret(
         inputContent: string | null,
-        fn: (slice: string, pos: number) => void
+        fn: (slice: string, pos: number) => void,
     ): void {
         if (inputContent === null) return;
 
@@ -228,7 +228,7 @@
 
             typingTimer = window.setTimeout(
                 () => dispatch("stopTyping"),
-                MARK_TYPING_STOPPED_INTERVAL_MS
+                MARK_TYPING_STOPPED_INTERVAL_MS,
             );
         });
     }
@@ -363,7 +363,7 @@
             if (tokenMatch && tokenMatch[2] !== undefined) {
                 const token = tokenMatch[1];
                 const tokenDetails = Object.values($cryptoLookup).find(
-                    (t) => t.symbol.toLowerCase() === token
+                    (t) => t.symbol.toLowerCase() === token,
                 );
                 if (tokenDetails !== undefined) {
                     dispatch("tokenTransfer", {
@@ -453,7 +453,7 @@
 
         const replaced = `${inp.textContent?.slice(
             0,
-            rangeToReplace[0]
+            rangeToReplace[0],
         )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
         inp.textContent = replaced;
 
@@ -552,51 +552,54 @@
                 {placeholder}
             </div>
         {/if}
-        {#if editingEvent === undefined}
-            {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                <div class="record">
-                    <AudioAttacher
-                        mimeType={audioMimeType}
-                        bind:percentRecorded
-                        bind:recording
-                        bind:supported={audioSupported}
-                        on:audioCaptured />
-                </div>
-            {:else if canEnterText}
+
+        <div class="icons">
+            {#if editingEvent === undefined}
+                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                    <div class="record">
+                        <AudioAttacher
+                            mimeType={audioMimeType}
+                            bind:percentRecorded
+                            bind:recording
+                            bind:supported={audioSupported}
+                            on:audioCaptured />
+                    </div>
+                {:else if canEnterText}
+                    <div class="send" on:click={sendMessage}>
+                        <HoverIcon title={$_("sendMessage")}>
+                            <Send size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </div>
+                {/if}
+                <!-- we might need this if we are editing too -->
+                <MessageActions
+                    bind:this={messageActions}
+                    bind:messageAction
+                    {permittedMessages}
+                    {attachment}
+                    {mode}
+                    editing={editingEvent !== undefined}
+                    on:tokenTransfer
+                    on:createPrizeMessage
+                    on:attachGif
+                    on:makeMeme
+                    on:createPoll
+                    on:upgrade
+                    on:clearAttachment
+                    on:fileSelected />
+            {:else}
                 <div class="send" on:click={sendMessage}>
-                    <HoverIcon title={$_("sendMessage")}>
-                        <Send size={$iconSize} color={"var(--icon-txt)"} />
+                    <HoverIcon>
+                        <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div class="send" on:click={cancelEdit}>
+                    <HoverIcon>
+                        <Close size={$iconSize} color={"var(--button-txt)"} />
                     </HoverIcon>
                 </div>
             {/if}
-            <!-- we might need this if we are editing too -->
-            <MessageActions
-                bind:this={messageActions}
-                bind:messageAction
-                {permittedMessages}
-                {attachment}
-                {mode}
-                editing={editingEvent !== undefined}
-                on:tokenTransfer
-                on:createPrizeMessage
-                on:attachGif
-                on:makeMeme
-                on:createPoll
-                on:upgrade
-                on:clearAttachment
-                on:fileSelected />
-        {:else}
-            <div class="send" on:click={sendMessage}>
-                <HoverIcon>
-                    <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
-                </HoverIcon>
-            </div>
-            <div class="send" on:click={cancelEdit}>
-                <HoverIcon>
-                    <Close size={$iconSize} color={"var(--button-txt)"} />
-                </HoverIcon>
-            </div>
-        {/if}
+        </div>
     {/if}
 </div>
 
@@ -614,6 +617,11 @@
         &.editing {
             background-color: var(--button-bg);
         }
+
+        .icons {
+            display: flex;
+            align-self: flex-end;
+        }
     }
     .send {
         flex: 0 0 15px;
@@ -626,7 +634,7 @@
         border-radius: var(--entry-input-rd);
         outline: none;
         border: 0;
-        max-height: 100px;
+        max-height: calc(var(--vh, 1vh) * 50);
         min-height: toRem(30);
         overflow-x: hidden;
         overflow-y: auto;
