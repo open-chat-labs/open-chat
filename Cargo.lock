@@ -1267,6 +1267,7 @@ dependencies = [
 name = "community_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "canister_client",
  "community_canister",
  "ic-cdk 0.11.3",
@@ -3664,10 +3665,13 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "community_canister",
+ "group_canister",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
  "types",
+ "user_canister",
 ]
 
 [[package]]
