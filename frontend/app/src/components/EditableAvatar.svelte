@@ -97,7 +97,7 @@
                 0,
                 0,
                 SAVE_DIMS.width,
-                SAVE_DIMS.height
+                SAVE_DIMS.height,
             );
 
         canvas.toBlob(async (blob: Blob | null) => {
@@ -206,7 +206,7 @@
     }
 
     .photo-icon {
-        border-radius: 50%;
+        border-radius: var(--avatar-rd);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -233,7 +233,7 @@
             width: 100%;
             height: 100%;
             background-size: cover;
-            border-radius: 50%;
+            border-radius: var(--avatar-rd);
         }
     }
 </style>

@@ -68,10 +68,11 @@ import type {
     SubmitProposalResponse,
     CryptocurrencyDetails,
     ExchangeTokenSwapArgs,
-    MessageContext,
-    PendingCryptocurrencyTransfer,
     SwapTokensResponse,
     TokenSwapStatusResponse,
+    ApproveTransferResponse,
+    MessageContext,
+    PendingCryptocurrencyTransfer,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -109,6 +110,7 @@ import {
     reportMessageResponse,
     swapTokensResponse,
     tokenSwapStatusResponse,
+    approveTransferResponse,
 } from "./mappers";
 import {
     type Database,
@@ -831,6 +833,7 @@ export class UserClient extends CandidService {
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
+                decimals: [],
                 token: apiToken(transfer.token),
                 recipient: Principal.fromText(transfer.recipient),
                 ledger: Principal.fromText(transfer.ledger),
@@ -1207,6 +1210,26 @@ export class UserClient extends CandidService {
             () => this.userService.token_swap_status(args),
             tokenSwapStatusResponse,
             args,
+        );
+    }
+
+    approveTransfer(
+        spender: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint | undefined,
+    ): Promise<ApproveTransferResponse> {
+        return this.handleResponse(
+            this.userService.approve_transfer({
+                spender: {
+                    owner: Principal.fromText(spender),
+                    subaccount: [],
+                },
+                ledger_canister_id: Principal.fromText(ledger),
+                amount,
+                expires_in: apiOptional(identity, expiresIn),
+            }),
+            approveTransferResponse,
         );
     }
 }

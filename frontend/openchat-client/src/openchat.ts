@@ -179,7 +179,7 @@ import {
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
-import { formatTokens, validateTokenInput } from "./utils/cryptoFormatter";
+import { formatTokens, parseBigInt, validateTokenInput } from "./utils/cryptoFormatter";
 import {
     formatMessageDate,
     toDateString,
@@ -346,6 +346,9 @@ import type {
     DexId,
     SwapTokensResponse,
     TokenSwapStatusResponse,
+    Member,
+    Level,
+    VersionedRules,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -367,7 +370,7 @@ import {
     MessageContextMap,
     messageContextsEqual,
     communityRoles,
-    isSnsGate,
+    isNeuronGate,
     toTitleCase,
     CommonResponses,
     defaultChatRules,
@@ -379,6 +382,7 @@ import {
     contentTypeToPermission,
     anonymousUser,
     ANON_USER_ID,
+    isPaymentGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -420,10 +424,7 @@ import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpda
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import type { Member } from "openchat-shared";
-import type { Level } from "openchat-shared";
 import type { DraftMessage } from "./stores/draftMessageFactory";
-import type { VersionedRules } from "openchat-shared";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 
@@ -1127,10 +1128,56 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
+    async approveAccessGatePayment(group: MultiUserChat | CommunitySummary): Promise<boolean> {
+        // If there is no payment gate then do nothing
+        if (!isPaymentGate(group.gate)) {
+            // If this is a channel there might still be a payment gate on the community
+            if (group.kind === "channel") {
+                return this.approveAccessGatePayment(
+                    this._liveState.communities.get({
+                        kind: "community",
+                        communityId: group.id.communityId,
+                    })!,
+                );
+            } else {
+                return true;
+            }
+        }
+
+        // If there is a payment gateway then first call the user's canister to get an
+        // approval for the group/community to transfer the payment
+        const spender = group.kind === "group_chat" ? group.id.groupId : group.id.communityId;
+
+        const token = this.getTokenDetailsForAccessGate(group.gate);
+
+        if (token === undefined) {
+            return false;
+        }
+
+        const response = await this.sendRequest({
+            kind: "approveTransfer",
+            spender,
+            ledger: group.gate.ledgerCanister,
+            amount: group.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
+            expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
+        });
+
+        if (response?.kind !== "success") {
+            this._logger.error("Unable to approve transfer", response?.error);
+            return false;
+        }
+
+        return true;
+    }
+
     async joinGroup(
         chat: MultiUserChat,
         credential?: string,
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
+        if (!(await this.approveAccessGatePayment(chat))) {
+            return "gate_check_failed";
+        }
+
         return this.sendRequest({ kind: "joinGroup", chatId: chat.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {
@@ -1276,6 +1323,7 @@ export class OpenChat extends OpenChatAgentWorker {
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
+    parseBigInt = parseBigInt;
     toShortTimeString = toShortTimeString;
     toMonthString = toMonthString;
     formatMessageDate = formatMessageDate;
@@ -2310,35 +2358,46 @@ export class OpenChat extends OpenChatAgentWorker {
     hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
-        if (isSnsGate(current) && isSnsGate(original)) {
+        if (isNeuronGate(current) && isNeuronGate(original)) {
             return (
+                current.governanceCanister !== original.governanceCanister ||
                 current.minDissolveDelay !== original.minDissolveDelay ||
                 current.minStakeE8s !== original.minStakeE8s
+            );
+        }
+        if (isPaymentGate(current) && isPaymentGate(original)) {
+            return (
+                current.ledgerCanister !== original.ledgerCanister ||
+                current.amount !== original.amount
             );
         }
         return false;
     }
 
-    getTokenDetailsForSnsAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
-        if (gate.kind === "sns_gate") {
+    getTokenDetailsForAccessGate(gate: AccessGate): CryptocurrencyDetails | undefined {
+        if (gate.kind === "neuron_gate") {
             return this.tryGetNervousSystem(gate.governanceCanister)?.token;
+        } else if (gate.kind === "payment_gate") {
+            return this.tryGetCryptocurrency(gate.ledgerCanister);
         }
     }
 
     getMinDissolveDelayDays(gate: AccessGate): number | undefined {
-        if (isSnsGate(gate)) {
+        if (isNeuronGate(gate)) {
             return gate.minDissolveDelay
                 ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
                 : undefined;
         }
-        return undefined;
+    }
+
+    getPaymentAmount(gate: AccessGate): bigint | undefined {
+        return isPaymentGate(gate) ? gate.amount : undefined;
     }
 
     getMinStakeInTokens(gate: AccessGate): number | undefined {
-        if (isSnsGate(gate)) {
+        if (isNeuronGate(gate)) {
             return gate.minStakeE8s ? gate.minStakeE8s / E8S_PER_TOKEN : undefined;
         }
-        return undefined;
     }
 
     earliestLoadedThreadIndex(): number | undefined {
@@ -5054,6 +5113,15 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
+    tryGetCryptocurrency(ledgerCanisterId: string | undefined): CryptocurrencyDetails | undefined {
+        if (ledgerCanisterId !== undefined) {
+            const lookup = get(cryptoLookup);
+            if (ledgerCanisterId in lookup) {
+                return lookup[ledgerCanisterId];
+            }
+        }
+    }
+
     // the key might be a username or it might be a user group name
     getUserLookupForMentions(): Record<string, UserOrUserGroup> {
         if (this._userLookupForMentions === undefined) {
@@ -5318,6 +5386,10 @@ export class OpenChat extends OpenChatAgentWorker {
         community: CommunitySummary,
         credential?: string,
     ): Promise<"success" | "failure" | "gate_check_failed"> {
+        if (!(await this.approveAccessGatePayment(community))) {
+            return "gate_check_failed";
+        }
+
         return this.sendRequest({ kind: "joinCommunity", id: community.id, credential })
             .then((resp) => {
                 if (resp.kind === "success") {

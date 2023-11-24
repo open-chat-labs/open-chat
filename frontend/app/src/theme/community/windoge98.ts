@@ -67,6 +67,12 @@ export function getTheme(base: Theme): Theme {
     base.button["disabled-txt"] = disabledTxt;
     base.button.bg = msBlue;
     base.button.hv = magenta;
+    base.button.rd = "0";
+
+    base.avatar.rd = "0";
+    base.toggle.rd.track = "0";
+    base.toggle.rd.thumb = "0";
+    base.nav.icon.rd = "0";
 
     base.modal.filter = "blur(5px)";
     base.modal.bg = silver;
@@ -86,11 +92,11 @@ export function getTheme(base: Theme): Theme {
     base.currentChat.date.bg = "rgba(239 239 239 / 80%)";
     base.currentChat.msg.r1 = "0";
     base.currentChat.msg.r2 = "0";
-    
+
     base.icon.txt = black;
     base.icon.inverted.txt = black;
     base.icon.selected = white;
-    
+
     base.recommended.bg = white;
     base.markdown.fg.color = txt;
     base.markdown.fg.bright = txt;
@@ -99,7 +105,7 @@ export function getTheme(base: Theme): Theme {
     base.vote.yes.color = successGreen;
     base.vote.no.color = errorRed;
 
-    base.notificationBar.bg = magenta;  
+    base.notificationBar.bg = magenta;
     base.notificationBar.txt = white;
 
     // misc

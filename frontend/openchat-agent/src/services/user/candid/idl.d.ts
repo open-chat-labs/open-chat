@@ -143,6 +143,7 @@ import {
     MessagePermissions,
     SwapTokensResponse,
     TokenSwapStatusResponse,
+    ApproveTransferResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -288,6 +289,7 @@ export {
     MessagePermissions as ApiMessagePermissions,
     SwapTokensResponse as ApiSwapTokensResponse,
     TokenSwapStatusResponse as ApiTokenSwapStatusResponse,
+    ApproveTransferResponse as ApiApproveTransferResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

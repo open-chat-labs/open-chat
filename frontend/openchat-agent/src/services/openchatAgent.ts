@@ -181,6 +181,7 @@ import type {
     AccountTransactionResult,
     OptionalChatPermissions,
     CryptocurrencyDetails,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2879,4 +2880,13 @@ export class OpenChatAgent extends EventTarget {
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
         return this.userClient.tokenSwapStatus(swapId);
     }
+
+	approveTransfer(
+        spender: string, 
+        ledger: string, 
+        amount: bigint, 
+        expiresIn: bigint | undefined
+    ): Promise<ApproveTransferResponse> {
+        return this.userClient.approveTransfer(spender, ledger, amount, expiresIn);
+	}
 }
