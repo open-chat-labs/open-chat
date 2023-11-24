@@ -1,1 +1,3 @@
-UserIndex -> User because `ledger_canister_id` has been added to `c2c_charge_user_account` args
+community, group -> group_index -> user_index -> user
+
+Because is_public has been added to c2c_report_message

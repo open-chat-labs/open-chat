@@ -49,7 +49,7 @@ fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.queue_modclub_submission(PendingModclubSubmission {
         report_index,
         title: construct_report_title(&args.message),
-        html_report: construct_html_report(args.chat_id, args.thread_root_message_index, args.message),
+        html_report: construct_html_report(args.chat_id, args.thread_root_message_index, args.message, args.is_public),
         level: if state.data.test_mode { Level::simple } else { Level::normal },
     });
 
@@ -62,7 +62,12 @@ fn construct_report_title(message: &Message) -> String {
     title
 }
 
-fn construct_html_report(chat_id: Chat, thread_root_message_index: Option<MessageIndex>, message: Message) -> String {
+fn construct_html_report(
+    chat_id: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message: Message,
+    is_public: bool,
+) -> String {
     let content = &message.content;
 
     let mut html = String::new();
@@ -113,8 +118,10 @@ fn construct_html_report(chat_id: Chat, thread_root_message_index: Option<Messag
     html.push_str(&markdown_to_html(&extract_text(content)));
 
     // 3. Message link
-    let message_link = deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index);
-    html.push_str(&format!("<a href=\"{}\">link to message</a>\n", message_link));
+    if is_public {
+        let message_link = deep_message_links::build_message_link(chat_id, thread_root_message_index, message.message_index);
+        html.push_str(&format!("<a href=\"{}\">link to message</a>\n", message_link));
+    }
 
     html
 }
@@ -189,7 +196,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             last_updated: None,
         };
 
-        let report = construct_html_report(Chat::Group(chat_id), None, message);
+        let report = construct_html_report(Chat::Group(chat_id), None, message, true);
 
         print!("{}", report);
     }
@@ -225,7 +232,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             last_updated: None,
         };
 
-        let report = construct_html_report(chat, None, message);
+        let report = construct_html_report(chat, None, message, true);
 
         print!("{}", report);
     }
@@ -265,7 +272,7 @@ https://github.com/open-chat-labs/open-chat/commit/e93865ea29b5bab8a9f0b01052938
             last_updated: None,
         };
 
-        let report = construct_html_report(chat, None, message);
+        let report = construct_html_report(chat, None, message, true);
 
         print!("{}", report);
     }
