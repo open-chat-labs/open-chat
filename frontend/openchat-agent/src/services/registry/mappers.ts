@@ -38,6 +38,7 @@ function tokenDetails(candid: ApiTokenDetails): CryptocurrencyDetails {
         infoUrl: candid.info_url,
         howToBuyUrl: candid.how_to_buy_url,
         transactionUrlFormat: candid.transaction_url_format,
+        supportedStandards: candid.supported_standards,
         added: candid.added,
         lastUpdated: candid.last_updated,
     };

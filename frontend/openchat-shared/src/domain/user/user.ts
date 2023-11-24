@@ -351,3 +351,8 @@ export type TokenSwapStatusResponse =
     | {
           kind: "not_found";
       };
+
+export type ApproveTransferResponse = 
+    | Success    
+    | { kind: "approve_error", error: string }
+    | InternalError;

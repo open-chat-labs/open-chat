@@ -134,6 +134,7 @@ export function lightTheme(): Theme {
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
             sh: "2px 2px 4px #e2e2e2",
+            rd: "50%",
         },
 
         chatSearch: {
@@ -277,6 +278,10 @@ export function lightTheme(): Theme {
 
         toggle: {
             bg: "#cccccc",
+            rd: {
+                track: "18px",
+                thumb: "50%",
+            },
         },
 
         thread: {
@@ -310,6 +315,12 @@ export function lightTheme(): Theme {
         card: {
             rd: "8px",
             sh: "none",
+        },
+
+        nav: {
+            icon: {
+                rd: "50%",
+            },
         },
 
         landing: {
