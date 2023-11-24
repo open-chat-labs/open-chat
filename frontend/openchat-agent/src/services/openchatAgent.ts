@@ -1388,6 +1388,7 @@ export class OpenChatAgent extends EventTarget {
         let pinnedFavouriteChats: ChatIdentifier[];
         let pinnedChannels: ChannelIdentifier[];
         let favouriteChats: ChatIdentifier[];
+        let suspensionChanged = undefined;
 
         let latestActiveGroupsCheck = BigInt(0);
         let latestUserCanisterUpdates: bigint;
@@ -1461,6 +1462,7 @@ export class OpenChatAgent extends EventTarget {
                 pinnedFavouriteChats = userResponse.favouriteChats.pinned ?? pinnedFavouriteChats;
                 pinnedChannels = this.getUpdatedPinnedChannels(pinnedChannels, userResponse);
                 favouriteChats = userResponse.favouriteChats.chats ?? favouriteChats;
+                suspensionChanged = userResponse.suspended;
                 latestUserCanisterUpdates = userResponse.timestamp;
                 anyUpdates = true;
             }
@@ -1589,6 +1591,7 @@ export class OpenChatAgent extends EventTarget {
             state: this.hydrateChatState(state),
             updatedEvents: updatedEvents.toMap(),
             anyUpdates,
+            suspensionChanged,
         };
     }
 
@@ -1601,6 +1604,7 @@ export class OpenChatAgent extends EventTarget {
                         state: this.hydrateChatState(cachedState),
                         updatedEvents: new Map(),
                         anyUpdates: false,
+                        suspensionChanged: undefined,
                     },
                     false,
                 );

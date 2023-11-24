@@ -839,6 +839,7 @@ export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
+    suspensionChanged: boolean | undefined;
 };
 
 export type ChatStateFull = {
@@ -1000,6 +1001,7 @@ export type InitialStateResponse = {
     directChats: DirectChatsInitial;
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
+    suspended: boolean;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -1013,6 +1015,7 @@ export type UpdatesSuccessResponse = {
     groupChats: GroupChatsUpdates;
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
+    suspended: boolean | undefined;
 };
 
 export type DirectChatsUpdates = {

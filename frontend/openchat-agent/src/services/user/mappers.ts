@@ -624,6 +624,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             avatarId: optional(result.avatar_id, identity),
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
+            suspended: result.suspended,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -721,6 +722,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             groupChats: groupChatsUpdates(candid.Success.group_chats),
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
             directChats: directChatsUpdates(candid.Success.direct_chats),
+            suspended: optional(candid.Success.suspended, identity),
         };
     }
 

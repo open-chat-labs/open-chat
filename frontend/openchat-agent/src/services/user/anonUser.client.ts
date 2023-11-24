@@ -94,6 +94,7 @@ export class AnonUserClient {
                 pinned: [],
             },
             timestamp: BigInt(Date.now()),
+            suspended: false,
         });
     }
 
