@@ -1,4 +1,4 @@
-use crate::client::{create_canister, install_canister};
+use crate::client::{create_canister, create_canister_with_id, install_canister};
 use crate::rng::random_principal;
 use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds, TestEnv, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
@@ -6,7 +6,7 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use icrc_ledger_types::icrc1::account::Account;
-use pocket_ic::PocketIc;
+use pocket_ic::{PocketIc, PocketIcBuilder};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::Path;
@@ -38,7 +38,7 @@ pub fn setup_new_env() -> TestEnv {
         ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
 
-    let mut env = PocketIc::new();
+    let mut env = PocketIcBuilder::new().with_nns_subnet().with_application_subnet().build();
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -50,13 +50,12 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..12).map(|_| create_canister(env, controller)).collect();
-    let nns_governance_canister_id = nns_canister_ids[1]; // rrkah-fqaaa-aaaaa-aaaaq-cai
-    let nns_ledger_canister_id = nns_canister_ids[2]; // ryjl3-tyaaa-aaaaa-aaaba-cai
-    let nns_root_canister_id = nns_canister_ids[3]; // r7inp-6aaaa-aaaaa-aaabq-cai
-    let cycles_minting_canister_id = nns_canister_ids[4]; // rkp4c-7iaaa-aaaaa-aaaca-cai
-    let sns_wasm_canister_id = nns_canister_ids[10]; // qaa6y-5yaaa-aaaaa-aaafa-cai
-    let nns_index_canister_id = nns_canister_ids[11]; // qhbym-qaaaa-aaaaa-aaafq-cai
+    let nns_governance_canister_id = create_canister_with_id(env, controller, "rrkah-fqaaa-aaaaa-aaaaq-cai");
+    let nns_ledger_canister_id = create_canister_with_id(env, controller, "ryjl3-tyaaa-aaaaa-aaaba-cai");
+    let nns_root_canister_id = create_canister_with_id(env, controller, "r7inp-6aaaa-aaaaa-aaabq-cai");
+    let cycles_minting_canister_id = create_canister_with_id(env, controller, "rkp4c-7iaaa-aaaaa-aaaca-cai");
+    let sns_wasm_canister_id = create_canister_with_id(env, controller, "qaa6y-5yaaa-aaaaa-aaafa-cai");
+    let nns_index_canister_id = create_canister_with_id(env, controller, "qhbym-qaaaa-aaaaa-aaafq-cai");
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);

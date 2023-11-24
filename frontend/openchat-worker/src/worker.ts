@@ -84,10 +84,11 @@ function streamReplies(
     correlationId: string,
     chain: Stream<WorkerResponseInner>,
 ) {
+    const start = Date.now();
     chain
         .subscribe((value, final) => {
             console.debug(
-                "WORKER: sending streamed reply: ",
+                `WORKER: sending streamed reply ${Date.now() - start}ms after subscribing`,
                 correlationId,
                 value,
                 Date.now(),
@@ -165,7 +166,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
         switch (kind) {
             case "getCurrentUser":
-                executeThenReply(payload, correlationId, agent.getCurrentUser());
+                streamReplies(payload, correlationId, agent.getCurrentUser());
                 break;
 
             case "getDeletedGroupMessage":
