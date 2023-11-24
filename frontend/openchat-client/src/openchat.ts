@@ -229,6 +229,7 @@ import {
     ThreadClosed,
     ThreadSelected,
     UserLoggedIn,
+    UserSuspensionChanged,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString, startTyping, stopTyping } from "./utils/chat";
@@ -4595,6 +4596,11 @@ export class OpenChat extends OpenChatAgentWorker {
         chatsResponse: UpdatesResult,
     ): Promise<void> {
         if (initialLoad || chatsResponse.anyUpdates) {
+            if (chatsResponse.suspensionChanged !== undefined) {
+                this.dispatchEvent(new UserSuspensionChanged());
+                return;
+            }            
+
             if (updateRegistryTask !== undefined) {
                 // We need the registry to be loaded before we attempt to render chats / events
                 await updateRegistryTask;
