@@ -48,7 +48,14 @@ import type {
     OptionalChatPermissions,
     ToggleMuteNotificationResponse,
 } from "openchat-shared";
-import { DestinationInvalidError, textToCode } from "openchat-shared";
+import {
+    DestinationInvalidError,
+    offline,
+    textToCode,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MAX_MISSING,
+} from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -109,7 +116,6 @@ import {
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
 import { apiOptionUpdate, identity } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
@@ -574,7 +580,7 @@ export class GroupClient extends CandidService {
     async getGroupDetails(chatLastUpdated: bigint): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, this.chatId.groupId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated || !navigator.onLine) {
+            if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
                 return this.getGroupDetailsUpdates(fromCache);

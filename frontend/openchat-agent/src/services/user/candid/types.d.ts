@@ -1839,7 +1839,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
-  'decimals' : [] | [number],
+  'decimals' : number,
   'token' : Cryptocurrency,
   'chat' : Chat,
   'recipient' : UserId,

@@ -130,14 +130,20 @@ import type {
     ClaimPrizeResponse,
     OptionalChatPermissions,
 } from "openchat-shared";
-import { textToCode, DestinationInvalidError } from "openchat-shared";
+import {
+    textToCode,
+    DestinationInvalidError,
+    offline,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+    MAX_MISSING,
+} from "openchat-shared";
 import {
     apiOptionalGroupPermissions,
     apiUpdatedRules,
     getMessagesByMessageIndexResponse,
 } from "../group/mappers";
 import { DataClient } from "../data/data.client";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import { getEventsResponse } from "../group/mappers";
 import {
     type Database,
@@ -740,7 +746,7 @@ export class CommunityClient extends CandidService {
     ): Promise<CommunityDetailsResponse> {
         const fromCache = await getCachedCommunityDetails(this.db, id.communityId);
         if (fromCache !== undefined) {
-            if (fromCache.lastUpdated >= communityLastUpdated || !navigator.onLine) {
+            if (fromCache.lastUpdated >= communityLastUpdated || offline()) {
                 return fromCache;
             } else {
                 return this.getCommunityDetailsUpdates(id, fromCache);
@@ -807,7 +813,7 @@ export class CommunityClient extends CandidService {
     ): Promise<GroupChatDetailsResponse> {
         const fromCache = await getCachedGroupDetails(this.db, chatId.channelId);
         if (fromCache !== undefined) {
-            if (fromCache.timestamp >= chatLastUpdated || !navigator.onLine) {
+            if (fromCache.timestamp >= chatLastUpdated || offline()) {
                 return fromCache;
             } else {
                 return this.getChannelDetailsUpdates(chatId, fromCache);
@@ -1115,8 +1121,8 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
@@ -1155,8 +1161,8 @@ export class CommunityClient extends CandidService {
                     gate === undefined
                         ? { NoChange: null }
                         : gate.kind === "no_gate"
-                        ? { SetToNone: null }
-                        : { SetToSome: apiAccessGate(gate) },
+                          ? { SetToNone: null }
+                          : { SetToSome: apiAccessGate(gate) },
                 avatar:
                     avatar === undefined
                         ? { NoChange: null }
