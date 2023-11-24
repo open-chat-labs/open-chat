@@ -92,7 +92,7 @@
         position: absolute;
         bottom: toRem(-32);
         left: toRem(24);
-        border-radius: 50%;
+        border-radius: var(--avatar-rd);
         border: 2px solid var(--txt-light);
     }
 
