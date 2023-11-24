@@ -61,6 +61,8 @@ import type {
     ApiSavedCryptoAccountsResponse,
     ApiSaveCryptoAccountResponse,
     ApiSubmitProposalResponse,
+    ApiSwapTokensResponse,
+    ApiTokenSwapStatusResponse,
     ApiApproveTransferResponse,
 } from "./candid/idl";
 import type {
@@ -123,6 +125,9 @@ import type {
     CandidateProposal,
     CandidateProposalAction,
     SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    Result,
     ApproveTransferResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
@@ -1126,6 +1131,57 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            amountOut: candid.Success.amount_out,
+        };
+    }
+    if ("InternalError" in candid) {
+        return {
+            kind: "internal_error",
+            error: candid.InternalError,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
+}
+
+export function tokenSwapStatusResponse(
+    candid: ApiTokenSwapStatusResponse,
+): TokenSwapStatusResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            started: candid.Success.started,
+            depositAccount: optional(candid.Success.deposit_account, result),
+            transfer: optional(candid.Success.transfer, result),
+            notifyDex: optional(candid.Success.notify_dex, result),
+            amountSwapped: optional(candid.Success.amount_swapped, result),
+            withdrawnFromDex: optional(candid.Success.withdraw_from_dex, result),
+        };
+    }
+    if ("NotFound" in candid) {
+        return {
+            kind: "not_found",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiTokenSwapStatusResponse type received", candid);
+}
+
+function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
+    if ("Ok" in candid) {
+        return {
+            kind: "ok",
+            value: candid.Ok,
+        };
+    }
+    return {
+        kind: "error",
+        error: candid.Err,
+    };
 }
 
 export function approveTransferResponse(candid: ApiApproveTransferResponse): ApproveTransferResponse {

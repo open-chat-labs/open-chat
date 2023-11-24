@@ -1870,14 +1870,12 @@ export interface TokenSwapStatusArgs { 'swap_id' : bigint }
 export type TokenSwapStatusResponse = { 'NotFound' : null } |
   {
     'Success' : {
-      'status' : {
-        'started' : TimestampMillis,
-        'deposit_account' : [] | [{ 'Ok' : Account } | { 'Err' : string }],
-        'withdrawn_from_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
-        'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
-        'notified_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
-        'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
-      },
+      'started' : TimestampMillis,
+      'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
     }
   };
 export interface Tokens { 'e8s' : bigint }

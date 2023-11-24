@@ -321,6 +321,37 @@ export type InsufficientPayment = {
     kind: "insufficient_payment";
 };
 
+export type SwapTokensResponse =
+    | {
+          kind: "success";
+          amountOut: bigint;
+      }
+    | InternalError;
+
+export type Result<T> =
+    | {
+          kind: "ok";
+          value: T;
+      }
+    | {
+          kind: "error";
+          error: string;
+      };
+
+export type TokenSwapStatusResponse =
+    | {
+          kind: "success";
+          started: bigint;
+          depositAccount?: Result<null>;
+          transfer?: Result<bigint>;
+          notifyDex?: Result<null>;
+          amountSwapped?: Result<bigint>;
+          withdrawnFromDex?: Result<bigint>;
+      }
+    | {
+          kind: "not_found";
+      };
+
 export type ApproveTransferResponse = 
     | Success    
     | { kind: "approve_error", error: string }

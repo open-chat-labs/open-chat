@@ -141,6 +141,8 @@ import {
     NamedAccount,
     SubmitProposalResponse,
     MessagePermissions,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
     ApproveTransferResponse,
 } from "./types";
 export {
@@ -285,6 +287,8 @@ export {
     SaveCryptoAccountResponse as ApiSaveCryptoAccountResponse,
     NamedAccount as ApiNamedAccount,
     MessagePermissions as ApiMessagePermissions,
+    SwapTokensResponse as ApiSwapTokensResponse,
+    TokenSwapStatusResponse as ApiTokenSwapStatusResponse,
     ApproveTransferResponse as ApiApproveTransferResponse,
 };
 
