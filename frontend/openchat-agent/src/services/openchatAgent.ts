@@ -1662,7 +1662,7 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    getCurrentUser(): Promise<CurrentUserResponse> {
+    getCurrentUser(): Stream<CurrentUserResponse> {
         return this._userIndexClient.getCurrentUser();
     }
 

@@ -476,6 +476,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
+        initialiseTracking(config);
+
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
@@ -483,7 +485,6 @@ export class OpenChat extends OpenChatAgentWorker {
             },
             storage: idbAuthClientStore,
         });
-        initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
     }
@@ -3800,12 +3801,24 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.sendRequest({ kind: "getCurrentUser" }).then((response) => {
-            if (response.kind === "created_user") {
-                userCreatedStore.set(true);
-                selectedAuthProviderStore.init(AuthProvider.II);
-            }
-            return response;
+        return new Promise((resolve, reject) => {
+            let resolved = false;
+            this.sendStreamRequest({ kind: "getCurrentUser" })
+                .subscribe((user) => {
+                    if (user.kind === "created_user") {
+                        userCreatedStore.set(true);
+                        selectedAuthProviderStore.init(AuthProvider.II);
+                        this.user.set(user);
+                        this.setDiamondMembership(user.diamondMembership);
+                    }
+                    if (!resolved) {
+                        // we want to resolve the promise with the first response from the stream so that
+                        // we are not waiting unnecessarily
+                        resolve(user);
+                        resolved = true;
+                    }
+                })
+                .catch(reject);
         });
     }
 
@@ -4851,7 +4864,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 const interval = expiry - now;
                 this._membershipCheck = window.setTimeout(
                     () => {
-                        this.sendRequest({ kind: "getCurrentUser" }).then((user) => {
+                        this.getCurrentUser().then((user) => {
                             if (user.kind === "created_user") {
                                 this.user.set(user);
                             } else {
