@@ -117,7 +117,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public.value {
+        } else if self.is_public.value && !self.has_payment_gate() {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -1659,6 +1659,14 @@ impl GroupChatCore {
                 .collect(),
             total_replies: thread_events_reader.next_message_index().into(),
         })
+    }
+
+    fn has_payment_gate(&self) -> bool {
+        self.gate
+            .value
+            .as_ref()
+            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .unwrap_or_default()
     }
 }
 

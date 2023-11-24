@@ -1,7 +1,7 @@
 import { Actor, HttpAgent, type Identity } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import type { Principal } from "@dfinity/principal";
-import { AuthError, DestinationInvalidError, SessionExpiryError } from "openchat-shared";
+import { AuthError, DestinationInvalidError, SessionExpiryError, offline } from "openchat-shared";
 import type { AgentConfig } from "../config";
 import { ReplicaNotUpToDateError, toCanisterResponseError } from "./error";
 
@@ -21,7 +21,7 @@ export abstract class CandidService {
         const host = config.icUrl;
         const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
         const isMainnet = config.icUrl.includes("icp-api.io");
-        if (!isMainnet && navigator.onLine) {
+        if (!isMainnet && !offline()) {
             agent.fetchRootKey();
         }
         return Actor.createActor<T>(factory, {
