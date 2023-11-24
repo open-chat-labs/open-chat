@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+
 ## [[2.0.942](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.942-group_index)] - 2023-11-24
 
 ### Changed
