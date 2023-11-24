@@ -834,7 +834,7 @@ export class UserClient extends CandidService {
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
-                decimals: [],
+                decimals,
                 token: apiToken(transfer.token),
                 recipient: Principal.fromText(transfer.recipient),
                 ledger: Principal.fromText(transfer.ledger),
@@ -843,7 +843,6 @@ export class UserClient extends CandidService {
                     identity,
                     messageContext.threadRootMessageIndex,
                 ),
-                decimals,
             }),
             tipMessageResponse,
         );
