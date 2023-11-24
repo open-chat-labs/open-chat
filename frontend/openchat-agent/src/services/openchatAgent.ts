@@ -1435,7 +1435,6 @@ export class OpenChatAgent extends EventTarget {
             pinnedFavouriteChats = current.pinnedFavouriteChats;
             pinnedChannels = current.pinnedChannels;
             favouriteChats = current.favouriteChats;
-
             latestUserCanisterUpdates = current.latestUserCanisterUpdates;
 
             if (userResponse.kind === "success") {
