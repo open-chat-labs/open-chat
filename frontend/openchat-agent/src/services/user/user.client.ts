@@ -68,8 +68,6 @@ import type {
     SubmitProposalResponse,
     CryptocurrencyDetails,
     ExchangeTokenSwapArgs,
-    MessageContext,
-    PendingCryptocurrencyTransfer,
     SwapTokensResponse,
     TokenSwapStatusResponse,
 } from "openchat-shared";
