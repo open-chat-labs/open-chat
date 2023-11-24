@@ -17,7 +17,7 @@ const successGreen = "#28a745";
 const errorRed = "#dc3545";
 
 export function getTheme(base: Theme): Theme {
-    base.author = "rh2pm-ryaaa-aaaan-qeniq-cai";
+    base.author = "y3rqn-fyaaa-aaaaf-a7z6a-cai";
     base.name = "windoge98";
     base.label = "Windoge98";
     base.bg = "#008080 url('/assets/windoge98logo.png') bottom 60px right 10px no-repeat";
@@ -42,11 +42,12 @@ export function getTheme(base: Theme): Theme {
 
     base.input.bg = white;
     base.input.accent = msBlue;
+    base.input.sh = "inset 0px 2px 4px rgba(0, 0, 0, 0.6)";
 
     base.entry.bg = silver;
     base.entry.input.bg = white;
     base.entry.input.rd = "0";
-    base.entry.input.sh = "";
+    base.entry.input.sh = "inset 0px 2px 4px rgba(0, 0, 0, 0.6)";
 
     base.panel.bg = msBlue;
     base.panel.left.bg = silver;
@@ -54,7 +55,9 @@ export function getTheme(base: Theme): Theme {
     base.panel.right.modal = "linear-gradient(#0884CE, #21219c)";
 
     base.chatSearch.bg = textBox;
+    base.chatSearch.rd = "0";
     base.chatSummary.hv = "rgba(255,255,255,0.4)";
+    base.chatSearch.sh = "inset 0px 2px 4px rgba(0, 0, 0, 0.6)";
     base.chatSummary["bg-selected"] = "rgba(255,255,255,0.6)";
 
     base.menu.txt = txt80;
@@ -63,6 +66,7 @@ export function getTheme(base: Theme): Theme {
     base.menu.separator = trolleyGray;
     base.menu["disabled-txt"] = txt60;
     base.menu.warn = errorRed;
+    base.menu.sh = "none";
 
     base.button["disabled-txt"] = disabledTxt;
     base.button.bg = msBlue;
@@ -76,10 +80,10 @@ export function getTheme(base: Theme): Theme {
 
     base.modal.filter = "blur(5px)";
     base.modal.bg = silver;
-    base.modal.bd = silver;
     base.modalPage.bg = trolleyGray;
     base.modalPage.txt = txt;
     base.modal.rd = "0";
+    base.modal.sh = "none";
 
     base.currentChat.msg.bd = trolleyGray;
     base.currentChat.msg.bg = silver;
