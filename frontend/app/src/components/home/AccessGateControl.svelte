@@ -140,7 +140,7 @@
             return undefined;
         }
 
-        return BigInt(amount) * BigInt(10) ** BigInt(tokenDetails.decimals);
+        return BigInt((amount * 10 ** tokenDetails.decimals).toFixed(0));
     }
 
     function updateGate() {
