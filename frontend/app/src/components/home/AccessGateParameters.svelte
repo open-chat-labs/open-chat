@@ -3,14 +3,15 @@
     import {
         OpenChat,
         type CredentialGate,
-        type SNSAccessGate,
+        type NeuronGate,
+        type PaymentGate,
     } from "openchat-client";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: SNSAccessGate | CredentialGate;
-    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
+    export let gate: NeuronGate | CredentialGate | PaymentGate;
+    $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
 </script>
 
 {#if gate.kind === "credential_gate"}
@@ -31,12 +32,23 @@
             </div>
         </div>
     </div>
-{:else}
+{:else if gate.kind === "payment_gate" && tokenDetails !== undefined}
     <div class="detail">
         <div>
-            {$_("access.snsHolder", {
-                values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
-            })}
+            {$_("access.tokenPayment", { values: { token: tokenDetails.symbol } })}
+        </div>
+        <div class="params">
+            <div>
+                {`${$_("access.amountN", {
+                    values: { n: client.formatTokens(gate.amount, 0, tokenDetails.decimals) },
+                })}`}
+            </div>
+        </div>
+    </div>
+{:else if gate.kind === "neuron_gate" && tokenDetails !== undefined}
+    <div class="detail">
+        <div>
+            {$_("access.tokenNeuronHolder", { values: { token: tokenDetails.symbol } })}
         </div>
         <div class="params">
             {#if gate.minDissolveDelay}
@@ -49,7 +61,13 @@
             {#if gate.minStakeE8s}
                 <div>
                     {`${$_("access.minStakeN", {
-                        values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) },
+                        values: {
+                            n: client.formatTokens(
+                                BigInt(gate.minStakeE8s),
+                                0,
+                                tokenDetails?.decimals ?? 8
+                            ),
+                        },
                     })}`}
                 </div>
             {/if}
