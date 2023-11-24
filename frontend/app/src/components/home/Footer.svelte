@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import { toastStore } from "../../stores/toast";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -17,6 +18,9 @@
         AttachmentContent,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
 
@@ -95,6 +99,25 @@
     }
 </script>
 
+{#if messageAction === "emoji"}
+    <div class="emoji-overlay">
+        <ModalContent hideFooter hideHeader fill>
+            <span slot="body">
+                <div class="emoji-header">
+                    <h4>{$_("pickEmoji")}</h4>
+                    <span title={$_("close")} class="close-emoji">
+                        <HoverIcon on:click={() => (messageAction = undefined)}>
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                </div>
+                <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
+            </span>
+            <span slot="footer" />
+        </ModalContent>
+    </div>
+{/if}
+
 <div class="footer">
     <div class="footer-overlay">
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
@@ -106,9 +129,6 @@
                     <DraftMediaMessage content={attachment} />
                 {/if}
             </div>
-        {/if}
-        {#if messageAction === "emoji"}
-            <EmojiPicker {mode} on:emojiSelected={emojiSelected} />
         {/if}
     </div>
     <MessageEntry
@@ -163,6 +183,31 @@
         align-content: center;
         align-items: flex-start;
         background-color: var(--entry-bg);
+    }
+
+    .emoji-overlay {
+        position: absolute;
+        bottom: toRem(70);
+        left: toRem(10);
+        width: 100%;
+        @include z-index("footer-overlay");
+
+        @include mobile() {
+            left: 0;
+            bottom: toRem(60);
+        }
+
+        .emoji-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: $sp3 $sp4;
+            background-color: var(--section-bg);
+
+            .close-emoji {
+                flex: 0 0 20px;
+            }
+        }
     }
 
     .draft-container {
