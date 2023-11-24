@@ -124,6 +124,7 @@ export interface Theme {
     avatar: {
         bg: string;
         sh: string;
+        rd: string;
     };
 
     chatSearch: {
@@ -265,6 +266,10 @@ export interface Theme {
 
     toggle: {
         bg: string;
+        rd: {
+            track: string;
+            thumb: string;
+        };
     };
 
     thread: {
@@ -298,6 +303,12 @@ export interface Theme {
     card: {
         rd: string;
         sh: string;
+    };
+
+    nav: {
+        icon: {
+            rd: string;
+        };
     };
 
     landing: {
