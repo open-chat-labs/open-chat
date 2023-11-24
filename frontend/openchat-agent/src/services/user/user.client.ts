@@ -1233,4 +1233,14 @@ export class UserClient extends CandidService {
             approveTransferResponse,
         );
     }
+
+    deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.delete_direct_chat({
+                user_id: Principal.fromText(userId),
+                block_user: blockUser,
+            }),
+            (resp) => "Success" in resp,
+        );
+    }
 }
