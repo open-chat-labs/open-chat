@@ -342,6 +342,10 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
+    TokenSwapPool,
+    DexId,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5146,6 +5150,57 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Unable to submit proposal", err);
                 return false;
             });
+    }
+
+    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
+        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
+
+        return this.sendRequest({
+            kind: "getTokenSwapPools",
+            inputToken,
+            outputTokens,
+        });
+    }
+
+    quoteTokenSwap(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+    ): Promise<[DexId, bigint][]> {
+        return this.sendRequest({
+            kind: "quoteTokenSwap",
+            inputToken,
+            outputToken,
+            amountIn,
+        });
+    }
+
+    swapTokens(
+        swapId: bigint,
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        pool: TokenSwapPool,
+    ): Promise<SwapTokensResponse> {
+        const lookup = get(cryptoLookup);
+
+        return this.sendRequest({
+            kind: "swapTokens",
+            swapId,
+            inputToken: lookup[inputToken],
+            outputToken: lookup[outputToken],
+            amountIn,
+            minAmountOut,
+            pool,
+        });
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        return this.sendRequest({
+            kind: "tokenSwapStatus",
+            swapId,
+        });
     }
 
     // **** Communities Stuff
