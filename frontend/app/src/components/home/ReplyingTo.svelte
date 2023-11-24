@@ -75,6 +75,8 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         position: relative;
+        @include nice-scrollbar();
+        max-height: 150px;
 
         .close-icon {
             position: absolute;
