@@ -70,10 +70,10 @@ fn send_message_succeeds() {
         },
     );
 
-    assert_is_message_with_text(responses.get(0).unwrap(), &format!("User: 0"));
-    assert_is_message_with_text(responses.get(1).unwrap(), &format!("Group1: 1"));
-    assert_is_message_with_text(responses.get(2).unwrap(), &format!("Group2: 2"));
-    assert_is_message_with_text(responses.get(3).unwrap(), &format!("Channel: 3"));
+    assert_is_message_with_text(responses.get(0).unwrap(), "User: 0");
+    assert_is_message_with_text(responses.get(1).unwrap(), "Group1: 1");
+    assert_is_message_with_text(responses.get(2).unwrap(), "Group2: 2");
+    assert_is_message_with_text(responses.get(3).unwrap(), "Channel: 3");
 }
 
 fn assert_is_message_with_text(response: &local_user_index_canister::chat_events::EventsResponse, text: &str) {

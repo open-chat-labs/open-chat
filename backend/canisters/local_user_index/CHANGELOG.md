@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support getting batches of chat events via LocalUserIndex ([#4848](https://github.com/open-chat-labs/open-chat/pull/4848))
+
 ## [[2.0.943](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.943-local_user_index)] - 2023-11-24
 
 ### Changed
