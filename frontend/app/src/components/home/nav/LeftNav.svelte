@@ -205,7 +205,7 @@
                         !communityExplorer}
                     unread={client.mergeCombinedUnreadCounts(
                         $unreadCommunityChannelCounts.get(community.id) ??
-                            emptyCombinedUnreadCounts()
+                            emptyCombinedUnreadCounts(),
                     )}
                     label={community.name}
                     on:click={() => selectCommunity(community)}>
@@ -296,7 +296,7 @@
         width: $size;
         height: $size;
         border: 1px solid transparent;
-        border-radius: 50%;
+        border-radius: var(--nav-icon-rd);
         background: var(--icon-hv);
         display: flex;
         align-items: center;
