@@ -44,7 +44,6 @@ pub struct CachedPublicGroupSummary {
     pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }

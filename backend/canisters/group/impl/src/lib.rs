@@ -361,11 +361,8 @@ struct Data {
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
     pub next_event_expiry: Option<TimestampMillis>,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub total_payment_receipts: PaymentReceipts,
 }
 
