@@ -3,10 +3,6 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
-fn allow_change_default() -> bool {
-    true
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PollConfig {
     pub text: Option<String>,
@@ -15,7 +11,6 @@ pub struct PollConfig {
     pub anonymous: bool,
     pub show_votes_before_end_date: bool,
     pub allow_multiple_votes_per_user: bool,
-    #[serde(default = "allow_change_default")]
     pub allow_user_to_change_vote: bool,
 }
 

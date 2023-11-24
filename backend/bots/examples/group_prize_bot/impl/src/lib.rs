@@ -85,7 +85,6 @@ struct Data {
     pub prizes_sent: Vec<Prize>,
     pub groups: HashSet<CanisterId>,
     pub started: bool,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
