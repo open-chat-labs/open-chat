@@ -98,6 +98,8 @@ import type {
     NamedAccount,
     SaveCryptoAccountResponse,
     SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "./user";
 import type {
     SearchDirectChatResponse,
@@ -139,7 +141,8 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult } from "./crypto";
+import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
+import type { DexId, TokenSwapPool } from "./dexes";
 /**
  * Worker request types
  */
@@ -292,7 +295,11 @@ export type WorkerRequest =
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
     | SubmitProposal
-    | TipMessage;
+    | TipMessage
+    | GetTokenSwapPools
+    | QuoteTokenSwap
+    | SwapTokens
+    | TokenSwapStatus;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -308,6 +315,34 @@ type TipMessage = {
     messageContext: MessageContext;
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
+};
+
+type GetTokenSwapPools = {
+    kind: "getTokenSwapPools";
+    inputToken: string;
+    outputTokens: string[];
+};
+
+type QuoteTokenSwap = {
+    kind: "quoteTokenSwap";
+    inputToken: string;
+    outputToken: string;
+    amountIn: bigint;
+};
+
+type SwapTokens = {
+    kind: "swapTokens";
+    swapId: bigint;
+    inputToken: CryptocurrencyDetails;
+    outputToken: CryptocurrencyDetails;
+    amountIn: bigint;
+    minAmountOut: bigint;
+    pool: TokenSwapPool;
+};
+
+type TokenSwapStatus = {
+    kind: "tokenSwapStatus";
+    swapId: bigint;
 };
 
 type SetCommunityIndexes = {
@@ -992,6 +1027,7 @@ export type WorkerResponseInner =
     | bigint
     | boolean
     | string
+    | string[]
     | undefined
     | CreateGroupResponse
     | DisableInviteCodeResponse
@@ -1100,7 +1136,11 @@ export type WorkerResponseInner =
     | SaveCryptoAccountResponse
     | SubmitProposalResponse
     | AccountTransactionResult
-    | Record<string, bigint>;
+    | Record<string, bigint>
+    | TokenSwapPool[]
+    | [DexId, bigint][]
+    | SwapTokensResponse
+    | TokenSwapStatusResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1341,7 +1381,7 @@ type SubmitProposal = {
     kind: "submitProposal";
 };
 
-//prettier-ignore
+// prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
     : T extends LoadSavedCryptoAccounts
@@ -1624,4 +1664,12 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record< string, bigint >
     : T extends SetCachePrimerTimestamp
     ? void
+    : T extends GetTokenSwapPools
+    ? TokenSwapPool[]
+    : T extends QuoteTokenSwap
+    ? [DexId, bigint][]
+    : T extends SwapTokens
+    ? SwapTokensResponse
+    : T extends TokenSwapStatus
+    ? TokenSwapStatusResponse
     : never;

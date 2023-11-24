@@ -342,6 +342,10 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
+    TokenSwapPool,
+    DexId,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -475,6 +479,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
+        initialiseTracking(config);
+
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
@@ -482,7 +488,6 @@ export class OpenChat extends OpenChatAgentWorker {
             },
             storage: idbAuthClientStore,
         });
-        initialiseTracking(config);
 
         this._authClient.then((c) => c.getIdentity()).then((id) => this.loadedIdentity(id));
     }
@@ -3743,12 +3748,24 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.sendRequest({ kind: "getCurrentUser" }).then((response) => {
-            if (response.kind === "created_user") {
-                userCreatedStore.set(true);
-                selectedAuthProviderStore.init(AuthProvider.II);
-            }
-            return response;
+        return new Promise((resolve, reject) => {
+            let resolved = false;
+            this.sendStreamRequest({ kind: "getCurrentUser" })
+                .subscribe((user) => {
+                    if (user.kind === "created_user") {
+                        userCreatedStore.set(true);
+                        selectedAuthProviderStore.init(AuthProvider.II);
+                        this.user.set(user);
+                        this.setDiamondMembership(user.diamondMembership);
+                    }
+                    if (!resolved) {
+                        // we want to resolve the promise with the first response from the stream so that
+                        // we are not waiting unnecessarily
+                        resolve(user);
+                        resolved = true;
+                    }
+                })
+                .catch(reject);
         });
     }
 
@@ -4794,7 +4811,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 const interval = expiry - now;
                 this._membershipCheck = window.setTimeout(
                     () => {
-                        this.sendRequest({ kind: "getCurrentUser" }).then((user) => {
+                        this.getCurrentUser().then((user) => {
                             if (user.kind === "created_user") {
                                 this.user.set(user);
                             } else {
@@ -5133,6 +5150,57 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Unable to submit proposal", err);
                 return false;
             });
+    }
+
+    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
+        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
+
+        return this.sendRequest({
+            kind: "getTokenSwapPools",
+            inputToken,
+            outputTokens,
+        });
+    }
+
+    quoteTokenSwap(
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+    ): Promise<[DexId, bigint][]> {
+        return this.sendRequest({
+            kind: "quoteTokenSwap",
+            inputToken,
+            outputToken,
+            amountIn,
+        });
+    }
+
+    swapTokens(
+        swapId: bigint,
+        inputToken: string,
+        outputToken: string,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        pool: TokenSwapPool,
+    ): Promise<SwapTokensResponse> {
+        const lookup = get(cryptoLookup);
+
+        return this.sendRequest({
+            kind: "swapTokens",
+            swapId,
+            inputToken: lookup[inputToken],
+            outputToken: lookup[outputToken],
+            amountIn,
+            minAmountOut,
+            pool,
+        });
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        return this.sendRequest({
+            kind: "tokenSwapStatus",
+            swapId,
+        });
     }
 
     // **** Communities Stuff

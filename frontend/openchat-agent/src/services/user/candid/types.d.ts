@@ -1770,6 +1770,18 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SwapTokensArgs {
+  'input_amount' : bigint,
+  'min_output_amount' : bigint,
+  'swap_id' : bigint,
+  'input_token' : TokenInfo,
+  'exchange_args' : {
+      'ICPSwap' : { 'zero_for_one' : boolean, 'swap_canister_id' : CanisterId }
+    },
+  'output_token' : TokenInfo,
+}
+export type SwapTokensResponse = { 'Success' : { 'amount_out' : bigint } } |
+  { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1831,6 +1843,24 @@ export type TipMessageResponse = { 'Retrying' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CannotTipSelf' : null };
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
+export interface TokenSwapStatusArgs { 'swap_id' : bigint }
+export type TokenSwapStatusResponse = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'started' : TimestampMillis,
+      'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+    }
+  };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -2111,7 +2141,12 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
+  'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
+  'token_swap_status' : ActorMethod<
+    [TokenSwapStatusArgs],
+    TokenSwapStatusResponse
+  >,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

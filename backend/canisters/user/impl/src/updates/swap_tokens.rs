@@ -156,7 +156,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         } else {
             mutate_state(|state| {
                 let now = state.env.now();
-                token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(()), now));
+                token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(amount_out), now));
                 token_swap.success = Some(Timestamped::new(true, now));
                 state.data.token_swaps.upsert(token_swap);
             });
