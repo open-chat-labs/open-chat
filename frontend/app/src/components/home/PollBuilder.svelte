@@ -202,7 +202,7 @@
                                             placeholder={$_(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
-                                                    : "poll.answerText"
+                                                    : "poll.answerText",
                                             )}>
                                             {#if answerError !== undefined}
                                                 <ErrorMessage>{$_(answerError)}</ErrorMessage>
@@ -234,13 +234,13 @@
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                         checked={poll.allowMultipleVotesPerUser} />
 
-                    <!-- <Toggle
+                    <Toggle
                         small
                         id={"allow-change"}
                         disabled={poll.allowMultipleVotesPerUser}
                         label={$_("poll.allowChangeVotes")}
                         on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} /> -->
+                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
 
                     <Toggle
                         small
