@@ -3,7 +3,8 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -67,7 +68,7 @@ export type ApproveError = {
 export interface ApproveTransferArgs {
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
-  'expires_at' : [] | [Milliseconds],
+  'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
 export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |
@@ -506,6 +507,12 @@ export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InternalError' : string };
+export interface DeleteDirectChatArgs {
+  'block_user' : boolean,
+  'user_id' : UserId,
+}
+export type DeleteDirectChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -583,6 +590,7 @@ export interface DirectChatsUpdates {
   'added' : Array<DirectChatSummary>,
   'pinned' : [] | [Array<ChatId>],
   'updated' : Array<DirectChatSummaryUpdates>,
+  'removed' : Array<ChatId>,
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
@@ -718,6 +726,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -1046,6 +1055,7 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1365,6 +1375,11 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PaymentGate {
+  'fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+}
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
@@ -1392,6 +1407,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1941,6 +1957,7 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -2072,6 +2089,10 @@ export interface _SERVICE {
   'delete_community' : ActorMethod<
     [DeleteCommunityArgs],
     DeleteCommunityResponse
+  >,
+  'delete_direct_chat' : ActorMethod<
+    [DeleteDirectChatArgs],
+    DeleteDirectChatResponse
   >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,

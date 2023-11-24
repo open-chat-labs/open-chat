@@ -23,6 +23,7 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
+    supportedStandards: string[];
     added: bigint;
     lastUpdated: bigint;
 };

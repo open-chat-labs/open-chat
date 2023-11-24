@@ -12,6 +12,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'last_updated' : TimestampMillis,
     'ledger_canister_id' : CanisterId,
+    'supported_standards' : IDL.Vec(IDL.Text),
     'symbol' : IDL.Text,
     'transaction_url_format' : IDL.Text,
   });

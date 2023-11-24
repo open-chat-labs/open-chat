@@ -41,7 +41,7 @@ export const idlFactory = ({ IDL }) => {
   const ApproveTransferArgs = IDL.Record({
     'ledger_canister_id' : CanisterId,
     'amount' : IDL.Nat,
-    'expires_at' : IDL.Opt(Milliseconds),
+    'expires_in' : IDL.Opt(Milliseconds),
     'spender' : Account,
   });
   const ApproveError = IDL.Variant({
@@ -121,10 +121,16 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const PaymentGate = IDL.Record({
+    'fee' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const Document = IDL.Record({
     'id' : IDL.Nat,
@@ -247,6 +253,14 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const DeleteDirectChatArgs = IDL.Record({
+    'block_user' : IDL.Bool,
+    'user_id' : UserId,
+  });
+  const DeleteDirectChatResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
     'ChatFrozen' : IDL.Null,
@@ -318,6 +332,7 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
+    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
@@ -993,6 +1008,7 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'suspended' : IDL.Bool,
     }),
   });
   const LeaveCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
@@ -1537,6 +1553,7 @@ export const idlFactory = ({ IDL }) => {
     'added' : IDL.Vec(DirectChatSummary),
     'pinned' : IDL.Opt(IDL.Vec(ChatId)),
     'updated' : IDL.Vec(DirectChatSummaryUpdates),
+    'removed' : IDL.Vec(ChatId),
   });
   const UpdatesResponse = IDL.Variant({
     'Success' : IDL.Record({
@@ -1549,6 +1566,7 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : IDL.Opt(IDL.Bool),
     }),
     'SuccessNoUpdates' : IDL.Null,
   });
@@ -1594,6 +1612,11 @@ export const idlFactory = ({ IDL }) => {
     'delete_community' : IDL.Func(
         [DeleteCommunityArgs],
         [DeleteCommunityResponse],
+        [],
+      ),
+    'delete_direct_chat' : IDL.Func(
+        [DeleteDirectChatArgs],
+        [DeleteDirectChatResponse],
         [],
       ),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),

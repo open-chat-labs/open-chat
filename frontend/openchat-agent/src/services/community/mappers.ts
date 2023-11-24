@@ -177,6 +177,10 @@ function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFaile
     if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
         return "min_stake_not_met";
     }
+    if ("PaymentFailed" in candid) {
+        console.warn("PaymentFailed: ", candid);
+        return "payment_failed";
+    }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 

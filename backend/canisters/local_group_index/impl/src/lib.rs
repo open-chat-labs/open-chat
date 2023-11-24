@@ -121,7 +121,6 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
