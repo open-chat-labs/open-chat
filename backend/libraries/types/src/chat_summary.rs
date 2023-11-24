@@ -24,7 +24,6 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
 }
 
@@ -65,7 +64,6 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
@@ -86,7 +84,6 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
 }
 
@@ -110,7 +107,6 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
@@ -143,11 +139,9 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[serde(default)]
     pub membership: Option<GroupMembership>,
 }
 
@@ -251,11 +245,9 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
-    #[serde(default)]
     pub membership: Option<GroupMembershipUpdates>,
 }
 

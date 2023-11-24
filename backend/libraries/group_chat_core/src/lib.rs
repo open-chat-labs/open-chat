@@ -1907,7 +1907,6 @@ pub struct SummaryUpdates {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
-    #[serde(default)]
     pub version_last_updated: TimestampMillis,
 }
 

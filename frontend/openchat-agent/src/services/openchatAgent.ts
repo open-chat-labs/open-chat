@@ -191,6 +191,7 @@ import {
     CommonResponses,
     applyOptionUpdate,
     ANON_USER_ID,
+    offline,
     Stream,
     waitAll,
 } from "openchat-shared";
@@ -360,7 +361,7 @@ export class OpenChatAgent extends EventTarget {
         msg: Message,
         threadRootMessageIndex?: number,
     ): Promise<EditMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve("failure");
 
         switch (chatId.kind) {
             case "direct_chat":
@@ -382,7 +383,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
-        if (!navigator.onLine) {
+        if (offline()) {
             recordFailedMessage(this.db, chatId, event, threadRootMessageIndex);
             return Promise.resolve([CommonResponses.offline(), event.event]);
         }
@@ -521,7 +522,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         if (candidate.id.kind === "channel") {
             return this.communityClient(candidate.id.communityId).createChannel(candidate);
@@ -541,7 +542,7 @@ export class OpenChatAgent extends EventTarget {
         gate?: AccessGate,
         isPublic?: boolean,
     ): Promise<UpdateGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -578,7 +579,7 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve<InviteUsersResponse>("success");
         }
 
-        if (!navigator.onLine) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve("failure");
 
         const communityLocalUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(communityLocalUserIndex).inviteUsersToCommunity(
@@ -595,7 +596,7 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve<InviteUsersResponse>("success");
         }
 
-        if (!navigator.onLine) return Promise.resolve("failure");
+        if (offline()) return Promise.resolve("failure");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1200,7 +1201,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        if (!navigator.onLine) return Promise.resolve([]);
+        if (offline()) return Promise.resolve([]);
 
         return this._userIndexClient
             .searchUsers(searchTerm, maxResults)
@@ -1213,7 +1214,7 @@ export class OpenChatAgent extends EventTarget {
         pageIndex: number,
         pageSize = 10,
     ): Promise<ExploreChannelsResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(id.communityId)
             .exploreChannels(searchTerm, pageIndex, pageSize)
@@ -1238,7 +1239,7 @@ export class OpenChatAgent extends EventTarget {
         flags: number,
         languages: string[],
     ): Promise<ExploreCommunitiesResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._groupIndexClient
             .exploreCommunities(searchTerm, pageIndex, pageSize, flags, languages)
@@ -1258,7 +1259,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._groupIndexClient.searchGroups(searchTerm, maxResults).then((res) => {
             if (res.kind === "success") {
@@ -1277,7 +1278,7 @@ export class OpenChatAgent extends EventTarget {
         userIds: string[],
         maxResults = 10,
     ): Promise<SearchGroupChatResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1301,7 +1302,7 @@ export class OpenChatAgent extends EventTarget {
         searchTerm: string,
         maxResults = 10,
     ): Promise<SearchDirectChatResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.searchDirectChat(chatId, searchTerm, maxResults);
     }
@@ -1676,19 +1677,19 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setModerationFlags(flags: number): Promise<boolean> {
-        if (!navigator.onLine) return Promise.resolve(false);
+        if (offline()) return Promise.resolve(false);
 
         return this._userIndexClient.setModerationFlags(flags);
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.checkUsername(username);
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.setUsername(userId, username);
     }
@@ -1697,7 +1698,7 @@ export class OpenChatAgent extends EventTarget {
         userId: string,
         displayName: string | undefined,
     ): Promise<SetDisplayNameResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.setDisplayName(userId, displayName);
     }
@@ -1707,7 +1708,7 @@ export class OpenChatAgent extends EventTarget {
         userId: string,
         newRole: MemberRole,
     ): Promise<ChangeRoleResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1722,7 +1723,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<DeleteGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1733,7 +1734,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1747,7 +1748,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.blockUser(userId);
     }
@@ -1756,7 +1757,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<BlockUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         if (chatId.kind === "channel")
             throw new Error("TODO - blockUserFromChannel not implemented");
@@ -1767,7 +1768,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         userId: string,
     ): Promise<UnblockUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         if (chatId.kind === "channel")
             throw new Error("TODO - unblockUserFromChannel not implemented");
@@ -1775,13 +1776,13 @@ export class OpenChatAgent extends EventTarget {
     }
 
     unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.unblockUser(userId);
     }
 
     leaveGroup(chatId: MultiUserChatIdentifier): Promise<LeaveGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         if (chatIdentifiersEqual(this._groupInvite?.chatId, chatId)) {
             this._groupInvite = undefined;
@@ -1798,7 +1799,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         _credential?: string,
     ): Promise<JoinGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1826,7 +1827,7 @@ export class OpenChatAgent extends EventTarget {
         id: CommunityIdentifier,
         _credential?: string,
     ): Promise<JoinCommunityResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
         const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
@@ -1852,7 +1853,7 @@ export class OpenChatAgent extends EventTarget {
         displayName: string | undefined,
         threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1890,7 +1891,7 @@ export class OpenChatAgent extends EventTarget {
         reaction: string,
         threadRootMessageIndex?: number,
     ): Promise<AddRemoveReactionResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1924,7 +1925,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number,
         asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -1954,7 +1955,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number,
         asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.communityClient(chatId.communityId).deleteMessages(
             chatId,
@@ -1970,7 +1971,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex?: number,
         asPlatformModerator?: boolean,
     ): Promise<DeleteMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.getGroupClient(chatId).deleteMessage(
             messageId,
@@ -1984,7 +1985,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<DeleteMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.deleteMessage(otherUserId, messageId, threadRootMessageIndex);
     }
@@ -1994,7 +1995,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         threadRootMessageIndex?: number,
     ): Promise<UndeleteMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2041,7 +2042,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: ChatIdentifier,
         muted: boolean,
     ): Promise<ToggleMuteNotificationResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2099,7 +2100,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getBio(userId?: string): Promise<string> {
-        if (!navigator.onLine) return Promise.resolve("");
+        if (offline()) return Promise.resolve("");
 
         const userClient = userId
             ? UserClient.create(userId, this.identity, this.config, this.db)
@@ -2115,7 +2116,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.setBio(bio);
     }
@@ -2125,7 +2126,7 @@ export class OpenChatAgent extends EventTarget {
         displayName: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
         return this.createLocalUserIndexClient(localUserIndex).registerUser(
@@ -2184,7 +2185,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     pinMessage(chatId: MultiUserChatIdentifier, messageIndex: number): Promise<PinMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2198,7 +2199,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: MultiUserChatIdentifier,
         messageIndex: number,
     ): Promise<UnpinMessageResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2215,7 +2216,7 @@ export class OpenChatAgent extends EventTarget {
         voteType: "register" | "delete",
         threadRootMessageIndex?: number,
     ): Promise<RegisterPollVoteResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2239,13 +2240,13 @@ export class OpenChatAgent extends EventTarget {
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal,
     ): Promise<WithdrawCryptocurrencyResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.withdrawCryptocurrency(domain);
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "community":
@@ -2258,7 +2259,7 @@ export class OpenChatAgent extends EventTarget {
     enableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<EnableInviteCodeResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "community":
@@ -2271,7 +2272,7 @@ export class OpenChatAgent extends EventTarget {
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (id.kind) {
             case "community":
@@ -2284,7 +2285,7 @@ export class OpenChatAgent extends EventTarget {
     resetInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<ResetInviteCodeResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (id.kind) {
             case "community":
@@ -2295,25 +2296,25 @@ export class OpenChatAgent extends EventTarget {
     }
 
     pinChat(chatId: ChatIdentifier, favourite: boolean): Promise<PinChatResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.pinChat(chatId, favourite);
     }
 
     unpinChat(chatId: ChatIdentifier, favourite: boolean): Promise<UnpinChatResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.unpinChat(chatId, favourite);
     }
 
     archiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.archiveChat(chatId);
     }
 
     unarchiveChat(chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.unarchiveChat(chatId);
     }
@@ -2323,7 +2324,7 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2345,7 +2346,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         const userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return userClient.migrateUserPrincipal();
@@ -2509,43 +2510,43 @@ export class OpenChatAgent extends EventTarget {
         chatId: GroupChatIdentifier,
         reason: string | undefined,
     ): Promise<FreezeGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.freezeGroup(chatId.groupId, reason);
     }
 
     unfreezeGroup(chatId: GroupChatIdentifier): Promise<UnfreezeGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.unfreezeGroup(chatId.groupId);
     }
 
     deleteFrozenGroup(chatId: GroupChatIdentifier): Promise<DeleteFrozenGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.deleteFrozenGroup(chatId.groupId);
     }
 
     addHotGroupExclusion(chatId: GroupChatIdentifier): Promise<AddHotGroupExclusionResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.addHotGroupExclusion(chatId.groupId);
     }
 
     removeHotGroupExclusion(chatId: GroupChatIdentifier): Promise<RemoveHotGroupExclusionResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.removeHotGroupExclusion(chatId.groupId);
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.suspendUser(userId, reason);
     }
 
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.unsuspendUser(userId);
     }
@@ -2563,7 +2564,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     claimPrize(chatId: MultiUserChatIdentifier, messageId: bigint): Promise<ClaimPrizeResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2583,7 +2584,7 @@ export class OpenChatAgent extends EventTarget {
         recurring: boolean,
         expectedPriceE8s: bigint,
     ): Promise<PayForDiamondMembershipResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._userIndexClient.payForDiamondMembership(
             userId,
@@ -2598,25 +2599,25 @@ export class OpenChatAgent extends EventTarget {
         communityId: string,
         flags: number,
     ): Promise<SetCommunityModerationFlagsResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setCommunityModerationFlags(communityId, flags);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setGroupUpgradeConcurrency(value);
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._groupIndexClient.setCommunityUpgradeConcurrency(value);
     }
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._userIndexClient.setUserUpgradeConcurrency(value);
     }
@@ -2625,7 +2626,7 @@ export class OpenChatAgent extends EventTarget {
         governanceCanisterId: string,
         stake: bigint,
     ): Promise<StakeNeuronForSubmittingProposalsResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this._proposalsBotClient.stakeNeuronForSubmittingProposals(
             governanceCanisterId,
@@ -2636,7 +2637,7 @@ export class OpenChatAgent extends EventTarget {
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs,
     ): Promise<UpdateMarketMakerConfigResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this._marketMakerClient.updateConfig(config);
     }
@@ -2648,7 +2649,7 @@ export class OpenChatAgent extends EventTarget {
         notes?: string,
         threadRootMessageIndex?: number,
     ): Promise<SetMessageReminderResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.userClient.setMessageReminder(
             chatId,
@@ -2660,7 +2661,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
-        if (!navigator.onLine) return Promise.resolve(false);
+        if (offline()) return Promise.resolve(false);
 
         return this.userClient.cancelMessageReminder(reminderId);
     }
@@ -2670,7 +2671,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<DeclineInvitationResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         switch (chatId.kind) {
             case "group_chat":
@@ -2685,7 +2686,7 @@ export class OpenChatAgent extends EventTarget {
         historyVisible: boolean,
         rules: Rules,
     ): Promise<ConvertToCommunityResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
@@ -2717,7 +2718,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
-        if (!navigator.onLine) return Promise.resolve(false);
+        if (offline()) return Promise.resolve(false);
 
         return this.userClient.setCommunityIndexes(communityIndexes);
     }
@@ -2727,7 +2728,7 @@ export class OpenChatAgent extends EventTarget {
         name: string,
         userIds: string[],
     ): Promise<CreateUserGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).createUserGroup(name, userIds);
     }
@@ -2739,7 +2740,7 @@ export class OpenChatAgent extends EventTarget {
         usersToAdd: string[],
         usersToRemove: string[],
     ): Promise<UpdateUserGroupResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).updateUserGroup(
             userGroupId,
@@ -2753,7 +2754,7 @@ export class OpenChatAgent extends EventTarget {
         communityId: string,
         display_name: string | undefined,
     ): Promise<SetMemberDisplayNameResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         return this.communityClient(communityId).setMemberDisplayName(display_name);
     }
@@ -2762,7 +2763,7 @@ export class OpenChatAgent extends EventTarget {
         communityId: string,
         userGroupIds: number[],
     ): Promise<DeleteUserGroupsResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.communityClient(communityId).deleteUserGroups(userGroupIds);
     }
@@ -2780,7 +2781,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number,
         follow: boolean,
     ): Promise<FollowThreadResponse> {
-        if (!navigator.onLine) return Promise.resolve("offline");
+        if (offline()) return Promise.resolve("offline");
 
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).followThread(
@@ -2803,7 +2804,7 @@ export class OpenChatAgent extends EventTarget {
         proposalRejectionFee: bigint,
         transactionFee: bigint,
     ): Promise<SubmitProposalResponse> {
-        if (!navigator.onLine) return Promise.resolve(CommonResponses.offline());
+        if (offline()) return Promise.resolve(CommonResponses.offline());
 
         return this.userClient.submitProposal(
             governanceCanisterId,
@@ -2821,7 +2822,7 @@ export class OpenChatAgent extends EventTarget {
         messageId: bigint,
         deleteMessage: boolean,
     ): Promise<boolean> {
-        if (!navigator.onLine) return Promise.resolve(false);
+        if (offline()) return Promise.resolve(false);
 
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).reportMessage(

@@ -178,9 +178,7 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
-    #[serde(default)]
     pub token_swaps: TokenSwaps,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 

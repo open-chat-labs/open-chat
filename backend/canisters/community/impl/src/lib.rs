@@ -288,11 +288,8 @@ struct Data {
     next_event_expiry: Option<TimestampMillis>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
-    #[serde(default)]
     rng_seed: [u8; 32],
-    #[serde(default)]
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub total_payment_receipts: PaymentReceipts,
 }
 

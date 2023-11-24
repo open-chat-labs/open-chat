@@ -132,7 +132,6 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
