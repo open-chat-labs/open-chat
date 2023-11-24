@@ -110,7 +110,7 @@
                 ...candidate,
                 gate: {
                     ...candidate.gate,
-                    amount: BigInt(amount),
+                    amount,
                 },
             };
         }
@@ -130,7 +130,7 @@
     function amountFromText(
         amountText: string,
         tokenDetails: CryptocurrencyDetails | undefined,
-    ): number | undefined {
+    ): bigint | undefined {
         if (tokenDetails === undefined) {
             return undefined;
         }
@@ -140,7 +140,7 @@
             return undefined;
         }
 
-        return Math.floor(amount * Number(Math.pow(10, tokenDetails.decimals)));
+        return BigInt(amount) * BigInt(10) ** BigInt(tokenDetails.decimals);
     }
 
     function updateGate() {
