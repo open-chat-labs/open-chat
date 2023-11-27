@@ -105,6 +105,8 @@
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
+        @include nice-scrollbar();
+        max-height: 300px;
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);

@@ -1076,6 +1076,20 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
+        const chatId: ChatIdentifier = { kind: "direct_chat", userId };
+        localChatSummaryUpdates.markRemoved(chatId);
+        return this.sendRequest({ kind: "deleteDirectChat", userId, blockUser }).then((success) => {
+            if (!success) {
+                const chat = this._liveState.chatSummaries.get(chatId);
+                if (chat !== undefined) {
+                    localChatSummaryUpdates.markAdded(chat);
+                }
+            }
+            return success;
+        });
+    }
+
     leaveGroup(
         chatId: MultiUserChatIdentifier,
     ): Promise<"success" | "failure" | "owner_cannot_leave"> {
@@ -4599,7 +4613,7 @@ export class OpenChat extends OpenChatAgentWorker {
             if (chatsResponse.suspensionChanged !== undefined) {
                 this.dispatchEvent(new UserSuspensionChanged());
                 return;
-            }            
+            }
 
             if (updateRegistryTask !== undefined) {
                 // We need the registry to be loaded before we attempt to render chats / events

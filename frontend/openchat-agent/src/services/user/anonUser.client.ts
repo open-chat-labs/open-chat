@@ -55,7 +55,7 @@ import type {
     ExchangeTokenSwapArgs,
     SwapTokensResponse,
     TokenSwapStatusResponse,
-	ApproveTransferResponse,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import { AnonymousOperationError } from "openchat-shared";
 
@@ -392,12 +392,16 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-	approveTransfer(
-        _spender: string, 
-        _ledger: string, 
-        _amount: bigint, 
-        _expiresIn: bigint | undefined
+    approveTransfer(
+        _spender: string,
+        _ledger: string,
+        _amount: bigint,
+        _expiresIn: bigint | undefined,
     ): Promise<ApproveTransferResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    deleteDirectChat(_userId: string, _blockUser: boolean): Promise<boolean> {
         throw new AnonymousOperationError();
     }
 }

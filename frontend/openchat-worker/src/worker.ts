@@ -1396,6 +1396,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.tokenSwapStatus(payload.swapId));
                 break;
 
+            case "deleteDirectChat":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteDirectChat(payload.userId, payload.blockUser),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
