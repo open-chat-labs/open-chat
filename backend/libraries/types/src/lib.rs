@@ -196,5 +196,5 @@ pub fn local_user_index_canister_id(canister_id: CanisterId) -> CanisterId {
         return CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
     }
     // This will only be reached during tests + local development
-    Principal::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap()
+    CanisterId::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap()
 }
