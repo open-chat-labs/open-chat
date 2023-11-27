@@ -3,7 +3,7 @@ use crate::model::community::Community;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{CommunityId, TimestampMillis};
+use types::{CanisterId, CommunityId, TimestampMillis};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Communities {
@@ -32,18 +32,31 @@ impl Communities {
             || self.removed.last().map(|g| g.timestamp > since).unwrap_or_default()
     }
 
-    pub fn create(&mut self, community_id: CommunityId, now: TimestampMillis) -> bool {
-        self.join(community_id, now);
+    pub fn create(
+        &mut self,
+        community_id: CommunityId,
+        local_user_index_canister_id: CanisterId,
+        now: TimestampMillis,
+    ) -> bool {
+        self.join(community_id, local_user_index_canister_id, now);
         self.communities_created += 1;
         true
     }
 
-    pub fn join(&mut self, community_id: CommunityId, now: TimestampMillis) -> (&mut Community, bool) {
+    pub fn join(
+        &mut self,
+        community_id: CommunityId,
+        local_user_index_canister_id: CanisterId,
+        now: TimestampMillis,
+    ) -> (&mut Community, bool) {
         let index = self.next_index();
         match self.communities.entry(community_id) {
             Vacant(e) => {
                 self.removed.retain(|c| c.community_id != community_id);
-                (e.insert(Community::new(community_id, index, now)), true)
+                (
+                    e.insert(Community::new(community_id, local_user_index_canister_id, index, now)),
+                    true,
+                )
             }
             Occupied(e) => (e.into_mut(), false),
         }

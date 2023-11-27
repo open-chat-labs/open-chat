@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+
 ## [[2.0.944](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.944-local_group_index)] - 2023-11-24
 
 ### Changed

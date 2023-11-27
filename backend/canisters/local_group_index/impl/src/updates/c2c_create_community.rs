@@ -31,7 +31,10 @@ async fn c2c_create_community(args: Args) -> Response {
         Ok(canister_id) => {
             let community_id = canister_id.into();
             mutate_state(|state| commit(community_id, wasm_version, state));
-            Success(SuccessResult { community_id })
+            Success(SuccessResult {
+                community_id,
+                local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
+            })
         }
         Err(error) => {
             let mut canister_id = None;
@@ -46,6 +49,7 @@ async fn c2c_create_community(args: Args) -> Response {
 
 struct PrepareOk {
     canister_id: Option<CanisterId>,
+    local_user_index_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
     init_canister_args: InitCommunityCanisterArgs,
@@ -64,6 +68,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.community_canister_wasm_for_new_canisters.clone();
+    let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = community_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -76,7 +81,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         group_index_canister_id: state.data.group_index_canister_id,
         local_group_index_canister_id: state.env.canister_id(),
         user_index_canister_id: state.data.user_index_canister_id,
-        local_user_index_canister_id: state.data.local_user_index_canister_id,
+        local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         avatar: args.avatar,
@@ -92,6 +97,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
 
     Ok(PrepareOk {
         canister_id,
+        local_user_index_canister_id,
         canister_wasm,
         cycles_to_use,
         init_canister_args,
