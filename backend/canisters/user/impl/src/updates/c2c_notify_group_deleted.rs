@@ -25,6 +25,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
     if let Some(CommunityImportedInto {
         community_name,
         community_id,
+        local_user_index_canister_id,
         channel,
         other_default_channels,
     }) = args.deleted_group.community_imported_into
@@ -40,7 +41,7 @@ fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Respon
             state,
         );
 
-        let (community, newly_joined) = state.data.communities.join(community_id, now);
+        let (community, newly_joined) = state.data.communities.join(community_id, local_user_index_canister_id, now);
 
         if let Some(group) = group_removed {
             community.import_group(channel.channel_id, group, now);

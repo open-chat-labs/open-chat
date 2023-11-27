@@ -48,11 +48,14 @@ async fn join_group(args: Args) -> Response {
 }
 
 fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, state: &mut RuntimeState) {
+    let local_user_index_canister_id = state.env.canister_id();
+
     if state.data.local_users.get(&user_id).is_some() {
         state.push_event_to_user(
             user_id,
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
+                local_user_index_canister_id,
                 latest_message_index,
             })),
         );
@@ -61,6 +64,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
+                local_user_index_canister_id,
                 latest_message_index,
             },
         )));
