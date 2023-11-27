@@ -6,7 +6,7 @@
     import { _ } from "svelte-i18n";
     import type { TextContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
-    import { lowBandwidth } from "../../stores/settings";
+    import { lowBandwidth, renderPreviews } from "../../stores/settings";
     import LinkPreview from "./LinkPreview.svelte";
 
     const SIZE_LIMIT = 1000;
@@ -17,7 +17,7 @@
     export let fill: boolean;
     export let me: boolean;
 
-    $: expanded = !$lowBandwidth;
+    $: expanded = !$lowBandwidth && $renderPreviews;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do

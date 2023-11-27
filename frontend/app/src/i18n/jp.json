@@ -1169,5 +1169,6 @@
     "hideAuthProviders": "オプションを非表示にする",
     "messageDeletedByOpenChatBot": "このメッセージは最初に OpenChat ユーザーによって報告され、その後 [Modclub]({modclub}) に送信され、そこでメッセージが [プラットフォーム ルール]({rules}) に違反していると判断され、最終的には {username} によって {timestamp} によって削除されました。 }",
     "offlineMessage": "オフライン",
-    "offlineError": "申し訳ありませんが、現在オフラインのようです"
+    "offlineError": "申し訳ありませんが、現在オフラインのようです",
+    "renderPreviews": "自動レンダリングリンクプレビュー"
 }
