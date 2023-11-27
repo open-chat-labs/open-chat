@@ -2885,12 +2885,16 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.tokenSwapStatus(swapId);
     }
 
-	approveTransfer(
-        spender: string, 
-        ledger: string, 
-        amount: bigint, 
-        expiresIn: bigint | undefined
+    approveTransfer(
+        spender: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint | undefined,
     ): Promise<ApproveTransferResponse> {
         return this.userClient.approveTransfer(spender, ledger, amount, expiresIn);
-	}
+    }
+
+    deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
+        return this.userClient.deleteDirectChat(userId, blockUser);
+    }
 }

@@ -301,7 +301,8 @@ export type WorkerRequest =
     | QuoteTokenSwap
     | SwapTokens
     | TokenSwapStatus
-    | ApproveTransfer;
+    | ApproveTransfer
+    | DeleteDirectChat;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1237,10 +1238,10 @@ type ReportMessage = {
 };
 
 type ApproveTransfer = {
-    spender: string, 
-    ledger: string, 
-    amount: bigint, 
-    expiresIn: bigint | undefined,
+    spender: string;
+    ledger: string;
+    amount: bigint;
+    expiresIn: bigint | undefined;
     kind: "approveTransfer";
 };
 
@@ -1391,6 +1392,12 @@ type SubmitProposal = {
     proposalRejectionFee: bigint;
     transactionFee: bigint;
     kind: "submitProposal";
+};
+
+type DeleteDirectChat = {
+    kind: "deleteDirectChat";
+    userId: string;
+    blockUser: boolean;
 };
 
 // prettier-ignore
@@ -1686,4 +1693,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? SwapTokensResponse
     : T extends TokenSwapStatus
     ? TokenSwapStatusResponse
+    : T extends DeleteDirectChat
+    ? boolean
     : never;
