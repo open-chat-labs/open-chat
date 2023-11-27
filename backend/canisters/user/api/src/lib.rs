@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    MessageContent, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
+    local_user_index_canister_id, CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency,
+    DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -27,6 +27,7 @@ pub enum EventsResponse {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub threads_read: HashMap<MessageIndex, MessageIndex>,
     pub archived: bool,
@@ -45,6 +46,7 @@ pub struct GroupChatSummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunitySummary {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelSummary>,
     pub index: u32,
     pub archived: bool,
@@ -131,15 +133,51 @@ pub struct UserSuspended {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "UserJoinedGroupPrevious")]
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UserJoinedGroupPrevious {
+    pub chat_id: ChatId,
+    pub latest_message_index: Option<MessageIndex>,
+}
+
+impl From<UserJoinedGroupPrevious> for UserJoinedGroup {
+    fn from(value: UserJoinedGroupPrevious) -> Self {
+        UserJoinedGroup {
+            chat_id: value.chat_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.chat_id.into()),
+            latest_message_index: value.latest_message_index,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "UserJoinedCommunityOrChannelPrevious")]
 pub struct UserJoinedCommunityOrChannel {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UserJoinedCommunityOrChannelPrevious {
+    pub community_id: CommunityId,
+    pub channels: Vec<ChannelLatestMessageIndex>,
+}
+
+impl From<UserJoinedCommunityOrChannelPrevious> for UserJoinedCommunityOrChannel {
+    fn from(value: UserJoinedCommunityOrChannelPrevious) -> Self {
+        UserJoinedCommunityOrChannel {
+            community_id: value.community_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.community_id.into()),
+            channels: value.channels,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

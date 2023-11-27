@@ -55,7 +55,10 @@ async fn c2c_create_group(args: Args) -> Response {
                     state,
                 )
             });
-            Success(SuccessResult { chat_id: result.chat_id })
+            Success(SuccessResult {
+                chat_id: result.chat_id,
+                local_user_index_canister_id: result.local_user_index_canister_id,
+            })
         }
         Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
         Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,

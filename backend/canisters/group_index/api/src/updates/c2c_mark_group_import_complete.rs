@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
-use types::{ChannelLatestMessageIndex, ChatId, Milliseconds, PublicCommunityActivity, UserId};
+use types::{CanisterId, ChannelLatestMessageIndex, ChatId, Milliseconds, PublicCommunityActivity, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
     pub community_name: String,
+    pub local_user_index_canister_id: CanisterId,
     pub channel: ChannelLatestMessageIndex,
     pub group_id: ChatId,
     pub group_name: String,

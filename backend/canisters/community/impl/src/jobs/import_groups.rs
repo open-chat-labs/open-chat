@@ -262,6 +262,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
                 community_name: state.data.name.clone(),
+                local_user_index_canister_id: state.data.local_user_index_canister_id,
                 channel: ChannelLatestMessageIndex {
                     channel_id,
                     latest_message_index: channel.chat.events.main_events_list().latest_message_index(),

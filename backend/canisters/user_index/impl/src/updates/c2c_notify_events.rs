@@ -46,6 +46,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
                     chat_id: ev.chat_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
                 }),
             );
@@ -56,6 +57,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 LocalUserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
                 }),
             );
