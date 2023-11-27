@@ -1169,5 +1169,6 @@
     "hideAuthProviders": "Ẩn tùy chọn",
     "messageDeletedByOpenChatBot": "Tin nhắn này lần đầu tiên được báo cáo bởi một người dùng OpenChat, sau đó được gửi đến [Modclub]({modclub}), nơi người ta quyết định rằng tin nhắn này đã vi phạm [quy tắc nền tảng]({rules}) và cuối cùng bị xóa bởi {username} trên {xyz }",
     "offlineMessage": "Ngoại tuyến",
-    "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này"
+    "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này",
+    "renderPreviews": "Tự động hiển thị bản xem trước liên kết"
 }
