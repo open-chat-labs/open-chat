@@ -251,6 +251,7 @@ type ChatEventWrapper = record {
 
 type GroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
@@ -286,6 +287,7 @@ type GroupChatSummary = record {
 
 type GroupCanisterGroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
@@ -350,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
 
 type CommunityCanisterCommunitySummary = record {
     community_id : CommunityId;
+    local_user_index_canister_id : CanisterId;
     name : text;
     description : text;
     avatar_id : opt nat;
@@ -713,6 +716,7 @@ type PinnedMessageUpdate = variant {
 
 type PublicGroupSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
