@@ -18,6 +18,7 @@ mod env;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
+mod get_chat_events_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod notification_tests;

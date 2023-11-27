@@ -85,6 +85,7 @@ impl PublicGroups {
     pub fn hydrate_cached_summary(&self, summary: CachedPublicGroupSummary) -> Option<PublicGroupSummary> {
         self.groups.get(&summary.chat_id).map(|group| PublicGroupSummary {
             chat_id: summary.chat_id,
+            local_user_index_canister_id: summary.local_user_index_canister_id,
             last_updated: summary.last_updated,
             name: group.name.clone(),
             description: group.description.clone(),

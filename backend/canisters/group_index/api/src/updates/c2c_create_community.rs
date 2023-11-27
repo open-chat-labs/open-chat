@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, CommunityId, CommunityPermissions, Document, Rules};
+use types::{local_user_index_canister_id, AccessGate, CanisterId, CommunityId, CommunityPermissions, Document, Rules};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -27,6 +27,22 @@ pub enum Response {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+#[serde(from = "SuccessResultPrevious")]
 pub struct SuccessResult {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResultPrevious {
+    pub community_id: CommunityId,
+}
+
+impl From<SuccessResultPrevious> for SuccessResult {
+    fn from(value: SuccessResultPrevious) -> Self {
+        SuccessResult {
+            community_id: value.community_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.community_id.into()),
+        }
+    }
 }

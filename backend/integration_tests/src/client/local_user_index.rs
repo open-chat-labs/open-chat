@@ -1,7 +1,8 @@
-use crate::generate_update_call;
+use crate::{generate_query_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
+generate_query_call!(chat_events);
 
 // Updates
 generate_update_call!(invite_users_to_channel);

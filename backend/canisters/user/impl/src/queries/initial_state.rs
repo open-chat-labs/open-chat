@@ -101,6 +101,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
 
     GroupChatSummary {
         chat_id: cached.chat_id,
+        local_user_index_canister_id: cached.local_user_index_canister_id,
         last_updated: cached.last_updated,
         name: cached.name.clone(),
         description: cached.description.clone(),
