@@ -421,6 +421,7 @@ export function mergeUnconfirmedIntoSummary(
     unconfirmed: UnconfirmedMessages,
     localUpdates: MessageMap<LocalMessageUpdates>,
     translations: MessageMap<string>,
+    blockedUsers: Set<string>,
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -446,7 +447,8 @@ export function mergeUnconfirmedIntoSummary(
     if (latestMessage !== undefined) {
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
-        if (updates !== undefined || translation !== undefined) {
+        const senderBlocked = blockedUsers.has(latestMessage.event.sender);
+        if (updates !== undefined || translation !== undefined || senderBlocked) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
@@ -456,6 +458,8 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     translation,
                     undefined,
+                    senderBlocked,
+                    false,
                 ),
             };
         }
@@ -692,7 +696,8 @@ function reduceJoinedOrLeft(
 
 function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
     return (
-        message.content.kind === "deleted_content" &&
+        (message.content.kind === "deleted_content" ||
+            message.content.kind === "blocked_content") &&
         message.sender !== myUserId &&
         !expandedDeletedMessages.has(message.messageIndex) &&
         message.thread === undefined
@@ -1165,8 +1170,8 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-        ? OPENCHAT_BOT_AVATAR_URL
-        : buildIdenticonUrl(userId);
+          ? OPENCHAT_BOT_AVATAR_URL
+          : buildIdenticonUrl(userId);
 }
 
 export function buildBlobUrl(
@@ -1232,11 +1237,12 @@ export function mergeEventsAndLocalUpdates(
     expiredEventRanges: DRange,
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
+    blockedUsers: Set<string>,
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
 
-    function processEvent(e: EventWrapper<ChatEvent>) {
+    function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
 
         if (e.event.kind === "message") {
@@ -1263,12 +1269,19 @@ export function mergeEventsAndLocalUpdates(
                       ]
                     : undefined;
 
+            const senderBlocked = blockedUsers.has(e.event.sender);
+            const repliesToSenderBlocked =
+                e.event.repliesTo?.kind === "rehydrated_reply_context" &&
+                blockedUsers.has(e.event.repliesTo.senderId);
+
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
                 tallyUpdate !== undefined ||
                 translation !== undefined ||
-                replyTranslation !== undefined
+                replyTranslation !== undefined ||
+                senderBlocked ||
+                repliesToSenderBlocked
             ) {
                 return {
                     ...e,
@@ -1279,6 +1292,8 @@ export function mergeEventsAndLocalUpdates(
                         tallyUpdate,
                         translation,
                         replyTranslation,
+                        senderBlocked,
+                        repliesToSenderBlocked,
                     ),
                 };
             }
@@ -1319,17 +1334,9 @@ function mergeLocalUpdates(
     tallyUpdate: Tally | undefined,
     translation: string | undefined,
     replyTranslation: string | undefined,
+    senderBlocked: boolean,
+    repliesToSenderBlocked: boolean,
 ): Message {
-    if (
-        localUpdates === undefined &&
-        replyContextLocalUpdates === undefined &&
-        tallyUpdate === undefined &&
-        translation === undefined &&
-        replyTranslation === undefined
-    ) {
-        return message;
-    }
-
     if (localUpdates?.deleted !== undefined) {
         return {
             ...message,
@@ -1338,6 +1345,15 @@ function mergeLocalUpdates(
                 kind: "deleted_content",
                 deletedBy: localUpdates.deleted.deletedBy,
                 timestamp: localUpdates.deleted.timestamp,
+            },
+        };
+    }
+
+    if (senderBlocked && localUpdates?.blockedMessageRevealed !== true) {
+        return {
+            ...message,
+            content: {
+                kind: "blocked_content",
             },
         };
     }
@@ -1415,7 +1431,9 @@ function mergeLocalUpdates(
 
     if (
         message.repliesTo?.kind === "rehydrated_reply_context" &&
-        (replyContextLocalUpdates !== undefined || replyTranslation !== undefined)
+        (replyContextLocalUpdates !== undefined ||
+            replyTranslation !== undefined ||
+            repliesToSenderBlocked)
     ) {
         if (replyContextLocalUpdates?.deleted !== undefined) {
             message.repliesTo = {
@@ -1424,6 +1442,16 @@ function mergeLocalUpdates(
                     kind: "deleted_content",
                     deletedBy: replyContextLocalUpdates.deleted.deletedBy,
                     timestamp: replyContextLocalUpdates.deleted.timestamp,
+                },
+            };
+        } else if (
+            repliesToSenderBlocked &&
+            replyContextLocalUpdates?.blockedMessageRevealed !== true
+        ) {
+            message.repliesTo = {
+                ...message.repliesTo,
+                content: {
+                    kind: "blocked_content",
                 },
             };
         } else {
@@ -1634,8 +1662,8 @@ export function buildCryptoTransferText(
         content.transfer.kind === "completed"
             ? "confirmedSent"
             : me
-            ? "pendingSentByYou"
-            : "pendingSent";
+              ? "pendingSentByYou"
+              : "pendingSent";
 
     return formatter(`tokenTransfer.${key}`, { values });
 }

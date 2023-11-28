@@ -20,3 +20,6 @@ generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_toggle_reaction);
 generate_c2c_call!(c2c_undelete_messages);
 generate_c2c_call!(c2c_vote_on_proposal);
+generate_c2c_call!(events);
+generate_c2c_call!(events_by_index);
+generate_c2c_call!(events_window);

@@ -50,12 +50,18 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();
-            state.data.group_chats.join(ev.chat_id, ev.latest_message_index, now);
+            state
+                .data
+                .group_chats
+                .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
             state.data.hot_group_exclusions.remove(&ev.chat_id, now);
         }
         Event::UserJoinedCommunityOrChannel(ev) => {
             let now = state.env.now();
-            let (community, _) = state.data.communities.join(ev.community_id, now);
+            let (community, _) = state
+                .data
+                .communities
+                .join(ev.community_id, ev.local_user_index_canister_id, now);
             community.mark_read(
                 ev.channels
                     .into_iter()

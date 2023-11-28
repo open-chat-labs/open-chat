@@ -823,6 +823,7 @@ type FavouriteChatsUpdates = record {
 
 type UserCanisterGroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     read_by_me_up_to : opt MessageIndex;
     threads_read : vec record { MessageIndex; MessageIndex };
     archived : bool;
@@ -839,6 +840,7 @@ type UserCanisterGroupChatSummaryUpdates = record {
 
 type UserCanisterCommunitySummary = record {
     community_id : CommunityId;
+    local_user_index_canister_id : CanisterId;
     channels : vec UserCanisterChannelSummary;
     index : nat32;
     archived : bool;
