@@ -287,7 +287,7 @@
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
                             canPin={client.canPinMessages(chat.id)}
-                            canBlockUser={client.canBlockUsers(chat.id)}
+                            canBlockUsers={client.canBlockUsers(chat.id)}
                             canDelete={client.canDeleteOtherUsersMessages(chat.id)}
                             publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                                 chat.public}

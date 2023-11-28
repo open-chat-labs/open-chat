@@ -133,7 +133,7 @@ export function getContentAsText(
             }),
             content.caption,
         );
-    } else if (content.kind === "deleted_content") {
+    } else if (content.kind === "deleted_content" || content.kind === "blocked_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";

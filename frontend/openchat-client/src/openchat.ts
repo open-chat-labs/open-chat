@@ -1776,6 +1776,10 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    revealBlockedMessage(messageId: bigint) {
+        localMessageUpdates.markBlockedMessageRevealed(messageId);
+    }
+
     selectReaction(
         chatId: ChatIdentifier,
         userId: string,

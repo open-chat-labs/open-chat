@@ -1161,5 +1161,6 @@
         "timeUpdated": "Disappearing message time set to {duration}",
         "disabled": "Disappearing messages disabled"
     },
-    "offlineMessage": "Offline"
+    "offlineMessage": "Offline",
+    "messageBlocked": "Message hidden because sender is blocked"
 }

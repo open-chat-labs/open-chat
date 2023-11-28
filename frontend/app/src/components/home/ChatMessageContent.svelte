@@ -14,6 +14,7 @@
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
+    import BlockedContent from "./BlockedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
@@ -55,6 +56,8 @@
     <FileContent {edited} {me} {content} {reply} />
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} {undeleting} />
+{:else if content.kind === "blocked_content"}
+    <BlockedContent />
 {:else if content.kind === "crypto_content"}
     <CryptoContent {senderId} {content} {me} />
 {:else if content.kind === "placeholder_content"}
