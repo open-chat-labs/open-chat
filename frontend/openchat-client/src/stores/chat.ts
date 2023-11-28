@@ -35,7 +35,7 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { currentUser, userStore } from "./user";
+import { currentUser, suspendedUsers, userStore } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -57,7 +57,7 @@ import {
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { communityPreviewsStore } from "./community";
+import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
@@ -153,6 +153,13 @@ export const expiredEventRangesStore = createDerivedPropStore<
     "expiredEventRanges"
 >(chatStateStore, "expiredEventRanges", () => new DRange());
 
+const currentChatBlockedOrSuspendedUsers = derived(
+    [currentChatBlockedUsers, currentCommunityBlockedUsers, suspendedUsers],
+    ([chatBlocked, communityBlocked, suspended]) => {
+        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended]);
+    },
+);
+
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
     ([$allState, $scope]) => {
@@ -244,7 +251,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         currentUser,
         localMessageUpdates,
         translationStore,
-        currentChatBlockedUsers,
+        currentChatBlockedOrSuspendedUsers,
     ],
     ([
         summaries,
@@ -253,7 +260,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         currentUser,
         localUpdates,
         translations,
-        blockedUsers,
+        blockedOrSuspendedUsers,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
@@ -273,7 +280,7 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                         unconfirmed,
                         localUpdates,
                         translations,
-                        blockedUsers,
+                        blockedOrSuspendedUsers,
                     ),
                 );
                 return result;
@@ -463,7 +470,7 @@ export const threadEvents = derived(
         failedMessagesStore,
         proposalTallies,
         translationStore,
-        currentChatBlockedUsers,
+        currentChatBlockedOrSuspendedUsers,
     ],
     ([
         $serverEvents,
@@ -473,7 +480,7 @@ export const threadEvents = derived(
         $failedMessages,
         $proposalTallies,
         $translationStore,
-        $blockedUsers,
+        $blockedOrSuspendedUsers,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -489,7 +496,7 @@ export const threadEvents = derived(
             new DRange(),
             $proposalTallies,
             $translationStore,
-            $blockedUsers,
+            $blockedOrSuspendedUsers,
         );
     },
 );
@@ -641,7 +648,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         failedMessagesStore,
         proposalTallies,
         translationStore,
-        currentChatBlockedUsers,
+        currentChatBlockedOrSuspendedUsers,
     ],
     ([
         $serverEventsForSelectedChat,
@@ -651,7 +658,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $failedMessages,
         $proposalTallies,
         $translationStore,
-        $blockedUsers,
+        $blockedOrSuspendedUsers,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
@@ -665,7 +672,7 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $expiredEventRanges,
             $proposalTallies,
             $translationStore,
-            $blockedUsers,
+            $blockedOrSuspendedUsers,
         );
     },
 );

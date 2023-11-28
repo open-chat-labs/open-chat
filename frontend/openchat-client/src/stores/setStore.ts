@@ -3,7 +3,7 @@ import type { Writable } from "svelte/store";
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function createSetStore<T>(store: Writable<Set<T>>) {
     let storeValue = new Set<T>();
-    store.subscribe(value => storeValue = value);
+    store.subscribe((value) => (storeValue = value));
 
     return {
         subscribe: store.subscribe,
@@ -17,6 +17,17 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
                 return true;
             }
             return false;
+        },
+        addMany: (newIds: T[]) => {
+            const toAdd = newIds.filter((id) => !storeValue.has(id));
+            if (toAdd.length > 0) {
+                store.update((ids) => {
+                    for (const id of ids) {
+                        ids.add(id);
+                    }
+                    return new Set(ids);
+                });
+            }
         },
         delete: (id: T): boolean => {
             if (storeValue.has(id)) {
@@ -33,6 +44,6 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
                 ids.clear();
                 return ids;
             }),
-        value: (): Set<T> => storeValue
+        value: (): Set<T> => storeValue,
     };
 }

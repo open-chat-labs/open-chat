@@ -9,6 +9,7 @@ import {
     anonymousUser,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
+import { createSetStore } from "./setStore";
 
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
@@ -63,6 +64,8 @@ const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUs
     }, $normalUsers);
 });
 
+export const suspendedUsers = createSetStore(writable(new Set<string>()));
+
 export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
     lookup[user.userId] = { ...user };
     return lookup;
@@ -76,12 +79,22 @@ export const userStore = {
             const clone = { ...users };
             return overwriteUser(clone, user);
         });
+        if (user.suspended) {
+            suspendedUsers.add(user.userId);
+        }
     },
     addMany: (newUsers: UserSummary[]): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
+        const suspended = newUsers.reduce((arr, user) => {
+            if (user.suspended) {
+                arr.push(user.userId);
+            }
+            return arr;
+        }, [] as string[]);
+        suspendedUsers.addMany(suspended);
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
