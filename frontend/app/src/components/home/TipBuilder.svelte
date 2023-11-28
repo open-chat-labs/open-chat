@@ -58,7 +58,12 @@
     $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
-    $: valid = exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
+    $: valid =
+        exchangeRate > 0 &&
+        draftAmount > 0n &&
+        remainingBalance > 0n &&
+        error === undefined &&
+        !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
     $: transferFees = tokenDetails.transferFee;
 
