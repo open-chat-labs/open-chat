@@ -967,7 +967,8 @@
         "paymentFailed": "Pago fallido",
         "tokenComingSoon": "{token} (próximamente)",
         "payAndJoin": "Paga y únete",
-        "openAccess": "Ninguno (acceso abierto)"
+        "openAccess": "Ninguno (acceso abierto)",
+        "subscriptionComingSoon": "Próximamente modelo de suscripción."
     },
     "communities": {
         "explore": "Explora comunidades",
