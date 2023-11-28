@@ -57,7 +57,7 @@ import {
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { communityPreviewsStore } from "./community";
+import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
@@ -154,9 +154,9 @@ export const expiredEventRangesStore = createDerivedPropStore<
 >(chatStateStore, "expiredEventRanges", () => new DRange());
 
 const currentChatBlockedOrSuspendedUsers = derived(
-    [currentChatBlockedUsers, suspendedUsers],
-    ([blocked, suspended]) => {
-        return new Set<string>([...blocked, ...suspended]);
+    [currentChatBlockedUsers, currentCommunityBlockedUsers, suspendedUsers],
+    ([chatBlocked, communityBlocked, suspended]) => {
+        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended]);
     },
 );
 
