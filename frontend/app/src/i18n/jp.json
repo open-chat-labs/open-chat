@@ -1138,7 +1138,8 @@
         "noExchangeRate": "{token} には為替レートが設定されていません",
         "menu": "チップ",
         "plusFee": "+ {fee} {token} 手数料",
-        "advice": "好きなだけタップしてチップを残しましょう"
+        "advice": "好きなだけタップしてチップを残しましょう",
+        "showCustom": "カスタムチップ金額"
     },
     "followThread": "このスレッドをフォローしてください",
     "unfollowThread": "このスレッドのフォローを解除する",
