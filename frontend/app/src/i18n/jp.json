@@ -966,7 +966,8 @@
         "paymentFailed": "支払いに失敗しました",
         "tokenComingSoon": "{token} (近日公開予定)",
         "payAndJoin": "お金を払って参加する",
-        "openAccess": "なし（オープンアクセス）"
+        "openAccess": "なし（オープンアクセス）",
+        "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。"
     },
     "communities": {
         "explore": "コミュニティを探索する",

@@ -14,7 +14,7 @@ export function getGateBindings(): GateBinding[] {
         noGate,
         diamondGate,
         neuronGateFolder,
-        // paymentGateFolder,
+        paymentGateFolder,
         // credentialGate,
         nftGate,
     ];
@@ -79,12 +79,12 @@ const neuronGateFolder: GateBinding = {
     enabled: true,
 };
 
-// const paymentGateFolder: GateBinding = {
-//     label: "access.payment",
-//     key: "payment_gate_folder",
-//     gate: { kind: "no_gate" },
-//     enabled: true,
-// };
+const paymentGateFolder: GateBinding = {
+    label: "access.payment",
+    key: "payment_gate_folder",
+    gate: { kind: "no_gate" },
+    enabled: true,
+};
 
 const nftGate: GateBinding = {
     label: "access.nftHolder",
