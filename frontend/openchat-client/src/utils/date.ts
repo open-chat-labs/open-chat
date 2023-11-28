@@ -76,6 +76,7 @@ export function toShortTimeString(date: Date): string {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
+        hourCycle: "h23",
     });
 }
 
@@ -90,7 +91,7 @@ export function formatMessageDate(
     today: string,
     yesterday: string,
     timeIfToday = false,
-    short = false
+    short = false,
 ): string {
     if (timestamp === 0n) return "";
 
@@ -108,6 +109,6 @@ export function formatMessageDate(
     return useDayNameOnly
         ? toDayOfWeekString(date)
         : short
-        ? toDateString(date)
-        : toLongDateString(date);
+          ? toDateString(date)
+          : toLongDateString(date);
 }
