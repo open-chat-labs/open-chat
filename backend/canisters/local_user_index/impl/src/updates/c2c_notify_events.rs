@@ -109,6 +109,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 ev.user_id,
                 UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
                     chat_id: ev.chat_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
                 })),
             );
@@ -118,6 +119,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 ev.user_id,
                 UserEvent::UserJoinedCommunityOrChannel(Box::new(UserJoinedCommunityOrChannel {
                     community_id: ev.community_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
                 })),
             );

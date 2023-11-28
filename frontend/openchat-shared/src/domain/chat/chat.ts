@@ -44,6 +44,7 @@ export type MessageContent =
     | VideoContent
     | AudioContent
     | DeletedContent
+    | BlockedContent
     | PlaceholderContent
     | PollContent
     | CryptocurrencyContent
@@ -398,6 +399,10 @@ export type DeletedContent = {
     timestamp: bigint;
 };
 
+export type BlockedContent = {
+    kind: "blocked_content";
+};
+
 export type PollContent = {
     kind: "poll_content";
     votes: PollVotes;
@@ -573,8 +578,9 @@ export type LocalMessageUpdates = {
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
-    lastUpdated: number;
     tips?: TipsReceived;
+    blockedMessageRevealed?: boolean;
+    lastUpdated: number;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;

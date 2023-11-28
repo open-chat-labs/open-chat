@@ -40,7 +40,10 @@ async fn c2c_create_community(args: Args) -> Response {
     };
 
     match create_community_impl(c2c_create_community_args, local_group_index_canister).await {
-        Ok(community_id) => Success(SuccessResult { community_id }),
+        Ok(result) => Success(SuccessResult {
+            community_id: result.community_id,
+            local_user_index_canister_id: result.local_user_index_canister_id,
+        }),
         Err(error) => InternalError(error),
     }
 }
@@ -48,7 +51,7 @@ async fn c2c_create_community(args: Args) -> Response {
 pub(crate) async fn create_community_impl(
     args: local_group_index_canister::c2c_create_community::Args,
     local_group_index_canister: CanisterId,
-) -> Result<CommunityId, String> {
+) -> Result<local_group_index_canister::c2c_create_community::SuccessResult, String> {
     match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &args).await {
         Ok(local_group_index_canister::c2c_create_community::Response::Success(result)) => {
             mutate_state(|state| {
@@ -69,7 +72,7 @@ pub(crate) async fn create_community_impl(
                     state,
                 )
             });
-            Ok(result.community_id)
+            Ok(result)
         }
         Ok(local_group_index_canister::c2c_create_community::Response::InternalError(error)) => Err(error),
         Err(error) => {

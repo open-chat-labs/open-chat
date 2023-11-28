@@ -266,6 +266,7 @@ impl Job for JoinUserToGroup {
                         LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                             user_id: args.user_id,
                             chat_id: group_id,
+                            local_user_index_canister_id: s.local_user_index_canister_id,
                             latest_message_index: s.latest_message.map(|m| m.event.message_index),
                         }),
                     )

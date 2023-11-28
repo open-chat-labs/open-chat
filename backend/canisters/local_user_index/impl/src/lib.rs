@@ -131,11 +131,13 @@ impl RuntimeState {
         community_id: CommunityId,
         channels: Vec<ChannelLatestMessageIndex>,
     ) {
+        let local_user_index_canister_id = self.env.canister_id();
         if self.data.local_users.get(&user_id).is_some() {
             self.push_event_to_user(
                 user_id,
                 UserEvent::UserJoinedCommunityOrChannel(Box::new(user_canister::UserJoinedCommunityOrChannel {
                     community_id,
+                    local_user_index_canister_id,
                     channels,
                 })),
             );
@@ -144,6 +146,7 @@ impl RuntimeState {
                 user_index_canister::UserJoinedCommunityOrChannel {
                     user_id,
                     community_id,
+                    local_user_index_canister_id,
                     channels,
                 },
             )));

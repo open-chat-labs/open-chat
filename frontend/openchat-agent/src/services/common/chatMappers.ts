@@ -1089,9 +1089,6 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "crypto_content":
             return { Crypto: apiPendingCryptoContent(domain) };
 
-        case "deleted_content":
-            return { Deleted: apiDeletedContent(domain) };
-
         case "poll_content":
             return { Poll: apiPollContent(domain) };
 
@@ -1103,30 +1100,6 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
 
         case "prize_content_initial":
             return { Prize: apiPrizeContentInitial(domain) };
-
-        case "prize_content":
-            throw new Error("Incorrectly attempting to send prize content to the server");
-
-        case "prize_winner_content":
-            throw new Error("Incorrectly attempting to send prize winner content to the server");
-
-        case "placeholder_content":
-            throw new Error("Incorrectly attempting to send placeholder content to the server");
-
-        case "message_reminder_content":
-            throw new Error(
-                "Incorrectly attempting to send message reminder content to the server",
-            );
-
-        case "message_reminder_created_content":
-            throw new Error(
-                "Incorrectly attempting to send message reminder created content to the server",
-            );
-
-        case "reported_message_content":
-            throw new Error(
-                "Incorrectly attempting to send reported message content to the server",
-            );
 
         case "meme_fighter_content":
             // eslint-disable-next-line no-case-declarations
@@ -1151,6 +1124,16 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
                     data: [],
                 },
             };
+
+        case "deleted_content":
+        case "blocked_content":
+        case "prize_content":
+        case "prize_winner_content":
+        case "placeholder_content":
+        case "message_reminder_content":
+        case "message_reminder_created_content":
+        case "reported_message_content":
+            throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
 
@@ -1293,9 +1276,9 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
                     ledger_canister_id: Principal.fromText(domain.ledgerCanister),
                     amount: domain.amount,
                     fee: domain.fee,
-                }               
-            }
-        ];    
+                },
+            },
+        ];
     }
     return [];
 }
@@ -1357,7 +1340,7 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             ledgerCanister: candid.Payment.ledger_canister_id.toString(),
             amount: candid.Payment.amount,
             fee: candid.Payment.fee,
-        }
+        };
     }
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
@@ -1370,13 +1353,6 @@ function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {
         }),
         domain,
     );
-}
-
-function apiDeletedContent(domain: DeletedContent): ApiDeletedContent {
-    return {
-        deleted_by: Principal.fromText(domain.deletedBy),
-        timestamp: domain.timestamp,
-    };
 }
 
 export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCotentInitial {

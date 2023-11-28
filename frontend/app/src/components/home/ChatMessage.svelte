@@ -77,7 +77,7 @@
     export let readonly: boolean;
     export let pinned: boolean;
     export let canPin: boolean;
-    export let canBlockUser: boolean;
+    export let canBlockUsers: boolean;
     export let canDelete: boolean;
     export let canQuoteReply: boolean;
     export let canReact: boolean;
@@ -128,15 +128,18 @@
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";
-    $: inert = msg.content.kind === "deleted_content" || collapsed;
+    $: inert = msg.content.kind === "deleted_content" || msg.content.kind === "blocked_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
+    $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
+    $: canRevealBlocked = msg.content.kind === "blocked_content";
 
     onMount(() => {
         if (!readByMe) {
@@ -561,7 +564,7 @@
                         bind:this={messageMenu}
                         {chatId}
                         {isProposal}
-                        inert={msg.deleted || collapsed}
+                        {inert}
                         {publicGroup}
                         {confirmed}
                         {failed}
@@ -582,6 +585,7 @@
                         {canDelete}
                         {canUndelete}
                         {canRevealDeleted}
+                        {canRevealBlocked}
                         {crypto}
                         translatable={(client.getMessageText(msg.content) ?? "").length > 0}
                         {translated}

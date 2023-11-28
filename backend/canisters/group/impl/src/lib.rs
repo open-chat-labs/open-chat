@@ -180,6 +180,7 @@ impl RuntimeState {
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
+            local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated: chat.last_updated(Some(member.user_id)),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),

@@ -80,7 +80,7 @@
     $: canSendAny = client.canSendMessage(chat.id, "message");
     $: preview = client.isPreviewing(chat.id);
     $: canPin = client.canPinMessages(chat.id);
-    $: canBlockUser = client.canBlockUsers(chat.id);
+    $: canBlockUsers = client.canBlockUsers(chat.id);
     $: canDelete = client.canDeleteOtherUsersMessages(chat.id);
     $: canReplyInThread = client.canSendMessage(chat.id, "thread");
     $: canReact = client.canReactToMessages(chat.id);
@@ -313,7 +313,7 @@
         {events}
         {filteredProposals}
         {canPin}
-        {canBlockUser}
+        {canBlockUsers}
         {canDelete}
         {canReplyInThread}
         {canSendAny}

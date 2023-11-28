@@ -49,7 +49,7 @@
     export let readonly: boolean;
     export let pinned: boolean;
     export let canPin: boolean;
-    export let canBlockUser: boolean;
+    export let canBlockUsers: boolean;
     export let canDelete: boolean;
     export let canSendAny: boolean;
     export let canReact: boolean;
@@ -137,7 +137,7 @@
             {readonly}
             {pinned}
             {canPin}
-            {canBlockUser}
+            {canBlockUsers}
             {canDelete}
             canQuoteReply={canSendAny}
             {canReact}

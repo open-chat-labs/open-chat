@@ -36,6 +36,11 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
             revealedContent: content,
         }));
     }
+    markBlockedMessageRevealed(messageId: bigint): void {
+        this.applyUpdate(messageId, (_) => ({
+            blockedMessageRevealed: true,
+        }));
+    }
     markContentEdited(messageId: bigint, content: MessageContent): void {
         this.applyUpdate(messageId, (_) => ({ editedContent: content }));
     }
@@ -80,7 +85,10 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
             pollVotes: [...(updates?.pollVotes ?? []), vote],
         }));
     }
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summaryUpdates: Partial<ThreadSummary>): void {
+    markThreadSummaryUpdated(
+        threadRootMessageId: bigint,
+        summaryUpdates: Partial<ThreadSummary>,
+    ): void {
         this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:

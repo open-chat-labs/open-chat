@@ -38,6 +38,7 @@
         statsSectionOpen,
         storageSectionOpen,
         userInfoOpen,
+        renderPreviews,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
@@ -145,7 +146,7 @@
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
                         client.logError("Unable to save user bio: ", err);
-                    })
+                    }),
             );
         }
 
@@ -171,7 +172,7 @@
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
                         client.logError("Unable to save username: ", err);
-                    })
+                    }),
             );
         }
 
@@ -195,7 +196,7 @@
                     .catch((err) => {
                         toastStore.showFailureToast($_("unableToSaveUserProfile"));
                         client.logError("Unable to save display name: ", err);
-                    })
+                    }),
             );
         }
 
@@ -398,6 +399,13 @@
                         on:change={() => lowBandwidth.toggle()}
                         label={$_("lowBandwidth")}
                         checked={$lowBandwidth} />
+                    <Toggle
+                        id={"render-previews"}
+                        disabled={$lowBandwidth}
+                        small
+                        on:change={() => renderPreviews.toggle()}
+                        label={$_("renderPreviews")}
+                        checked={$renderPreviews && !$lowBandwidth} />
                 </CollapsibleCard>
             </div>
             <div class="restricted">

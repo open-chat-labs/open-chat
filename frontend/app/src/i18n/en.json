@@ -8,6 +8,7 @@
     "doubleClickReply": "Double click message to reply/edit",
     "doubleTapReply": "Double tap message to reply/edit",
     "lowBandwidth": "Low bandwidth",
+    "renderPreviews": "Auto-render link previews",
     "loadImage": "Show image",
     "loadMeme": "Show meme",
     "loadGif": "Show gif",
@@ -1161,5 +1162,6 @@
         "timeUpdated": "Disappearing message time set to {duration}",
         "disabled": "Disappearing messages disabled"
     },
-    "offlineMessage": "Offline"
+    "offlineMessage": "Offline",
+    "messageBlocked": "Message hidden because sender is blocked"
 }

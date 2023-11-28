@@ -1171,5 +1171,7 @@
     "hideAuthProviders": "Ocultar opciones",
     "messageDeletedByOpenChatBot": "Este mensaje fue reportado por primera vez por un usuario de OpenChat, luego enviado a [Modclub]({modclub}) donde se decidió que el mensaje infringía una [regla de plataforma]({rules}) y finalmente eliminado por {username} en {xyz }",
     "offlineMessage": "Desconectado",
-    "offlineError": "Lo sentimos, parece que estás desconectado en este momento."
+    "offlineError": "Lo sentimos, parece que estás desconectado en este momento.",
+    "renderPreviews": "Vistas previas de enlaces de renderizado automático",
+    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado"
 }

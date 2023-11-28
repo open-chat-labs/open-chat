@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support getting batches of chat events via LocalUserIndex ([#4848](https://github.com/open-chat-labs/open-chat/pull/4848))
+
 ### Changed
 
 - In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
 
 ## [[2.0.947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.947-user)] - 2023-11-24
 

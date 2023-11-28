@@ -21,14 +21,17 @@ async fn c2c_convert_group_into_community(args: Args) -> Response {
     let name = create_community_args.name.clone();
 
     match create_community_impl(create_community_args, local_group_index_canister).await {
-        Ok(community_id) => {
+        Ok(result) => {
             if public {
                 mutate_state(|state| {
                     // Assign the name to the community rather than the group
-                    state.data.public_group_and_community_names.insert(&name, community_id.into());
+                    state
+                        .data
+                        .public_group_and_community_names
+                        .insert(&name, result.community_id.into());
                 });
             }
-            Success(community_id)
+            Success(result.community_id)
         }
         Err(error) => InternalError(error),
     }

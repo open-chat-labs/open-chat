@@ -181,6 +181,7 @@ impl RuntimeState {
 
         CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
+            local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated,
             name: data.name.clone(),
             description: data.description.clone(),

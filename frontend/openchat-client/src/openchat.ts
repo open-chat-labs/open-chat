@@ -1776,6 +1776,10 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    revealBlockedMessage(messageId: bigint) {
+        localMessageUpdates.markBlockedMessageRevealed(messageId);
+    }
+
     selectReaction(
         chatId: ChatIdentifier,
         userId: string,
@@ -2318,14 +2322,14 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
 
-        // check that the thread has not changed
-        if (threadRootMessageIndex !== this._liveState.selectedThreadRootMessageIndex)
+        const context = { chatId, threadRootMessageIndex };
+
+        // make sure that the message context (chatId or threadRootMessageIndex) has not changed
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext))
             return [[], new Set()];
 
         const userIds = this.userIdsFromEvents(resp.events);
         await this.updateUserStore(chatId, userIds);
-
-        const context = { chatId, threadRootMessageIndex };
 
         this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex, []);
 

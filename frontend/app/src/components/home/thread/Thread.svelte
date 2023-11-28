@@ -60,7 +60,7 @@
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
-        draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
+        draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {})),
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -75,7 +75,7 @@
         reverseScroll ? [...events].reverse() : events,
         $user.userId,
         $expandedDeletedMessages,
-        reverseScroll
+        reverseScroll,
     ) as TimelineItem<Message>[];
     $: readonly = client.isChatReadOnly(chat.id);
     $: thread = rootEvent.event.thread;
@@ -122,7 +122,7 @@
     function sendMessageWithAttachment(
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
-        mentioned: User[] = []
+        mentioned: User[] = [],
     ) {
         dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }
@@ -206,7 +206,7 @@
     }
 
     function onGoToMessageIndex(
-        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
+        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>,
     ) {
         goToMessageIndex(ev.detail.index);
     }
@@ -287,7 +287,7 @@
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
                             canPin={client.canPinMessages(chat.id)}
-                            canBlockUser={client.canBlockUsers(chat.id)}
+                            canBlockUsers={client.canBlockUsers(chat.id)}
                             canDelete={client.canDeleteOtherUsersMessages(chat.id)}
                             publicGroup={(chat.kind === "group_chat" || chat.kind === "channel") &&
                                 chat.public}

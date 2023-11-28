@@ -1,4 +1,7 @@
+pub mod c2c_events;
+pub mod c2c_events_by_index;
 pub mod c2c_events_internal;
+pub mod c2c_events_window;
 pub mod c2c_name_and_members;
 pub mod c2c_summary;
 pub mod c2c_summary_updates;

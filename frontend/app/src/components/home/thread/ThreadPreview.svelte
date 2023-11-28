@@ -147,7 +147,7 @@
                             supportsEdit={false}
                             supportsReply={false}
                             canPin={false}
-                            canBlockUser={false}
+                            canBlockUsers={false}
                             canDelete={false}
                             canQuoteReply={false}
                             canReact={false}
@@ -190,7 +190,7 @@
                                 supportsEdit={false}
                                 supportsReply={false}
                                 canPin={false}
-                                canBlockUser={false}
+                                canBlockUsers={false}
                                 canDelete={false}
                                 canQuoteReply={false}
                                 canReact={false}
