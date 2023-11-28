@@ -232,7 +232,8 @@
                             "access.paymentDistributionMessage",
                             candidate.id.kind === "group_chat" ? "group" : "community",
                             true,
-                        )} />
+                        ) +
+                        $_("access.subscriptionComingSoon")} />
             </div>
         {:else if candidate.gate.kind === "no_gate"}
             <div class="info">{$_("access.openAccessInfo")}</div>

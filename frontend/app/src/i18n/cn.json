@@ -965,7 +965,8 @@
         "paymentFailed": "支付失败",
         "tokenComingSoon": "{token}（即将推出）",
         "payAndJoin": "付款并加入",
-        "openAccess": "无（开放获取）"
+        "openAccess": "无（开放获取）",
+        "subscriptionComingSoon": "订阅模式即将推出。"
     },
     "communities": {
         "explore": "探索社区",
