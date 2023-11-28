@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { fade } from "svelte/transition";
     import { tweened } from "svelte/motion";
     import { quadOut } from "svelte/easing";
@@ -23,7 +22,6 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
-    import { iconSize } from "../../stores/iconSize";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
