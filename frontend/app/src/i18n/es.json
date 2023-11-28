@@ -967,7 +967,8 @@
         "paymentFailed": "Pago fallido",
         "tokenComingSoon": "{token} (próximamente)",
         "payAndJoin": "Paga y únete",
-        "openAccess": "Ninguno (acceso abierto)"
+        "openAccess": "Ninguno (acceso abierto)",
+        "subscriptionComingSoon": "Próximamente modelo de suscripción."
     },
     "communities": {
         "explore": "Explora comunidades",
@@ -1138,7 +1139,8 @@
         "noExchangeRate": "No tenemos ningún tipo de cambio configurado para {token}",
         "menu": "Consejo",
         "plusFee": "+ tarifa {fee} {token}",
-        "advice": "Toca tantas veces como quieras para dejar una propina."
+        "advice": "Toca tantas veces como quieras para dejar una propina.",
+        "showCustom": "Monto de propina personalizada"
     },
     "followThread": "Sigue este hilo",
     "unfollowThread": "Dejar de seguir este hilo",

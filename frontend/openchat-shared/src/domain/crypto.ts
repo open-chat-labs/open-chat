@@ -50,23 +50,23 @@ export type NervousSystemDetails = {
 };
 
 // approximate dollar exchange rates - until we come up with something better
-const dollarToICP = 0.22;
+const dollarToICP = 0.225;
 
 export const dollarExchangeRates: Record<string, number> = {
     icp: to2SigFigs(dollarToICP),
-    chat: to2SigFigs(dollarToICP / 0.0525),
+    chat: to2SigFigs(dollarToICP / 0.0612),
     hot: to2SigFigs(dollarToICP / 0.0045),
-    kinic: to2SigFigs(dollarToICP / 0.32),
-    ckbtc: to2SigFigs(dollarToICP / 8290),
-    dkp: to2SigFigs(dollarToICP / 480),
-    ghost: to2SigFigs(dollarToICP / 0.0000165),
-    mod: to2SigFigs(dollarToICP / 0.004),
-    cat: to2SigFigs(dollarToICP / 0.006),
-    boom: to2SigFigs(dollarToICP / 0.0026),
-    icx: to2SigFigs(dollarToICP / 0.0088),
-    nua: to2SigFigs(dollarToICP / 0.01),
-    sonic: to2SigFigs(dollarToICP / 0.021),
-    sneed: to2SigFigs(dollarToICP / 30),
+    kinic: to2SigFigs(dollarToICP / 0.312),
+    ckbtc: to2SigFigs(dollarToICP / 8480),
+    dkp: to2SigFigs(dollarToICP / 430.69),
+    ghost: to2SigFigs(dollarToICP / 0.000013),
+    mod: to2SigFigs(dollarToICP / 0.0046),
+    cat: to2SigFigs(dollarToICP / 0.0061),
+    boom: to2SigFigs(dollarToICP / 0.0025),
+    icx: to2SigFigs(dollarToICP / 0.0063),
+    nua: to2SigFigs(dollarToICP / 0.0147),
+    sonic: to2SigFigs(dollarToICP / 0.0274),
+    sneed: to2SigFigs(dollarToICP / 22.25),
 };
 
 function to2SigFigs(num: number): number {

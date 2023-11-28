@@ -966,7 +966,8 @@
         "paymentFailed": "Thanh toán không thành công",
         "tokenComingSoon": "{token} (sắp ra mắt)",
         "payAndJoin": "Thanh toán và tham gia",
-        "openAccess": "Không có (truy cập mở)"
+        "openAccess": "Không có (truy cập mở)",
+        "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt."
     },
     "communities": {
         "explore": "Khám phá cộng đồng",
@@ -1137,7 +1138,8 @@
         "noExchangeRate": "Chúng tôi không có tỷ giá hối đoái nào được định cấu hình cho {token}",
         "menu": "Mẹo",
         "plusFee": "+ phí {fee} {token}",
-        "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa"
+        "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
+        "showCustom": "Số tiền tip tùy chỉnh"
     },
     "followThread": "Theo dõi chủ đề này",
     "unfollowThread": "Hủy theo dõi chủ đề này",

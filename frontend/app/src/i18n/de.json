@@ -967,7 +967,8 @@
         "paymentFailed": "Bezahlung fehlgeschlagen",
         "tokenComingSoon": "{token} (bald verfügbar)",
         "payAndJoin": "Bezahlen und mitmachen",
-        "openAccess": "Keine (Open Access)"
+        "openAccess": "Keine (Open Access)",
+        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze."
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
@@ -1138,7 +1139,8 @@
         "noExchangeRate": "Wir haben keinen Wechselkurs für {token} konfiguriert",
         "menu": "Tipp",
         "plusFee": "+ {fee} {token} Gebühr",
-        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen"
+        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
+        "showCustom": "Benutzerdefinierter Trinkgeldbetrag"
     },
     "followThread": "Folgen Sie diesem Thread",
     "unfollowThread": "Folgen Sie diesem Thread nicht mehr",

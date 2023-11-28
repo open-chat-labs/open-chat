@@ -965,7 +965,8 @@
         "paymentFailed": "Pagamento fallito",
         "tokenComingSoon": "{token} (disponibile a breve)",
         "payAndJoin": "Paga e iscriviti",
-        "openAccess": "Nessuno (accesso aperto)"
+        "openAccess": "Nessuno (accesso aperto)",
+        "subscriptionComingSoon": "Modello di abbonamento in arrivo."
     },
     "communities": {
         "explore": "Esplora le comunità",
@@ -1136,7 +1137,8 @@
         "noExchangeRate": "Non abbiamo configurato alcun tasso di cambio per {token}",
         "menu": "Mancia",
         "plusFee": "+ commissione {fee} {token}",
-        "advice": "Tocca quante volte vuoi per lasciare una mancia"
+        "advice": "Tocca quante volte vuoi per lasciare una mancia",
+        "showCustom": "Importo della mancia personalizzato"
     },
     "followThread": "Segui questo thread",
     "unfollowThread": "Smetti di seguire questo thread",

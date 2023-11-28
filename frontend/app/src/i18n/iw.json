@@ -963,7 +963,8 @@
         "paymentFailed": "התשלום נכשל",
         "tokenComingSoon": "{token} (בקרוב)",
         "payAndJoin": "שלם והצטרף",
-        "openAccess": "אין (גישה פתוחה)"
+        "openAccess": "אין (גישה פתוחה)",
+        "subscriptionComingSoon": "דגם מנוי בקרוב."
     },
     "communities": {
         "explore": "חקור קהילות",
@@ -1134,7 +1135,8 @@
         "noExchangeRate": "אין לנו שער חליפין מוגדר עבור {token}",
         "menu": "עֵצָה",
         "plusFee": "+ עמלת {fee} {token}",
-        "advice": "הקש כמה פעמים שתרצה כדי להשאיר טיפ"
+        "advice": "הקש כמה פעמים שתרצה כדי להשאיר טיפ",
+        "showCustom": "סכום טיפ מותאם אישית"
     },
     "followThread": "עקבו אחר השרשור הזה",
     "unfollowThread": "בטל את המעקב אחר השרשור הזה",
