@@ -1138,7 +1138,7 @@
         "menu": "Mẹo",
         "plusFee": "+ phí {fee} {token}",
         "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
-        "showCustom": "số tiền tip tùy chỉnh"
+        "showCustom": "Số tiền tip tùy chỉnh"
     },
     "followThread": "Theo dõi chủ đề này",
     "unfollowThread": "Hủy theo dõi chủ đề này",

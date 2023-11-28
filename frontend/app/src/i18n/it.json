@@ -1137,7 +1137,7 @@
         "menu": "Mancia",
         "plusFee": "+ commissione {fee} {token}",
         "advice": "Tocca quante volte vuoi per lasciare una mancia",
-        "showCustom": "importo della mancia personalizzato"
+        "showCustom": "Importo della mancia personalizzato"
     },
     "followThread": "Segui questo thread",
     "unfollowThread": "Smetti di seguire questo thread",
