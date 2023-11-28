@@ -1349,7 +1349,11 @@ function mergeLocalUpdates(
         };
     }
 
-    if (senderBlocked && localUpdates?.blockedMessageRevealed !== true) {
+    if (
+        senderBlocked &&
+        localUpdates?.blockedMessageRevealed !== true &&
+        message.content.kind !== "deleted_content"
+    ) {
         return {
             ...message,
             content: {
