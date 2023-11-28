@@ -67,8 +67,8 @@ export const dollarExchangeRates: Record<string, number> = {
     nua: to2SigFigs(dollarToICP / 0.0147),
     sonic: to2SigFigs(dollarToICP / 0.0274),
     sneed: to2SigFigs(dollarToICP / 22.25),
-    exe: to2SigFigs(dollarToICP / 0.0152),
-    taggr: to2SigFigs(dollarToICP / 1.0197),
+    exe: to2SigFigs(dollarToICP / 0.0034),
+    taggr: to2SigFigs(dollarToICP / 0.1851),
 };
 
 function to2SigFigs(num: number): number {
