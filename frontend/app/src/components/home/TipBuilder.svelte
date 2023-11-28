@@ -1,7 +1,9 @@
 <script lang="ts">
+    import { fade } from "svelte/transition";
     import { tweened } from "svelte/motion";
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
+    import TokenInput from "./TokenInput.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type {
         CryptocurrencyDetails,
@@ -39,34 +41,52 @@
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
     let centAmount = 0;
+    let showCustomTip = false;
+    let validAmount: boolean = false;
+    let draftAmount = 0n;
 
     $: user = client.user;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
     $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
-    $: draftAmount = calculateAmount(centAmount, exchangeRate);
     $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
     $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
-        draftAmount > BigInt(0)
-            ? cryptoBalance - draftAmount - tokenDetails.transferFee
-            : cryptoBalance;
-    $: valid = exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
+        draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
+    $: valid =
+        exchangeRate > 0 &&
+        draftAmount > 0n &&
+        remainingBalance > 0n &&
+        error === undefined &&
+        !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
+    $: transferFees = tokenDetails.transferFee;
 
     $: {
         if (ledger !== undefined) {
             // reset when ledger changes
             centAmount = 0;
             tokenChanging = true;
+            draftAmount = 0n;
         }
+    }
+
+    $: {
+        centAmount = calculateCentAmount(draftAmount, exchangeRate);
     }
 
     function amountLabel(n: Increment): string {
         return `$${(n / 100).toFixed(2)}`;
+    }
+
+    function calculateCentAmount(e8s: bigint, exchangeRate: number): number {
+        const tokens = Number(e8s) / Math.pow(10, tokenDetails.decimals);
+        const dollar = tokens / exchangeRate;
+        const cents = dollar * 100;
+        return Math.round(cents);
     }
 
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
@@ -86,7 +106,7 @@
             recipient: msg.sender,
             amountE8s: draftAmount,
             feeE8s: tokenDetails.transferFee,
-            createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+            createdAtNanos: BigInt(Date.now()) * 1_000_000n,
         };
         dispatch("send", transfer);
         lastCryptoSent.set(ledger);
@@ -111,10 +131,10 @@
         toppingUp = false;
         tokenChanging = false;
         if (remainingBalance < 0) {
-            remainingBalance = BigInt(0);
+            remainingBalance = 0n;
             draftAmount = cryptoBalance - tokenDetails.transferFee;
             if (draftAmount < 0) {
-                draftAmount = BigInt(0);
+                draftAmount = 0n;
             }
         }
     }
@@ -125,7 +145,7 @@
             dollar.style.setProperty("opacity", `${$dollarOpacity}`);
             dollar.style.setProperty(
                 "transform",
-                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`
+                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
             );
         }
     }
@@ -158,10 +178,15 @@
     function clickAmount(e: MouseEvent, increment: Increment) {
         bounceMoneyMouthFrom(e.target as HTMLElement);
         centAmount += increment;
+        draftAmount = calculateAmount(centAmount, exchangeRate);
     }
 
     function hasExchangeRate(token: CryptocurrencyDetails): boolean {
         return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
+    }
+
+    function maxAmount(balance: bigint): bigint {
+        return balance - transferFees;
     }
 
     onMount(() => {
@@ -231,7 +256,7 @@
                                         cryptoBalance - tokenDetails.transferFee} />
                         {/each}
                     </div>
-                    <div class="message">
+                    <div in:fade|local={{ duration: 300 }} class="message">
                         {#if exchangeRate !== undefined}
                             {#if draftAmount > 0}
                                 <div class="summary">
@@ -265,6 +290,30 @@
                         {#if error}
                             <ErrorMessage>{$_(error)}</ErrorMessage>
                         {/if}
+                    </div>
+                {/if}
+            </div>
+            <div class="custom-tip">
+                {#if !showCustomTip}
+                    <a
+                        role="button"
+                        tabindex="0"
+                        on:click={() => (showCustomTip = true)}
+                        class="options"
+                        in:fade|local={{ duration: 500 }}
+                        class:expanded={showCustomTip}>
+                        {$_("tip.showCustom")}
+                    </a>
+                {/if}
+
+                {#if showCustomTip}
+                    <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
+                        <TokenInput
+                            {ledger}
+                            {transferFees}
+                            bind:valid={validAmount}
+                            maxAmount={maxAmount(cryptoBalance)}
+                            bind:amount={draftAmount} />
                     </div>
                 {/if}
             </div>
@@ -362,5 +411,15 @@
 
     .how-to {
         margin-top: $sp4;
+    }
+
+    .custom-tip {
+        text-align: center;
+        margin-bottom: $sp3;
+        @include font(light, normal, fs-80);
+
+        .custom-tip-amount {
+            padding: $sp3 $sp4;
+        }
     }
 </style>

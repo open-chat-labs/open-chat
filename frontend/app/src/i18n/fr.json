@@ -1137,7 +1137,8 @@
         "noExchangeRate": "Nous n'avons pas de taux de change configuré pour {token}",
         "menu": "Conseil",
         "plusFee": "+ frais de {fee} {token}",
-        "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire"
+        "advice": "Appuyez autant de fois que vous le souhaitez pour laisser un pourboire",
+        "showCustom": "Montant du pourboire personnalisé"
     },
     "followThread": "Suivez ce fil",
     "unfollowThread": "Ne plus suivre ce fil",
