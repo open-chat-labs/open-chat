@@ -64,6 +64,7 @@
     export let canDelete: boolean;
     export let canUndelete: boolean;
     export let canRevealDeleted: boolean;
+    export let canRevealBlocked: boolean;
     export let translatable: boolean;
     export let translated: boolean;
     export let crypto: boolean;
@@ -196,8 +197,11 @@
     }
 
     function revealDeletedMessage() {
-        if (!canRevealDeleted) return;
-        client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
+        if (canRevealDeleted) {
+            client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
+        } else if (canRevealBlocked) {
+            client.revealBlockedMessage(msg.messageId);
+        }
     }
 
     function untranslateMessage() {
@@ -444,7 +448,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if canRevealDeleted}
+                {#if canRevealDeleted || canRevealBlocked}
                     <MenuItem on:click={revealDeletedMessage}>
                         <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">{$_("revealDeletedMessage")}</div>

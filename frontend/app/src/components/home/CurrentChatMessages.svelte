@@ -36,7 +36,7 @@
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let canPin: boolean;
-    export let canBlockUser: boolean;
+    export let canBlockUsers: boolean;
     export let canDelete: boolean;
     export let canSendAny: boolean;
     export let canReact: boolean;
@@ -332,7 +332,7 @@
                         last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
                         {readonly}
                         {canPin}
-                        {canBlockUser}
+                        {canBlockUsers}
                         {canDelete}
                         {canSendAny}
                         {canReact}

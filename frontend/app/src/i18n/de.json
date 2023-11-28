@@ -1171,5 +1171,6 @@
     "messageDeletedByOpenChatBot": "Diese Nachricht wurde zuerst von einem OpenChat-Benutzer gemeldet, dann an [Modclub]({modclub}) gesendet, wo entschieden wurde, dass die Nachricht gegen eine [Plattformregel]({rules}) verstieß, und schließlich von {username} am {xyz gelöscht }",
     "offlineMessage": "Offline",
     "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline",
-    "renderPreviews": "Linkvorschauen automatisch rendern"
+    "renderPreviews": "Linkvorschauen automatisch rendern",
+    "messageBlocked": "Nachricht ausgeblendet, da der Absender blockiert ist"
 }
