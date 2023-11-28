@@ -352,7 +352,15 @@ export type TokenSwapStatusResponse =
           kind: "not_found";
       };
 
-export type ApproveTransferResponse = 
-    | Success    
-    | { kind: "approve_error", error: string }
+export type ApproveTransferResponse =
+    | Success
+    | { kind: "approve_error"; error: string }
     | InternalError;
+
+export type DiamondMembershipFees = {
+    token: "CHAT" | "ICP";
+    oneMonth: bigint;
+    threeMonths: bigint;
+    oneYear: bigint;
+    lifetime: bigint;
+};
