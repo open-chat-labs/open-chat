@@ -90,8 +90,8 @@
         border-radius: var(--rd);
         border: 1px solid var(--menu-bd);
         cursor: pointer;
-        max-height: 330px;
-        overflow: auto;
+        max-height: 250px;
+        @include nice-scrollbar();
     }
 
     .icon {
