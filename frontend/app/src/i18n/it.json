@@ -1136,7 +1136,9 @@
         "noExchangeRate": "Non abbiamo configurato alcun tasso di cambio per {token}",
         "menu": "Mancia",
         "plusFee": "+ commissione {fee} {token}",
-        "advice": "Tocca quante volte vuoi per lasciare una mancia"
+        "advice": "Tocca quante volte vuoi per lasciare una mancia",
+        "showCustom": "Mostra l'importo della mancia personalizzata",
+        "hideCustom": "Nascondi l'importo della mancia personalizzata"
     },
     "followThread": "Segui questo thread",
     "unfollowThread": "Smetti di seguire questo thread",

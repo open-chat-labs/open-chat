@@ -1137,7 +1137,9 @@
         "noExchangeRate": "Chúng tôi không có tỷ giá hối đoái nào được định cấu hình cho {token}",
         "menu": "Mẹo",
         "plusFee": "+ phí {fee} {token}",
-        "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa"
+        "advice": "Nhấn bao nhiêu lần tùy thích để để lại tiền boa",
+        "showCustom": "Hiển thị số tiền tip tùy chỉnh",
+        "hideCustom": "Ẩn số tiền boa tùy chỉnh"
     },
     "followThread": "Theo dõi chủ đề này",
     "unfollowThread": "Hủy theo dõi chủ đề này",

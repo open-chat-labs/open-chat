@@ -1138,7 +1138,9 @@
         "noExchangeRate": "Wir haben keinen Wechselkurs für {token} konfiguriert",
         "menu": "Tipp",
         "plusFee": "+ {fee} {token} Gebühr",
-        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen"
+        "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
+        "showCustom": "Benutzerdefinierten Trinkgeldbetrag anzeigen",
+        "hideCustom": "Benutzerdefinierten Trinkgeldbetrag ausblenden"
     },
     "followThread": "Folgen Sie diesem Thread",
     "unfollowThread": "Folgen Sie diesem Thread nicht mehr",
