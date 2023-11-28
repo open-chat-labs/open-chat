@@ -967,7 +967,8 @@
         "paymentFailed": "Bezahlung fehlgeschlagen",
         "tokenComingSoon": "{token} (bald verfügbar)",
         "payAndJoin": "Bezahlen und mitmachen",
-        "openAccess": "Keine (Open Access)"
+        "openAccess": "Keine (Open Access)",
+        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze."
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

@@ -965,7 +965,8 @@
         "paymentFailed": "Платеж не прошел",
         "tokenComingSoon": "{token} (скоро)",
         "payAndJoin": "Оплатите и присоединяйтесь",
-        "openAccess": "Нет (открытый доступ)"
+        "openAccess": "Нет (открытый доступ)",
+        "subscriptionComingSoon": "Модель подписки появится в ближайшее время."
     },
     "communities": {
         "explore": "Исследуйте сообщества",
