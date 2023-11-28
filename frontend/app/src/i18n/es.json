@@ -1139,8 +1139,7 @@
         "menu": "Consejo",
         "plusFee": "+ tarifa {fee} {token}",
         "advice": "Toca tantas veces como quieras para dejar una propina.",
-        "showCustom": "Mostrar cantidad de propina personalizada",
-        "hideCustom": "Ocultar cantidad de propina personalizada"
+        "showCustom": "cantidad de propina personalizada"
     },
     "followThread": "Sigue este hilo",
     "unfollowThread": "Dejar de seguir este hilo",

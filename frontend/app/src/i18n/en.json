@@ -1135,8 +1135,7 @@
         "noExchangeRate": "We have no exchange rate configured for {token}",
         "plusFee": "+ {fee} {token} fee",
         "advice": "Tap as many times as you like to leave a tip",
-        "showCustom": "Show custom tip amount",
-        "hideCustom": "Hide custom tip amount"
+        "showCustom": "custom tip amount"
     },
     "followThread": "Follow this thread",
     "unfollowThread": "Unfollow this thread",

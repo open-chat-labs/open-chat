@@ -1139,8 +1139,7 @@
         "menu": "Tipp",
         "plusFee": "+ {fee} {token} Gebühr",
         "advice": "Tippen Sie so oft Sie möchten, um einen Tipp zu hinterlassen",
-        "showCustom": "Benutzerdefinierten Trinkgeldbetrag anzeigen",
-        "hideCustom": "Benutzerdefinierten Trinkgeldbetrag ausblenden"
+        "showCustom": "individueller Trinkgeldbetrag"
     },
     "followThread": "Folgen Sie diesem Thread",
     "unfollowThread": "Folgen Sie diesem Thread nicht mehr",

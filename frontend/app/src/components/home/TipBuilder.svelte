@@ -296,22 +296,17 @@
                 {/if}
             </div>
             <div class="custom-tip">
-                <div class="custom-link">
+                {#if !showCustomTip}
                     <a
                         role="button"
                         tabindex="0"
-                        on:click={() => (showCustomTip = !showCustomTip)}
+                        on:click={() => (showCustomTip = true)}
                         class="options"
+                        in:fade|local={{ duration: 500 }}
                         class:expanded={showCustomTip}>
-                        {showCustomTip ? $_("tip.hideCustom") : $_("tip.showCustom")}
+                        {$_("tip.showCustom")}
                     </a>
-                    <div class="icon" class:showing={showCustomTip}>
-                        <ChevronDown
-                            viewBox={"0 -3 24 24"}
-                            size={$iconSize}
-                            color={"var(--primary)"} />
-                    </div>
-                </div>
+                {/if}
 
                 {#if showCustomTip}
                     <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
@@ -422,25 +417,11 @@
 
     .custom-tip {
         text-align: center;
+        margin-bottom: $sp3;
         @include font(light, normal, fs-80);
-
-        .custom-link {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: $sp2;
-        }
 
         .custom-tip-amount {
             padding: $sp3 $sp4;
-        }
-
-        .icon {
-            transition: transform 250ms ease-in-out;
-            transform-origin: 50%;
-            &.showing {
-                transform: rotate(180deg);
-            }
         }
     }
 </style>
