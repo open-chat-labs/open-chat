@@ -12,6 +12,7 @@
     export let filter: (details: CryptocurrencyDetails) => boolean = (_) => true;
 
     let selecting = false;
+    let ignoreClick = false;
 
     $: cryptoBalance = client.cryptoBalance;
 
@@ -50,10 +51,24 @@
             selecting = false;
         }
     }
+
+    function toggle() {
+        selecting = !selecting;
+        if (selecting) {
+            ignoreClick = true;
+        }
+    }
+
+    function windowClick() {
+        if (selecting && !ignoreClick) {
+            selecting = false;
+        }
+        ignoreClick = false;
+    }
 </script>
 
 {#if crypto.length > 0}
-    <div class="selected" on:click={() => (selecting = !selecting)}>
+    <div class="selected" on:click={toggle}>
         <div class="symbol">
             {$cryptoLookup[ledger].symbol}
         </div>
@@ -79,7 +94,7 @@
     {/if}
 {/if}
 
-<svelte:window on:click={() => (selecting = false)} on:keydown={onKeyDown} />
+<svelte:window on:click={windowClick} on:keydown={onKeyDown} />
 
 <style lang="scss">
     .tokens {
