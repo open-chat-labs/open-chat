@@ -163,6 +163,24 @@
         const tokenDetails = client.getTokenDetailsForAccessGate(gate);
         return tokenDetails ? { token: tokenDetails.symbol } : undefined;
     }
+
+    function buildPaymentInfoMessage(candidate: CandidateGroupChat | CommunitySummary): string {
+        if (isPaymentGate(candidate.gate)) {
+            const sentences = [
+                $_("access.tokenPaymentInfo", { values: tokenParams(candidate.gate) }),
+                interpolateLevel(
+                    "access.paymentDistributionMessage",
+                    candidate.id.kind === "group_chat" ? "group" : "community",
+                    true,
+                ),
+                $_("access.subscriptionComingSoon"),
+            ];
+
+            return sentences.join(" ");
+        }
+
+        return "";
+    }
 </script>
 
 <div transition:fade|local={{ duration: 250 }} class="wrapper">
@@ -224,16 +242,7 @@
             </div>
         {:else if isPaymentGate(candidate.gate)}
             <div class="info">
-                <Markdown
-                    text={$_("access.tokenPaymentInfo", {
-                        values: tokenParams(candidate.gate),
-                    }) +
-                        interpolateLevel(
-                            "access.paymentDistributionMessage",
-                            candidate.id.kind === "group_chat" ? "group" : "community",
-                            true,
-                        ) +
-                        $_("access.subscriptionComingSoon")} />
+                <Markdown text={buildPaymentInfoMessage(candidate)} />
             </div>
         {:else if candidate.gate.kind === "no_gate"}
             <div class="info">{$_("access.openAccessInfo")}</div>
