@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.951](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.951-community)] - 2023-11-28
+## [[2.0.949](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.949-community)] - 2023-11-28
 
 ### Added
 
