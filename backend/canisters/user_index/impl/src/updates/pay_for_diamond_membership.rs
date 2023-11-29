@@ -175,9 +175,12 @@ fn process_charge(
             );
         }
 
-        let (recipient_account, reason) = if let Some(neuron_account) = matches!(args.token, Cryptocurrency::InternetComputer)
-            .then_some(state.data.nns_neuron_account())
-            .flatten()
+        let (recipient_account, reason) = if let Some(neuron_account) = matches!(
+            (&args.token, args.duration),
+            (Cryptocurrency::InternetComputer, DiamondMembershipPlanDuration::Lifetime)
+        )
+        .then_some(state.data.nns_neuron_account())
+        .flatten()
         {
             (neuron_account, PendingPaymentReason::TopUpNeuron)
         } else if matches!(args.token, Cryptocurrency::CHAT) {
