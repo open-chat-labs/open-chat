@@ -5,7 +5,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, Cycles};
 use utils::canister::create;
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
+use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -23,12 +23,12 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    let is_full = read_state(is_pool_full);
+    let (is_full, test_mode) = read_state(|state| (is_pool_full(state), state.data.test_mode));
     if !is_full {
         let cycles_to_use = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
         // Only create the new canister if it won't result in the cycles balance being too low
-        if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
+        if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
             ic_cdk::spawn(add_new_canister(cycles_to_use));
         }
     } else if let Some(timer_id) = TIMER_ID.take() {

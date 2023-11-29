@@ -2,7 +2,16 @@ use candid::Principal;
 use types::{CanisterId, Cycles, UserId};
 
 // This only applies to the 'top level' canisters (ie. not user + group canisters)
-pub const MIN_CYCLES_BALANCE: Cycles = 50_000_000_000_000; // 50T
+pub fn min_cycles_balance(test_mode: bool) -> Cycles {
+    if test_mode {
+        MIN_CYCLES_BALANCE_TEST
+    } else {
+        MIN_CYCLES_BALANCE
+    }
+}
+
+const MIN_CYCLES_BALANCE: Cycles = 50_000_000_000_000; // 50T
+const MIN_CYCLES_BALANCE_TEST: Cycles = MIN_CYCLES_BALANCE / 10; // 5T
 pub const CREATE_CANISTER_CYCLES_FEE: Cycles = 100_000_000_000; // 0.1T cycles
 pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 120_000_000_000; // 0.12T cycles
 
