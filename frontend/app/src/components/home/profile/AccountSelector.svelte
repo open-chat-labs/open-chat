@@ -88,7 +88,7 @@
         display: flex;
         flex-direction: column;
         @include font(book, normal, fs-80);
-        font-family: "Roboto", sans-serif;
+        font-family: var(--font);
 
         .name {
             color: var(--primary);
