@@ -265,6 +265,17 @@ type PayForDiamondMembershipResponse = variant {
     InternalError : text;
 };
 
+type UpdateDiamondMembershipSubscriptionArgs = record {
+    pay_in_chat : opt bool;
+    subscription : opt DiamondMembershipSubscription;
+};
+
+type UpdateDiamondMembershipSubscriptionResponse = variant {
+    Success;
+    NotDiamondMember;
+    AlreadyLifetimeDiamondMember;
+};
+
 type ReferralMetricsResponse = variant {
     Success : record {
         users_who_referred : nat32;
@@ -361,6 +372,7 @@ service : {
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
 
