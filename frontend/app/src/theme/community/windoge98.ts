@@ -31,10 +31,9 @@ export function getTheme(base: Theme): Theme {
     base.accent = magenta;
     base.disabledTxt = txt40;
     base.placeholder = txt60;
-    // base.font =
-    //     "'Microsoft Sans Serif', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Monaco', 'Roboto', sans-serif";
-    // base["font-bold"] =
-    //     "'Microsoft Sans Serif', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', 'Monaco', 'Manrope', sans-serif";
+    base.font = `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base.font}`;
+    base["font-bold"] =
+        `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base["font-bold"]}`;
 
     base.timeline.txt = txt40;
     base.time.txt = txt60;

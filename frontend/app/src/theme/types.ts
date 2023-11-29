@@ -13,6 +13,7 @@ export interface Theme {
     mode: "light" | "dark"; // pick the one that makes the most sense for your theme
     font: string;
     "font-bold": string;
+    fontUrl?: string; // allows the dynamic loading of custom fonts
 
     bg: string;
     txt: string;
