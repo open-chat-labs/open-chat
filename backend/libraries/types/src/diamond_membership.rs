@@ -44,10 +44,10 @@ impl DiamondMembershipPlanDuration {
 
     pub const fn chat_price_e8s(&self) -> u64 {
         match self {
-            DiamondMembershipPlanDuration::OneMonth => 400_000_000,      // 4 CHAT
-            DiamondMembershipPlanDuration::ThreeMonths => 1_000_000_000, // 10 CHAT
-            DiamondMembershipPlanDuration::OneYear => 3_000_000_000,     // 30 CHAT
-            DiamondMembershipPlanDuration::Lifetime => 12_000_000_000,   // 120 CHAT
+            DiamondMembershipPlanDuration::OneMonth => 300_000_000,    // 3 CHAT
+            DiamondMembershipPlanDuration::ThreeMonths => 750_000_000, // 7.5 CHAT
+            DiamondMembershipPlanDuration::OneYear => 2_500_000_000,   // 25 CHAT
+            DiamondMembershipPlanDuration::Lifetime => 10_000_000_000, // 100 CHAT
         }
     }
 }
