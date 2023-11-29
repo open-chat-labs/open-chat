@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Top up NNS neuron when users pay ICP for Diamond membership ([#4880](https://github.com/open-chat-labs/open-chat/pull/4880))
+- Top up NNS neuron when users pay ICP for Lifetime Diamond membership ([#4880](https://github.com/open-chat-labs/open-chat/pull/4880))
 
 ## [[2.0.952](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.952-user_index)] - 2023-11-28
 
