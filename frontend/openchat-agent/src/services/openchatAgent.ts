@@ -61,6 +61,7 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DexId,
+    DiamondMembershipFees,
     DirectChatEvent,
     DirectChatSummary,
     DirectChatSummaryUpdates,
@@ -2896,5 +2897,9 @@ export class OpenChatAgent extends EventTarget {
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
         return this.userClient.deleteDirectChat(userId, blockUser);
+    }
+
+    diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
+        return this._userIndexClient.diamondMembershipFees();
     }
 }

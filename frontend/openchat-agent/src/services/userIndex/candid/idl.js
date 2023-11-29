@@ -55,6 +55,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DiamondMembershipPlanDuration = IDL.Variant({
     'OneYear' : IDL.Null,
+    'Lifetime' : IDL.Null,
     'ThreeMonths' : IDL.Null,
     'OneMonth' : IDL.Null,
   });
@@ -93,6 +94,7 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({
         'one_year' : IDL.Nat64,
         'token' : Cryptocurrency,
+        'lifetime' : IDL.Nat64,
         'one_month' : IDL.Nat64,
         'three_months' : IDL.Nat64,
       })

@@ -17,6 +17,7 @@ import type {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     SetDisplayNameResponse,
+    DiamondMembershipFees,
 } from "openchat-shared";
 import { Stream } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -33,6 +34,7 @@ import {
     referralLeaderboardResponse,
     userRegistrationCanisterResponse,
     setDisplayNameResponse,
+    diamondMembershipFeesResponse,
 } from "./mappers";
 import { apiOptional, apiToken } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
@@ -353,6 +355,13 @@ export class UserIndexClient extends CandidService {
     getPlatformModeratorGroup(): Promise<string> {
         return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
             res.Success.toString(),
+        );
+    }
+
+    diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.diamond_membership_fees({}),
+            diamondMembershipFeesResponse,
         );
     }
 }

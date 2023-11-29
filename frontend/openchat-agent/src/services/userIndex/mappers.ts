@@ -10,18 +10,18 @@ import type {
     SuspensionAction,
     DiamondMembershipDetails,
     DiamondMembershipDuration,
+    DiamondMembershipFees,
     PayForDiamondMembershipResponse,
     ReferralLeaderboardResponse,
     ReferralStats,
     SetDisplayNameResponse,
 } from "openchat-shared";
-import {
-    UnsupportedValueError
-} from "openchat-shared";
+import { UnsupportedValueError } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
+    ApiDiamondMembershipFeesResponse,
     ApiDiamondMembershipPlanDuration,
     ApiPayForDiamondMembershipResponse,
     ApiReferralLeaderboardResponse,
@@ -38,6 +38,7 @@ import type {
     ApiUserSummary,
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
+import { token } from "../common/chatMappers";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -75,7 +76,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
 }
 
 export function userRegistrationCanisterResponse(
-    candid: ApiUserRegistrationCanisterResponse
+    candid: ApiUserRegistrationCanisterResponse,
 ): string {
     if ("Success" in candid) {
         return candid.Success.toString();
@@ -98,8 +99,8 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                 "Required" in r.canister_upgrade_status
                     ? "required"
                     : "NotRequired" in r.canister_upgrade_status
-                    ? "not_required"
-                    : "in_progress",
+                      ? "not_required"
+                      : "in_progress",
             referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_platform_moderator,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
@@ -124,7 +125,7 @@ function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembersh
 }
 
 function diamondMembershipDuration(
-    candid: ApiDiamondMembershipPlanDuration
+    candid: ApiDiamondMembershipPlanDuration,
 ): DiamondMembershipDuration {
     if ("OneMonth" in candid) {
         return "one_month";
@@ -265,7 +266,7 @@ export function referralStat(candid: ApiReferralStats): ReferralStats {
 }
 
 export function referralLeaderboardResponse(
-    candid: ApiReferralLeaderboardResponse
+    candid: ApiReferralLeaderboardResponse,
 ): ReferralLeaderboardResponse {
     if ("AllTime" in candid) {
         return { kind: "all_time", stats: candid.AllTime.map(referralStat) };
@@ -280,12 +281,12 @@ export function referralLeaderboardResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiReferralLeaderboardResponse type received",
-        candid
+        candid,
     );
 }
 
 export function payForDiamondMembershipResponse(
-    candid: ApiPayForDiamondMembershipResponse
+    candid: ApiPayForDiamondMembershipResponse,
 ): PayForDiamondMembershipResponse {
     if ("PaymentAlreadyInProgress" in candid) {
         return { kind: "payment_already_in_progress" };
@@ -316,12 +317,12 @@ export function payForDiamondMembershipResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",
-        candid
+        candid,
     );
 }
 
 export function apiDiamondDuration(
-    domain: DiamondMembershipDuration
+    domain: DiamondMembershipDuration,
 ): ApiDiamondMembershipPlanDuration {
     if (domain === "one_month") {
         return { OneMonth: null };
@@ -333,4 +334,22 @@ export function apiDiamondDuration(
         return { OneYear: null };
     }
     throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
+}
+
+export function diamondMembershipFeesResponse(
+    candid: ApiDiamondMembershipFeesResponse,
+): DiamondMembershipFees[] {
+    if ("Success" in candid) {
+        return candid.Success.map((f) => ({
+            token: token(f.token) as "CHAT" | "ICP",
+            oneMonth: f.one_month,
+            threeMonths: f.three_months,
+            oneYear: f.one_year,
+            lifetime: f.lifetime,
+        }));
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDiamondMembershipFeesResponse type received",
+        candid,
+    );
 }
