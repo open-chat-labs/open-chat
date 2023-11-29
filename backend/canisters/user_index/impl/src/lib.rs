@@ -175,7 +175,7 @@ impl RuntimeState {
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
-            nns_neuron: self.data.nns_neuron.clone(),
+            nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -224,7 +224,7 @@ struct Data {
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
-    pub nns_neuron: Option<NnsNeuron>,
+    pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
 }
 
@@ -277,7 +277,7 @@ impl Data {
             internet_identity_canister_id,
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
-            nns_neuron: None,
+            nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
@@ -298,14 +298,14 @@ impl Data {
     }
 
     pub fn nns_neuron_account(&self) -> Option<Account> {
-        self.nns_neuron.as_ref().map(|n| Account {
+        self.nns_8_year_neuron.as_ref().map(|n| Account {
             owner: self.nns_governance_canister_id,
             subaccount: Some(n.subaccount),
         })
     }
 
     pub fn refresh_nns_neuron(&self) {
-        if let Some(neuron_id) = self.nns_neuron.as_ref().map(|n| n.neuron_id) {
+        if let Some(neuron_id) = self.nns_8_year_neuron.as_ref().map(|n| n.neuron_id) {
             ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
         }
 
@@ -360,7 +360,7 @@ impl Default for Data {
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            nns_neuron: None,
+            nns_8_year_neuron: None,
             rng_seed: [0; 32],
         }
     }
@@ -389,7 +389,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
-    pub nns_neuron: Option<NnsNeuron>,
+    pub nns_8_year_neuron: Option<NnsNeuron>,
     pub canister_ids: CanisterIds,
     pub pending_modclub_submissions: usize,
     pub reporting_metrics: ReportingMetrics,

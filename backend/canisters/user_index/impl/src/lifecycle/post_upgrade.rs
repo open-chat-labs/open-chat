@@ -25,7 +25,7 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         if !state.data.test_mode {
-            state.data.nns_neuron = Some(NnsNeuron {
+            state.data.nns_8_year_neuron = Some(NnsNeuron {
                 neuron_id: 17682165960669268263,
                 subaccount: [
                     106, 24, 201, 114, 207, 210, 101, 85, 190, 208, 248, 112, 144, 208, 19, 164, 28, 86, 155, 119, 164, 16, 3,
