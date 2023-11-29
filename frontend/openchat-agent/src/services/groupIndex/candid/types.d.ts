@@ -414,6 +414,7 @@ export interface DiamondMembershipDetails {
   'expires_at' : TimestampMillis,
 }
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};

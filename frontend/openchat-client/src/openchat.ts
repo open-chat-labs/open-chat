@@ -288,6 +288,7 @@ import type {
     ThreadRead,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
+    DiamondMembershipFees,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
@@ -4907,6 +4908,12 @@ export class OpenChat extends OpenChatAgentWorker {
                 );
             }
         }
+    }
+
+    diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
+        return this.sendRequest({
+            kind: "diamondMembershipFees",
+        });
     }
 
     payForDiamondMembership(
