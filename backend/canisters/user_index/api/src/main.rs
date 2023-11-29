@@ -31,6 +31,7 @@ fn main() {
     generate_candid_method!(user_index, set_username, update);
     generate_candid_method!(user_index, suspend_user, update);
     generate_candid_method!(user_index, unsuspend_user, update);
+    generate_candid_method!(user_index, update_diamond_membership_subscription, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());
