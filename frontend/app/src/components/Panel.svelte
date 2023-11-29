@@ -99,8 +99,7 @@
             width: toRem(80);
             overflow-x: hidden;
             height: 100%;
-            background: var(--panel-left-bg);
-            background: var(--panel-right-modal);
+            background: var(--panel-nav-bg);
             padding: $sp2 0;
             border-right: var(--bw) solid var(--bd);
             @include z-index("left-nav");

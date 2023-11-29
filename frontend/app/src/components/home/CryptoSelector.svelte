@@ -135,7 +135,7 @@
         gap: $sp3;
         color: var(--menu-txt);
         @include font(bold, normal, fs-80);
-        font-family: "Roboto", sans-serif;
+        font-family: var(--font);
 
         @media (hover: hover) {
             &:hover {

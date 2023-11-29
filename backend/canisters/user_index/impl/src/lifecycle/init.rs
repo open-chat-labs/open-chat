@@ -10,7 +10,7 @@ use utils::cycles::init_cycles_dispenser_client;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
 
@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.proposals_bot_canister_id,
         args.cycles_dispenser_canister_id,
         args.storage_index_canister_id,
+        args.nns_governance_canister_id,
         args.internet_identity_canister_id,
         args.test_mode,
     );

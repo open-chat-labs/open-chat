@@ -2,10 +2,12 @@ use crate::guards::caller_is_openchat_user;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use icrc_ledger_types::icrc1;
+use icrc_ledger_types::icrc1::account::Account;
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
 use storage_index_canister::add_or_update_users::UserConfig;
@@ -159,7 +161,7 @@ fn process_charge(
                 amount: amount_to_referrer,
                 currency: args.token.clone(),
                 timestamp: now_nanos,
-                recipient: share_with.into(),
+                recipient_account: Account::from(Principal::from(share_with)),
                 memo: state.env.rng().gen(),
                 reason: PendingPaymentReason::ReferralReward,
             };
@@ -173,13 +175,27 @@ fn process_charge(
             );
         }
 
+        let (recipient_account, reason) = if let Some(neuron_account) = matches!(
+            (&args.token, args.duration),
+            (Cryptocurrency::InternetComputer, DiamondMembershipPlanDuration::Lifetime)
+        )
+        .then_some(state.data.nns_neuron_account())
+        .flatten()
+        {
+            (neuron_account, PendingPaymentReason::TopUpNeuron)
+        } else if matches!(args.token, Cryptocurrency::CHAT) {
+            (Account::from(SNS_GOVERNANCE_CANISTER_ID), PendingPaymentReason::Burn)
+        } else {
+            (Account::from(SNS_GOVERNANCE_CANISTER_ID), PendingPaymentReason::Treasury)
+        };
+
         let treasury_payment = PendingPayment {
             amount: amount_to_treasury,
             currency: args.token.clone(),
             timestamp: now_nanos,
-            recipient: SNS_GOVERNANCE_CANISTER_ID,
+            recipient_account,
             memo: state.env.rng().gen(),
-            reason: PendingPaymentReason::Treasury,
+            reason,
         };
         state.queue_payment(treasury_payment);
 

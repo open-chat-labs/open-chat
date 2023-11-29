@@ -90,20 +90,6 @@ type UserResponse = variant {
     UserNotFound;
 };
 
-type UsersArgs = record {
-    user_groups : vec record {
-        users : vec UserId;
-        updated_since : TimestampMillis;
-    };
-};
-
-type UsersResponse = variant {
-    Success : record {
-        users : vec PartialUserSummary;
-        timestamp : TimestampMillis;
-    };
-};
-
 type UsersV2Args = record {
     user_groups : vec record {
         users : vec UserId;
@@ -265,6 +251,17 @@ type PayForDiamondMembershipResponse = variant {
     InternalError : text;
 };
 
+type UpdateDiamondMembershipSubscriptionArgs = record {
+    pay_in_chat : opt bool;
+    subscription : opt DiamondMembershipSubscription;
+};
+
+type UpdateDiamondMembershipSubscriptionResponse = variant {
+    Success;
+    NotDiamondMember;
+    AlreadyLifetimeDiamondMember;
+};
+
 type ReferralMetricsResponse = variant {
     Success : record {
         users_who_referred : nat32;
@@ -348,7 +345,6 @@ service : {
     user : (UserArgs) -> (UserResponse) query;
 
     // Gets some users by id
-    users : (UsersArgs) -> (UsersResponse) query;
     users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query
@@ -361,6 +357,7 @@ service : {
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
 

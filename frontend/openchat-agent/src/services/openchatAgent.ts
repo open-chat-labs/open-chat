@@ -61,6 +61,7 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DexId,
+    DiamondMembershipFees,
     DirectChatEvent,
     DirectChatSummary,
     DirectChatSummaryUpdates,
@@ -1093,9 +1094,7 @@ export class OpenChatAgent extends EventTarget {
                         eventIndex: idx,
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
-                        sourceContext: ev.event.repliesTo.sourceContext ?? {
-                            chatId: { ...defaultChatId },
-                        },
+                        sourceContext: messageContext,
                     };
                 } else {
                     this._logger.log(
@@ -2896,5 +2895,9 @@ export class OpenChatAgent extends EventTarget {
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
         return this.userClient.deleteDirectChat(userId, blockUser);
+    }
+
+    diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
+        return this._userIndexClient.diamondMembershipFees();
     }
 }

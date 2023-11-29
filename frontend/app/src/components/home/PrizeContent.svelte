@@ -24,7 +24,7 @@
     $: cryptoLookup = client.cryptoLookup;
     $: logo =
         Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.token.toLowerCase()
+            (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
         )?.logo ?? "";
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
@@ -111,10 +111,10 @@
                         >{claimedByYou
                             ? $_("prizes.claimed")
                             : finished
-                            ? $_("prizes.finished")
-                            : allClaimed
-                            ? $_("prizes.allClaimed")
-                            : $_("prizes.claim")}</Button>
+                              ? $_("prizes.finished")
+                              : allClaimed
+                                ? $_("prizes.allClaimed")
+                                : $_("prizes.claim")}</Button>
                 </ButtonGroup>
             {/if}
         </div>
@@ -160,6 +160,7 @@
         gap: $sp2;
         align-items: center;
         border-radius: var(--rd);
+        color: white;
         top: 10px;
         left: 10px;
         background-color: rgba(0, 0, 0, 0.3);
@@ -195,7 +196,6 @@
     .click,
     .caption {
         @include font(book, normal, fs-80);
-        color: var(--txt);
         margin-bottom: $sp4;
     }
 

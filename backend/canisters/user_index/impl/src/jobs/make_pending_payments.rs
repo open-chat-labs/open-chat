@@ -1,9 +1,8 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
+use crate::{read_state, LocalUserIndexEvent};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
@@ -40,11 +39,15 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment) {
     let reason = pending_payment.reason.clone();
     match make_payment(&pending_payment).await {
-        Ok(block_index) => {
-            if matches!(reason, PendingPaymentReason::ReferralReward) {
+        Ok(block_index) => match reason {
+            PendingPaymentReason::ReferralReward => {
                 mutate_state(|state| inform_referrer(&pending_payment, block_index, state));
             }
-        }
+            PendingPaymentReason::TopUpNeuron => {
+                read_state(|state| state.data.refresh_nns_neuron());
+            }
+            _ => {}
+        },
         Err(retry) => {
             if retry {
                 mutate_state(|state| {
@@ -58,11 +61,9 @@ async fn process_payment(pending_payment: PendingPayment) {
 
 // Error response contains a boolean stating if the transfer should be retried
 async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
-    let to = Account::from(pending_payment.recipient);
-
     let args = TransferArg {
         from_subaccount: None,
-        to,
+        to: pending_payment.recipient_account,
         fee: None,
         created_at_time: Some(pending_payment.timestamp),
         memo: Some(pending_payment.memo.to_vec().try_into().unwrap()),
@@ -83,7 +84,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
 }
 
 fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
-    let user_id = pending_payment.recipient.into();
+    let user_id = pending_payment.recipient_account.owner.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
     let symbol = pending_payment.currency.token_symbol();
     let mut amount_text = format!("{} {}", amount, symbol);

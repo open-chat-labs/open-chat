@@ -124,8 +124,19 @@ export const currentThemeName = derived(
     },
 );
 
+function loadFont(theme: Theme): void {
+    if (theme.fontUrl) {
+        const link = document.createElement("link");
+        link.setAttribute("rel", "stylesheet");
+        link.setAttribute("type", "text/css");
+        link.setAttribute("href", theme.fontUrl);
+        document.getElementsByTagName("head")[0].appendChild(link);
+    }
+}
+
 export const currentTheme = derived(currentThemeName, (name) => {
     const theme = themes[name];
+    loadFont(theme);
     writeCssVars("--", theme);
     return theme;
 });

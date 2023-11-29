@@ -8,7 +8,7 @@ generate_query_call!(search);
 generate_query_call!(platform_moderators);
 generate_query_call!(platform_operators);
 generate_query_call!(user);
-generate_query_call!(users);
+generate_query_call!(users_v2);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);

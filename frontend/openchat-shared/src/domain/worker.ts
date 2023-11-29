@@ -88,6 +88,7 @@ import type {
     UserSummary,
     UnsuspendUserResponse,
     DiamondMembershipDuration,
+    DiamondMembershipFees,
     PayForDiamondMembershipResponse,
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
@@ -302,7 +303,8 @@ export type WorkerRequest =
     | SwapTokens
     | TokenSwapStatus
     | ApproveTransfer
-    | DeleteDirectChat;
+    | DeleteDirectChat
+    | GetDiamondMembershipFees;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1145,7 +1147,8 @@ export type WorkerResponseInner =
     | TokenSwapPool[]
     | [DexId, bigint][]
     | SwapTokensResponse
-    | TokenSwapStatusResponse;
+    | TokenSwapStatusResponse
+    | DiamondMembershipFees[];
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1398,6 +1401,10 @@ type DeleteDirectChat = {
     kind: "deleteDirectChat";
     userId: string;
     blockUser: boolean;
+};
+
+type GetDiamondMembershipFees = {
+    kind: "diamondMembershipFees";
 };
 
 // prettier-ignore
@@ -1695,4 +1702,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? TokenSwapStatusResponse
     : T extends DeleteDirectChat
     ? boolean
+    : T extends GetDiamondMembershipFees
+    ? DiamondMembershipFees[]
     : never;

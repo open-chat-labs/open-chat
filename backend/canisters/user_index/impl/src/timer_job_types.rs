@@ -77,7 +77,7 @@ impl Job for TimerJob {
 
 impl Job for RecurringDiamondMembershipPayment {
     fn execute(self) {
-        if let Some(duration) = read_state(|state| {
+        if let Some((duration, pay_in_chat)) = read_state(|state| {
             let now = state.env.now();
             state
                 .data
@@ -85,19 +85,23 @@ impl Job for RecurringDiamondMembershipPayment {
                 .get_by_user_id(&self.user_id)
                 .map(|u| &u.diamond_membership_details)
                 .filter(|d| d.is_recurring_payment_due(now))
-                .and_then(|d| d.latest_duration())
+                .and_then(|d| {
+                    DiamondMembershipPlanDuration::try_from(d.subscription())
+                        .ok()
+                        .map(|duration| (duration, d.pay_in_chat()))
+                })
         }) {
-            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration));
+            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration, pay_in_chat));
         }
 
-        async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration) {
+        async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration, pay_in_chat: bool) {
             use user_index_canister::pay_for_diamond_membership::*;
 
-            let price_e8s = duration.icp_price_e8s();
+            let price_e8s = if pay_in_chat { duration.chat_price_e8s() } else { duration.icp_price_e8s() };
 
             let args = Args {
                 duration,
-                token: Cryptocurrency::InternetComputer,
+                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
                 expected_price_e8s: price_e8s,
                 recurring: true,
             };

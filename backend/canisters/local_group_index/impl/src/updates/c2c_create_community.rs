@@ -7,7 +7,7 @@ use local_group_index_canister::c2c_create_community::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, CommunityId, Cycles};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
+use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
@@ -58,7 +58,7 @@ struct PrepareOk {
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = COMMUNITY_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
             return Err(InternalError("Cycles balance too low".to_string()));
         }
         cycles_required

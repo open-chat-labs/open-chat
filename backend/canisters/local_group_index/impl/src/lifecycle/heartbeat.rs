@@ -1,9 +1,9 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
-use types::{BuildVersion, CanisterId, ChatId, Cycles, CyclesTopUp};
+use types::{BuildVersion, CanisterId, ChatId, CommunityId, Cycles, CyclesTopUp};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
+use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[heartbeat]
 fn heartbeat() {
@@ -47,7 +47,7 @@ mod upgrade_groups {
         let group = state.data.local_groups.get_mut(&chat_id)?;
         let current_wasm_version = group.wasm_version;
         let group_canister_wasm = &state.data.group_canister_wasm_for_upgrades;
-        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
         if current_wasm_version == group_canister_wasm.version && !force {
             return None;
@@ -125,7 +125,6 @@ mod upgrade_groups {
 
 mod upgrade_communities {
     use super::*;
-    use types::CommunityId;
 
     type CanisterToUpgrade = canister::CanisterToInstall<community_canister::post_upgrade::Args>;
 
@@ -159,7 +158,7 @@ mod upgrade_communities {
         let community = state.data.local_communities.get_mut(&community_id)?;
         let current_wasm_version = community.wasm_version;
         let community_canister_wasm = &state.data.community_canister_wasm_for_upgrades;
-        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
         if current_wasm_version == community_canister_wasm.version && !force {
             return None;
@@ -239,12 +238,12 @@ mod topup_canister_pool {
     use super::*;
 
     pub fn run() {
-        let is_full = read_state(is_pool_full);
+        let (is_full, test_mode) = read_state(|state| (is_pool_full(state), state.data.test_mode));
         if !is_full {
             let cycles_to_use = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
             // Only create the new canister if it won't result in the cycles balance being too low
-            if utils::cycles::can_spend_cycles(cycles_to_use, MIN_CYCLES_BALANCE) {
+            if utils::cycles::can_spend_cycles(cycles_to_use, min_cycles_balance(test_mode)) {
                 ic_cdk::spawn(add_new_canister(cycles_to_use));
             }
         }
