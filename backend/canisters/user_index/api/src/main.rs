@@ -14,7 +14,6 @@ fn main() {
     generate_candid_method!(user_index, suspected_bots, query);
     generate_candid_method!(user_index, user, query);
     generate_candid_method!(user_index, user_registration_canister, query);
-    generate_candid_method!(user_index, users, query);
     generate_candid_method!(user_index, users_v2, query);
 
     generate_candid_method!(user_index, add_platform_moderator, update);
@@ -31,6 +30,7 @@ fn main() {
     generate_candid_method!(user_index, set_username, update);
     generate_candid_method!(user_index, suspend_user, update);
     generate_candid_method!(user_index, unsuspend_user, update);
+    generate_candid_method!(user_index, update_diamond_membership_subscription, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

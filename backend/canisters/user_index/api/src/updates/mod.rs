@@ -25,5 +25,6 @@ pub mod set_user_upgrade_concurrency;
 pub mod set_username;
 pub mod suspend_user;
 pub mod unsuspend_user;
+pub mod update_diamond_membership_subscription;
 pub mod upgrade_local_user_index_canister_wasm;
 pub mod upgrade_user_canister_wasm;

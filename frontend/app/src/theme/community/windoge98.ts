@@ -31,6 +31,9 @@ export function getTheme(base: Theme): Theme {
     base.accent = magenta;
     base.disabledTxt = txt40;
     base.placeholder = txt60;
+    base.font = `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base.font}`;
+    base["font-bold"] =
+        `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base["font-bold"]}`;
 
     base.timeline.txt = txt40;
     base.time.txt = txt60;
@@ -52,7 +55,8 @@ export function getTheme(base: Theme): Theme {
     base.panel.bg = msBlue;
     base.panel.left.bg = silver;
     base.panel.right.bg = silver;
-    base.panel.right.modal = "linear-gradient(#0884CE, #21219c)";
+    base.panel.nav.bg = "linear-gradient(#0884CE, #21219c)";
+    base.panel.right.modal = silver;
 
     base.chatSearch.bg = textBox;
     base.chatSearch.rd = "0";

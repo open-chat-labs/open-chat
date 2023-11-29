@@ -1,15 +1,55 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
-use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, Milliseconds, TimestampMillis};
+use types::{
+    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    DiamondMembershipSubscription, Milliseconds, TimestampMillis,
+};
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 use utils::time::DAY_IN_MS;
 
+const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
+
 #[derive(Serialize, Deserialize, Clone, Default)]
+#[serde(from = "DiamondMembershipDetailsInternalCombined")]
 pub struct DiamondMembershipDetailsInternal {
     expires_at: Option<TimestampMillis>,
     payments: Vec<DiamondMembershipPayment>,
+    pay_in_chat: bool,
+    subscription: DiamondMembershipSubscription,
+    payment_in_progress: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default)]
+pub struct DiamondMembershipDetailsInternalCombined {
+    expires_at: Option<TimestampMillis>,
+    payments: Vec<DiamondMembershipPayment>,
+    #[serde(default)]
+    pay_in_chat: bool,
+    #[serde(default)]
+    subscription: Option<DiamondMembershipSubscription>,
+    #[serde(default)]
     recurring: bool,
     payment_in_progress: bool,
+}
+
+impl From<DiamondMembershipDetailsInternalCombined> for DiamondMembershipDetailsInternal {
+    fn from(value: DiamondMembershipDetailsInternalCombined) -> Self {
+        let subscription = value.subscription.unwrap_or_else(|| {
+            if value.recurring {
+                value.payments.last().map(|p| p.duration.into()).unwrap_or_default()
+            } else {
+                DiamondMembershipSubscription::Disabled
+            }
+        });
+
+        DiamondMembershipDetailsInternal {
+            expires_at: value.expires_at,
+            payments: value.payments,
+            pay_in_chat: value.pay_in_chat,
+            subscription,
+            payment_in_progress: value.payment_in_progress,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -33,22 +73,33 @@ impl DiamondMembershipDetailsInternal {
         self.expires_at.map_or(false, |ts| now < ts)
     }
 
+    pub fn status(&self, now: TimestampMillis) -> DiamondMembershipStatus {
+        match self.expires_at {
+            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatus::Lifetime,
+            Some(ts) if ts > now => DiamondMembershipStatus::Active,
+            _ => DiamondMembershipStatus::Inactive,
+        }
+    }
+
     pub fn is_recurring(&self) -> bool {
-        self.recurring
+        self.subscription.is_active()
     }
 
     pub fn is_recurring_payment_due(&self, now: TimestampMillis) -> bool {
-        self.recurring
+        self.subscription.is_active()
             && self
                 .expires_at
                 .map(|ts| ts < now.saturating_add(DAY_IN_MS))
                 .unwrap_or_default()
     }
 
+    #[allow(deprecated)]
     pub fn hydrate(&self, now: TimestampMillis) -> Option<DiamondMembershipDetails> {
         self.expires_at.filter(|&ts| now < ts).map(|ts| DiamondMembershipDetails {
             expires_at: ts,
-            recurring: self.recurring.then(|| self.payments.last().map(|p| p.duration)).flatten(),
+            pay_in_chat: self.pay_in_chat,
+            recurring: self.subscription.is_active().then_some(self.subscription),
+            subscription: self.subscription,
         })
     }
 
@@ -68,6 +119,10 @@ impl DiamondMembershipDetailsInternal {
                 })
             }
         })
+    }
+
+    pub fn is_lifetime_diamond_member(&self) -> bool {
+        self.expires_at > Some(LIFETIME_TIMESTAMP)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -92,8 +147,9 @@ impl DiamondMembershipDetailsInternal {
 
         let duration_millis = duration.as_millis();
         self.expires_at = Some(max(now, self.expires_at.unwrap_or_default()) + duration_millis);
+        self.pay_in_chat = matches!(payment.token, Cryptocurrency::CHAT);
         self.payments.push(payment);
-        self.recurring = recurring;
+        self.subscription = if recurring { duration.into() } else { DiamondMembershipSubscription::Disabled };
         self.payment_in_progress = false;
     }
 
@@ -105,17 +161,24 @@ impl DiamondMembershipDetailsInternal {
         self.payment_in_progress = value;
     }
 
-    pub fn latest_duration(&self) -> Option<DiamondMembershipPlanDuration> {
-        self.payments.last().map(|p| p.duration)
-    }
-
     pub fn payments(&self) -> &[DiamondMembershipPayment] {
         &self.payments
     }
 
-    #[allow(dead_code)]
-    pub fn set_recurring(&mut self, value: bool) {
-        self.recurring = value;
+    pub fn pay_in_chat(&self) -> bool {
+        self.pay_in_chat
+    }
+
+    pub fn set_pay_in_chat(&mut self, pay_in_chat: bool) {
+        self.pay_in_chat = pay_in_chat;
+    }
+
+    pub fn subscription(&self) -> DiamondMembershipSubscription {
+        self.subscription
+    }
+
+    pub fn set_subscription(&mut self, subscription: DiamondMembershipSubscription) {
+        self.subscription = subscription;
     }
 
     pub fn has_ever_been_diamond_member(&self) -> bool {

@@ -417,12 +417,14 @@ export type DiamondMembershipFeesResponse = {
       {
         'one_year' : bigint,
         'token' : Cryptocurrency,
+        'lifetime' : bigint,
         'one_month' : bigint,
         'three_months' : bigint,
       }
     >
   };
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
