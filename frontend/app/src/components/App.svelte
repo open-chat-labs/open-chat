@@ -36,7 +36,7 @@
     const logger = inititaliseLogger(
         process.env.ROLLBAR_ACCESS_TOKEN!,
         process.env.OPENCHAT_WEBSITE_VERSION!,
-        process.env.NODE_ENV!
+        process.env.NODE_ENV!,
     );
 
     function createOpenChatClient(): OpenChat {
@@ -180,14 +180,14 @@
         communityId: string,
         channelId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number | undefined
+        threadRootMessageIndex?: number | undefined,
     ): void {
         client
             .deleteMessage(
                 { kind: "channel", communityId, channelId },
                 threadRootMessageIndex,
                 messageId,
-                true
+                true,
             )
             .then((success) => {
                 if (success) {
@@ -196,7 +196,7 @@
                         communityId,
                         channelId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 } else {
                     console.log(
@@ -204,7 +204,7 @@
                         communityId,
                         channelId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 }
             });
@@ -213,14 +213,14 @@
     function deleteMessage(
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number | undefined
+        threadRootMessageIndex?: number | undefined,
     ): void {
         client
             .deleteMessage(
                 { kind: "group_chat", groupId: chatId },
                 threadRootMessageIndex,
                 messageId,
-                true
+                true,
             )
             .then((success) => {
                 if (success) {
@@ -230,7 +230,7 @@
                         "Failed to delete message",
                         chatId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 }
             });
@@ -540,18 +540,23 @@
         :root {
             --bg: #121212;
             --prize: #f79413;
+            --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+                Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
+            --font: "Roboto", sans-serif;
+            --font-bold: "Manrope", sans-serif;
         }
 
         body {
-            transition: background ease-in-out 300ms, color ease-in-out 150ms,
+            transition:
+                background ease-in-out 300ms,
+                color ease-in-out 150ms,
                 padding ease-in-out 150ms;
             background: var(--bg);
             color: var(--txt);
             margin: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
-                Cantarell, "Helvetica Neue", sans-serif;
-            font-family: "Roboto", sans-serif;
+            font-family: var(--font-fallback);
+            font-family: var(--font);
             font-weight: 400;
             font-size: toRem(16);
             line-height: 135%;
@@ -594,13 +599,13 @@
         h2,
         h3,
         h4 {
-            font-family: "Manrope", sans-serif;
+            font-family: var(--font-bold);
             font-weight: 700;
         }
 
         textarea {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
-                Cantarell, "Helvetica Neue", sans-serif;
+            font-family: var(--font-fallback);
+            font-family: var(--font);
         }
 
         a {
