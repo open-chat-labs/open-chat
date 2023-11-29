@@ -88,7 +88,7 @@ impl DiamondMembershipDetailsInternal {
         self.expires_at.filter(|&ts| now < ts).map(|ts| DiamondMembershipDetails {
             expires_at: ts,
             pay_in_chat: self.pay_in_chat,
-            recurring: self.subscription.is_active().then(|| self.subscription),
+            recurring: self.subscription.is_active().then_some(self.subscription),
             subscription: self.subscription,
         })
     }

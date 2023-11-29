@@ -184,11 +184,11 @@ fn update_subscription_succeeds(disable: bool) {
         canister_ids.user_index,
         &user_index_canister::update_diamond_membership_subscription::Args {
             pay_in_chat: None,
-            subscription: if disable {
+            subscription: Some(if disable {
                 DiamondMembershipSubscription::Disabled
             } else {
                 DiamondMembershipSubscription::OneYear
-            },
+            }),
         },
     );
 
