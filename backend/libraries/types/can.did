@@ -1430,7 +1430,9 @@ type PrizeWinnerContent = record {
 
 type DiamondMembershipDetails = record {
     expires_at : TimestampMillis;
-    recurring : opt DiamondMembershipPlanDuration;
+    recurring : opt DiamondMembershipSubscription;
+    pay_in_chat : bool;
+    subscription : DiamondMembershipSubscription;
 };
 
 type DiamondMembershipPlanDuration = variant {
@@ -1438,6 +1440,13 @@ type DiamondMembershipPlanDuration = variant {
     ThreeMonths;
     OneYear;
     Lifetime;
+};
+
+type DiamondMembershipSubscription = variant {
+    Disabled;
+    OneMonth;
+    ThreeMonths;
+    OneYear;
 };
 
 type AccessGate = variant {

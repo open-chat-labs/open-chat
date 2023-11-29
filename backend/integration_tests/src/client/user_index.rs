@@ -20,6 +20,7 @@ generate_update_call!(remove_platform_moderator);
 generate_update_call!(set_display_name);
 generate_update_call!(set_username);
 generate_update_call!(suspend_user);
+generate_update_call!(update_diamond_membership_subscription);
 generate_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
