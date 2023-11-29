@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose count of new users per day ([#4873](https://github.com/open-chat-labs/open-chat/pull/4873))
-- Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876)) 
+- Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876))
+- Support updating Diamond membership subscription ([#4884](https://github.com/open-chat-labs/open-chat/pull/4884))
 
 ## [[2.0.952](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.952-user_index)] - 2023-11-28
 
