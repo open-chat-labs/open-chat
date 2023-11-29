@@ -3,7 +3,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use types::{CyclesTopUp, NotifyLowBalanceArgs, NotifyLowBalanceResponse, UserId};
 use utils::canister::deposit_cycles;
-use utils::consts::MIN_CYCLES_BALANCE;
+use utils::consts::min_cycles_balance;
 use utils::cycles::can_spend_cycles;
 
 #[update_msgpack]
@@ -37,7 +37,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceRespon
         amount: top_up_amount,
     };
 
-    if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
+    if !can_spend_cycles(top_up_amount, min_cycles_balance(state.data.test_mode)) {
         Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
     } else if state.data.users.get_by_user_id(&user_id).is_some() {
         Ok(PrepareResult { user_id, top_up })
