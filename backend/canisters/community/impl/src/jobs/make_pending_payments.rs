@@ -3,13 +3,12 @@ use candid::Principal;
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::BlockIndex;
+use icrc_ledger_types::icrc1::transfer::Memo;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
-use ledger_utils::convert_to_subaccount;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{CanisterId, Cryptocurrency, TimestampNanos};
+use types::{CanisterId, TimestampNanos};
 use utils::consts::{MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
 
 thread_local! {
@@ -40,16 +39,8 @@ pub fn run() {
 
 async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNanos) {
     let to = match pending_payment.recipient {
-        PaymentRecipient::Treasury => {
-            if pending_payment.ledger_canister == Cryptocurrency::CHAT.ledger_canister_id().unwrap() {
-                Account {
-                    owner: SNS_GOVERNANCE_CANISTER_ID,
-                    subaccount: Some(convert_to_subaccount(&SNS_GOVERNANCE_CANISTER_ID).0),
-                }
-            } else {
-                SNS_GOVERNANCE_CANISTER_ID.into()
-            }
-        }
+        // Note in the case of CHAT this will cause the tokens to be burned
+        PaymentRecipient::Treasury => SNS_GOVERNANCE_CANISTER_ID.into(),
         PaymentRecipient::Member(user_id) => Principal::from(user_id).into(),
         PaymentRecipient::Account(account) => account,
     };
