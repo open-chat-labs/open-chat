@@ -1404,6 +1404,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "diamondMembershipFees":
+                executeThenReply(payload, correlationId, agent.diamondMembershipFees());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }
