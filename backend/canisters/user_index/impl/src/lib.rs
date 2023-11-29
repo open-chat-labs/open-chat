@@ -8,11 +8,15 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
+use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
+use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
+use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
+use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -171,6 +175,7 @@ impl RuntimeState {
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
+            nns_neuron: self.data.nns_neuron.clone(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
@@ -211,13 +216,20 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
+    #[serde(default = "nns_governance_canister_id")]
+    pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
     #[serde(default)]
+    pub nns_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
+}
+
+fn nns_governance_canister_id() -> CanisterId {
+    CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap()
 }
 
 impl Data {
@@ -231,6 +243,7 @@ impl Data {
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
+        nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
@@ -260,9 +273,11 @@ impl Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            nns_governance_canister_id,
             internet_identity_canister_id,
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
+            nns_neuron: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
@@ -280,6 +295,33 @@ impl Data {
         );
 
         data
+    }
+
+    pub fn nns_neuron_account(&self) -> Option<Account> {
+        self.nns_neuron.as_ref().map(|n| Account {
+            owner: self.nns_governance_canister_id,
+            subaccount: Some(n.subaccount),
+        })
+    }
+
+    pub fn refresh_nns_neuron(&self) {
+        if let Some(neuron_id) = self.nns_neuron.as_ref().map(|n| n.neuron_id) {
+            ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
+        }
+
+        async fn refresh_nns_neuron_inner(nns_governance_canister_id: CanisterId, neuron_id: u64) {
+            let _ = nns_governance_canister_c2c_client::manage_neuron(
+                nns_governance_canister_id,
+                &ManageNeuron {
+                    id: Some(NeuronId { id: neuron_id }),
+                    neuron_id_or_subaccount: None,
+                    command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+                        by: Some(By::NeuronIdOrSubaccount(Empty {})),
+                    })),
+                },
+            )
+            .await;
+        }
     }
 }
 
@@ -312,11 +354,13 @@ impl Default for Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            nns_neuron: None,
             rng_seed: [0; 32],
         }
     }
@@ -345,6 +389,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
+    pub nns_neuron: Option<NnsNeuron>,
     pub canister_ids: CanisterIds,
     pub pending_modclub_submissions: usize,
     pub reporting_metrics: ReportingMetrics,
@@ -368,6 +413,12 @@ pub struct DiamondMembershipPaymentMetrics {
     pub manual_payments_taken: u64,
     pub recurring_payments_taken: u64,
     pub recurring_payments_failed_due_to_insufficient_funds: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NnsNeuron {
+    pub neuron_id: u64,
+    pub subaccount: Subaccount,
 }
 
 #[derive(Serialize, Debug)]
