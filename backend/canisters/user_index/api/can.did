@@ -136,6 +136,7 @@ type DiamondMembershipFeesResponse = variant {
         one_month : nat64;
         three_months : nat64;
         one_year : nat64;
+        lifetime : nat64;
     };
 };
 
