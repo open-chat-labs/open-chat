@@ -59,7 +59,7 @@
     $: valid =
         exchangeRate > 0 &&
         draftAmount > 0n &&
-        remainingBalance > 0n &&
+        remainingBalance >= 0n &&
         error === undefined &&
         !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
@@ -291,29 +291,29 @@
                             <ErrorMessage>{$_(error)}</ErrorMessage>
                         {/if}
                     </div>
-                {/if}
-            </div>
-            <div class="custom-tip">
-                {#if !showCustomTip}
-                    <a
-                        role="button"
-                        tabindex="0"
-                        on:click={() => (showCustomTip = true)}
-                        class="options"
-                        in:fade|local={{ duration: 500 }}
-                        class:expanded={showCustomTip}>
-                        {$_("tip.showCustom")}
-                    </a>
-                {/if}
+                    <div class="custom-tip">
+                        {#if !showCustomTip}
+                            <a
+                                role="button"
+                                tabindex="0"
+                                on:click={() => (showCustomTip = true)}
+                                class="options"
+                                in:fade|local={{ duration: 500 }}
+                                class:expanded={showCustomTip}>
+                                {$_("tip.showCustom")}
+                            </a>
+                        {/if}
 
-                {#if showCustomTip}
-                    <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
-                        <TokenInput
-                            {ledger}
-                            {transferFees}
-                            bind:valid={validAmount}
-                            maxAmount={maxAmount(cryptoBalance)}
-                            bind:amount={draftAmount} />
+                        {#if showCustomTip}
+                            <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
+                                <TokenInput
+                                    {ledger}
+                                    {transferFees}
+                                    bind:valid={validAmount}
+                                    maxAmount={maxAmount(cryptoBalance)}
+                                    bind:amount={draftAmount} />
+                            </div>
+                        {/if}
                     </div>
                 {/if}
             </div>
