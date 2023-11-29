@@ -185,7 +185,6 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
-    $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
@@ -209,11 +208,6 @@
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
         }
-    }
-
-    $: {
-        const merged = client.mergeCombinedUnreadCounts($globalUnreadCount);
-        document.title = merged.unmuted > 0 ? `OpenChat (${merged.unmuted})` : "OpenChat";
     }
 
     $: {
@@ -257,7 +251,7 @@
                             chatId: notification.chatId,
                         },
                         notification.messageIndex,
-                        undefined
+                        undefined,
                     );
                 }
 
@@ -274,7 +268,7 @@
     async function newChatSelected(
         chatId: ChatIdentifier,
         messageIndex?: number,
-        threadMessageIndex?: number
+        threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
 
@@ -286,8 +280,8 @@
                 page.redirect(
                     routeForChatIdentifier(
                         $chatListScope.communityId === undefined ? "group_chat" : "community",
-                        chatId
-                    )
+                        chatId,
+                    ),
                 );
                 return;
             }
@@ -312,16 +306,16 @@
                                         chatId: preview.location,
                                         threadRootMessageIndex: messageIndex,
                                     },
-                                    threadMessageIndex
-                                )
+                                    threadMessageIndex,
+                                ),
                             );
                         } else {
                             page.replace(
                                 routeForMessage(
                                     "community",
                                     { chatId: preview.location },
-                                    messageIndex
-                                )
+                                    messageIndex,
+                                ),
                             );
                         }
                     } else {
@@ -353,7 +347,7 @@
     async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
         if (!currentChatMessages && retries < 5) {
             window.requestAnimationFrame(() =>
-                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1)
+                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1),
             );
         } else {
             currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
@@ -426,7 +420,7 @@
                     newChatSelected(
                         pathParams.chatId,
                         pathParams.messageIndex,
-                        pathParams.threadMessageIndex
+                        pathParams.threadMessageIndex,
                     );
                 } else {
                     // if the chat in the url is *the same* as the selected chat
@@ -585,7 +579,7 @@
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
                         rightPanelHistory.set([]);
-                    }
+                    },
                 );
             default:
                 return Promise.reject();
@@ -643,7 +637,7 @@
                     toastStore.showFailureToast(interpolateLevel("ownerCantLeave", level, true));
                 } else {
                     toastStore.showFailureToast(
-                        interpolateLevel("failedToLeaveGroup", level, true)
+                        interpolateLevel("failedToLeaveGroup", level, true),
                     );
                 }
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
@@ -763,7 +757,7 @@
     }
 
     async function joinGroup(
-        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
+        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
@@ -791,7 +785,7 @@
     async function doJoinGroup(
         group: MultiUserChat,
         select: boolean,
-        credential: string | undefined
+        credential: string | undefined,
     ): Promise<void> {
         joining = group;
         if (group.gate.kind === "credential_gate" && credential === undefined) {
@@ -825,7 +819,7 @@
                     modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
                     toastStore.showFailureToast(
-                        interpolateLevel("joinGroupFailed", group.level, true)
+                        interpolateLevel("joinGroupFailed", group.level, true),
                     );
                     joining = undefined;
                 } else if (select) {
@@ -882,7 +876,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>,
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", { ...rules, version: 0 });
@@ -898,7 +892,7 @@
                           kind: "group_details",
                       },
                   ]
-                : []
+                : [],
         );
     }
 
@@ -1043,7 +1037,7 @@
         chatWith(
             new CustomEvent("chatWith", {
                 detail: { kind: "direct_chat", userId: showProfileCard.userId },
-            })
+            }),
         );
         showProfileCard = undefined;
     }
