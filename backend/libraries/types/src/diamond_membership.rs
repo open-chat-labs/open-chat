@@ -14,6 +14,7 @@ pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,
     ThreeMonths = 3,
     OneYear = 12,
+    Lifetime = 255,
 }
 
 impl DiamondMembershipPlanDuration {
@@ -25,6 +26,7 @@ impl DiamondMembershipPlanDuration {
             Self::OneMonth => Self::MONTH_IN_MS,
             Self::ThreeMonths => 3 * Self::MONTH_IN_MS,
             Self::OneYear => 12 * Self::MONTH_IN_MS,
+            Self::Lifetime => 1000 * 12 * Self::MONTH_IN_MS,
         }
     }
 
@@ -33,6 +35,7 @@ impl DiamondMembershipPlanDuration {
             DiamondMembershipPlanDuration::OneMonth => 20_000_000,    // 0.2 ICP
             DiamondMembershipPlanDuration::ThreeMonths => 50_000_000, // 0.5 ICP
             DiamondMembershipPlanDuration::OneYear => 150_000_000,    // 1.5 ICP
+            DiamondMembershipPlanDuration::Lifetime => 600_000_000,   // 6 ICP
         }
     }
 
@@ -41,6 +44,7 @@ impl DiamondMembershipPlanDuration {
             DiamondMembershipPlanDuration::OneMonth => 400_000_000,      // 4 CHAT
             DiamondMembershipPlanDuration::ThreeMonths => 1_000_000_000, // 10 CHAT
             DiamondMembershipPlanDuration::OneYear => 3_000_000_000,     // 30 CHAT
+            DiamondMembershipPlanDuration::Lifetime => 12_000_000_000,   // 120 CHAT
         }
     }
 }

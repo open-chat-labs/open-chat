@@ -10,12 +10,14 @@ fn diamond_membership_fees(_args: Args) -> Response {
             one_month: DiamondMembershipPlanDuration::OneMonth.chat_price_e8s(),
             three_months: DiamondMembershipPlanDuration::ThreeMonths.chat_price_e8s(),
             one_year: DiamondMembershipPlanDuration::OneYear.chat_price_e8s(),
+            lifetime: DiamondMembershipPlanDuration::Lifetime.chat_price_e8s(),
         },
         DiamondMembershipFees {
             token: Cryptocurrency::InternetComputer,
             one_month: DiamondMembershipPlanDuration::OneMonth.icp_price_e8s(),
             three_months: DiamondMembershipPlanDuration::ThreeMonths.icp_price_e8s(),
             one_year: DiamondMembershipPlanDuration::OneYear.icp_price_e8s(),
+            lifetime: DiamondMembershipPlanDuration::Lifetime.icp_price_e8s(),
         },
     ];
 

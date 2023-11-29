@@ -1437,6 +1437,7 @@ type DiamondMembershipPlanDuration = variant {
     OneMonth;
     ThreeMonths;
     OneYear;
+    Lifetime;
 };
 
 type AccessGate = variant {
