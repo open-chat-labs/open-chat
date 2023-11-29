@@ -13,6 +13,14 @@ pub struct DiamondMembershipDetails {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 #[repr(u8)]
+pub enum DiamondMembershipStatus {
+    Inactive = 0,
+    Active = 1,
+    Lifetime = 2,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
+#[repr(u8)]
 pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,
     ThreeMonths = 3,

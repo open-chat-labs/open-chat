@@ -1060,15 +1060,7 @@ type UserSummary = record {
     is_bot : bool;
     suspended : bool;
     diamond_member : bool;
-};
-
-type PartialUserSummary = record {
-    user_id : UserId;
-    username : opt text;
-    avatar_id : opt nat;
-    is_bot : bool;
-    suspended : bool;
-    diamond_member : bool;
+    diamond_membership_status : DiamondMembershipStatus;
 };
 
 type BuildVersion = record {
@@ -1447,6 +1439,12 @@ type DiamondMembershipSubscription = variant {
     OneMonth;
     ThreeMonths;
     OneYear;
+};
+
+type DiamondMembershipStatus = variant {
+    Inactive;
+    Active;
+    Lifetime;
 };
 
 type AccessGate = variant {

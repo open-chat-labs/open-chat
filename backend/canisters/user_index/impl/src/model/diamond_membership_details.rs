@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
-    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipSubscription, Milliseconds,
-    TimestampMillis,
+    Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
+    DiamondMembershipSubscription, Milliseconds, TimestampMillis,
 };
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 use utils::time::DAY_IN_MS;
+
+const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[serde(from = "DiamondMembershipDetailsInternalCombined")]
@@ -71,6 +73,14 @@ impl DiamondMembershipDetailsInternal {
         self.expires_at.map_or(false, |ts| now < ts)
     }
 
+    pub fn status(&self, now: TimestampMillis) -> DiamondMembershipStatus {
+        match self.expires_at {
+            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatus::Lifetime,
+            Some(ts) if ts > now => DiamondMembershipStatus::Active,
+            _ => DiamondMembershipStatus::Inactive,
+        }
+    }
+
     pub fn is_recurring(&self) -> bool {
         self.subscription.is_active()
     }
@@ -112,7 +122,7 @@ impl DiamondMembershipDetailsInternal {
     }
 
     pub fn is_lifetime_diamond_member(&self) -> bool {
-        self.expires_at > Some(30000000000000) // This timestamp is in the year 2920
+        self.expires_at > Some(LIFETIME_TIMESTAMP)
     }
 
     #[allow(clippy::too_many_arguments)]
