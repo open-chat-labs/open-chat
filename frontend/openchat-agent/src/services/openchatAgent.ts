@@ -1093,9 +1093,7 @@ export class OpenChatAgent extends EventTarget {
                         eventIndex: idx,
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
-                        sourceContext: ev.event.repliesTo.sourceContext ?? {
-                            chatId: { ...defaultChatId },
-                        },
+                        sourceContext: messageContext,
                     };
                 } else {
                     this._logger.log(
