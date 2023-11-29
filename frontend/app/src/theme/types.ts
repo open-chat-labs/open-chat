@@ -11,6 +11,8 @@ export interface Theme {
     burst: boolean;
     logo: boolean;
     mode: "light" | "dark"; // pick the one that makes the most sense for your theme
+    font: string;
+    "font-bold": string;
 
     bg: string;
     txt: string;
@@ -111,6 +113,10 @@ export interface Theme {
         bg: string;
 
         left: {
+            bg: string;
+        };
+
+        nav: {
             bg: string;
         };
 

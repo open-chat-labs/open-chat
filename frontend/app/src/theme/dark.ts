@@ -46,6 +46,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         disabledTxt: txtLow,
         primary,
         code: "#f36D28",
+        font: '"Roboto", sans-serif',
+        "font-bold": '"Manrope", sans-serif',
 
         unread: {
             mute: "rgba(255,255,255,0.2)",
@@ -134,6 +136,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
             left: {
                 bg: chatPanelDark,
+            },
+
+            nav: {
+                bg: backgroundBlack,
             },
 
             right: {
