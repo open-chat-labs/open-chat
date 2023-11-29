@@ -12,6 +12,8 @@
     import { getContext } from "svelte";
     import { currentTheme } from "../../theme/themes";
     import DisappearsAt from "./DisappearsAt.svelte";
+    import TooltipWrapper from "../TooltipWrapper.svelte";
+    import TooltipPopup from "../TooltipPopup.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -30,14 +32,23 @@
     export let deleted: boolean;
     export let undeleting: boolean;
 
+    $: date = new Date(Number(timestamp));
+
     let iconColor = me ? $currentTheme.time.me.icon : $currentTheme.time.icon;
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
 </script>
 
 <div class="time-and-ticks" class:me class:fill class:rtl={$rtlStore}>
-    <span class="time">
-        {dateFormatter(new Date(Number(timestamp)))}
-    </span>
+    <TooltipWrapper position={"top"} align={"end"}>
+        <span slot="target" class="time">
+            {dateFormatter(date)}
+        </span>
+        <div let:position let:align slot="tooltip">
+            <TooltipPopup {position} {align}>
+                {client.toDatetimeString(date)}
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
     {#if failed}
         <AlertCircleOutline size={"0.9em"} color={iconColor} />
     {:else if deleted}
