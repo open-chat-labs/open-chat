@@ -36,6 +36,8 @@ export function lightTheme(): Theme {
         placeholder: txtLight,
         primary,
         code: orangeAccent,
+        font: '"Roboto", sans-serif',
+        "font-bold": '"Manrope", sans-serif',
 
         unread: {
             mute: "rgba(0,0,0,0.1)",
@@ -123,6 +125,10 @@ export function lightTheme(): Theme {
                     "#5f2583",
                     31.3,
                 )})`,
+            },
+
+            nav: {
+                bg: "linear-gradient(#22A7F2, #5f2583)",
             },
 
             right: {
