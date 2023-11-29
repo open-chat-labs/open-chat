@@ -56,7 +56,7 @@ export function getTheme(base: Theme): Theme {
     base.panel.left.bg = silver;
     base.panel.right.bg = silver;
     base.panel.nav.bg = "linear-gradient(#0884CE, #21219c)";
-    base.panel.right.modal = "linear-gradient(#0884CE, #21219c)";
+    base.panel.right.modal = silver;
 
     base.chatSearch.bg = textBox;
     base.chatSearch.rd = "0";
