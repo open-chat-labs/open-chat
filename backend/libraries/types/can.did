@@ -1447,6 +1447,12 @@ type DiamondMembershipStatus = variant {
     Lifetime;
 };
 
+type DiamondMembershipStatusFull = variant {
+    Inactive;
+    Active : DiamondMembershipDetails;
+    Lifetime;
+};
+
 type AccessGate = variant {
     DiamondMember;
     VerifiedCredential : VerifiedCredentialGate;

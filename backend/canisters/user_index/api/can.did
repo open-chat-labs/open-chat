@@ -56,6 +56,7 @@ type CurrentUserResponse = variant {
         suspension_details : opt SuspensionDetails;
         is_suspected_bot : bool;
         diamond_membership_details : opt DiamondMembershipDetails;
+        diamond_membership_status : DiamondMembershipStatusFull;
         moderation_flags_enabled : nat32;
     };
     UserNotFound;
