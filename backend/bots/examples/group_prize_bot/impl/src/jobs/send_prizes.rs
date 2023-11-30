@@ -184,10 +184,9 @@ async fn send_prize_message_to_group(
         end_date,
         caption: None,
         diamond_only: false,
-    })
-    .into();
+    });
 
-    let c2c_args = group_canister::c2c_send_message::Args {
+    let c2c_args = group_canister::send_message_v2::Args {
         message_id,
         thread_root_message_index: None,
         content,
@@ -200,8 +199,8 @@ async fn send_prize_message_to_group(
         correlation_id: 0,
     };
 
-    use group_canister::c2c_send_message::Response;
-    match group_canister_c2c_client::c2c_send_message(group, &c2c_args).await {
+    use group_canister::send_message_v2::Response;
+    match group_canister_c2c_client::send_message_v2(group, &c2c_args).await {
         Ok(response) => match response {
             Response::Success(_) => Ok(()),
             Response::CallerNotInGroup => Err("Bot not in group".to_string()),

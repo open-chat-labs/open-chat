@@ -93,6 +93,11 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
 
     let member = state.data.members.get(caller).unwrap();
 
+    // Bots can't call this c2c endpoint since it skips the validation
+    if member.is_bot && member.user_id != state.data.proposals_bot_user_id {
+        return NotAuthorized;
+    }
+
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
 
@@ -165,6 +170,7 @@ fn run_preliminary_checks(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageResult,
     sender: UserId,

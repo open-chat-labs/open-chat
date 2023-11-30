@@ -69,7 +69,13 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     }
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
+    if let Some(member) = state.data.get_member(caller) {
+        // Bots can't call this c2c endpoint since it skips the validation
+        if member.is_bot && member.user_id != state.data.proposals_bot_user_id {
+            return NotAuthorized;
+        }
+        let user_id = member.user_id;
+
         let now = state.env.now();
 
         let result = state.data.chat.send_message(
@@ -99,6 +105,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_send_message_result(
     result: SendMessageResult,
     sender: UserId,
