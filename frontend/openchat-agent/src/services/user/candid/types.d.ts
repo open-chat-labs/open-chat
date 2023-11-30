@@ -556,6 +556,9 @@ export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
 export type DiamondMembershipStatus = { 'Inactive' : null } |
   { 'Lifetime' : null } |
   { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
 export type DiamondMembershipSubscription = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'Disabled' : null } |

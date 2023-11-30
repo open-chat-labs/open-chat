@@ -376,6 +376,7 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
@@ -433,6 +434,9 @@ export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
 export type DiamondMembershipStatus = { 'Inactive' : null } |
   { 'Lifetime' : null } |
   { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
 export type DiamondMembershipSubscription = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'Disabled' : null } |

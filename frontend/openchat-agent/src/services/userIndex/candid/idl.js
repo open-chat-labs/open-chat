@@ -34,6 +34,23 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const EmptyArgs = IDL.Record({});
+  const DiamondMembershipSubscription = IDL.Variant({
+    'OneYear' : IDL.Null,
+    'ThreeMonths' : IDL.Null,
+    'Disabled' : IDL.Null,
+    'OneMonth' : IDL.Null,
+  });
+  const DiamondMembershipDetails = IDL.Record({
+    'pay_in_chat' : IDL.Bool,
+    'subscription' : DiamondMembershipSubscription,
+    'recurring' : IDL.Opt(DiamondMembershipSubscription),
+    'expires_at' : TimestampMillis,
+  });
+  const DiamondMembershipStatusFull = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'Active' : DiamondMembershipDetails,
+  });
   const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -53,21 +70,10 @@ export const idlFactory = ({ IDL }) => {
     'suspended_by' : UserId,
     'reason' : IDL.Text,
   });
-  const DiamondMembershipSubscription = IDL.Variant({
-    'OneYear' : IDL.Null,
-    'ThreeMonths' : IDL.Null,
-    'Disabled' : IDL.Null,
-    'OneMonth' : IDL.Null,
-  });
-  const DiamondMembershipDetails = IDL.Record({
-    'pay_in_chat' : IDL.Bool,
-    'subscription' : DiamondMembershipSubscription,
-    'recurring' : IDL.Opt(DiamondMembershipSubscription),
-    'expires_at' : TimestampMillis,
-  });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),

@@ -319,13 +319,10 @@ export class UserIndexClient extends CandidService {
                 recurring,
                 expected_price_e8s: expectedPriceE8s,
             }),
-            payForDiamondMembershipResponse,
+            (res) => payForDiamondMembershipResponse(duration, res),
         ).then((res) => {
             if (res.kind === "success") {
-                setUserDiamondStatusInCache(
-                    userId,
-                    duration === "lifetime" ? "lifetime" : "active",
-                );
+                setUserDiamondStatusInCache(userId, res.status.kind);
             }
             return res;
         });

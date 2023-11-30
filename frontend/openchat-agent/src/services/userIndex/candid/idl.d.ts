@@ -26,6 +26,7 @@ import {
     ReferralStats,
     SetModerationFlagsResponse,
     DiamondMembershipStatus,
+    DiamondMembershipStatusFull,
     DiamondMembershipSubscription
 } from "./types";
 export {
@@ -55,6 +56,7 @@ export {
     ReferralStats as ApiReferralStats,
     SetModerationFlagsResponse as ApiSetModerationFlagsResponse,
     DiamondMembershipStatus as ApiDiamondMembershipStatus,
+    DiamondMembershipStatusFull as ApiDiamondMembershipStatusFull,
     DiamondMembershipSubscription as ApiDiamondMembershipSubscription
 };
 

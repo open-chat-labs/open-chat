@@ -287,7 +287,6 @@ import type {
     UserStatus,
     ThreadRead,
     DiamondMembershipDuration,
-    DiamondMembershipDetails,
     DiamondMembershipFees,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
@@ -351,6 +350,7 @@ import type {
     Member,
     Level,
     VersionedRules,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -386,7 +386,7 @@ import {
     ANON_USER_ID,
     isPaymentGate,
     ONE_MINUTE_MILLIS,
-    ONE_YEAR,
+    ONE_HOUR,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -702,18 +702,6 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private diamondDurationFromDiamondMembership(
-        membership?: DiamondMembershipDetails,
-    ): DiamondMembershipDuration | undefined {
-        if (membership === undefined) return undefined;
-        if (membership.recurring !== undefined && membership.recurring !== "disabled") {
-            return membership.recurring;
-        }
-        if (Number(membership.expiresAt) - Date.now() > ONE_YEAR) {
-            return "lifetime";
-        }
-    }
-
     maxMediaSizes(): MaxMediaSizes {
         return this._liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
@@ -723,7 +711,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this.user.set(user);
-        this.setDiamondMembership(user.diamondMembership);
+        this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -3847,7 +3835,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         userCreatedStore.set(true);
                         selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
-                        this.setDiamondMembership(user.diamondMembership);
+                        this.setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -4888,26 +4876,18 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private updateDiamondStatusInUserStore(
-        now: number,
-        duration: DiamondMembershipDuration,
-        details?: DiamondMembershipDetails,
-    ): void {
-        const diamond = details !== undefined && Number(details.expiresAt) > now;
+    private updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
         this.overwriteUserInStore(this._liveState.user.userId, (user) => {
-            const status = diamond ? (duration === "lifetime" ? "lifetime" : "active") : "inactive";
-            return user.diamondStatus !== status ? { ...user, diamondStatus: status } : undefined;
+            const changed = status.kind !== user.diamondStatus;
+            return changed ? { ...user, diamondStatus: status.kind } : undefined;
         });
     }
 
-    private setDiamondMembership(
-        duration: DiamondMembershipDuration,
-        details?: DiamondMembershipDetails,
-    ): void {
+    private setDiamondStatus(status: DiamondMembershipStatus): void {
         const now = Date.now();
-        this.updateDiamondStatusInUserStore(now, duration, details);
-        if (details !== undefined) {
-            const expiry = Number(details.expiresAt);
+        this.updateDiamondStatusInUserStore(status);
+        if (status.kind === "active") {
+            const expiry = Number(status.expiresAt);
             if (expiry > now) {
                 if (this._membershipCheck !== undefined) {
                     window.clearTimeout(this._membershipCheck);
@@ -4956,9 +4936,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 } else {
                     this.user.update((user) => ({
                         ...user,
-                        diamondMembership: resp.details,
+                        diamondStatus: resp.status,
                     }));
-                    this.setDiamondMembership(duration, resp.details);
+                    this.setDiamondStatus(resp.status);
                     return true;
                 }
             })
