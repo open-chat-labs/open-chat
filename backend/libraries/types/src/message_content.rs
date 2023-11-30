@@ -3,7 +3,7 @@ use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
     ProposalContent, TimestampMillis, TotalVotes, User, UserId,
 };
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -11,7 +11,6 @@ use std::fmt::{Debug, Formatter};
 
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
-const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInitial {
@@ -59,7 +58,6 @@ pub enum ContentValidationError {
     TransferCannotBeZero,
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
-    UnauthorizedToSendProposalMessages,
     Unauthorized,
 }
 
@@ -209,38 +207,17 @@ impl MessageContent {
 }
 
 impl MessageContentInitial {
-    pub fn validate_for_new_direct_message(
+    pub fn validate_for_new_message(
         &self,
-        sender: UserId,
-        forwarding: bool,
-        now: TimestampMillis,
-    ) -> Result<(), ContentValidationError> {
-        self.validate_for_new_message(sender, true, forwarding, None, now)
-    }
-
-    pub fn validate_for_new_group_message(
-        &self,
-        sender: UserId,
-        forwarding: bool,
-        proposals_bot_user_id: UserId,
-        now: TimestampMillis,
-    ) -> Result<(), ContentValidationError> {
-        self.validate_for_new_message(sender, false, forwarding, Some(proposals_bot_user_id), now)
-    }
-
-    // Determines if the content is valid for a new message, this should not be called on existing
-    // messages
-    fn validate_for_new_message(
-        &self,
-        sender: UserId,
         is_direct_chat: bool,
         forwarding: bool,
-        proposals_bot_user_id: Option<UserId>,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContentInitial::Poll(_) | MessageContentInitial::Crypto(_) | MessageContentInitial::Deleted(_) => {
+                MessageContentInitial::Crypto(_)
+                | MessageContentInitial::GovernanceProposal(_)
+                | MessageContentInitial::Poll(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -263,20 +240,10 @@ impl MessageContentInitial {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
                 }
             }
-            MessageContentInitial::GovernanceProposal(_) => {
-                if proposals_bot_user_id.map_or(true, |u| u != sender) {
-                    return Err(ContentValidationError::UnauthorizedToSendProposalMessages);
-                }
-            }
-            MessageContentInitial::MessageReminderCreated(_) => {
-                if sender != OPENCHAT_BOT_USER_ID {
-                    return Err(ContentValidationError::Unauthorized);
-                }
-            }
-            MessageContentInitial::MessageReminder(_) => {
-                if sender != OPENCHAT_BOT_USER_ID {
-                    return Err(ContentValidationError::Unauthorized);
-                }
+            MessageContentInitial::GovernanceProposal(_)
+            | MessageContentInitial::MessageReminderCreated(_)
+            | MessageContentInitial::MessageReminder(_) => {
+                return Err(ContentValidationError::Unauthorized);
             }
             _ => {}
         };

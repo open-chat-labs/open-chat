@@ -32,6 +32,7 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
@@ -517,7 +518,7 @@ impl GroupChatCore {
         Success(matches)
     }
 
-    pub fn send_message(
+    pub fn validate_and_send_message(
         &mut self,
         sender: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -532,25 +533,7 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        match self.members.get_mut(&sender) {
-            Some(m) => {
-                if m.suspended.value {
-                    return UserSuspended;
-                }
-                if let Some(version) = rules_accepted {
-                    m.accept_rules(min(version, self.rules.text.version), now);
-                }
-            }
-            None => return UserNotInGroup,
-        };
-
-        let member = self.members.get(&sender).unwrap();
-
-        if !self.check_rules(member) {
-            return RulesNotAccepted;
-        }
-
-        if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
+        if let Err(error) = content.validate_for_new_message(false, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -562,9 +545,6 @@ impl GroupChatCore {
                     InvalidRequest("Cannot forward this type of message".to_string())
                 }
                 ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
-                ContentValidationError::UnauthorizedToSendProposalMessages => {
-                    InvalidRequest("User unauthorized to send proposal messages".to_string())
-                }
                 ContentValidationError::Unauthorized => {
                     InvalidRequest("User unauthorized to send messages of this type".to_string())
                 }
@@ -581,36 +561,72 @@ impl GroupChatCore {
             }
         }
 
-        let permissions = &self.permissions;
+        self.send_message(
+            sender,
+            thread_root_message_index,
+            message_id,
+            content.into(),
+            replies_to,
+            mentioned,
+            forwarding,
+            rules_accepted,
+            proposals_bot_user_id,
+            now,
+        )
+    }
 
-        if !member
-            .role
-            .can_send_message(&content, thread_root_message_index.is_some(), permissions)
-        {
-            return NotAuthorized;
-        }
+    pub fn send_message(
+        &mut self,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: MessageContentInternal,
+        replies_to: Option<GroupReplyContext>,
+        mentioned: Vec<UserId>,
+        forwarding: bool,
+        rules_accepted: Option<Version>,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> SendMessageResult {
+        use SendMessageResult::*;
+
+        let PrepareSendMessageSuccess {
+            min_visible_event_index,
+            mentions_disabled,
+            everyone_mentioned,
+        } = match self.prepare_send_message(
+            sender,
+            thread_root_message_index,
+            &content,
+            rules_accepted,
+            proposals_bot_user_id,
+            now,
+        ) {
+            PrepareSendMessageResult::Success(success) => success,
+            PrepareSendMessageResult::UserSuspended => return UserSuspended,
+            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
+            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
+            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
+        };
 
         if let Some(root_message_index) = thread_root_message_index {
             if !self
                 .events
-                .is_accessible(member.min_visible_event_index(), None, root_message_index.into())
+                .is_accessible(min_visible_event_index, None, root_message_index.into())
             {
                 return ThreadMessageNotFound;
             }
         }
 
-        let min_visible_event_index = member.min_visible_event_index();
         let user_being_replied_to = replies_to
             .as_ref()
             .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
-
-        let everyone_mentioned = member.role.can_mention_everyone(permissions) && is_everyone_mentioned(&content);
 
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index,
             message_id,
-            content: content.into(),
+            content,
             mentioned: mentioned.clone(),
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
@@ -650,9 +666,6 @@ impl GroupChatCore {
             }
         }
 
-        // Disable mentions for messages sent by the ProposalsBot
-        let mentions_disabled = sender == proposals_bot_user_id;
-
         for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
             let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
@@ -672,6 +685,59 @@ impl GroupChatCore {
         Success(SendMessageSuccess {
             message_event,
             users_to_notify: users_to_notify.into_iter().collect(),
+        })
+    }
+
+    fn prepare_send_message(
+        &mut self,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: &MessageContentInternal,
+        rules_accepted: Option<Version>,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> PrepareSendMessageResult {
+        use PrepareSendMessageResult::*;
+
+        if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
+            return Success(PrepareSendMessageSuccess {
+                min_visible_event_index: EventIndex::default(),
+                mentions_disabled: true,
+                everyone_mentioned: false,
+            });
+        }
+
+        match self.members.get_mut(&sender) {
+            Some(m) => {
+                if m.suspended.value {
+                    return UserSuspended;
+                }
+                if let Some(version) = rules_accepted {
+                    m.accept_rules(min(version, self.rules.text.version), now);
+                }
+            }
+            None => return UserNotInGroup,
+        };
+
+        let member = self.members.get(&sender).unwrap();
+
+        if !self.check_rules(member) {
+            return RulesNotAccepted;
+        }
+
+        let permissions = &self.permissions;
+
+        if !member
+            .role
+            .can_send_message(content, thread_root_message_index.is_some(), permissions)
+        {
+            return NotAuthorized;
+        }
+
+        Success(PrepareSendMessageSuccess {
+            min_visible_event_index: member.min_visible_event_index(),
+            mentions_disabled: false,
+            everyone_mentioned: is_everyone_mentioned(content),
         })
     }
 
@@ -1963,8 +2029,22 @@ lazy_static! {
     static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|\W)(@everyone)($|\W)").unwrap();
 }
 
-fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
+fn is_everyone_mentioned(content: &MessageContentInternal) -> bool {
     content
         .text()
         .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
+}
+
+enum PrepareSendMessageResult {
+    Success(PrepareSendMessageSuccess),
+    UserSuspended,
+    UserNotInGroup,
+    RulesNotAccepted,
+    NotAuthorized,
+}
+
+struct PrepareSendMessageSuccess {
+    min_visible_event_index: EventIndex,
+    mentions_disabled: bool,
+    everyone_mentioned: bool,
 }

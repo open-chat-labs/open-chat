@@ -116,12 +116,8 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
 
     let now = state.env.now();
 
-    if matches!(args.content, MessageContentInitial::Prize(_)) {
-        return ValidateRequestResult::Invalid(InvalidRequest("Cannot send a prize message in a direct chat".to_string()));
-    }
-
     let my_user_id: UserId = state.env.canister_id().into();
-    if let Err(error) = args.content.validate_for_new_direct_message(my_user_id, args.forwarding, now) {
+    if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -131,9 +127,6 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
             ContentValidationError::PrizeEndDateInThePast => unreachable!(),
-            ContentValidationError::UnauthorizedToSendProposalMessages => {
-                InvalidRequest("User unauthorized to send proposal messages".to_string())
-            }
             ContentValidationError::Unauthorized => {
                 InvalidRequest("User unauthorized to send messages of this type".to_string())
             }

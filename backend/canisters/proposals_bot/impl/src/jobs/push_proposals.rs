@@ -52,14 +52,15 @@ async fn push_proposal(
 
 async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatId, proposal: Proposal) {
     let message_id = generate_message_id(governance_canister_id, proposal.id());
-    let send_message_args = group_canister::send_message_v2::Args {
+    let send_message_args = group_canister::c2c_send_message::Args {
         message_id,
         thread_root_message_index: None,
         content: MessageContentInitial::GovernanceProposal(ProposalContent {
             governance_canister_id,
             proposal: proposal.clone(),
             my_vote: None,
-        }),
+        })
+        .into(),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
         replies_to: None,
@@ -69,7 +70,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         correlation_id: 0,
     };
 
-    let response = group_canister_c2c_client::send_message_v2(group_id.into(), &send_message_args).await;
+    let response = group_canister_c2c_client::c2c_send_message(group_id.into(), &send_message_args).await;
 
     mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
 }
@@ -81,14 +82,15 @@ async fn push_channel_proposal(
     proposal: Proposal,
 ) {
     let message_id = generate_message_id(governance_canister_id, proposal.id());
-    let send_message_args = community_canister::send_message::Args {
+    let send_message_args = community_canister::c2c_send_message::Args {
         message_id,
         thread_root_message_index: None,
         content: MessageContentInitial::GovernanceProposal(ProposalContent {
             governance_canister_id,
             proposal: proposal.clone(),
             my_vote: None,
-        }),
+        })
+        .into(),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
         replies_to: None,
@@ -99,7 +101,7 @@ async fn push_channel_proposal(
         channel_rules_accepted: None,
     };
 
-    let response = community_canister_c2c_client::send_message(community_id.into(), &send_message_args).await;
+    let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;
 
     mark_proposal_pushed(governance_canister_id, proposal, message_id, is_failure(response));
 }
