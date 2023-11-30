@@ -90,7 +90,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_direct_message(sender_user_id, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }

@@ -386,15 +386,6 @@ impl Data {
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
-    pub fn check_rules(&self, member: &CommunityMemberInternal) -> bool {
-        !self.rules.enabled
-            || member.is_bot
-            || (member
-                .rules_accepted
-                .as_ref()
-                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
-    }
-
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
         let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();

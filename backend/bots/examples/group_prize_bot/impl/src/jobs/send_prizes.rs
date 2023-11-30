@@ -184,9 +184,10 @@ async fn send_prize_message_to_group(
         end_date,
         caption: None,
         diamond_only: false,
-    });
+    })
+    .into();
 
-    let c2c_args = group_canister::send_message_v2::Args {
+    let c2c_args = group_canister::c2c_send_message::Args {
         message_id,
         thread_root_message_index: None,
         content,
@@ -199,19 +200,20 @@ async fn send_prize_message_to_group(
         correlation_id: 0,
     };
 
-    match group_canister_c2c_client::send_message_v2(group, &c2c_args).await {
+    use group_canister::c2c_send_message::Response;
+    match group_canister_c2c_client::c2c_send_message(group, &c2c_args).await {
         Ok(response) => match response {
-            group_canister::send_message_v2::Response::Success(_) => Ok(()),
-            group_canister::send_message_v2::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
-            group_canister::send_message_v2::Response::UserSuspended => Err("Bot suspended".to_string()),
-            group_canister::send_message_v2::Response::ChatFrozen => Err("Group frozen".to_string()),
-            group_canister::send_message_v2::Response::MessageEmpty
-            | group_canister::send_message_v2::Response::RulesNotAccepted
-            | group_canister::send_message_v2::Response::InvalidPoll(_)
-            | group_canister::send_message_v2::Response::NotAuthorized
-            | group_canister::send_message_v2::Response::ThreadMessageNotFound
-            | group_canister::send_message_v2::Response::InvalidRequest(_)
-            | group_canister::send_message_v2::Response::TextTooLong(_) => unreachable!(),
+            Response::Success(_) => Ok(()),
+            Response::CallerNotInGroup => Err("Bot not in group".to_string()),
+            Response::UserSuspended => Err("Bot suspended".to_string()),
+            Response::ChatFrozen => Err("Group frozen".to_string()),
+            Response::MessageEmpty
+            | Response::RulesNotAccepted
+            | Response::InvalidPoll(_)
+            | Response::NotAuthorized
+            | Response::ThreadMessageNotFound
+            | Response::InvalidRequest(_)
+            | Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => Err(format!("{error:?}")),

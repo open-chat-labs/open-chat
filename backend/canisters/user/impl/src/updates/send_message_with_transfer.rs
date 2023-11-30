@@ -2,8 +2,7 @@ use crate::crypto::process_transaction;
 use crate::guards::caller_is_owner;
 use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use community_canister::send_message;
-use group_canister::send_message_v2;
+use chat_events::MessageContentInternal;
 use ic_cdk_macros::update;
 use types::{
     CompletedCryptoTransaction, CryptoContent, CryptoTransaction, MessageContentInitial, PendingCryptoTransaction,
@@ -48,7 +47,7 @@ async fn send_message_with_transfer_to_channel(
     let content = transform_content_with_completed_transaction(args.content, completed_transaction.clone());
 
     // Build the send_message args
-    let c2c_args = community_canister::send_message::Args {
+    let c2c_args = community_canister::c2c_send_message::Args {
         channel_id: args.channel_id,
         message_id: args.message_id,
         thread_root_message_index: args.thread_root_message_index,
@@ -63,28 +62,29 @@ async fn send_message_with_transfer_to_channel(
     };
 
     // Send the message to the community
-    match community_canister_c2c_client::send_message(args.community_id.into(), &c2c_args).await {
+    use community_canister::c2c_send_message::Response;
+    match community_canister_c2c_client::c2c_send_message(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            send_message::Response::Success(r) => Success(send_message_with_transfer_to_channel::SuccessResult {
+            Response::Success(r) => Success(send_message_with_transfer_to_channel::SuccessResult {
                 event_index: r.event_index,
                 message_index: r.message_index,
                 timestamp: r.timestamp,
                 expires_at: r.expires_at,
                 transfer: completed_transaction,
             }),
-            send_message::Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
-            send_message::Response::UserNotInChannel => UserNotInChannel(completed_transaction),
-            send_message::Response::ChannelNotFound => ChannelNotFound(completed_transaction),
-            send_message::Response::UserSuspended => UserSuspended,
-            send_message::Response::CommunityFrozen => CommunityFrozen,
-            send_message::Response::RulesNotAccepted => RulesNotAccepted,
-            send_message::Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
-            send_message::Response::MessageEmpty
-            | send_message::Response::InvalidPoll(_)
-            | send_message::Response::NotAuthorized
-            | send_message::Response::ThreadMessageNotFound
-            | send_message::Response::InvalidRequest(_)
-            | send_message::Response::TextTooLong(_) => unreachable!(),
+            Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
+            Response::UserNotInChannel => UserNotInChannel(completed_transaction),
+            Response::ChannelNotFound => ChannelNotFound(completed_transaction),
+            Response::UserSuspended => UserSuspended,
+            Response::CommunityFrozen => CommunityFrozen,
+            Response::RulesNotAccepted => RulesNotAccepted,
+            Response::CommunityRulesNotAccepted => CommunityRulesNotAccepted,
+            Response::MessageEmpty
+            | Response::InvalidPoll(_)
+            | Response::NotAuthorized
+            | Response::ThreadMessageNotFound
+            | Response::InvalidRequest(_)
+            | Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => InternalError(format!("{error:?}"), completed_transaction),
@@ -126,7 +126,7 @@ async fn send_message_with_transfer_to_group(
     let content = transform_content_with_completed_transaction(args.content, completed_transaction.clone());
 
     // Build the send_message args
-    let c2c_args = group_canister::send_message_v2::Args {
+    let c2c_args = group_canister::c2c_send_message::Args {
         message_id: args.message_id,
         thread_root_message_index: args.thread_root_message_index,
         content,
@@ -140,25 +140,26 @@ async fn send_message_with_transfer_to_group(
     };
 
     // Send the message to the group
-    match group_canister_c2c_client::send_message_v2(args.group_id.into(), &c2c_args).await {
+    use group_canister::c2c_send_message::Response;
+    match group_canister_c2c_client::c2c_send_message(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            send_message_v2::Response::Success(r) => Success(send_message_with_transfer_to_group::SuccessResult {
+            Response::Success(r) => Success(send_message_with_transfer_to_group::SuccessResult {
                 event_index: r.event_index,
                 message_index: r.message_index,
                 timestamp: r.timestamp,
                 expires_at: r.expires_at,
                 transfer: completed_transaction,
             }),
-            send_message_v2::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
-            send_message_v2::Response::UserSuspended => UserSuspended,
-            send_message_v2::Response::ChatFrozen => ChatFrozen,
-            send_message_v2::Response::RulesNotAccepted => RulesNotAccepted,
-            send_message_v2::Response::MessageEmpty
-            | send_message_v2::Response::InvalidPoll(_)
-            | send_message_v2::Response::NotAuthorized
-            | send_message_v2::Response::ThreadMessageNotFound
-            | send_message_v2::Response::InvalidRequest(_)
-            | send_message_v2::Response::TextTooLong(_) => unreachable!(),
+            Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
+            Response::UserSuspended => UserSuspended,
+            Response::ChatFrozen => ChatFrozen,
+            Response::RulesNotAccepted => RulesNotAccepted,
+            Response::MessageEmpty
+            | Response::InvalidPoll(_)
+            | Response::NotAuthorized
+            | Response::ThreadMessageNotFound
+            | Response::InvalidRequest(_)
+            | Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => InternalError(format!("{error:?}"), completed_transaction),
@@ -232,9 +233,9 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
 fn transform_content_with_completed_transaction(
     content: MessageContentInitial,
     completed_transaction: CompletedCryptoTransaction,
-) -> MessageContentInitial {
+) -> MessageContentInternal {
     // Mutate the content so it now includes the completed transaction
-    match content {
+    MessageContentInternal::from(match content {
         MessageContentInitial::Crypto(c) => MessageContentInitial::Crypto(CryptoContent {
             recipient: c.recipient,
             transfer: CryptoTransaction::Completed(completed_transaction),
@@ -248,5 +249,5 @@ fn transform_content_with_completed_transaction(
             diamond_only: c.diamond_only,
         }),
         _ => unreachable!("Message must include a crypto transfer"),
-    }
+    })
 }
