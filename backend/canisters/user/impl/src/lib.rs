@@ -5,12 +5,14 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
+use crate::model::p2p_trades::P2PTrades;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
+use icrc_ledger_types::icrc1::account::Subaccount;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
@@ -80,12 +82,12 @@ impl RuntimeState {
 
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.group_chats.get(&caller.into()).is_some()
+        self.data.group_chats.exists(&caller.into())
     }
 
     pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.communities.get(&caller.into()).is_some()
+        self.data.communities.exists(&caller.into())
     }
 
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
@@ -179,6 +181,8 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
+    #[serde(default)]
+    pub p2p_trades: P2PTrades,
     pub rng_seed: [u8; 32],
 }
 
@@ -228,6 +232,7 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
+            p2p_trades: P2PTrades::default(),
             rng_seed: [0; 32],
         }
     }
@@ -286,6 +291,13 @@ pub struct Metrics {
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+fn p2p_trade_subaccount(id: u32) -> Subaccount {
+    let mut subaccount = [0; 32];
+    subaccount[25..28].copy_from_slice(b"P2P");
+    subaccount[28..].copy_from_slice(&id.to_be_bytes());
+    subaccount
 }
 
 #[derive(Serialize, Debug)]

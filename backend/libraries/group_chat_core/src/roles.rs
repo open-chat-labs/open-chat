@@ -110,8 +110,8 @@ impl GroupRoleInternal {
             MessageContentInternal::Poll(_) => ps.poll.unwrap_or(ps.default),
             MessageContentInternal::Crypto(_) => ps.crypto.unwrap_or(ps.default),
             MessageContentInternal::Giphy(_) => ps.giphy.unwrap_or(ps.default),
-            MessageContentInternal::GovernanceProposal(_) => GroupPermissionRole::Owner,
             MessageContentInternal::Prize(_) => ps.prize.unwrap_or(ps.default),
+            MessageContentInternal::P2PTrade(_) => ps.p2p_trade.unwrap_or(ps.default),
             MessageContentInternal::Custom(mc) => ps
                 .custom
                 .iter()
@@ -119,9 +119,10 @@ impl GroupRoleInternal {
                 .map(|cp| cp.role)
                 .unwrap_or(ps.default),
             MessageContentInternal::Deleted(_)
-            | MessageContentInternal::PrizeWinner(_)
+            | MessageContentInternal::GovernanceProposal(_)
             | MessageContentInternal::MessageReminderCreated(_)
             | MessageContentInternal::MessageReminder(_)
+            | MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::ReportedMessage(_) => GroupPermissionRole::None,
         };
 

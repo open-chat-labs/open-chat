@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    ProposalContent, TimestampMillis, TotalVotes, User, UserId,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -27,6 +27,7 @@ pub enum MessageContentInitial {
     Prize(PrizeContentInitial),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    P2PTrade(P2PTradeContentInitial),
     Custom(CustomContent),
 }
 
@@ -47,6 +48,7 @@ pub enum MessageContent {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     ReportedMessage(ReportedMessage),
+    P2PTrade(P2PTradeContent),
     Custom(CustomContent),
 }
 
@@ -100,6 +102,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::P2PTrade(_)
             | MessageContent::Custom(_) => {}
         }
 
@@ -123,6 +126,7 @@ impl MessageContent {
             MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
             MessageContent::MessageReminder(_) => "MessageReminder",
             MessageContent::ReportedMessage(_) => "ReportedMessage",
+            MessageContent::P2PTrade(_) => "P2PTrade",
             MessageContent::Custom(c) => &c.kind,
         };
 
@@ -141,6 +145,7 @@ impl MessageContent {
             MessageContent::Giphy(g) => g.caption.as_deref(),
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
             MessageContent::Prize(p) => p.caption.as_deref(),
+            MessageContent::P2PTrade(p) => p.caption.as_deref(),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -184,6 +189,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
+            | MessageContent::P2PTrade(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -210,14 +216,13 @@ impl MessageContentInitial {
     pub fn validate_for_new_message(
         &self,
         is_direct_chat: bool,
+        sender_is_bot: bool,
         forwarding: bool,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContentInitial::Crypto(_)
-                | MessageContentInitial::GovernanceProposal(_)
-                | MessageContentInitial::Poll(_) => {
+                MessageContentInitial::Crypto(_) | MessageContentInitial::Poll(_) | MessageContentInitial::P2PTrade(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -238,6 +243,11 @@ impl MessageContentInitial {
             MessageContentInitial::Prize(p) => {
                 if p.end_date <= now {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
+                }
+            }
+            MessageContentInitial::P2PTrade(_) => {
+                if sender_is_bot {
+                    return Err(ContentValidationError::Unauthorized);
                 }
             }
             MessageContentInitial::GovernanceProposal(_)
@@ -262,6 +272,7 @@ impl MessageContentInitial {
             | MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_)
+            | MessageContentInitial::P2PTrade(_)
             | MessageContentInitial::Custom(_) => false,
         };
 
@@ -293,6 +304,7 @@ impl MessageContentInitial {
             MessageContentInitial::Prize(p) => p.caption.as_deref(),
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInitial::P2PTrade(p) => p.caption.as_deref(),
             MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -316,6 +328,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
+            MessageContent::P2PTrade(_) => todo!(),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
@@ -345,6 +358,7 @@ impl From<MessageContentInitial> for MessageContent {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
+            MessageContentInitial::P2PTrade(_) => unimplemented!(),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
         }
     }
@@ -507,6 +521,49 @@ pub struct MessageReport {
     pub timestamp: TimestampMillis,
     pub reason_code: u32,
     pub notes: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeContentInitial {
+    pub input_token: TokenInfo,
+    pub input_amount: u128,
+    pub output_token: TokenInfo,
+    pub output_amount: u128,
+    pub expires_at: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeContent {
+    pub input_token: TokenInfo,
+    pub input_transfer: CompletedCryptoTransaction,
+    pub output_token: TokenInfo,
+    pub output_amount: u128,
+    pub expires_at: TimestampMillis,
+    pub status: P2PTradeStatus,
+    pub caption: Option<String>,
+}
+
+impl P2PTradeContent {
+    pub fn new(content: P2PTradeContentInitial, transfer: CompletedCryptoTransaction) -> P2PTradeContent {
+        P2PTradeContent {
+            input_token: content.input_token,
+            input_transfer: transfer,
+            output_token: content.output_token,
+            output_amount: content.output_amount,
+            expires_at: content.expires_at,
+            status: P2PTradeStatus::Open,
+            caption: content.caption,
+        }
+    }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum P2PTradeStatus {
+    Open,
+    Cancelled,
+    Reserved(UserId, TimestampMillis),
+    Completed(UserId, CompletedCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

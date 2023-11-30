@@ -33,11 +33,14 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
+    if let Some(member) = state.data.get_member(caller) {
+        let user_id = member.user_id;
+        let sender_is_bot = member.is_bot;
         let now = state.env.now();
 
         let result = state.data.chat.validate_and_send_message(
             user_id,
+            sender_is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,
