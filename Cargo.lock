@@ -1259,6 +1259,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "chat_events",
  "serde",
  "types",
 ]

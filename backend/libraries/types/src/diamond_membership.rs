@@ -2,13 +2,20 @@ use crate::{Milliseconds, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct DiamondMembershipDetails {
     pub expires_at: TimestampMillis,
     pub pay_in_chat: bool,
     #[deprecated]
     pub recurring: Option<DiamondMembershipSubscription>,
     pub subscription: DiamondMembershipSubscription,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum DiamondMembershipStatusFull {
+    Inactive,
+    Active(DiamondMembershipDetails),
+    Lifetime,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]

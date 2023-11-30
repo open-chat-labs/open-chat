@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
     Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
-    DiamondMembershipSubscription, Milliseconds, TimestampMillis,
+    DiamondMembershipStatusFull, DiamondMembershipSubscription, Milliseconds, TimestampMillis,
 };
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 use utils::time::DAY_IN_MS;
@@ -91,6 +91,20 @@ impl DiamondMembershipDetailsInternal {
                 .expires_at
                 .map(|ts| ts < now.saturating_add(DAY_IN_MS))
                 .unwrap_or_default()
+    }
+
+    #[allow(deprecated)]
+    pub fn status_full(&self, now: TimestampMillis) -> DiamondMembershipStatusFull {
+        match self.expires_at {
+            Some(ts) if ts > LIFETIME_TIMESTAMP => DiamondMembershipStatusFull::Lifetime,
+            Some(ts) if ts > now => DiamondMembershipStatusFull::Active(DiamondMembershipDetails {
+                expires_at: ts,
+                pay_in_chat: self.pay_in_chat,
+                recurring: Some(self.subscription),
+                subscription: self.subscription,
+            }),
+            _ => DiamondMembershipStatusFull::Inactive,
+        }
     }
 
     #[allow(deprecated)]

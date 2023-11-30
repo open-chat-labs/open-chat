@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_send_message` with improved API for c2c calls vs `send_message_v2` ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
+
 ### Changed
 
 - Burn any CHAT going to the treasury ([#4891](https://github.com/open-chat-labs/open-chat/pull/4891))
