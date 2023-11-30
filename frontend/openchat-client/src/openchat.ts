@@ -385,6 +385,8 @@ import {
     anonymousUser,
     ANON_USER_ID,
     isPaymentGate,
+    ONE_MINUTE_MILLIS,
+    ONE_YEAR,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -433,13 +435,11 @@ import { offlineStore } from "./stores/network";
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
-const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
-const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
@@ -699,6 +699,18 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
         if (this._liveState.diamondMembership !== undefined) {
             return formatRelativeTime(now, locale, this._liveState.diamondMembership.expiresAt);
+        }
+    }
+
+    private diamondDurationFromDiamondMembership(
+        membership?: DiamondMembershipDetails,
+    ): DiamondMembershipDuration | undefined {
+        if (membership === undefined) return undefined;
+        if (membership.recurring !== undefined && membership.recurring !== "disabled") {
+            return membership.recurring;
+        }
+        if (Number(membership.expiresAt) - Date.now() > ONE_YEAR) {
+            return "lifetime";
         }
     }
 

@@ -9,9 +9,10 @@
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Diamond from "../../icons/Diamond.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
 
     const client = getContext<OpenChat>("client");
-    const ledger: string = LEDGER_CANISTER_ICP;
+    let ledger: string = LEDGER_CANISTER_ICP;
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
@@ -62,6 +63,11 @@
                     {/if}
                 </div>
                 {#if step === "payment"}
+                    <div>
+                        <CryptoSelector
+                            bind:ledger
+                            filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+                    </div>
                     <div class="balance">
                         <BalanceWithRefresh
                             {ledger}
