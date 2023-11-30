@@ -53,14 +53,16 @@ export const idlFactory = ({ IDL }) => {
     'suspended_by' : UserId,
     'reason' : IDL.Text,
   });
-  const DiamondMembershipPlanDuration = IDL.Variant({
+  const DiamondMembershipSubscription = IDL.Variant({
     'OneYear' : IDL.Null,
-    'Lifetime' : IDL.Null,
     'ThreeMonths' : IDL.Null,
+    'Disabled' : IDL.Null,
     'OneMonth' : IDL.Null,
   });
   const DiamondMembershipDetails = IDL.Record({
-    'recurring' : IDL.Opt(DiamondMembershipPlanDuration),
+    'pay_in_chat' : IDL.Bool,
+    'subscription' : DiamondMembershipSubscription,
+    'recurring' : IDL.Opt(DiamondMembershipSubscription),
     'expires_at' : TimestampMillis,
   });
   const CurrentUserResponse = IDL.Variant({
@@ -102,6 +104,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const DiamondMembershipPlanDuration = IDL.Variant({
+    'OneYear' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'ThreeMonths' : IDL.Null,
+    'OneMonth' : IDL.Null,
+  });
   const PayForDiamondMembershipArgs = IDL.Record({
     'token' : Cryptocurrency,
     'duration' : DiamondMembershipPlanDuration,
@@ -178,9 +186,15 @@ export const idlFactory = ({ IDL }) => {
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const DiamondMembershipStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'Active' : IDL.Null,
+  });
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
     'diamond_member' : IDL.Bool,
+    'diamond_membership_status' : DiamondMembershipStatus,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
@@ -244,6 +258,15 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
+  const UpdateDiamondMembershipSubscriptionArgs = IDL.Record({
+    'pay_in_chat' : IDL.Opt(IDL.Bool),
+    'subscription' : IDL.Opt(DiamondMembershipSubscription),
+  });
+  const UpdateDiamondMembershipSubscriptionResponse = IDL.Variant({
+    'NotDiamondMember' : IDL.Null,
+    'Success' : IDL.Null,
+    'AlreadyLifetimeDiamondMember' : IDL.Null,
+  });
   const UserArgs = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : IDL.Opt(UserId),
@@ -255,28 +278,6 @@ export const idlFactory = ({ IDL }) => {
   const UserRegistrationCanisterResponse = IDL.Variant({
     'Success' : CanisterId,
     'NewRegistrationsClosed' : IDL.Null,
-  });
-  const UsersArgs = IDL.Record({
-    'user_groups' : IDL.Vec(
-      IDL.Record({
-        'users' : IDL.Vec(UserId),
-        'updated_since' : TimestampMillis,
-      })
-    ),
-  });
-  const PartialUserSummary = IDL.Record({
-    'username' : IDL.Opt(IDL.Text),
-    'diamond_member' : IDL.Bool,
-    'user_id' : UserId,
-    'is_bot' : IDL.Bool,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'suspended' : IDL.Bool,
-  });
-  const UsersResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'users' : IDL.Vec(PartialUserSummary),
-    }),
   });
   const UsersV2Args = IDL.Record({
     'user_groups' : IDL.Vec(
@@ -397,13 +398,17 @@ export const idlFactory = ({ IDL }) => {
         [UnsuspendUserResponse],
         [],
       ),
+    'update_diamond_membership_subscription' : IDL.Func(
+        [UpdateDiamondMembershipSubscriptionArgs],
+        [UpdateDiamondMembershipSubscriptionResponse],
+        [],
+      ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
     'user_registration_canister' : IDL.Func(
         [EmptyArgs],
         [UserRegistrationCanisterResponse],
         ['query'],
       ),
-    'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
     'users_v2' : IDL.Func([UsersV2Args], [UsersV2Response], ['query']),
   });
 };

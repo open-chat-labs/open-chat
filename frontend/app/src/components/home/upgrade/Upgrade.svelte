@@ -8,6 +8,7 @@
     import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import Diamond from "../../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const ledger: string = LEDGER_CANISTER_ICP;
@@ -43,10 +44,11 @@
 </script>
 
 <Overlay>
-    <ModalContent overflows hideFooter fill>
+    <ModalContent overflows={step === "features"} hideFooter fill>
         <div class="header" slot="header">
             {#if !confirming && !confirmed}
                 <div class="title">
+                    <Diamond size={"1em"} show={"blue"} />
                     {#if step === "features"}
                         {#if $canExtendDiamond}
                             {$_("upgrade.extend")}
@@ -104,5 +106,11 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
     }
 </style>

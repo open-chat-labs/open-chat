@@ -18,8 +18,10 @@ export type UserSummary = DataContent & {
     displayName: string | undefined;
     updated: bigint;
     suspended: boolean;
-    diamond: boolean;
+    diamondStatus: DiamondStatus;
 };
+
+export type DiamondStatus = "inactive" | "active" | "lifetime";
 
 export type UserGroupSummary = {
     kind: "user_group";
@@ -137,11 +139,13 @@ export type CreatedUser = {
 };
 
 export type DiamondMembershipDetails = {
-    recurring?: DiamondMembershipDuration;
+    recurring?: DiamondMembershipSubscription;
     expiresAt: bigint;
 };
 
-export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year";
+export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year" | "lifetime";
+
+export type DiamondMembershipSubscription = "one_month" | "three_months" | "one_year" | "disabled";
 
 export type SuspensionDetails = {
     reason: string;

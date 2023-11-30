@@ -693,7 +693,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (userId === this._liveState.user.userId) return this._liveState.isDiamond;
 
-        return user.diamond;
+        return user.diamondStatus !== "inactive";
     }
 
     diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
@@ -4876,16 +4876,24 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private updateDiamondStatusInUserStore(now: number, details?: DiamondMembershipDetails): void {
+    private updateDiamondStatusInUserStore(
+        now: number,
+        duration: DiamondMembershipDuration,
+        details?: DiamondMembershipDetails,
+    ): void {
         const diamond = details !== undefined && Number(details.expiresAt) > now;
-        this.overwriteUserInStore(this._liveState.user.userId, (user) =>
-            user.diamond !== diamond ? { ...user, diamond } : undefined,
-        );
+        this.overwriteUserInStore(this._liveState.user.userId, (user) => {
+            const status = diamond ? (duration === "lifetime" ? "lifetime" : "active") : "inactive";
+            return user.diamondStatus !== status ? { ...user, diamondStatus: status } : undefined;
+        });
     }
 
-    private setDiamondMembership(details?: DiamondMembershipDetails): void {
+    private setDiamondMembership(
+        duration: DiamondMembershipDuration,
+        details?: DiamondMembershipDetails,
+    ): void {
         const now = Date.now();
-        this.updateDiamondStatusInUserStore(now, details);
+        this.updateDiamondStatusInUserStore(now, duration, details);
         if (details !== undefined) {
             const expiry = Number(details.expiresAt);
             if (expiry > now) {
@@ -4938,7 +4946,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         ...user,
                         diamondMembership: resp.details,
                     }));
-                    this.setDiamondMembership(resp.details);
+                    this.setDiamondMembership(duration, resp.details);
                     return true;
                 }
             })
@@ -5027,8 +5035,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     displayNameAndIcon(user?: UserSummary): string {
+        // TODO need to come back to this
         return user !== undefined
-            ? `${user?.displayName ?? user?.username}  ${user?.diamond ? "💎" : ""}`
+            ? `${user?.displayName ?? user?.username}  ${
+                  user?.diamondStatus !== "inactive" ? "💎" : ""
+              }`
             : this.config.i18nFormatter("unknownUser");
     }
 

@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { UserSummary } from "openchat-shared";
+import type { DiamondStatus, UserSummary } from "openchat-shared";
 
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 
 let db: UserDatabase | undefined;
 
@@ -54,7 +54,7 @@ export async function setCachedUsers(users: UserSummary[]): Promise<void> {
 
 export async function writeCachedUsersToDatabase(
     db: UserDatabase,
-    users: UserSummary[]
+    users: UserSummary[],
 ): Promise<void> {
     // in this one case we will open the db every time because we expect this to be done from the service worker
     const tx = (await db).transaction("users", "readwrite", {
@@ -78,7 +78,10 @@ export async function setUsernameInCache(userId: string, username: string): Prom
     await tx.done;
 }
 
-export async function setDisplayNameInCache(userId: string, displayName: string | undefined): Promise<void> {
+export async function setDisplayNameInCache(
+    userId: string,
+    displayName: string | undefined,
+): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",
     });
@@ -91,14 +94,17 @@ export async function setDisplayNameInCache(userId: string, displayName: string 
     await tx.done;
 }
 
-export async function setUserDiamondStatusToTrueInCache(userId: string): Promise<void> {
+export async function setUserDiamondStatusInCache(
+    userId: string,
+    status: DiamondStatus,
+): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",
     });
     const store = tx.objectStore("users");
     const user = await store.get(userId);
     if (user !== undefined) {
-        user.diamond = true;
+        user.diamondStatus = status;
         await store.put(user, userId);
     }
     await tx.done;

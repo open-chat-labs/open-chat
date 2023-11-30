@@ -15,6 +15,8 @@ import type {
     ReferralLeaderboardResponse,
     ReferralStats,
     SetDisplayNameResponse,
+    DiamondStatus,
+    DiamondMembershipSubscription,
 } from "openchat-shared";
 import { UnsupportedValueError } from "openchat-shared";
 import type {
@@ -23,6 +25,8 @@ import type {
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipFeesResponse,
     ApiDiamondMembershipPlanDuration,
+    ApiDiamondMembershipStatus,
+    ApiDiamondMembershipSubscription,
     ApiPayForDiamondMembershipResponse,
     ApiReferralLeaderboardResponse,
     ApiReferralStats,
@@ -71,8 +75,21 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         })),
         updated: timestamp,
         suspended: candid.suspended,
-        diamond: candid.diamond_member,
+        diamondStatus: diamondStatus(candid.diamond_membership_status),
     };
+}
+
+export function diamondStatus(candid: ApiDiamondMembershipStatus): DiamondStatus {
+    if ("Inactive" in candid) {
+        return "inactive";
+    }
+    if ("Active" in candid) {
+        return "active";
+    }
+    if ("Lifetime" in candid) {
+        return "lifetime";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDiamondMembershipStatus type received", candid);
 }
 
 export function userRegistrationCanisterResponse(
@@ -120,13 +137,13 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
 function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembershipDetails {
     return {
         expiresAt: candid.expires_at,
-        recurring: optional(candid.recurring, diamondMembershipDuration),
+        recurring: optional(candid.recurring, diamondMembershipSubscription),
     };
 }
 
-function diamondMembershipDuration(
-    candid: ApiDiamondMembershipPlanDuration,
-): DiamondMembershipDuration {
+function diamondMembershipSubscription(
+    candid: ApiDiamondMembershipSubscription,
+): DiamondMembershipSubscription {
     if ("OneMonth" in candid) {
         return "one_month";
     }
@@ -136,7 +153,13 @@ function diamondMembershipDuration(
     if ("OneYear" in candid) {
         return "one_year";
     }
-    throw new Error(`Unexpected ApiDiamondMembershipPlanDuration type received: ${candid}`);
+    if ("Disabled" in candid) {
+        return "disabled";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDiamondMembershipSubscription type received",
+        candid,
+    );
 }
 
 function suspensionDetails(candid: ApiSuspensionDetails): SuspensionDetails {
@@ -332,6 +355,9 @@ export function apiDiamondDuration(
     }
     if (domain === "one_year") {
         return { OneYear: null };
+    }
+    if (domain === "lifetime") {
+        return { Lifetime: null };
     }
     throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
 }

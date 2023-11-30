@@ -42,7 +42,7 @@ import {
     getCachedUsers,
     setCachedUsers,
     setDisplayNameInCache,
-    setUserDiamondStatusToTrueInCache,
+    setUserDiamondStatusInCache,
     setUsernameInCache,
 } from "../../utils/userCache";
 import { identity } from "../../utils/mapping";
@@ -322,7 +322,10 @@ export class UserIndexClient extends CandidService {
             payForDiamondMembershipResponse,
         ).then((res) => {
             if (res.kind === "success") {
-                setUserDiamondStatusToTrueInCache(userId);
+                setUserDiamondStatusInCache(
+                    userId,
+                    duration === "lifetime" ? "lifetime" : "active",
+                );
             }
             return res;
         });

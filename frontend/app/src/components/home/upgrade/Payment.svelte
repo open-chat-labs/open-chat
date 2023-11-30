@@ -18,6 +18,7 @@
     import Checkbox from "../../Checkbox.svelte";
     import { toastStore } from "../../../stores/toast";
     import Expiry from "./Expiry.svelte";
+    import Diamond from "../../icons/Diamond.svelte";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -43,6 +44,11 @@
             index: 2,
             duration: $_("upgrade.oneYear"),
             amount: 1.5,
+        },
+        {
+            index: 3,
+            duration: $_("upgrade.lifetime"),
+            amount: 6,
         },
     ];
 
@@ -71,6 +77,7 @@
         0: "one_month",
         1: "three_months",
         2: "one_year",
+        3: "lifetime",
     };
 
     function cancel() {
@@ -91,7 +98,12 @@
     function confirm() {
         confirming = true;
         client
-            .payForDiamondMembership(token, selectedDuration, autoRenew, expectedPrice())
+            .payForDiamondMembership(
+                token,
+                selectedDuration,
+                autoRenew && selectedDuration !== "lifetime",
+                expectedPrice(),
+            )
             .then((success) => {
                 if (success) {
                     confirmed = true;
@@ -118,8 +130,13 @@
                         class:insufficientFunds={insufficientFunds && !refreshingBalance}
                         class:selected={selectedOption?.index === option.index}
                         on:click={() => (selectedOption = option)}>
-                        <p class="duration">{option.duration}</p>
-                        <p class="price">{`${option.amount} ICP`}</p>
+                        <div class="option-details">
+                            <p class="duration">{option.duration}</p>
+                            <p class="price">{`${option.amount} ICP`}</p>
+                        </div>
+                        {#if option.index === 3}
+                            <Diamond size={"1.2em"} show={"gold"} />
+                        {/if}
                     </div>
                 {/each}
             </div>
@@ -134,7 +151,8 @@
                 on:change={() => (autoRenew = !autoRenew)}
                 label={$_("upgrade.autorenew")}
                 align={"start"}
-                checked={autoRenew}>
+                disabled={selectedDuration === "lifetime"}
+                checked={autoRenew && selectedDuration !== "lifetime"}>
                 <div class="section-title">{$_("upgrade.autorenew")}</div>
                 <div class="smallprint">
                     {$_("upgrade.paymentSmallprint")}
@@ -208,6 +226,9 @@
         margin-bottom: $sp4;
         cursor: pointer;
         transition: background-color 250ms ease-in-out;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
 
         &.selected {
             background-color: var(--primary);
@@ -220,7 +241,8 @@
 
         @include mobile() {
             text-align: center;
-            padding: 12px $sp4;
+            padding: 10px $sp4;
+            margin-bottom: $sp3;
         }
     }
 

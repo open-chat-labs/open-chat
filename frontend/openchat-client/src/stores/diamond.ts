@@ -35,5 +35,8 @@ export function diamondDurationToMs(duration: DiamondMembershipDuration): number
     if (duration === "one_year") {
         return YEAR_IN_MS;
     }
+    if (duration === "lifetime") {
+        return YEAR_IN_MS * 1000;
+    }
     throw new UnsupportedValueError("Unknown diamond membership duration supplied", duration);
 }

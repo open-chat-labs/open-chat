@@ -492,11 +492,20 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     text-overflow: ellipsis;
 }
 
-@mixin diamond() {
+@mixin diamond($lifetime: false) {
     &::after {
-        content: "💎";
+        content: "";
+        background-image: url("/assets/diamond.svg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: 0 1px;
+        display: inline-block;
+        width: 15px;
+        height: 15px;
         margin-inline-start: 5px;
-        @include font-size(fs-80);
+        @if $lifetime == true {
+            background-image: url("/assets/lifetime_diamond.svg");
+        }
     }
 }
 
