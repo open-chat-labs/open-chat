@@ -154,12 +154,11 @@ fn run_preliminary_checks(
             if let Some(version) = community_rules_accepted {
                 m.accept_rules(version, now);
             }
-            if !data.rules.enabled
-                || m.is_bot
-                || (m
-                    .rules_accepted
+            if data.rules.enabled
+                && !m.is_bot
+                && m.rules_accepted
                     .as_ref()
-                    .map_or(false, |accepted| accepted.value >= data.rules.text.version))
+                    .map_or(true, |accepted| accepted.value < data.rules.text.version)
             {
                 return Err(CommunityRulesNotAccepted);
             }
