@@ -96,6 +96,7 @@ fn process_charge(
     state: &mut RuntimeState,
 ) -> Response {
     let share_with = referrer_to_share_payment(user_id, state);
+    let recurring = args.recurring && !args.duration.is_lifetime();
 
     if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {
         let now = state.env.now();
@@ -106,7 +107,7 @@ fn process_charge(
             args.expected_price_e8s,
             block_index,
             args.duration,
-            args.recurring,
+            recurring,
             manual_payment,
             now,
         );
@@ -125,7 +126,7 @@ fn process_charge(
                 amount_e8s: args.expected_price_e8s,
                 block_index,
                 duration: args.duration,
-                recurring: args.recurring,
+                recurring,
                 send_bot_message: true,
             }),
         );
@@ -139,7 +140,7 @@ fn process_charge(
             crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
         }
 
-        if args.recurring {
+        if recurring {
             state.data.timer_jobs.enqueue_job(
                 TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id }),
                 expires_at.saturating_sub(DAY_IN_MS),

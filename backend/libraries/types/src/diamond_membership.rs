@@ -58,6 +58,10 @@ impl DiamondMembershipPlanDuration {
             DiamondMembershipPlanDuration::Lifetime => 10_000_000_000, // 100 CHAT
         }
     }
+
+    pub const fn is_lifetime(&self) -> bool {
+        matches!(self, DiamondMembershipPlanDuration::Lifetime)
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default)]

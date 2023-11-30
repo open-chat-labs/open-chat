@@ -10,9 +10,10 @@ use types::{Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubs
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
-#[test]
+#[test_case(false)]
+#[test_case(true)]
 #[serial]
-fn can_upgrade_to_diamond() {
+fn can_upgrade_to_diamond(lifetime: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -35,13 +36,19 @@ fn can_upgrade_to_diamond() {
 
     let now = now_millis(env);
 
-    let expected_expiry = now + DiamondMembershipPlanDuration::OneMonth.as_millis();
+    let duration = if lifetime {
+        DiamondMembershipPlanDuration::Lifetime
+    } else {
+        DiamondMembershipPlanDuration::OneMonth
+    };
+
+    let expected_expiry = now + duration.as_millis();
 
     let diamond_response = client::user_index::happy_path::pay_for_diamond_membership(
         env,
         user.principal,
         canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
+        duration,
         false,
     );
 
@@ -63,13 +70,13 @@ fn can_upgrade_to_diamond() {
         .is_active());
 
     let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
-    assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
+    assert_eq!(new_balance, 1_000_000_000 - duration.icp_price_e8s());
 
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        20_000_000 - (2 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
+        duration.icp_price_e8s() - (2 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
     );
 }
 

@@ -107,7 +107,8 @@
             return "";
         }
 
-        if (chatSummary.latestMessage === undefined || chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) {
+        if ((chatSummary.latestMessage !== undefined && chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
+            (chatSummary.latestMessage === undefined && chatSummary.eventsTTL !== undefined && chatSummary.membership.role !== "none")) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
                       values: {
@@ -115,6 +116,10 @@
                       },
                   })
                 : $_("disappearingMessages.disabled");
+        }
+
+        if (chatSummary.latestMessage === undefined) {
+            return "";
         }
 
         const latestMessageText = client.getContentAsText(
