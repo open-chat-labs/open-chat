@@ -2041,7 +2041,6 @@ dependencies = [
  "ic-cdk-macros 0.7.0",
  "ic-cdk-timers",
  "ic-stable-structures",
- "ic-transport-types",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
  "rand",
