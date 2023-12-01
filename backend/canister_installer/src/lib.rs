@@ -32,6 +32,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
         set_controllers(management_canister, &canister_ids.registry, controllers.clone()),
         set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -185,6 +187,13 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let escrow_canister_wasm = get_canister_wasm(CanisterName::Escrow, version);
+    let escrow_init_args = escrow_canister::init::Args {
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
     futures::future::join5(
         install_wasm(
             management_canister,
@@ -250,6 +259,14 @@ async fn install_service_canisters_impl(
             &neuron_controller_canister_wasm.module,
             neuron_controller_init_args,
         ),
+    )
+    .await;
+
+    install_wasm(
+        management_canister,
+        &canister_ids.escrow,
+        &escrow_canister_wasm.module,
+        escrow_init_args,
     )
     .await;
 
