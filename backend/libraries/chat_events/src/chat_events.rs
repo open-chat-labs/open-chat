@@ -163,7 +163,7 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    message.content = args.content.into();
+                    message.content = args.content.try_into().unwrap();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
                     self.last_updated_timestamps

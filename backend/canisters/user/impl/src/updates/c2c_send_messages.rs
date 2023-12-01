@@ -6,18 +6,31 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
 #[update_msgpack]
 #[trace]
 async fn c2c_send_messages(args: Args) -> Response {
+    let v2_args = user_canister::c2c_send_messages_v2::Args {
+        messages: args.messages.into_iter().map(|m| m.into()).collect(),
+        sender_name: args.sender_name,
+        sender_display_name: args.sender_display_name,
+        sender_avatar_id: args.sender_avatar_id,
+    };
+
+    c2c_send_messages_impl(v2_args).await
+}
+
+#[update_msgpack]
+#[trace]
+async fn c2c_send_messages_v2(args: user_canister::c2c_send_messages_v2::Args) -> Response {
     c2c_send_messages_impl(args).await
 }
 
-async fn c2c_send_messages_impl(args: Args) -> Response {
+async fn c2c_send_messages_impl(args: user_canister::c2c_send_messages_v2::Args) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -105,7 +118,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: message.content.into(),
+                    content: message.content.try_into().unwrap(),
                     replies_to: None,
                     forwarding: false,
                     correlation_id: 0,
@@ -126,7 +139,7 @@ pub(crate) struct HandleMessageArgs {
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
     pub sender_display_name: Option<String>,
-    pub content: MessageContent,
+    pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
     pub correlation_id: u64,
@@ -175,15 +188,13 @@ pub(crate) fn handle_message_impl(
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, state);
-    let initial_content: MessageContentInitial = args.content.into();
-    let content = MessageContentInternal::from(initial_content);
-    let files = content.blob_references();
+    let files = args.content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender,
-        content,
+        content: args.content,
         mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
