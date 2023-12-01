@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{CompletedCryptoTransaction, TimestampMillis, TokenInfo, UserId};
+use types::{icrc1::CompletedCryptoTransaction, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Offers {
