@@ -1,3 +1,4 @@
+use crate::model::offers::Offers;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -7,6 +8,7 @@ use utils::env::Environment;
 mod jobs;
 mod lifecycle;
 mod memory;
+mod model;
 mod queries;
 mod updates;
 
@@ -42,6 +44,7 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub offers: Offers,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
@@ -50,6 +53,7 @@ struct Data {
 impl Data {
     pub fn new(cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
         Data {
+            offers: Offers::default(),
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],
             test_mode,
