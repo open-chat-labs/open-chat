@@ -73,26 +73,24 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                     balance_required: offer.amount0 + offer.token0.fee,
                 })
             }
-        } else {
-            if let Some((accepted_by, _)) = offer.accepted_by {
-                if accepted_by == user_id {
-                    Err(Success)
-                } else {
-                    Err(OfferAlreadyAccepted)
-                }
-            } else if offer.expires_at < now {
-                Err(OfferExpired)
+        } else if let Some((accepted_by, _)) = offer.accepted_by {
+            if accepted_by == user_id {
+                Err(Success)
             } else {
-                Ok(PrepareResult {
-                    user_id,
-                    ledger: offer.token1.ledger,
-                    account: Account {
-                        owner: state.env.canister_id(),
-                        subaccount: Some(deposit_subaccount(user_id, offer.id)),
-                    },
-                    balance_required: offer.amount1 + offer.token1.fee,
-                })
+                Err(OfferAlreadyAccepted)
             }
+        } else if offer.expires_at < now {
+            Err(OfferExpired)
+        } else {
+            Ok(PrepareResult {
+                user_id,
+                ledger: offer.token1.ledger,
+                account: Account {
+                    owner: state.env.canister_id(),
+                    subaccount: Some(deposit_subaccount(user_id, offer.id)),
+                },
+                balance_required: offer.amount1 + offer.token1.fee,
+            })
         }
     } else {
         Err(OfferNotFound)
