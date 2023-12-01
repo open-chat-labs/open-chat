@@ -111,7 +111,7 @@ impl DirectChats {
         &self.metrics
     }
 
-    pub fn has(&self, chat_id: &ChatId) -> bool {
+    pub fn exists(&self, chat_id: &ChatId) -> bool {
         self.direct_chats.contains_key(chat_id)
     }
 

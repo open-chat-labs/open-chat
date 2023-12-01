@@ -92,7 +92,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
     } else {
         let now_nanos = state.env.now_nanos();
         match args.chat {
-            Chat::Direct(chat_id) if state.data.direct_chats.has(&chat_id) => Ok((
+            Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((
                 PrepareResult::Direct(TipMessageArgs {
                     user_id: my_user_id,
                     recipient: args.recipient,
@@ -105,7 +105,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                 }),
                 now_nanos,
             )),
-            Chat::Group(group_id) if state.data.group_chats.has(&group_id) => Ok((
+            Chat::Group(group_id) if state.data.group_chats.exists(&group_id) => Ok((
                 PrepareResult::Group(
                     group_id,
                     group_canister::c2c_tip_message::Args {
@@ -122,7 +122,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                 ),
                 now_nanos,
             )),
-            Chat::Channel(community_id, channel_id) if state.data.communities.has(&community_id) => Ok((
+            Chat::Channel(community_id, channel_id) if state.data.communities.exists(&community_id) => Ok((
                 PrepareResult::Channel(
                     community_id,
                     community_canister::c2c_tip_message::Args {

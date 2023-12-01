@@ -1,13 +1,13 @@
 use crate::model::nervous_systems::ProposalToPush;
 use crate::{generate_message_id, mutate_state, RuntimeState};
+use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
+use std::collections::HashMap;
 use std::time::Duration;
 use tracing::trace;
-use types::{
-    CanisterId, ChannelId, ChatId, CommunityId, MessageContentInitial, MessageId, MultiUserChat, Proposal, ProposalContent,
-};
+use types::{CanisterId, ChannelId, ChatId, CommunityId, MessageId, MultiUserChat, Proposal};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -55,12 +55,11 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
     let send_message_args = group_canister::c2c_send_message::Args {
         message_id,
         thread_root_message_index: None,
-        content: MessageContentInitial::GovernanceProposal(ProposalContent {
+        content: MessageContentInternal::GovernanceProposal(ProposalContentInternal {
             governance_canister_id,
             proposal: proposal.clone(),
-            my_vote: None,
-        })
-        .into(),
+            votes: HashMap::new(),
+        }),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
         replies_to: None,
@@ -85,12 +84,11 @@ async fn push_channel_proposal(
     let send_message_args = community_canister::c2c_send_message::Args {
         message_id,
         thread_root_message_index: None,
-        content: MessageContentInitial::GovernanceProposal(ProposalContent {
+        content: MessageContentInternal::GovernanceProposal(ProposalContentInternal {
             governance_canister_id,
             proposal: proposal.clone(),
-            my_vote: None,
-        })
-        .into(),
+            votes: HashMap::new(),
+        }),
         sender_name: "ProposalsBot".to_string(),
         sender_display_name: None,
         replies_to: None,
