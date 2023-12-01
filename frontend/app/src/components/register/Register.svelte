@@ -104,7 +104,7 @@
                     isPlatformModerator: false,
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
-                    diamondMembership: undefined,
+                    diamondStatus: { kind: "inactive" },
                     moderationFlagsEnabled: 0,
                 };
                 dispatch("createdUser", createdUser);

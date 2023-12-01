@@ -96,7 +96,7 @@ export async function setDisplayNameInCache(
 
 export async function setUserDiamondStatusInCache(
     userId: string,
-    status: DiamondMembershipStatus["kind"],
+    status: DiamondMembershipStatus,
 ): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",
@@ -104,7 +104,7 @@ export async function setUserDiamondStatusInCache(
     const store = tx.objectStore("users");
     const user = await store.get(userId);
     if (user !== undefined) {
-        user.diamondStatus = status;
+        user.diamondStatus = status.kind;
         await store.put(user, userId);
     }
     await tx.done;

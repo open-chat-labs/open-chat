@@ -29,6 +29,7 @@ import type {
     CommunitySummary,
     DataContent,
     CreatedUser,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -1127,4 +1128,20 @@ export async function getCachedCurrentUser(principal: string): Promise<CreatedUs
 export async function setCachedCurrentUser(principal: string, user: CreatedUser): Promise<void> {
     if (db === undefined) return;
     (await db).put("currentUser", user, principal);
+}
+
+export async function setCurrentUserDiamondStatusInCache(
+    principal: string,
+    diamondStatus: DiamondMembershipStatus,
+): Promise<void> {
+    const user = await getCachedCurrentUser(principal);
+    if (user === undefined || db === undefined) return;
+    (await db).put(
+        "currentUser",
+        {
+            ...user,
+            diamondStatus,
+        },
+        principal,
+    );
 }

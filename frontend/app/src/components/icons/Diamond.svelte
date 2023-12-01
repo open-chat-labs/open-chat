@@ -6,6 +6,7 @@
     export let height = size;
     export let show: "blue" | "gold" | undefined = undefined;
     export let status: DiamondMembershipStatus["kind"] | undefined = undefined;
+    export let y = -40;
 
     type Colours = {
         dark: string;
@@ -27,7 +28,7 @@
 </script>
 
 {#if status !== "inactive" || show}
-    <svg viewBox="0 -40 500 430" {width} {height}>
+    <svg class="diamond" viewBox={`0 ${y} 500 430`} {width} {height}>
         <g transform="matrix(0.714286, 0, 0, 0.714286, -3.571425, -3.585709)">
             <g>
                 <polygon

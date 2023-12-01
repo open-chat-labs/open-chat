@@ -46,7 +46,11 @@ import {
     setUsernameInCache,
 } from "../../utils/userCache";
 import { identity } from "../../utils/mapping";
-import { getCachedCurrentUser, setCachedCurrentUser } from "../../utils/caching";
+import {
+    getCachedCurrentUser,
+    setCachedCurrentUser,
+    setCurrentUserDiamondStatusInCache,
+} from "../../utils/caching";
 
 export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
@@ -322,7 +326,9 @@ export class UserIndexClient extends CandidService {
             (res) => payForDiamondMembershipResponse(duration, res),
         ).then((res) => {
             if (res.kind === "success") {
-                setUserDiamondStatusInCache(userId, res.status.kind);
+                const principal = this.identity.getPrincipal().toString();
+                setUserDiamondStatusInCache(userId, res.status);
+                setCurrentUserDiamondStatusInCache(principal, res.status);
             }
             return res;
         });
