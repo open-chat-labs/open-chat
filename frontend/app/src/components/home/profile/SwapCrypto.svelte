@@ -24,14 +24,12 @@
     let bestQuote: [DexId, bigint] | undefined = undefined;
     let swapId: bigint | undefined;
 
-    $: cryptoBalanceStore = client.cryptoBalance;
-    $: cryptoBalance = $cryptoBalanceStore[ledgerIn] ?? BigInt(0);
-    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
     $: detailsIn = $cryptoLookup[ledgerIn];
-    $: detailsOutList = Object.keys(swaps)
-        .map((t) => $cryptoLookup[t])
-        .filter((p) => p !== undefined);
-    $: selectedDetailsOut = detailsOutList.find((t) => t.ledger === selectedLedgerOut);
+    $: detailsOutList = Object.values($cryptoLookup).filter((t) =>
+        Object.keys(swaps).includes(t.ledger),
+    );
+    $: selectedDetailsOut = $cryptoLookup[selectedLedgerOut];
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && selectedDetailsOut !== undefined;
     //$: swapping = swapStep === "swap" && busy;
     $: transferFees = detailsIn.transferFee;
@@ -39,16 +37,29 @@
     $: {
         valid =
             anySwapsAvailable &&
-            (swapStep === "swap" ? validAmount && bestQuote !== undefined : true);
+            validAmount &&
+            (swapStep === "swap" ? bestQuote !== undefined : true);
+    }
+
+    $: {
+        if (swapStep === "quote" && anySwapsAvailable) {
+            const values = { quote: $_("tokenSwap.quote") };
+            message = $_("tokenSwap.quoteInfo", { values }) + "\n\n";
+            for (const dex of swaps[selectedLedgerOut]) {
+                message += `- ${dexName(dex)}\n`;
+            }
+        }
+    }
+
+    $: {
+        if (detailsOutList?.length > 0) {
+            selectedLedgerOut = detailsOutList[0].ledger;
+        }
     }
 
     onMount(async () => {
         try {
             swaps = await client.getTokenSwaps(ledgerIn);
-            message = $_("tokenSwap.quoteInfo") + "\n\n";
-            for (const dex of swaps[selectedLedgerOut]) {
-                message += `- ${dexName(dex)}\n`;
-            }
         } catch (err) {
             client.logError(`Error getting swaps for token: ${detailsIn.symbol}`, err);
             dispatch("error", {
@@ -87,11 +98,13 @@
                     const [dexId, quote] = bestQuote!;
                     const quoteText = client.formatTokens(quote, 0, selectedDetailsOut!.decimals);
                     const dex = dexName(dexId);
+                    const swapText = $_("tokenSwap.title");
                     message = $_("tokenSwap.swapInfo", {
                         values: {
                             amount: quoteText,
                             tokenOut: selectedDetailsOut!.symbol,
                             dex,
+                            swap: swapText,
                         },
                     });
                 }
@@ -166,8 +179,8 @@
 <div class="token-input">
     <TokenInput
         ledger={ledgerIn}
-        {transferFees}
-        maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+        minAmount={transferFees * BigInt(100)}
+        maxAmount={detailsIn.balance}
         bind:valid={validAmount}
         bind:amount={amountIn} />
 </div>
@@ -180,7 +193,7 @@
     </Select>
 </div>
 
-<Markdown text={message} />
+<Markdown inline={false} text={message} />
 
 <style lang="scss">
     .token-input {

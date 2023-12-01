@@ -27,7 +27,7 @@
     let busy = false;
     let capturingAccount = false;
     let valid = false;
-    let swapStep: "quote" | "swap";
+    let swapStep: "quote" | "swap" | "swapped";
 
     $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
@@ -38,7 +38,11 @@
     $: title = $_(`cryptoAccount.${mode}Token`, { values: { symbol } });
     $: cryptoBalance = client.cryptoBalance;
     $: secondaryButtonText = $_(
-        capturingAccount ? "noThanks" : mode !== "receive" ? "close" : "cancel",
+        capturingAccount
+            ? "noThanks"
+            : mode === "receive" || swapStep === "swapped"
+              ? "close"
+              : "cancel",
     );
     $: primaryButtonText = $_(
         mode === "swap" && swapStep === "quote"
@@ -64,10 +68,10 @@
     }
 
     function onError(ev: CustomEvent<{ error: string; values?: InterpolationValues } | undefined>) {
-        if (ev.detail === undefined) {
-            error = undefined;
-        } else {
+        if (ev.detail) {
             error = $_(ev.detail.error, ev.detail.values);
+        } else {
+            error = undefined;
         }
     }
 
@@ -145,7 +149,7 @@
                     secondary={mode !== "receive"}
                     tiny={$mobileWidth}
                     on:click={onSecondaryClick}>{secondaryButtonText}</Button>
-                {#if mode !== "receive"}
+                {#if mode !== "receive" && swapStep !== "swapped"}
                     <Button
                         disabled={busy || !valid}
                         loading={busy}

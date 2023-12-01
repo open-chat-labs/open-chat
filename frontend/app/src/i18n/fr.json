@@ -513,7 +513,9 @@
             "from": "Depuis",
             "to": "À",
             "type": "Taper"
-        }
+        },
+        "swap": "Échanger",
+        "swapToken": "Échanger {symbol}"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",
@@ -1176,15 +1178,14 @@
     "tokenSwap": {
         "title": "Échanger",
         "quote": "Citation",
-        "swapToken": "Échanger {symbol}",
         "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
         "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
         "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
         "quoteError": "Erreur lors de l'échange des devis {tokenIn}",
         "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
-        "quoteInfo": "Lorsque vous appuyez sur le bouton « Citer », les échanges décentralisés (DEX) suivants seront interrogés en votre nom pour obtenir un devis pour échanger vos jetons :",
-        "swapInfo": "La meilleure citation est **{amount}** {tokenOut} de {dex}. L'échange n'aura lieu que si le montant de {tokenOut} reçu sera d'au moins 99 % du montant indiqué. Souhaitez-vous continuer et tenter le « swap » ?",
         "swapFailed": "Échec de l'échange de **{amountIn}** {tokenIn} contre au moins **{minAmountOut}** {tokenOut} à l'aide de {dex}",
-        "swapSucceeded": "Échange réussi de **{amountIn}** {tokenIn} contre **{amountOut}** {tokenOut} à l'aide de {dex}"
+        "swapSucceeded": "Échange réussi de **{amountIn}** {tokenIn} contre **{amountOut}** {tokenOut} à l'aide de {dex}",
+        "quoteInfo": "Lorsque vous appuyez sur le bouton « {quote} », les échanges décentralisés (DEX) suivants seront interrogés en votre nom pour obtenir un devis pour échanger vos jetons :",
+        "swapInfo": "La meilleure citation est **{amount}** {tokenOut} de {dex}. L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est d'au moins 99 % du montant indiqué. Souhaitez-vous continuer et tenter le « {swap}  » ?"
     }
 }

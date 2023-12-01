@@ -513,7 +513,9 @@
             "from": "から",
             "to": "に",
             "type": "タイプ"
-        }
+        },
+        "swap": "スワップ",
+        "swapToken": "{symbol}を交換する"
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -1177,15 +1179,14 @@
     "tokenSwap": {
         "title": "スワップ",
         "quote": "引用",
-        "swapToken": "{symbol}を交換する",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
-        "quoteInfo": "「見積」ボタンを押すと、次の分散型取引所 (DEX) がお客様に代わってトークンを交換するための見積を照会されます。",
-        "swapInfo": "最も良い引用は、{amount} の **{tokenOut}** {dex} です。スワップは、受け取った {tokenOut} の額が見積額の少なくとも 99% である場合にのみ続行されます。先に進んで「交換」を試みますか?",
         "swapFailed": "{amountIn} を使用して **{tokenIn}** {minAmountOut} を少なくとも **{tokenOut}** {dex} と交換できませんでした",
-        "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました"
+        "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました",
+        "quoteInfo": "「{quote}」ボタンを押すと、次の分散型取引所 (DEX) があなたの代わりにトークンを交換するための見積もりを問い合わせます。",
+        "swapInfo": "最も良い引用は、{amount} の **{tokenOut}** {dex} です。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 99% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?"
     }
 }

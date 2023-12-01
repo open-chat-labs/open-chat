@@ -514,7 +514,9 @@
             "from": "Từ",
             "to": "ĐẾN",
             "type": "Kiểu"
-        }
+        },
+        "swap": "Tráo đổi",
+        "swapToken": "Hoán đổi {symbol}"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -1177,15 +1179,14 @@
     "tokenSwap": {
         "title": "Tráo đổi",
         "quote": "Trích dẫn",
-        "swapToken": "Hoán đổi {symbol}",
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
-        "quoteInfo": "Khi bạn nhấn nút `quote`, các sàn giao dịch phi tập trung (DEX) sau sẽ được yêu cầu thay mặt bạn đưa ra báo giá để trao đổi token của bạn:",
-        "swapInfo": "Câu trích dẫn hay nhất là **{amount}** {tokenOut} từ {dex}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} nhận được ít nhất bằng 99% số tiền được báo giá. Bạn có muốn tiếp tục và thử `hoán đổi` không?",
         "swapFailed": "Không thể hoán đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut} bằng cách sử dụng {dex}",
-        "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}"
+        "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}",
+        "quoteInfo": "Khi bạn nhấn nút `{quote}`, các sàn giao dịch phi tập trung (DEX) sau đây sẽ thay mặt bạn truy vấn báo giá để trao đổi mã thông báo của bạn:",
+        "swapInfo": "Câu trích dẫn hay nhất là **{amount}** {tokenOut} từ {dex}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất bằng 99% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?"
     }
 }

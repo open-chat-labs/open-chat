@@ -515,7 +515,9 @@
             "from": "Aus",
             "to": "Zu",
             "type": "Typ"
-        }
+        },
+        "swap": "Tauschen",
+        "swapToken": "Tausche {symbol}"
     },
     "searchChat": "Suche",
     "search": "Suche...",
@@ -1178,15 +1180,14 @@
     "tokenSwap": {
         "title": "Tauschen",
         "quote": "Zitat",
-        "swapToken": "Tausche {symbol}",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
         "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
-        "quoteInfo": "Wenn Sie auf die Schaltfläche „Angebot“ klicken, werden die folgenden dezentralen Börsen (DEXes) in Ihrem Namen nach einem Angebot für den Tausch Ihrer Token gefragt:",
-        "swapInfo": "Das beste Zitat ist **{amount}** {tokenOut} von {dex}. Der Swap wird nur durchgeführt, wenn der erhaltene Betrag von {tokenOut} mindestens 99 % des angegebenen Betrags beträgt. Möchten Sie den „Tausch“ versuchen?",
         "swapFailed": "Fehler beim Austauschen von **{amountIn}** {tokenIn} gegen mindestens **{minAmountOut}** {tokenOut} mit {dex} fehlgeschlagen",
-        "swapSucceeded": "**{amountIn}** {tokenIn} erfolgreich gegen **{amountOut}** {tokenOut} mit {dex} ausgetauscht"
+        "swapSucceeded": "**{amountIn}** {tokenIn} erfolgreich gegen **{amountOut}** {tokenOut} mit {dex} ausgetauscht",
+        "quoteInfo": "Wenn Sie auf die Schaltfläche „{quote}“ klicken, werden die folgenden dezentralen Börsen (DEXes) in Ihrem Namen nach einem Angebot für den Tausch Ihrer Token gefragt:",
+        "swapInfo": "Das beste Zitat ist **{amount}** {tokenOut} von {dex}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 99 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?"
     }
 }

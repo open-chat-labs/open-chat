@@ -133,7 +133,7 @@ import {
     focusThreadMessageIndex,
     selectedMessageContext,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, enhancedCryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -5765,6 +5765,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
