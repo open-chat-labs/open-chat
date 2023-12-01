@@ -6,7 +6,6 @@ import type {
     ChatSummary,
     CommunitySummary,
     CommunityMap,
-    DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
