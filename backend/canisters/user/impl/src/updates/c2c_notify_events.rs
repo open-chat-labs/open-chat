@@ -47,7 +47,7 @@ fn process_event(event: Event, state: &mut RuntimeState) {
         }
         Event::OpenChatBotMessage(content) => {
             let initial_content: MessageContentInitial = (*content).into();
-            openchat_bot::send_message(initial_content.into(), false, state);
+            openchat_bot::send_message(initial_content.try_into().unwrap(), false, state);
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();

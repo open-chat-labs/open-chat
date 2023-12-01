@@ -32,7 +32,7 @@ fn init(args: Args) {
     mutate_state(|state| {
         for message in args.openchat_bot_messages {
             let initial_content: MessageContentInitial = message.into();
-            openchat_bot::send_message(initial_content.into(), true, state);
+            openchat_bot::send_message(initial_content.try_into().unwrap(), true, state);
         }
     });
 

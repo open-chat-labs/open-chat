@@ -27,7 +27,7 @@ impl From<crate::c2c_send_messages::SendMessageArgs> for SendMessageArgs {
         SendMessageArgs {
             message_id: value.message_id,
             sender_message_index: value.sender_message_index,
-            content: MessageContentInitial::from(value.content).into(),
+            content: MessageContentInitial::from(value.content).try_into().unwrap(),
             replies_to: value.replies_to,
             forwarding: value.forwarding,
             correlation_id: value.correlation_id,

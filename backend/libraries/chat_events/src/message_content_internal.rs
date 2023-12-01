@@ -149,24 +149,27 @@ impl MessageContentInternal {
     }
 }
 
-impl From<MessageContentInitial> for MessageContentInternal {
-    fn from(value: MessageContentInitial) -> Self {
+impl TryFrom<MessageContentInitial> for MessageContentInternal {
+    type Error = ();
+
+    fn try_from(value: MessageContentInitial) -> Result<Self, ()> {
         match value {
-            MessageContentInitial::Text(t) => MessageContentInternal::Text(t.into()),
-            MessageContentInitial::Image(i) => MessageContentInternal::Image(i.into()),
-            MessageContentInitial::Video(v) => MessageContentInternal::Video(v.into()),
-            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a.into()),
-            MessageContentInitial::File(f) => MessageContentInternal::File(f.into()),
-            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(p.into()),
-            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
-            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g.into()),
-            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p.into()),
-            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
-            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
-            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
-            MessageContentInitial::Crypto(_) | MessageContentInitial::Prize(_) => {
+            MessageContentInitial::Text(t) => Ok(MessageContentInternal::Text(t.into())),
+            MessageContentInitial::Image(i) => Ok(MessageContentInternal::Image(i.into())),
+            MessageContentInitial::Video(v) => Ok(MessageContentInternal::Video(v.into())),
+            MessageContentInitial::Audio(a) => Ok(MessageContentInternal::Audio(a.into())),
+            MessageContentInitial::File(f) => Ok(MessageContentInternal::File(f.into())),
+            MessageContentInitial::Poll(p) => Ok(MessageContentInternal::Poll(p.into())),
+            MessageContentInitial::Deleted(d) => Ok(MessageContentInternal::Deleted(d.into())),
+            MessageContentInitial::Giphy(g) => Ok(MessageContentInternal::Giphy(g.into())),
+            MessageContentInitial::GovernanceProposal(p) => Ok(MessageContentInternal::GovernanceProposal(p.into())),
+            MessageContentInitial::MessageReminderCreated(r) => Ok(MessageContentInternal::MessageReminderCreated(r.into())),
+            MessageContentInitial::MessageReminder(r) => Ok(MessageContentInternal::MessageReminder(r.into())),
+            MessageContentInitial::Custom(c) => Ok(MessageContentInternal::Custom(c.into())),
+            MessageContentInitial::Crypto(c) => Ok(MessageContentInternal::Crypto(c.into())),
+            MessageContentInitial::Prize(_) => {
                 // These should be created via `new_with_transfer`
-                unimplemented!()
+                Err(())
             }
         }
     }
