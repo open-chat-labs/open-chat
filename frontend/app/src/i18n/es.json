@@ -214,7 +214,8 @@
         "info_a": "Vaya a nuestra <a href=\"/home\">página de inicio</a> y busque enlaces a las <a href=\"/features\">características</a> de OpenChat, <a href=\"/roadmap\">hoja de ruta</ a>, <a href=\"/whitepaper\">informe</a>, <a href=\"/architecture\">arquitectura</a> y <a href=\"/blog\">blog</a>",
         "referral_rewards_q": "¿Qué son las recompensas por recomendación?",
         "referral_rewards_a": "Como miembro Diamond, puede ganar recompensas por cada usuario que recomiende y que luego se convierta en miembro Diamond. Recibirá la mitad de los pagos Diamante que realicen durante el primer año después de unirse a OpenChat. Puede encontrar su enlace de referencia en la sección &quot;invitar amigos/familiares&quot; de su &quot;configuración de perfil&quot; en el menú principal.<br><br> ¿Cómo podrías hacer esto? Hay muchas maneras. Puedes contarles a tus amigos y familiares, twittear sobre OpenChat, crear un video sobre OpenChat que describa lo que te gusta de él y compartirlo en TikTok o YouTube. Puedes transmitir en Twitch o escribir una publicación en un blog, crear un podcast, organizar un espacio en Twitter o incluso realizar una reunión en la vida real. ¡Esperamos ver todas las ideas creativas que se te ocurran para correr la voz!<br><br> En el futuro, abriremos recompensas por referencias para todos los usuarios que recomiendes, independientemente de si se convierten en miembros Diamante. Sin embargo, debido a que esto es fácilmente explotable, primero necesitaremos introducir algún tipo de &quot;prueba de personalidad única&quot;.",
-        "buychat_a": "En este momento, primero debe <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">comprar ICP</a> , que luego puede cambiar por CHAT en varios intercambios descentralizados (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY está agregando soporte para la <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API de Rosetta</a> para tokens ICRC1 (que incluye CHAT), lo que los hace mucho más fáciles de integrar con los intercambios centralizados (CEX). Una vez que esto haya sucedido, es probable que CHAT esté disponible para operar en CEX por ICP o USDT."
+        "buychat_a": "En este momento, primero debe <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">comprar ICP</a> , que luego puede cambiar por CHAT en varios intercambios descentralizados (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY está agregando soporte para la <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API de Rosetta</a> para tokens ICRC1 (que incluye CHAT), lo que los hace mucho más fáciles de integrar con los intercambios centralizados (CEX). Una vez que esto haya sucedido, es probable que CHAT esté disponible para operar en CEX por ICP o USDT.",
+        "diamond_q": "¿Qué es la membresía Diamante?"
     },
     "roadmap": "Roadmap",
     "here": "aquí",
@@ -846,7 +847,14 @@
         "notifications": "Notificaciones",
         "freeNotifications": "iOS, Android y escritorio",
         "diamondNotifications": "iOS, Android y escritorio",
-        "createCommunities": "Crear comunidades"
+        "createCommunities": "Crear comunidades",
+        "featuresTitle": "Actualizar a Diamante",
+        "forDisplayName": "Actualizar para configurar el nombre para mostrar",
+        "displayNames": "Nombres para mostrar",
+        "benefits": "Beneficios del diamante",
+        "message": "Cuéntame sobre la membresía Diamante",
+        "lifetimeMessage": "Tienes membresía Diamond vitalicia.",
+        "lifetime": "Toda la vida"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",

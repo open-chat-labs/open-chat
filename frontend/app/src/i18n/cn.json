@@ -272,7 +272,8 @@
         "info_a": "转到我们的<a href=\"/home\">主页</a>并找到指向 OpenChat <a href=\"/features\">功能</a>、<a href=\"/roadmap\">路线图</的链接a>、<a href=\"/whitepaper\">白皮书</a>、<a href=\"/architecture\">架构</a>和<a href=\"/blog\">博客</a>",
         "referral_rewards_q": "什么是推荐奖励？",
         "referral_rewards_a": "作为钻石会员，您可以为您推荐的每位后来成为钻石会员的用户赚取奖励。您将在加入 OpenChat 的第一年内收到他们支付的钻石付款的一半。您可以在主菜单“个人资料设置”的“邀请朋友/家人”部分找到您的推荐链接。<br><br>你会怎么做？有很多方法。您可以告诉朋友和家人、发布有关 OpenChat 的推文、创建有关 OpenChat 的视频来描述您喜欢它的地方，并将其分享到 TikTok 或 YouTube。您可以在 Twitch 上进行直播、撰写博客文章、创建播客、开设 Twitter 空间，甚至举办现实生活中的聚会。我们期待看到您提出的所有创意想法！<br><br>未来我们将为您推荐的所有用户开放推荐奖励，无论他们是否成为钻石会员。然而，由于这很容易被利用，我们首先需要引入某种类型的“独特人格证明”。",
-        "buychat_a": "现在您必须首先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买 ICP</a> ，然后您可以在各种去中心化交易所（DEX）上兑换 CHAT。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">国际快递公司</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPS交换</a></li></ul>DFINITY 正在为 ICRC1 代币（包括 CHAT）添加对<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>的支持，使其更容易与集中式交易所 (CEX) 集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上交易 ICP 或 USDT。"
+        "buychat_a": "现在您必须首先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买 ICP</a> ，然后您可以在各种去中心化交易所（DEX）上兑换 CHAT。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">国际快递公司</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPS交换</a></li></ul>DFINITY 正在为 ICRC1 代币（包括 CHAT）添加对<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>的支持，使其更容易与集中式交易所 (CEX) 集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上交易 ICP 或 USDT。",
+        "diamond_q": "什么是钻石会员？"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -844,7 +845,14 @@
         "notifications": "通知",
         "freeNotifications": "iOS、安卓和桌面",
         "diamondNotifications": "iOS、安卓和桌面",
-        "createCommunities": "创建社区"
+        "createCommunities": "创建社区",
+        "featuresTitle": "升级至钻石",
+        "forDisplayName": "升级以设置显示名称",
+        "displayNames": "显示名称",
+        "benefits": "钻石的好处",
+        "message": "告诉我有关钻石会员的信息",
+        "lifetimeMessage": "您拥有终身钻石会员资格。",
+        "lifetime": "寿命"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",

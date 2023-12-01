@@ -219,7 +219,8 @@
         "info_a": "Gehen Sie zu unserer <a href=\"/home\">Homepage</a> und finden Sie Links zu OpenChat <a href=\"/features\">Funktionen</a>, <a href=\"/roadmap\">Roadmap</ a>, <a href=\"/whitepaper\">Whitepaper</a>, <a href=\"/architecture\">Architektur</a> und <a href=\"/blog\">Blog</a>",
         "referral_rewards_q": "Was sind Empfehlungsprämien?",
         "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br> Wie könnten Sie das tun? Es gibt viele Möglichkeiten. Sie können Freunden und Familie davon erzählen, über OpenChat twittern, ein Video über OpenChat erstellen, in dem Sie beschreiben, was Sie daran lieben, und es auf TikTok oder YouTube teilen. Sie könnten auf Twitch streamen, einen Blog-Beitrag schreiben, einen Podcast erstellen, einen Twitter-Bereich hosten oder sogar ein echtes Treffen veranstalten. Wir freuen uns darauf, all die kreativen Ideen zu sehen, die Sie haben, um die Nachricht bekannt zu machen!<br><br> In Zukunft bieten wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer an, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen.",
-        "buychat_a": "Im Moment müssen Sie zunächst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a> , das Sie dann an verschiedenen dezentralen Börsen (DEXes) gegen CHAT eintauschen können.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Tokens (einschließlich CHAT) hinzu, wodurch die Integration in Centralized Exchanges (CEXes) erheblich vereinfacht wird. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXes für ICP oder USDT verfügbar sein wird."
+        "buychat_a": "Im Moment müssen Sie zunächst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a> , das Sie dann an verschiedenen dezentralen Börsen (DEXes) gegen CHAT eintauschen können.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Tokens (einschließlich CHAT) hinzu, wodurch die Integration in Centralized Exchanges (CEXes) erheblich vereinfacht wird. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXes für ICP oder USDT verfügbar sein wird.",
+        "diamond_q": "Was ist eine Diamond-Mitgliedschaft?"
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -846,7 +847,14 @@
         "notifications": "Benachrichtigungen",
         "freeNotifications": "iOS, Android und Desktop",
         "diamondNotifications": "iOS, Android und Desktop",
-        "createCommunities": "Erstellen Sie Communities"
+        "createCommunities": "Erstellen Sie Communities",
+        "featuresTitle": "Upgrade auf Diamond",
+        "forDisplayName": "Aktualisieren Sie, um den Anzeigenamen festzulegen",
+        "displayNames": "Anzeigenamen",
+        "benefits": "Vorteile von Diamant",
+        "message": "Erzählen Sie mir von der Diamond-Mitgliedschaft",
+        "lifetimeMessage": "Sie haben eine lebenslange Diamond-Mitgliedschaft.",
+        "lifetime": "Lebensdauer"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",
