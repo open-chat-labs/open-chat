@@ -303,6 +303,7 @@
                     </UsernameInput>
                     <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
                     <DisplayNameInput
+                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
@@ -506,7 +507,7 @@
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile community={selectedCommunity} />
+        <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
 {/if}
 

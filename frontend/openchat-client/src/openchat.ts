@@ -3821,11 +3821,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return captured;
     }
 
-    registerUser(username: string, displayName: string | undefined): Promise<RegisterUserResponse> {
+    registerUser(username: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             username,
-            displayName,
             referralCode: this._referralCode,
         }).then((res) => {
             console.log("register user response: ", res);
@@ -5811,7 +5810,7 @@ export class OpenChat extends OpenChatAgentWorker {
     isDiamond = isDiamond;
     isLifetimeDiamond = isLifetimeDiamond;
     canExtendDiamond = canExtendDiamond;
-    diamondMembership = diamondStatus;
+    diamondStatus = diamondStatus;
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;

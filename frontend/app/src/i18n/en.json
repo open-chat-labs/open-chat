@@ -878,6 +878,8 @@
         "featuresTitle": "Upgrade to Diamond",
         "extend": "Extend Diamond",
         "extendShort": "Extend",
+        "forDisplayName": "Upgrade to set display name",
+        "displayNames": "Display names",
         "membership": "Membership",
         "benefits": "Benefits of Diamond",
         "message": "Tell me about Diamond membership",

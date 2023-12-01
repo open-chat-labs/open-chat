@@ -14,15 +14,15 @@
         light: string;
     };
 
-    $: colour = status === "lifetime" || show === "gold" ? [52, 92] : [203, 93];
+    $: colour = status === "lifetime" || show === "gold" ? 48 : 210;
 
-    $: colours = deriveColours(colour as [number, number]);
+    $: colours = deriveColours(colour);
 
-    function deriveColours([hue, _sat]: [number, number]): Colours {
+    function deriveColours(hue: number): Colours {
         return {
-            dark: `hsl(${hue}, 93%, 35%)`,
-            medium: `hsl(${hue}, 51%, 69%)`, // 51
-            light: `hsl(${hue}, 52%, 85%)`, //52
+            dark: `hsl(${hue}, 100%, 35%)`,
+            medium: `hsl(${hue}, 100%, 65%)`,
+            light: `hsl(${hue}, 100%, 80%)`,
         };
     }
 </script>

@@ -15,7 +15,6 @@
     import Legend from "../Legend.svelte";
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import DisplayNameInput from "../DisplayNameInput.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -29,14 +28,11 @@
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
     let usernameStore: Writable<string | undefined> = writable(undefined);
-    let displayNameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
     let showGuidelines = false;
     let username = "";
     let usernameValid = false;
-    let displayName: string | undefined = undefined;
-    let displayNameValid = false;
     let checkingUsername: boolean;
     let badCode = false;
 
@@ -51,17 +47,15 @@
     }
 
     function register() {
-        if (usernameValid && displayNameValid) {
+        if (usernameValid) {
             usernameStore.set(username);
-            displayNameStore.set(displayName);
-            // TODO: Ask user for a display name
-            registerUser(username, displayName);
+            registerUser(username);
         }
     }
 
-    function registerUser(username: string, displayName: string | undefined): void {
+    function registerUser(username: string): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username, displayName).then((resp) => {
+        client.registerUser(username).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
@@ -96,7 +90,7 @@
                 createdUser = {
                     kind: "created_user",
                     username,
-                    displayName,
+                    displayName: undefined,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,
                     canisterUpgradeStatus: "not_required",
@@ -170,14 +164,6 @@
                     bind:usernameValid
                     bind:checking={checkingUsername}
                     bind:error={$error} />
-
-                <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
-                <DisplayNameInput
-                    {client}
-                    originalDisplayName={$displayNameStore}
-                    disabled={busy}
-                    bind:displayName
-                    bind:displayNameValid />
             </form>
 
             {#if $error}
@@ -196,13 +182,13 @@
                 <Button secondary on:click={clearCodeAndLogout}>{$_("cancel")}</Button>
                 <Button
                     loading={checkingUsername || busy}
-                    disabled={!usernameValid || !displayNameValid || busy}
+                    disabled={!usernameValid || busy}
                     on:click={clearCodeAndRegister}>{$_("register.proceed")}</Button>
             </ButtonGroup>
         {:else}
             <Button
                 loading={checkingUsername || busy}
-                disabled={!usernameValid || !displayNameValid || busy}
+                disabled={!usernameValid || busy}
                 on:click={register}>
                 {$_("register.createUser")}
             </Button>

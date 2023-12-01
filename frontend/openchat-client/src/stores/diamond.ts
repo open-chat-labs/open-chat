@@ -20,14 +20,7 @@ const THREE_MONTH_IN_MS: number = 3 * MONTH_IN_MS;
 const YEAR_IN_MS: number = 12 * MONTH_IN_MS;
 
 export const canExtendDiamond = derived(diamondStatus, ($diamondStatus) => {
-    if ($diamondStatus.kind !== "active") return false;
-    const now = Date.now();
-    const threeMonths = now + THREE_MONTH_IN_MS;
-    return (
-        $diamondStatus !== undefined &&
-        $diamondStatus.expiresAt > now &&
-        $diamondStatus.expiresAt < threeMonths
-    );
+    return $diamondStatus.kind === "active";
 });
 
 export function diamondDurationToMs(duration: DiamondMembershipDuration): number {

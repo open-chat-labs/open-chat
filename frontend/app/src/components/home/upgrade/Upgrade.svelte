@@ -59,15 +59,14 @@
                             {$_("upgrade.featuresTitle")}
                         {/if}
                     {:else if step === "payment"}
-                        {$_("upgrade.paymentTitle")}
+                        <div>
+                            <CryptoSelector
+                                bind:ledger
+                                filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+                        </div>
                     {/if}
                 </div>
                 {#if step === "payment"}
-                    <div>
-                        <CryptoSelector
-                            bind:ledger
-                            filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
-                    </div>
                     <div class="balance">
                         <BalanceWithRefresh
                             {ledger}
@@ -92,6 +91,7 @@
                     bind:confirmed
                     bind:confirming
                     bind:refreshingBalance
+                    {ledger}
                     {error}
                     accountBalance={Number(tokenDetails.balance)}
                     on:cancel
