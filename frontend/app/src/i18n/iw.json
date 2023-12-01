@@ -1170,5 +1170,19 @@
     "offlineMessage": "לא מקוון",
     "offlineError": "סליחה - נראה שאתה במצב לא מקוון כרגע",
     "renderPreviews": "תצוגה מקדימה של קישורים לעיבוד אוטומטי",
-    "messageBlocked": "ההודעה מוסתרת כי השולח חסום"
+    "messageBlocked": "ההודעה מוסתרת כי השולח חסום",
+    "tokenSwap": {
+        "title": "לְהַחלִיף",
+        "quote": "ציטוט",
+        "swapToken": "החלפה {symbol}",
+        "swapNotAvailable": "נכון לעכשיו לא ניתן להחליף את {tokenIn} לשום אסימון אחר",
+        "noQuotes": "שום DEXs לא סיפקו הצעת מחיר להחלפה {tokenIn}",
+        "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
+        "quoteError": "שגיאה בקבלת ציטוטים להחלפה של {tokenIn}",
+        "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
+        "quoteInfo": "כאשר אתה לוחץ על כפתור 'הצעת מחיר', הבורסות המבוזרות הבאות (DEXes) יישאלו בשמך לקבלת הצעת מחיר להחלפת האסימונים שלך:",
+        "swapInfo": "הציטוט הטוב ביותר הוא **{amount}** {tokenOut} מ-{dex}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שהתקבל יהיה לפחות 99% מהסכום הנקוב. האם תרצה להמשיך ולנסות את ה'החלפה'?",
+        "swapFailed": "נכשל ההחלפה של **{amountIn}** {tokenIn} ב-**{minAmountOut}** {tokenOut} לפחות באמצעות {dex}",
+        "swapSucceeded": "הוחלף בהצלחה את **{amountIn}** {tokenIn} ל**{amountOut}** {tokenOut} באמצעות {dex}"
+    }
 }

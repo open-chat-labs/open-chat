@@ -9,22 +9,25 @@
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { InterpolationValues, OpenChat } from "openchat-client";
     import SendCrypto from "./SendCrypto.svelte";
+    import SwapCrypto from "./SwapCrypto.svelte";
 
     export let ledger: string;
-    export let mode: "send" | "receive";
+    export let mode: "send" | "receive" | "swap";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     let sendCrypto: SendCrypto;
+    let swapCrypto: SwapCrypto;
     let error: string | undefined = undefined;
     let amountToSend = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
     let busy = false;
     let capturingAccount = false;
     let valid = false;
+    let swapStep: "quote" | "swap";
 
     $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
@@ -32,11 +35,20 @@
     $: transferFees = tokenDetails.transferFee;
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: title =
-        mode === "receive"
-            ? $_("cryptoAccount.receiveToken", { values: { symbol } })
-            : $_("cryptoAccount.sendToken", { values: { symbol } });
+    $: title = $_(`cryptoAccount.${mode}Token`, { values: { symbol } });
     $: cryptoBalance = client.cryptoBalance;
+    $: secondaryButtonText = $_(
+        capturingAccount ? "noThanks" : mode !== "receive" ? "close" : "cancel",
+    );
+    $: primaryButtonText = $_(
+        mode === "swap" && swapStep === "quote"
+            ? "tokenSwap.quote"
+            : mode === "swap"
+              ? "tokenSwap.title"
+              : capturingAccount
+                ? "tokenTransfer.saveAccount"
+                : "tokenTransfer.send",
+    );
 
     $: remainingBalance =
         amountToSend > BigInt(0)
@@ -48,25 +60,36 @@
     }
 
     function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = ev.detail;
+        error = $_(ev.detail);
     }
 
-    function saveAccount() {
-        if (sendCrypto) {
-            busy = true;
-            sendCrypto
-                .saveAccount()
-                .then((resp) => {
-                    if (resp.kind === "success") {
-                        dispatch("close");
-                    } else if (resp.kind === "name_taken") {
-                        error = "tokenTransfer.accountNameTaken";
-                    } else {
-                        error = "tokenTransfer.failedToSaveAccount";
-                    }
-                })
-                .finally(() => (busy = false));
+    function onError(ev: CustomEvent<{ error: string; values?: InterpolationValues } | undefined>) {
+        if (ev.detail === undefined) {
+            error = undefined;
+        } else {
+            error = $_(ev.detail.error, ev.detail.values);
         }
+    }
+
+    function onPrimaryClick() {
+        busy = true;
+        if (sendCrypto) {
+            if (capturingAccount) {
+                sendCrypto.saveAccount();
+            } else {
+                sendCrypto.send();
+            }
+        } else if (swapCrypto) {
+            if (swapStep === "quote") {
+                swapCrypto.quote();
+            } else {
+                swapCrypto.swap();
+            }
+        }
+    }
+
+    function onSecondaryClick() {
+        dispatch("close");
     }
 </script>
 
@@ -90,47 +113,44 @@
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol } })}
                 </a>
-            {/if}
-
-            {#if mode === "send"}
+            {:else if mode === "send"}
                 <SendCrypto
                     bind:this={sendCrypto}
                     bind:busy
                     bind:capturingAccount
                     bind:valid
                     on:close
-                    on:error={(ev) => (error = ev.detail)}
+                    on:error={onError}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
                     {ledger}
                     bind:amountToSend />
+            {:else if mode === "swap"}
+                <SwapCrypto
+                    bind:this={swapCrypto}
+                    bind:busy
+                    bind:valid
+                    bind:swapStep
+                    on:close
+                    on:error={onError}
+                    ledgerIn={ledger}
+                    bind:amountIn={amountToSend} />
             {/if}
             {#if error}
-                <ErrorMessage>{$_(error)}</ErrorMessage>
+                <ErrorMessage>{error}</ErrorMessage>
             {/if}
         </form>
         <span slot="footer">
             <ButtonGroup>
-                {#if mode === "send"}
-                    {#if capturingAccount}
-                        <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                            >{$_("noThanks")}</Button>
-                        <Button
-                            disabled={busy || !valid}
-                            loading={busy}
-                            tiny={$mobileWidth}
-                            on:click={saveAccount}>{$_("tokenTransfer.saveAccount")}</Button>
-                    {:else}
-                        <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                            >{$_("cancel")}</Button>
-                        <Button
-                            disabled={busy || !valid}
-                            loading={busy}
-                            tiny={$mobileWidth}
-                            on:click={() => sendCrypto?.send()}>{$_("tokenTransfer.send")}</Button>
-                    {/if}
-                {:else}
-                    <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
-                        >{$_("close")}</Button>
+                <Button
+                    secondary={mode !== "receive"}
+                    tiny={$mobileWidth}
+                    on:click={onSecondaryClick}>{secondaryButtonText}</Button>
+                {#if mode !== "receive"}
+                    <Button
+                        disabled={busy || !valid}
+                        loading={busy}
+                        tiny={$mobileWidth}
+                        on:click={onPrimaryClick}>{primaryButtonText}</Button>
                 {/if}
             </ButtonGroup>
         </span>

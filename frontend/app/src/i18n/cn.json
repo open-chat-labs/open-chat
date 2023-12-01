@@ -1173,5 +1173,19 @@
     "offlineMessage": "离线",
     "offlineError": "抱歉 - 您目前似乎处于离线状态",
     "renderPreviews": "自动渲染链接预览",
-    "messageBlocked": "由于发件人被阻止，邮件被隐藏"
+    "messageBlocked": "由于发件人被阻止，邮件被隐藏",
+    "tokenSwap": {
+        "title": "交换",
+        "quote": "引用",
+        "swapToken": "交换{symbol}",
+        "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
+        "noQuotes": "没有 DEX 提供交换 {tokenIn} 的报价",
+        "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
+        "quoteError": "获取交换 {tokenIn} 的报价时出错",
+        "findingAvailableTokens": "正在寻找可用的代币进行交换...",
+        "quoteInfo": "当您按下“报价”按钮时，将代表您查询以下去中心化交易所（DEX）以获取交换代币的报价：",
+        "swapInfo": "最佳引用是来自 {amount} 的 **{tokenOut}** {dex}。仅当收到的 {tokenOut} 金额至少为报价金额的 99% 时，交换才会继续。您想继续尝试“交换”吗？",
+        "swapFailed": "无法使用 {amountIn} 将 **{tokenIn}** {minAmountOut} 至少交换为 **{tokenOut}** {dex}",
+        "swapSucceeded": "已使用 {amountIn} 成功将 **{tokenIn}** {amountOut} 交换为 **{tokenOut}** {dex}"
+    }
 }

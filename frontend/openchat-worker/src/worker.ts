@@ -1361,19 +1361,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "getTokenSwapPools":
+            case "getTokenSwaps":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getTokenSwapPools(payload.inputToken, payload.outputTokens),
+                    agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
                 );
                 break;
 
-            case "quoteTokenSwap":
+            case "getTokenSwapQuotes":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.quoteTokenSwap(payload.inputToken, payload.outputToken, payload.amountIn),
+                    agent.getTokenSwapQuotes(payload.inputTokenLedger, payload.outputTokenLedger, payload.amountIn),
                 );
                 break;
 
@@ -1383,11 +1383,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.swapTokens(
                         payload.swapId,
-                        payload.inputToken,
-                        payload.outputToken,
+                        payload.inputTokenDetails,
+                        payload.outputTokenDetails,
                         payload.amountIn,
                         payload.minAmountOut,
-                        payload.pool,
+                        payload.dex,
                     ),
                 );
                 break;

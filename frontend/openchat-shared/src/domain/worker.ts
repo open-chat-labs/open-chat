@@ -144,7 +144,7 @@ import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
-import type { DexId, TokenSwapPool } from "./dexes";
+import type { DexId } from "./dexes";
 /**
  * Worker request types
  */
@@ -298,8 +298,8 @@ export type WorkerRequest =
     | SaveCryptoAccount
     | SubmitProposal
     | TipMessage
-    | GetTokenSwapPools
-    | QuoteTokenSwap
+    | GetTokenSwaps
+    | GetTokenSwapQuotes
     | SwapTokens
     | TokenSwapStatus
     | ApproveTransfer
@@ -323,27 +323,27 @@ type TipMessage = {
     decimals: number;
 };
 
-type GetTokenSwapPools = {
-    kind: "getTokenSwapPools";
-    inputToken: string;
-    outputTokens: string[];
+type GetTokenSwaps = {
+    kind: "getTokenSwaps";
+    inputTokenLedger: string;
+    outputTokenLedgers: string[];
 };
 
-type QuoteTokenSwap = {
-    kind: "quoteTokenSwap";
-    inputToken: string;
-    outputToken: string;
+type GetTokenSwapQuotes = {
+    kind: "getTokenSwapQuotes";
+    inputTokenLedger: string;
+    outputTokenLedger: string;
     amountIn: bigint;
 };
 
 type SwapTokens = {
     kind: "swapTokens";
     swapId: bigint;
-    inputToken: CryptocurrencyDetails;
-    outputToken: CryptocurrencyDetails;
+    inputTokenDetails: CryptocurrencyDetails;
+    outputTokenDetails: CryptocurrencyDetails;
     amountIn: bigint;
     minAmountOut: bigint;
-    pool: TokenSwapPool;
+    dex: DexId;
 };
 
 type TokenSwapStatus = {
@@ -1144,7 +1144,7 @@ export type WorkerResponseInner =
     | ApproveTransferResponse
     | AccountTransactionResult
     | Record<string, bigint>
-    | TokenSwapPool[]
+    | Record<string, DexId[]>
     | [DexId, bigint][]
     | SwapTokensResponse
     | TokenSwapStatusResponse
@@ -1692,9 +1692,9 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record< string, bigint >
     : T extends SetCachePrimerTimestamp
     ? void
-    : T extends GetTokenSwapPools
-    ? TokenSwapPool[]
-    : T extends QuoteTokenSwap
+    : T extends GetTokenSwaps
+    ? Record<string, DexId[]>
+    : T extends GetTokenSwapQuotes
     ? [DexId, bigint][]
     : T extends SwapTokens
     ? SwapTokensResponse

@@ -1174,5 +1174,19 @@
     "offlineMessage": "Desconectado",
     "offlineError": "Lo sentimos, parece que estás desconectado en este momento.",
     "renderPreviews": "Vistas previas de enlaces de renderizado automático",
-    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado"
+    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado",
+    "tokenSwap": {
+        "title": "Intercambio",
+        "quote": "Cita",
+        "swapToken": "Intercambiar {symbol}",
+        "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
+        "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
+        "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
+        "quoteError": "Error al obtener cotizaciones para intercambiar {tokenIn}",
+        "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
+        "quoteInfo": "Cuando presione el botón \"cotizar\", se solicitará en su nombre a los siguientes intercambios descentralizados (DEX) una cotización para intercambiar sus tokens:",
+        "swapInfo": "La mejor cotización es **{amount}** {tokenOut} de {dex}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} recibida es al menos el 99 % de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el \"intercambio\"?",
+        "swapFailed": "No se pudo intercambiar **{amountIn}** {tokenIn} por al menos **{minAmountOut}** {tokenOut} usando {dex}",
+        "swapSucceeded": "Se intercambió exitosamente **{amountIn}** {tokenIn} por **{amountOut}** {tokenOut} usando {dex}"
+    }
 }

@@ -641,6 +641,20 @@
             "to": "To"
         }
     },
+    "tokenSwap": {
+        "title": "Swap",
+        "quote": "Quote",
+        "swapToken": "Swap {symbol}",
+        "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
+        "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
+        "getTokenSwapsError": "Error getting swaps for {tokenIn}",
+        "quoteError": "Error getting quotes to swap {tokenIn}",
+        "findingAvailableTokens": "finding available tokens to swap...",
+        "quoteInfo": "When you press the `quote` button the following decentralized exchanges (DEXes) will be queried on your behalf for a quote to swap your tokens:",
+        "swapInfo": "The best quote is **{amount}** {tokenOut} from {dex}. The swap will only go ahead if the amount of {tokenOut} received will be at least 99% of the amount quoted. Would you like to go ahead and attempt the `swap`?",
+        "swapFailed": "Failed to swap **{amountIn}** {tokenIn} for at least **{minAmountOut}** {tokenOut} using {dex}",
+        "swapSucceeded": "Successfully swapped **{amountIn}** {tokenIn} for **{amountOut}** {tokenOut} using {dex}"
+    },
     "searchChat": "Search",
     "search": "Search...",
     "offline": "Offline",

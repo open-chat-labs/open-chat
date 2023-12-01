@@ -344,7 +344,6 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
-    TokenSwapPool,
     DexId,
     SwapTokensResponse,
     TokenSwapStatusResponse,
@@ -5253,47 +5252,47 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
-        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
+    getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
+        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter((t) => t !== inputTokenLedger);
 
         return this.sendRequest({
-            kind: "getTokenSwapPools",
-            inputToken,
-            outputTokens,
+            kind: "getTokenSwaps",
+            inputTokenLedger,
+            outputTokenLedgers,
         });
     }
 
-    quoteTokenSwap(
-        inputToken: string,
-        outputToken: string,
+    getTokenSwapQuotes(
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
         return this.sendRequest({
-            kind: "quoteTokenSwap",
-            inputToken,
-            outputToken,
+            kind: "getTokenSwapQuotes",
+            inputTokenLedger,
+            outputTokenLedger,
             amountIn,
         });
     }
 
     swapTokens(
         swapId: bigint,
-        inputToken: string,
-        outputToken: string,
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
-        pool: TokenSwapPool,
+        dex: DexId,
     ): Promise<SwapTokensResponse> {
         const lookup = get(cryptoLookup);
 
         return this.sendRequest({
             kind: "swapTokens",
             swapId,
-            inputToken: lookup[inputToken],
-            outputToken: lookup[outputToken],
+            inputTokenDetails: lookup[inputTokenLedger],
+            outputTokenDetails: lookup[outputTokenLedger],
             amountIn,
             minAmountOut,
-            pool,
+            dex,
         });
     }
 

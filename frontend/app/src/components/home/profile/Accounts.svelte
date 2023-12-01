@@ -7,6 +7,7 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -28,7 +29,7 @@
     export let zeroCount = 0;
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive";
+    let manageMode: "none" | "send" | "receive" | "swap";
     let selectedLedger: string | undefined = undefined;
     let transactionsFor: TransactionsFor | undefined = undefined;
 
@@ -36,7 +37,9 @@
     $: cryptoBalance = client.cryptoBalance;
     $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).map((ns) => ns.ledgerCanisterId));
+    $: snsLedgers = new Set<string>(
+        Object.values($nervousSystemLookup).map((ns) => ns.ledgerCanisterId),
+    );
 
     $: {
         zeroCount = accounts.filter((a) => a.zero).length;
@@ -64,9 +67,14 @@
         manageMode = "send";
     }
 
+    function showSwap(ledger: string) {
+        selectedLedger = ledger;
+        manageMode = "swap";
+    }
+
     function buildAccountsList(
         cryptoLookup: Record<string, CryptocurrencyDetails>,
-        cryptoBalance: Record<string, bigint>
+        cryptoBalance: Record<string, bigint>,
     ) {
         const accounts = Object.values(cryptoLookup).map((t) => {
             const balance = cryptoBalance[t.ledger] ?? BigInt(0);
@@ -169,6 +177,17 @@
                                         slot="icon" />
                                     <div slot="text">{$_("cryptoAccount.receive")}</div>
                                 </MenuItem>
+                                {#await client.getTokenSwaps(token.ledger) then swaps}
+                                    {#if Object.keys(swaps).length > 0}
+                                        <MenuItem on:click={() => showSwap(token.ledger)}>
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("cryptoAccount.swap")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                {/await}
                                 {#if snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => (transactionsFor = token)}>
                                         <ViewList

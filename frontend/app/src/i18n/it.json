@@ -1172,5 +1172,19 @@
     "offlineMessage": "disconnesso",
     "offlineError": "Siamo spiacenti, sembra che tu sia offline al momento",
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
-    "messageBlocked": "Messaggio nascosto perché il mittente è bloccato"
+    "messageBlocked": "Messaggio nascosto perché il mittente è bloccato",
+    "tokenSwap": {
+        "title": "Scambio",
+        "quote": "Citazione",
+        "swapToken": "Scambia {symbol}",
+        "swapNotAvailable": "Attualmente non è possibile scambiare {tokenIn} con nessun altro token",
+        "noQuotes": "Nessun DEX ha fornito un preventivo per lo scambio di {tokenIn}",
+        "getTokenSwapsError": "Errore durante il recupero degli scambi per {tokenIn}",
+        "quoteError": "Errore durante il recupero delle virgolette da scambiare {tokenIn}",
+        "findingAvailableTokens": "ricerca di token disponibili per lo scambio...",
+        "quoteInfo": "Quando premi il pulsante \"quote\", i seguenti scambi decentralizzati (DEX) verranno interrogati per tuo conto per un preventivo per lo scambio dei tuoi token:",
+        "swapInfo": "La citazione migliore è **{amount}** {tokenOut} da {dex}. Lo scambio andrà avanti solo se l'importo di {tokenOut} ricevuto sarà almeno pari al 99% dell'importo quotato. Vuoi procedere e tentare lo \"scambio\"?",
+        "swapFailed": "Impossibile scambiare **{amountIn}** {tokenIn} con almeno **{minAmountOut}** {tokenOut} utilizzando {dex}",
+        "swapSucceeded": "Scambiato **{amountIn}** {tokenIn} con **{amountOut}** {tokenOut} utilizzando {dex} con successo"
+    }
 }
