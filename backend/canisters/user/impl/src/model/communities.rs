@@ -19,8 +19,8 @@ struct RemovedCommunity {
 }
 
 impl Communities {
-    pub fn get(&self, community_id: &CommunityId) -> Option<&Community> {
-        self.communities.get(community_id)
+    pub fn exists(&self, community_id: &CommunityId) -> bool {
+        self.communities.contains_key(community_id)
     }
 
     pub fn get_mut(&mut self, community_id: &CommunityId) -> Option<&mut Community> {
@@ -73,10 +73,6 @@ impl Communities {
         community
     }
 
-    pub fn exists(&self, community_id: &CommunityId) -> bool {
-        self.communities.contains_key(community_id)
-    }
-
     pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = &Community> {
         self.communities.values().filter(move |c| c.last_updated() > updated_since)
     }
@@ -100,10 +96,6 @@ impl Communities {
 
     pub fn len(&self) -> usize {
         self.communities.len()
-    }
-
-    pub fn has(&self, community_id: &CommunityId) -> bool {
-        self.communities.contains_key(community_id)
     }
 
     fn next_index(&self) -> u32 {

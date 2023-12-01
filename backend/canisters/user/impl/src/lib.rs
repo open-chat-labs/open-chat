@@ -80,12 +80,12 @@ impl RuntimeState {
 
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.group_chats.get(&caller.into()).is_some()
+        self.data.group_chats.exists(&caller.into())
     }
 
     pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.communities.get(&caller.into()).is_some()
+        self.data.communities.exists(&caller.into())
     }
 
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {

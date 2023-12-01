@@ -6988,6 +6988,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "chat_events",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",

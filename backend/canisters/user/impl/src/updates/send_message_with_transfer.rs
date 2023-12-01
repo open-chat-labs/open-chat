@@ -4,10 +4,7 @@ use crate::{read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
 use ic_cdk_macros::update;
-use types::{
-    CompletedCryptoTransaction, CryptoContent, CryptoTransaction, MessageContentInitial, PendingCryptoTransaction,
-    PrizeContentInitial, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
-};
+use types::{CryptoTransaction, MessageContentInitial, PendingCryptoTransaction, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE};
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
 use utils::consts::{MEMO_MESSAGE, MEMO_PRIZE};
@@ -22,7 +19,7 @@ async fn send_message_with_transfer_to_channel(
     run_regular_jobs();
 
     // Check that the user is a member of the community
-    if read_state(|state| state.data.communities.get(&args.community_id).is_none()) {
+    if read_state(|state| !state.data.communities.exists(&args.community_id)) {
         return UserNotInCommunity(None);
     }
 
@@ -44,7 +41,7 @@ async fn send_message_with_transfer_to_channel(
     };
 
     // Mutate the content so it now includes the completed transaction
-    let content = transform_content_with_completed_transaction(args.content, completed_transaction.clone());
+    let content = MessageContentInternal::new_with_transfer(args.content, completed_transaction.clone());
 
     // Build the send_message args
     let c2c_args = community_canister::c2c_send_message::Args {
@@ -101,7 +98,7 @@ async fn send_message_with_transfer_to_group(
     run_regular_jobs();
 
     // Check that the user is a member of the group
-    if read_state(|state| state.data.group_chats.get(&args.group_id).is_none()) {
+    if read_state(|state| !state.data.group_chats.exists(&args.group_id)) {
         return CallerNotInGroup(None);
     }
 
@@ -123,7 +120,7 @@ async fn send_message_with_transfer_to_group(
     };
 
     // Mutate the content so it now includes the completed transaction
-    let content = transform_content_with_completed_transaction(args.content, completed_transaction.clone());
+    let content = MessageContentInternal::new_with_transfer(args.content, completed_transaction.clone());
 
     // Build the send_message args
     let c2c_args = group_canister::c2c_send_message::Args {
@@ -228,26 +225,4 @@ fn prepare(content: &MessageContentInitial, state: &RuntimeState) -> PrepareResu
     } else {
         TransferCannotBeZero
     }
-}
-
-fn transform_content_with_completed_transaction(
-    content: MessageContentInitial,
-    completed_transaction: CompletedCryptoTransaction,
-) -> MessageContentInternal {
-    // Mutate the content so it now includes the completed transaction
-    MessageContentInternal::from(match content {
-        MessageContentInitial::Crypto(c) => MessageContentInitial::Crypto(CryptoContent {
-            recipient: c.recipient,
-            transfer: CryptoTransaction::Completed(completed_transaction),
-            caption: c.caption,
-        }),
-        MessageContentInitial::Prize(c) => MessageContentInitial::Prize(PrizeContentInitial {
-            prizes: c.prizes,
-            transfer: CryptoTransaction::Completed(completed_transaction),
-            end_date: c.end_date,
-            caption: c.caption,
-            diamond_only: c.diamond_only,
-        }),
-        _ => unreachable!("Message must include a crypto transfer"),
-    })
 }

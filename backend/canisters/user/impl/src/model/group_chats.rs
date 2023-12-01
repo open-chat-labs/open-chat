@@ -19,6 +19,10 @@ struct RemovedGroup {
 }
 
 impl GroupChats {
+    pub fn exists(&self, chat_id: &ChatId) -> bool {
+        self.group_chats.contains_key(chat_id)
+    }
+
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
@@ -38,10 +42,6 @@ impl GroupChats {
             .take_while(|g| g.timestamp > timestamp)
             .map(|g| g.chat_id)
             .collect()
-    }
-
-    pub fn get(&self, chat_id: &ChatId) -> Option<&GroupChat> {
-        self.group_chats.get(chat_id)
     }
 
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut GroupChat> {
@@ -85,10 +85,6 @@ impl GroupChats {
         group
     }
 
-    pub fn exists(&self, chat_id: &ChatId) -> bool {
-        self.group_chats.contains_key(chat_id)
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
     }
@@ -99,10 +95,6 @@ impl GroupChats {
 
     pub fn len(&self) -> usize {
         self.group_chats.len()
-    }
-
-    pub fn has(&self, chat_id: &ChatId) -> bool {
-        self.group_chats.contains_key(chat_id)
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {
