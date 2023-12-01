@@ -53,8 +53,8 @@ async fn process_payment(pending_payment: PendingPayment) {
     };
 
     match make_payment(pending_payment.token_info.ledger, &args).await {
-        Ok(block_index) => match pending_payment.reason {
-            PendingPaymentReason::Trade(_) => {
+        Ok(block_index) => {
+            if matches!(pending_payment.reason, PendingPaymentReason::Trade(_)) {
                 mutate_state(|state| {
                     if let Some(offer) = state.data.offers.get_mut(pending_payment.offer_id) {
                         let transfer = CompletedCryptoTransaction {
@@ -80,8 +80,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                     }
                 });
             }
-            _ => {}
-        },
+        }
         Err(retry) => {
             if retry {
                 mutate_state(|state| {
@@ -95,7 +94,7 @@ async fn process_payment(pending_payment: PendingPayment) {
 
 // Error response contains a boolean stating if the transfer should be retried
 async fn make_payment(ledger_canister_id: CanisterId, args: &TransferArg) -> Result<u64, bool> {
-    match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, &args).await {
+    match icrc_ledger_canister_c2c_client::icrc1_transfer(ledger_canister_id, args).await {
         Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
         Ok(Err(transfer_error)) => {
             error!(?transfer_error, ?args, "Transfer failed");
