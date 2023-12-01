@@ -471,14 +471,10 @@
                 {#if first && !isProposal && !isPrize}
                     <div class="sender" class:fill class:rtl={$rtlStore}>
                         <Link underline={"never"} on:click={openUserProfile}>
-                            <h4
-                                class="username"
-                                class:fill
-                                class:crypto
-                                class:diamond={sender?.diamond}>
+                            <h4 class="username" class:fill class:crypto>
                                 {senderDisplayName}
                             </h4>
-                            <Diamond />
+                            <Diamond status={sender?.diamondStatus} />
                         </Link>
                         {#if senderTyping}
                             <span class="typing">

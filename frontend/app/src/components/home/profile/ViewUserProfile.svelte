@@ -18,6 +18,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
+    import Diamond from "../../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -31,6 +32,7 @@
     let user: UserSummary | undefined;
     let lastOnline: number | undefined;
 
+    $: diamondStatus = user?.diamondStatus;
     $: createdUser = client.user;
     $: platformModerator = client.platformModerator;
     $: me = userId === $createdUser.userId;
@@ -47,7 +49,6 @@
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
     $: isPremium = profile?.isPremium ?? false;
-    $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
     $: selectedChat = client.selectedChatStore;
     $: blockedUsers = client.blockedUsers;
@@ -61,21 +62,21 @@
             username: profile?.username ?? "",
             displayName: profile?.displayName,
         },
-        inGlobalContext ? undefined : $communityMembers
+        inGlobalContext ? undefined : $communityMembers,
     );
     $: canBlock = canBlockUser(
         $selectedChat,
         $selectedCommunity,
         $blockedUsers,
         $currentChatBlockedUsers,
-        $currentCommunityBlockedUsers
+        $currentCommunityBlockedUsers,
     );
     $: canUnblock = canUnblockUser(
         $selectedChat,
         $selectedCommunity,
         $blockedUsers,
         $currentChatBlockedUsers,
-        $currentCommunityBlockedUsers
+        $currentCommunityBlockedUsers,
     );
 
     onMount(async () => {
@@ -146,7 +147,7 @@
             client
                 .unblockCommunityUser($selectedCommunity.id, userId)
                 .then((success) =>
-                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed")
+                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed"),
                 );
             onClose();
             return;
@@ -158,7 +159,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>
+        blockedCommunityUsers: Set<string>,
     ) {
         if (me || inGlobalContext) return false;
 
@@ -178,7 +179,7 @@
         community: CommunitySummary | undefined,
         blockedUsers: Set<string>,
         blockedChatUsers: Set<string>,
-        blockedCommunityUsers: Set<string>
+        blockedCommunityUsers: Set<string>,
     ) {
         if (me || inGlobalContext) return false;
         if (chat !== undefined) {
@@ -236,9 +237,10 @@
             on:close>
             <div class="header" slot="header">
                 <div class="handle">
-                    <span class:diamond>
+                    <span>
                         {displayName}
                     </span>
+                    <Diamond status={diamondStatus} />
                     <span class="username">
                         @{profile.username}
                     </span>
@@ -362,10 +364,6 @@
         .handle {
             display: inline;
             overflow-wrap: anywhere;
-
-            .diamond {
-                @include diamond();
-            }
 
             .username {
                 font-weight: 200;

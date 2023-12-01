@@ -391,9 +391,10 @@ import {
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
     canExtendDiamond,
-    diamondMembership,
+    diamondStatus,
     isDiamond,
     diamondDurationToMs,
+    isLifetimeDiamond,
 } from "./stores/diamond";
 import {
     addCommunityPreview,
@@ -696,9 +697,18 @@ export class OpenChat extends OpenChatAgentWorker {
         return user.diamondStatus !== "inactive";
     }
 
+    userIsLifetimeDiamond(userId: string): boolean {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return false;
+
+        if (userId === this._liveState.user.userId) return this._liveState.isLifetimeDiamond;
+
+        return user.diamondStatus === "lifetime";
+    }
+
     diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
-        if (this._liveState.diamondMembership !== undefined) {
-            return formatRelativeTime(now, locale, this._liveState.diamondMembership.expiresAt);
+        if (this._liveState.diamondStatus.kind === "active") {
+            return formatRelativeTime(now, locale, this._liveState.diamondStatus.expiresAt);
         }
     }
 
@@ -5026,12 +5036,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getReferralLeaderboard", args });
     }
 
-    displayNameAndIcon(user?: UserSummary): string {
-        // TODO need to come back to this
+    displayName(user?: UserSummary): string {
         return user !== undefined
-            ? `${user?.displayName ?? user?.username}  ${
-                  user?.diamondStatus !== "inactive" ? "💎" : ""
-              }`
+            ? `${user?.displayName ?? user?.username}`
             : this.config.i18nFormatter("unknownUser");
     }
 
@@ -5802,8 +5809,9 @@ export class OpenChat extends OpenChatAgentWorker {
     userMetrics = userMetrics;
     threadEvents = threadEvents;
     isDiamond = isDiamond;
+    isLifetimeDiamond = isLifetimeDiamond;
     canExtendDiamond = canExtendDiamond;
-    diamondMembership = diamondMembership;
+    diamondMembership = diamondStatus;
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;

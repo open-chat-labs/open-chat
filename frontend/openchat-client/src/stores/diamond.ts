@@ -2,26 +2,31 @@ import { type DiamondMembershipDuration, UnsupportedValueError } from "openchat-
 import { derived } from "svelte/store";
 import { currentUser } from "./user";
 
-export const diamondMembership = derived(
-    currentUser,
-    ($currentUser) => $currentUser.diamondMembership,
-);
+export const diamondStatus = derived(currentUser, ($currentUser) => $currentUser.diamondStatus);
 
-export const isDiamond = derived(diamondMembership, ($diamondMembership) => {
-    return $diamondMembership !== undefined && $diamondMembership.expiresAt > Date.now();
+export const isDiamond = derived(diamondStatus, ($diamondStatus) => {
+    return (
+        $diamondStatus.kind === "lifetime" ||
+        ($diamondStatus.kind === "active" && $diamondStatus.expiresAt > Date.now())
+    );
+});
+
+export const isLifetimeDiamond = derived(diamondStatus, ($diamondStatus) => {
+    return $diamondStatus.kind === "lifetime";
 });
 
 const MONTH_IN_MS: number = ((4 * 365 + 1) * 24 * 60 * 60 * 1000) / (4 * 12);
 const THREE_MONTH_IN_MS: number = 3 * MONTH_IN_MS;
 const YEAR_IN_MS: number = 12 * MONTH_IN_MS;
 
-export const canExtendDiamond = derived(diamondMembership, ($diamondMembership) => {
+export const canExtendDiamond = derived(diamondStatus, ($diamondStatus) => {
+    if ($diamondStatus.kind !== "active") return false;
     const now = Date.now();
     const threeMonths = now + THREE_MONTH_IN_MS;
     return (
-        $diamondMembership !== undefined &&
-        $diamondMembership.expiresAt > now &&
-        $diamondMembership.expiresAt < threeMonths
+        $diamondStatus !== undefined &&
+        $diamondStatus.expiresAt > now &&
+        $diamondStatus.expiresAt < threeMonths
     );
 });
 

@@ -1,16 +1,11 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import type { DiamondMembershipStatus } from "openchat-client";
 
     export let size = "0.8em";
     export let width = size;
     export let height = size;
     export let show: "blue" | "gold" | undefined = undefined;
-
-    const client = getContext<OpenChat>("client");
-    $: diamond = client.isDiamond;
-
-    let lifetime = false;
+    export let status: DiamondMembershipStatus["kind"] | undefined = undefined;
 
     type Colours = {
         dark: string;
@@ -18,9 +13,9 @@
         light: string;
     };
 
-    let colour: [number, number] = lifetime || show === "gold" ? [52, 92] : [203, 93];
+    $: colour = status === "lifetime" || show === "gold" ? [52, 92] : [203, 93];
 
-    $: colours = deriveColours(colour);
+    $: colours = deriveColours(colour as [number, number]);
 
     function deriveColours([hue, _sat]: [number, number]): Colours {
         return {
@@ -31,7 +26,7 @@
     }
 </script>
 
-{#if $diamond || show}
+{#if status !== "inactive" || show}
     <svg viewBox="0 -40 500 430" {width} {height}>
         <g transform="matrix(0.714286, 0, 0, 0.714286, -3.571425, -3.585709)">
             <g>

@@ -11,13 +11,14 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import SuspendModal from "./SuspendModal.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Diamond from "../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -61,14 +62,15 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     username: "@" + them.username,
                     eventsTTL: undefined,
@@ -76,6 +78,7 @@
             default:
                 return {
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     username: undefined,
@@ -83,7 +86,7 @@
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     eventsTTL: chatSummary.eventsTTL,
                 };
@@ -96,7 +99,7 @@
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: { userId, chatButton: false, inGlobalContext: false },
                     bubbles: true,
-                })
+                }),
             );
         }
     }
@@ -140,6 +143,7 @@
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
+                <Diamond status={chat.diamondStatus} />
                 <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}
