@@ -2022,6 +2022,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "icrc-ledger-types",
  "serde",
  "types",
 ]
@@ -2043,6 +2044,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "msgpack",
  "rand",
  "serde",
  "serde_bytes",
