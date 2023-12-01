@@ -3,8 +3,9 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
+use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, Chat, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
+use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -128,7 +129,7 @@ impl Job for DeleteFileReferencesJob {
 impl Job for MessageReminderJob {
     fn execute(self) {
         let replies_to = C2CReplyContext::OtherChat(self.chat, self.thread_root_message_index, self.event_index);
-        let content = MessageContent::MessageReminder(MessageReminderContent {
+        let content = MessageContentInternal::MessageReminder(MessageReminderContentInternal {
             reminder_id: self.reminder_id,
             notes: self.notes.clone(),
         });

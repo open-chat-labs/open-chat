@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::Timestamped;
+use types::{MessageContentInitial, Timestamped};
 use user_canister::c2c_notify_user_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
@@ -46,7 +46,8 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_user_suspended_message(&ev, state);
         }
         Event::OpenChatBotMessage(content) => {
-            openchat_bot::send_message(*content, false, state);
+            let initial_content: MessageContentInitial = (*content).into();
+            openchat_bot::send_message(initial_content.try_into().unwrap(), false, state);
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();
