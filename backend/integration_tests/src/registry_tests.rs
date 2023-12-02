@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::rng::{random_principal, random_string};
-use crate::setup::install_icrc1_ledger;
+use crate::setup::install_icrc_ledger;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use registry_canister::TokenStandard;
@@ -17,12 +17,13 @@ fn add_token_succeeds() {
         ..
     } = wrapper.env();
 
-    let ledger_canister_id = install_icrc1_ledger(
+    let ledger_canister_id = install_icrc_ledger(
         env,
         *controller,
         "ABC Token".to_string(),
         "ABC".to_string(),
         10_000,
+        None,
         Vec::new(),
     );
 
@@ -105,12 +106,13 @@ fn update_token_succeeds() {
         ..
     } = wrapper.env();
 
-    let ledger_canister_id = install_icrc1_ledger(
+    let ledger_canister_id = install_icrc_ledger(
         env,
         *controller,
         "ABC Token".to_string(),
         "ABC".to_string(),
         10_000,
+        None,
         Vec::new(),
     );
 
