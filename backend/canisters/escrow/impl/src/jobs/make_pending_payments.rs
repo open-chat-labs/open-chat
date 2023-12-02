@@ -54,32 +54,26 @@ async fn process_payment(pending_payment: PendingPayment) {
 
     match make_payment(pending_payment.token_info.ledger, &args).await {
         Ok(block_index) => {
-            if matches!(pending_payment.reason, PendingPaymentReason::Trade(_)) {
-                mutate_state(|state| {
-                    if let Some(offer) = state.data.offers.get_mut(pending_payment.offer_id) {
-                        let transfer = CompletedCryptoTransaction {
-                            ledger: pending_payment.token_info.ledger,
-                            token: pending_payment.token_info.token,
-                            amount: pending_payment.amount,
-                            from: Account {
-                                owner: state.env.canister_id(),
-                                subaccount: args.from_subaccount,
-                            }
-                            .into(),
-                            to: Account::from(Principal::from(pending_payment.user_id)).into(),
-                            fee: pending_payment.token_info.fee,
-                            memo: None,
-                            created: created_at_time,
-                            block_index,
-                        };
-                        if offer.created_by == pending_payment.user_id {
-                            offer.transfer_out1 = Some(transfer);
-                        } else {
-                            offer.transfer_out0 = Some(transfer);
+            mutate_state(|state| {
+                if let Some(offer) = state.data.offers.get_mut(pending_payment.offer_id) {
+                    let transfer = CompletedCryptoTransaction {
+                        ledger: pending_payment.token_info.ledger,
+                        token: pending_payment.token_info.token,
+                        amount: pending_payment.amount,
+                        from: Account {
+                            owner: state.env.canister_id(),
+                            subaccount: args.from_subaccount,
                         }
-                    }
-                });
-            }
+                        .into(),
+                        to: Account::from(Principal::from(pending_payment.user_id)).into(),
+                        fee: pending_payment.token_info.fee,
+                        memo: None,
+                        created: created_at_time,
+                        block_index,
+                    };
+                    offer.transfers_out.push(transfer);
+                }
+            });
         }
         Err(retry) => {
             if retry {
