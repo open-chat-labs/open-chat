@@ -60,7 +60,7 @@ fn tip_direct_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance as u128, tip_amount);
 }
 
@@ -109,7 +109,7 @@ fn tip_group_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance as u128, tip_amount);
 }
 
@@ -172,7 +172,7 @@ fn tip_channel_message_succeeds() {
         (canister_ids.icp_ledger, vec![(user1.user_id, tip_amount)])
     );
 
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance as u128, tip_amount);
 }
 
@@ -326,13 +326,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::icrc1::happy_path::transfer(
-        env,
-        controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        10_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user1.user_id, 10_000_000_000);
 
     TestData { user1, user2 }
 }

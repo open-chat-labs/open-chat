@@ -1,9 +1,9 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::cancel_offer::{Response::*, *};
 
-#[update_msgpack]
+#[update_candid_and_msgpack]
 #[trace]
 fn cancel_offer(args: Args) -> Response {
     mutate_state(|state| cancel_offer_impl(args, state))

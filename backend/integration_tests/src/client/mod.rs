@@ -10,6 +10,7 @@ mod macros;
 
 pub mod community;
 pub mod cycles_dispenser;
+pub mod escrow;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
@@ -95,13 +96,7 @@ pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, con
 }
 
 pub fn upgrade_user(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
-    icrc1::happy_path::transfer(
-        env,
-        controller,
-        canister_ids.icp_ledger,
-        user.user_id.into(),
-        1_000_000_000u64,
-    );
+    icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
     user_index::happy_path::pay_for_diamond_membership(
         env,

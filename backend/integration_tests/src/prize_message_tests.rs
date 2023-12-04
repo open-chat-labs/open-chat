@@ -32,13 +32,7 @@ fn prize_messages_can_be_claimed_successfully() {
     client::local_user_index::happy_path::join_group(env, user3.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
@@ -79,11 +73,11 @@ fn prize_messages_can_be_claimed_successfully() {
 
     if let user_canister::send_message_with_transfer_to_group::Response::Success(result) = send_message_response {
         client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 200000);
 
         client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
-        let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id.into());
+        let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id);
         assert_eq!(user3_balance, 100000);
 
         let events = client::group::happy_path::thread_events(
@@ -125,13 +119,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let prizes = [100000, 200000];
     let token = Cryptocurrency::InternetComputer;
@@ -182,12 +170,12 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
     env.advance_time(Duration::from_millis(interval - 1));
     env.tick();
 
-    let user1_balance_before_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id.into());
+    let user1_balance_before_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     env.advance_time(Duration::from_millis(1));
     tick_many(env, 2);
 
-    let user1_balance_after_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id.into());
+    let user1_balance_after_refund = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user1.user_id);
 
     assert_eq!(user1_balance_after_refund, user1_balance_before_refund + 100000);
 }

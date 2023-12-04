@@ -100,7 +100,7 @@ fn send_crypto_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 10000);
     } else {
         panic!("{send_message_result:?}")
@@ -167,19 +167,19 @@ fn send_prize_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister());
         assert_eq!(user1_balance_after_sending_prize, inital_user1_balance - total - fee);
 
-        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
         assert_eq!(community_balance_after_sending_prize, total);
 
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
 
-        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister());
         assert_eq!(user1_balance_after_refund, inital_user1_balance - 2 * fee);
 
-        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
         assert_eq!(community_balance_after_refund, 0);
     } else {
         panic!("{send_message_result:?}")
