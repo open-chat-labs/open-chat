@@ -127,7 +127,6 @@ import {
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
-    selectedThreadRootEvent,
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     focusThreadMessageIndex,
@@ -2243,24 +2242,40 @@ export class OpenChat extends OpenChatAgentWorker {
 
     openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
         this.clearThreadEvents();
-        selectedThreadRootEvent.set(threadRootEvent);
-        if (!initiating && this._liveState.selectedChatId !== undefined) {
-            if (this._liveState.focusThreadMessageIndex !== undefined) {
-                this.loadEventWindow(
-                    this._liveState.selectedChatId,
-                    this._liveState.focusThreadMessageIndex,
-                    threadRootEvent,
-                    true,
-                );
-            } else {
-                this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return {
+                    ...context,
+                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                };
             }
+            return context;
+        });
+
+        const context = this._liveState.selectedMessageContext;
+        if (context) {
+            if (!initiating) {
+                if (this._liveState.focusThreadMessageIndex !== undefined) {
+                    this.loadEventWindow(
+                        context.chatId,
+                        this._liveState.focusThreadMessageIndex,
+                        threadRootEvent,
+                        true,
+                    );
+                } else {
+                    this.loadPreviousMessages(context.chatId, threadRootEvent, true);
+                }
+            }
+            this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
         }
-        this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
 
     closeThread(): void {
-        selectedThreadRootEvent.set(undefined);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return { chatId: context.chatId };
+            }
+        });
         this.dispatchEvent(new ThreadClosed());
     }
 
@@ -2690,8 +2705,8 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<void> {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
-        const selectedThreadRootEvent = this._liveState.selectedThreadRootEvent;
-        const selectedThreadRootMessageIndex = selectedThreadRootEvent?.event?.messageIndex;
+        const selectedThreadRootMessageIndex =
+            this._liveState.selectedMessageContext?.threadRootMessageIndex;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -2957,7 +2972,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         e.event.messageIndex === selectedThreadRootMessageIndex,
                 );
                 if (threadRootEvent !== undefined) {
-                    selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
                     this.dispatchEvent(
                         new ChatUpdated({
                             chatId,
@@ -5812,7 +5826,6 @@ export class OpenChat extends OpenChatAgentWorker {
     isLifetimeDiamond = isLifetimeDiamond;
     canExtendDiamond = canExtendDiamond;
     diamondStatus = diamondStatus;
-    selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
