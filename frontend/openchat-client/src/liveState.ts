@@ -9,7 +9,6 @@ import type {
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    Message,
     MessageContext,
     ThreadSyncDetails,
     UserLookup,
@@ -43,7 +42,6 @@ import {
     chatsLoading,
     uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
-    selectedThreadRootEvent,
     selectedMessageContext,
     allChats,
     currentChatMembers,
@@ -94,7 +92,6 @@ export class LiveState {
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
-    selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatMembers!: Member[];
     currentChatRules!: VersionedRules | undefined;
@@ -152,7 +149,6 @@ export class LiveState {
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
-        selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
         currentChatRules.subscribe((data) => (this.currentChatRules = data));
