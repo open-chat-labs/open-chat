@@ -5139,9 +5139,12 @@ export class OpenChat extends OpenChatAgentWorker {
 
         cryptoLookup.set(cryptoRecord);
 
-        // Refresh the token balances
-        for (const t of registry.tokenDetails) {
-            this.refreshAccountBalance(t.ledger, get(this.user).userId);
+        window.setTimeout(this.refreshBalancesInSeries, 0);
+    }
+
+    private async refreshBalancesInSeries() {
+        for (const t of Object.values(get(cryptoLookup))) {
+            await this.refreshAccountBalance(t.ledger, get(this.user).userId);
         }
     }
 
