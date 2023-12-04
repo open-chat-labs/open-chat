@@ -239,10 +239,7 @@ type PayForDiamondMembershipArgs = record {
 
 type PayForDiamondMembershipResponse = variant {
     Success : DiamondMembershipDetails;
-    CannotExtend : record {
-        diamond_membership_expires_at : TimestampMillis;
-        can_extend_at : TimestampMillis;
-    };
+    AlreadyLifetimeDiamondMember;
     CurrencyNotSupported;
     PriceMismatch;
     PaymentAlreadyInProgress;
