@@ -13,6 +13,8 @@ export const GHOST_SYMBOL = "GHOST";
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
+export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC"];
+
 export type CryptocurrencyDetails = {
     name: string;
     symbol: string;
@@ -26,6 +28,13 @@ export type CryptocurrencyDetails = {
     supportedStandards: string[];
     added: bigint;
     lastUpdated: bigint;
+};
+
+export type EnhancedTokenDetails = CryptocurrencyDetails & {
+    balance: bigint;
+    dollarBalance: number;
+    zero: boolean;
+    urlFormat: string;
 };
 
 export type NervousSystemSummary = {

@@ -52,7 +52,20 @@
     });
 
     export function saveAccount() {
-        return saveAccountElement?.saveAccount();
+        if (saveAccountElement !== undefined) {
+            saveAccountElement
+                .saveAccount()
+                .then((resp) => {
+                    if (resp.kind === "success") {
+                        dispatch("close");
+                    } else if (resp.kind === "name_taken") {
+                        dispatch("error", { error: "tokenTransfer.accountNameTaken" });
+                    } else {
+                        dispatch("error", { error: "tokenTransfer.failedToSaveAccount" });
+                    }
+                })
+                .finally(() => (busy = false));
+        }
     }
 
     export function scan() {
@@ -92,15 +105,13 @@
                         targetAccount = "";
                     }
                 } else {
-                    dispatch("error", "cryptoAccount.sendFailed");
+                    dispatch("error", { error: "cryptoAccount.sendFailed", values: { symbol } });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
-                dispatch("error", "cryptoAccount.sendFailed");
+                dispatch("error", { error: "cryptoAccount.sendFailed", values: { symbol } });
                 client.logError(`Unable to withdraw ${symbol}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (busy = false));
     }

@@ -512,7 +512,9 @@
             "from": "从",
             "to": "到",
             "type": "类型"
-        }
+        },
+        "swap": "交换",
+        "swapToken": "交换{symbol}"
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -1177,5 +1179,17 @@
     "offlineMessage": "离线",
     "offlineError": "抱歉 - 您目前似乎处于离线状态",
     "renderPreviews": "自动渲染链接预览",
-    "messageBlocked": "由于发件人被阻止，邮件被隐藏"
+    "messageBlocked": "由于发件人被阻止，邮件被隐藏",
+    "tokenSwap": {
+        "title": "交换",
+        "quote": "引用",
+        "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
+        "noQuotes": "没有 DEX 提供交换 {tokenIn} 的报价",
+        "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
+        "quoteError": "获取交换 {tokenIn} 的报价时出错",
+        "findingAvailableTokens": "正在寻找可用的代币进行交换...",
+        "swapFailed": "无法使用 {amountIn} 将 **{tokenIn}** {minAmountOut} 至少交换为 **{tokenOut}** {dex}",
+        "swapSucceeded": "已使用 {amountIn} 成功将 **{tokenIn}** {amountOut} 交换为 **{tokenOut}** {dex}",
+        "swapInfo": "最优惠的报价是来自 {rate} 的 **{dex}**。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会继续进行。您想继续尝试“{swap}”吗？"
+    }
 }

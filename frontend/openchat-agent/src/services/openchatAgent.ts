@@ -109,7 +109,6 @@ import type {
     ThreadPreview,
     ThreadPreviewsResponse,
     ThreadSyncDetails,
-    TokenSwapPool,
     TokenSwapStatusResponse,
     ToggleMuteNotificationResponse,
     UnblockUserResponse,
@@ -183,6 +182,7 @@ import type {
     OptionalChatPermissions,
     CryptocurrencyDetails,
     ApproveTransferResponse,
+    TokenSwapPool,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -2840,39 +2840,78 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    getTokenSwapPools(inputToken: string, outputTokens: string[]): Promise<TokenSwapPool[]> {
-        return this._dexesAgent.getSwapPools(inputToken, new Set(outputTokens));
+    canSwap(tokenLedgers: Set<string>): Promise<Set<string>> {
+        return this._dexesAgent.canSwap(tokenLedgers);
     }
 
-    quoteTokenSwap(
-        inputToken: string,
-        outputToken: string,
+    getTokenSwaps(inputTokenLedger: string, outputTokenLedgers: string[]): Promise<Record<string, DexId[]>> {
+        return this._dexesAgent.getSwapPools(inputTokenLedger, new Set(outputTokenLedgers)).then((pools) => {
+            return pools.reduce(swapReducer, {} as Record<string, DexId[]>)
+        });
+
+        function swapReducer(result: Record<string, DexId[]>, pool: TokenSwapPool): Record<string, DexId[]> {
+            const outputTokenLedger = inputTokenLedger === pool.token0 ? pool.token1 : pool.token0;
+            return { 
+                ...result, 
+                [outputTokenLedger]: [...(result[outputTokenLedger] || []), pool.dex]
+            };
+        }
+    }
+
+    getTokenSwapQuotes(
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
-        return this._dexesAgent.quoteSwap(inputToken, outputToken, amountIn);
+        return this._dexesAgent.quoteSwap(inputTokenLedger, outputTokenLedger, amountIn).then((quotes) => {
+            // Sort the quotes by amount descending so the first quote is the best
+            quotes.sort(compare);
+            return quotes;
+        });
+
+        function compare([_dexA, amountA]: [DexId, bigint], [_dexB, amountB]: [DexId, bigint]): number {
+            if (amountA > amountB) {
+                return -1;
+            }
+            if (amountA < amountB) {
+                return 1;
+            }
+            return 0;
+        }
     }
 
     swapTokens(
         swapId: bigint,
-        inputToken: CryptocurrencyDetails,
-        outputToken: CryptocurrencyDetails,
+        inputTokenDetails: CryptocurrencyDetails,
+        outputTokenDetails: CryptocurrencyDetails,
         amountIn: bigint,
         minAmountOut: bigint,
-        pool: TokenSwapPool,
+        dex: DexId,
     ): Promise<SwapTokensResponse> {
-        const exchangeArgs: ExchangeTokenSwapArgs = {
-            dex: "icpswap",
-            swapCanisterId: pool.canisterId,
-            zeroForOne: pool.token0 === inputToken.ledger,
-        };
-        return this.userClient.swapTokens(
-            swapId,
-            inputToken,
-            outputToken,
-            amountIn,
-            minAmountOut,
-            exchangeArgs,
-        );
+        return this._dexesAgent
+            .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
+            .then((pools) => {
+                const pool = pools.find((p) => p.dex === dex && p.token0 === inputTokenDetails.ledger || p.token0 === outputTokenDetails.ledger);
+
+                if (pool === undefined) {
+                    return Promise.reject("Cannot find a matching pool");
+                }
+                
+                const exchangeArgs: ExchangeTokenSwapArgs = {
+                    dex,
+                    swapCanisterId: pool.canisterId,
+                    zeroForOne: pool.token0 === inputTokenDetails.ledger,
+                };
+
+                return this.userClient.swapTokens(
+                    swapId,
+                    inputTokenDetails,
+                    outputTokenDetails,
+                    amountIn,
+                    minAmountOut,
+                    exchangeArgs,
+                );        
+            });
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {

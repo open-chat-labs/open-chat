@@ -515,7 +515,9 @@
             "from": "Aus",
             "to": "Zu",
             "type": "Typ"
-        }
+        },
+        "swap": "Tauschen",
+        "swapToken": "Tausche {symbol}"
     },
     "searchChat": "Suche",
     "search": "Suche...",
@@ -1178,5 +1180,17 @@
     "offlineMessage": "Offline",
     "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline",
     "renderPreviews": "Linkvorschauen automatisch rendern",
-    "messageBlocked": "Nachricht ausgeblendet, da der Absender blockiert ist"
+    "messageBlocked": "Nachricht ausgeblendet, da der Absender blockiert ist",
+    "tokenSwap": {
+        "title": "Tauschen",
+        "quote": "Zitat",
+        "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
+        "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
+        "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
+        "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
+        "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
+        "swapFailed": "Fehler beim Austauschen von **{amountIn}** {tokenIn} gegen mindestens **{minAmountOut}** {tokenOut} mit {dex} fehlgeschlagen",
+        "swapSucceeded": "**{amountIn}** {tokenIn} erfolgreich gegen **{amountOut}** {tokenOut} mit {dex} ausgetauscht",
+        "swapInfo": "Der beste angegebene Tarif ist **{rate}** ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?"
+    }
 }

@@ -513,7 +513,9 @@
             "from": "От",
             "to": "К",
             "type": "Тип"
-        }
+        },
+        "swap": "Менять",
+        "swapToken": "Обмен {symbol}"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",
@@ -1176,5 +1178,17 @@
     "offlineMessage": "Не в сети",
     "offlineError": "Извините, похоже, вы сейчас не в сети.",
     "renderPreviews": "Автоматический предварительный просмотр ссылок",
-    "messageBlocked": "Сообщение скрыто, поскольку отправитель заблокирован"
+    "messageBlocked": "Сообщение скрыто, поскольку отправитель заблокирован",
+    "tokenSwap": {
+        "title": "Менять",
+        "quote": "Цитировать",
+        "swapNotAvailable": "В настоящее время невозможно обменять {tokenIn} на любой другой токен.",
+        "noQuotes": "Ни одна DEX не предоставила котировку на обмен {tokenIn}",
+        "getTokenSwapsError": "Ошибка при получении свопов для {tokenIn}.",
+        "quoteError": "Ошибка получения котировок для обмена {tokenIn}",
+        "findingAvailableTokens": "поиск доступных токенов для обмена...",
+        "swapFailed": "Не удалось заменить **{amountIn}** {tokenIn} как минимум на **{minAmountOut}** {tokenOut} с помощью {dex}.",
+        "swapSucceeded": "Успешно заменен **{amountIn}** {tokenIn} на **{amountOut}** {tokenOut} с помощью {dex}.",
+        "swapInfo": "Лучшая заявленная цена — **{rate}** от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?"
+    }
 }

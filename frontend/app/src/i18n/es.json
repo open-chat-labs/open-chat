@@ -514,7 +514,9 @@
             "from": "De",
             "to": "A",
             "type": "Tipo"
-        }
+        },
+        "swap": "Intercambio",
+        "swapToken": "Intercambiar {symbol}"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",
@@ -1178,5 +1180,17 @@
     "offlineMessage": "Desconectado",
     "offlineError": "Lo sentimos, parece que estás desconectado en este momento.",
     "renderPreviews": "Vistas previas de enlaces de renderizado automático",
-    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado"
+    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado",
+    "tokenSwap": {
+        "title": "Intercambio",
+        "quote": "Cita",
+        "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
+        "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
+        "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
+        "quoteError": "Error al obtener cotizaciones para intercambiar {tokenIn}",
+        "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
+        "swapFailed": "No se pudo intercambiar **{amountIn}** {tokenIn} por al menos **{minAmountOut}** {tokenOut} usando {dex}",
+        "swapSucceeded": "Se intercambió exitosamente **{amountIn}** {tokenIn} por **{amountOut}** {tokenOut} usando {dex}",
+        "swapInfo": "La mejor tarifa cotizada es **{rate}** de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?"
+    }
 }

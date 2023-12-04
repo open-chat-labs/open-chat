@@ -18,6 +18,18 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 
+    fn get_bot_users(state: &RuntimeState) -> HttpResponse {
+        let bots: Vec<_> = state
+            .data
+            .users
+            .iter()
+            .filter(|u| u.is_bot)
+            .map(|u| u.user_id.to_string())
+            .collect();
+
+        build_json_response(&bots)
+    }
+
     fn get_new_users_per_day(state: &RuntimeState) -> HttpResponse {
         let mut grouped: BTreeMap<String, u32> = BTreeMap::new();
         for user in state.data.users.iter().filter(|u| u.date_created > 0) {
@@ -32,6 +44,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
+        Route::Other(path, _) if path == "bots" => read_state(get_bot_users),
         Route::Other(path, _) if path == "new_users_per_day" => read_state(get_new_users_per_day),
         _ => HttpResponse::not_found(),
     }
