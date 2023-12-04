@@ -6,7 +6,7 @@
     import TokenInput from "./TokenInput.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type {
-        CryptocurrencyDetails,
+        EnhancedTokenDetails,
         Message,
         OpenChat,
         PendingCryptocurrencyTransfer,
@@ -181,7 +181,7 @@
         draftAmount = calculateAmount(centAmount, exchangeRate);
     }
 
-    function hasExchangeRate(token: CryptocurrencyDetails): boolean {
+    function hasExchangeRate(token: EnhancedTokenDetails): boolean {
         return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
     }
 

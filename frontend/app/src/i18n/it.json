@@ -513,7 +513,9 @@
             "from": "Da",
             "to": "A",
             "type": "Tipo"
-        }
+        },
+        "swap": "Scambio",
+        "swapToken": "Scambia {symbol}"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",
@@ -1176,5 +1178,17 @@
     "offlineMessage": "disconnesso",
     "offlineError": "Siamo spiacenti, sembra che tu sia offline al momento",
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
-    "messageBlocked": "Messaggio nascosto perché il mittente è bloccato"
+    "messageBlocked": "Messaggio nascosto perché il mittente è bloccato",
+    "tokenSwap": {
+        "title": "Scambio",
+        "quote": "Citazione",
+        "swapNotAvailable": "Attualmente non è possibile scambiare {tokenIn} con nessun altro token",
+        "noQuotes": "Nessun DEX ha fornito un preventivo per lo scambio di {tokenIn}",
+        "getTokenSwapsError": "Errore durante il recupero degli scambi per {tokenIn}",
+        "quoteError": "Errore durante il recupero delle virgolette da scambiare {tokenIn}",
+        "findingAvailableTokens": "ricerca di token disponibili per lo scambio...",
+        "swapFailed": "Impossibile scambiare **{amountIn}** {tokenIn} con almeno **{minAmountOut}** {tokenOut} utilizzando {dex}",
+        "swapSucceeded": "Scambiato **{amountIn}** {tokenIn} con **{amountOut}** {tokenOut} utilizzando {dex} con successo",
+        "swapInfo": "La migliore tariffa indicata è **{rate}** da {dex}. Questo dà **{amountOut}** {tokenOut} per **{amountIn}** {tokenIn}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 98% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?"
+    }
 }

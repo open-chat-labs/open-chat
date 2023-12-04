@@ -132,7 +132,7 @@ import {
     focusThreadMessageIndex,
     selectedMessageContext,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, enhancedCryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -342,7 +342,6 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
-    TokenSwapPool,
     DexId,
     SwapTokensResponse,
     TokenSwapStatusResponse,
@@ -5155,6 +5154,14 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         cryptoLookup.set(cryptoRecord);
+
+        window.setTimeout(this.refreshBalancesInSeries, 0);
+    }
+
+    private async refreshBalancesInSeries() {
+        for (const t of Object.values(get(cryptoLookup))) {
+            await this.refreshAccountBalance(t.ledger, get(this.user).userId);
+        }
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
@@ -5279,48 +5286,55 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
-        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
-
+    swappableTokens(): Promise<Set<string>> {
         return this.sendRequest({
-            kind: "getTokenSwapPools",
-            inputToken,
-            outputTokens,
+            kind: "canSwap",
+            tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
         });
     }
 
-    quoteTokenSwap(
-        inputToken: string,
-        outputToken: string,
+    getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
+        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter((t) => t !== inputTokenLedger);
+
+        return this.sendRequest({
+            kind: "getTokenSwaps",
+            inputTokenLedger,
+            outputTokenLedgers,
+        });
+    }
+
+    getTokenSwapQuotes(
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
         return this.sendRequest({
-            kind: "quoteTokenSwap",
-            inputToken,
-            outputToken,
+            kind: "getTokenSwapQuotes",
+            inputTokenLedger,
+            outputTokenLedger,
             amountIn,
         });
     }
 
     swapTokens(
         swapId: bigint,
-        inputToken: string,
-        outputToken: string,
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
-        pool: TokenSwapPool,
+        dex: DexId,
     ): Promise<SwapTokensResponse> {
         const lookup = get(cryptoLookup);
 
         return this.sendRequest({
             kind: "swapTokens",
             swapId,
-            inputToken: lookup[inputToken],
-            outputToken: lookup[outputToken],
+            inputTokenDetails: lookup[inputTokenLedger],
+            outputTokenDetails: lookup[outputTokenLedger],
             amountIn,
             minAmountOut,
-            pool,
-        });
+            dex,
+        }, false, 1000 * 60 * 3);
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -5792,6 +5806,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
