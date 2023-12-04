@@ -617,7 +617,6 @@ type SubscriptionExists = {
 
 type RegisterUser = {
     username: string;
-    displayName: string | undefined;
     referralCode: string | undefined;
     kind: "registerUser";
 };

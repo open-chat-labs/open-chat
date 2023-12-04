@@ -9,6 +9,7 @@
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import Diamond from "../../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,7 +33,7 @@
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
                     bubbles: true,
-                })
+                }),
             );
         }
 
@@ -57,8 +58,9 @@
     </span>
     <div class="details">
         <div class="display-name">
-            <h4 class:diamond={user.diamond}>
+            <h4>
                 <FilteredUsername {searchTerm} username={displayName} {me} />
+                <Diamond status={user.diamondStatus} />
             </h4>
             {#if role !== undefined}
                 <span class="role">
@@ -79,7 +81,9 @@
         justify-content: center;
         align-items: center;
         padding: $sp4;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         gap: 12px;
 
         &:not(.me) {
@@ -112,16 +116,18 @@
             flex: 1;
             align-items: center;
             @include ellipsis();
+
+            h4 {
+                display: flex;
+                align-items: center;
+                gap: $sp2;
+            }
         }
 
         .username {
             font-weight: 200;
             color: var(--txt-light);
         }
-    }
-
-    .diamond {
-        @include diamond();
     }
 
     .role {

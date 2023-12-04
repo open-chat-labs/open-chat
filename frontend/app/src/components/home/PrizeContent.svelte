@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "../Button.svelte";
+    import Diamond from "../icons/Diamond.svelte";
     import type { ChatIdentifier, OpenChat, PrizeContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -60,7 +61,7 @@
 
 <div class={`prize ${content.token}`}>
     <div class="top">
-        <div class:diamond={content.diamondOnly} class="countdown" class:rtl={$rtlStore}>
+        <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if allClaimed && !finished}
@@ -69,6 +70,9 @@
                     {timeRemaining}
                 {/if}
             </span>
+            {#if content.diamondOnly}
+                <Diamond y={0} size={"1em"} />
+            {/if}
         </div>
         <div class="prize-coin">
             <SpinningToken {logo} />
@@ -170,10 +174,6 @@
         &.rtl {
             left: unset;
             right: 10px;
-        }
-
-        &.diamond::after {
-            content: "💎";
         }
     }
 

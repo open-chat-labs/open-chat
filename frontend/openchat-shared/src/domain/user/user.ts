@@ -18,7 +18,7 @@ export type UserSummary = DataContent & {
     displayName: string | undefined;
     updated: bigint;
     suspended: boolean;
-    diamond: boolean;
+    diamondStatus: DiamondMembershipStatus["kind"];
 };
 
 export type UserGroupSummary = {
@@ -116,7 +116,7 @@ export function anonymousUser(): CreatedUser {
         isPlatformModerator: false,
         suspensionDetails: undefined,
         isSuspectedBot: false,
-        diamondMembership: undefined,
+        diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
     };
 }
@@ -132,16 +132,24 @@ export type CreatedUser = {
     isPlatformModerator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
-    diamondMembership?: DiamondMembershipDetails;
+    diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
 };
 
+export type DiamondMembershipStatus =
+    | { kind: "inactive" }
+    | { kind: "lifetime" }
+    | ({ kind: "active" } & DiamondMembershipDetails);
+
 export type DiamondMembershipDetails = {
-    recurring?: DiamondMembershipDuration;
+    payInChat: boolean;
+    subscription: DiamondMembershipSubscription;
     expiresAt: bigint;
 };
 
-export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year";
+export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year" | "lifetime";
+
+export type DiamondMembershipSubscription = "one_month" | "three_months" | "one_year" | "disabled";
 
 export type SuspensionDetails = {
     reason: string;
@@ -251,7 +259,7 @@ export type UnsuspendUserResponse =
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }
     | { kind: "currency_not_supported" }
-    | { kind: "success"; details: DiamondMembershipDetails }
+    | { kind: "success"; status: DiamondMembershipStatus }
     | { kind: "price_mismatch" }
     | { kind: "transfer_failed" }
     | { kind: "internal_error" }

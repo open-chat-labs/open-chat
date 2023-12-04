@@ -11,6 +11,7 @@
     import { iconSize } from "../stores/iconSize";
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
+    import Diamond from "./icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -105,11 +106,12 @@
                         size={AvatarSize.Default} />
                 </span>
                 <div class="details">
-                    <h4 class:diamond={user.diamond}>
+                    <h4>
                         <FilteredUsername
                             {searchTerm}
                             me={user.userId === $createdUser.userId}
                             username={user.displayName ?? user.username} />
+                        <Diamond status={user.diamondStatus} />
                     </h4>
                     <div class="username">
                         <FilteredUsername {searchTerm} username={"@" + user.username} />
@@ -172,7 +174,9 @@
         color: var(--txt);
         padding: $sp4;
         margin: 0 0 $sp3 0;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         cursor: pointer;
         gap: 12px;
 
@@ -194,10 +198,6 @@
         display: flex;
         flex-direction: column;
         padding: 0 5px;
-
-        .diamond {
-            @include diamond();
-        }
 
         .username {
             font-weight: 200;

@@ -492,14 +492,6 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     text-overflow: ellipsis;
 }
 
-@mixin diamond() {
-    &::after {
-        content: "💎";
-        margin-inline-start: 5px;
-        @include font-size(fs-80);
-    }
-}
-
 @mixin bullet_list() {
     text-align: left;
     list-style: none;
