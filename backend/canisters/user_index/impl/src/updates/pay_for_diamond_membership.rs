@@ -66,8 +66,8 @@ fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(),
     let diamond_membership = state.data.users.diamond_membership_details_mut(&user_id).unwrap();
     if diamond_membership.payment_in_progress() {
         Err(PaymentAlreadyInProgress)
-    } else if let Err(result) = diamond_membership.can_extend(state.env.now()) {
-        Err(CannotExtend(result))
+    } else if diamond_membership.is_lifetime_diamond_member() {
+        Err(AlreadyLifetimeDiamondMember)
     } else {
         match args.token {
             Cryptocurrency::CHAT => {

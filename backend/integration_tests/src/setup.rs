@@ -38,7 +38,11 @@ pub fn setup_new_env() -> TestEnv {
         ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
 
-    let mut env = PocketIcBuilder::new().with_nns_subnet().with_application_subnet().build();
+    let mut env = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_sns_subnet()
+        .with_application_subnet()
+        .build();
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -56,6 +60,15 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let cycles_minting_canister_id = create_canister_with_id(env, controller, "rkp4c-7iaaa-aaaaa-aaaca-cai");
     let sns_wasm_canister_id = create_canister_with_id(env, controller, "qaa6y-5yaaa-aaaaa-aaafa-cai");
     let nns_index_canister_id = create_canister_with_id(env, controller, "qhbym-qaaaa-aaaaa-aaafq-cai");
+    let chat_ledger_canister_id = install_icrc_ledger(
+        env,
+        controller,
+        "OpenChat".to_string(),
+        "CHAT".to_string(),
+        100000,
+        Some("2ouva-viaaa-aaaaq-aaamq-cai"),
+        Vec::new(),
+    );
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
@@ -364,16 +377,18 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
         icp_ledger: nns_ledger_canister_id,
+        chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
     }
 }
 
-pub fn install_icrc1_ledger(
+pub fn install_icrc_ledger(
     env: &mut PocketIc,
     controller: Principal,
     token_name: String,
     token_symbol: String,
     transfer_fee: u64,
+    canister_id: Option<&str>,
     initial_balances: Vec<(Account, u64)>,
 ) -> CanisterId {
     #[derive(CandidType)]
@@ -413,7 +428,11 @@ pub fn install_icrc1_ledger(
         },
     });
 
-    let canister_id = create_canister(env, controller);
+    let canister_id = if let Some(id) = canister_id {
+        create_canister_with_id(env, controller, id)
+    } else {
+        create_canister(env, controller)
+    };
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id

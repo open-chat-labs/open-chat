@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, TimestampMillis};
+use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,7 +13,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(DiamondMembershipDetails),
-    CannotExtend(CannotExtendResult),
+    AlreadyLifetimeDiamondMember,
     CurrencyNotSupported,
     PriceMismatch,
     PaymentAlreadyInProgress,
@@ -21,10 +21,4 @@ pub enum Response {
     InsufficientFunds(u64), // Returns the account balance in e8s
     TransferFailed(String),
     InternalError(String),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct CannotExtendResult {
-    pub diamond_membership_expires_at: TimestampMillis,
-    pub can_extend_at: TimestampMillis,
 }

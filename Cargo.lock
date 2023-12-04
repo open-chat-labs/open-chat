@@ -2024,6 +2024,7 @@ dependencies = [
  "candid_gen",
  "icrc-ledger-types",
  "serde",
+ "sha256",
  "types",
 ]
 

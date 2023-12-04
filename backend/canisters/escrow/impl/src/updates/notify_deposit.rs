@@ -1,3 +1,4 @@
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -39,7 +40,24 @@ async fn notify_deposit(args: Args) -> Response {
                     offer.token1_received = true;
                 }
                 if offer.token0_received && offer.token1_received {
-                    // TODO queue up transfers
+                    let accepted_by = offer.accepted_by.unwrap().0;
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        user_id: offer.created_by,
+                        timestamp: now,
+                        token_info: offer.token1.clone(),
+                        amount: offer.amount1,
+                        offer_id: offer.id,
+                        reason: PendingPaymentReason::Trade(accepted_by),
+                    });
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        user_id: accepted_by,
+                        timestamp: now,
+                        token_info: offer.token0.clone(),
+                        amount: offer.amount0,
+                        offer_id: offer.id,
+                        reason: PendingPaymentReason::Trade(offer.created_by),
+                    });
+                    crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
                 Success
             }
@@ -58,39 +76,44 @@ struct PrepareResult {
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = state.env.now();
     if let Some(offer) = state.data.offers.get_mut(args.offer_id) {
-        let user_id = args.user_id.unwrap_or_else(|| state.env.caller().into());
-        if offer.created_by == user_id {
-            if offer.token0_received {
-                Err(Success)
+        if offer.cancelled_at.is_some() {
+            Err(OfferCancelled)
+        } else if offer.expires_at < now {
+            Err(OfferExpired)
+        } else {
+            let user_id = args.user_id.unwrap_or_else(|| state.env.caller().into());
+
+            if offer.created_by == user_id {
+                if offer.token0_received {
+                    Err(Success)
+                } else {
+                    Ok(PrepareResult {
+                        user_id,
+                        ledger: offer.token0.ledger,
+                        account: Account {
+                            owner: state.env.canister_id(),
+                            subaccount: Some(deposit_subaccount(user_id, offer.id)),
+                        },
+                        balance_required: offer.amount0 + offer.token0.fee,
+                    })
+                }
+            } else if let Some((accepted_by, _)) = offer.accepted_by {
+                if accepted_by == user_id {
+                    Err(Success)
+                } else {
+                    Err(OfferAlreadyAccepted)
+                }
             } else {
                 Ok(PrepareResult {
                     user_id,
-                    ledger: offer.token0.ledger,
+                    ledger: offer.token1.ledger,
                     account: Account {
                         owner: state.env.canister_id(),
                         subaccount: Some(deposit_subaccount(user_id, offer.id)),
                     },
-                    balance_required: offer.amount0 + offer.token0.fee,
+                    balance_required: offer.amount1 + offer.token1.fee,
                 })
             }
-        } else if let Some((accepted_by, _)) = offer.accepted_by {
-            if accepted_by == user_id {
-                Err(Success)
-            } else {
-                Err(OfferAlreadyAccepted)
-            }
-        } else if offer.expires_at < now {
-            Err(OfferExpired)
-        } else {
-            Ok(PrepareResult {
-                user_id,
-                ledger: offer.token1.ledger,
-                account: Account {
-                    owner: state.env.canister_id(),
-                    subaccount: Some(deposit_subaccount(user_id, offer.id)),
-                },
-                balance_required: offer.amount1 + offer.token1.fee,
-            })
         }
     } else {
         Err(OfferNotFound)
