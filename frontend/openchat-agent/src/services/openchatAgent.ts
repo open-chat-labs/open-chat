@@ -2845,6 +2845,10 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    canSwap(tokenLedgers: Set<string>): Promise<Set<string>> {
+        return this._dexesAgent.canSwap(tokenLedgers);
+    }
+
     getTokenSwaps(inputTokenLedger: string, outputTokenLedgers: string[]): Promise<Record<string, DexId[]>> {
         return this._dexesAgent.getSwapPools(inputTokenLedger, new Set(outputTokenLedgers)).then((pools) => {
             return pools.reduce(swapReducer, {} as Record<string, DexId[]>)

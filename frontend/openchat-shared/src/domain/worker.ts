@@ -298,6 +298,7 @@ export type WorkerRequest =
     | SaveCryptoAccount
     | SubmitProposal
     | TipMessage
+    | CanSwap
     | GetTokenSwaps
     | GetTokenSwapQuotes
     | SwapTokens
@@ -321,6 +322,11 @@ type TipMessage = {
     messageId: bigint;
     transfer: PendingCryptocurrencyTransfer;
     decimals: number;
+};
+
+type CanSwap = {
+    kind: "canSwap";
+    tokenLedgers: Set<string>;
 };
 
 type GetTokenSwaps = {
@@ -1145,6 +1151,7 @@ export type WorkerResponseInner =
     | AccountTransactionResult
     | Record<string, bigint>
     | Record<string, DexId[]>
+    | Set<string>
     | [DexId, bigint][]
     | SwapTokensResponse
     | TokenSwapStatusResponse
@@ -1694,6 +1701,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? void
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
+    : T extends CanSwap
+    ? Set<string>
     : T extends GetTokenSwapQuotes
     ? [DexId, bigint][]
     : T extends SwapTokens

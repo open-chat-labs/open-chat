@@ -69,7 +69,7 @@
 
     function onError(ev: CustomEvent<{ error: string; values?: InterpolationValues } | undefined>) {
         if (ev.detail) {
-            error = $_(ev.detail.error, ev.detail.values);
+            error = $_(ev.detail.error, { values: ev.detail.values });
         } else {
             error = undefined;
         }
@@ -136,7 +136,7 @@
                     bind:swapStep
                     on:close
                     on:error={onError}
-                    ledgerIn={ledger}
+                    bind:ledgerIn={ledger}
                     bind:amountIn={amountToSend} />
             {/if}
             {#if error}

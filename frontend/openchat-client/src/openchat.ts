@@ -5252,6 +5252,13 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    swappableTokens(): Promise<Set<string>> {
+        return this.sendRequest({
+            kind: "canSwap",
+            tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
+        });
+    }
+
     getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
         const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter((t) => t !== inputTokenLedger);
 
@@ -5293,7 +5300,7 @@ export class OpenChat extends OpenChatAgentWorker {
             amountIn,
             minAmountOut,
             dex,
-        });
+        }, false, 1000 * 60 * 3);
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {

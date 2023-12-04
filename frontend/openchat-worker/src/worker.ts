@@ -1361,6 +1361,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "canSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.canSwap(payload.tokenLedgers),
+                );
+                break;
+
             case "getTokenSwaps":
                 executeThenReply(
                     payload,
