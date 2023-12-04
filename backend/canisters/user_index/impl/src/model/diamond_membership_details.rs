@@ -2,9 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
     Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
-    DiamondMembershipStatusFull, DiamondMembershipSubscription, Milliseconds, TimestampMillis,
+    DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
-use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 use utils::time::DAY_IN_MS;
 
 const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
@@ -62,8 +61,6 @@ pub struct DiamondMembershipPayment {
     pub manual_payment: bool,
 }
 
-const THREE_MONTHS: Milliseconds = DiamondMembershipPlanDuration::ThreeMonths.as_millis();
-
 impl DiamondMembershipDetailsInternal {
     pub fn expires_at(&self) -> Option<TimestampMillis> {
         self.expires_at
@@ -114,24 +111,6 @@ impl DiamondMembershipDetailsInternal {
             pay_in_chat: self.pay_in_chat,
             recurring: self.subscription.is_active().then_some(self.subscription),
             subscription: self.subscription,
-        })
-    }
-
-    pub fn can_extend(&self, now: TimestampMillis) -> Result<(), CannotExtendResult> {
-        self.expires_at.map_or(Ok(()), |ts| {
-            let remaining_until_expired = ts.saturating_sub(now);
-
-            // Users can extend when there is < 3 months remaining
-            let remaining_until_can_extend = remaining_until_expired.saturating_sub(THREE_MONTHS);
-
-            if remaining_until_can_extend == 0 {
-                Ok(())
-            } else {
-                Err(CannotExtendResult {
-                    can_extend_at: now.saturating_add(remaining_until_can_extend),
-                    diamond_membership_expires_at: ts,
-                })
-            }
         })
     }
 
