@@ -59,12 +59,17 @@
                     swapStep = "swap";
 
                     const [dexId, quote] = bestQuote!;
-                    const quoteText = client.formatTokens(quote, 0, detailsOut!.decimals);
+                    const amountOutText = client.formatTokens(quote, 0, detailsOut!.decimals);
+                    const amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
+                    const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const swapText = $_("tokenSwap.title");
                     message = $_("tokenSwap.swapInfo", {
                         values: {
-                            amount: quoteText,
+                            amountIn: amountInText,
+                            tokenIn: detailsIn.symbol,
+                            rate,
+                            amountOut: amountOutText,
                             tokenOut: detailsOut!.symbol,
                             dex,
                             swap: swapText,
@@ -92,12 +97,12 @@
 
         const [dex, quote] = bestQuote!;
         const minAmountOut = (quote * BigInt(99)) / BigInt(100);
-        const tokenInAmountText = client.formatTokens(amountIn, 0, detailsIn.decimals);
+        const amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
         const minAmountOutText = client.formatTokens(minAmountOut, 0, detailsOut!.decimals);
         const values = {
             tokenIn: detailsIn.symbol,
             tokenOut: detailsOut!.symbol,
-            amountIn: tokenInAmountText,
+            amountIn: amountInText,
             minAmountOut: minAmountOutText,
             dex: dexName(dex),
         };

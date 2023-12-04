@@ -1191,6 +1191,6 @@
         "swapFailed": "无法使用 {amountIn} 将 **{tokenIn}** {minAmountOut} 至少交换为 **{tokenOut}** {dex}",
         "swapSucceeded": "已使用 {amountIn} 成功将 **{tokenIn}** {amountOut} 交换为 **{tokenOut}** {dex}",
         "quoteInfo": "当您按下“{quote}”按钮时，将代表您查询以下去中心化交易所（DEX）以获取交换代币的报价：",
-        "swapInfo": "最佳引用是来自 {amount} 的 **{tokenOut}** {dex}。仅当收到的 {tokenOut} 金额至少为报价金额的 99% 时，交换才会继续进行。您想继续尝试“{swap}”吗？"
+        "swapInfo": "最优惠的报价是来自 {rate} 的 **{dex}**。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 99% 时，交换才会继续进行。您想继续尝试“{swap}”吗？"
     }
 }

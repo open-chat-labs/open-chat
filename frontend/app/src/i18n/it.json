@@ -1190,6 +1190,6 @@
         "swapFailed": "Impossibile scambiare **{amountIn}** {tokenIn} con almeno **{minAmountOut}** {tokenOut} utilizzando {dex}",
         "swapSucceeded": "Scambiato **{amountIn}** {tokenIn} con **{amountOut}** {tokenOut} utilizzando {dex} con successo",
         "quoteInfo": "Quando premi il pulsante \"{quote}\" i seguenti scambi decentralizzati (DEX) verranno interrogati per tuo conto per un preventivo per lo scambio dei tuoi token:",
-        "swapInfo": "La citazione migliore è **{amount}** {tokenOut} da {dex}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 99% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?"
+        "swapInfo": "La migliore tariffa indicata è **{rate}** da {dex}. Questo dà **{amountOut}** {tokenOut} per **{amountIn}** {tokenIn}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 99% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?"
     }
 }
