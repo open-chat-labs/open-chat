@@ -8,7 +8,10 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{icrc1, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction, PrizeContentInitial};
+use types::{
+    icrc1, ChatEvent, CryptoTransaction, Cryptocurrency, EventIndex, MessageContent, MessageContentInitial,
+    PendingCryptoTransaction, PrizeContentInitial,
+};
 use utils::time::{HOUR_IN_MS, MINUTE_IN_MS};
 
 #[test]
@@ -42,7 +45,7 @@ fn prize_messages_can_be_claimed_successfully() {
     let fee = token.fee().unwrap();
     let message_id = random_message_id();
 
-    client::user::send_message_with_transfer_to_group(
+    let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
         user1.user_id.into(),
@@ -74,13 +77,35 @@ fn prize_messages_can_be_claimed_successfully() {
         },
     );
 
-    client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
-    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
-    assert_eq!(user2_balance, 200000);
+    if let user_canister::send_message_with_transfer_to_group::Response::Success(result) = send_message_response {
+        client::group::happy_path::claim_prize(env, user2.principal, group_id, message_id);
+        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        assert_eq!(user2_balance, 200000);
 
-    client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
-    let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id.into());
-    assert_eq!(user3_balance, 100000);
+        client::group::happy_path::claim_prize(env, user3.principal, group_id, message_id);
+        let user3_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user3.user_id.into());
+        assert_eq!(user3_balance, 100000);
+
+        let events = client::group::happy_path::thread_events(
+            env,
+            &user1,
+            group_id,
+            result.message_index,
+            EventIndex::default(),
+            true,
+            10,
+            10,
+        );
+
+        let prize_claimed_events = events
+            .events
+            .into_iter()
+            .filter_map(|e| if let ChatEvent::Message(m) = e.event { Some(m) } else { None })
+            .filter(|m| matches!(m.content, MessageContent::PrizeWinner(_)))
+            .count();
+
+        assert_eq!(prize_claimed_events, 2);
+    }
 }
 
 #[test_case(false)]

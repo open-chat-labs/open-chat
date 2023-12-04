@@ -117,7 +117,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .events
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
-        chat_events::ClaimPrizeResult::Success(message_event) => {
+        chat_events::ClaimPrizeResult::Success(thread_root_message_index, message_event) => {
             // Send a notification to group participants
             let notification_recipients = channel
                 .chat
@@ -131,7 +131,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
             let notification = Notification::ChannelMessage(ChannelMessageNotification {
                 community_id: state.env.canister_id().into(),
                 channel_id: args.channel_id,
-                thread_root_message_index: None,
+                thread_root_message_index: Some(thread_root_message_index),
                 message_index: message_event.event.message_index,
                 event_index: message_event.index,
                 community_name: state.data.name.clone(),
