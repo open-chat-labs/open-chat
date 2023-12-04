@@ -14,6 +14,7 @@ import type {
     ChatListScope,
     AttachmentContent,
     ExpiredEventsRange,
+    MessageContext,
 } from "openchat-shared";
 import {
     compareChats,
@@ -23,6 +24,7 @@ import {
     nullMembership,
     chatIdentifiersEqual,
     isAttachmentContent,
+    messageContextsEqual,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -63,10 +65,18 @@ import { translationStore } from "./translation";
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
 
-export const selectedChatId = safeWritable<ChatIdentifier | undefined>(
+export const selectedMessageContext = safeWritable<MessageContext | undefined>(
     undefined,
-    chatIdentifiersEqual,
+    messageContextsEqual,
 );
+
+export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
+    return $messageContext?.threadRootMessageIndex;
+});
+
+export const selectedChatId = derived(selectedMessageContext, ($messageContext) => {
+    return $messageContext?.chatId;
+});
 
 export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
     selectedChatId,
@@ -313,22 +323,6 @@ export const userMetrics = derived([allServerChats], ([$chats]) => {
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
-export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
-export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
-    return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
-});
-export const selectedMessageContext = derived(
-    [selectedChatId, selectedThreadRootMessageIndex],
-    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
-        if ($selectedChatId !== undefined) {
-            return {
-                chatId: $selectedChatId,
-                threadRootMessageIndex: $selectedThreadRootMessageIndex,
-            };
-        }
-        return undefined;
-    },
-);
 export const chatsLoading = writable(true);
 export const chatsInitialised = writable(false);
 
@@ -585,11 +579,11 @@ export function setSelectedChat(
 
 export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     filteredProposalsStore.set(undefined);
-    selectedChatId.update((chatId) => {
-        if (chatId !== undefined) {
-            chatStateStore.clear(chatId);
+    selectedMessageContext.update((context) => {
+        if (context !== undefined) {
+            chatStateStore.clear(context.chatId);
         }
-        return newSelectedChatId;
+        return newSelectedChatId ? { chatId: newSelectedChatId } : undefined;
     });
 }
 
