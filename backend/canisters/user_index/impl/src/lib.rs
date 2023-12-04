@@ -288,7 +288,6 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
-            None,
             0,
             None,
             true,

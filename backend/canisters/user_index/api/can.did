@@ -24,6 +24,7 @@ type SetDisplayNameArgs = record {
 
 type SetDisplayNameResponse = variant {
     Success;
+    Unauthorized;
     UserNotFound;
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;

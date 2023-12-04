@@ -22,7 +22,6 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.proposals_bot_canister_id,
         args.username,
-        args.display_name,
         args.test_mode,
         env.now(),
     );
