@@ -36,7 +36,7 @@
     $: cryptoBalance = client.cryptoBalance;
     $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).map((ns) => ns.ledgerCanisterId));
+    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).filter((ns) => !ns.isNns).map((ns) => ns.ledgerCanisterId));
 
     $: {
         zeroCount = accounts.filter((a) => a.zero).length;
