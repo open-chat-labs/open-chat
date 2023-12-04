@@ -78,6 +78,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
     let registry_canister_id = create_canister(env, controller);
+    let escrow_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -86,6 +87,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
+    let escrow_canister_wasm = wasms::ESCROW.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
@@ -263,6 +265,13 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_init_args,
     );
 
+    let escrow_init_args = escrow_canister::init::Args {
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
+
     client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
         env,
@@ -376,6 +385,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
+        escrow: escrow_canister_id,
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,

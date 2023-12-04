@@ -1,13 +1,13 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
 use escrow_canister::notify_deposit::{Response::*, *};
 use icrc_ledger_types::icrc1::account::Account;
 use types::{CanisterId, UserId};
 
-#[update_msgpack]
+#[update_candid_and_msgpack]
 #[trace]
 async fn notify_deposit(args: Args) -> Response {
     let PrepareResult {
