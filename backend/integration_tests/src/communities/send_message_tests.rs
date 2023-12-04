@@ -124,7 +124,7 @@ fn send_prize_in_channel() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+    let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
     let fee = 10000;
     let prizes = vec![Tokens::from_e8s(100000)];
     let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
@@ -168,7 +168,7 @@ fn send_prize_in_channel() {
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
         let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
-        assert_eq!(user1_balance_after_sending_prize, inital_user1_balance - total - fee);
+        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - total - fee);
 
         let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
         assert_eq!(community_balance_after_sending_prize, total);
@@ -177,7 +177,7 @@ fn send_prize_in_channel() {
         tick_many(env, 5);
 
         let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
-        assert_eq!(user1_balance_after_refund, inital_user1_balance - 2 * fee);
+        assert_eq!(user1_balance_after_refund, initial_user1_balance - 2 * fee);
 
         let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
         assert_eq!(community_balance_after_refund, 0);
