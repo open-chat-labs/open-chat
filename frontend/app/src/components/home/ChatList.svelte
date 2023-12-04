@@ -37,6 +37,7 @@
     import FilteredUsername from "../FilteredUsername.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import Diamond from "../icons/Diamond.svelte";
+    import CommunityChannels from "./communities/details/CommunityChannels.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -358,6 +359,7 @@
                     <div class="disc hash">#</div>
                     <div class="label">{$_("communities.browseChannels")}</div>
                 </div>
+                <CommunityChannels on:newChannel />
             {/if}
         {/if}
     </div>
