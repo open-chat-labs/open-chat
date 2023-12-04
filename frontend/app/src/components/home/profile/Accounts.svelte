@@ -33,9 +33,7 @@
 
     $: accounts = client.enhancedCryptoLookup;
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: snsLedgers = new Set<string>(
-        Object.values($nervousSystemLookup).map((ns) => ns.ledgerCanisterId),
-    );
+    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).filter((ns) => !ns.isNns).map((ns) => ns.ledgerCanisterId));
 
     $: {
         zeroCount = Object.values($accounts).filter((a) => a.zero).length;

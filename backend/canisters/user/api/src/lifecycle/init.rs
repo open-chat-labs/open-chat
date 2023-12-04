@@ -12,7 +12,6 @@ pub struct Args {
     pub proposals_bot_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
-    pub display_name: Option<String>,
     pub openchat_bot_messages: Vec<MessageContent>,
     pub test_mode: bool,
 }

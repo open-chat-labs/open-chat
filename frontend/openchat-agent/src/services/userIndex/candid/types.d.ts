@@ -375,6 +375,7 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
@@ -409,7 +410,9 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export interface DiamondMembershipDetails {
-  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'pay_in_chat' : boolean,
+  'subscription' : DiamondMembershipSubscription,
+  'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
 }
 export type DiamondMembershipFeesResponse = {
@@ -426,6 +429,16 @@ export type DiamondMembershipFeesResponse = {
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
+export type DiamondMembershipStatus = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
+export type DiamondMembershipSubscription = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'Disabled' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
@@ -1091,14 +1104,6 @@ export interface OptionalMessagePermissions {
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
-export interface PartialUserSummary {
-  'username' : [] | [string],
-  'diamond_member' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'avatar_id' : [] | [bigint],
-  'suspended' : boolean,
-}
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1478,6 +1483,15 @@ export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface UpdateDiamondMembershipSubscriptionArgs {
+  'pay_in_chat' : [] | [boolean],
+  'subscription' : [] | [DiamondMembershipSubscription],
+}
+export type UpdateDiamondMembershipSubscriptionResponse = {
+    'NotDiamondMember' : null
+  } |
+  { 'Success' : null } |
+  { 'AlreadyLifetimeDiamondMember' : null };
 export interface UpdatedRules {
   'new_version' : boolean,
   'text' : string,
@@ -1501,16 +1515,12 @@ export type UserResponse = { 'Success' : UserSummary } |
 export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatus,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'suspended' : boolean,
-}
-export interface UsersArgs {
-  'user_groups' : Array<
-    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
-  >,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -1520,12 +1530,6 @@ export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
-export type UsersResponse = {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'users' : Array<PartialUserSummary>,
-    }
-  };
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1633,11 +1637,14 @@ export interface _SERVICE {
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
+  'update_diamond_membership_subscription' : ActorMethod<
+    [UpdateDiamondMembershipSubscriptionArgs],
+    UpdateDiamondMembershipSubscriptionResponse
+  >,
   'user' : ActorMethod<[UserArgs], UserResponse>,
   'user_registration_canister' : ActorMethod<
     [EmptyArgs],
     UserRegistrationCanisterResponse
   >,
-  'users' : ActorMethod<[UsersArgs], UsersResponse>,
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }

@@ -8,3 +8,7 @@ export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
 
 // downlink is the effective bandwidth estimate in megabits per second, rounded to the nearest multiple of 25 kilobits per seconds.
 export const MIN_DOWNLINK = 0.05;
+export const ONE_MINUTE_MILLIS = 60 * 1000;
+export const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
+export const ONE_DAY = 24 * ONE_HOUR;
+export const ONE_YEAR = 365 * ONE_DAY;

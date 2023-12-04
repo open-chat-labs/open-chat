@@ -31,15 +31,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
     let caller: CanisterId = state.env.caller();
 
     match event {
-        Event::UserRegistered(ev) => process_new_user(
-            ev.principal,
-            ev.username,
-            ev.display_name,
-            ev.user_id,
-            ev.referred_by,
-            caller,
-            state,
-        ),
+        Event::UserRegistered(ev) => process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state),
         Event::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
@@ -89,7 +81,6 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
 fn process_new_user(
     caller: Principal,
     username: String,
-    display_name: Option<String>,
     user_id: UserId,
     referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
@@ -106,15 +97,10 @@ fn process_new_user(
         }
     };
 
-    state.data.users.register(
-        caller,
-        user_id,
-        username.clone(),
-        display_name.clone(),
-        now,
-        referred_by,
-        false,
-    );
+    state
+        .data
+        .users
+        .register(caller, user_id, username.clone(), now, referred_by, false);
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 

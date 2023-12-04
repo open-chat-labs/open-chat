@@ -80,12 +80,12 @@ impl RuntimeState {
 
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.group_chats.get(&caller.into()).is_some()
+        self.data.group_chats.exists(&caller.into())
     }
 
     pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.communities.get(&caller.into()).is_some()
+        self.data.communities.exists(&caller.into())
     }
 
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
@@ -192,7 +192,6 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         username: String,
-        display_name: Option<String>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
@@ -213,7 +212,7 @@ impl Data {
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
             username: Timestamped::new(username, now),
-            display_name: Timestamped::new(display_name, now),
+            display_name: Timestamped::default(),
             bio: Timestamped::new("".to_string(), now),
             cached_group_summaries: None,
             storage_limit: 0,

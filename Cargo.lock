@@ -1022,6 +1022,7 @@ dependencies = [
  "canister_agent_utils",
  "clap",
  "cycles_dispenser_canister",
+ "escrow_canister",
  "futures",
  "group_index_canister",
  "group_index_canister_client",
@@ -1101,6 +1102,7 @@ dependencies = [
  "canister_agent_utils",
  "clap",
  "cycles_dispenser_canister",
+ "escrow_canister",
  "group_index_canister",
  "group_index_canister_client",
  "ic-agent",
@@ -2012,6 +2014,46 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "escrow_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "icrc-ledger-types",
+ "serde",
+ "sha256",
+ "types",
+]
+
+[[package]]
+name = "escrow_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "escrow_canister",
+ "http_request",
+ "ic-cdk 0.11.3",
+ "ic-cdk-macros 0.7.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "icrc-ledger-types",
+ "icrc_ledger_canister_c2c_client",
+ "msgpack",
+ "rand",
+ "serde",
+ "serde_bytes",
+ "serializer",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils",
 ]
 
 [[package]]
@@ -5026,6 +5068,7 @@ dependencies = [
  "canister_state_macros",
  "canister_timer_jobs",
  "canister_tracing_macros",
+ "chat_events",
  "community_canister",
  "community_canister_c2c_client",
  "fire_and_forget_handler",
@@ -6988,6 +7031,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "chat_events",
  "ic-ledger-types",
  "icrc-ledger-types",
  "proposals_bot_canister",

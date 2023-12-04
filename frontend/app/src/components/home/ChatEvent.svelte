@@ -82,7 +82,7 @@
             displayName: user.displayName,
             updated: BigInt(0),
             suspended: false,
-            diamond: false,
+            diamondStatus: "inactive",
         };
     }
 
@@ -94,7 +94,7 @@
         client.deleteFailedMessage(
             chatId,
             event as EventWrapper<Message>,
-            threadRootMessage?.messageIndex
+            threadRootMessage?.messageIndex,
         );
     }
 
@@ -108,7 +108,7 @@
                 page(
                     `${routeForChatIdentifier($chatListScope.kind, chatId)}/${
                         event.event.messageIndex
-                    }`
+                    }`,
                 );
             } else {
                 client.openThread(event as EventWrapper<Message>, true);
@@ -272,7 +272,11 @@
         event={event.event}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "events_ttl_updated"}
-    <DisappearingMessageTimeUpdated user={userSummary} changedBy={event.event.updatedBy} newTimeToLive={event.event.newTimeToLive} timestamp={event.timestamp} />
+    <DisappearingMessageTimeUpdated
+        user={userSummary}
+        changedBy={event.event.updatedBy}
+        newTimeToLive={event.event.newTimeToLive}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_frozen"}
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}

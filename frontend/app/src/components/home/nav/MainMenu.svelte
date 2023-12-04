@@ -37,7 +37,7 @@
             <span slot="text">{$_("profile.title")}</span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("upgrade")}>
-            <span class="diamond-icon" slot="icon">💎</span>
+            <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
                 >{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
         </MenuItem>
@@ -92,3 +92,16 @@
         </MenuItem>
     {/if}
 </Menu>
+
+<style lang="scss">
+    .diamond-icon {
+        background-image: url("/assets/diamond.svg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: 0 1px;
+        margin-inline-start: 3px;
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+    }
+</style>

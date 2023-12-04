@@ -32,6 +32,7 @@ CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispens
 REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
+ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml -- \
@@ -47,5 +48,6 @@ cargo run \
   --registry $REGISTRY_CANISTER_ID \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
+  --escrow $ESCROW_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

@@ -6,7 +6,6 @@ import type {
     ChatSummary,
     CommunitySummary,
     CommunityMap,
-    DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
@@ -19,6 +18,7 @@ import type {
     Member,
     VersionedRules,
     CreatedUser,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -54,7 +54,7 @@ import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
-import { diamondMembership, isDiamond } from "./stores/diamond";
+import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import {
     communities,
@@ -103,8 +103,9 @@ export class LiveState {
     chatsInitialised!: boolean;
     chatsLoading!: boolean;
     blockedUsers!: Set<string>;
-    diamondMembership!: DiamondMembershipDetails | undefined;
+    diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
+    isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
@@ -162,8 +163,9 @@ export class LiveState {
         chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
         chatsLoading.subscribe((data) => (this.chatsLoading = data));
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
-        diamondMembership.subscribe((data) => (this.diamondMembership = data));
+        diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
+        isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));

@@ -2126,17 +2126,12 @@ export class OpenChatAgent extends EventTarget {
 
     async registerUser(
         username: string,
-        displayName: string | undefined,
         referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        return this.createLocalUserIndexClient(localUserIndex).registerUser(
-            username,
-            displayName,
-            referralCode,
-        );
+        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {

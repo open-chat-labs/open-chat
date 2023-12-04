@@ -6,6 +6,7 @@
         ChatSummary,
         CommunityIdentifier,
         CommunitySummary,
+        DiamondMembershipStatus,
         DirectChatSummary,
         GlobalState,
         MultiUserChat,
@@ -27,6 +28,7 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Search from "./Search.svelte";
     import { compareBigints } from "../utils/bigints";
+    import Diamond from "./icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -42,6 +44,7 @@
         id: ChatIdentifier;
         userId: string | undefined;
         name: string;
+        diamondStatus: DiamondMembershipStatus["kind"];
         avatarUrl: string;
         description: string;
         username: string | undefined;
@@ -72,7 +75,7 @@
 
     $: {
         buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
-            (t) => (targets = t)
+            (t) => (targets = t),
         );
     }
     $: noTargets = getNumberOfTargets(targets) === 0;
@@ -88,10 +91,10 @@
     async function targetsFromChatList(
         now: number,
         chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined
+        selectedChatId: ChatIdentifier | undefined,
     ): Promise<ShareChat[]> {
         return Promise.all(
-            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c))
+            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c)),
         );
     }
 
@@ -101,7 +104,7 @@
                 (c) =>
                     searchTerm === "" ||
                     c.name.toLowerCase().includes(searchTerm) ||
-                    c.username?.toLowerCase()?.includes(searchTerm)
+                    c.username?.toLowerCase()?.includes(searchTerm),
             )
             .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
     }
@@ -125,7 +128,7 @@
         global: GlobalState,
         now: number,
         selectedChatId: ChatIdentifier | undefined,
-        searchTerm: string
+        searchTerm: string,
     ): Promise<ShareTo> {
         let targets: ShareTo = {
             directChats: [],
@@ -143,7 +146,7 @@
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c))
+                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c)),
             );
             return {
                 directChats: chatMatchesSearch(directChats, searchTerm),
@@ -158,10 +161,10 @@
     async function normaliseCommunity(
         now: number,
         selectedChatId: ChatIdentifier | undefined,
-        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary
+        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary,
     ): Promise<ShareCommunity> {
         const normalisedChannels = await Promise.all(
-            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c))
+            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c)),
         );
         return {
             kind: "community",
@@ -183,7 +186,8 @@
                     kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                     username: "@" + them.username,
@@ -196,6 +200,7 @@
                     id: chatSummary.id,
                     userId: undefined,
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
@@ -206,7 +211,7 @@
 
     async function buildDirectChatDescription(
         chat: DirectChatSummary,
-        now: number
+        now: number,
     ): Promise<string> {
         return client.getLastOnlineDate(chat.them.userId, now).then((lastOnline) => {
             if (lastOnline !== undefined && lastOnline !== 0) {
@@ -231,12 +236,12 @@
 
     function filterChatSelection(
         chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined
+        selectedChatId: ChatIdentifier | undefined,
     ): ChatSummary[] {
         return chats.filter(
             (c) =>
                 !chatIdentifiersEqual(selectedChatId, c.id) &&
-                client.canSendMessage(c.id, "message", "text")
+                client.canSendMessage(c.id, "message", "text"),
         );
     }
 
@@ -300,6 +305,7 @@
                                     <span class="display-name">
                                         {target.name}
                                     </span>
+                                    <Diamond status={target.diamondStatus} />
                                     {#if target.username !== undefined}
                                         <span class="username">{target.username}</span>
                                     {/if}
@@ -500,6 +506,7 @@
             @include font(book, normal, fs-100);
 
             display: flex;
+            align-items: center;
             gap: $sp2;
 
             .username {

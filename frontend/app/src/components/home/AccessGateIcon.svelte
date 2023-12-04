@@ -11,6 +11,7 @@
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
+    import Diamond from "../icons/Diamond.svelte";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -25,7 +26,7 @@
 
     function formatParams(
         gate: AccessGate,
-        tokenDetails: CryptocurrencyDetails | undefined
+        tokenDetails: CryptocurrencyDetails | undefined,
     ): string {
         const parts = [];
         if (isNeuronGate(gate)) {
@@ -33,7 +34,7 @@
                 parts.push(
                     `${$_("access.minDissolveDelayN", {
                         values: { n: gate.minDissolveDelay / (24 * 60 * 60 * 1000) },
-                    })}`
+                    })}`,
                 );
             }
             if (gate.minStakeE8s) {
@@ -43,17 +44,17 @@
                             n: client.formatTokens(
                                 BigInt(gate.minStakeE8s),
                                 0,
-                                tokenDetails?.decimals ?? 8
+                                tokenDetails?.decimals ?? 8,
                             ),
                         },
-                    })}`
+                    })}`,
                 );
             }
         } else if (isPaymentGate(gate)) {
             parts.push(
                 `${$_("access.amountN", {
                     values: { n: client.formatTokens(gate.amount, 0, tokenDetails?.decimals ?? 8) },
-                })}`
+                })}`,
             );
         }
         return parts.length > 0 ? ` (${parts.join(", ")})` : "";
@@ -63,7 +64,9 @@
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "diamond_gate"}
         <TooltipWrapper {position} {align}>
-            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">💎</div>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">
+                <Diamond />
+            </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     {$_("access.diamondGateInfo")}

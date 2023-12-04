@@ -25,6 +25,9 @@ import {
     ReferralLeaderboardResponse,
     ReferralStats,
     SetModerationFlagsResponse,
+    DiamondMembershipStatus,
+    DiamondMembershipStatusFull,
+    DiamondMembershipSubscription
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -52,6 +55,9 @@ export {
     ReferralLeaderboardResponse as ApiReferralLeaderboardResponse,
     ReferralStats as ApiReferralStats,
     SetModerationFlagsResponse as ApiSetModerationFlagsResponse,
+    DiamondMembershipStatus as ApiDiamondMembershipStatus,
+    DiamondMembershipStatusFull as ApiDiamondMembershipStatusFull,
+    DiamondMembershipSubscription as ApiDiamondMembershipSubscription
 };
 
 export const idlFactory: IDL.InterfaceFactory;

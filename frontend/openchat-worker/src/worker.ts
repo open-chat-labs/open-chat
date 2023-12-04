@@ -569,7 +569,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.registerUser(payload.username, payload.displayName, payload.referralCode),
+                    agent.registerUser(payload.username, payload.referralCode),
                 );
                 break;
 

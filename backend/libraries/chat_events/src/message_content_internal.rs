@@ -50,6 +50,18 @@ pub enum MessageContentInternal {
 }
 
 impl MessageContentInternal {
+    pub fn new_with_transfer(content: MessageContentInitial, transfer: CompletedCryptoTransaction) -> MessageContentInternal {
+        match content {
+            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(CryptoContentInternal {
+                recipient: c.recipient,
+                transfer,
+                caption: c.caption,
+            }),
+            MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
+            _ => unreachable!("Message must include a crypto transfer"),
+        }
+    }
+
     pub fn hydrate(&self, my_user_id: Option<UserId>) -> MessageContent {
         match self {
             MessageContentInternal::Text(t) => MessageContent::Text(t.hydrate(my_user_id)),
@@ -137,23 +149,28 @@ impl MessageContentInternal {
     }
 }
 
-impl From<MessageContentInitial> for MessageContentInternal {
-    fn from(value: MessageContentInitial) -> Self {
+impl TryFrom<MessageContentInitial> for MessageContentInternal {
+    type Error = ();
+
+    fn try_from(value: MessageContentInitial) -> Result<Self, ()> {
         match value {
-            MessageContentInitial::Text(t) => MessageContentInternal::Text(t.into()),
-            MessageContentInitial::Image(i) => MessageContentInternal::Image(i.into()),
-            MessageContentInitial::Video(v) => MessageContentInternal::Video(v.into()),
-            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a.into()),
-            MessageContentInitial::File(f) => MessageContentInternal::File(f.into()),
-            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(p.into()),
-            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c.into()),
-            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d.into()),
-            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g.into()),
-            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(p.into()),
-            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(p.into()),
-            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r.into()),
-            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r.into()),
-            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
+            MessageContentInitial::Text(t) => Ok(MessageContentInternal::Text(t.into())),
+            MessageContentInitial::Image(i) => Ok(MessageContentInternal::Image(i.into())),
+            MessageContentInitial::Video(v) => Ok(MessageContentInternal::Video(v.into())),
+            MessageContentInitial::Audio(a) => Ok(MessageContentInternal::Audio(a.into())),
+            MessageContentInitial::File(f) => Ok(MessageContentInternal::File(f.into())),
+            MessageContentInitial::Poll(p) => Ok(MessageContentInternal::Poll(p.into())),
+            MessageContentInitial::Deleted(d) => Ok(MessageContentInternal::Deleted(d.into())),
+            MessageContentInitial::Giphy(g) => Ok(MessageContentInternal::Giphy(g.into())),
+            MessageContentInitial::GovernanceProposal(p) => Ok(MessageContentInternal::GovernanceProposal(p.into())),
+            MessageContentInitial::MessageReminderCreated(r) => Ok(MessageContentInternal::MessageReminderCreated(r.into())),
+            MessageContentInitial::MessageReminder(r) => Ok(MessageContentInternal::MessageReminder(r.into())),
+            MessageContentInitial::Custom(c) => Ok(MessageContentInternal::Custom(c.into())),
+            MessageContentInitial::Crypto(c) => Ok(MessageContentInternal::Crypto(c.into())),
+            MessageContentInitial::Prize(_) => {
+                // These should be created via `new_with_transfer`
+                Err(())
+            }
         }
     }
 }
@@ -223,9 +240,8 @@ impl From<&MessageContentInternal> for Document {
     }
 }
 
-pub(crate) trait MessageContentInternalSubtype: From<Self::ContentTypeInitial> {
+pub(crate) trait MessageContentInternalSubtype {
     type ContentType;
-    type ContentTypeInitial;
 
     fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType;
 }
@@ -244,7 +260,6 @@ impl From<TextContent> for TextContentInternal {
 
 impl MessageContentInternalSubtype for TextContentInternal {
     type ContentType = TextContent;
-    type ContentTypeInitial = TextContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         TextContent { text: self.text.clone() }
@@ -282,7 +297,6 @@ impl From<ImageContent> for ImageContentInternal {
 
 impl MessageContentInternalSubtype for ImageContentInternal {
     type ContentType = ImageContent;
-    type ContentTypeInitial = ImageContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         ImageContent {
@@ -340,7 +354,6 @@ impl From<VideoContent> for VideoContentInternal {
 
 impl MessageContentInternalSubtype for VideoContentInternal {
     type ContentType = VideoContent;
-    type ContentTypeInitial = VideoContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         VideoContent {
@@ -377,7 +390,6 @@ impl From<AudioContent> for AudioContentInternal {
 
 impl MessageContentInternalSubtype for AudioContentInternal {
     type ContentType = AudioContent;
-    type ContentTypeInitial = AudioContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         AudioContent {
@@ -416,7 +428,6 @@ impl From<FileContent> for FileContentInternal {
 
 impl MessageContentInternalSubtype for FileContentInternal {
     type ContentType = FileContent;
-    type ContentTypeInitial = FileContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         FileContent {
@@ -451,7 +462,6 @@ impl From<PollContent> for PollContentInternal {
 
 impl MessageContentInternalSubtype for PollContentInternal {
     type ContentType = PollContent;
-    type ContentTypeInitial = PollContent;
 
     fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
         let user_votes = if let Some(user_id) = my_user_id {
@@ -557,7 +567,6 @@ impl From<CryptoContent> for CryptoContentInternal {
 
 impl MessageContentInternalSubtype for CryptoContentInternal {
     type ContentType = CryptoContent;
-    type ContentTypeInitial = CryptoContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         CryptoContent {
@@ -627,7 +636,6 @@ impl From<&GiphyImageVariantInternal> for GiphyImageVariant {
 
 impl MessageContentInternalSubtype for GiphyContentInternal {
     type ContentType = GiphyContent;
-    type ContentTypeInitial = GiphyContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         GiphyContent {
@@ -661,7 +669,6 @@ impl From<ProposalContent> for ProposalContentInternal {
 
 impl MessageContentInternalSubtype for ProposalContentInternal {
     type ContentType = ProposalContent;
-    type ContentTypeInitial = ProposalContent;
 
     fn hydrate(&self, my_user_id: Option<UserId>) -> Self::ContentType {
         ProposalContent {
@@ -691,6 +698,18 @@ pub struct PrizeContentInternal {
 }
 
 impl PrizeContentInternal {
+    pub fn new(content: PrizeContentInitial, transaction: CompletedCryptoTransaction) -> PrizeContentInternal {
+        PrizeContentInternal {
+            prizes_remaining: content.prizes,
+            reservations: HashSet::new(),
+            winners: HashSet::new(),
+            transaction,
+            end_date: content.end_date,
+            caption: content.caption,
+            diamond_only: content.diamond_only,
+        }
+    }
+
     pub fn prize_refund(&self, sender: UserId, memo: &[u8], now_nanos: TimestampNanos) -> Option<PendingCryptoTransaction> {
         let fee = self.transaction.fee();
         let unclaimed = self.prizes_remaining.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
@@ -710,27 +729,8 @@ impl PrizeContentInternal {
     }
 }
 
-impl From<PrizeContentInitial> for PrizeContentInternal {
-    fn from(value: PrizeContentInitial) -> Self {
-        if let CryptoTransaction::Completed(transaction) = value.transfer {
-            PrizeContentInternal {
-                prizes_remaining: value.prizes,
-                reservations: HashSet::new(),
-                winners: HashSet::new(),
-                transaction,
-                end_date: value.end_date,
-                caption: value.caption,
-                diamond_only: value.diamond_only,
-            }
-        } else {
-            panic!("Unable to convert PrizeContentInitial to PrizeContentInternal");
-        }
-    }
-}
-
 impl MessageContentInternalSubtype for PrizeContentInternal {
     type ContentType = PrizeContent;
-    type ContentTypeInitial = PrizeContentInitial;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeContent {
@@ -767,7 +767,6 @@ impl From<PrizeWinnerContent> for PrizeWinnerContentInternal {
 
 impl MessageContentInternalSubtype for PrizeWinnerContentInternal {
     type ContentType = PrizeWinnerContent;
-    type ContentTypeInitial = PrizeWinnerContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         PrizeWinnerContent {
@@ -803,7 +802,6 @@ impl From<MessageReminderCreatedContent> for MessageReminderCreatedContentIntern
 
 impl MessageContentInternalSubtype for MessageReminderCreatedContentInternal {
     type ContentType = MessageReminderCreatedContent;
-    type ContentTypeInitial = MessageReminderCreatedContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         MessageReminderCreatedContent {
@@ -834,7 +832,6 @@ impl From<MessageReminderContent> for MessageReminderContentInternal {
 
 impl MessageContentInternalSubtype for MessageReminderContentInternal {
     type ContentType = MessageReminderContent;
-    type ContentTypeInitial = MessageReminderContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         MessageReminderContent {
@@ -858,7 +855,6 @@ impl From<ReportedMessage> for ReportedMessageInternal {
 
 impl MessageContentInternalSubtype for ReportedMessageInternal {
     type ContentType = ReportedMessage;
-    type ContentTypeInitial = ReportedMessage;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         ReportedMessage {
@@ -887,7 +883,6 @@ impl From<CustomContent> for CustomContentInternal {
 
 impl MessageContentInternalSubtype for CustomContentInternal {
     type ContentType = CustomContent;
-    type ContentTypeInitial = CustomContent;
 
     fn hydrate(&self, _my_user_id: Option<UserId>) -> Self::ContentType {
         CustomContent {
