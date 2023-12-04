@@ -123,7 +123,6 @@ type InviteUsersToGroupResponse = variant {
 
 type RegisterUserArgs = record {
     username : text;
-    display_name : opt text;
     referral_code : opt text;
     public_key : blob;
 };
@@ -138,9 +137,6 @@ type RegisterUserResponse = variant {
     UsernameInvalid;
     UsernameTooShort : nat16;
     UsernameTooLong : nat16;
-    DisplayNameInvalid;
-    DisplayNameTooShort : nat16;
-    DisplayNameTooLong : nat16;
     CyclesBalanceTooLow;
     InternalError : text;
     PublicKeyInvalid : text;
