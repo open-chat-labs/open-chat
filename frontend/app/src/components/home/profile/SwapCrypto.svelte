@@ -96,7 +96,7 @@
         swapId = random128();
 
         const [dex, quote] = bestQuote!;
-        const minAmountOut = (quote * BigInt(99)) / BigInt(100);
+        const minAmountOut = (quote * BigInt(98)) / BigInt(100);
         const amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
         const minAmountOutText = client.formatTokens(minAmountOut, 0, detailsOut!.decimals);
         const values = {

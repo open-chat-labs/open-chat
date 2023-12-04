@@ -29,10 +29,8 @@ export class DexesAgent {
         const available = new Set<string>();
 
         for (const p of allPools) {
-            if (tokens.has(p.token0)) {
+            if (tokens.has(p.token0) && tokens.has(p.token1)) {
                 available.add(p.token0);
-            }
-            if (tokens.has(p.token1)) {
                 available.add(p.token1);
             }
         }

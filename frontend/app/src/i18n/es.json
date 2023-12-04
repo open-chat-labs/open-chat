@@ -1191,7 +1191,6 @@
         "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
         "swapFailed": "No se pudo intercambiar **{amountIn}** {tokenIn} por al menos **{minAmountOut}** {tokenOut} usando {dex}",
         "swapSucceeded": "Se intercambió exitosamente **{amountIn}** {tokenIn} por **{amountOut}** {tokenOut} usando {dex}",
-        "quoteInfo": "Cuando presione el botón `{quote}`, se solicitará en su nombre a los siguientes intercambios descentralizados (DEX) una cotización para intercambiar sus tokens:",
-        "swapInfo": "La mejor tarifa cotizada es **{rate}** de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 99% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?"
+        "swapInfo": "La mejor tarifa cotizada es **{rate}** de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?"
     }
 }

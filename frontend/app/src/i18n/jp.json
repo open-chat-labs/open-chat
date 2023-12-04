@@ -1190,7 +1190,6 @@
         "findingAvailableTokens": "交換できるトークンを見つけています...",
         "swapFailed": "{amountIn} を使用して **{tokenIn}** {minAmountOut} を少なくとも **{tokenOut}** {dex} と交換できませんでした",
         "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました",
-        "quoteInfo": "「{quote}」ボタンを押すと、次の分散型取引所 (DEX) があなたの代わりにトークンを交換するための見積もりを問い合わせます。",
-        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 99% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?"
+        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?"
     }
 }

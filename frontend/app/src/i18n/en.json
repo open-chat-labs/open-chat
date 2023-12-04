@@ -651,8 +651,7 @@
         "getTokenSwapsError": "Error getting swaps for {tokenIn}",
         "quoteError": "Error getting quotes to swap {tokenIn}",
         "findingAvailableTokens": "finding available tokens to swap...",
-        "quoteInfo": "When you press the `{quote}` button the following decentralized exchanges (DEXes) will be queried on your behalf for a quote to swap your tokens:",
-        "swapInfo": "The best rate quoted is **{rate}** from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. The swap will only go ahead if the amount of {tokenOut} to be received is at least 99% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
+        "swapInfo": "The best rate quoted is **{rate}** from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
         "swapFailed": "Failed to swap **{amountIn}** {tokenIn} for at least **{minAmountOut}** {tokenOut} using {dex}",
         "swapSucceeded": "Successfully swapped **{amountIn}** {tokenIn} for **{amountOut}** {tokenOut} using {dex}"
     },

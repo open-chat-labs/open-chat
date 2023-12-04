@@ -1187,7 +1187,6 @@
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
         "swapFailed": "נכשל ההחלפה של **{amountIn}** {tokenIn} ב-**{minAmountOut}** {tokenOut} לפחות באמצעות {dex}",
         "swapSucceeded": "הוחלף בהצלחה את **{amountIn}** {tokenIn} ל**{amountOut}** {tokenOut} באמצעות {dex}",
-        "quoteInfo": "כאשר אתה לוחץ על הלחצן `{quote}`, הבורסות המבוזרות הבאות (DEXes) יישאלו בשמך לקבלת הצעת מחיר להחלפת האסימונים שלך:",
-        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 99% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?"
+        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?"
     }
 }
