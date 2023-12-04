@@ -173,7 +173,7 @@ fn tip_channel_message_succeeds() {
     );
 
     let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
-    assert_eq!(user2_balance as u128, tip_amount);
+    assert_eq!(user2_balance, tip_amount);
 }
 
 #[test]
