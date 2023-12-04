@@ -1,10 +1,10 @@
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::update_msgpack;
+use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::create_offer::{Response::*, *};
 use types::TimestampMillis;
 
-#[update_msgpack]
+#[update_candid_and_msgpack]
 #[trace]
 fn create_offer(args: Args) -> Response {
     mutate_state(|state| create_offer_impl(args, state))

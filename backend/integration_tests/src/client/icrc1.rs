@@ -1,7 +1,7 @@
 use crate::{generate_query_call, generate_update_call};
 use candid::Nat;
 use icrc_ledger_types::icrc1::account::Account;
-use icrc_ledger_types::icrc1::transfer::{NumTokens, TransferArg, TransferError};
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 
 // Queries
 generate_query_call!(icrc1_balance_of);
@@ -17,7 +17,6 @@ pub mod icrc1_balance_of {
 }
 
 pub mod icrc1_transfer {
-
     use super::*;
 
     type Type = TransferArg;
@@ -36,21 +35,21 @@ pub mod happy_path {
     pub fn transfer(
         env: &mut PocketIc,
         sender: Principal,
-        icp_ledger_canister_id: CanisterId,
-        recipient: Principal,
-        amount_e8s: u64,
+        ledger_canister_id: CanisterId,
+        recipient: impl Into<Account>,
+        amount: u128,
     ) -> BlockIndex {
         icrc1_transfer(
             env,
             sender,
-            icp_ledger_canister_id,
+            ledger_canister_id,
             &icrc1_transfer::Args {
                 from_subaccount: None,
-                to: Account::from(recipient),
+                to: recipient.into(),
                 fee: None,
                 created_at_time: None,
                 memo: None,
-                amount: NumTokens::from(amount_e8s),
+                amount: amount.into(),
             },
         )
         .unwrap()
@@ -59,18 +58,10 @@ pub mod happy_path {
         .unwrap()
     }
 
-    pub fn balance_of(env: &PocketIc, icp_ledger_canister_id: CanisterId, principal: Principal) -> u64 {
-        icrc1_balance_of(
-            env,
-            Principal::anonymous(),
-            icp_ledger_canister_id,
-            &icrc1_balance_of::Args {
-                owner: principal,
-                subaccount: None,
-            },
-        )
-        .0
-        .try_into()
-        .unwrap()
+    pub fn balance_of(env: &PocketIc, ledger_canister_id: CanisterId, account: impl Into<Account>) -> u128 {
+        icrc1_balance_of(env, Principal::anonymous(), ledger_canister_id, &account.into())
+            .0
+            .try_into()
+            .unwrap()
     }
 }
