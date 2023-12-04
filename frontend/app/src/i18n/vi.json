@@ -514,7 +514,9 @@
             "from": "Từ",
             "to": "ĐẾN",
             "type": "Kiểu"
-        }
+        },
+        "swap": "Tráo đổi",
+        "swapToken": "Hoán đổi {symbol}"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -1177,5 +1179,17 @@
     "offlineMessage": "Ngoại tuyến",
     "offlineError": "Xin lỗi - có vẻ như bạn đang ngoại tuyến vào lúc này",
     "renderPreviews": "Tự động hiển thị bản xem trước liên kết",
-    "messageBlocked": "Tin nhắn bị ẩn vì người gửi bị chặn"
+    "messageBlocked": "Tin nhắn bị ẩn vì người gửi bị chặn",
+    "tokenSwap": {
+        "title": "Tráo đổi",
+        "quote": "Trích dẫn",
+        "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
+        "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
+        "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
+        "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
+        "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
+        "swapFailed": "Không thể hoán đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut} bằng cách sử dụng {dex}",
+        "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}",
+        "swapInfo": "Giá được báo giá tốt nhất là **{rate}** từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?"
+    }
 }

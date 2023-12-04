@@ -614,8 +614,10 @@
         "shortRemainingBalanceLabel": "remaining balance",
         "manage": "Manage",
         "send": "Send",
+        "swap": "Swap",
         "receiveToken": "Receive {symbol}",
         "sendToken": "Send {symbol}",
+        "swapToken": "Swap {symbol}",
         "transactions": "Transactions",
         "manageHeader": "Manage {symbol} account",
         "topUp": "Top up",
@@ -640,6 +642,18 @@
             "from": "From",
             "to": "To"
         }
+    },
+    "tokenSwap": {
+        "title": "Swap",
+        "quote": "Quote",
+        "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
+        "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
+        "getTokenSwapsError": "Error getting swaps for {tokenIn}",
+        "quoteError": "Error getting quotes to swap {tokenIn}",
+        "findingAvailableTokens": "finding available tokens to swap...",
+        "swapInfo": "The best rate quoted is **{rate}** from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
+        "swapFailed": "Failed to swap **{amountIn}** {tokenIn} for at least **{minAmountOut}** {tokenOut} using {dex}",
+        "swapSucceeded": "Successfully swapped **{amountIn}** {tokenIn} for **{amountOut}** {tokenOut} using {dex}"
     },
     "searchChat": "Search",
     "search": "Search...",

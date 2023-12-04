@@ -153,6 +153,7 @@ export class OpenChatAgentWorker extends EventTarget {
     responseHandler<Req extends WorkerRequest, T>(
         req: Req,
         correlationId: string,
+        timeout: number,
     ): (resolve: (val: T, final: boolean) => void, reject: (reason?: unknown) => void) => void {
         return (resolve, reject) => {
             const sentAt = Date.now();
@@ -168,7 +169,7 @@ export class OpenChatAgentWorker extends EventTarget {
                         sentAt,
                     });
                     this._pending.delete(correlationId);
-                }, WORKER_TIMEOUT),
+                }, timeout),
             });
         };
     }
@@ -176,6 +177,7 @@ export class OpenChatAgentWorker extends EventTarget {
     sendStreamRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
+        timeout: number = WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -185,12 +187,13 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId,
         });
-        return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId));
+        return new Stream<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
     }
 
     async sendRequest<Req extends WorkerRequest>(
         req: Req,
         connecting = false,
+        timeout: number = WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
             throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
@@ -200,6 +203,6 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId,
         });
-        return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId));
+        return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
     }
 }
