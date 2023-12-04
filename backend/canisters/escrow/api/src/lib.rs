@@ -1,5 +1,6 @@
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Subaccount;
+use sha256::sha256;
 use types::UserId;
 
 mod lifecycle;
@@ -11,10 +12,8 @@ pub use queries::*;
 pub use updates::*;
 
 pub fn deposit_subaccount(user_id: UserId, offer_id: u32) -> Subaccount {
-    let mut subaccount = [0; 32];
-    let principal = Principal::from(user_id);
-    let user_id_bytes = principal.as_slice();
-    subaccount[..user_id_bytes.len()].copy_from_slice(user_id_bytes);
-    subaccount[28..].copy_from_slice(&offer_id.to_be_bytes());
-    subaccount
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(Principal::from(user_id).as_slice());
+    bytes.extend_from_slice(&offer_id.to_be_bytes());
+    sha256(&bytes)
 }
