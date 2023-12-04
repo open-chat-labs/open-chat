@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::CommunityId;
@@ -70,7 +71,10 @@ fn cancel_channel_invites_succeeds() {
     client::community::happy_path::cancel_invites(env, user1.principal, community_id, vec![user2.user_id], Some(channel_id));
 
     let community_details = client::community::happy_path::selected_initial(env, &user1, community_id);
-    assert_eq!(community_details.invited_users, vec![user2.user_id, user3.user_id]);
+    assert_eq!(
+        community_details.invited_users.into_iter().sorted().collect_vec(),
+        vec![user2.user_id, user3.user_id].into_iter().sorted().collect_vec()
+    );
 
     let channel_details = client::community::happy_path::selected_channel_initial(env, &user1, community_id, channel_id);
     assert_eq!(channel_details.invited_users, vec![user3.user_id]);
