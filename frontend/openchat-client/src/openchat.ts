@@ -2523,7 +2523,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     earliestAvailableEventIndex(chat: ChatSummary): number {
-        return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
+        return chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex;
     }
 
     private earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
