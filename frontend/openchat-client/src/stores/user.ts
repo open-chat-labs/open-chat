@@ -73,7 +73,10 @@ export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup
 
 export const userStore = {
     subscribe: allUsers.subscribe,
-    set: (users: UserLookup): void => normalUsers.set(users),
+    set: (users: UserLookup): void => {
+        normalUsers.set(users);
+        addSuspendedUsersToStore(Object.values(users));
+    },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
@@ -88,13 +91,7 @@ export const userStore = {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
-        const suspended = newUsers.reduce((arr, user) => {
-            if (user.suspended) {
-                arr.push(user.userId);
-            }
-            return arr;
-        }, [] as string[]);
-        suspendedUsers.addMany(suspended);
+        addSuspendedUsersToStore(newUsers);
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
@@ -122,3 +119,14 @@ export const platformModerator = derived(
     currentUser,
     ($currentUser) => $currentUser.isPlatformModerator,
 );
+
+function addSuspendedUsersToStore(users: UserSummary[]) {
+    const suspended = users.reduce((arr, user) => {
+        if (user.suspended) {
+            arr.push(user.userId);
+        }
+        return arr;
+    }, [] as string[]);
+
+    suspendedUsers.addMany(suspended);
+}
