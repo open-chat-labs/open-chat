@@ -34,6 +34,7 @@
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: nervousSystemLookup = client.nervousSystemLookup;
+    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).filter((ns) => !ns.isNns).map((ns) => ns.ledgerCanisterId));
     $: moreAvailable = moreTransactionsAvailable(transationData);
     $: loading = transationData.kind === "loading" || transationData.kind === "loading_more";
 
@@ -146,7 +147,7 @@
                 <div>{$_("cryptoAccount.transactions")}</div>
                 <div>
                     <CryptoSelector
-                        filter={(t) => !["ckbtc", "icp"].includes(t.symbol.toLowerCase())}
+                        filter={(t) => snsLedgers.has(t.ledger)}
                         on:select={ledgerSelected}
                         {ledger} />
                 </div>
