@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876))
 - Support updating Diamond membership subscription ([#4884](https://github.com/open-chat-labs/open-chat/pull/4884))
 - Add `diamond_membership_status` to `current_user` response ([#4896](https://github.com/open-chat-labs/open-chat/pull/4896))
+- Expose list of registered bot users ([#4919](https://github.com/open-chat-labs/open-chat/pull/4919))
 
 ### Changed
 
