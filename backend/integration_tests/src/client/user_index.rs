@@ -77,6 +77,7 @@ pub mod happy_path {
         sender: Principal,
         canister_id: CanisterId,
         duration: DiamondMembershipPlanDuration,
+        pay_in_chat: bool,
         recurring: bool,
     ) -> DiamondMembershipDetails {
         let response = super::pay_for_diamond_membership(
@@ -85,8 +86,8 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::pay_for_diamond_membership::Args {
                 duration,
-                token: Cryptocurrency::InternetComputer,
-                expected_price_e8s: duration.icp_price_e8s(),
+                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
+                expected_price_e8s: if pay_in_chat { duration.chat_price_e8s() } else { duration.icp_price_e8s() },
                 recurring,
             },
         );
