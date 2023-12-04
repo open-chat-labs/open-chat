@@ -12,6 +12,7 @@ pub mod happy_path {
     use pocket_ic::PocketIc;
     use types::{CanisterId, Cryptocurrency, TimestampMillis, TokenInfo, UserId};
 
+    #[allow(clippy::too_many_arguments)]
     pub fn create_offer(
         env: &mut PocketIc,
         sender: Principal,

@@ -124,7 +124,7 @@ fn send_prize_in_channel() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
     let prizes = vec![Tokens::from_e8s(100000)];
     let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
