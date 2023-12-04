@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Top up NNS neuron when users pay ICP for lifetime Diamond membership ([#4880](https://github.com/open-chat-labs/open-chat/pull/4880))
 - Add `diamond_membership_status` to user summaries ([#4887](https://github.com/open-chat-labs/open-chat/pull/4887))
+- Allow extending Diamond membership even if > 3 month remaining ([#4909](https://github.com/open-chat-labs/open-chat/pull/4909))
 - Require Diamond membership to set a display name ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
 
 ## [[2.0.952](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.952-user_index)] - 2023-11-28

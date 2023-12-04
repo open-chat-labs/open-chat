@@ -12,6 +12,7 @@ pub enum Response {
     Success,
     BalanceTooLow(BalanceTooLowResult),
     OfferAlreadyAccepted,
+    OfferCancelled,
     OfferExpired,
     OfferNotFound,
     InternalError(String),
