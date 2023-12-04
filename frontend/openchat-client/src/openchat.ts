@@ -2707,6 +2707,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootMessageIndex =
             this._liveState.selectedMessageContext?.threadRootMessageIndex;
+        const selectedChatId = this._liveState.selectedChatId;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -2714,6 +2715,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (e.threadRootMessageIndex !== undefined) {
                     if (
                         e.threadRootMessageIndex === selectedThreadRootMessageIndex &&
+                        chatIdentifiersEqual(serverChat.id, selectedChatId) &&
                         indexIsInRanges(e.eventIndex, confirmedThreadLoaded)
                     ) {
                         thread.push(e.eventIndex);
