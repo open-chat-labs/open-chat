@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{CompletedCryptoTransaction, TimestampMillis, TokenInfo, UserId};
+use types::{icrc1::CompletedCryptoTransaction, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Offers {
@@ -32,8 +32,7 @@ pub struct Offer {
     pub accepted_by: Option<(UserId, TimestampMillis)>,
     pub token0_received: bool,
     pub token1_received: bool,
-    pub transfer_out0: Option<CompletedCryptoTransaction>,
-    pub transfer_out1: Option<CompletedCryptoTransaction>,
+    pub transfers_out: Vec<CompletedCryptoTransaction>,
 }
 
 impl Offer {
@@ -50,8 +49,7 @@ impl Offer {
             accepted_by: None,
             token0_received: false,
             token1_received: false,
-            transfer_out0: None,
-            transfer_out1: None,
+            transfers_out: Vec::new(),
         }
     }
 }

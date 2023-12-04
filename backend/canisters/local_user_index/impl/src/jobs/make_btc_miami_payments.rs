@@ -7,7 +7,6 @@ use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::CryptoAccount;
 use types::{
     icrc1, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, MessageContent,
     TextContent,
@@ -85,8 +84,8 @@ fn send_oc_bot_messages(pending_payment: &PendingPayment, block_index: BlockInde
                 token: Cryptocurrency::CKBTC,
                 amount,
                 fee: 10,
-                from: CryptoAccount::Account(Account::from(Principal::from(OPENCHAT_BOT_USER_ID))),
-                to: CryptoAccount::Account(Account::from(Principal::from(user_id))),
+                from: Account::from(Principal::from(OPENCHAT_BOT_USER_ID)).into(),
+                to: Account::from(Principal::from(user_id)).into(),
                 memo: None,
                 created: pending_payment.timestamp,
                 block_index: block_index.0.try_into().unwrap(),
