@@ -7,7 +7,6 @@ use icrc_ledger_types::icrc1::transfer::{BlockIndex, TransferArg};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::icrc1::CryptoAccount;
 use types::{
     icrc1, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent, MessageContent,
     TextContent,
