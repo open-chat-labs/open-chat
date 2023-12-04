@@ -65,23 +65,3 @@
         </g>
     </svg>
 {/if}
-
-<style lang="scss">
-    svg {
-        background-position: 0 1px;
-        color: hsl(203, 93%, 85%);
-    }
-    // svg:hover {
-    //     $speed: 100ms;
-    //     .circle {
-    //         transition: stroke $speed ease-in-out, fill $speed ease-in-out;
-    //         stroke: #f7931a;
-    //         fill: #f7931a;
-    //     }
-
-    //     .logo {
-    //         transition: fill $speed ease-in-out;
-    //         fill: var(--txt);
-    //     }
-    // }
-</style>

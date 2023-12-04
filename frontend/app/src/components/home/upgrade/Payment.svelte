@@ -131,11 +131,7 @@
             .then((fees) => {
                 diamondFees = {
                     kind: "success",
-                    data: client.toRecord2(
-                        fees,
-                        (f) => f.token,
-                        (f) => f,
-                    ),
+                    data: client.toRecord(fees, (f) => f.token),
                 };
             })
             .catch((err) => {

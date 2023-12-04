@@ -1359,6 +1359,7 @@ export class OpenChat extends OpenChatAgentWorker {
     userOrUserGroupId = userOrUserGroupId;
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
+    toRecord = toRecord;
     toDatetimeString = toDatetimeString;
     groupBySender = groupBySender;
     groupBy = groupBy;
