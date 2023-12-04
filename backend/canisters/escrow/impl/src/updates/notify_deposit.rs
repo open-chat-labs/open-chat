@@ -1,3 +1,4 @@
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -39,7 +40,24 @@ async fn notify_deposit(args: Args) -> Response {
                     offer.token1_received = true;
                 }
                 if offer.token0_received && offer.token1_received {
-                    // TODO queue up transfers
+                    let accepted_by = offer.accepted_by.unwrap().0;
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        user_id: offer.created_by,
+                        timestamp: now,
+                        token_info: offer.token1.clone(),
+                        amount: offer.amount1,
+                        offer_id: offer.id,
+                        reason: PendingPaymentReason::Trade(accepted_by),
+                    });
+                    state.data.pending_payments_queue.push(PendingPayment {
+                        user_id: accepted_by,
+                        timestamp: now,
+                        token_info: offer.token0.clone(),
+                        amount: offer.amount0,
+                        offer_id: offer.id,
+                        reason: PendingPaymentReason::Trade(offer.created_by),
+                    });
+                    crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
                 Success
             }
