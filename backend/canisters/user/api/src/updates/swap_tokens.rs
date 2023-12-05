@@ -26,6 +26,7 @@ pub struct ICPSwapArgs {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    SwapFailed,
     InternalError(String),
 }
 

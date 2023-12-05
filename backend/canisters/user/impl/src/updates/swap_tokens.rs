@@ -113,8 +113,8 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         }
     }
 
-    let amount_swapped = if let Some(a) = extract_result(&token_swap.amount_swapped) {
-        *a
+    let swap_result = if let Some(a) = extract_result(&token_swap.amount_swapped).cloned() {
+        a
     } else {
         match swap_client
             .swap(args.input_amount.saturating_sub(args.input_token.fee), args.min_output_amount)
@@ -123,7 +123,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
             Ok(a) => {
                 mutate_state(|state| {
                     let now = state.env.now();
-                    token_swap.amount_swapped = Some(Timestamped::new(Ok(a), now));
+                    token_swap.amount_swapped = Some(Timestamped::new(Ok(a.clone()), now));
                     state.data.token_swaps.upsert(token_swap.clone());
                 });
                 a
@@ -141,10 +141,14 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         }
     };
 
-    let amount_out = amount_swapped.saturating_sub(args.output_token.fee);
+    let (successful_swap, amount_out) = if let Ok(amount_swapped) = swap_result {
+        (true, amount_swapped.saturating_sub(args.output_token.fee))
+    } else {
+        (false, args.input_amount.saturating_sub(args.input_token.fee))
+    };
 
     if extract_result(&token_swap.withdrawn_from_dex_at).is_none() {
-        if let Err(error) = swap_client.withdraw(amount_out).await {
+        if let Err(error) = swap_client.withdraw(successful_swap, amount_out).await {
             let msg = format!("{error:?}");
             mutate_state(|state| {
                 let now = state.env.now();
@@ -157,13 +161,17 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
             mutate_state(|state| {
                 let now = state.env.now();
                 token_swap.withdrawn_from_dex_at = Some(Timestamped::new(Ok(amount_out), now));
-                token_swap.success = Some(Timestamped::new(true, now));
+                token_swap.success = Some(Timestamped::new(successful_swap, now));
                 state.data.token_swaps.upsert(token_swap);
             });
         }
     }
 
-    Success(SuccessResult { amount_out })
+    if successful_swap {
+        Success(SuccessResult { amount_out })
+    } else {
+        SwapFailed
+    }
 }
 
 fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {
