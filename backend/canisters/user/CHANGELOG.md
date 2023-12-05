@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- When swapping tokens take fee out of amount passed in ([#4934](https://github.com/open-chat-labs/open-chat/pull/4934))
+
 ## [[2.0.961](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.961-user)] - 2023-12-05
 
 ### Added

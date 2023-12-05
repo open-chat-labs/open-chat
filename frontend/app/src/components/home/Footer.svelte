@@ -100,7 +100,7 @@
 </script>
 
 {#if messageAction === "emoji"}
-    <div class="emoji-overlay">
+    <div class={`emoji-overlay ${mode}`}>
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
@@ -173,6 +173,11 @@
         border: var(--bw) solid var(--bd);
     }
 
+    :global(.emoji-overlay.thread .modal-content) {
+        width: 100%;
+        border-radius: var(--modal-rd) var(--modal-rd) 0 0;
+    }
+
     .footer {
         position: relative;
         flex: 0 0 toRem(60);
@@ -211,6 +216,11 @@
             .close-emoji {
                 flex: 0 0 20px;
             }
+        }
+
+        &.thread {
+            bottom: toRem(60);
+            left: 0;
         }
     }
 
