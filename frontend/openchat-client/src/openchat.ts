@@ -132,7 +132,13 @@ import {
     focusThreadMessageIndex,
     selectedMessageContext,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, enhancedCryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
+import {
+    cryptoBalance,
+    cryptoLookup,
+    enhancedCryptoLookup,
+    lastCryptoSent,
+    nervousSystemLookup,
+} from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -401,9 +407,11 @@ import {
     communityPreviewsStore,
     communityStateStore,
     currentCommunityBlockedUsers,
+    currentCommunityChannels,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
+    currentCommunityTotalChannels,
     currentCommunityUserGroups,
     nextCommunityIndex,
     removeCommunityPreview,
@@ -2656,6 +2664,13 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
         }
         await this.updateUserStoreFromCommunityState(community.id);
+
+        this.exploreChannels(community.id, undefined, 0, 100).then((resp) => {
+            if (resp.kind === "success") {
+                communityStateStore.setProp(community.id, "channels", resp.matches);
+                communityStateStore.setProp(community.id, "totalChannels", resp.total);
+            }
+        });
     }
 
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
@@ -5294,7 +5309,9 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
-        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter((t) => t !== inputTokenLedger);
+        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter(
+            (t) => t !== inputTokenLedger,
+        );
 
         return this.sendRequest({
             kind: "getTokenSwaps",
@@ -5326,15 +5343,19 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<SwapTokensResponse> {
         const lookup = get(cryptoLookup);
 
-        return this.sendRequest({
-            kind: "swapTokens",
-            swapId,
-            inputTokenDetails: lookup[inputTokenLedger],
-            outputTokenDetails: lookup[outputTokenLedger],
-            amountIn,
-            minAmountOut,
-            dex,
-        }, false, 1000 * 60 * 3);
+        return this.sendRequest(
+            {
+                kind: "swapTokens",
+                swapId,
+                inputTokenDetails: lookup[inputTokenLedger],
+                outputTokenDetails: lookup[outputTokenLedger],
+                amountIn,
+                minAmountOut,
+                dex,
+            },
+            false,
+            1000 * 60 * 3,
+        );
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {

@@ -64,16 +64,18 @@
 
 <style lang="scss">
     .details {
-        height: toRem(94);
+        // height: toRem(94);
         display: flex;
         align-items: center;
         gap: $sp4;
-        padding: $sp3 $sp4;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        padding: $sp4;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         cursor: pointer;
 
         @include mobile() {
-            padding: $sp3 toRem(10);
+            padding: 0 toRem(10);
         }
 
         @media (hover: hover) {
