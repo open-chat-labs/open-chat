@@ -127,13 +127,12 @@ import {
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
-    selectedThreadRootEvent,
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
+import { cryptoBalance, cryptoLookup, enhancedCryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -343,7 +342,6 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
-    TokenSwapPool,
     DexId,
     SwapTokensResponse,
     TokenSwapStatusResponse,
@@ -2243,24 +2241,40 @@ export class OpenChat extends OpenChatAgentWorker {
 
     openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
         this.clearThreadEvents();
-        selectedThreadRootEvent.set(threadRootEvent);
-        if (!initiating && this._liveState.selectedChatId !== undefined) {
-            if (this._liveState.focusThreadMessageIndex !== undefined) {
-                this.loadEventWindow(
-                    this._liveState.selectedChatId,
-                    this._liveState.focusThreadMessageIndex,
-                    threadRootEvent,
-                    true,
-                );
-            } else {
-                this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return {
+                    ...context,
+                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                };
             }
+            return context;
+        });
+
+        const context = this._liveState.selectedMessageContext;
+        if (context) {
+            if (!initiating) {
+                if (this._liveState.focusThreadMessageIndex !== undefined) {
+                    this.loadEventWindow(
+                        context.chatId,
+                        this._liveState.focusThreadMessageIndex,
+                        threadRootEvent,
+                        true,
+                    );
+                } else {
+                    this.loadPreviousMessages(context.chatId, threadRootEvent, true);
+                }
+            }
+            this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
         }
-        this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
 
     closeThread(): void {
-        selectedThreadRootEvent.set(undefined);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return { chatId: context.chatId };
+            }
+        });
         this.dispatchEvent(new ThreadClosed());
     }
 
@@ -2523,7 +2537,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     earliestAvailableEventIndex(chat: ChatSummary): number {
-        return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
+        return chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex;
     }
 
     private earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
@@ -2690,8 +2704,9 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<void> {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
-        const selectedThreadRootEvent = this._liveState.selectedThreadRootEvent;
-        const selectedThreadRootMessageIndex = selectedThreadRootEvent?.event?.messageIndex;
+        const selectedThreadRootMessageIndex =
+            this._liveState.selectedMessageContext?.threadRootMessageIndex;
+        const selectedChatId = this._liveState.selectedChatId;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -2699,6 +2714,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (e.threadRootMessageIndex !== undefined) {
                     if (
                         e.threadRootMessageIndex === selectedThreadRootMessageIndex &&
+                        chatIdentifiersEqual(serverChat.id, selectedChatId) &&
                         indexIsInRanges(e.eventIndex, confirmedThreadLoaded)
                     ) {
                         thread.push(e.eventIndex);
@@ -2957,7 +2973,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         e.event.messageIndex === selectedThreadRootMessageIndex,
                 );
                 if (threadRootEvent !== undefined) {
-                    selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
                     this.dispatchEvent(
                         new ChatUpdated({
                             chatId,
@@ -5139,6 +5154,14 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         cryptoLookup.set(cryptoRecord);
+
+        window.setTimeout(this.refreshBalancesInSeries, 0);
+    }
+
+    private async refreshBalancesInSeries() {
+        for (const t of Object.values(get(cryptoLookup))) {
+            await this.refreshAccountBalance(t.ledger, get(this.user).userId);
+        }
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
@@ -5263,48 +5286,55 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
-        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
-
+    swappableTokens(): Promise<Set<string>> {
         return this.sendRequest({
-            kind: "getTokenSwapPools",
-            inputToken,
-            outputTokens,
+            kind: "canSwap",
+            tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
         });
     }
 
-    quoteTokenSwap(
-        inputToken: string,
-        outputToken: string,
+    getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
+        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter((t) => t !== inputTokenLedger);
+
+        return this.sendRequest({
+            kind: "getTokenSwaps",
+            inputTokenLedger,
+            outputTokenLedgers,
+        });
+    }
+
+    getTokenSwapQuotes(
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
         return this.sendRequest({
-            kind: "quoteTokenSwap",
-            inputToken,
-            outputToken,
+            kind: "getTokenSwapQuotes",
+            inputTokenLedger,
+            outputTokenLedger,
             amountIn,
         });
     }
 
     swapTokens(
         swapId: bigint,
-        inputToken: string,
-        outputToken: string,
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
-        pool: TokenSwapPool,
+        dex: DexId,
     ): Promise<SwapTokensResponse> {
         const lookup = get(cryptoLookup);
 
         return this.sendRequest({
             kind: "swapTokens",
             swapId,
-            inputToken: lookup[inputToken],
-            outputToken: lookup[outputToken],
+            inputTokenDetails: lookup[inputTokenLedger],
+            outputTokenDetails: lookup[outputTokenLedger],
             amountIn,
             minAmountOut,
-            pool,
-        });
+            dex,
+        }, false, 1000 * 60 * 3);
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -5776,6 +5806,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
@@ -5812,7 +5843,6 @@ export class OpenChat extends OpenChatAgentWorker {
     isLifetimeDiamond = isLifetimeDiamond;
     canExtendDiamond = canExtendDiamond;
     diamondStatus = diamondStatus;
-    selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;

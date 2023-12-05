@@ -25,13 +25,7 @@ fn send_direct_message_with_transfer_succeeds() {
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let send_message_result = client::user::send_message_v2(
         env,
@@ -64,7 +58,7 @@ fn send_direct_message_with_transfer_succeeds() {
         send_message_result,
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ) {
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 10000);
     } else {
         panic!("{send_message_result:?}")
@@ -87,13 +81,7 @@ fn send_message_with_transfer_to_group_succeeds() {
     client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let send_message_result = client::user::send_message_with_transfer_to_group(
         env,
@@ -129,7 +117,7 @@ fn send_message_with_transfer_to_group_succeeds() {
         send_message_result,
         user_canister::send_message_with_transfer_to_group::Response::Success(_)
     ) {
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
         assert_eq!(user2_balance, 10000);
     } else {
         panic!("{send_message_result:?}")
@@ -150,13 +138,7 @@ fn send_icp_as_icrc1_converted_to_nns_format() {
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     // Send user1 some ICP
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user1.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
 
     let send_message_result = client::user::send_message_v2(
         env,

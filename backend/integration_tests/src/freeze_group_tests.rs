@@ -182,7 +182,7 @@ fn freeze_and_suspend_users() {
         },
     );
 
-    env.tick();
+    tick_many(env, 3);
 
     let user = client::user_index::happy_path::current_user(env, user2.principal, canister_ids.user_index);
 

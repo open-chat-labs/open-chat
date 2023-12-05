@@ -1,12 +1,12 @@
 <script lang="ts">
-    import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
-    import { dollarExchangeRates } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    //import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -22,24 +22,25 @@
     };
 
     const client = getContext<OpenChat>("client");
-    const defaultTokens = ["CHAT", "ICP", "ckBTC"];
 
     export let showZeroBalance = false;
     export let zeroCount = 0;
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive";
+    let manageMode: "none" | "send" | "receive" | "swap";
     let selectedLedger: string | undefined = undefined;
     let transactionsFor: TransactionsFor | undefined = undefined;
 
-    $: cryptoLookup = client.cryptoLookup;
-    $: cryptoBalance = client.cryptoBalance;
-    $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
+    $: accounts = client.enhancedCryptoLookup;
     $: nervousSystemLookup = client.nervousSystemLookup;
-    $: snsLedgers = new Set<string>(Object.values($nervousSystemLookup).map((ns) => ns.ledgerCanisterId));
+    $: snsLedgers = new Set<string>(
+        Object.values($nervousSystemLookup)
+            .filter((ns) => !ns.isNns)
+            .map((ns) => ns.ledgerCanisterId),
+    );
 
     $: {
-        zeroCount = accounts.filter((a) => a.zero).length;
+        zeroCount = Object.values($accounts).filter((a) => a.zero).length;
     }
 
     function onBalanceRefreshed() {
@@ -64,54 +65,10 @@
         manageMode = "send";
     }
 
-    function buildAccountsList(
-        cryptoLookup: Record<string, CryptocurrencyDetails>,
-        cryptoBalance: Record<string, bigint>
-    ) {
-        const accounts = Object.values(cryptoLookup).map((t) => {
-            const balance = cryptoBalance[t.ledger] ?? BigInt(0);
-            const xr = dollarExchangeRates[t.symbol.toLowerCase()];
-            const dollarBalance = xr > 0 ? Number(balance) / xr : 0;
-            const zero = balance === BigInt(0) && !defaultTokens.includes(t.symbol);
-            return {
-                key: t.ledger,
-                ledger: t.ledger,
-                symbol: t.symbol,
-                balance,
-                logo: t.logo,
-                dollarBalance,
-                zero,
-                urlFormat: t.transactionUrlFormat,
-            };
-        });
-
-        accounts.sort((a, b) => {
-            // Sort by $ balance
-            // Then by whether token is a default
-            // Then by default precedence
-            // Then alphabetically by symbol
-            if (a.dollarBalance < b.dollarBalance) {
-                return 1;
-            } else if (a.dollarBalance > b.dollarBalance) {
-                return -1;
-            } else {
-                const defA = defaultTokens.indexOf(a.symbol);
-                const defB = defaultTokens.indexOf(b.symbol);
-
-                if (defA >= 0 && defB >= 0) {
-                    return defA < defB ? 1 : -1;
-                } else if (defA >= 0) {
-                    return 1;
-                } else if (defB >= 0) {
-                    return -1;
-                } else {
-                    return a.symbol.localeCompare(b.symbol);
-                }
-            }
-        });
-
-        return accounts;
-    }
+    // function showSwap(ledger: string) {
+    //     selectedLedger = ledger;
+    //     manageMode = "swap";
+    // }
 </script>
 
 {#if manageMode !== "none" && selectedLedger !== undefined}
@@ -127,7 +84,7 @@
         <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
         <th />
     </tr>
-    {#each accounts as token}
+    {#each Object.values($accounts) as token}
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">
@@ -155,20 +112,31 @@
                         </span>
                         <span slot="menu">
                             <Menu>
-                                <MenuItem on:click={() => showSend(token.key)}>
+                                <MenuItem on:click={() => showSend(token.ledger)}>
                                     <ArrowRightBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("cryptoAccount.send")}</div>
                                 </MenuItem>
-                                <MenuItem on:click={() => showReceive(token.key)}>
+                                <MenuItem on:click={() => showReceive(token.ledger)}>
                                     <ArrowLeftBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("cryptoAccount.receive")}</div>
                                 </MenuItem>
+                                <!-- {#await client.getTokenSwaps(token.ledger) then swaps}
+                                    {#if Object.keys(swaps).length > 0}
+                                        <MenuItem on:click={() => showSwap(token.ledger)}>
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">{$_("cryptoAccount.swap")}</div>
+                                        </MenuItem>
+                                    {/if}
+                                {/await} -->
                                 {#if snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => (transactionsFor = token)}>
                                         <ViewList

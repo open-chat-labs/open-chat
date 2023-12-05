@@ -67,7 +67,7 @@
     }
 
     function onChangeGroupRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
+        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
     ): void {
         if (
             $selectedChatId !== undefined &&
@@ -79,7 +79,7 @@
     }
 
     function onChangeCommunityRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
+        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
     ): void {
         if ($selectedCommunity !== undefined) {
             const { userId, newRole, oldRole } = ev.detail;
@@ -150,8 +150,8 @@
                                 interpolateLevel(
                                     "group.inviteUsersFailed",
                                     $multiUserChat.level,
-                                    true
-                                )
+                                    true,
+                                ),
                             );
                             break;
                     }
@@ -159,7 +159,7 @@
                 .catch((err) => {
                     client.logError("InviteUsersFailed", err);
                     toastStore.showFailureToast(
-                        interpolateLevel("group.inviteUsersFailed", $multiUserChat.level, true)
+                        interpolateLevel("group.inviteUsersFailed", $multiUserChat.level, true),
                     );
                 });
 
@@ -192,7 +192,7 @@
 
     function findMessage(
         events: EventWrapper<ChatEvent>[],
-        messageId: bigint
+        messageId: bigint,
     ): EventWrapper<Message> | undefined {
         return events.find((e) => {
             return e.event.kind === "message" && e.event.messageId === messageId;
@@ -203,7 +203,7 @@
         chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
-        oldRole: MemberRole
+        oldRole: MemberRole,
     ): Promise<void> {
         // Call backend to changeRole
         return client.changeRole(chatId, userId, newRole, oldRole).then((success) => {
@@ -222,7 +222,7 @@
         id: CommunityIdentifier,
         userId: string,
         newRole: MemberRole,
-        oldRole: MemberRole
+        oldRole: MemberRole,
     ) {
         return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
             if (!success) {
@@ -282,7 +282,7 @@
         if ($selectedCommunity !== undefined) {
             const success = await client.blockCommunityUser(
                 $selectedCommunity.id,
-                ev.detail.userId
+                ev.detail.userId,
             );
             if (success) {
                 toastStore.showSuccessToast("blockUserSucceeded");
@@ -310,7 +310,7 @@
         if ($selectedCommunity !== undefined) {
             const success = await client.unblockCommunityUser(
                 $selectedCommunity.id,
-                ev.detail.userId
+                ev.detail.userId,
             );
             if (success) {
                 toastStore.showSuccessToast("unblockUserSucceeded");
@@ -339,8 +339,8 @@
         lastState.kind === "invite_community_users"
             ? "community"
             : $selectedChat?.kind === "channel"
-            ? "channel"
-            : "group"
+              ? "channel"
+              : "group"
     ) as Level;
 </script>
 

@@ -16,7 +16,7 @@
     export let valid: boolean = false;
     export let state: "ok" | "zero" | "too_low" | "too_high" = "zero";
     export let label: string = "tokenTransfer.amount";
-    export let transferFees: bigint;
+    export let transferFees: bigint | undefined = undefined;
 
     let inputElement: HTMLInputElement;
 
@@ -79,17 +79,19 @@
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">
-    <div class="fee">
-        <Alert size={$iconSize} color={"var(--warn)"} />
-        <span>
-            {$_("tokenTransfer.fee", {
-                values: {
-                    fee: client.formatTokens(transferFees, 0, tokenDecimals),
-                    token: symbol,
-                },
-            })}
-        </span>
-    </div>
+    {#if transferFees !== undefined}
+        <div class="fee">
+            <Alert size={$iconSize} color={"var(--warn)"} />
+            <span>
+                {$_("tokenTransfer.fee", {
+                    values: {
+                        fee: client.formatTokens(transferFees, 0, tokenDecimals),
+                        token: symbol,
+                    },
+                })}
+            </span>
+        </div>
+    {/if}
     <input
         {autofocus}
         class="amount-val"

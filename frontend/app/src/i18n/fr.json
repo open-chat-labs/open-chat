@@ -513,7 +513,9 @@
             "from": "Depuis",
             "to": "À",
             "type": "Taper"
-        }
+        },
+        "swap": "Échanger",
+        "swapToken": "Échanger {symbol}"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",
@@ -1176,5 +1178,17 @@
     "offlineMessage": "Hors ligne",
     "offlineError": "Désolé, il semble que vous soyez hors ligne pour le moment",
     "renderPreviews": "Aperçus des liens avec rendu automatique",
-    "messageBlocked": "Message masqué car l'expéditeur est bloqué"
+    "messageBlocked": "Message masqué car l'expéditeur est bloqué",
+    "tokenSwap": {
+        "title": "Échanger",
+        "quote": "Citation",
+        "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
+        "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
+        "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
+        "quoteError": "Erreur lors de l'échange des devis {tokenIn}",
+        "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
+        "swapFailed": "Échec de l'échange de **{amountIn}** {tokenIn} contre au moins **{minAmountOut}** {tokenOut} à l'aide de {dex}",
+        "swapSucceeded": "Échange réussi de **{amountIn}** {tokenIn} contre **{amountOut}** {tokenOut} à l'aide de {dex}",
+        "swapInfo": "Le meilleur tarif indiqué est **{rate}** à partir de {dex}. Cela donne **{amountOut}** {tokenOut} pour **{amountIn}** {tokenIn}. L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est d'au moins 98 % du montant indiqué. Souhaitez-vous continuer et tenter le « {swap}  » ?"
+    }
 }
