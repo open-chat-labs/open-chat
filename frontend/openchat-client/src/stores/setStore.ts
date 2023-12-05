@@ -22,7 +22,7 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
             const toAdd = newIds.filter((id) => !storeValue.has(id));
             if (toAdd.length > 0) {
                 store.update((ids) => {
-                    for (const id of ids) {
+                    for (const id of toAdd) {
                         ids.add(id);
                     }
                     return new Set(ids);
