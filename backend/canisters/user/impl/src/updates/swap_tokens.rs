@@ -167,7 +167,11 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         }
     }
 
-    Success(SuccessResult { amount_out })
+    if successful_swap {
+        Success(SuccessResult { amount_out })
+    } else {
+        SwapFailed
+    }
 }
 
 fn build_swap_client(args: &Args, state: &RuntimeState) -> Box<dyn SwapClient> {

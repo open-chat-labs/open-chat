@@ -164,6 +164,7 @@ type SwapTokensResponse = variant {
     Success : record {
         amount_out : nat;
     };
+    SwapFailed;
     InternalError : text;
 };
 
