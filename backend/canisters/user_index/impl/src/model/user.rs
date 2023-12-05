@@ -51,18 +51,16 @@ impl User {
         principal: Principal,
         user_id: UserId,
         username: String,
-        display_name: Option<String>,
         now: TimestampMillis,
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
-        let display_name_upper = display_name.as_ref().map(|s| s.to_uppercase());
         User {
             principal,
             user_id,
             username,
-            display_name,
-            display_name_upper,
+            display_name: None,
+            display_name_upper: None,
             date_created: now,
             date_updated: now,
             upgrade_in_progress: false,

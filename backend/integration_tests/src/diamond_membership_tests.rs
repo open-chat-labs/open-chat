@@ -10,10 +10,12 @@ use types::{Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubs
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
-#[test_case(false)]
-#[test_case(true)]
+#[test_case(true, false)]
+#[test_case(true, true)]
+#[test_case(false, false)]
+#[test_case(false, true)]
 #[serial]
-fn can_upgrade_to_diamond(lifetime: bool) {
+fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -22,17 +24,13 @@ fn can_upgrade_to_diamond(lifetime: bool) {
         ..
     } = wrapper.env();
 
-    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let ledger = if pay_in_chat { canister_ids.chat_ledger } else { canister_ids.icp_ledger };
+
+    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user.user_id.into(),
-        1_000_000_000u64,
-    );
+    client::icrc1::happy_path::transfer(env, *controller, ledger, user.user_id, 10_000_000_000);
 
     let now = now_millis(env);
 
@@ -49,6 +47,7 @@ fn can_upgrade_to_diamond(lifetime: bool) {
         user.principal,
         canister_ids.user_index,
         duration,
+        pay_in_chat,
         false,
     );
 
@@ -69,15 +68,21 @@ fn can_upgrade_to_diamond(lifetime: bool) {
         .subscription
         .is_active());
 
-    let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
-    assert_eq!(new_balance, 1_000_000_000 - duration.icp_price_e8s());
+    let (expected_price, transfer_fee) = if pay_in_chat {
+        (duration.chat_price_e8s() as u128, Cryptocurrency::CHAT.fee().unwrap())
+    } else {
+        (
+            duration.icp_price_e8s() as u128,
+            Cryptocurrency::InternetComputer.fee().unwrap(),
+        )
+    };
 
-    let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let new_balance = client::icrc1::happy_path::balance_of(env, ledger, user.user_id);
+    assert_eq!(new_balance, 10_000_000_000 - expected_price);
 
-    assert_eq!(
-        treasury_balance - init_treasury_balance,
-        duration.icp_price_e8s() - (2 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
-    );
+    let treasury_balance = client::icrc1::happy_path::balance_of(env, ledger, SNS_GOVERNANCE_CANISTER_ID);
+
+    assert_eq!(treasury_balance - init_treasury_balance, expected_price - (2 * transfer_fee));
 }
 
 #[test_case(false; "without_ledger_error")]
@@ -123,7 +128,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         .subscription
         .is_active());
 
-    let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
+    let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
     assert_eq!(new_balance, 1_000_000_000 - 40_000_000);
 }
 
@@ -151,20 +156,20 @@ fn membership_payment_shared_with_referrer() {
 
     // Take a snapshot of the ledger and referrer ICP balances
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    let init_referrer_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id.into());
+    let init_referrer_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
 
     // Upgrade user_b to Diamond
     client::upgrade_user(&user_b, env, canister_ids, *controller);
 
     // Check the referrer has been credited with half the Diamond payment
-    let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id.into());
+    let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
     assert_eq!(balance_referrer - init_referrer_balance, 10_000_000);
 
     // Check the treasury has received the remainder less the fees
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee().unwrap()) as u64
+        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
     );
 }
 
@@ -216,7 +221,7 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::Disabled
         ));
 
-        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
+        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
         assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
     } else {
         let one_year_millis = DiamondMembershipPlanDuration::OneYear.as_millis();
@@ -229,7 +234,7 @@ fn update_subscription_succeeds(disable: bool) {
             DiamondMembershipSubscription::OneYear
         ));
 
-        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
+        let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
         assert_eq!(new_balance, 1_000_000_000 - 170_000_000);
     }
 }

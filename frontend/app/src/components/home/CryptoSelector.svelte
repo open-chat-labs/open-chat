@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
+    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
@@ -8,36 +8,19 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let ledger: string;
-    export let filter: (details: CryptocurrencyDetails) => boolean = (_) => true;
+    export let ledger: string | undefined;
+    export let filter: (details: EnhancedTokenDetails) => boolean = (_) => true;
 
     let selecting = false;
     let ignoreClick = false;
 
-    $: cryptoBalance = client.cryptoBalance;
-
-    $: cryptoLookup = client.cryptoLookup;
-    $: crypto = Object.values($cryptoLookup)
-        .filter((t) => filter(t))
-        .map((t) => ({
-            ledger: t.ledger,
-            symbol: t.symbol,
-            name: t.name,
-            logo: t.logo,
-            balance: $cryptoBalance[t.ledger] ?? BigInt(0),
-            urlFormat: t.transactionUrlFormat,
-        }));
+    $: cryptoLookup = client.enhancedCryptoLookup;
+    $: crypto = Object.values($cryptoLookup).filter((t) => filter(t));
 
     $: {
-        crypto.sort((a, b) => {
-            if (a.balance < b.balance) {
-                return 1;
-            } else if (a.balance > b.balance) {
-                return -1;
-            } else {
-                return 0;
-            }
-        });
+        if (ledger === undefined && crypto.length > 0) {
+            ledger = crypto[0].ledger;
+        }
     }
 
     function selectToken(selectedLedger: string, urlFormat: string) {
@@ -67,7 +50,7 @@
     }
 </script>
 
-{#if crypto.length > 0}
+{#if crypto.length > 0 && ledger !== undefined}
     <div class="selected" on:click={toggle}>
         <div class="symbol">
             {$cryptoLookup[ledger].symbol}

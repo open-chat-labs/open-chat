@@ -402,6 +402,12 @@ pub mod icrc1 {
             super::FailedCryptoTransaction::ICRC1(value)
         }
     }
+
+    impl From<Account> for CryptoAccount {
+        fn from(value: Account) -> Self {
+            CryptoAccount::Account(value)
+        }
+    }
 }
 
 impl From<icrc1::PendingCryptoTransaction> for nns::PendingCryptoTransaction {

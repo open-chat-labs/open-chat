@@ -11,6 +11,7 @@ export function getPoolsResponse(candid: ApiGetPoolsResponse): TokenSwapPool[] {
             )
             .map((p) => ({
                 dex: "icpswap",
+                dexName: "ICPSwap",
                 canisterId: p.canisterId.toString(),
                 token0: p.token0.address,
                 token1: p.token1.address,

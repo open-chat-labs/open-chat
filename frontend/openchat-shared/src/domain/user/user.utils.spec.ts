@@ -12,7 +12,7 @@ const lookup: UserLookup = {
         displayName: undefined,
         updated: BigInt(0),
         suspended: false,
-        diamond: false,
+        diamondStatus: "inactive",
     },
     b: {
         kind: "user",
@@ -21,7 +21,7 @@ const lookup: UserLookup = {
         displayName: undefined,
         updated: BigInt(0),
         suspended: false,
-        diamond: false,
+        diamondStatus: "inactive",
     },
     xyz: {
         kind: "user",
@@ -30,7 +30,7 @@ const lookup: UserLookup = {
         displayName: undefined,
         updated: BigInt(0),
         suspended: false,
-        diamond: false,
+        diamondStatus: "inactive",
     },
     alpha: {
         kind: "user",
@@ -39,7 +39,7 @@ const lookup: UserLookup = {
         displayName: undefined,
         updated: BigInt(0),
         suspended: false,
-        diamond: false,
+        diamondStatus: "inactive",
     },
 };
 
@@ -50,7 +50,7 @@ describe("extract user ids from mentions", () => {
     });
     test("extract multiple user ids", () => {
         const parsed = extractUserIdsFromMentions(
-            "hello there @UserId(xyz) and hello @UserId(abc), how are you?"
+            "hello there @UserId(xyz) and hello @UserId(abc), how are you?",
         );
         expect(parsed).toEqual(["xyz", "abc"]);
     });

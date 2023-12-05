@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.957-group)] - 2023-12-05
+
 ### Added
 
 - Add `c2c_send_message` with improved API for c2c calls vs `send_message_v2` ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
@@ -12,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Burn any CHAT going to the treasury ([#4891](https://github.com/open-chat-labs/open-chat/pull/4891))
+- Move prize winner messages to be in a thread on each prize message ([#4915](https://github.com/open-chat-labs/open-chat/pull/4915))
 
 ## [[2.0.950](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.950-group)] - 2023-11-28
 

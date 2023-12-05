@@ -23,6 +23,21 @@ export class DexesAgent {
         );
     }
 
+    async canSwap(tokens: Set<string>): Promise<Set<string>> {
+        const allPools = await this._icpSwapIndexClient.getPools();
+
+        const available = new Set<string>();
+
+        for (const p of allPools) {
+            if (tokens.has(p.token0) && tokens.has(p.token1)) {
+                available.add(p.token0);
+                available.add(p.token1);
+            }
+        }
+
+        return available;
+    }
+
     async quoteSwap(
         inputToken: string,
         outputToken: string,

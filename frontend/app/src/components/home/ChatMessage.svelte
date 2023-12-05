@@ -53,6 +53,7 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import { filterRightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
+    import Diamond from "../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -128,7 +129,10 @@
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";
-    $: inert = msg.content.kind === "deleted_content" || msg.content.kind === "blocked_content" || collapsed;
+    $: inert =
+        msg.content.kind === "deleted_content" ||
+        msg.content.kind === "blocked_content" ||
+        collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
@@ -258,7 +262,7 @@
                     reaction,
                     user.username,
                     user.displayName,
-                    kind
+                    kind,
                 )
                 .then((success) => {
                     if (success && kind === "add") {
@@ -321,7 +325,7 @@
             messageWrapperWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            maxWidthFraction
+            maxWidthFraction,
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -332,7 +336,7 @@
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
                 bubbles: true,
-            })
+            }),
         );
     }
 
@@ -346,7 +350,7 @@
                 msg.messageId,
                 msg.messageIndex,
                 ev.detail.answerIndex,
-                ev.detail.type
+                ev.detail.type,
             )
             .then((success) => {
                 if (!success) {
@@ -467,13 +471,10 @@
                 {#if first && !isProposal && !isPrize}
                     <div class="sender" class:fill class:rtl={$rtlStore}>
                         <Link underline={"never"} on:click={openUserProfile}>
-                            <h4
-                                class="username"
-                                class:fill
-                                class:crypto
-                                class:diamond={sender?.diamond}>
+                            <h4 class="username" class:fill class:crypto>
                                 {senderDisplayName}
                             </h4>
+                            <Diamond status={sender?.diamondStatus} />
                         </Link>
                         {#if senderTyping}
                             <span class="typing">
@@ -796,8 +797,11 @@
     .message-bubble {
         $radius: var(--currentChat-msg-r1);
         $inner-radius: var(--currentChat-msg-r2);
-        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
-            border ease-in-out 300ms, transform ease-in-out 200ms;
+        transition:
+            box-shadow ease-in-out 200ms,
+            background-color ease-in-out 200ms,
+            border ease-in-out 300ms,
+            transform ease-in-out 200ms;
         position: relative;
         padding: toRem(8) toRem(12) toRem(8) toRem(12);
         background-color: var(--currentChat-msg-bg);
@@ -824,10 +828,6 @@
             &.fill,
             &.crypto {
                 color: #fff;
-            }
-
-            &.diamond {
-                @include diamond();
             }
         }
 

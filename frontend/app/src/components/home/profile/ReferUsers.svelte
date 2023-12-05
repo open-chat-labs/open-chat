@@ -13,6 +13,7 @@
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import Diamond from "../../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,7 +28,7 @@
             },
             () => {
                 toastStore.showFailureToast("failedToCopyLinkToClipboard");
-            }
+            },
         );
     }
 
@@ -40,7 +41,7 @@
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: { userId, chatButton: false, inGlobalContext: true },
                 bubbles: true,
-            })
+            }),
         );
     }
 </script>
@@ -78,7 +79,8 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {client.displayNameAndIcon($userStore[userId])}
+                            {client.displayName($userStore[userId])}
+                            <Diamond status={$userStore[userId]?.diamondStatus} />
                         </LinkButton>
                     </div>
                 {/each}

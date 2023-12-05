@@ -163,7 +163,7 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    message.content = args.content.into();
+                    message.content = args.content.try_into().unwrap();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
                     self.last_updated_timestamps
@@ -637,7 +637,7 @@ impl ChatEvents {
                     // Push a PrizeWinnerContent message to the group from the OpenChatBot
                     let message_event = self.push_message(PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
-                        thread_root_message_index: None,
+                        thread_root_message_index: Some(message_index),
                         message_id: rng.gen(),
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
@@ -651,7 +651,7 @@ impl ChatEvents {
                         now,
                     });
 
-                    ClaimPrizeResult::Success(message_event)
+                    ClaimPrizeResult::Success(message_index, message_event)
                 } else {
                     ClaimPrizeResult::ReservationNotFound
                 };
@@ -1463,7 +1463,7 @@ pub enum ReservePrizeResult {
 
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPrizeResult {
-    Success(EventWrapper<Message>),
+    Success(MessageIndex, EventWrapper<Message>),
     MessageNotFound,
     ReservationNotFound,
 }

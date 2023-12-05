@@ -6,11 +6,9 @@ import type {
     ChatSummary,
     CommunitySummary,
     CommunityMap,
-    DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    Message,
     MessageContext,
     ThreadSyncDetails,
     UserLookup,
@@ -19,6 +17,7 @@ import type {
     Member,
     VersionedRules,
     CreatedUser,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -43,7 +42,6 @@ import {
     chatsLoading,
     uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
-    selectedThreadRootEvent,
     selectedMessageContext,
     allChats,
     currentChatMembers,
@@ -54,7 +52,7 @@ import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
-import { diamondMembership, isDiamond } from "./stores/diamond";
+import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import {
     communities,
@@ -94,7 +92,6 @@ export class LiveState {
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
-    selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatMembers!: Member[];
     currentChatRules!: VersionedRules | undefined;
@@ -103,8 +100,9 @@ export class LiveState {
     chatsInitialised!: boolean;
     chatsLoading!: boolean;
     blockedUsers!: Set<string>;
-    diamondMembership!: DiamondMembershipDetails | undefined;
+    diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
+    isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
@@ -151,7 +149,6 @@ export class LiveState {
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
-        selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
         currentChatRules.subscribe((data) => (this.currentChatRules = data));
@@ -162,8 +159,9 @@ export class LiveState {
         chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
         chatsLoading.subscribe((data) => (this.chatsLoading = data));
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
-        diamondMembership.subscribe((data) => (this.diamondMembership = data));
+        diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
+        isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));

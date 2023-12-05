@@ -2,54 +2,19 @@ use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use types::{
     Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, DiamondMembershipStatus,
-    DiamondMembershipStatusFull, DiamondMembershipSubscription, Milliseconds, TimestampMillis,
+    DiamondMembershipStatusFull, DiamondMembershipSubscription, TimestampMillis,
 };
-use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 use utils::time::DAY_IN_MS;
 
 const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-#[serde(from = "DiamondMembershipDetailsInternalCombined")]
 pub struct DiamondMembershipDetailsInternal {
     expires_at: Option<TimestampMillis>,
     payments: Vec<DiamondMembershipPayment>,
     pay_in_chat: bool,
     subscription: DiamondMembershipSubscription,
     payment_in_progress: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DiamondMembershipDetailsInternalCombined {
-    expires_at: Option<TimestampMillis>,
-    payments: Vec<DiamondMembershipPayment>,
-    #[serde(default)]
-    pay_in_chat: bool,
-    #[serde(default)]
-    subscription: Option<DiamondMembershipSubscription>,
-    #[serde(default)]
-    recurring: bool,
-    payment_in_progress: bool,
-}
-
-impl From<DiamondMembershipDetailsInternalCombined> for DiamondMembershipDetailsInternal {
-    fn from(value: DiamondMembershipDetailsInternalCombined) -> Self {
-        let subscription = value.subscription.unwrap_or_else(|| {
-            if value.recurring {
-                value.payments.last().map(|p| p.duration.into()).unwrap_or_default()
-            } else {
-                DiamondMembershipSubscription::Disabled
-            }
-        });
-
-        DiamondMembershipDetailsInternal {
-            expires_at: value.expires_at,
-            payments: value.payments,
-            pay_in_chat: value.pay_in_chat,
-            subscription,
-            payment_in_progress: value.payment_in_progress,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -61,8 +26,6 @@ pub struct DiamondMembershipPayment {
     pub duration: DiamondMembershipPlanDuration,
     pub manual_payment: bool,
 }
-
-const THREE_MONTHS: Milliseconds = DiamondMembershipPlanDuration::ThreeMonths.as_millis();
 
 impl DiamondMembershipDetailsInternal {
     pub fn expires_at(&self) -> Option<TimestampMillis> {
@@ -114,24 +77,6 @@ impl DiamondMembershipDetailsInternal {
             pay_in_chat: self.pay_in_chat,
             recurring: self.subscription.is_active().then_some(self.subscription),
             subscription: self.subscription,
-        })
-    }
-
-    pub fn can_extend(&self, now: TimestampMillis) -> Result<(), CannotExtendResult> {
-        self.expires_at.map_or(Ok(()), |ts| {
-            let remaining_until_expired = ts.saturating_sub(now);
-
-            // Users can extend when there is < 3 months remaining
-            let remaining_until_can_extend = remaining_until_expired.saturating_sub(THREE_MONTHS);
-
-            if remaining_until_can_extend == 0 {
-                Ok(())
-            } else {
-                Err(CannotExtendResult {
-                    can_extend_at: now.saturating_add(remaining_until_can_extend),
-                    diamond_membership_expires_at: ts,
-                })
-            }
         })
     }
 

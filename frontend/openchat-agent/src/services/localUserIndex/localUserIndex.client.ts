@@ -29,44 +29,43 @@ export class LocalUserIndexClient extends CandidService {
         this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(
             idlFactory,
             canisterId,
-            config
+            config,
         );
     }
 
     static create(
         identity: Identity,
         config: AgentConfig,
-        canisterId: string
+        canisterId: string,
     ): LocalUserIndexClient {
         return new LocalUserIndexClient(identity, config, canisterId);
     }
 
     registerUser(
         username: string,
-        displayName: string | undefined,
-        referralCode: string | undefined
+        referralCode: string | undefined,
     ): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.localUserIndexService.register_user({
                 username,
-                display_name: apiOptional(identity, displayName),
+                display_name: [],
                 referral_code: apiOptional(identity, referralCode),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
-            registerUserResponse
+            registerUserResponse,
         );
     }
 
     joinCommunity(
         communityId: string,
-        inviteCode: string | undefined
+        inviteCode: string | undefined,
     ): Promise<JoinCommunityResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_community({
                 community_id: Principal.fromText(communityId),
                 invite_code: apiOptional(textToCode, inviteCode),
             }),
-            joinCommunityResponse
+            joinCommunityResponse,
         );
     }
 
@@ -77,7 +76,7 @@ export class LocalUserIndexClient extends CandidService {
                 invite_code: apiOptional(textToCode, inviteCode),
                 correlation_id: BigInt(0),
             }),
-            joinGroupResponse
+            joinGroupResponse,
         );
     }
 
@@ -88,7 +87,7 @@ export class LocalUserIndexClient extends CandidService {
                 channel_id: BigInt(id.channelId),
                 invite_code: apiOptional(textToCode, inviteCode),
             }),
-            (resp) => joinChannelResponse(resp, id.communityId)
+            (resp) => joinChannelResponse(resp, id.communityId),
         );
     }
 
@@ -98,7 +97,7 @@ export class LocalUserIndexClient extends CandidService {
                 community_id: Principal.fromText(communityId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
-            inviteUsersResponse
+            inviteUsersResponse,
         );
     }
 
@@ -109,14 +108,14 @@ export class LocalUserIndexClient extends CandidService {
                 user_ids: userIds.map((u) => Principal.fromText(u)),
                 correlation_id: BigInt(0),
             }),
-            inviteUsersResponse
+            inviteUsersResponse,
         );
     }
 
     inviteUsersToChannel(
         communityId: string,
         channelId: string,
-        userIds: string[]
+        userIds: string[],
     ): Promise<InviteUsersResponse> {
         return this.handleResponse(
             this.localUserIndexService.invite_users_to_channel({
@@ -124,7 +123,7 @@ export class LocalUserIndexClient extends CandidService {
                 channel_id: BigInt(channelId),
                 user_ids: userIds.map((u) => Principal.fromText(u)),
             }),
-            inviteUsersResponse
+            inviteUsersResponse,
         );
     }
 }

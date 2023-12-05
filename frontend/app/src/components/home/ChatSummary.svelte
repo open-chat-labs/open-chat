@@ -1,7 +1,13 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
-    import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
+    import type {
+        UserLookup,
+        ChatSummary,
+        TypersByKey,
+        CommunitySummary,
+        DiamondMembershipStatus,
+    } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
@@ -35,6 +41,7 @@
     import page from "page";
     import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
+    import Diamond from "../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,14 +73,15 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     fav,
                     eventsTTL: undefined,
@@ -81,13 +89,14 @@
             default:
                 return {
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
@@ -98,7 +107,7 @@
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
         return chat.membership.mentions.filter(
-            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId)
+            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId),
         ).length;
     }
 
@@ -107,8 +116,13 @@
             return "";
         }
 
-        if ((chatSummary.latestMessage !== undefined && chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
-            (chatSummary.latestMessage === undefined && chatSummary.eventsTTL !== undefined && chatSummary.membership.role !== "none")) {
+        if (
+            (chatSummary.latestMessage !== undefined &&
+                chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
+            (chatSummary.latestMessage === undefined &&
+                chatSummary.eventsTTL !== undefined &&
+                chatSummary.membership.role !== "none")
+        ) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
                       values: {
@@ -124,7 +138,7 @@
 
         const latestMessageText = client.getContentAsText(
             $_,
-            chatSummary.latestMessage.event.content
+            chatSummary.latestMessage.event.content,
         );
 
         if (chatSummary.kind === "direct_chat") {
@@ -135,7 +149,7 @@
             users,
             chatSummary.latestMessage.event.sender,
             chatSummary.latestMessage.event.sender === userId,
-            false
+            false,
         );
 
         return `${user}: ${latestMessageText}`;
@@ -149,7 +163,7 @@
     function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = client.unreadMessageCount(
             chatSummary.id,
-            chatSummary.latestMessage?.event.messageIndex
+            chatSummary.latestMessage?.event.messageIndex,
         );
         unreadMentions = getUnreadMentionCount(chatSummary);
 
@@ -329,7 +343,10 @@
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
-                <h4 class="chat-name">{chat.name}</h4>
+                <div class="chat-name">
+                    <h4>{chat.name}</h4>
+                    <Diamond status={chat.diamondStatus} />
+                </div>
             </div>
             <div class="chat-msg">
                 {#if chat.typing !== undefined}
@@ -475,7 +492,7 @@
                                             {interpolateLevel(
                                                 "leaveGroup",
                                                 chatSummary.level,
-                                                true
+                                                true,
                                             )}
                                         </div>
                                     </MenuItem>
@@ -544,7 +561,9 @@
         padding: $sp4;
         margin-bottom: 0;
         cursor: pointer;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         user-select: none;
 
         @include mobile() {
@@ -577,7 +596,9 @@
 
         .menu-icon {
             width: 0;
-            transition: width 200ms ease-in-out, opacity 200ms;
+            transition:
+                width 200ms ease-in-out,
+                opacity 200ms;
             height: 0;
             opacity: 0;
             position: relative;
@@ -649,7 +670,12 @@
             margin-bottom: $sp1;
 
             .chat-name {
-                @include font(medium, normal, fs-100);
+                h4 {
+                    @include font(medium, normal, fs-100);
+                }
+                display: flex;
+                align-items: center;
+                gap: $sp2;
 
                 @include ellipsis();
                 flex: auto;

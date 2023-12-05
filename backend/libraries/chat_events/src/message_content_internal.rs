@@ -155,8 +155,10 @@ impl MessageContentInternal {
     }
 }
 
-impl From<MessageContentInitial> for MessageContentInternal {
-    fn from(value: MessageContentInitial) -> Self {
+impl TryFrom<MessageContentInitial> for MessageContentInternal {
+    type Error = ();
+
+    fn try_from(value: MessageContentInitial) -> Result<Self, ()> {
         match value {
             MessageContentInitial::Text(t) => MessageContentInternal::Text(t.into()),
             MessageContentInitial::Image(i) => MessageContentInternal::Image(i.into()),
@@ -172,7 +174,7 @@ impl From<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c.into()),
             MessageContentInitial::Crypto(_) | MessageContentInitial::P2PTrade(_) | MessageContentInitial::Prize(_) => {
                 // These should be created via `new_with_transfer`
-                unimplemented!()
+                Err(())
             }
         }
     }

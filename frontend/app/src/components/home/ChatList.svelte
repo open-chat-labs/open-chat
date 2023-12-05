@@ -36,6 +36,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
+    import Diamond from "../icons/Diamond.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -300,10 +301,11 @@
                                         avatarUrl={client.userAvatarUrl(user)}
                                         on:click={() => chatWith(user.userId)}>
                                         <div class="user-result">
-                                            <h4 class:diamond={user.diamond}>
+                                            <h4>
                                                 <FilteredUsername
                                                     {searchTerm}
                                                     username={user.displayName ?? user.username} />
+                                                <Diamond status={user.diamondStatus} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername
@@ -470,10 +472,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-
-        .diamond {
-            @include diamond();
-        }
 
         .username {
             font-weight: 200;

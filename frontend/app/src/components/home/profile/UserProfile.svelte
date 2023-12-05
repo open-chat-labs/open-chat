@@ -96,6 +96,7 @@
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: isDiamond = client.isDiamond;
+    $: isLifetimeDiamond = client.isLifetimeDiamond;
     $: canExtendDiamond = client.canExtendDiamond;
     $: {
         setLocale(selectedLocale);
@@ -302,6 +303,7 @@
                     </UsernameInput>
                     <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
                     <DisplayNameInput
+                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
@@ -447,6 +449,8 @@
                                 <Button on:click={() => dispatch("upgrade")} small
                                     >{$_("upgrade.button")}</Button>
                             </ButtonGroup>
+                        {:else if $isLifetimeDiamond}
+                            {$_("upgrade.lifetimeMessage")}
                         {:else}
                             <Expiry />
                             <ButtonGroup align={"fill"}>
@@ -503,7 +507,7 @@
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile community={selectedCommunity} />
+        <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
 {/if}
 

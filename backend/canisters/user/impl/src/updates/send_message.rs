@@ -5,7 +5,7 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{PushMessageArgs, Reader};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use rand::Rng;
 use tracing::error;
@@ -169,7 +169,11 @@ fn send_message_impl(
         thread_root_message_index: None,
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone().into(),
+        content: if let Some(transfer) = completed_transfer.clone() {
+            MessageContentInternal::new_with_transfer(args.content.clone(), transfer)
+        } else {
+            args.content.clone().try_into().unwrap()
+        },
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
@@ -322,7 +326,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         sender: recipient,
                         thread_root_message_index: None,
                         message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                        content: message.content.into(),
+                        content: message.content.try_into().unwrap(),
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,

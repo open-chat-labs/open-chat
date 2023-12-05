@@ -15,6 +15,7 @@ mod delete_message_tests;
 mod diamond_membership_tests;
 mod disappearing_message_tests;
 mod env;
+mod escrow_tests;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
@@ -77,7 +78,9 @@ pub struct CanisterIds {
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
+    pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
 }
 

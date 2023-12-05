@@ -369,12 +369,24 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export interface DiamondMembershipDetails {
-  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'pay_in_chat' : boolean,
+  'subscription' : DiamondMembershipSubscription,
+  'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
 }
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
+export type DiamondMembershipStatus = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
+export type DiamondMembershipSubscription = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'Disabled' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
@@ -1038,14 +1050,6 @@ export interface OptionalMessagePermissions {
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
-export interface PartialUserSummary {
-  'username' : [] | [string],
-  'diamond_member' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'avatar_id' : [] | [bigint],
-  'suspended' : boolean,
-}
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1337,6 +1341,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatus,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],

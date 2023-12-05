@@ -127,13 +127,18 @@ import {
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
-    selectedThreadRootEvent,
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
     focusThreadMessageIndex,
     selectedMessageContext,
 } from "./stores/chat";
-import { cryptoBalance, cryptoLookup, lastCryptoSent, nervousSystemLookup } from "./stores/crypto";
+import {
+    cryptoBalance,
+    cryptoLookup,
+    enhancedCryptoLookup,
+    lastCryptoSent,
+    nervousSystemLookup,
+} from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
@@ -287,7 +292,6 @@ import type {
     UserStatus,
     ThreadRead,
     DiamondMembershipDuration,
-    DiamondMembershipDetails,
     DiamondMembershipFees,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
@@ -344,13 +348,13 @@ import type {
     OptionalChatPermissions,
     ExpiredEventsRange,
     UpdatesResult,
-    TokenSwapPool,
     DexId,
     SwapTokensResponse,
     TokenSwapStatusResponse,
     Member,
     Level,
     VersionedRules,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -385,13 +389,16 @@ import {
     anonymousUser,
     ANON_USER_ID,
     isPaymentGate,
+    ONE_MINUTE_MILLIS,
+    ONE_HOUR,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
     canExtendDiamond,
-    diamondMembership,
+    diamondStatus,
     isDiamond,
     diamondDurationToMs,
+    isLifetimeDiamond,
 } from "./stores/diamond";
 import {
     addCommunityPreview,
@@ -433,13 +440,11 @@ import { offlineStore } from "./stores/network";
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
 const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); // 30 days
-const ONE_MINUTE_MILLIS = 60 * 1000;
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
-const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
@@ -693,12 +698,21 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (userId === this._liveState.user.userId) return this._liveState.isDiamond;
 
-        return user.diamond;
+        return user.diamondStatus !== "inactive";
+    }
+
+    userIsLifetimeDiamond(userId: string): boolean {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return false;
+
+        if (userId === this._liveState.user.userId) return this._liveState.isLifetimeDiamond;
+
+        return user.diamondStatus === "lifetime";
     }
 
     diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
-        if (this._liveState.diamondMembership !== undefined) {
-            return formatRelativeTime(now, locale, this._liveState.diamondMembership.expiresAt);
+        if (this._liveState.diamondStatus.kind === "active") {
+            return formatRelativeTime(now, locale, this._liveState.diamondStatus.expiresAt);
         }
     }
 
@@ -711,7 +725,7 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this.user.set(user);
-        this.setDiamondMembership(user.diamondMembership);
+        this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -1349,6 +1363,7 @@ export class OpenChat extends OpenChatAgentWorker {
     userOrUserGroupId = userOrUserGroupId;
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
+    toRecord = toRecord;
     toDatetimeString = toDatetimeString;
     groupBySender = groupBySender;
     groupBy = groupBy;
@@ -2232,24 +2247,40 @@ export class OpenChat extends OpenChatAgentWorker {
 
     openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
         this.clearThreadEvents();
-        selectedThreadRootEvent.set(threadRootEvent);
-        if (!initiating && this._liveState.selectedChatId !== undefined) {
-            if (this._liveState.focusThreadMessageIndex !== undefined) {
-                this.loadEventWindow(
-                    this._liveState.selectedChatId,
-                    this._liveState.focusThreadMessageIndex,
-                    threadRootEvent,
-                    true,
-                );
-            } else {
-                this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return {
+                    ...context,
+                    threadRootMessageIndex: threadRootEvent.event.messageIndex,
+                };
             }
+            return context;
+        });
+
+        const context = this._liveState.selectedMessageContext;
+        if (context) {
+            if (!initiating) {
+                if (this._liveState.focusThreadMessageIndex !== undefined) {
+                    this.loadEventWindow(
+                        context.chatId,
+                        this._liveState.focusThreadMessageIndex,
+                        threadRootEvent,
+                        true,
+                    );
+                } else {
+                    this.loadPreviousMessages(context.chatId, threadRootEvent, true);
+                }
+            }
+            this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
         }
-        this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
 
     closeThread(): void {
-        selectedThreadRootEvent.set(undefined);
+        selectedMessageContext.update((context) => {
+            if (context) {
+                return { chatId: context.chatId };
+            }
+        });
         this.dispatchEvent(new ThreadClosed());
     }
 
@@ -2512,7 +2543,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     earliestAvailableEventIndex(chat: ChatSummary): number {
-        return chat.kind === "group_chat" ? chat.minVisibleEventIndex : 0;
+        return chat.kind === "direct_chat" ? 0 : chat.minVisibleEventIndex;
     }
 
     private earliestLoadedIndex(chatId: ChatIdentifier): number | undefined {
@@ -2679,8 +2710,9 @@ export class OpenChat extends OpenChatAgentWorker {
     ): Promise<void> {
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.id);
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
-        const selectedThreadRootEvent = this._liveState.selectedThreadRootEvent;
-        const selectedThreadRootMessageIndex = selectedThreadRootEvent?.event?.messageIndex;
+        const selectedThreadRootMessageIndex =
+            this._liveState.selectedMessageContext?.threadRootMessageIndex;
+        const selectedChatId = this._liveState.selectedChatId;
 
         // Partition the updated events into those that belong to the currently selected thread and those that don't
         const [currentChatEvents, currentThreadEvents] = updatedEvents.reduce(
@@ -2688,6 +2720,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (e.threadRootMessageIndex !== undefined) {
                     if (
                         e.threadRootMessageIndex === selectedThreadRootMessageIndex &&
+                        chatIdentifiersEqual(serverChat.id, selectedChatId) &&
                         indexIsInRanges(e.eventIndex, confirmedThreadLoaded)
                     ) {
                         thread.push(e.eventIndex);
@@ -2946,7 +2979,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         e.event.messageIndex === selectedThreadRootMessageIndex,
                 );
                 if (threadRootEvent !== undefined) {
-                    selectedThreadRootEvent.set(threadRootEvent as EventWrapper<Message>);
                     this.dispatchEvent(
                         new ChatUpdated({
                             chatId,
@@ -3049,10 +3081,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(
-                            msg.content.transfer.ledger,
-                            this._liveState.user.cryptoAccount,
-                        );
+                        this.refreshAccountBalance(msg.content.transfer.ledger);
                     }
                     if (threadRootMessageIndex !== undefined) {
                         trackEvent("sent_threaded_message");
@@ -3234,10 +3263,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(
-                            msg.content.transfer.ledger,
-                            this._liveState.user.userId,
-                        );
+                        this.refreshAccountBalance(msg.content.transfer.ledger);
                     }
                     if (threadRootMessageIndex !== undefined) {
                         trackEvent("sent_threaded_message");
@@ -3811,11 +3837,10 @@ export class OpenChat extends OpenChatAgentWorker {
         return captured;
     }
 
-    registerUser(username: string, displayName: string | undefined): Promise<RegisterUserResponse> {
+    registerUser(username: string): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             username,
-            displayName,
             referralCode: this._referralCode,
         }).then((res) => {
             console.log("register user response: ", res);
@@ -3835,7 +3860,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         userCreatedStore.set(true);
                         selectedAuthProviderStore.init(AuthProvider.II);
                         this.user.set(user);
-                        this.setDiamondMembership(user.diamondMembership);
+                        this.setDiamondStatus(user.diamondStatus);
                     }
                     if (!resolved) {
                         // we want to resolve the promise with the first response from the stream so that
@@ -4134,13 +4159,20 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
-        return this.sendRequest({ kind: "refreshAccountBalance", ledger, principal }).then(
-            (val) => {
-                cryptoBalance.set(ledger, val);
-                return val;
-            },
-        );
+    refreshAccountBalance(ledger: string): Promise<bigint> {
+        const user = this._liveState.user;
+        if (user === undefined) {
+            return Promise.resolve(0n);
+        }
+
+        return this.sendRequest({
+            kind: "refreshAccountBalance",
+            ledger,
+            principal: user.userId,
+        }).then((val) => {
+            cryptoBalance.set(ledger, val);
+            return val;
+        });
     }
 
     async getAccountTransactions(
@@ -4876,18 +4908,18 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    private updateDiamondStatusInUserStore(now: number, details?: DiamondMembershipDetails): void {
-        const diamond = details !== undefined && Number(details.expiresAt) > now;
-        this.overwriteUserInStore(this._liveState.user.userId, (user) =>
-            user.diamond !== diamond ? { ...user, diamond } : undefined,
-        );
+    private updateDiamondStatusInUserStore(status: DiamondMembershipStatus): void {
+        this.overwriteUserInStore(this._liveState.user.userId, (user) => {
+            const changed = status.kind !== user.diamondStatus;
+            return changed ? { ...user, diamondStatus: status.kind } : undefined;
+        });
     }
 
-    private setDiamondMembership(details?: DiamondMembershipDetails): void {
+    private setDiamondStatus(status: DiamondMembershipStatus): void {
         const now = Date.now();
-        this.updateDiamondStatusInUserStore(now, details);
-        if (details !== undefined) {
-            const expiry = Number(details.expiresAt);
+        this.updateDiamondStatusInUserStore(status);
+        if (status.kind === "active") {
+            const expiry = Number(status.expiresAt);
             if (expiry > now) {
                 if (this._membershipCheck !== undefined) {
                     window.clearTimeout(this._membershipCheck);
@@ -4936,9 +4968,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 } else {
                     this.user.update((user) => ({
                         ...user,
-                        diamondMembership: resp.details,
+                        diamondStatus: resp.status,
                     }));
-                    this.setDiamondMembership(resp.details);
+                    this.setDiamondStatus(resp.status);
                     return true;
                 }
             })
@@ -5026,9 +5058,9 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getReferralLeaderboard", args });
     }
 
-    displayNameAndIcon(user?: UserSummary): string {
+    displayName(user?: UserSummary): string {
         return user !== undefined
-            ? `${user?.displayName ?? user?.username}  ${user?.diamond ? "💎" : ""}`
+            ? `${user?.displayName ?? user?.username}`
             : this.config.i18nFormatter("unknownUser");
     }
 
@@ -5129,6 +5161,16 @@ export class OpenChat extends OpenChatAgentWorker {
         );
 
         cryptoLookup.set(cryptoRecord);
+
+        if (!this._liveState.anonUser) {
+            window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+        }
+    }
+
+    private async refreshBalancesInSeries() {
+        for (const t of Object.values(get(cryptoLookup))) {
+            await this.refreshAccountBalance(t.ledger);
+        }
     }
 
     private getSnsLogo(governanceCanisterId: string): string | undefined {
@@ -5253,48 +5295,61 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    getTokenSwapPools(inputToken: string): Promise<TokenSwapPool[]> {
-        const outputTokens = Object.keys(get(cryptoLookup)).filter((t) => t !== inputToken);
-
+    swappableTokens(): Promise<Set<string>> {
         return this.sendRequest({
-            kind: "getTokenSwapPools",
-            inputToken,
-            outputTokens,
+            kind: "canSwap",
+            tokenLedgers: new Set(Object.keys(get(cryptoLookup))),
         });
     }
 
-    quoteTokenSwap(
-        inputToken: string,
-        outputToken: string,
+    getTokenSwaps(inputTokenLedger: string): Promise<Record<string, DexId[]>> {
+        const outputTokenLedgers = Object.keys(get(cryptoLookup)).filter(
+            (t) => t !== inputTokenLedger,
+        );
+
+        return this.sendRequest({
+            kind: "getTokenSwaps",
+            inputTokenLedger,
+            outputTokenLedgers,
+        });
+    }
+
+    getTokenSwapQuotes(
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
         return this.sendRequest({
-            kind: "quoteTokenSwap",
-            inputToken,
-            outputToken,
+            kind: "getTokenSwapQuotes",
+            inputTokenLedger,
+            outputTokenLedger,
             amountIn,
         });
     }
 
     swapTokens(
         swapId: bigint,
-        inputToken: string,
-        outputToken: string,
+        inputTokenLedger: string,
+        outputTokenLedger: string,
         amountIn: bigint,
         minAmountOut: bigint,
-        pool: TokenSwapPool,
+        dex: DexId,
     ): Promise<SwapTokensResponse> {
         const lookup = get(cryptoLookup);
 
-        return this.sendRequest({
-            kind: "swapTokens",
-            swapId,
-            inputToken: lookup[inputToken],
-            outputToken: lookup[outputToken],
-            amountIn,
-            minAmountOut,
-            pool,
-        });
+        return this.sendRequest(
+            {
+                kind: "swapTokens",
+                swapId,
+                inputTokenDetails: lookup[inputTokenLedger],
+                outputTokenDetails: lookup[outputTokenLedger],
+                amountIn,
+                minAmountOut,
+                dex,
+            },
+            false,
+            1000 * 60 * 3,
+        );
     }
 
     tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
@@ -5766,6 +5821,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
@@ -5799,9 +5855,9 @@ export class OpenChat extends OpenChatAgentWorker {
     userMetrics = userMetrics;
     threadEvents = threadEvents;
     isDiamond = isDiamond;
+    isLifetimeDiamond = isLifetimeDiamond;
     canExtendDiamond = canExtendDiamond;
-    diamondMembership = diamondMembership;
-    selectedThreadRootEvent = selectedThreadRootEvent;
+    diamondStatus = diamondStatus;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;

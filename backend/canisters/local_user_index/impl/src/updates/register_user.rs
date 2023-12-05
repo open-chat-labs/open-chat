@@ -14,7 +14,7 @@ use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegister
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
-use utils::text_validation::{validate_display_name, validate_username, UsernameValidationError};
+use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
 
@@ -49,17 +49,7 @@ async fn register_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| {
-                commit(
-                    caller,
-                    user_id,
-                    args.username,
-                    args.display_name,
-                    wasm_version,
-                    referral_code,
-                    state,
-                )
-            });
+            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
@@ -121,15 +111,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
-    if let Some(display_name) = args.display_name.as_ref() {
-        match validate_display_name(display_name) {
-            Ok(_) => {}
-            Err(UsernameValidationError::TooShort(s)) => return Err(DisplayNameTooShort(s.min_length as u16)),
-            Err(UsernameValidationError::TooLong(l)) => return Err(DisplayNameTooLong(l.max_length as u16)),
-            Err(UsernameValidationError::Invalid) => return Err(DisplayNameInvalid),
-        };
-    }
-
     let openchat_bot_messages = if referral_code
         .as_ref()
         .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
@@ -171,7 +152,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         proposals_bot_canister_id: state.data.proposals_bot_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
-        display_name: args.display_name.clone(),
         openchat_bot_messages,
         test_mode: state.data.test_mode,
     };
@@ -192,7 +172,6 @@ fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
-    display_name: Option<String>,
     wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
     state: &mut RuntimeState,
@@ -205,7 +184,6 @@ fn commit(
         principal,
         user_id,
         username: username.clone(),
-        display_name: display_name.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
     })));
 

@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.959](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.959-local_user_index)] - 2023-12-05
+
+### Added
+
+- Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876))
+
+### Changed
+
+- Remove `display_name` from `register_user` args ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
+
 ## [[2.0.948](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.948-local_user_index)] - 2023-11-28
 
 ### Added

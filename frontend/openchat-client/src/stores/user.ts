@@ -23,7 +23,7 @@ export const openChatBotUser: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
-    diamond: false,
+    diamondStatus: "inactive",
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -34,7 +34,7 @@ export const anonymousUserSummary: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: ANON_AVATAR_URL,
-    diamond: false,
+    diamondStatus: "inactive",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -50,7 +50,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
-        diamond: false,
+        diamondStatus: "inactive",
     };
 }
 
@@ -73,7 +73,10 @@ export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup
 
 export const userStore = {
     subscribe: allUsers.subscribe,
-    set: (users: UserLookup): void => normalUsers.set(users),
+    set: (users: UserLookup): void => {
+        normalUsers.set(users);
+        suspendedUsers.set(new Set(extractSuspendedUsers(Object.values(users))));
+    },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
@@ -88,13 +91,7 @@ export const userStore = {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
-        const suspended = newUsers.reduce((arr, user) => {
-            if (user.suspended) {
-                arr.push(user.userId);
-            }
-            return arr;
-        }, [] as string[]);
-        suspendedUsers.addMany(suspended);
+        suspendedUsers.addMany(extractSuspendedUsers(newUsers));
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
@@ -122,3 +119,12 @@ export const platformModerator = derived(
     currentUser,
     ($currentUser) => $currentUser.isPlatformModerator,
 );
+
+function extractSuspendedUsers(users: UserSummary[]): string[] {
+    return users.reduce((arr, user) => {
+        if (user.suspended) {
+            arr.push(user.userId);
+        }
+        return arr;
+    }, [] as string[]);
+}

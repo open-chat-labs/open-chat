@@ -164,6 +164,7 @@ type SwapTokensResponse = variant {
     Success : record {
         amount_out : nat;
     };
+    SwapFailed;
     InternalError : text;
 };
 
@@ -194,13 +195,17 @@ type TokenSwapStatusResponse = variant {
             Err : text;
         };
         amount_swapped : opt variant {
-            Ok : nat;
+            Ok : variant {
+                Ok : nat;
+                Err : text;
+            };
             Err : text;
         };
         withdraw_from_dex : opt variant {
             Ok : nat;
             Err : text;
         };
+        success : opt bool;
     };
     NotFound;
 };
