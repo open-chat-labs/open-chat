@@ -56,10 +56,10 @@
         drawOpen = false;
     }
 
-    function createPrizeMessage() {
-        dispatch("createPrizeMessage");
-        drawOpen = false;
-    }
+    // function createPrizeMessage() {
+    //     dispatch("createPrizeMessage");
+    //     drawOpen = false;
+    // }
 
     function toggleEmojiPicker() {
         toggleAction("emoji");
