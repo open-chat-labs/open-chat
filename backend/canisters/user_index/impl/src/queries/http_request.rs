@@ -24,7 +24,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
             .users
             .iter()
             .filter(|u| u.is_bot)
-            .map(|u| u.user_id.to_string())
+            .map(|u| (u.user_id.to_string(), u.username.clone()))
             .collect();
 
         build_json_response(&bots)
@@ -34,7 +34,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         let mut grouped: BTreeMap<String, u32> = BTreeMap::new();
         for user in state.data.users.iter().filter(|u| u.date_created > 0) {
             let date = time::OffsetDateTime::from_unix_timestamp((user.date_created / 1000) as i64).unwrap();
-            let date_string = format!("{}-{}-{}", date.year(), u8::from(date.month()), date.day());
+            let date_string = format!("{}-{:02}-{:02}", date.year(), u8::from(date.month()), date.day());
             *grouped.entry(date_string).or_default() += 1;
         }
         build_json_response(&grouped)
