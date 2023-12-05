@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
 - Switch to `c2c_send_message` when sending messages c2c to groups or channels ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
 - Remove `display_name` from `init` args ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
+- Handle case where swap fails due to slippage ([#4924](https://github.com/open-chat-labs/open-chat/pull/4924))
 
 ## [[2.0.947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.947-user)] - 2023-11-24
 
