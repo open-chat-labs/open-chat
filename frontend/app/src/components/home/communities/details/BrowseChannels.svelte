@@ -19,6 +19,7 @@
     let pageSize = 100;
     let searchResults: ChannelMatch[] = [];
     let total = 0;
+    let autoOpen = false;
     $: more = total > searchResults.length;
 
     $: myChannels = ChatMap.fromList($chatSummariesListStore ?? []);
@@ -49,7 +50,10 @@
                     }
                     total = results.total;
                     if (searchTerm !== "" && filteredResults.length > 0 && !$browseChannels) {
-                        browseChannels.toggle();
+                        autoOpen = true;
+                    }
+                    if (searchTerm === "" && autoOpen && !$browseChannels) {
+                        autoOpen = false;
                     }
                 }
             })
@@ -69,11 +73,11 @@
             fill
             first
             on:toggle={browseChannels.toggle}
-            open={$browseChannels}
+            open={$browseChannels || autoOpen}
             headerText={$_("communities.otherChannels")}>
             <div slot="titleSlot" class="browse-channels">
                 <div class="disc">#</div>
-                <div class="label">{$_("communities.browseChannels")}</div>
+                <div class="label">{$_("communities.otherChannels")}</div>
             </div>
 
             <div class="channels">
