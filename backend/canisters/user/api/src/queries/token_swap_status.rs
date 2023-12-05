@@ -21,6 +21,7 @@ pub struct TokenSwapStatus {
     pub notify_dex: SwapSubtask<()>,
     pub amount_swapped: SwapSubtask<Result<u128, String>>,
     pub withdraw_from_dex: SwapSubtask<u128>,
+    pub success: Option<bool>,
 }
 
 type SwapSubtask<T = ()> = Option<Result<T, String>>;

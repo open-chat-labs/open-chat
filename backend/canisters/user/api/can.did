@@ -204,6 +204,7 @@ type TokenSwapStatusResponse = variant {
             Ok : nat;
             Err : text;
         };
+        success : opt bool;
     };
     NotFound;
 };
