@@ -1185,8 +1185,17 @@
         "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
         "quoteError": "שגיאה בקבלת ציטוטים להחלפה של {tokenIn}",
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
-        "swapFailed": "נכשל ההחלפה של **{amountIn}** {tokenIn} ב-**{minAmountOut}** {tokenOut} לפחות באמצעות {dex}",
         "swapSucceeded": "הוחלף בהצלחה את **{amountIn}** {tokenIn} ל**{amountOut}** {tokenOut} באמצעות {dex}",
-        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?"
+        "swapFailed": "{dex} לא הצליח להחליף את **{amountIn}** {tokenIn} לפחות ב-**{minAmountOut}** {tokenOut}.",
+        "progress": {
+            "get": "קבל חשבון פיקדון",
+            "deposit": "העבר את {amountIn} {tokenIn} אל {dex}",
+            "notify": "הודע ל-{dex} על ההפקדה",
+            "swap": "הוראה ל-{dex} לבצע את ההחלפה",
+            "withdraw": "משך את {amountOut} {tokenOut} מ-{dex}",
+            "refund": "החזר {amountIn} {tokenIn} מ-{dex}"
+        },
+        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?",
+        "swapError": "לא ניתן לעבד את ההחלפה. שום כספים לא אבדו."
     }
 }

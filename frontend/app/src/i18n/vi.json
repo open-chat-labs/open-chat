@@ -1188,8 +1188,17 @@
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
-        "swapFailed": "Không thể hoán đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut} bằng cách sử dụng {dex}",
         "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}",
-        "swapInfo": "Giá được báo giá tốt nhất là **{rate}** từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?"
+        "swapFailed": "{dex} không thể trao đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut}.",
+        "progress": {
+            "get": "Nhận tài khoản tiền gửi",
+            "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
+            "notify": "Thông báo {dex} về khoản tiền gửi",
+            "swap": "Hướng dẫn {dex} thực hiện hoán đổi",
+            "withdraw": "Rút {amountOut} {tokenOut} từ {dex}",
+            "refund": "Hoàn tiền {amountIn} {tokenIn} từ {dex}"
+        },
+        "swapInfo": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
+        "swapError": "Không thể xử lý trao đổi. Không có khoản tiền nào bị mất."
     }
 }

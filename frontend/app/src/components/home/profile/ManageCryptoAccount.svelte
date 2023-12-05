@@ -37,6 +37,7 @@
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: title = $_(`cryptoAccount.${mode}Token`, { values: { symbol } });
     $: cryptoBalance = client.cryptoBalance;
+    $: swapping = mode === "swap" && swapStep === "swap" && busy;
     $: secondaryButtonText = $_(
         capturingAccount
             ? "noThanks"
@@ -55,7 +56,7 @@
     );
 
     $: remainingBalance =
-        amountToSend > BigInt(0)
+        amountToSend > BigInt(0) && swapStep !== "swapped"
             ? $cryptoBalance[ledger] - amountToSend - transferFees
             : $cryptoBalance[ledger];
 
@@ -97,7 +98,7 @@
     }
 </script>
 
-<Overlay on:close dismissible>
+<Overlay on:close>
     <ModalContent>
         <span class="header" slot="header">
             <div class="main-title">{title}</div>
@@ -107,6 +108,7 @@
                 value={remainingBalance}
                 label={$_("cryptoAccount.shortBalanceLabel")}
                 minDecimals={2}
+                showRefresh={!swapping}
                 bold
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
@@ -145,10 +147,12 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                <Button
-                    secondary={mode !== "receive"}
-                    tiny={$mobileWidth}
-                    on:click={onSecondaryClick}>{secondaryButtonText}</Button>
+                {#if !swapping}
+                    <Button
+                        secondary={mode !== "receive"}
+                        tiny={$mobileWidth}
+                        on:click={onSecondaryClick}>{secondaryButtonText}</Button>
+                {/if}
                 {#if mode !== "receive" && swapStep !== "swapped"}
                     <Button
                         disabled={busy || !valid}

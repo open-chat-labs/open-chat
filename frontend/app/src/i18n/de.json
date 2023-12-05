@@ -1189,8 +1189,17 @@
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
         "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
-        "swapFailed": "Fehler beim Austauschen von **{amountIn}** {tokenIn} gegen mindestens **{minAmountOut}** {tokenOut} mit {dex} fehlgeschlagen",
         "swapSucceeded": "**{amountIn}** {tokenIn} erfolgreich gegen **{amountOut}** {tokenOut} mit {dex} ausgetauscht",
-        "swapInfo": "Der beste angegebene Tarif ist **{rate}** ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?"
+        "swapFailed": "{dex} konnte **{amountIn}** {tokenIn} nicht gegen mindestens **{minAmountOut}** {tokenOut} austauschen.",
+        "progress": {
+            "get": "Holen Sie sich ein Einlagenkonto",
+            "deposit": "Übertragen Sie {amountIn} {tokenIn} an {dex}",
+            "notify": "Benachrichtigen Sie {dex} über die Einzahlung",
+            "swap": "Weisen Sie {dex} an, den Austausch durchzuführen",
+            "withdraw": "{amountOut} {tokenOut} von {dex} abheben",
+            "refund": "Erstattung von {amountIn} {tokenIn} von {dex}"
+        },
+        "swapInfo": "Der beste angegebene Tarif ist **{rate}** {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?",
+        "swapError": "Der Austausch konnte nicht verarbeitet werden. Es sind keine Gelder verloren gegangen."
     }
 }

@@ -15,6 +15,7 @@
     export let bold = false;
     export let toppingUp = false;
     export let showTopUp = false;
+    export let showRefresh = true;
     export let refreshing = false;
 
     $: cryptoLookup = client.cryptoLookup;
@@ -58,9 +59,11 @@
     <div class="amount" class:bold>
         {client.formatTokens(value, minDecimals, tokenDetails.decimals)}
     </div>
-    <div class="refresh" class:refreshing on:click={refresh}>
-        <Refresh size={"1em"} color={"var(--icon-txt)"} />
-    </div>
+    {#if showRefresh}
+        <div class="refresh" class:refreshing on:click={refresh}>
+            <Refresh size={"1em"} color={"var(--icon-txt)"} />
+        </div>
+    {/if}
     {#if showTopUp}
         <div class="top-up" on:click={topUp} title={$_("cryptoAccount.topUp")}>
             <Plus size={"1em"} color={toppingUp ? "var(--icon-selected)" : "var(--icon-txt)"} />

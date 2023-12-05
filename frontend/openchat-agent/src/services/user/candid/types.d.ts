@@ -1801,7 +1801,8 @@ export interface SwapTokensArgs {
     },
   'output_token' : TokenInfo,
 }
-export type SwapTokensResponse = { 'Success' : { 'amount_out' : bigint } } |
+export type SwapTokensResponse = { 'SwapFailed' : null } |
+  { 'Success' : { 'amount_out' : bigint } } |
   { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
@@ -1877,7 +1878,11 @@ export type TokenSwapStatusResponse = { 'NotFound' : null } |
     'Success' : {
       'started' : TimestampMillis,
       'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
-      'amount_swapped' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'amount_swapped' : [] | [
+        { 'Ok' : { 'Ok' : bigint } | { 'Err' : string } } |
+          { 'Err' : string }
+      ],
+      'success' : [] | [boolean],
       'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
       'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
       'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],

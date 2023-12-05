@@ -1188,8 +1188,17 @@
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
-        "swapFailed": "{amountIn} を使用して **{tokenIn}** {minAmountOut} を少なくとも **{tokenOut}** {dex} と交換できませんでした",
         "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました",
-        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?"
+        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?",
+        "swapFailed": "{dex} は **{amountIn}** {tokenIn} を少なくとも **{minAmountOut}** {tokenOut} と交換できませんでした。",
+        "progress": {
+            "get": "預金口座を取得する",
+            "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
+            "notify": "{dex} に入金を通知する",
+            "swap": "{dex} にスワップを実行するように指示します",
+            "withdraw": "{amountOut} {tokenOut} を {dex} から出金する",
+            "refund": "{amountIn} から {tokenIn} を払い戻します"
+        },
+        "swapError": "スワップを処理できません。資金の損失はありません。"
     }
 }

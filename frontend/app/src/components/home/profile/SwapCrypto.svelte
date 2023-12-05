@@ -8,6 +8,7 @@
     import { Record } from "@dfinity/candid/lib/cjs/idl";
     import CryptoSelector from "../CryptoSelector.svelte";
     import Legend from "../../Legend.svelte";
+    import SwapProgress from "./SwapProgress.svelte";
 
     export let ledgerIn: string;
     export let amountIn: bigint;
@@ -29,7 +30,12 @@
     $: detailsIn = $cryptoLookup[ledgerIn];
     $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
-    //$: swapping = swapStep === "swap" && busy;
+    $: swapping = swapStep === "swap" && busy;
+    $: amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
+    $: minAmountOut =
+        bestQuote !== undefined
+            ? (bestQuote[1] * BigInt(detailsIn.symbol === "CHAT" ? 102 : 98)) / BigInt(100)
+            : BigInt(0);
 
     $: {
         valid =
@@ -60,7 +66,6 @@
 
                     const [dexId, quote] = bestQuote!;
                     const amountOutText = client.formatTokens(quote, 0, detailsOut!.decimals);
-                    const amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const swapText = $_("tokenSwap.title");
@@ -91,49 +96,11 @@
         if (!valid) return;
 
         busy = true;
+        message = "";
         dispatch("error", undefined);
-
         swapId = random128();
 
-        const [dex, quote] = bestQuote!;
-        const minAmountOut = (quote * BigInt(98)) / BigInt(100);
-        const amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
-        const minAmountOutText = client.formatTokens(minAmountOut, 0, detailsOut!.decimals);
-        const values = {
-            tokenIn: detailsIn.symbol,
-            tokenOut: detailsOut!.symbol,
-            amountIn: amountInText,
-            minAmountOut: minAmountOutText,
-            dex: dexName(dex),
-        };
-
-        client
-            .swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, dex)
-            .then((response) => {
-                if (response.kind === "success") {
-                    swapStep = "swapped";
-                    const amountOutText = client.formatTokens(
-                        response.amountOut,
-                        0,
-                        detailsOut!.decimals,
-                    );
-                    message = $_("tokenSwap.swapSucceeded", {
-                        values: { ...values, amountOut: amountOutText },
-                    });
-                } else {
-                    dispatch("error", { error: "tokenSwap.swapFailed", values });
-                }
-            })
-            .catch((err) => {
-                client.logError(
-                    `Failed to swap ${detailsIn.symbol} to ${detailsOut!.symbol} on ${dexName(
-                        dex,
-                    )}`,
-                    err,
-                );
-                dispatch("error", { error: "tokenSwap.swapFailed", values });
-            })
-            .finally(() => (busy = false));
+        client.swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0]);
     }
 
     function dexName(dex: DexId): string {
@@ -152,6 +119,34 @@
 
     function onLedgerInSelected(ev: CustomEvent<{ ledger: string; urlFormat: string }>): void {
         loadSwaps(ev.detail.ledger);
+    }
+
+    function onSwapComplete(
+        ev: CustomEvent<{ status: "success" | "failure" | "error"; amountOut: string }>,
+    ): void {
+        busy = false;
+        swapStep = "swapped";
+
+        const minAmountOutText = client.formatTokens(minAmountOut, 0, detailsOut!.decimals);
+        const values = {
+            tokenIn: detailsIn.symbol,
+            tokenOut: detailsOut!.symbol,
+            amountIn: amountInText,
+            amountOut: ev.detail.amountOut,
+            minAmountOut: minAmountOutText,
+            dex: dexName(bestQuote![0]),
+        };
+
+        if (ev.detail.status === "success") {
+            message = $_("tokenSwap.swapSucceeded", { values });
+        } else if (ev.detail.status === "failure") {
+            message = $_("tokenSwap.swapFailed", { values });
+        } else {
+            message = $_("tokenSwap.swapError");
+        }
+
+        client.refreshAccountBalance(ledgerIn);
+        client.refreshAccountBalance(ledgerOut!);
     }
 </script>
 
@@ -185,6 +180,17 @@
             </div>
         </div>
     {/await}
+{/if}
+
+{#if swapping && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+    <SwapProgress
+        {swapId}
+        tokenIn={detailsIn.symbol}
+        tokenOut={detailsOut.symbol}
+        amountIn={amountInText}
+        decimalsOut={detailsOut.decimals}
+        dex={dexName(bestQuote[0])}
+        on:complete={onSwapComplete} />
 {/if}
 
 {#if message !== undefined}

@@ -1187,8 +1187,17 @@
         "getTokenSwapsError": "Ошибка при получении свопов для {tokenIn}.",
         "quoteError": "Ошибка получения котировок для обмена {tokenIn}",
         "findingAvailableTokens": "поиск доступных токенов для обмена...",
-        "swapFailed": "Не удалось заменить **{amountIn}** {tokenIn} как минимум на **{minAmountOut}** {tokenOut} с помощью {dex}.",
         "swapSucceeded": "Успешно заменен **{amountIn}** {tokenIn} на **{amountOut}** {tokenOut} с помощью {dex}.",
-        "swapInfo": "Лучшая заявленная цена — **{rate}** от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?"
+        "swapFailed": "Пользователю {dex} не удалось обменять **{amountIn}** {tokenIn} как минимум на **{minAmountOut}** {tokenOut}.",
+        "progress": {
+            "get": "Получить депозитный счет",
+            "deposit": "Перевести {amountIn} {tokenIn} в {dex}",
+            "notify": "Уведомить {dex} о депозите",
+            "swap": "Поручите {dex} выполнить замену",
+            "withdraw": "Вывести {amountOut} {tokenOut} из {dex}",
+            "refund": "Возврат средств на {amountIn} {tokenIn} от {dex}"
+        },
+        "swapInfo": "Лучшая заявленная цена — **{rate}** {tokenOut} за {tokenIn} от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?",
+        "swapError": "Не удалось обработать обмен. Никакие средства не были потеряны."
     }
 }

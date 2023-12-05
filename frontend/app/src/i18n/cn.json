@@ -1188,8 +1188,17 @@
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
         "quoteError": "获取交换 {tokenIn} 的报价时出错",
         "findingAvailableTokens": "正在寻找可用的代币进行交换...",
-        "swapFailed": "无法使用 {amountIn} 将 **{tokenIn}** {minAmountOut} 至少交换为 **{tokenOut}** {dex}",
         "swapSucceeded": "已使用 {amountIn} 成功将 **{tokenIn}** {amountOut} 交换为 **{tokenOut}** {dex}",
-        "swapInfo": "最优惠的报价是来自 {rate} 的 **{dex}**。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会继续进行。您想继续尝试“{swap}”吗？"
+        "swapFailed": "{dex} 无法将 **{amountIn}** {tokenIn} 交换为至少 **{minAmountOut}** {tokenOut}。",
+        "progress": {
+            "get": "获取存款账户",
+            "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
+            "notify": "通知{dex}存款",
+            "swap": "指示 {dex} 执行交换",
+            "withdraw": "从 {amountOut} 中撤回 {tokenOut} {dex}",
+            "refund": "从 {amountIn} 退款 {tokenIn} {dex}"
+        },
+        "swapInfo": "所报的最佳费率是 {rate} 每 {tokenOut} 的 **{tokenIn}** {dex}。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会进行。您想继续尝试“{swap}”吗？",
+        "swapError": "无法处理交换。没有资金损失。"
     }
 }
