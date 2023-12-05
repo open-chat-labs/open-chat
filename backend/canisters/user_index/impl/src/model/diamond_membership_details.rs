@@ -9,46 +9,12 @@ use utils::time::DAY_IN_MS;
 const LIFETIME_TIMESTAMP: TimestampMillis = 30000000000000; // This timestamp is in the year 2920
 
 #[derive(Serialize, Deserialize, Clone, Default)]
-#[serde(from = "DiamondMembershipDetailsInternalCombined")]
 pub struct DiamondMembershipDetailsInternal {
     expires_at: Option<TimestampMillis>,
     payments: Vec<DiamondMembershipPayment>,
     pay_in_chat: bool,
     subscription: DiamondMembershipSubscription,
     payment_in_progress: bool,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default)]
-pub struct DiamondMembershipDetailsInternalCombined {
-    expires_at: Option<TimestampMillis>,
-    payments: Vec<DiamondMembershipPayment>,
-    #[serde(default)]
-    pay_in_chat: bool,
-    #[serde(default)]
-    subscription: Option<DiamondMembershipSubscription>,
-    #[serde(default)]
-    recurring: bool,
-    payment_in_progress: bool,
-}
-
-impl From<DiamondMembershipDetailsInternalCombined> for DiamondMembershipDetailsInternal {
-    fn from(value: DiamondMembershipDetailsInternalCombined) -> Self {
-        let subscription = value.subscription.unwrap_or_else(|| {
-            if value.recurring {
-                value.payments.last().map(|p| p.duration.into()).unwrap_or_default()
-            } else {
-                DiamondMembershipSubscription::Disabled
-            }
-        });
-
-        DiamondMembershipDetailsInternal {
-            expires_at: value.expires_at,
-            payments: value.payments,
-            pay_in_chat: value.pay_in_chat,
-            subscription,
-            payment_in_progress: value.payment_in_progress,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
