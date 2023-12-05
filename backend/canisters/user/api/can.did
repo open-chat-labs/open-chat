@@ -194,7 +194,10 @@ type TokenSwapStatusResponse = variant {
             Err : text;
         };
         amount_swapped : opt variant {
-            Ok : nat;
+            Ok : variant {
+                Ok : nat;
+                Err : text;
+            };
             Err : text;
         };
         withdraw_from_dex : opt variant {
