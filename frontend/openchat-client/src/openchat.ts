@@ -407,11 +407,9 @@ import {
     communityPreviewsStore,
     communityStateStore,
     currentCommunityBlockedUsers,
-    currentCommunityChannels,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
     currentCommunityRules,
-    currentCommunityTotalChannels,
     currentCommunityUserGroups,
     nextCommunityIndex,
     removeCommunityPreview,
@@ -2664,13 +2662,6 @@ export class OpenChat extends OpenChatAgentWorker {
             communityStateStore.setProp(community.id, "userGroups", resp.userGroups);
         }
         await this.updateUserStoreFromCommunityState(community.id);
-
-        this.exploreChannels(community.id, undefined, 0, 100).then((resp) => {
-            if (resp.kind === "success") {
-                communityStateStore.setProp(community.id, "channels", resp.matches);
-                communityStateStore.setProp(community.id, "totalChannels", resp.total);
-            }
-        });
     }
 
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {

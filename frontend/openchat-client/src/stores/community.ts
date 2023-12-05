@@ -65,8 +65,6 @@ export const communityStateStore = createCommunitySpecificObjectStore<CommunityS
         invitedUsers: new Set<string>(),
         userGroups: new Map<number, UserGroupDetails>(),
         rules: emptyRules(),
-        channels: [],
-        totalChannels: 0,
     }),
 );
 

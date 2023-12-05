@@ -64,7 +64,6 @@
 
 <style lang="scss">
     .details {
-        // height: toRem(94);
         display: flex;
         align-items: center;
         gap: $sp4;
