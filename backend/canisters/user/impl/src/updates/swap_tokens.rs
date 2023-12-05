@@ -64,7 +64,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
                 fee: Some(args.input_token.fee.into()),
                 created_at_time: Some(now * NANOS_PER_MILLISECOND),
                 memo: Some(MEMO_SWAP.to_vec().into()),
-                amount: args.input_amount.into(),
+                amount: args.input_amount.saturating_sub(args.input_token.fee).into(),
             },
         )
         .await
@@ -85,7 +85,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
             Err(msg) => {
                 mutate_state(|state| {
                     let now = state.env.now();
-                    token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
+                    token_swap.transfer = Some(Timestamped::new(Err(msg.clone()), now));
                     token_swap.success = Some(Timestamped::new(false, now));
                     state.data.token_swaps.upsert(token_swap);
                 });
@@ -99,7 +99,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
             let msg = format!("{error:?}");
             mutate_state(|state| {
                 let now = state.env.now();
-                token_swap.transfer = Some(Timestamped::new(Err(msg.clone()), now));
+                token_swap.notified_dex_at = Some(Timestamped::new(Err(msg.clone()), now));
                 state.data.token_swaps.upsert(token_swap.clone());
                 enqueue_token_swap(token_swap, attempt, now, &mut state.data);
             });
@@ -144,7 +144,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
     let (successful_swap, amount_out) = if let Ok(amount_swapped) = swap_result {
         (true, amount_swapped.saturating_sub(args.output_token.fee))
     } else {
-        (false, args.input_amount.saturating_sub(args.input_token.fee))
+        (false, args.input_amount.saturating_sub(2 * args.input_token.fee))
     };
 
     if extract_result(&token_swap.withdrawn_from_dex_at).is_none() {

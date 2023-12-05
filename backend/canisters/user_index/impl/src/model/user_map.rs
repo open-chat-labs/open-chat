@@ -248,6 +248,9 @@ impl UserMap {
         let mut metrics = DiamondMembershipUserMetrics::default();
         for user in self.users.values().filter(|u| u.diamond_membership_details.is_active(now)) {
             metrics.total += 1;
+            if user.diamond_membership_details.is_lifetime_diamond_member() {
+                metrics.lifetime += 1;
+            }
             if user.diamond_membership_details.is_recurring() {
                 metrics.recurring += 1;
             }
