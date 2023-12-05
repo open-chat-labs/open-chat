@@ -216,20 +216,14 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-    #[serde(default = "nns_governance_canister_id")]
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
-}
-
-fn nns_governance_canister_id() -> CanisterId {
-    CanisterId::from_text("rrkah-fqaaa-aaaaa-aaaaq-cai").unwrap()
 }
 
 impl Data {
