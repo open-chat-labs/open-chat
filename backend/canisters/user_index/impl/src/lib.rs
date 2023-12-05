@@ -403,6 +403,7 @@ pub struct DiamondMembershipMetrics {
 #[derive(Serialize, Debug, Default)]
 pub struct DiamondMembershipUserMetrics {
     pub total: u64,
+    pub lifetime: u64,
     pub recurring: u64,
 }
 
