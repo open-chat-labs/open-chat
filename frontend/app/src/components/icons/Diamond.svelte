@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { DiamondMembershipStatus } from "openchat-client";
 
-    export let size = "0.8em";
+    export let size = "0.9em";
     export let width = size;
     export let height = size;
     export let show: "blue" | "gold" | undefined = undefined;
