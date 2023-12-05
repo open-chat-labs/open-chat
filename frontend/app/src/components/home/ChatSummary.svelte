@@ -670,7 +670,9 @@
             margin-bottom: $sp1;
 
             .chat-name {
-                @include font(medium, normal, fs-100);
+                h4 {
+                    @include font(medium, normal, fs-100);
+                }
                 display: flex;
                 align-items: center;
                 gap: $sp2;

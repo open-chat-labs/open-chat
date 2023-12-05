@@ -17,7 +17,6 @@
     export let showTopUp = false;
     export let refreshing = false;
 
-    $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
@@ -33,7 +32,7 @@
         refreshing = true;
 
         return client
-            .refreshAccountBalance(ledger, $user.userId)
+            .refreshAccountBalance(ledger)
             .then((val) => {
                 dispatch("refreshed", val);
             })
