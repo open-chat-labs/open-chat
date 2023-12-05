@@ -111,9 +111,9 @@
         if (permissions.get("poll")) {
             actions.set("poll", actions.size);
         }
-        if (permissions.get("prize")) {
-            actions.set("prize", actions.size);
-        }
+        // if (permissions.get("prize")) {
+        //     actions.set("prize", actions.size);
+        // }
         return actions;
     }
 
@@ -215,7 +215,7 @@
                 </HoverIcon>
             </div>
         {/if}
-        {#if supportedActions.has("prize")}
+        <!-- {#if supportedActions.has("prize")}
             <div
                 style={`${cssVars("prize")}`}
                 class="prize"
@@ -224,7 +224,7 @@
                     <Gift size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
-        {/if}
+        {/if} -->
     {/if}
 </div>
 
