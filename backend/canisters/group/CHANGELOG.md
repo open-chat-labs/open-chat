@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix bug which allowed anyone to mention @everyone ([#4930](https://github.com/open-chat-labs/open-chat/pull/4930))
+
 ## [[2.0.957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.957-group)] - 2023-12-05
 
 ### Added
