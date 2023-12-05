@@ -13,7 +13,6 @@
         type GroupSearchResponse,
         routeForChatIdentifier,
         chatIdentifiersEqual,
-        type ChannelMatch,
         emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
@@ -151,11 +150,6 @@
      */
     function selectGroup({ chatId }: GroupMatch): void {
         page(routeForChatIdentifier($chatListScope.kind, chatId));
-        closeSearch();
-    }
-
-    function selectChannel({ id }: ChannelMatch): void {
-        page(routeForChatIdentifier($chatListScope.kind, id));
         closeSearch();
     }
 
