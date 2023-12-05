@@ -32,7 +32,7 @@ pub struct TokenSwap {
     pub deposit_account: SwapSubtask<Account>,
     pub transfer: SwapSubtask<u64>, // Block Index
     pub notified_dex_at: SwapSubtask,
-    pub amount_swapped: SwapSubtask<u128>,
+    pub amount_swapped: SwapSubtask<Result<u128, String>>,
     pub withdrawn_from_dex_at: SwapSubtask<u128>,
     pub success: Option<Timestamped<bool>>,
 }
@@ -61,7 +61,7 @@ impl From<TokenSwap> for TokenSwapStatus {
             deposit_account: value.deposit_account.map(|a| a.value.map(|_| ())),
             transfer: value.transfer.map(|t| t.value),
             notify_dex: value.notified_dex_at.map(|t| t.value.map(|_| ())),
-            amount_swapped: value.amount_swapped.map(|t| t.value),
+            amount_swapped: value.amount_swapped.as_ref().map(|t| t.value.clone()),
             withdraw_from_dex: value.withdrawn_from_dex_at.map(|t| t.value),
         }
     }
