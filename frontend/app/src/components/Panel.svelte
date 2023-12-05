@@ -130,6 +130,7 @@
             padding: 0px;
             border-left: var(--bw) solid var(--bd);
             background: var(--panel-right-bg);
+            position: relative;
 
             &.modal.right {
                 background: var(--panel-right-modal);
