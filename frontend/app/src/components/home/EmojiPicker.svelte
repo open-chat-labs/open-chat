@@ -45,5 +45,9 @@
         @include size-below(xxs) {
             --num-columns: 7 !important;
         }
+
+        &.thread {
+            --num-columns: 10 !important;
+        }
     }
 </style>
