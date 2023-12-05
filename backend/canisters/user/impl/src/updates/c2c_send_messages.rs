@@ -6,8 +6,8 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContentInitial, MessageId, MessageIndex, Notification,
-    TimestampMillis, UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -60,8 +60,6 @@ async fn c2c_send_messages_impl(args: user_canister::c2c_send_messages_v2::Args)
                 }
             }
 
-            let initial_content = MessageContentInitial::from(message.content);
-
             handle_message_impl(
                 sender_user_id,
                 HandleMessageArgs {
@@ -69,7 +67,7 @@ async fn c2c_send_messages_impl(args: user_canister::c2c_send_messages_v2::Args)
                     sender_message_index: Some(message.sender_message_index),
                     sender_name: args.sender_name.clone(),
                     sender_display_name: args.sender_display_name.clone(),
-                    content: initial_content.into(),
+                    content: message.content,
                     replies_to: message.replies_to,
                     forwarding: message.forwarding,
                     correlation_id: message.correlation_id,

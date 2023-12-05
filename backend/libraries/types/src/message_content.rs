@@ -563,7 +563,7 @@ pub enum P2PTradeStatus {
     Open,
     Cancelled,
     Reserved(UserId, TimestampMillis),
-    Completed(UserId, CompletedCryptoTransaction),
+    Completed(UserId, Box<CompletedCryptoTransaction>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
