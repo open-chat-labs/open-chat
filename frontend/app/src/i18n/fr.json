@@ -1064,7 +1064,6 @@
         "importBtn": "Importer",
         "noOwned": "Vous n'êtes propriétaire d'aucune communauté",
         "chooseCommunity": "Choisissez une communauté",
-        "otherChannels": "Autres canaux",
         "defaultInfo": "Les utilisateurs rejoignant cette communauté seront automatiquement ajoutés à tous les canaux publics",
         "saveChanges": "Sauvegarder les modifications",
         "exploreMobile": "Explorer",
@@ -1081,7 +1080,8 @@
         "userGroupName": "Nom du groupe d'utilisateurs",
         "noSpaces": "aucun espace autorisé",
         "noMatch": "Aucune communauté correspondante trouvée",
-        "refineSearch": "essayez d'affiner votre recherche"
+        "refineSearch": "essayez d'affiner votre recherche",
+        "otherChannels": "Autres chaînes publiques"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
