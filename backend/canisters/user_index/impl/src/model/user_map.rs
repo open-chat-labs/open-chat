@@ -194,7 +194,7 @@ impl UserMap {
     pub fn iter_suspended_or_unsuspended_users(&self, since: TimestampMillis) -> impl DoubleEndedIterator<Item = UserId> + '_ {
         self.suspended_or_unsuspended_users
             .range(RangeFrom {
-                start: (since, Principal::anonymous().into()),
+                start: (since + 1, Principal::from_slice(&[0]).into()),
             })
             .map(|(_, u)| *u)
     }
