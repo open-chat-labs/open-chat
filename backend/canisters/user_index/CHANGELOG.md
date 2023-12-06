@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose number of lifetime Diamond members in metrics ([#4929](https://github.com/open-chat-labs/open-chat/pull/4929))
+- Optionally return suspended users from `users_v2` ([#4945](https://github.com/open-chat-labs/open-chat/pull/4945))
 
 ## [[2.0.955](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.955-user_index)] - 2023-12-05
 
