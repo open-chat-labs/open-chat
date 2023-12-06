@@ -7,7 +7,7 @@
     import type { InterpolationValues } from "openchat-client";
 
     export let stepLabels: string[];
-    export let labelValues: InterpolationValues | undefined;
+    export let labelValues: InterpolationValues | undefined = undefined;
     export let step = 0;
     export let finalLabel: string | undefined;
 
