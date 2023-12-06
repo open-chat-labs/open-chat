@@ -11,6 +11,7 @@
     export let open = true;
     export let first = false;
     export let transition = true;
+    export let fill = false;
 
     function toggle() {
         open = !open;
@@ -19,8 +20,8 @@
     }
 </script>
 
-<div class="card" class:first>
-    <div class="header" class:open on:click={toggle}>
+<div class="card" class:first class:open>
+    <div class="header" class:open on:click={toggle} class:fill>
         <slot name="titleSlot">
             <div>{headerText}</div>
         </slot>
@@ -75,6 +76,11 @@
         &.open {
             color: var(--txt);
         }
+
+        &.fill {
+            padding-left: $sp4;
+            padding-right: $sp4;
+        }
     }
 
     .arrow {
@@ -84,10 +90,10 @@
     }
 
     .body {
-        padding: $sp4 0;
+        padding-bottom: $sp4;
 
         @include mobile() {
-            padding: $sp3 0;
+            padding-bottom: $sp3;
         }
 
         &.static {

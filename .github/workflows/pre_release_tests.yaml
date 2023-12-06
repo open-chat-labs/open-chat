@@ -16,5 +16,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "build-debug"
+          save-if: "false"
       - name: Run integration tests
         run: ./scripts/run-integration-tests.sh $GITHUB_REF_NAME

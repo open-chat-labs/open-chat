@@ -1065,7 +1065,6 @@
         "importBtn": "輸入",
         "noOwned": "あなたはどのコミュニティの所有者でもありません",
         "chooseCommunity": "コミュニティを選択してください",
-        "otherChannels": "その他のチャンネル",
         "defaultInfo": "このコミュニティに参加しているユーザーは、すべてのパブリック チャネルに自動的に追加されます",
         "saveChanges": "変更内容を保存",
         "exploreMobile": "探検",
@@ -1082,7 +1081,8 @@
         "userGroupName": "ユーザーグループ名",
         "noSpaces": "スペースは使用できません",
         "noMatch": "一致するコミュニティが見つかりませんでした",
-        "refineSearch": "検索を絞り込んでみてください"
+        "refineSearch": "検索を絞り込んでみてください",
+        "otherChannels": "その他のパブリックチャンネル"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",

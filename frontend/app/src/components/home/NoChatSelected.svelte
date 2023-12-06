@@ -4,7 +4,6 @@
     import page from "page";
     import { getContext } from "svelte";
     import type { ChatListScope, OpenChat } from "openchat-client";
-    import { pushRightPanelHistory } from "../../stores/rightPanel";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import { routeForScope } from "../../routes";
@@ -21,14 +20,6 @@
         if ($selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
             page(routeForScope(client.getDefaultScope()));
-        }
-    }
-
-    function showChannels() {
-        if ($chatListScope.kind === "community") {
-            pushRightPanelHistory({
-                kind: "community_channels",
-            });
         }
     }
 
@@ -79,7 +70,7 @@
         <h2 class="title">{$_(title)}</h2>
         <p class="subtitle">{$_(message)}</p>
         {#if $chatListScope.kind === "community"}
-            <Button on:click={showChannels}>{$_("communities.browseChannels")}</Button>
+            <Button>{$_("communities.browseChannels")}</Button>
         {:else if $chatListScope.kind === "group_chat"}
             <Button on:click={() => page("/groups")}>{$_("discoverMoreGroups")}</Button>
         {/if}
