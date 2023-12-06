@@ -219,6 +219,28 @@
             year: "numeric",
         });
     }
+
+    function unsuspendUser() {
+        client.unsuspendUser(userId).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("unsuspendedUser");
+                onClose();
+            } else {
+                toastStore.showFailureToast("failedToUnsuspendUser");
+            }
+        });
+    }
+
+    function suspendUser() {
+        client.suspendUser(userId, "").then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("suspendedUser");
+                onClose();
+            } else {
+                toastStore.showFailureToast("failedToSuspendUser");
+            }
+        });
+    }
 </script>
 
 <svelte:window on:resize={onWindowResize} />
@@ -289,6 +311,18 @@
                         <Button on:click={unblockUser} small>{$_("profile.unblock")}</Button>
                     {/if}
                 </ButtonGroup>
+                {#if $platformModerator}
+                    <div class="suspend">
+                        <ButtonGroup align={"fill"}>
+                            {#if isSuspended}
+                                <Button on:click={unsuspendUser} small
+                                    >{$_("unsuspendUser")}</Button>
+                            {:else}
+                                <Button on:click={suspendUser} small>{$_("suspendUser")}</Button>
+                            {/if}
+                        </ButtonGroup>
+                    </div>
+                {/if}
             </div>
         </ModalContent>
     </Overlay>
@@ -370,5 +404,9 @@
                 color: var(--txt-light);
             }
         }
+    }
+
+    .suspend {
+        margin-top: $sp3;
     }
 </style>

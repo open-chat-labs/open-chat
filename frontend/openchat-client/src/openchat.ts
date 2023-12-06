@@ -3081,7 +3081,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(msg.content.transfer.ledger);
+                        this.refreshAccountBalance(
+                            msg.content.transfer.ledger,
+                            this._liveState.user.cryptoAccount,
+                        );
                     }
                     if (threadRootMessageIndex !== undefined) {
                         trackEvent("sent_threaded_message");
@@ -3263,7 +3266,10 @@ export class OpenChat extends OpenChatAgentWorker {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                     if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(msg.content.transfer.ledger);
+                        this.refreshAccountBalance(
+                            msg.content.transfer.ledger,
+                            this._liveState.user.userId,
+                        );
                     }
                     if (threadRootMessageIndex !== undefined) {
                         trackEvent("sent_threaded_message");
@@ -4159,20 +4165,13 @@ export class OpenChat extends OpenChatAgentWorker {
         }
     }
 
-    refreshAccountBalance(ledger: string): Promise<bigint> {
-        const user = this._liveState.user;
-        if (user === undefined) {
-            return Promise.resolve(0n);
-        }
-
-        return this.sendRequest({
-            kind: "refreshAccountBalance",
-            ledger,
-            principal: user.userId,
-        }).then((val) => {
-            cryptoBalance.set(ledger, val);
-            return val;
-        });
+    refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
+        return this.sendRequest({ kind: "refreshAccountBalance", ledger, principal }).then(
+            (val) => {
+                cryptoBalance.set(ledger, val);
+                return val;
+            },
+        );
     }
 
     async getAccountTransactions(
@@ -5162,14 +5161,12 @@ export class OpenChat extends OpenChatAgentWorker {
 
         cryptoLookup.set(cryptoRecord);
 
-        if (!this._liveState.anonUser) {
-            window.setTimeout(() => this.refreshBalancesInSeries(), 0);
-        }
+        window.setTimeout(this.refreshBalancesInSeries, 0);
     }
 
     private async refreshBalancesInSeries() {
         for (const t of Object.values(get(cryptoLookup))) {
-            await this.refreshAccountBalance(t.ledger);
+            await this.refreshAccountBalance(t.ledger, get(this.user).userId);
         }
     }
 
