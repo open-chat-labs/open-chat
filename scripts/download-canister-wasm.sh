@@ -7,13 +7,13 @@ cd $SCRIPT_DIR/..
 CANISTER_NAME=$1
 WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" or the commit Id
 
-if [[ -z "$WASM_SRC" || $WASM_SRC = "latest" ]]
+if [[ -z $WASM_SRC || $WASM_SRC == "latest" ]]
 then
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 elif [[ $WASM_SRC = "prod" ]]
 then
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
-elif [[ $WASM_SRC == v*.*.* ]]
+elif [[ $WASM_SRC =~ v*.*.* ]]
 then
   if [ $(git tag -l $WASM_SRC) ]
   then
