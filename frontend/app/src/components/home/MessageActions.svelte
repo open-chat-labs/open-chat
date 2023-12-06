@@ -5,7 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import Gift from "svelte-material-icons/GiftOutline.svelte";
+    // import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -56,10 +56,10 @@
         drawOpen = false;
     }
 
-    function createPrizeMessage() {
-        dispatch("createPrizeMessage");
-        drawOpen = false;
-    }
+    // function createPrizeMessage() {
+    //     dispatch("createPrizeMessage");
+    //     drawOpen = false;
+    // }
 
     function toggleEmojiPicker() {
         toggleAction("emoji");
@@ -111,9 +111,9 @@
         if (permissions.get("poll")) {
             actions.set("poll", actions.size);
         }
-        if (permissions.get("prize")) {
-            actions.set("prize", actions.size);
-        }
+        // if (permissions.get("prize")) {
+        //     actions.set("prize", actions.size);
+        // }
         return actions;
     }
 
@@ -215,7 +215,7 @@
                 </HoverIcon>
             </div>
         {/if}
-        {#if supportedActions.has("prize")}
+        <!-- {#if supportedActions.has("prize")}
             <div
                 style={`${cssVars("prize")}`}
                 class="prize"
@@ -224,7 +224,7 @@
                     <Gift size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
-        {/if}
+        {/if} -->
     {/if}
 </div>
 
