@@ -678,9 +678,7 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.identityState.set({ kind: "registering" });
                         break;
                     case "created_user":
-                        this.onCreatedUser({
-                            ...user,
-                        });
+                        this.onCreatedUser(user);
                         break;
                 }
             })
