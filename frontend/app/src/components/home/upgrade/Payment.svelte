@@ -49,11 +49,11 @@
             duration: $_("upgrade.oneYear"),
             fee: "oneYear",
         },
-        // {
-        //     index: 3,
-        //     duration: $_("upgrade.lifetime"),
-        //     fee: "lifetime",
-        // },
+        {
+            index: 3,
+            duration: $_("upgrade.lifetime"),
+            fee: "lifetime",
+        },
     ];
 
     let autoRenew = true;
@@ -83,7 +83,7 @@
         0: "one_month",
         1: "three_months",
         2: "one_year",
-        // 3: "lifetime",
+        3: "lifetime",
     };
 
     function amount(e8s: bigint): number {

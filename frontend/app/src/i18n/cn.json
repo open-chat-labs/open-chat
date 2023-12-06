@@ -1064,7 +1064,6 @@
         "importBtn": "进口",
         "noOwned": "您不是任何社区的所有者",
         "chooseCommunity": "选择一个社区",
-        "otherChannels": "其他渠道",
         "defaultInfo": "加入此社区的用户将自动添加到所有公共频道",
         "saveChanges": "保存更改",
         "exploreMobile": "探索",
@@ -1081,7 +1080,8 @@
         "userGroupName": "用户组名",
         "noSpaces": "不允许有空格",
         "noMatch": "未找到匹配的社区",
-        "refineSearch": "尝试优化您的搜索"
+        "refineSearch": "尝试优化您的搜索",
+        "otherChannels": "其他公共渠道"
     },
     "groupCreatedBy": "{username} 创建了 {level}",
     "groupName": "{level} 名称",

@@ -1065,7 +1065,6 @@
         "importBtn": "Nhập khẩu",
         "noOwned": "Bạn không phải là chủ sở hữu của bất kỳ cộng đồng nào",
         "chooseCommunity": "Chọn một cộng đồng",
-        "otherChannels": "Các kênh khác",
         "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh công khai",
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
@@ -1082,7 +1081,8 @@
         "userGroupName": "Tên nhóm người dùng",
         "noSpaces": "không còn khoảng trống cho phép",
         "noMatch": "Không tìm thấy cộng đồng phù hợp",
-        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn"
+        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn",
+        "otherChannels": "Các kênh công cộng khác"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",

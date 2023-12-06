@@ -1062,7 +1062,6 @@
         "importBtn": "יְבוּא",
         "noOwned": "אינך הבעלים של אף קהילות",
         "chooseCommunity": "בחר קהילה",
-        "otherChannels": "ערוצים אחרים",
         "defaultInfo": "משתמשים המצטרפים לקהילה זו יתווספו אוטומטית לכל הערוצים הציבוריים",
         "saveChanges": "שמור שינויים",
         "exploreMobile": "לַחקוֹר",
@@ -1079,7 +1078,8 @@
         "userGroupName": "שם קבוצת משתמשים",
         "noSpaces": "אין רווחים",
         "noMatch": "לא נמצאו קהילות תואמות",
-        "refineSearch": "נסה לצמצם את החיפוש שלך"
+        "refineSearch": "נסה לצמצם את החיפוש שלך",
+        "otherChannels": "ערוצים ציבוריים אחרים"
     },
     "groupCreatedBy": "{username} יצר את ה-{level}",
     "groupName": "שם {level}",

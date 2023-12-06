@@ -4,6 +4,7 @@ use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
+use std::ops::RangeFrom;
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
@@ -18,6 +19,8 @@ pub struct UserMap {
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
+    #[serde(default)]
+    suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
 }
 
 impl UserMap {
@@ -158,32 +161,42 @@ impl UserMap {
 
     pub fn suspend_user(
         &mut self,
-        user_id: &UserId,
+        user_id: UserId,
         duration: Option<Milliseconds>,
         reason: String,
         suspended_by: UserId,
         now: TimestampMillis,
     ) -> bool {
-        if let Some(user) = self.users.get_mut(user_id) {
+        if let Some(user) = self.users.get_mut(&user_id) {
             user.suspension_details = Some(SuspensionDetails {
                 timestamp: now,
                 duration: duration.map_or(SuspensionDuration::Indefinitely, SuspensionDuration::Duration),
                 reason,
                 suspended_by,
             });
+            self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
             false
         }
     }
 
-    pub fn unsuspend_user(&mut self, user_id: &UserId) -> bool {
-        if let Some(user) = self.users.get_mut(user_id) {
+    pub fn unsuspend_user(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let Some(user) = self.users.get_mut(&user_id) {
             user.suspension_details = None;
+            self.suspended_or_unsuspended_users.insert((now, user_id));
             true
         } else {
             false
         }
+    }
+
+    pub fn iter_suspended_or_unsuspended_users(&self, since: TimestampMillis) -> impl DoubleEndedIterator<Item = UserId> + '_ {
+        self.suspended_or_unsuspended_users
+            .range(RangeFrom {
+                start: (since + 1, Principal::from_slice(&[0]).into()),
+            })
+            .map(|(_, u)| *u)
     }
 
     pub fn is_user_suspended(&self, user_id: &UserId) -> Option<bool> {

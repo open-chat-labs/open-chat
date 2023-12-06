@@ -105,6 +105,7 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::users_v2::Args {
                 user_groups: vec![UserGroup { users, updated_since: 0 }],
+                users_suspended_since: None,
             },
         );
 

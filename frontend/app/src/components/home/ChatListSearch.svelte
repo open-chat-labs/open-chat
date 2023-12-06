@@ -2,9 +2,7 @@
     import { getContext, onMount } from "svelte";
     import Search from "../Search.svelte";
     import type {
-        ChannelMatch,
         ChatListScope,
-        CommunityIdentifier,
         GroupSearchResponse,
         OpenChat,
         UserSummary,
@@ -16,7 +14,6 @@
     export let searchResultsAvailable: boolean = false;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    export let channelSearchResults: Promise<ChannelMatch[]> | undefined = undefined;
 
     let searching: boolean = false;
 
@@ -48,7 +45,6 @@
         searchResultsAvailable = false;
         groupSearchResults = undefined;
         userSearchResults = undefined;
-        channelSearchResults = undefined;
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -69,8 +65,6 @@
                     case "direct_chat":
                         userSearch(term);
                         break;
-                    case "community":
-                        channelSearch($chatListScope.id, term);
                 }
             } catch (err) {
                 console.warn("search failed with: ", err);
@@ -99,13 +93,6 @@
     async function groupSearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);
         await groupSearchResults.then(postSearch);
-    }
-
-    async function channelSearch(id: CommunityIdentifier, term: string) {
-        channelSearchResults = client
-            .exploreChannels(id, term, 0, 10)
-            .then((res) => (res.kind === "success" ? res.matches : []));
-        await channelSearchResults.then(postSearch);
     }
 
     async function legacySearch(term: string) {

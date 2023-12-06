@@ -5,14 +5,38 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
-WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" or the commit Id
+WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the release version
 
-if [[ -z "$WASM_SRC" || $WASM_SRC = "latest" ]]
+if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
-elif [ $WASM_SRC = "prod" ]
+elif [[ $WASM_SRC == "prod" ]]
 then
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
+elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
+then
+  if [[ $(git tag -l $WASM_SRC) ]]
+  then
+    RELEASE_TAG_ID=$WASM_SRC
+  else
+    RELEASE_TAG_ID=$(git tag -l "$WASM_SRC-*")
+  fi
+
+  CHILD_COMMIT_ID=$(git rev-list --ancestry-path $RELEASE_TAG_ID..origin/master | tail -1)
+  if [[ -z $CHILD_COMMIT_ID ]]
+  then
+    CANISTER_TAG_ID=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME" | head -1)
+  else
+    CANISTER_TAG_ID=$(git tag -l --no-contains $CHILD_COMMIT_ID --sort=-version:refname "*-$CANISTER_NAME" | head -1)
+  fi
+
+  if [[ -z $CANISTER_TAG_ID ]]
+  then
+    # If the canister has not been released yet then download the latest version
+    COMMIT_ID=$(git rev-parse origin/master)
+  else
+    COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
+  fi
 else
   COMMIT_ID=$WASM_SRC
 fi

@@ -5,6 +5,7 @@ use types::{TimestampMillis, UserId, UserSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_groups: Vec<UserGroup>,
+    pub users_suspended_since: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -31,7 +31,6 @@
     import page from "page";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import CommunityChannels from "./communities/details/CommunityChannels.svelte";
     import { interpolateLevel } from "../../utils/i18n";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
 
@@ -439,8 +438,6 @@
         </AcceptRulesWrapper>
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
-    {:else if lastState.kind === "community_channels"}
-        <CommunityChannels on:newChannel />
     {:else if lastState.kind === "community_details"}
         <CommunityDetails on:deleteCommunity on:editCommunity />
     {:else if lastState.kind === "community_filters"}

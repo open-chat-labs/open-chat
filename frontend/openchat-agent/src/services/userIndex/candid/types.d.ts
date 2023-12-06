@@ -1538,6 +1538,7 @@ export interface UsersV2Args {
   'user_groups' : Array<
     { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
   >,
+  'users_suspended_since' : [] | [TimestampMillis],
 }
 export type UsersV2Response = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }

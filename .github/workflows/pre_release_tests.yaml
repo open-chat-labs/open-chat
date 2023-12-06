@@ -1,0 +1,24 @@
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+
+name: Run integration tests
+
+jobs:
+  integration_tests:
+    name: run integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "build-debug"
+          save-if: "false"
+      - name: Run integration tests
+        run: ./scripts/run-integration-tests.sh $GITHUB_REF_NAME

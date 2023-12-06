@@ -1078,7 +1078,7 @@
         "convert": "Convert to community",
         "convertButton": "Convert",
         "channels": "Channels",
-        "otherChannels": "Other channels",
+        "otherChannels": "Other public channels",
         "channelPlaceholder": "Enter a channel name",
         "channelsInfo": "You must create one or more public channels. Any user who joins your community will be automatically enrolled in these channels. You can always change this later.",
         "updateChannelPlaceholder": "Update channel name",
