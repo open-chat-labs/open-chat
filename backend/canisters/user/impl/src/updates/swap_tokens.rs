@@ -54,6 +54,8 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         }
     };
 
+    let amount_to_dex = args.input_amount.saturating_sub(args.input_token.fee);
+
     if extract_result(&token_swap.transfer).is_none() {
         let now = read_state(|state| state.env.now());
         let transfer_result = match icrc_ledger_canister_c2c_client::icrc1_transfer(
@@ -64,7 +66,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
                 fee: Some(args.input_token.fee.into()),
                 created_at_time: Some(now * NANOS_PER_MILLISECOND),
                 memo: Some(MEMO_SWAP.to_vec().into()),
-                amount: args.input_amount.saturating_sub(args.input_token.fee).into(),
+                amount: amount_to_dex.into(),
             },
         )
         .await
@@ -95,7 +97,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
     }
 
     if extract_result(&token_swap.notified_dex_at).is_none() {
-        if let Err(error) = swap_client.deposit(args.input_amount).await {
+        if let Err(error) = swap_client.deposit(amount_to_dex).await {
             let msg = format!("{error:?}");
             mutate_state(|state| {
                 let now = state.env.now();
@@ -117,7 +119,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
         a
     } else {
         match swap_client
-            .swap(args.input_amount.saturating_sub(args.input_token.fee), args.min_output_amount)
+            .swap(amount_to_dex.saturating_sub(args.input_token.fee), args.min_output_amount)
             .await
         {
             Ok(a) => {
@@ -144,7 +146,7 @@ pub(crate) async fn process_token_swap(mut token_swap: TokenSwap, attempt: u32) 
     let (successful_swap, amount_out) = if let Ok(amount_swapped) = swap_result {
         (true, amount_swapped.saturating_sub(args.output_token.fee))
     } else {
-        (false, args.input_amount.saturating_sub(2 * args.input_token.fee))
+        (false, amount_to_dex.saturating_sub(args.input_token.fee))
     };
 
     if extract_result(&token_swap.withdrawn_from_dex_at).is_none() {
