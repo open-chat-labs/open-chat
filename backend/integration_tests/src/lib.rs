@@ -22,6 +22,7 @@ mod gated_group_tests;
 mod get_chat_events_tests;
 mod join_group_tests;
 mod last_online_date_tests;
+mod mentions_tests;
 mod notification_tests;
 mod platform_moderator_tests;
 mod poll_tests;
@@ -62,6 +63,15 @@ impl User {
 
     pub fn username(&self) -> String {
         principal_to_username(self.principal)
+    }
+}
+
+impl From<&User> for types::User {
+    fn from(value: &User) -> Self {
+        types::User {
+            user_id: value.user_id,
+            username: value.username(),
+        }
     }
 }
 
