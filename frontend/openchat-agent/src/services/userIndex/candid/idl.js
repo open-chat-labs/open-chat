@@ -292,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
         'updated_since' : TimestampMillis,
       })
     ),
+    'users_suspended_since' : IDL.Opt(TimestampMillis),
   });
   const UsersV2Response = IDL.Variant({
     'Success' : IDL.Record({
