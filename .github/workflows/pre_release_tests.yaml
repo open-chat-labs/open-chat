@@ -21,4 +21,5 @@ jobs:
           shared-key: "build-debug"
           save-if: "false"
       - name: Run integration tests
+        shell: bash
         run: ./scripts/run-integration-tests.sh $GITHUB_REF_NAME
