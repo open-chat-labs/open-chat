@@ -226,13 +226,11 @@ export class UserIndexClient extends CandidService {
 
         for (const userId of allUsers) {
             const cached = fromCacheMap.get(userId);
-            const userResponse = responseMap.get(userId);
+            const fromServer = responseMap.get(userId);
 
-            if (userResponse !== undefined) {
-                users.push({
-                    ...userResponse,
-                    blobReference: userResponse.blobReference ?? cached?.blobReference,
-                });
+            if (fromServer !== undefined) {
+                responseMap.delete(userId);
+                users.push(fromServer);
             } else if (cached !== undefined) {
                 if (requestedFromServer.has(userId)) {
                     // If this user was requested from the server but wasn't included in the response, then that means
@@ -246,6 +244,11 @@ export class UserIndexClient extends CandidService {
                     users.push(cached);
                 }
             }
+        }
+
+        // This is needed because newly suspended users won't have been included in the `allUsers` array
+        for (const user of responseMap.values()) {
+            users.push(user);
         }
 
         return {
