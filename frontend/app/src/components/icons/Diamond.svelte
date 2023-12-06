@@ -14,7 +14,7 @@
         light: string;
     };
 
-    $: colour = status === "lifetime" || show === "gold" ? 48 : 210;
+    $: colour = status === "lifetime" || show === "gold" ? 42 : 210;
 
     $: colours = deriveColours(colour);
 
