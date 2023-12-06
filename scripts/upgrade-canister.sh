@@ -8,7 +8,7 @@ IC_URL=$2
 IDENTITY=$3
 CANISTER_NAME=$4
 VERSION=$5
-WASM_SRC=$6 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
+WASM_SRC=$6 # WASM_SRC is either empty, "build", "latest", "local", "prod" the commit Id or the release version
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
