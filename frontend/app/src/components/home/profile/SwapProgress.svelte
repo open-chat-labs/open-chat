@@ -3,6 +3,7 @@
     import { Poller } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import ProgressSteps from "../../ProgressSteps.svelte";
 
     export let swapId: bigint;
     export let tokenIn: string;
@@ -14,19 +15,18 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     const POLL_INTERVAL = 1000;
+    const labelPrefix = "tokenSwap.progress.";
 
     let step = 0;
     let amountOut = "";
-    let swapProgressSteps = ["get", "deposit", "notify", "swap", "withdraw"];
-    let swapProgressResults: (boolean | undefined)[] = [
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-    ];
+    let steps = ["get", "deposit", "notify", "swap", "withdraw"];
+    let progressSteps: ProgressSteps;
 
-    $: values = {
+    $: stepLabels = steps.map((step) => labelPrefix + step);
+
+    let finalLabel = labelPrefix + "done";
+
+    $: labelValues = {
         tokenIn,
         tokenOut,
         amountIn,
@@ -45,14 +45,16 @@
 
         if (response.kind === "success") {
             if (response.withdrawnFromDex?.kind === "ok" && step <= 4) {
-                const status =
+                const success =
                     response.amountSwapped?.kind === "ok" &&
-                    response.amountSwapped.value.kind === "ok"
-                        ? "success"
-                        : "failure";
-                swapProgressResults = [true, true, true, status === "success", true];
-                step = 5;
-                onComplete(status);
+                    response.amountSwapped.value.kind === "ok";
+
+                if (!success) {
+                    finalLabel = labelPrefix + "failed";
+                }
+
+                updateProgress(5, true, success);
+                dispatch("finished");
             } else if (response.amountSwapped?.kind === "ok" && step <= 3) {
                 if (response.amountSwapped.value.kind === "ok") {
                     amountOut = client.formatTokens(
@@ -60,50 +62,43 @@
                         0,
                         decimalsOut,
                     );
-                    swapProgressResults = [true, true, true, true, undefined];
+                    updateProgress(4, true);
                 } else {
-                    swapProgressSteps[4] = "refund";
-                    swapProgressResults = [true, true, true, false, undefined];
+                    steps[4] = "refund";
+                    updateProgress(4, false);
                 }
-                step = 4;
             } else if (response.notifyDex?.kind == "ok" && step <= 2) {
-                swapProgressResults = [true, true, true, undefined, undefined];
-                step = 3;
+                updateProgress(3, true);
             } else if (response.transfer?.kind == "ok" && step <= 1) {
-                swapProgressResults = [true, true, undefined, undefined, undefined];
-                step = 2;
+                updateProgress(2, true);
             } else if (response.transfer?.kind == "error" && step <= 1) {
-                swapProgressResults = [true, false, undefined, undefined, undefined];
-                onComplete("error");
+                finalLabel = labelPrefix + "insufficientFunds";
+                updateProgress(2, false, false);
+                dispatch("finished");
             } else if (response.depositAccount?.kind == "ok" && step === 0) {
-                swapProgressResults = [true, undefined, undefined, undefined, undefined];
-                step = 1;
+                updateProgress(1, true);
             } else if (response.depositAccount?.kind == "error" && step === 0) {
-                swapProgressResults = [false, undefined, undefined, undefined, undefined];
-                onComplete("error");
+                finalLabel = labelPrefix + "error";
+                updateProgress(1, false, false);
+                dispatch("finished");
             }
         }
     }
 
-    function onComplete(status: "success" | "failure" | "error") {
-        dispatch("complete", { status, amountOut });
+    function updateProgress(nextStep: number, previousSuccess: boolean, outcome?: boolean) {
+        if (nextStep <= step) {
+            return;
+        }
+
+        const numNewSteps = nextStep - step;
+
+        for (let i = 0; i < numNewSteps; i++) {
+            const last = i == numNewSteps - 1;
+            progressSteps.next(!last || previousSuccess, last ? outcome : undefined);
+        }
     }
 </script>
 
-<ol>
-    {#each swapProgressSteps as label, i}
-        {#if step >= i}
-            <li>
-                {$_(`tokenSwap.progress.${label}`, {
-                    values,
-                })}... {#if swapProgressResults[i] === true}✅️{:else if swapProgressResults[i] === false}❌️{/if}
-            </li>
-        {/if}
-    {/each}
-</ol>
-
-<style lang="scss">
-    ol {
-        margin-left: $sp4;
-    }
-</style>
+<div>
+    <ProgressSteps bind:this={progressSteps} {stepLabels} {labelValues} {finalLabel} bind:step />
+</div>

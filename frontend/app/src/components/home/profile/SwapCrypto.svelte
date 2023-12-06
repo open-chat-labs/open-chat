@@ -33,7 +33,9 @@
     $: swapping = swapStep === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
     $: minAmountOut =
-        bestQuote !== undefined ? (bestQuote[1] * BigInt(98)) / BigInt(100) : BigInt(0);
+        bestQuote !== undefined
+            ? (bestQuote[1] * BigInt(detailsIn.symbol === "CHAT" ? 102 : 98)) / BigInt(100)
+            : BigInt(0);
 
     $: {
         valid =
@@ -119,81 +121,63 @@
         loadSwaps(ev.detail.ledger);
     }
 
-    function onSwapComplete(
-        ev: CustomEvent<{ status: "success" | "failure" | "error"; amountOut: string }>,
-    ): void {
+    function onSwapFinished() {
         busy = false;
         swapStep = "swapped";
-
-        const minAmountOutText = client.formatTokens(minAmountOut, 0, detailsOut!.decimals);
-        const values = {
-            tokenIn: detailsIn.symbol,
-            tokenOut: detailsOut!.symbol,
-            amountIn: amountInText,
-            amountOut: ev.detail.amountOut,
-            minAmountOut: minAmountOutText,
-            dex: dexName(bestQuote![0]),
-        };
-
-        if (ev.detail.status === "success") {
-            message = $_("tokenSwap.swapSucceeded", { values });
-        } else if (ev.detail.status === "failure") {
-            message = $_("tokenSwap.swapFailed", { values });
-        } else {
-            message = $_("tokenSwap.swapError");
-        }
 
         client.refreshAccountBalance(ledgerIn);
         client.refreshAccountBalance(ledgerOut!);
     }
 </script>
 
-{#if swapStep === "quote"}
-    {#await client.swappableTokens() then swappableTokens}
-        <div class="swap">
-            <div class="select-from">
-                <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
-                <div class="inner">
-                    <CryptoSelector
-                        filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
-                        bind:ledger={ledgerIn}
-                        on:select={onLedgerInSelected} />
+<div class="wrapper">
+    {#if swapStep === "quote"}
+        {#await client.swappableTokens() then swappableTokens}
+            <div class="swap">
+                <div class="select-from">
+                    <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
+                    <div class="inner">
+                        <CryptoSelector
+                            filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
+                            bind:ledger={ledgerIn}
+                            on:select={onLedgerInSelected} />
+                    </div>
+                </div>
+                <div class="amount">
+                    <TokenInput
+                        ledger={ledgerIn}
+                        minAmount={detailsIn.transferFee * BigInt(100)}
+                        maxAmount={detailsIn.balance}
+                        bind:valid={validAmount}
+                        bind:amount={amountIn} />
+                </div>
+                <div class="select-to">
+                    <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
+                    <div class="inner">
+                        <CryptoSelector
+                            filter={(t) => Object.keys(swaps).includes(t.ledger)}
+                            bind:ledger={ledgerOut} />
+                    </div>
                 </div>
             </div>
-            <div class="amount">
-                <TokenInput
-                    ledger={ledgerIn}
-                    minAmount={detailsIn.transferFee * BigInt(100)}
-                    maxAmount={detailsIn.balance}
-                    bind:valid={validAmount}
-                    bind:amount={amountIn} />
-            </div>
-            <div class="select-to">
-                <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
-                <div class="inner">
-                    <CryptoSelector
-                        filter={(t) => Object.keys(swaps).includes(t.ledger)}
-                        bind:ledger={ledgerOut} />
-                </div>
-            </div>
-        </div>
-    {/await}
-{/if}
+        {/await}
+    {/if}
 
-{#if swapping && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-    <SwapProgress
-        {swapId}
-        tokenIn={detailsIn.symbol}
-        tokenOut={detailsOut.symbol}
-        amountIn={amountInText}
-        decimalsOut={detailsOut.decimals}
-        dex={dexName(bestQuote[0])}
-        on:complete={onSwapComplete} />
-{/if}
+    {#if (swapping || swapStep === "swapped") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+        <SwapProgress
+            {swapId}
+            tokenIn={detailsIn.symbol}
+            tokenOut={detailsOut.symbol}
+            amountIn={amountInText}
+            decimalsOut={detailsOut.decimals}
+            dex={dexName(bestQuote[0])}
+            on:finished={onSwapFinished} />
+    {/if}
 
-{#if message !== undefined}
-    <Markdown inline={false} text={message} />
-{/if}
+    {#if message !== undefined}
+        <Markdown inline={false} text={message} />
+    {/if}
+</div>
 
 <style lang="scss">
     :global(.swap input.amount-val) {
@@ -204,11 +188,16 @@
         height: 47px;
     }
 
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: $sp4;
+    }
+
     .swap {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: $sp3;
 
         .inner {
             @include font(book, normal, fs-100);

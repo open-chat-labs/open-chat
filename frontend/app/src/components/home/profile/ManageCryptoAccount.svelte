@@ -102,16 +102,17 @@
     <ModalContent>
         <span class="header" slot="header">
             <div class="main-title">{title}</div>
-            <BalanceWithRefresh
-                bind:this={balanceWithRefresh}
-                {ledger}
-                value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
-                minDecimals={2}
-                showRefresh={!swapping}
-                bold
-                on:refreshed={onBalanceRefreshed}
-                on:error={onBalanceRefreshError} />
+            {#if !swapping}
+                <BalanceWithRefresh
+                    bind:this={balanceWithRefresh}
+                    {ledger}
+                    value={remainingBalance}
+                    label={$_("cryptoAccount.shortBalanceLabel")}
+                    minDecimals={2}
+                    bold
+                    on:refreshed={onBalanceRefreshed}
+                    on:error={onBalanceRefreshError} />
+            {/if}
         </span>
         <form class={`body ${mode}`} slot="body">
             {#if mode === "receive"}
