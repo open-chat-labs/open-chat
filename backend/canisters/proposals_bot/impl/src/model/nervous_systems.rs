@@ -309,7 +309,6 @@ pub struct NervousSystem {
     latest_failed_proposals_update: Option<TimestampMillis>,
     proposals_to_be_pushed: ProposalsToBePushed,
     proposals_to_be_updated: ProposalsToBeUpdated,
-    #[serde(skip_deserializing)]
     active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
     neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
