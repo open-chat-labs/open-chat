@@ -97,6 +97,7 @@ type UsersV2Args = record {
         users : vec UserId;
         updated_since : TimestampMillis;
     };
+    users_suspended_since : opt TimestampMillis;
 };
 
 type UsersV2Response = variant {
