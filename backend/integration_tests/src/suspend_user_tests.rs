@@ -205,6 +205,7 @@ fn suspended_users_returned_from_user_index_users() {
         platform_moderator,
     } = init_test_data(env, canister_ids, *controller);
 
+    env.advance_time(Duration::from_millis(1));
     let start = now_millis(env);
     env.advance_time(Duration::from_millis(1));
 
