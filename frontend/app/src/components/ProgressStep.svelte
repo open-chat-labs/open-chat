@@ -80,7 +80,6 @@
     }
 
     .icon {
-        flex: 0 0 25px;
         height: 25px;
     }
 </style>
