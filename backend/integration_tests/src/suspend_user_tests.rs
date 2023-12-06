@@ -236,7 +236,7 @@ fn suspended_users_returned_from_user_index_users() {
             user_index_canister_id,
             &user_index_canister::users_v2::Args {
                 user_groups: Vec::new(),
-                suspended_users_since: Some(since),
+                users_suspended_since: Some(since),
             },
         );
 
