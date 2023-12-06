@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 NETWORK=$1
 IDENTITY="oc-matt"

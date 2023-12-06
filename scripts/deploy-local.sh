@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Deploys everything needed to test OpenChat locally (OpenChat, OpenStorage and the NNS canisters)
 
