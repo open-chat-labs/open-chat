@@ -5,11 +5,13 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
+use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use types::{CanisterId, MessageContentInitial, TextContent, TimestampMillis, UserId};
 
 #[test]
+#[serial]
 fn suspend_user() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -138,6 +140,7 @@ fn suspend_user() {
 }
 
 #[test]
+#[serial]
 fn suspend_user_for_duration() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -187,6 +190,7 @@ fn suspend_user_for_duration() {
 }
 
 #[test]
+#[serial]
 fn suspended_users_returned_from_user_index_users() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
