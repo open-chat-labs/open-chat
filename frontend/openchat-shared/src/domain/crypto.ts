@@ -13,7 +13,7 @@ export const GHOST_SYMBOL = "GHOST";
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
-export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC"];
+export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC", "ckETH"];
 
 export type CryptocurrencyDetails = {
     name: string;
@@ -66,7 +66,8 @@ export const dollarExchangeRates: Record<string, number> = {
     chat: to2SigFigs(dollarToICP / 0.0612),
     hot: to2SigFigs(dollarToICP / 0.0045),
     kinic: to2SigFigs(dollarToICP / 0.312),
-    ckbtc: to2SigFigs(dollarToICP / 8480),
+    ckbtc: to2SigFigs(0.000023),
+    cketh: to2SigFigs(0.00044),
     dkp: to2SigFigs(dollarToICP / 430.69),
     ghost: to2SigFigs(dollarToICP / 0.000013),
     mod: to2SigFigs(dollarToICP / 0.0046),
