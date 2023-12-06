@@ -41,5 +41,5 @@ fn commit(user_id: UserId, groups: Vec<ChatId>, state: &mut RuntimeState) {
             now,
         );
     }
-    state.data.users.unsuspend_user(&user_id);
+    state.data.users.unsuspend_user(user_id, now);
 }
