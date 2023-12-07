@@ -12,22 +12,30 @@
     import SaveAccount from "./SaveAccount.svelte";
     import AccountSelector from "./AccountSelector.svelte";
     import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
+    import ModalContent from "../../ModalContent.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import Button from "../../Button.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ErrorMessage from "../../ErrorMessage.svelte";
 
     export let ledger: string;
-    export let amountToSend: bigint;
-    export let busy = false;
-    export let valid = false;
-    export let validAccountName = false;
-    export let capturingAccount = false;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    let error: string | undefined = undefined;
+    let amountToSend: bigint;
+    let busy = false;
+    let valid = false;
+    let validAccountName = false;
+    let capturingAccount = false;
     let validAmount = false;
     let targetAccount: string = "";
     let scanner: Scanner;
     let accounts: NamedAccount[] = [];
     let saveAccountElement: SaveAccount;
+    let balanceWithRefresh: BalanceWithRefresh;
 
     $: user = client.user;
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -46,12 +54,16 @@
     $: {
         valid = capturingAccount ? validAccountName : validSend;
     }
+    $: title = $_("cryptoAccount.sendToken", { values: { symbol } });
+
+    $: remainingBalance =
+        amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance;
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
     });
 
-    export function saveAccount() {
+    function saveAccount() {
         if (saveAccountElement !== undefined) {
             saveAccountElement
                 .saveAccount()
@@ -59,16 +71,16 @@
                     if (resp.kind === "success") {
                         dispatch("close");
                     } else if (resp.kind === "name_taken") {
-                        dispatch("error", { error: "tokenTransfer.accountNameTaken" });
+                        error = $_("tokenTransfer.accountNameTaken");
                     } else {
-                        dispatch("error", { error: "tokenTransfer.failedToSaveAccount" });
+                        error = $_("tokenTransfer.failedToSaveAccount");
                     }
                 })
                 .finally(() => (busy = false));
         }
     }
 
-    export function scan() {
+    function scan() {
         scanner?.scan();
     }
 
@@ -76,11 +88,12 @@
         return accounts.find((a) => a.account === account) === undefined;
     }
 
-    export function send() {
+    function send() {
         if (!valid) return;
 
         busy = true;
-        dispatch("error", undefined);
+        error = undefined;
+
         client
             .withdrawCryptocurrency({
                 kind: "pending",
@@ -94,7 +107,7 @@
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);
-                    dispatch("refreshBalance");
+                    balanceWithRefresh.refresh();
                     toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
                         values: { symbol },
                     });
@@ -105,63 +118,131 @@
                         targetAccount = "";
                     }
                 } else {
-                    dispatch("error", { error: "cryptoAccount.sendFailed", values: { symbol } });
+                    error = $_("cryptoAccount.sendFailed", { values: { symbol } });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
                 }
             })
             .catch((err) => {
-                dispatch("error", { error: "cryptoAccount.sendFailed", values: { symbol } });
+                error = $_("cryptoAccount.sendFailed", { values: { symbol } });
                 client.logError(`Unable to withdraw ${symbol}`, err);
             })
             .finally(() => (busy = false));
     }
+
+    function onBalanceRefreshed() {
+        error = undefined;
+    }
+
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        error = $_(ev.detail);
+    }
+
+    function onPrimaryClick() {
+        busy = true;
+        if (capturingAccount) {
+            saveAccount();
+        } else {
+            send();
+        }
+    }
 </script>
 
-{#if capturingAccount}
-    <SaveAccount
-        bind:this={saveAccountElement}
-        bind:valid={validAccountName}
-        account={targetAccount}
-        {accounts} />
-{:else}
-    <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
-
-    <div class="token-input">
-        <TokenInput
+<ModalContent>
+    <span class="header" slot="header">
+        <div class="main-title">{title}</div>
+        <BalanceWithRefresh
+            bind:this={balanceWithRefresh}
             {ledger}
-            {transferFees}
-            maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
-            bind:valid={validAmount}
-            bind:amount={amountToSend} />
-    </div>
-    <div class="target">
-        <Input
-            bind:value={targetAccount}
-            countdown={false}
-            maxlength={100}
-            invalid={targetAccount.length > 0 && !targetAccountValid}
-            placeholder={$_("cryptoAccount.sendTarget")} />
+            value={remainingBalance}
+            label={$_("cryptoAccount.shortBalanceLabel")}
+            minDecimals={2}
+            bold
+            on:refreshed={onBalanceRefreshed}
+            on:error={onBalanceRefreshError} />
+    </span>
+    <form class="body" slot="body">
+        {#if capturingAccount}
+            <SaveAccount
+                bind:this={saveAccountElement}
+                bind:valid={validAccountName}
+                account={targetAccount}
+                {accounts} />
+        {:else}
+            <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
-        <div class="qr" on:click={scan}>
-            <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
-        </div>
-    </div>
+            <div class="token-input">
+                <TokenInput
+                    {ledger}
+                    {transferFees}
+                    maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                    bind:valid={validAmount}
+                    bind:amount={amountToSend} />
+            </div>
+            <div class="target">
+                <Input
+                    bind:value={targetAccount}
+                    countdown={false}
+                    maxlength={100}
+                    invalid={targetAccount.length > 0 && !targetAccountValid}
+                    placeholder={$_("cryptoAccount.sendTarget")} />
 
-    {#if accounts.length > 0}
-        <div class="accounts">
-            <AccountSelector bind:targetAccount {accounts} />
-        </div>
-    {/if}
-{/if}
+                <div class="qr" on:click={scan}>
+                    <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
+                </div>
+            </div>
+
+            {#if accounts.length > 0}
+                <div class="accounts">
+                    <AccountSelector bind:targetAccount {accounts} />
+                </div>
+            {/if}
+        {/if}
+
+        {#if error !== undefined}
+            <ErrorMessage>{error}</ErrorMessage>
+        {/if}
+    </form>
+    <span slot="footer">
+        <ButtonGroup>
+            <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                >{$_(capturingAccount ? "noThanks" : "cancel")}</Button>
+            <Button
+                disabled={busy || !valid}
+                loading={busy}
+                tiny={$mobileWidth}
+                on:click={onPrimaryClick}
+                >{$_(
+                    capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
+                )}</Button>
+        </ButtonGroup>
+    </span>
+</ModalContent>
 
 <style lang="scss">
     :global(.target .input-wrapper input) {
         padding-right: 40px;
     }
 
+    .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: $sp2;
+
+        .main-title {
+            flex: auto;
+        }
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+    }
+
     .token-input {
         margin-bottom: $sp3;
     }
+
     .target {
         margin-bottom: $sp3;
         position: relative;

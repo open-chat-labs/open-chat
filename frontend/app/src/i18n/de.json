@@ -516,8 +516,7 @@
             "to": "Zu",
             "type": "Typ"
         },
-        "swap": "Tauschen",
-        "swapToken": "Tausche {symbol}"
+        "swap": "Tauschen"
     },
     "searchChat": "Suche",
     "search": "Suche...",
@@ -1182,15 +1181,29 @@
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "messageBlocked": "Nachricht ausgeblendet, da der Absender blockiert ist",
     "tokenSwap": {
-        "title": "Tauschen",
+        "swap": "Tauschen",
         "quote": "Zitat",
+        "requote": "Nochmals zitieren",
+        "back": "Zurück",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
         "noQuotes": "Keine DEXes haben ein Angebot für den Tausch von {tokenIn} bereitgestellt",
         "getTokenSwapsError": "Fehler beim Abrufen von Swaps für {tokenIn}",
         "quoteError": "Fehler beim Abrufen der Angebote für den Tausch von {tokenIn}",
         "findingAvailableTokens": "Verfügbare Token zum Tauschen finden...",
-        "swapFailed": "Fehler beim Austauschen von **{amountIn}** {tokenIn} gegen mindestens **{minAmountOut}** {tokenOut} mit {dex} fehlgeschlagen",
-        "swapSucceeded": "**{amountIn}** {tokenIn} erfolgreich gegen **{amountOut}** {tokenOut} mit {dex} ausgetauscht",
-        "swapInfo": "Der beste angegebene Tarif ist **{rate}** ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?"
+        "swapInfo": "Der beste angegebene Tarif ist **{rate}** {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt **{amountOut}** {tokenOut} für **{amountIn}** {tokenIn}. Der Swap wird nur durchgeführt, wenn der zu erhaltende Betrag von {tokenOut} mindestens 98 % des angegebenen Betrags beträgt. Möchten Sie fortfahren und es mit „{swap}“ versuchen?",
+        "progress": {
+            "get": "Holen Sie sich ein Einlagenkonto",
+            "deposit": "Übertragen Sie {amountIn} {tokenIn} an {dex}",
+            "notify": "Benachrichtigen Sie {dex} über die Einzahlung",
+            "swap": "Weisen Sie {dex} an, den Austausch durchzuführen",
+            "withdraw": "{amountOut} {tokenOut} von {dex} abheben",
+            "refund": "Erstattung von {amountIn} {tokenIn} von {dex}",
+            "done": "Tausch abgeschlossen",
+            "failed": "Der Tausch ist fehlgeschlagen – der Wechselkurs hat sich geändert",
+            "insufficientFunds": "Der Tausch ist fehlgeschlagen – unzureichende Mittel",
+            "error": "Swap-Fehler – es sind keine Gelder verloren gegangen"
+        },
+        "swapToken": "Tausche {tokenIn}",
+        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus"
     }
 }

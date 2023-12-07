@@ -1411,6 +1411,7 @@ export const idlFactory = ({ IDL }) => {
     'output_token' : TokenInfo,
   });
   const SwapTokensResponse = IDL.Variant({
+    'SwapFailed' : IDL.Null,
     'Success' : IDL.Record({ 'amount_out' : IDL.Nat }),
     'InternalError' : IDL.Text,
   });
@@ -1448,8 +1449,12 @@ export const idlFactory = ({ IDL }) => {
         IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
       ),
       'amount_swapped' : IDL.Opt(
-        IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text })
+        IDL.Variant({
+          'Ok' : IDL.Variant({ 'Ok' : IDL.Nat, 'Err' : IDL.Text }),
+          'Err' : IDL.Text,
+        })
       ),
+      'success' : IDL.Opt(IDL.Bool),
       'notify_dex' : IDL.Opt(
         IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text })
       ),

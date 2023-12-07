@@ -514,8 +514,7 @@
             "to": "К",
             "type": "Тип"
         },
-        "swap": "Менять",
-        "swapToken": "Обмен {symbol}"
+        "swap": "Менять"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",
@@ -1180,15 +1179,29 @@
     "renderPreviews": "Автоматический предварительный просмотр ссылок",
     "messageBlocked": "Сообщение скрыто, поскольку отправитель заблокирован",
     "tokenSwap": {
-        "title": "Менять",
+        "swap": "Менять",
         "quote": "Цитировать",
+        "requote": "Повторная цитация",
+        "back": "Назад",
         "swapNotAvailable": "В настоящее время невозможно обменять {tokenIn} на любой другой токен.",
         "noQuotes": "Ни одна DEX не предоставила котировку на обмен {tokenIn}",
         "getTokenSwapsError": "Ошибка при получении свопов для {tokenIn}.",
         "quoteError": "Ошибка получения котировок для обмена {tokenIn}",
         "findingAvailableTokens": "поиск доступных токенов для обмена...",
-        "swapFailed": "Не удалось заменить **{amountIn}** {tokenIn} как минимум на **{minAmountOut}** {tokenOut} с помощью {dex}.",
-        "swapSucceeded": "Успешно заменен **{amountIn}** {tokenIn} на **{amountOut}** {tokenOut} с помощью {dex}.",
-        "swapInfo": "Лучшая заявленная цена — **{rate}** от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?"
+        "swapInfo": "Лучшая заявленная цена — **{rate}** {tokenOut} за {tokenIn} от {dex}. Это дает **{amountOut}** {tokenOut} для **{amountIn}** {tokenIn}. Своп состоится только в том случае, если сумма {tokenOut}, подлежащая получению, составит не менее 98% от указанной суммы. Хотите продолжить и попробовать `{swap}`?",
+        "progress": {
+            "get": "Получить депозитный счет",
+            "deposit": "Перевести {amountIn} {tokenIn} в {dex}",
+            "notify": "Уведомить {dex} о депозите",
+            "swap": "Поручите {dex} выполнить замену",
+            "withdraw": "Вывести {amountOut} {tokenOut} из {dex}",
+            "refund": "Возврат средств на {amountIn} {tokenIn} от {dex}",
+            "done": "Обмен завершен",
+            "failed": "Своп не удался – курс изменился",
+            "insufficientFunds": "Обмен не удался – недостаточно средств",
+            "error": "Ошибка свопа - средства не потеряны"
+        },
+        "swapToken": "Обмен {tokenIn}",
+        "swapTokenTo": "Замените {tokenIn} на {tokenOut}"
     }
 }

@@ -334,6 +334,9 @@ export type SwapTokensResponse =
           kind: "success";
           amountOut: bigint;
       }
+    | {
+          kind: "swap_failed";
+      }
     | InternalError;
 
 export type Result<T> =
@@ -353,7 +356,7 @@ export type TokenSwapStatusResponse =
           depositAccount?: Result<null>;
           transfer?: Result<bigint>;
           notifyDex?: Result<null>;
-          amountSwapped?: Result<bigint>;
+          amountSwapped?: Result<Result<bigint>>;
           withdrawnFromDex?: Result<bigint>;
       }
     | {

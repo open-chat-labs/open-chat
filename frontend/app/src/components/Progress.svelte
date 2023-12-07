@@ -3,9 +3,10 @@
 
     export let percent: number;
     export let bg: "button" | "accent" = "button";
+    export let size = "40px";
 </script>
 
-<div class="bar">
+<div class="bar" style={`--size: ${size}`}>
     <span
         class="meter"
         class:rtl={$rtlStore}
@@ -18,15 +19,16 @@
 </div>
 
 <style lang="scss">
-    $progress-bar-x-large: 40px;
+    $radius: calc(var(--size) / 2);
 
     .bar {
         // border: 1px solid rgba(255, 255, 255, 0.2);
         border: 1px solid var(--progress-bd);
         width: 100%;
-        height: $progress-bar-x-large;
+        height: var(--size);
         position: relative;
-        border-radius: math.div($progress-bar-x-large, 2);
+        // border-radius: math.div($progress-bar-x-large, 2);
+        border-radius: $radius;
         overflow: hidden;
     }
 
