@@ -9,12 +9,15 @@ WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the re
 
 if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
+  echo "here1"
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 elif [[ $WASM_SRC == "prod" ]]
 then
+  echo "here2"
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
 # elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
 else
+  echo "here3"
   if [[ $(git tag -l $WASM_SRC) ]]
   then
     RELEASE_TAG_ID=$WASM_SRC
