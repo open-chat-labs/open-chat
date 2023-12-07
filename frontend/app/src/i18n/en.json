@@ -617,7 +617,6 @@
         "swap": "Swap",
         "receiveToken": "Receive {symbol}",
         "sendToken": "Send {symbol}",
-        "swapToken": "Swap {symbol}",
         "transactions": "Transactions",
         "manageHeader": "Manage {symbol} account",
         "topUp": "Top up",
@@ -644,8 +643,12 @@
         }
     },
     "tokenSwap": {
-        "title": "Swap",
+        "swapToken": "Swap {tokenIn}",
+        "swapTokenTo": "Swap {tokenIn} to {tokenOut}",
+        "swap": "Swap",
         "quote": "Quote",
+        "requote": "Re-quote",
+        "back": "Back",
         "swapNotAvailable": "Currently it is not possible to swap {tokenIn} to any other token",
         "noQuotes": "No DEXes provided a quote to swap {tokenIn}",
         "getTokenSwapsError": "Error getting swaps for {tokenIn}",

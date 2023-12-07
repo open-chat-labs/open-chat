@@ -514,8 +514,7 @@
             "to": "に",
             "type": "タイプ"
         },
-        "swap": "スワップ",
-        "swapToken": "{symbol}を交換する"
+        "swap": "スワップ"
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -1065,6 +1064,7 @@
         "importBtn": "輸入",
         "noOwned": "あなたはどのコミュニティの所有者でもありません",
         "chooseCommunity": "コミュニティを選択してください",
+        "otherChannels": "その他のチャンネル",
         "defaultInfo": "このコミュニティに参加しているユーザーは、すべてのパブリック チャネルに自動的に追加されます",
         "saveChanges": "変更内容を保存",
         "exploreMobile": "探検",
@@ -1081,8 +1081,7 @@
         "userGroupName": "ユーザーグループ名",
         "noSpaces": "スペースは使用できません",
         "noMatch": "一致するコミュニティが見つかりませんでした",
-        "refineSearch": "検索を絞り込んでみてください",
-        "otherChannels": "その他のパブリックチャンネル"
+        "refineSearch": "検索を絞り込んでみてください"
     },
     "groupCreatedBy": "{username} が {level} を作成しました",
     "groupName": "{level}の名前",
@@ -1181,24 +1180,29 @@
     "renderPreviews": "自動レンダリングリンクプレビュー",
     "messageBlocked": "送信者がブロックされているためメッセージが非表示になりました",
     "tokenSwap": {
-        "title": "スワップ",
+        "swap": "スワップ",
         "quote": "引用",
+        "requote": "再引用",
+        "back": "戻る",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
-        "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました",
-        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?",
-        "swapFailed": "{dex} は **{amountIn}** {tokenIn} を少なくとも **{minAmountOut}** {tokenOut} と交換できませんでした。",
+        "swapInfo": "見積もられた最良レートは、{rate} からの {tokenOut} あたり **{tokenIn}** {dex} です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?",
         "progress": {
             "get": "預金口座を取得する",
             "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
             "notify": "{dex} に入金を通知する",
             "swap": "{dex} にスワップを実行するように指示します",
             "withdraw": "{amountOut} {tokenOut} を {dex} から出金する",
-            "refund": "{amountIn} から {tokenIn} を払い戻します"
+            "refund": "{amountIn} から {tokenIn} を払い戻します",
+            "done": "交換完了",
+            "failed": "スワップに失敗しました - 為替レートが変更されました",
+            "insufficientFunds": "スワップ失敗 - 資金不足",
+            "error": "スワップエラー - 資金は失われていません"
         },
-        "swapError": "スワップを処理できません。資金の損失はありません。"
+        "swapToken": "{tokenIn}を交換する",
+        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します"
     }
 }

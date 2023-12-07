@@ -513,8 +513,7 @@
             "to": "到",
             "type": "类型"
         },
-        "swap": "交换",
-        "swapToken": "交换{symbol}"
+        "swap": "交换"
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -1181,24 +1180,29 @@
     "renderPreviews": "自动渲染链接预览",
     "messageBlocked": "由于发件人被阻止，邮件被隐藏",
     "tokenSwap": {
-        "title": "交换",
+        "swap": "交换",
         "quote": "引用",
+        "requote": "重新报价",
+        "back": "后退",
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
         "noQuotes": "没有 DEX 提供交换 {tokenIn} 的报价",
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
         "quoteError": "获取交换 {tokenIn} 的报价时出错",
         "findingAvailableTokens": "正在寻找可用的代币进行交换...",
-        "swapSucceeded": "已使用 {amountIn} 成功将 **{tokenIn}** {amountOut} 交换为 **{tokenOut}** {dex}",
-        "swapFailed": "{dex} 无法将 **{amountIn}** {tokenIn} 交换为至少 **{minAmountOut}** {tokenOut}。",
+        "swapInfo": "所报的最佳费率是 {rate} 每 {tokenOut} 的 **{tokenIn}** {dex}。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会进行。您想继续尝试“{swap}”吗？",
         "progress": {
             "get": "获取存款账户",
             "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
             "notify": "通知{dex}存款",
             "swap": "指示 {dex} 执行交换",
             "withdraw": "从 {amountOut} 中撤回 {tokenOut} {dex}",
-            "refund": "从 {amountIn} 退款 {tokenIn} {dex}"
+            "refund": "从 {amountIn} 退款 {tokenIn} {dex}",
+            "done": "交换完成",
+            "failed": "兑换失败 - 汇率已更改",
+            "insufficientFunds": "兑换失败-资金不足",
+            "error": "掉期错误 - 没有资金损失"
         },
-        "swapInfo": "所报的最佳费率是 {rate} 每 {tokenOut} 的 **{tokenIn}** {dex}。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会进行。您想继续尝试“{swap}”吗？",
-        "swapError": "无法处理交换。没有资金损失。"
+        "swapToken": "交换{tokenIn}",
+        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}"
     }
 }

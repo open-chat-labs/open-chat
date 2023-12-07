@@ -514,8 +514,7 @@
             "to": "ל",
             "type": "סוּג"
         },
-        "swap": "לְהַחלִיף",
-        "swapToken": "החלפה {symbol}"
+        "swap": "לְהַחלִיף"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",
@@ -1178,24 +1177,29 @@
     "renderPreviews": "תצוגה מקדימה של קישורים לעיבוד אוטומטי",
     "messageBlocked": "ההודעה מוסתרת כי השולח חסום",
     "tokenSwap": {
-        "title": "לְהַחלִיף",
+        "swap": "לְהַחלִיף",
         "quote": "ציטוט",
+        "requote": "ציטוט מחדש",
+        "back": "חזור",
         "swapNotAvailable": "נכון לעכשיו לא ניתן להחליף את {tokenIn} לשום אסימון אחר",
         "noQuotes": "שום DEXs לא סיפקו הצעת מחיר להחלפה {tokenIn}",
         "getTokenSwapsError": "שגיאה בקבלת החלפות עבור {tokenIn}",
         "quoteError": "שגיאה בקבלת ציטוטים להחלפה של {tokenIn}",
         "findingAvailableTokens": "מציאת אסימונים זמינים להחלפה...",
-        "swapSucceeded": "הוחלף בהצלחה את **{amountIn}** {tokenIn} ל**{amountOut}** {tokenOut} באמצעות {dex}",
-        "swapFailed": "{dex} לא הצליח להחליף את **{amountIn}** {tokenIn} לפחות ב-**{minAmountOut}** {tokenOut}.",
+        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?",
         "progress": {
             "get": "קבל חשבון פיקדון",
             "deposit": "העבר את {amountIn} {tokenIn} אל {dex}",
             "notify": "הודע ל-{dex} על ההפקדה",
             "swap": "הוראה ל-{dex} לבצע את ההחלפה",
             "withdraw": "משך את {amountOut} {tokenOut} מ-{dex}",
-            "refund": "החזר {amountIn} {tokenIn} מ-{dex}"
+            "refund": "החזר {amountIn} {tokenIn} מ-{dex}",
+            "done": "ההחלפה הושלמה",
+            "failed": "ההחלפה נכשלה - שער החליפין השתנה",
+            "insufficientFunds": "ההחלפה נכשלה - אין מספיק כספים",
+            "error": "שגיאת החלפה - לא אבדו כספים"
         },
-        "swapInfo": "התעריף הטוב ביותר שצוטט הוא **{rate}** {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן **{amountOut}** {tokenOut} עבור **{amountIn}** {tokenIn}. ההחלפה תתבצע רק אם הסכום של {tokenOut} שיתקבל הוא לפחות 98% מהסכום הנקוב. האם תרצה להמשיך ולנסות את `{swap}`?",
-        "swapError": "לא ניתן לעבד את ההחלפה. שום כספים לא אבדו."
+        "swapToken": "החלפה {tokenIn}",
+        "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}"
     }
 }

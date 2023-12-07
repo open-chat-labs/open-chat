@@ -515,8 +515,7 @@
             "to": "A",
             "type": "Tipo"
         },
-        "swap": "Intercambio",
-        "swapToken": "Intercambiar {symbol}"
+        "swap": "Intercambio"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",
@@ -1182,24 +1181,29 @@
     "renderPreviews": "Vistas previas de enlaces de renderizado automático",
     "messageBlocked": "Mensaje oculto porque el remitente está bloqueado",
     "tokenSwap": {
-        "title": "Intercambio",
+        "swap": "Intercambio",
         "quote": "Cita",
+        "requote": "Volver a cotizar",
+        "back": "Atrás",
         "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
         "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
         "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
         "quoteError": "Error al obtener cotizaciones para intercambiar {tokenIn}",
         "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
-        "swapSucceeded": "Se intercambió exitosamente **{amountIn}** {tokenIn} por **{amountOut}** {tokenOut} usando {dex}",
-        "swapFailed": "{dex} no pudo intercambiar **{amountIn}** {tokenIn} por al menos **{minAmountOut}** {tokenOut}.",
+        "swapInfo": "La mejor tarifa cotizada es **{rate}** {tokenOut} por {tokenIn} de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?",
         "progress": {
             "get": "Obtener cuenta de depósito",
             "deposit": "Transferir {amountIn} {tokenIn} a {dex}",
             "notify": "Notificar a {dex} del depósito",
             "swap": "Indique a {dex} que realice el intercambio",
             "withdraw": "Retirar {amountOut} {tokenOut} de {dex}",
-            "refund": "Reembolso {amountIn} {tokenIn} de {dex}"
+            "refund": "Reembolso {amountIn} {tokenIn} de {dex}",
+            "done": "Intercambio completo",
+            "failed": "El intercambio falló: el tipo de cambio ha cambiado",
+            "insufficientFunds": "El intercambio falló: fondos insuficientes",
+            "error": "Error de intercambio: no se han perdido fondos"
         },
-        "swapInfo": "La mejor tarifa cotizada es **{rate}** {tokenOut} por {tokenIn} de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?",
-        "swapError": "No se puede procesar el intercambio. No se han perdido fondos."
+        "swapToken": "Intercambiar {tokenIn}",
+        "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}"
     }
 }

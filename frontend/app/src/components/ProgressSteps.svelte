@@ -61,7 +61,7 @@
     }
 </script>
 
-<div class="steps">
+<div>
     {#each toShow as status, i (stepLabels[i])}
         <div in:fade={{ duration: 500 }} animate:flip={{ duration: 500 }}>
             <ProgressStep label={$_(stepLabels[i], { values: labelValues })} step={i} {status} />
@@ -74,12 +74,8 @@
     {/if}
 </div>
 
-<div class="progress">
-    <Progress size={"30px"} {percent} />
-</div>
-
-<style lang="scss">
-    .steps {
-        padding-bottom: $sp4;
-    }
-</style>
+{#if finalStatus === undefined}
+    <div class="progress">
+        <Progress size={"30px"} {percent} />
+    </div>
+{/if}

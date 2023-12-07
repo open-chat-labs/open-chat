@@ -515,8 +515,7 @@
             "to": "ĐẾN",
             "type": "Kiểu"
         },
-        "swap": "Tráo đổi",
-        "swapToken": "Hoán đổi {symbol}"
+        "swap": "Tráo đổi"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -1181,24 +1180,29 @@
     "renderPreviews": "Tự động hiển thị bản xem trước liên kết",
     "messageBlocked": "Tin nhắn bị ẩn vì người gửi bị chặn",
     "tokenSwap": {
-        "title": "Tráo đổi",
+        "swap": "Tráo đổi",
         "quote": "Trích dẫn",
+        "requote": "Báo giá lại",
+        "back": "Mặt sau",
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
-        "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}",
-        "swapFailed": "{dex} không thể trao đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut}.",
+        "swapInfo": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ tiếp tục nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
         "progress": {
             "get": "Nhận tài khoản tiền gửi",
             "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
             "notify": "Thông báo {dex} về khoản tiền gửi",
             "swap": "Hướng dẫn {dex} thực hiện hoán đổi",
             "withdraw": "Rút {amountOut} {tokenOut} từ {dex}",
-            "refund": "Hoàn tiền {amountIn} {tokenIn} từ {dex}"
+            "refund": "Hoàn tiền {amountIn} {tokenIn} từ {dex}",
+            "done": "Hoán đổi hoàn tất",
+            "failed": "Hoán đổi không thành công - tỷ giá hối đoái đã thay đổi",
+            "insufficientFunds": "Hoán đổi không thành công - không đủ tiền",
+            "error": "Lỗi hoán đổi - không có khoản tiền nào bị mất"
         },
-        "swapInfo": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
-        "swapError": "Không thể xử lý trao đổi. Không có khoản tiền nào bị mất."
+        "swapToken": "Hoán đổi {tokenIn}",
+        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}"
     }
 }

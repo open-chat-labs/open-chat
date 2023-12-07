@@ -54,7 +54,7 @@
                 }
 
                 updateProgress(5, true, success);
-                dispatch("finished");
+                dispatch("finished", success ? "success" : "rateChanged");
             } else if (response.amountSwapped?.kind === "ok" && step <= 3) {
                 if (response.amountSwapped.value.kind === "ok") {
                     amountOut = client.formatTokens(
@@ -74,13 +74,13 @@
             } else if (response.transfer?.kind == "error" && step <= 1) {
                 finalLabel = labelPrefix + "insufficientFunds";
                 updateProgress(2, false, false);
-                dispatch("finished");
+                dispatch("finished", "insufficientFunds");
             } else if (response.depositAccount?.kind == "ok" && step === 0) {
                 updateProgress(1, true);
             } else if (response.depositAccount?.kind == "error" && step === 0) {
                 finalLabel = labelPrefix + "error";
                 updateProgress(1, false, false);
-                dispatch("finished");
+                dispatch("finished", "error");
             }
         }
     }
@@ -99,6 +99,4 @@
     }
 </script>
 
-<div>
-    <ProgressSteps bind:this={progressSteps} {stepLabels} {labelValues} {finalLabel} bind:step />
-</div>
+<ProgressSteps bind:this={progressSteps} {stepLabels} {labelValues} {finalLabel} bind:step />

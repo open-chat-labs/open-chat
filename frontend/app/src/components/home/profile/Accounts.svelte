@@ -2,7 +2,6 @@
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
@@ -15,11 +14,10 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
-
-    type TransactionsFor = {
-        ledger: string;
-        urlFormat: string;
-    };
+    import Overlay from "../../Overlay.svelte";
+    import SwapCrypto from "./SwapCrypto.svelte";
+    import SendCrypto from "./SendCrypto.svelte";
+    import ReceiveCrypto from "./ReceiveCrypto.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,9 +25,9 @@
     export let zeroCount = 0;
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive" | "swap";
+    let manageMode: "none" | "send" | "receive" | "swap" | "transactions";
     let selectedLedger: string | undefined = undefined;
-    let transactionsFor: TransactionsFor | undefined = undefined;
+    let transactionsFormat: string;
 
     $: accounts = client.enhancedCryptoLookup;
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -69,13 +67,31 @@
         selectedLedger = ledger;
         manageMode = "swap";
     }
+
+    function showTransactions(token: { ledger: string; urlFormat: string }) {
+        selectedLedger = token.ledger;
+        transactionsFormat = token.urlFormat;
+        manageMode = "transactions";
+    }
 </script>
 
 {#if manageMode !== "none" && selectedLedger !== undefined}
-    <ManageCryptoAccount
-        mode={manageMode}
-        bind:ledger={selectedLedger}
-        on:close={hideManageModal} />
+    <Overlay
+        dismissible={manageMode === "receive" || manageMode === "transactions"}
+        on:close={hideManageModal}>
+        {#if manageMode === "receive"}
+            <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "send"}
+            <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "swap"}
+            <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "transactions"}
+            <AccountTransactions
+                ledger={selectedLedger}
+                on:close={hideManageModal}
+                urlFormat={transactionsFormat} />
+        {/if}
+    </Overlay>
 {/if}
 
 <table>
@@ -138,7 +154,7 @@
                                     {/if}
                                 {/await}
                                 {#if snsLedgers.has(token.ledger)}
-                                    <MenuItem on:click={() => (transactionsFor = token)}>
+                                    <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
@@ -157,13 +173,6 @@
 
 {#if balanceError !== undefined}
     <ErrorMessage>{balanceError}</ErrorMessage>
-{/if}
-
-{#if transactionsFor !== undefined}
-    <AccountTransactions
-        on:close={() => (transactionsFor = undefined)}
-        ledger={transactionsFor.ledger}
-        urlFormat={transactionsFor.urlFormat} />
 {/if}
 
 <style lang="scss">
@@ -204,11 +213,6 @@
         td {
             vertical-align: middle;
             padding-bottom: $sp3;
-        }
-
-        .transactions {
-            cursor: pointer;
-            padding: 0 $sp2 0 0;
         }
 
         .token {

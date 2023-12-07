@@ -9,16 +9,24 @@
     import CryptoSelector from "../CryptoSelector.svelte";
     import Legend from "../../Legend.svelte";
     import SwapProgress from "./SwapProgress.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import Button from "../../Button.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ErrorMessage from "../../ErrorMessage.svelte";
 
     export let ledgerIn: string;
-    export let amountIn: bigint;
-    export let busy = false;
-    export let valid = false;
-    export let swapStep: "quote" | "swap" | "swapped" = "quote";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    let error: string | undefined = undefined;
+    let amountIn: bigint = BigInt(0);
+    let busy = false;
+    let valid = false;
+    let state: "quote" | "swap" | "finished" = "quote";
+    let result: "success" | "rateChanged" | "insufficientFunds" | "error" | undefined = undefined;
     let validAmount = false;
     let ledgerOut: string | undefined;
     let swaps = {} as Record<string, DexId[]>;
@@ -30,43 +38,64 @@
     $: detailsIn = $cryptoLookup[ledgerIn];
     $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
-    $: swapping = swapStep === "swap" && busy;
+    $: swapping = state === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
     $: minAmountOut =
         bestQuote !== undefined ? (bestQuote[1] * BigInt(98)) / BigInt(100) : BigInt(0);
 
     $: {
         valid =
-            anySwapsAvailable &&
-            validAmount &&
-            (swapStep === "swap" ? bestQuote !== undefined : true);
+            anySwapsAvailable && validAmount && (state === "swap" ? bestQuote !== undefined : true);
     }
+
+    $: title =
+        state === "quote"
+            ? $_("tokenSwap.swapToken", { values: { tokenIn: detailsIn.symbol } })
+            : $_("tokenSwap.swapTokenTo", {
+                  values: { tokenIn: detailsIn.symbol, tokenOut: detailsOut!.symbol },
+              });
+
+    $: cryptoBalanceStore = client.cryptoBalance;
+    $: balanceIn = $cryptoBalanceStore[ledgerIn];
+    $: remainingBalance =
+        amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
+
+    $: primaryButtonText = $_(
+        `tokenSwap.${
+            state === "quote"
+                ? "quote"
+                : state === "swap"
+                  ? "swap"
+                  : result === "insufficientFunds"
+                    ? "back"
+                    : "requote"
+        }`,
+    );
 
     onMount(() => loadSwaps(ledgerIn));
 
-    export function quote() {
+    function quote() {
         if (!valid) return;
 
         busy = true;
-        dispatch("error", undefined);
+        error = undefined;
+        result = undefined;
+        swapId = undefined;
 
         client
             .getTokenSwapQuotes(ledgerIn, ledgerOut!, amountIn)
             .then((response) => {
                 if (response.length === 0) {
-                    dispatch("error", {
-                        error: "tokenSwap.noQuotes",
-                        values: { tokenIn: detailsIn.symbol },
-                    });
+                    error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
                 } else {
                     bestQuote = response[0];
-                    swapStep = "swap";
+                    state = "swap";
 
                     const [dexId, quote] = bestQuote!;
                     const amountOutText = client.formatTokens(quote, 0, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
-                    const swapText = $_("tokenSwap.title");
+                    const swapText = $_("tokenSwap.swap");
                     message = $_("tokenSwap.swapInfo", {
                         values: {
                             amountIn: amountInText,
@@ -82,20 +111,19 @@
             })
             .catch((err) => {
                 client.logError(`Error getting swap quotes for token: ${detailsIn.symbol}`, err);
-                dispatch("error", {
-                    error: "tokenSwap.quoteError",
-                    values: { tokenIn: detailsIn.symbol },
-                });
+                error = $_("tokenSwap.quoteError", { values: { tokenIn: detailsIn.symbol } });
             })
             .finally(() => (busy = false));
     }
 
-    export function swap() {
+    function swap() {
         if (!valid) return;
 
         busy = true;
-        message = "";
-        dispatch("error", undefined);
+        message = undefined;
+        error = undefined;
+        result = undefined;
+
         swapId = random128();
 
         client.swapTokens(swapId, ledgerIn, ledgerOut!, amountIn, minAmountOut, bestQuote![0]);
@@ -119,63 +147,124 @@
         loadSwaps(ev.detail.ledger);
     }
 
-    function onSwapFinished() {
+    function onSwapFinished(
+        ev: CustomEvent<"success" | "rateChanged" | "insufficientFunds" | "error">,
+    ) {
         busy = false;
-        swapStep = "swapped";
+        state = "finished";
+        result = ev.detail;
+
+        if (result !== "rateChanged") {
+            amountIn = BigInt(0);
+        }
 
         client.refreshAccountBalance(ledgerIn);
         client.refreshAccountBalance(ledgerOut!);
     }
+
+    function onPrimaryClick() {
+        if (state === "quote" || result === "rateChanged") {
+            quote();
+        } else if (state === "swap") {
+            swap();
+        } else if (result === "insufficientFunds") {
+            state = "quote";
+        }
+    }
+
+    function onBalanceRefreshed() {
+        error = undefined;
+    }
+
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        error = $_(ev.detail);
+    }
 </script>
 
-<div class="wrapper">
-    {#if swapStep === "quote"}
-        {#await client.swappableTokens() then swappableTokens}
-            <div class="swap">
-                <div class="select-from">
-                    <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
-                    <div class="inner">
-                        <CryptoSelector
-                            filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
-                            bind:ledger={ledgerIn}
-                            on:select={onLedgerInSelected} />
+<ModalContent>
+    <span class="header" slot="header">
+        <div class="main-title">{title}</div>
+        {#if state === "quote"}
+            <BalanceWithRefresh
+                ledger={ledgerIn}
+                value={remainingBalance}
+                label={$_("cryptoAccount.shortBalanceLabel")}
+                minDecimals={2}
+                bold
+                on:refreshed={onBalanceRefreshed}
+                on:error={onBalanceRefreshError} />
+        {/if}
+    </span>
+    <form class="body" slot="body">
+        {#if state === "quote"}
+            {#await client.swappableTokens() then swappableTokens}
+                <div class="swap">
+                    <div class="select-from">
+                        <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
+                        <div class="inner">
+                            <CryptoSelector
+                                filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
+                                bind:ledger={ledgerIn}
+                                on:select={onLedgerInSelected} />
+                        </div>
+                    </div>
+                    <div class="amount">
+                        <TokenInput
+                            ledger={ledgerIn}
+                            minAmount={detailsIn.transferFee * BigInt(100)}
+                            maxAmount={detailsIn.balance}
+                            bind:valid={validAmount}
+                            bind:amount={amountIn} />
+                    </div>
+                    <div class="select-to">
+                        <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
+                        <div class="inner">
+                            <CryptoSelector
+                                filter={(t) => Object.keys(swaps).includes(t.ledger)}
+                                bind:ledger={ledgerOut} />
+                        </div>
                     </div>
                 </div>
-                <div class="amount">
-                    <TokenInput
-                        ledger={ledgerIn}
-                        minAmount={detailsIn.transferFee * BigInt(100)}
-                        maxAmount={detailsIn.balance}
-                        bind:valid={validAmount}
-                        bind:amount={amountIn} />
-                </div>
-                <div class="select-to">
-                    <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
-                    <div class="inner">
-                        <CryptoSelector
-                            filter={(t) => Object.keys(swaps).includes(t.ledger)}
-                            bind:ledger={ledgerOut} />
-                    </div>
-                </div>
+            {/await}
+        {/if}
+
+        {#if (swapping || state === "finished") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
+            <div>
+                <SwapProgress
+                    {swapId}
+                    tokenIn={detailsIn.symbol}
+                    tokenOut={detailsOut.symbol}
+                    amountIn={amountInText}
+                    decimalsOut={detailsOut.decimals}
+                    dex={dexName(bestQuote[0])}
+                    on:finished={onSwapFinished} />
             </div>
-        {/await}
-    {/if}
+        {/if}
 
-    {#if (swapping || swapStep === "swapped") && swapId !== undefined && detailsOut !== undefined && bestQuote !== undefined}
-        <SwapProgress
-            {swapId}
-            tokenIn={detailsIn.symbol}
-            tokenOut={detailsOut.symbol}
-            amountIn={amountInText}
-            decimalsOut={detailsOut.decimals}
-            dex={dexName(bestQuote[0])}
-            on:finished={onSwapFinished} />
-    {/if}
+        {#if message !== undefined}
+            <Markdown inline={false} text={message} />
+        {/if}
 
-    {#if message !== undefined}
-        <Markdown inline={false} text={message} />
-    {/if}
-</div>
+        {#if error !== undefined}
+            <ErrorMessage>{error}</ErrorMessage>
+        {/if}
+    </form>
+    <span slot="footer">
+        <ButtonGroup>
+            {#if !swapping}
+                <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                    >{$_("close")}</Button>
+            {/if}
+            {#if result !== "success" && result !== "error"}
+                <Button
+                    disabled={busy || !valid}
+                    loading={busy}
+                    tiny={$mobileWidth}
+                    on:click={onPrimaryClick}>{primaryButtonText}</Button>
+            {/if}
+        </ButtonGroup>
+    </span>
+</ModalContent>
 
 <style lang="scss">
     :global(.swap input.amount-val) {
@@ -186,7 +275,18 @@
         height: 47px;
     }
 
-    .wrapper {
+    .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: $sp2;
+
+        .main-title {
+            flex: auto;
+        }
+    }
+
+    .body {
         display: flex;
         flex-direction: column;
         gap: $sp4;
@@ -204,6 +304,7 @@
             background-color: var(--modal-bg);
             display: flex;
             height: 47px;
+            align-items: center;
         }
 
         .select-from .inner {

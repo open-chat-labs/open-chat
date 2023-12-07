@@ -514,8 +514,7 @@
             "to": "A",
             "type": "Tipo"
         },
-        "swap": "Scambio",
-        "swapToken": "Scambia {symbol}"
+        "swap": "Scambio"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",
@@ -1180,24 +1179,29 @@
     "renderPreviews": "Anteprime dei collegamenti con rendering automatico",
     "messageBlocked": "Messaggio nascosto perché il mittente è bloccato",
     "tokenSwap": {
-        "title": "Scambio",
+        "swap": "Scambio",
         "quote": "Citazione",
+        "requote": "Riquotare",
+        "back": "Indietro",
         "swapNotAvailable": "Attualmente non è possibile scambiare {tokenIn} con nessun altro token",
         "noQuotes": "Nessun DEX ha fornito un preventivo per lo scambio di {tokenIn}",
         "getTokenSwapsError": "Errore durante il recupero degli scambi per {tokenIn}",
         "quoteError": "Errore durante il recupero delle virgolette da scambiare {tokenIn}",
         "findingAvailableTokens": "ricerca di token disponibili per lo scambio...",
-        "swapSucceeded": "Scambiato **{amountIn}** {tokenIn} con **{amountOut}** {tokenOut} utilizzando {dex} con successo",
-        "swapFailed": "{dex} non è riuscito a scambiare **{amountIn}** {tokenIn} con almeno **{minAmountOut}** {tokenOut}.",
+        "swapInfo": "La migliore tariffa indicata è **{rate}** {tokenOut} per {tokenIn} da {dex}. Questo dà **{amountOut}** {tokenOut} per **{amountIn}** {tokenIn}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 98% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?",
         "progress": {
             "get": "Ottieni un conto di deposito",
             "deposit": "Trasferisci {amountIn} {tokenIn} a {dex}",
             "notify": "Avvisare {dex} del deposito",
             "swap": "Ordina a {dex} di eseguire lo scambio",
             "withdraw": "Preleva {amountOut} {tokenOut} da {dex}",
-            "refund": "Rimborso {amountIn} {tokenIn} da {dex}"
+            "refund": "Rimborso {amountIn} {tokenIn} da {dex}",
+            "done": "Scambio completato",
+            "failed": "Scambio fallito: il tasso di cambio è cambiato",
+            "insufficientFunds": "Scambio fallito: fondi insufficienti",
+            "error": "Errore di scambio: nessun fondo è stato perso"
         },
-        "swapInfo": "La migliore tariffa indicata è **{rate}** {tokenOut} per {tokenIn} da {dex}. Questo dà **{amountOut}** {tokenOut} per **{amountIn}** {tokenIn}. Lo scambio andrà avanti solo se l'importo di {tokenOut} da ricevere sarà almeno il 98% dell'importo quotato. Vuoi andare avanti e tentare il `{swap}`?",
-        "swapError": "Impossibile elaborare lo scambio. Nessun fondo è andato perso."
+        "swapToken": "Scambia {tokenIn}",
+        "swapTokenTo": "Scambia {tokenIn} in {tokenOut}"
     }
 }
