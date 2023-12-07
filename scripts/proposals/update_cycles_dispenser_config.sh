@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 TITLE="Update CyclesDispenser config"
 SUMMARY="Set the min cycles balance to 1000T and set the ICP burn amount to 50 ICP.

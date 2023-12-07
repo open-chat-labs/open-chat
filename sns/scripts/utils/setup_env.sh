@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Check the necessary environment variables have been set
 if [ -z "${NETWORK}" ]
