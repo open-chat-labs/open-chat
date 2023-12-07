@@ -238,7 +238,7 @@
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
-                {#each chats as chatSummary}
+                {#each chats as chatSummary (chatSummary.id)}
                     <ChatSummary
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
