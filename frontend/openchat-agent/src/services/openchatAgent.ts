@@ -627,6 +627,12 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<EventsResponse<ChatEvent>> {
         latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
 
+        console.debug("CHAT EVENTS: Getting events window", {
+            chatId,
+            threadRootMessageIndex,
+            messageIndex,
+        });
+
         switch (chatId.kind) {
             case "direct_chat":
                 return this.directChatEventsWindow(
@@ -682,6 +688,13 @@ export class OpenChatAgent extends EventTarget {
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
+        console.debug("CHAT EVENTS: Getting chat events", {
+            chatId,
+            threadRootMessageIndex,
+            startIndex,
+            ascending,
+        });
 
         if (chatId.kind === "group_chat") {
             return this.groupChatEvents(
@@ -851,6 +864,12 @@ export class OpenChatAgent extends EventTarget {
         latestKnownUpdate: bigint | undefined,
     ): Promise<EventsResponse<ChatEvent>> {
         latestKnownUpdate = excludeLatestKnownUpdateIfBeforeFix(latestKnownUpdate);
+
+        console.debug("CHAT EVENTS: Getting chat events by index", {
+            chatId,
+            threadRootMessageIndex,
+            eventIndexes,
+        });
 
         switch (chatId.kind) {
             case "group_chat":

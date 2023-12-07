@@ -4624,6 +4624,7 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             usersToUpdate.delete(ANON_USER_ID);
+            usersToUpdate.delete(OPENCHAT_BOT_USER_ID);
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
             const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {

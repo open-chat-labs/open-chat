@@ -8,10 +8,10 @@ WASM_SRC=${1:-build}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
 
-if [[ $OSTYPE == "linux-gnu"* || $RUNNER_OS == "Linux" ]]
+if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then
     PLATFORM=linux
-elif [[ $OSTYPE == "darwin"* || $RUNNER_OS == "macOS" ]]
+elif [[ $OSTYPE == "darwin"* ]] || [[ $RUNNER_OS == "macOS" ]]
 then
     PLATFORM=darwin
 else
