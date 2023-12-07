@@ -3,6 +3,7 @@ use crate::Notification;
 use async_channel::Sender;
 use base64::Engine;
 use index_store::IndexStore;
+use std::cmp::max;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::time;
@@ -31,10 +32,19 @@ impl<I: IndexStore> Reader<I> {
         info!(%self.notifications_canister_id, "Notifications reader started");
 
         let mut interval = time::interval(time::Duration::from_secs(2));
+        let mut batch_size = 50;
         loop {
             for _ in 0..30 {
-                if let Err(error) = self.read_notifications().await {
+                if let Err(error) = self.read_notifications(batch_size).await {
                     error!(?error, "Read notifications failed");
+
+                    // If the request failed because the response was too large, try again using a
+                    // smaller batch size
+                    if format!("{error:?}").contains("IC0504") {
+                        batch_size = max(batch_size / 2, 1);
+                    }
+                } else {
+                    batch_size = 50;
                 }
 
                 interval.tick().await;
@@ -46,11 +56,11 @@ impl<I: IndexStore> Reader<I> {
         }
     }
 
-    async fn read_notifications(&self) -> Result<(), Error> {
+    async fn read_notifications(&self, max_results: u32) -> Result<(), Error> {
         let from_notification_index = self.index_processed_up_to().await? + 1;
         let ic_response = self
             .ic_agent
-            .notifications(&self.notifications_canister_id, from_notification_index)
+            .notifications(&self.notifications_canister_id, from_notification_index, max_results)
             .await?;
 
         if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
