@@ -13,8 +13,8 @@ then
 elif [[ $WASM_SRC == "prod" ]]
 then
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
-elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
-then
+# elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
+else
   if [[ $(git tag -l $WASM_SRC) ]]
   then
     RELEASE_TAG_ID=$WASM_SRC
@@ -37,8 +37,8 @@ then
   else
     COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
   fi
-else
-  COMMIT_ID=$WASM_SRC
+# else
+#   COMMIT_ID=$WASM_SRC
 fi
 
 echo "Downloading $CANISTER_NAME wasm at commit $COMMIT_ID"

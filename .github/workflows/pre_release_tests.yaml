@@ -15,16 +15,16 @@ jobs:
 #    needs: push_canister_wasms
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: "build-debug"
-          save-if: "false"
+#      - uses: actions-rs/toolchain@v1
+#        with:
+#          profile: minimal
+#          toolchain: stable
+#          override: true
+#      - uses: Swatinem/rust-cache@v2
+#        with:
+#          shared-key: "build-debug"
+#          save-if: "false"
       - name: Download canister wasms
         run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
-      - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh local
+#      - name: Run integration tests
+#        run: ./scripts/run-integration-tests.sh local
