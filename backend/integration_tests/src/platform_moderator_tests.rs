@@ -133,7 +133,7 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         );
         group_id
     })
-    .unwrap_or_else(|| {
+    .unwrap_or_else(|_| {
         let user_index_canister::platform_moderators_group::Response::Success(group_id) =
             client::user_index::platform_moderators_group(
                 env,
