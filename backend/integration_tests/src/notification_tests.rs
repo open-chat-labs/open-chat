@@ -20,7 +20,7 @@ fn direct_message_notification_succeeds() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -59,7 +59,7 @@ fn group_message_notification_succeeds() {
         vec![(user2.user_id, user2.principal)],
     );
 
-    client::group::happy_path::send_text_message(env, &user1, group_id, None, "TEXT", None);
+    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -88,7 +88,7 @@ fn direct_message_notification_muted() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT1", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     client::user::mute_notifications(
         env,
         user2.principal,
@@ -100,7 +100,7 @@ fn direct_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT2", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -145,7 +145,7 @@ fn group_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::group::happy_path::send_text_message(env, &user1, group_id, None, "TEXT", None);
+    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -187,7 +187,7 @@ fn max_results_applied_correctly() {
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
     for _ in 0..10 {
-        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     }
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
