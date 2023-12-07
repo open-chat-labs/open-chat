@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Extract the args or use defaults
 USER_ID=$1

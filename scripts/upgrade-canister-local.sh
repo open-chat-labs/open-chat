@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Pass in the dfx identity name
 # eg './upgrade-canister-local.sh openchat user_index 1.0.0'
