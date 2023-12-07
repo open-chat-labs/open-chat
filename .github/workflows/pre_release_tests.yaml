@@ -24,5 +24,7 @@ jobs:
         with:
           shared-key: "build-debug"
           save-if: "false"
+      - name: Download canister wasms
+        run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
       - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh $GITHUB_REF_NAME
+        run: ./scripts/run-integration-tests.sh local

@@ -15,6 +15,7 @@ then
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
 elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
 then
+  git fetch -tfq origin master
   if [[ $(git tag -l $WASM_SRC) ]]
   then
     RELEASE_TAG_ID=$WASM_SRC

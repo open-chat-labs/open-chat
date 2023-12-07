@@ -11,7 +11,7 @@ then
   WASM_SRC=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 fi
 
-echo "Downloading wasms. WASM_SRC: $WASM_SRC"
+echo "Downloading wasms"
 
 ./download-canister-wasm.sh community $WASM_SRC || exit 1
 ./download-canister-wasm.sh cycles_dispenser $WASM_SRC || exit 1
