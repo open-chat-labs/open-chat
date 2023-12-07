@@ -39,6 +39,17 @@ export function createSetStore<T>(store: Writable<Set<T>>) {
             }
             return false;
         },
+        deleteMany: (ids: T[]) => {
+            const toDelete = ids.filter((id) => storeValue.has(id));
+            if (toDelete.length > 0) {
+                store.update((ids) => {
+                    for (const id of toDelete) {
+                        ids.delete(id);
+                    }
+                    return new Set(ids);
+                });
+            }
+        },
         clear: (): void =>
             store.update((ids) => {
                 ids.clear();
