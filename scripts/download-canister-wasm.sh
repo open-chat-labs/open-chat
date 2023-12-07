@@ -22,7 +22,7 @@ then
     RELEASE_TAG_ID=$(git tag -l "$WASM_SRC-*")
   fi
 
-  CHILD_COMMIT_ID=$(git rev-list --ancestry-path $RELEASE_TAG_ID..origin/master | tail -1)
+  CHILD_COMMIT_ID=$(git rev-list --ancestry-path $RELEASE_TAG_ID..HEAD | tail -1)
   if [[ -z $CHILD_COMMIT_ID ]]
   then
     CANISTER_TAG_ID=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME" | head -1)
@@ -33,7 +33,7 @@ then
   if [[ -z $CANISTER_TAG_ID ]]
   then
     # If the canister has not been released yet then download the latest version
-    COMMIT_ID=$(git rev-parse origin/master)
+    COMMIT_ID=$(git rev-parse HEAD)
   else
     COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
   fi
