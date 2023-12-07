@@ -15,12 +15,12 @@ pub struct SubscriptionKeys {
 
 impl SubscriptionInfo {
     pub fn approx_size(&self) -> usize {
-        self.endpoint.len() + self.keys.approx_size() + 32
+        self.endpoint.len() + self.keys.approx_size() + 24
     }
 }
 
 impl SubscriptionKeys {
     pub fn approx_size(&self) -> usize {
-        self.p256dh.len() + self.auth.len() + 32
+        self.p256dh.len() + self.auth.len() + 24
     }
 }
