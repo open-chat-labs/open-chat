@@ -9,39 +9,42 @@ WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the re
 
 if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
-  echo "here1"
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 elif [[ $WASM_SRC == "prod" ]]
 then
-  echo "here2"
   COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
-# elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
-else
-  echo "here3"
+elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
+  echo "here1"
   if [[ $(git tag -l $WASM_SRC) ]]
   then
+    echo "here2"
     RELEASE_TAG_ID=$WASM_SRC
   else
+    echo "here3"
     RELEASE_TAG_ID=$(git tag -l "$WASM_SRC-*")
   fi
 
   CHILD_COMMIT_ID=$(git rev-list --ancestry-path $RELEASE_TAG_ID..HEAD | tail -1)
   if [[ -z $CHILD_COMMIT_ID ]]
   then
+    echo "here4"
     CANISTER_TAG_ID=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME" | head -1)
   else
+    echo "here5"
     CANISTER_TAG_ID=$(git tag -l --no-contains $CHILD_COMMIT_ID --sort=-version:refname "*-$CANISTER_NAME" | head -1)
   fi
 
   if [[ -z $CANISTER_TAG_ID ]]
   then
+    echo "here6"
     # If the canister has not been released yet then download the latest version
     COMMIT_ID=$(git rev-parse HEAD)
   else
+    echo "here7"
     COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
   fi
-# else
-#   COMMIT_ID=$WASM_SRC
+else
+  COMMIT_ID=$WASM_SRC
 fi
 
 echo "Downloading $CANISTER_NAME wasm at commit $COMMIT_ID"
