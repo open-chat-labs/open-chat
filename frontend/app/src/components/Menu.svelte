@@ -22,7 +22,9 @@
         border-radius: var(--rd);
         border: var(--bw) solid var(--menu-bd);
         max-height: 80vh;
+        height: var(--override-height);
         overflow-y: auto;
+        @include nice-scrollbar();
 
         @include mobile() {
             &.centered {

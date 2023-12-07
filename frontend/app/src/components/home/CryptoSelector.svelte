@@ -43,6 +43,184 @@
         }
         ignoreClick = false;
     }
+
+    const crypto2 = [
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+        {
+            ledger: "whatever",
+            urlFormat: "",
+            logo: "",
+            name: "whatever",
+            symbol: "ICP",
+        },
+    ];
 </script>
 
 {#if crypto.length > 0 && ledger !== undefined}
@@ -56,7 +234,7 @@
 
         <div slot="menu">
             <Menu centered>
-                {#each crypto as token}
+                {#each crypto2 as token}
                     <MenuItem on:click={() => selectToken(token.ledger, token.urlFormat)}>
                         <img slot="icon" class="token-icon" src={token.logo} />
                         <div class="token-text" slot="text">
@@ -88,6 +266,7 @@
 
     .token-selector-trigger {
         display: flex;
+        cursor: pointer;
         align-items: center;
         gap: $sp1;
     }
