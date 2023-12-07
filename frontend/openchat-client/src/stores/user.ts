@@ -75,7 +75,8 @@ export const userStore = {
     subscribe: allUsers.subscribe,
     set: (users: UserLookup): void => {
         normalUsers.set(users);
-        suspendedUsers.set(new Set(extractSuspendedUsers(Object.values(users))));
+        const [suspended, _] = partitionSuspendedUsers(Object.values(users));
+        suspendedUsers.set(new Set(suspended));
     },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
@@ -84,6 +85,8 @@ export const userStore = {
         });
         if (user.suspended) {
             suspendedUsers.add(user.userId);
+        } else {
+            suspendedUsers.delete(user.userId);
         }
     },
     addMany: (newUsers: UserSummary[]): void => {
@@ -91,7 +94,9 @@ export const userStore = {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
-        suspendedUsers.addMany(extractSuspendedUsers(newUsers));
+        const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
+        suspendedUsers.addMany(suspended);
+        suspendedUsers.deleteMany(notSuspended);
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
@@ -120,11 +125,15 @@ export const platformModerator = derived(
     ($currentUser) => $currentUser.isPlatformModerator,
 );
 
-function extractSuspendedUsers(users: UserSummary[]): string[] {
-    return users.reduce((arr, user) => {
+function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
+    const suspended = [];
+    const notSuspended = [];
+    for (const user of users) {
         if (user.suspended) {
-            arr.push(user.userId);
+            suspended.push(user.userId);
+        } else {
+            notSuspended.push(user.userId);
         }
-        return arr;
-    }, [] as string[]);
+    }
+    return [suspended, notSuspended];
 }
