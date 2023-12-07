@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # cd into root of OpenChat repo
 SCRIPT=$(readlink -f "$0")
@@ -34,7 +34,7 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
     WASM_FILE=$CANISTER_NAME.wasm.gz
     WASM_PATH=$WASM_FOLDER/$WASM_FILE
-    PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/canister_upgrade_proposal_builder    
+    PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/canister_upgrade_proposal_builder
     PROPOSAL_FILE=proposal.candid
     PROPOSAL_BUILDER_PATH=$PROPOSAL_BUILDER_FOLDER/$PROPOSAL_FILE
 
