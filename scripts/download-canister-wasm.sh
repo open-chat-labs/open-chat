@@ -38,7 +38,7 @@ then
   if [[ -z $CANISTER_TAG_ID ]]
   then
     echo "here6"
-    TAGS=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME")
+    TAGS=$(git tag -l --sort=-version:refname | head -10)
     echo "TAGS: $TAGS"
     # If the canister has not been released yet then download the latest version
     COMMIT_ID=$(git rev-parse HEAD)
