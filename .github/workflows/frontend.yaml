@@ -1,0 +1,53 @@
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - master
+
+name: Frontend linting, type check & unit tests
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore dependencies from cache
+        uses: actions/cache/restore@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+          restore-keys: npm-
+      - name: Restore Turborepo files from cache
+        uses: actions/cache/restore@v3
+        with:
+          path: frontend/.turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.17.1"
+      - name: Build frontend
+        run: npm run build:ci
+        env:
+          NODE_ENV: ci
+          USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
+          ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
+          OPENCHAT_WEBSITE_VERSION: 1.0.0
+          METERED_APIKEY: DUMMY_METERED_APIKEY
+      - name: Save dependencies to cache
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.npm
+          key: npm-${{ hashFiles('package-lock.json') }}
+      - name: Save Turborepo files to cache
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: actions/cache/save@v3
+        with:
+          path: frontend/.turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}

@@ -1,0 +1,46 @@
+on:
+  pull_request:
+  merge_group:
+    branches:
+      - master
+
+name: Validate candid files
+
+jobs:
+  candid_syntax:
+    name: validate candid syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install didc 0.3.2
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/dfinity/candid/releases/download/2023-07-11/didc-linux64
+          name: didc
+          version: 0.3.2
+      - name: run validate-candid-syntax.sh
+        run: ./scripts/validate-candid-syntax.sh
+        shell: bash
+
+  candid_matches_rust:
+    name: validate candid matches rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "build-debug"
+      - name: install didc 0.3.2
+        uses: supplypike/setup-bin@v1
+        with:
+          uri: https://github.com/dfinity/candid/releases/download/2023-07-11/didc-linux64
+          name: didc
+          version: 0.3.2
+      - name: run validate-candid-matches-rust.sh
+        run: ./scripts/validate-candid-matches-rust.sh
+        shell: bash
