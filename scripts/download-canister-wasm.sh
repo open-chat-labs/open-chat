@@ -39,7 +39,7 @@ then
   then
     echo "here6"
     TAGS=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME")
-    echo "TAGS: "$TAGS"
+    echo "TAGS: $TAGS"
     # If the canister has not been released yet then download the latest version
     COMMIT_ID=$(git rev-parse HEAD)
   else
