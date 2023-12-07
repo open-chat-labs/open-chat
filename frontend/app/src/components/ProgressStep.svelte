@@ -21,11 +21,11 @@
         </div>
     {:else if status === "overall-done"}
         <div class="icon">
-            <DoneIcon size="25px" viewBox="0 1 24 24" color={$currentTheme.toast.success.bg} />
+            <DoneIcon size="29px" viewBox="1 2 24 24" color={$currentTheme.toast.success.bg} />
         </div>
     {:else if status === "overall-failed"}
         <div class="icon">
-            <FailedIcon size="25px" viewBox="0 1 24 24" color={$currentTheme.error} />
+            <FailedIcon size="29px" viewBox="1 2 24 24" color={$currentTheme.error} />
         </div>
     {:else}
         <div class={`index ${status}`}>
@@ -80,6 +80,7 @@
     }
 
     .icon {
+        width: 25px;
         height: 25px;
     }
 </style>

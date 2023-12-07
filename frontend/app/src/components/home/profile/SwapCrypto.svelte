@@ -33,9 +33,7 @@
     $: swapping = swapStep === "swap" && busy;
     $: amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
     $: minAmountOut =
-        bestQuote !== undefined
-            ? (bestQuote[1] * BigInt(detailsIn.symbol === "CHAT" ? 102 : 98)) / BigInt(100)
-            : BigInt(0);
+        bestQuote !== undefined ? (bestQuote[1] * BigInt(98)) / BigInt(100) : BigInt(0);
 
     $: {
         valid =
