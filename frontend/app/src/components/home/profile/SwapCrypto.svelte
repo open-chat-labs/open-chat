@@ -154,10 +154,6 @@
         state = "finished";
         result = ev.detail;
 
-        if (result !== "rateChanged") {
-            amountIn = BigInt(0);
-        }
-
         client.refreshAccountBalance(ledgerIn);
         client.refreshAccountBalance(ledgerOut!);
     }
@@ -168,6 +164,7 @@
         } else if (state === "swap") {
             swap();
         } else if (result === "insufficientFunds") {
+            amountIn = BigInt(0);
             state = "quote";
         }
     }
