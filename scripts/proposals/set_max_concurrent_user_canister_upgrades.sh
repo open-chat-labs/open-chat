@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 TITLE="Increase max concurrent user canister upgrades to 50 per subnet"
 SUMMARY="It currently takes 1.5 days for all user canisters to be upgraded.
