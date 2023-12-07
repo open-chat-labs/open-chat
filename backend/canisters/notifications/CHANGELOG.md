@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
 
+### Fixed
+
+- Request smaller batch size if notifications batch exceeds size limit ([#4964](https://github.com/open-chat-labs/open-chat/pull/4964))
+
 ## [[2.0.898](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.898-notifications)] - 2023-10-19
 
 ### Changed
