@@ -44,6 +44,7 @@ export const menuStore = {
             if (menu === undefined) return menu;
 
             const elementRect = menu.getBoundingClientRect();
+            const originalHeight = elementRect.height;
 
             const dim =
                 centered && get(mobileWidth)
@@ -59,7 +60,9 @@ export const menuStore = {
             // for landing pages we need to offset based on the window scroll
             // for the main app this will always be 0 so it's a no-op
             menu.style.setProperty("top", `${dim.y + window.scrollY}px`);
-            menu.style.setProperty("--override-height", `${dim.h}px`);
+            if (originalHeight !== dim.h) {
+                menu.style.setProperty("--override-height", `${dim.h}px`);
+            }
 
             return menu;
         }),
