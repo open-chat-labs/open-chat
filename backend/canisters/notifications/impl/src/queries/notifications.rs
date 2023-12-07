@@ -5,7 +5,7 @@ use notifications_canister::notifications::{Response::*, *};
 use std::collections::HashMap;
 use types::{IndexedEvent, NotificationEnvelope, SubscriptionInfo, UserId};
 
-const MAX_NOTIFICATIONS_PER_BATCH: u32 = 100;
+const DEFAULT_MAX_RESULTS: u32 = 50;
 
 #[query(guard = "caller_is_push_service")]
 fn notifications(args: Args) -> Response {
@@ -16,7 +16,7 @@ fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
     let notifications = state
         .data
         .notifications
-        .get(args.from_notification_index, MAX_NOTIFICATIONS_PER_BATCH);
+        .get(args.from_notification_index, args.max_results.unwrap_or(DEFAULT_MAX_RESULTS));
 
     let result = add_subscriptions(notifications, state);
     Success(result)

@@ -20,6 +20,7 @@
     let searchResults: ChannelMatch[] = [];
     let total = 0;
     let autoOpen = false;
+    let matchedCommunityId: string | undefined = undefined;
     $: more = total > searchResults.length;
 
     $: myChannels = ChatMap.fromList($chatSummariesListStore ?? []);
@@ -28,6 +29,10 @@
 
     function search(term: string, reset = false) {
         if ($selectedCommunity === undefined) return;
+        if ($selectedCommunity.id.communityId !== matchedCommunityId) {
+            searchResults = [];
+        }
+        matchedCommunityId = $selectedCommunity.id.communityId;
         searching = true;
         if (reset) {
             pageIndex = 0;
@@ -42,7 +47,10 @@
                 pageSize,
             )
             .then((results) => {
-                if (results.kind === "success") {
+                if (
+                    results.kind === "success" &&
+                    $selectedCommunity?.id.communityId === matchedCommunityId
+                ) {
                     if (reset) {
                         searchResults = results.matches;
                     } else {
@@ -63,6 +71,8 @@
     $: {
         if ($selectedCommunity !== undefined) {
             search(searchTerm, true);
+        } else {
+            searchResults = [];
         }
     }
 </script>
