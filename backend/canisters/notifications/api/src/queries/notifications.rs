@@ -6,6 +6,7 @@ use types::{IndexedEvent, NotificationEnvelope, SubscriptionInfo, TimestampMilli
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub from_notification_index: u64,
+    pub max_results: Option<u32>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
