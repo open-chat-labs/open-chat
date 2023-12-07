@@ -5,6 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::panic;
 use types::{Chat, ChatEvent, ChatId, MessageContent, MultiUserChat};
 
 #[test]
@@ -120,18 +121,28 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
         &user_index_canister::add_platform_moderator::Args { user_id: user1.user_id },
     );
 
-    let group_name = random_string();
+    let moderators_group = panic::catch_unwind(|| {
+        let group_name = random_string();
+        let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
 
-    let moderators_group = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
-
-    client::user_index::assign_platform_moderators_group(
-        env,
-        controller,
-        canister_ids.user_index,
-        &user_index_canister::assign_platform_moderators_group::Args {
-            group_id: moderators_group,
-        },
-    );
+        client::user_index::assign_platform_moderators_group(
+            env,
+            controller,
+            canister_ids.user_index,
+            &user_index_canister::assign_platform_moderators_group::Args { group_id },
+        );
+        group_id
+    })
+    .unwrap_or_else(|| {
+        let user_index_canister::platform_moderators_group::Response::Success(group_id) =
+            client::user_index::platform_moderators_group(
+                env,
+                controller,
+                canister_ids.user_index,
+                &user_index_canister::platform_moderators_group::Args {},
+            );
+        group_id
+    });
 
     TestData {
         user1,
