@@ -28,6 +28,7 @@ fn direct_message_notification_succeeds() {
         canister_ids.notifications,
         &notifications_canister::notifications::Args {
             from_notification_index: latest_notification_index + 1,
+            max_results: None,
         },
     );
 
@@ -66,6 +67,7 @@ fn group_message_notification_succeeds() {
         canister_ids.notifications,
         &notifications_canister::notifications::Args {
             from_notification_index: latest_notification_index + 1,
+            max_results: None,
         },
     );
 
@@ -106,6 +108,7 @@ fn direct_message_notification_muted() {
         canister_ids.notifications,
         &notifications_canister::notifications::Args {
             from_notification_index: latest_notification_index + 1,
+            max_results: None,
         },
     );
 
@@ -150,6 +153,7 @@ fn group_message_notification_muted() {
         canister_ids.notifications,
         &notifications_canister::notifications::Args {
             from_notification_index: latest_notification_index + 1,
+            max_results: None,
         },
     );
 
@@ -166,6 +170,37 @@ fn latest_notification_index(env: &PocketIc, notifications_canister_id: Principa
         );
 
     latest_notification_index
+}
+
+#[test]
+fn max_results_applied_correctly() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2 } = init_test_data(env, canister_ids);
+
+    let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
+
+    for _ in 0..10 {
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+    }
+
+    let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
+        env,
+        *controller,
+        canister_ids.notifications,
+        &notifications_canister::notifications::Args {
+            from_notification_index: latest_notification_index + 1,
+            max_results: Some(3),
+        },
+    );
+
+    assert_eq!(notifications_response.notifications.len(), 3);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
