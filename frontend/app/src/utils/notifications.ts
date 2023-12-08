@@ -18,7 +18,7 @@ export const PUBLIC_VAPID_KEY =
 
 export async function subscribeToNotifications(
     client: OpenChat,
-    onNotification: (notification: Notification) => void
+    onNotification: (notification: Notification) => void,
 ): Promise<boolean> {
     if (!notificationsSupported) {
         console.debug("PUSH: notifications not supported");
@@ -40,7 +40,7 @@ export async function subscribeToNotifications(
         } else if (event.data.type === "NOTIFICATION_CLICKED") {
             console.debug(
                 "PUSH: notification clicked existing client routing to: ",
-                event.data.path
+                event.data.path,
             );
             page(event.data.path);
         }
@@ -87,7 +87,7 @@ export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise
 }
 
 export async function closeNotifications(
-    shouldClose: (notification: Notification) => boolean
+    shouldClose: (notification: Notification) => boolean,
 ): Promise<void> {
     const registration = await getRegistration();
     if (registration !== undefined) {
@@ -108,7 +108,9 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
     }
 
     try {
-        return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH", { type: "module" });
+        return await navigator.serviceWorker.register("process.env.SERVICE_WORKER_PATH", {
+            type: "module",
+        });
     } catch (e) {
         console.log(e);
         return undefined;
@@ -153,7 +155,7 @@ async function trySubscribe(client: OpenChat): Promise<boolean> {
 }
 
 async function subscribeUserToPush(
-    registration: ServiceWorkerRegistration
+    registration: ServiceWorkerRegistration,
 ): Promise<PushSubscription | null> {
     const subscribeOptions = {
         userVisibleOnly: true,
@@ -192,5 +194,5 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
-    return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
+    return await navigator.serviceWorker.getRegistration("process.env.SERVICE_WORKER_PATH");
 }
