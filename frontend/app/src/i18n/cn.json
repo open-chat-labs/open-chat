@@ -720,7 +720,7 @@
     "theme": {
         "dark": "深色的",
         "light": "浅色的",
-        "system": "默认",
+        "system": "系统",
         "title": "主题",
         "preferredLightTheme": "首选浅色主题",
         "preferredDarkTheme": "首选深色主题"
