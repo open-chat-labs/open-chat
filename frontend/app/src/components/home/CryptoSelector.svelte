@@ -88,6 +88,7 @@
 
     .token-selector-trigger {
         display: flex;
+        cursor: pointer;
         align-items: center;
         gap: $sp1;
     }
