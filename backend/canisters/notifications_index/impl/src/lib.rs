@@ -49,11 +49,17 @@ impl RuntimeState {
     }
 
     pub fn add_subscription(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
-        self.data.subscriptions.push(user_id, subscription.clone());
+        let subscriptions_removed = self.data.subscriptions.push(user_id, subscription.clone());
 
         let event = NotificationsIndexEvent::SubscriptionAdded(SubscriptionAdded { user_id, subscription });
 
         self.push_event_to_notifications_canisters(event);
+
+        for p256dh_key in subscriptions_removed {
+            let event = NotificationsIndexEvent::SubscriptionRemoved(SubscriptionRemoved { user_id, p256dh_key });
+
+            self.push_event_to_notifications_canisters(event);
+        }
     }
 
     pub fn remove_subscription(&mut self, user_id: UserId, p256dh_key: String) {

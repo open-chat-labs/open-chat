@@ -95,6 +95,22 @@ impl Data {
     }
 }
 
+#[cfg(test)]
+impl Default for Data {
+    fn default() -> Self {
+        Data {
+            notifications_index_canister_id: CanisterId::anonymous(),
+            push_service_principals: HashSet::new(),
+            authorized_principals: AuthorizedPrincipals::new(HashSet::new()),
+            cycles_dispenser_canister_id: CanisterId::anonymous(),
+            notifications: EventStream::default(),
+            subscriptions: Subscriptions::default(),
+            rng_seed: [0; 32],
+            test_mode: true,
+        }
+    }
+}
+
 #[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
