@@ -19,7 +19,7 @@
         "app",
         "openchat-agent",
         "openchat-client",
-        "openchat-push",
+        "openchat-service-worker",
         "openchat-shared",
         "openchat-worker"
     ],

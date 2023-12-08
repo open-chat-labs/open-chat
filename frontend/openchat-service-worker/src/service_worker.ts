@@ -35,17 +35,17 @@ const FILE_ICON =
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
-    ev.waitUntil(self.skipWaiting().then(() => console.debug("PSW: skipWaiting promise resolved")));
+    ev.waitUntil(self.skipWaiting().then(() => console.debug("SW: skipWaiting promise resolved")));
 });
 
 self.addEventListener("activate", (ev) => {
     // upon activation take control of all clients (tabs & windows)
     ev.waitUntil(self.clients.claim());
-    console.debug("PSW: actived");
+    console.debug("SW: actived");
 });
 
 self.addEventListener("fetch", () => {
-    console.debug("PSW: dummy fetch interceptor");
+    console.debug("SW: dummy fetch interceptor");
 });
 
 self.addEventListener("push", (ev: PushEvent) => {
@@ -58,9 +58,9 @@ self.addEventListener("notificationclick", (ev: NotificationEvent) => {
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
     const id = Date.now().toString();
-    console.debug("PUSH: push notification received", id);
+    console.debug("SW: push notification received", id);
     if (!event.data) {
-        console.debug("PUSH: notification data is empty", id);
+        console.debug("SW: notification data is empty", id);
         return;
     }
 
@@ -72,7 +72,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     // Try to extract the typed notification from the event
     const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
     if (!candid) {
-        console.debug("PUSH: unable to decode candid", id);
+        console.debug("SW: unable to decode candid", id);
         return;
     }
 
@@ -95,7 +95,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
         (wc) => wc.focused && wc.visibilityState === "visible",
     );
     if (isClientFocused && isMessageNotification(notification)) {
-        console.debug("PUSH: suppressing notification because client focused", id);
+        console.debug("SW: suppressing notification because client focused", id);
         return;
     }
     await showNotification(notification, id);
@@ -119,7 +119,7 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
         });
     } else {
         const urlToOpen = new URL(event.notification.data.path, self.location.origin);
-        console.debug("PUSH: notification clicked no open clients. Opening: ", urlToOpen);
+        console.debug("SW: notification clicked no open clients. Opening: ", urlToOpen);
         await self.clients.openWindow(urlToOpen);
     }
 }
@@ -226,7 +226,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         },
     };
 
-    console.debug("PUSH: about to show notification: ", toShow, id);
+    console.debug("SW: about to show notification: ", toShow, id);
     await self.registration.showNotification(title, toShow);
 }
 

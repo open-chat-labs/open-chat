@@ -27,15 +27,15 @@
 
         "build:prod": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
         "build:prod_test": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
         "build:testnet": {
             "outputs": ["lib/**", "build/**"],
-            "dependsOn": ["^build", "openchat-push#build", "openchat-worker#build"]
+            "dependsOn": ["^build", "openchat-service-worker#build", "openchat-worker#build"]
         },
 
         "build": {
