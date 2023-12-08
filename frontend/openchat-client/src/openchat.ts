@@ -62,6 +62,7 @@ import {
     canSendGroupMessage,
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
+    activeUserIdFromEvent,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -75,6 +76,7 @@ import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { showTrace } from "./utils/profiling";
 import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
+import { RecentlyActiveUsersTracker } from "./utils/recentlyActiveUsersTracker";
 import {
     idbAuthClientStore,
     lsAuthClientStore,
@@ -135,6 +137,7 @@ import {
 import {
     cryptoBalance,
     cryptoLookup,
+    cryptoTokensSorted,
     enhancedCryptoLookup,
     lastCryptoSent,
     nervousSystemLookup,
@@ -463,6 +466,8 @@ export class OpenChat extends OpenChatAgentWorker {
     private _chatsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
+    private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
+        new RecentlyActiveUsersTracker();
 
     user = currentUser;
     anonUser = anonUser;
@@ -2949,6 +2954,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const context = { chatId, threadRootMessageIndex };
         const myUserId = this._liveState.user.userId;
+        const now = BigInt(Date.now());
+        const recentlyActiveCutOff = now - BigInt(12 * ONE_HOUR);
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
@@ -2963,6 +2970,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     !messagesRead.isRead(context, messageIndex, messageId)
                 ) {
                     messagesRead.markMessageRead(context, messageIndex, messageId);
+                }
+            }
+            if (event.timestamp > recentlyActiveCutOff) {
+                const userId = activeUserIdFromEvent(event.event);
+                if (userId !== undefined && userId !== myUserId) {
+                    this._recentlyActiveUsersTracker.track(userId, event.timestamp);
                 }
             }
         }
@@ -4602,8 +4615,19 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private async updateUsers() {
         try {
+            const now = BigInt(Date.now());
             const allUsers = this._liveState.userStore;
             const usersToUpdate = new Set<string>([this._liveState.user.userId]);
+
+            for (const userId of this._recentlyActiveUsersTracker.consume()) {
+                const current = allUsers[userId];
+                if (current === undefined || now - current.updated > 10 * ONE_MINUTE_MILLIS) {
+                    usersToUpdate.add(userId);
+                }
+                if (usersToUpdate.size >= 100) {
+                    break;
+                }
+            }
 
             // Update all users we have direct chats with
             for (const chat of this._liveState.chatSummariesList) {
@@ -4613,7 +4637,6 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             // Also update any users who haven't been updated for at least 24 hours
-            const now = BigInt(Date.now());
             for (const user of Object.values(allUsers)) {
                 if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
                     usersToUpdate.add(user.userId);
@@ -5822,6 +5845,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;

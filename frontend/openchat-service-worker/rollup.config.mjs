@@ -7,7 +7,7 @@ import typescript from "@rollup/plugin-typescript";
 import del from "rollup-plugin-delete";
 
 export default {
-    input: `./src/push_sw.ts`,
+    input: `./src/service_worker.ts`,
     output: {
         dir: "./lib",
         sourcemap: true,
