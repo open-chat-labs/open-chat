@@ -17,7 +17,7 @@
     let ignoreClick = false;
 
     $: cryptoLookup = client.enhancedCryptoLookup;
-    $: crypto = Object.values($cryptoLookup).filter((t) => filter(t));
+    $: crypto = client.sortCryptoTokens(Object.values($cryptoLookup).filter((t) => filter(t)));
 
     $: {
         if (ledger === undefined && crypto.length > 0) {

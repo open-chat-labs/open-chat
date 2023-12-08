@@ -1,6 +1,11 @@
 import { derived, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import { dollarExchangeRates, type CryptocurrencyDetails, type NervousSystemDetails, DEFAULT_TOKENS } from "openchat-shared";
+import {
+    dollarExchangeRates,
+    type CryptocurrencyDetails,
+    type NervousSystemDetails,
+    DEFAULT_TOKENS,
+} from "openchat-shared";
 import { toRecord } from "../utils/list";
 
 type LedgerCanister = string;
@@ -40,7 +45,8 @@ export const enhancedCryptoLookup = derived(
         const accounts = Object.values($lookup).map((t) => {
             const balance = $balance[t.ledger] ?? BigInt(0);
             const xr = dollarExchangeRates[t.symbol.toLowerCase()];
-            const dollarBalance = xr > 0 ? Number(balance) / xr : 0;
+            const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
+            const dollarBalance = xr > 0 ? balanceWholeUnits / xr : 0;
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
             return {
                 ...t,
@@ -51,32 +57,35 @@ export const enhancedCryptoLookup = derived(
             };
         });
 
-        accounts.sort((a, b) => {
-            // Sort by $ balance
-            // Then by whether token is a default
-            // Then by default precedence
-            // Then alphabetically by symbol
-            if (a.dollarBalance < b.dollarBalance) {
-                return 1;
-            } else if (a.dollarBalance > b.dollarBalance) {
-                return -1;
-            } else {
-                const defA = DEFAULT_TOKENS.indexOf(a.symbol);
-                const defB = DEFAULT_TOKENS.indexOf(b.symbol);
-
-                if (defA >= 0 && defB >= 0) {
-                    return defA < defB ? 1 : -1;
-                } else if (defA >= 0) {
-                    return 1;
-                } else if (defB >= 0) {
-                    return -1;
-                } else {
-                    return a.symbol.localeCompare(b.symbol);
-                }
-            }
-        });
-
         return toRecord(accounts, (a) => a.ledger);
     },
 );
 
+export function sortCryptoTokens<T extends { dollarBalance: number; symbol: string }>(
+    tokens: T[],
+): T[] {
+    return tokens.sort((a, b) => {
+        // Sort by $ balance
+        // Then by whether token is a default
+        // Then by default precedence
+        // Then alphabetically by symbol
+        if (a.dollarBalance < b.dollarBalance) {
+            return 1;
+        } else if (a.dollarBalance > b.dollarBalance) {
+            return -1;
+        } else {
+            const defA = DEFAULT_TOKENS.indexOf(a.symbol);
+            const defB = DEFAULT_TOKENS.indexOf(b.symbol);
+
+            if (defA >= 0 && defB >= 0) {
+                return defA < defB ? 1 : -1;
+            } else if (defA >= 0) {
+                return 1;
+            } else if (defB >= 0) {
+                return -1;
+            } else {
+                return a.symbol.localeCompare(b.symbol);
+            }
+        }
+    });
+}

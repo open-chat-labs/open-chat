@@ -138,6 +138,7 @@ import {
     enhancedCryptoLookup,
     lastCryptoSent,
     nervousSystemLookup,
+    sortCryptoTokens,
 } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
@@ -5823,6 +5824,7 @@ export class OpenChat extends OpenChatAgentWorker {
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
     enhancedCryptoLookup = enhancedCryptoLookup;
+    sortCryptoTokens = sortCryptoTokens;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;

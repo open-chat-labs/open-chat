@@ -30,6 +30,7 @@
     let transactionsFormat: string;
 
     $: accounts = client.enhancedCryptoLookup;
+    $: accountsSorted = client.sortCryptoTokens(Object.values($accounts));
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
@@ -100,7 +101,7 @@
         <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
         <th />
     </tr>
-    {#each Object.values($accounts) as token}
+    {#each accountsSorted as token}
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">
