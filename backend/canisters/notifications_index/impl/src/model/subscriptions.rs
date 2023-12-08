@@ -11,13 +11,18 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) {
+    // Returns any subscriptions which were removed
+    pub fn push(&mut self, user_id: UserId, subscription: SubscriptionInfo) -> Vec<String> {
+        let mut removed = Vec::new();
         match self.subscriptions.entry(user_id) {
             Occupied(e) => {
                 let subscriptions = e.into_mut();
                 if subscriptions.iter().any(|s| *s == subscription) {
-                    return;
+                    return removed;
                 }
+                if subscriptions.len() >= 10 {
+                    removed.extend(subscriptions.drain(..subscriptions.len() - 9).map(|s| s.keys.p256dh));
+                };
                 subscriptions.push(subscription);
             }
             Vacant(e) => {
@@ -26,6 +31,7 @@ impl Subscriptions {
         }
 
         self.total = self.total.saturating_add(1);
+        removed
     }
 
     pub fn remove_all(&mut self, user_id: UserId) {

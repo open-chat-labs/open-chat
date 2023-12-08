@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.965](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.965-community)] - 2023-12-07
+
 ### Fixed
 
 - Fix bug which allowed anyone to mention @everyone ([#4930](https://github.com/open-chat-labs/open-chat/pull/4930))

@@ -16,12 +16,13 @@
     let selecting = false;
     let ignoreClick = false;
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: crypto = Object.values($cryptoLookup).filter((t) => filter(t));
+    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoTokensSorted = client.cryptoTokensSorted;
+    $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => filter(t));
 
     $: {
-        if (ledger === undefined && crypto.length > 0) {
-            ledger = crypto[0].ledger;
+        if (ledger === undefined && cryptoTokensFiltered.length > 0) {
+            ledger = cryptoTokensFiltered[0].ledger;
         }
     }
 
@@ -45,7 +46,7 @@
     }
 </script>
 
-{#if crypto.length > 0 && ledger !== undefined}
+{#if cryptoTokensFiltered.length > 0 && ledger !== undefined}
     <MenuIcon centered position={"bottom"} align={"start"}>
         <div class="token-selector-trigger" slot="icon">
             <div class="symbol">
@@ -56,7 +57,7 @@
 
         <div slot="menu">
             <Menu centered>
-                {#each crypto as token}
+                {#each cryptoTokensFiltered as token}
                     <MenuItem on:click={() => selectToken(token.ledger, token.urlFormat)}>
                         <img slot="icon" class="token-icon" src={token.logo} />
                         <div class="token-text" slot="text">
