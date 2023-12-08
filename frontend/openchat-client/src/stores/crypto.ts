@@ -61,10 +61,8 @@ export const enhancedCryptoLookup = derived(
     },
 );
 
-export function sortCryptoTokens<T extends { dollarBalance: number; symbol: string }>(
-    tokens: T[],
-): T[] {
-    return tokens.sort((a, b) => {
+export const cryptoTokensSorted = derived([enhancedCryptoLookup], ([$lookup]) => {
+    return Object.values($lookup).sort((a, b) => {
         // Sort by $ balance
         // Then by whether token is a default
         // Then by default precedence
@@ -88,4 +86,4 @@ export function sortCryptoTokens<T extends { dollarBalance: number; symbol: stri
             }
         }
     });
-}
+});
