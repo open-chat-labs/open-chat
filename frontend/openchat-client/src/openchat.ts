@@ -4619,7 +4619,7 @@ export class OpenChat extends OpenChatAgentWorker {
             const allUsers = this._liveState.userStore;
             const usersToUpdate = new Set<string>([this._liveState.user.userId]);
 
-            for (const [userId] of this._recentlyActiveUsersTracker.take()) {
+            for (const userId of this._recentlyActiveUsersTracker.consume()) {
                 const current = allUsers[userId];
                 if (current === undefined || now - current.updated > 10 * ONE_MINUTE_MILLIS) {
                     usersToUpdate.add(userId);
