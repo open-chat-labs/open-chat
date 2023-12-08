@@ -34,12 +34,8 @@ impl IcAgent {
         &self,
         notifications_canister_id: &CanisterId,
         from_notification_index: u64,
-        max_results: u32,
     ) -> Result<notifications::SuccessResult, Error> {
-        let args = notifications::Args {
-            from_notification_index,
-            max_results: Some(max_results),
-        };
+        let args = notifications::Args { from_notification_index };
 
         trace!(?args, "notifications::args");
 
