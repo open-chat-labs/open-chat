@@ -8,10 +8,14 @@ export class RecentlyActiveUsersTracker {
         }
     }
 
-    take(): [string, bigint][] {
-        const allSorted: [string, bigint][] = [];
-        this.map.forEach((lastActive, userId) => allSorted.push([userId, lastActive]));
+    *consume(): Generator<string> {
+        const sorted: [string, bigint][] = [];
+        this.map.forEach((lastActive, userId) => sorted.push([userId, lastActive]));
+        sorted.sort((a, b) => Number(b[1] - a[1]));
 
-        return allSorted.sort((a, b) => Number(b[1] - a[1]));
+        for (const [next] of sorted) {
+            this.map.delete(next);
+            yield next;
+        }
     }
 }
