@@ -137,6 +137,7 @@ import {
 import {
     cryptoBalance,
     cryptoLookup,
+    cryptoTokensSorted,
     enhancedCryptoLookup,
     lastCryptoSent,
     nervousSystemLookup,
@@ -5844,6 +5845,7 @@ export class OpenChat extends OpenChatAgentWorker {
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;
     cryptoLookup = cryptoLookup;
+    cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
     lastCryptoSent = lastCryptoSent;
