@@ -29,7 +29,7 @@
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
 
-    $: accounts = client.enhancedCryptoLookup;
+    $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
@@ -38,7 +38,7 @@
     );
 
     $: {
-        zeroCount = Object.values($accounts).filter((a) => a.zero).length;
+        zeroCount = $accountsSorted.filter((a) => a.zero).length;
     }
 
     function onBalanceRefreshed() {
@@ -100,7 +100,7 @@
         <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
         <th />
     </tr>
-    {#each Object.values($accounts) as token}
+    {#each $accountsSorted as token}
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">

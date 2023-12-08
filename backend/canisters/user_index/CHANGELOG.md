@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.964](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.964-user_index)] - 2023-12-06
+
 ### Added
 
 - Expose number of lifetime Diamond members in metrics ([#4929](https://github.com/open-chat-labs/open-chat/pull/4929))
