@@ -17,6 +17,7 @@ document.body.appendChild(menuAnchor);
 
 function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     if (menu !== undefined) {
+        menu.style.removeProperty("--override-height");
         if (!menuAnchor) {
             // debug logging - will remove later
             console.error("trying to remove menu when menu anchor is null");
@@ -43,6 +44,7 @@ export const menuStore = {
             if (menu === undefined) return menu;
 
             const elementRect = menu.getBoundingClientRect();
+            const originalHeight = elementRect.height;
 
             const dim =
                 centered && get(mobileWidth)
@@ -50,6 +52,7 @@ export const menuStore = {
                     : boundsCheck(
                           triggerRect,
                           derivePosition(triggerRect, elementRect, position, align, gutter),
+                          gutter,
                       );
 
             menu.style.setProperty("left", `${dim.x}px`);
@@ -57,6 +60,9 @@ export const menuStore = {
             // for landing pages we need to offset based on the window scroll
             // for the main app this will always be 0 so it's a no-op
             menu.style.setProperty("top", `${dim.y + window.scrollY}px`);
+            if (originalHeight !== dim.h) {
+                menu.style.setProperty("--override-height", `${dim.h}px`);
+            }
 
             return menu;
         }),

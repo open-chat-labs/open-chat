@@ -497,7 +497,7 @@
         "scan": "扫描二维码",
         "receiveToken": "接收 {symbol}",
         "sendToken": "发送 {symbol}",
-        "receive": "收到",
+        "receive": "接收",
         "showZeroBalance": "展示更多",
         "hideZeroBalance": "显示较少",
         "transactions": "交易",
@@ -513,7 +513,7 @@
             "to": "到",
             "type": "类型"
         },
-        "swap": "交换"
+        "swap": "兑换"
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -864,7 +864,7 @@
     "participant": "成员",
     "unauthorizedToCreatePublicGroup": "您无权创建公共组",
     "reminders": {
-        "optional": "选修的",
+        "optional": "可选的",
         "menu": "提醒我",
         "title": "设置提醒",
         "note": "添加注释",
@@ -941,7 +941,7 @@
         "minStake": "最小股份（代币）",
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minStakeN": "最小质押 {n} 个代币",
-        "optional": "选修的",
+        "optional": "可选的",
         "openAccessInfo": "加入没有特殊的访问要求",
         "gateCheckFailed": "未满足访问门禁",
         "cannotMakePublic": "您不能将私有的 {level} 设为公开，因为这会危及现有成员的隐私。",
@@ -1180,29 +1180,29 @@
     "renderPreviews": "自动渲染链接预览",
     "messageBlocked": "由于发件人被阻止，邮件被隐藏",
     "tokenSwap": {
-        "swap": "交换",
-        "quote": "引用",
+        "swap": "兑换",
+        "quote": "报价",
         "requote": "重新报价",
         "back": "后退",
         "swapNotAvailable": "目前无法将 {tokenIn} 交换为任何其他代币",
-        "noQuotes": "没有 DEX 提供交换 {tokenIn} 的报价",
+        "noQuotes": "没有 DEX 提供兑换 {tokenIn} 的报价",
         "getTokenSwapsError": "获取 {tokenIn} 的交换时出错",
-        "quoteError": "获取交换 {tokenIn} 的报价时出错",
-        "findingAvailableTokens": "正在寻找可用的代币进行交换...",
-        "swapInfo": "所报的最佳费率是 {rate} 每 {tokenOut} 的 **{tokenIn}** {dex}。这为 **{amountOut}** {tokenOut} 提供了 **{amountIn}** {tokenIn}。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，交换才会进行。您想继续尝试“{swap}”吗？",
+        "quoteError": "获取兑换 {tokenIn} 的报价时出错",
+        "findingAvailableTokens": "正在寻找可用的代币进行兑换...",
+        "swapInfo": "所报的最佳费率是 {rate}  {tokenOut} / **{tokenIn}** @{dex}。这将从 **{amountIn}** {tokenIn} 兑换 **{amountOut}** {tokenOut} 。仅当收到的 {tokenOut} 金额至少为报价金额的 98% 时，兑换才会进行。您想继续尝试“{swap}”吗？",
         "progress": {
             "get": "获取存款账户",
             "deposit": "将 {amountIn} {tokenIn} 转移到 {dex}",
             "notify": "通知{dex}存款",
             "swap": "指示 {dex} 执行交换",
-            "withdraw": "从 {amountOut} 中撤回 {tokenOut} {dex}",
-            "refund": "从 {amountIn} 退款 {tokenIn} {dex}",
-            "done": "交换完成",
+            "withdraw": "从 {dex} 提取 {amountOut} {tokenOut} ",
+            "refund": "从 {dex} 撤回 {amountIn}  {tokenIn} ",
+            "done": "兑换完成",
             "failed": "兑换失败 - 汇率已更改",
             "insufficientFunds": "兑换失败-资金不足",
-            "error": "掉期错误 - 没有资金损失"
+            "error": "兑换错误 - 没有资金损失"
         },
-        "swapToken": "交换{tokenIn}",
-        "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}"
+        "swapToken": "兑换{tokenIn}",
+        "swapTokenTo": "将 {tokenIn} 兑换为 {tokenOut}"
     }
 }
