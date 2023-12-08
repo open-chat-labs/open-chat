@@ -171,6 +171,7 @@ type AssignPlatformModeratorsGroupArgs = record {
 
 type AssignPlatformModeratorsGroupResponse = variant {
     Success;
+    AlreadySet : ChatId;
 };
 
 type PlatformModeratorsResponse = variant {
