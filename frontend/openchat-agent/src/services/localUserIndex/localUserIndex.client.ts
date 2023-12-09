@@ -48,7 +48,6 @@ export class LocalUserIndexClient extends CandidService {
         return this.handleResponse(
             this.localUserIndexService.register_user({
                 username,
-                display_name: [],
                 referral_code: apiOptional(identity, referralCode),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),

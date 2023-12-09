@@ -73,6 +73,7 @@ export type CommunitySummary = AccessControlled &
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
         userGroups: Map<number, UserGroupSummary>;
+        localUserIndex: string;
     };
 
 export type DefaultChannel = {

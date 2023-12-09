@@ -1233,6 +1233,7 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        localUserIndex: string;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1296,6 +1297,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
+        localUserIndex: string;
     };
 
 export type UpdatedEvent = {

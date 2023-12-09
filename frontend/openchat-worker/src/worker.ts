@@ -393,7 +393,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.credential),
+                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credential),
                 );
                 break;
 
@@ -601,7 +601,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.chatId, payload.userIds),
+                    agent.inviteUsers(payload.chatId, payload.localUserIndex, payload.userIds),
                 );
                 break;
 
@@ -609,7 +609,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsersToCommunity(payload.id, payload.userIds),
+                    agent.inviteUsersToCommunity(
+                        payload.id,
+                        payload.localUserIndex,
+                        payload.userIds,
+                    ),
                 );
                 break;
 
@@ -1362,11 +1366,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "canSwap":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.canSwap(payload.tokenLedgers),
-                );
+                executeThenReply(payload, correlationId, agent.canSwap(payload.tokenLedgers));
                 break;
 
             case "getTokenSwaps":
@@ -1381,7 +1381,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.getTokenSwapQuotes(payload.inputTokenLedger, payload.outputTokenLedger, payload.amountIn),
+                    agent.getTokenSwapQuotes(
+                        payload.inputTokenLedger,
+                        payload.outputTokenLedger,
+                        payload.amountIn,
+                    ),
                 );
                 break;
 

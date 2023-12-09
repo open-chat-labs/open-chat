@@ -1213,7 +1213,24 @@ export class OpenChat extends OpenChatAgentWorker {
             return "gate_check_failed";
         }
 
-        return this.sendRequest({ kind: "joinGroup", chatId: chat.id, credential })
+        const localUserIndex =
+            chat.kind === "group_chat"
+                ? chat.localUserIndex
+                : this._liveState.communities.get({
+                      kind: "community",
+                      communityId: chat.id.communityId,
+                  })?.localUserIndex;
+
+        if (localUserIndex === undefined) {
+            throw new Error("Community not found");
+        }
+
+        return this.sendRequest({
+            kind: "joinGroup",
+            chatId: chat.id,
+            localUserIndex,
+            credential,
+        })
             .then((resp) => {
                 if (resp.kind === "success") {
                     localChatSummaryUpdates.markAdded(resp.group);
@@ -5502,7 +5519,12 @@ export class OpenChat extends OpenChatAgentWorker {
             return "gate_check_failed";
         }
 
-        return this.sendRequest({ kind: "joinCommunity", id: community.id, credential })
+        return this.sendRequest({
+            kind: "joinCommunity",
+            id: community.id,
+            localUserIndex: community.localUserIndex,
+            credential,
+        })
             .then((resp) => {
                 if (resp.kind === "success") {
                     // Make the community appear at the top of the list

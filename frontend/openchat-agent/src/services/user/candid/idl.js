@@ -855,6 +855,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'channels' : IDL.Vec(UserCanisterChannelSummary),
     'pinned' : IDL.Vec(ChannelId),
+    'local_user_index_canister_id' : CanisterId,
     'index' : IDL.Nat32,
     'archived' : IDL.Bool,
   });
@@ -866,6 +867,7 @@ export const idlFactory = ({ IDL }) => {
     'pinned' : IDL.Vec(Chat),
   });
   const UserCanisterGroupChatSummary = IDL.Record({
+    'local_user_index_canister_id' : CanisterId,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
     'date_read_pinned' : IDL.Opt(TimestampMillis),
@@ -955,6 +957,7 @@ export const idlFactory = ({ IDL }) => {
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
+    'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(ThreadSyncDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,

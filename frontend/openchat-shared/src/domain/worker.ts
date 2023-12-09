@@ -737,6 +737,7 @@ type UpdateGroup = {
 
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
+    localUserIndex: string;
     kind: "joinGroup";
     credential?: string;
 };
