@@ -401,7 +401,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.credential),
+                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credential),
                 );
                 break;
 

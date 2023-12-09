@@ -1216,14 +1216,7 @@ export class OpenChat extends OpenChatAgentWorker {
         const localUserIndex =
             chat.kind === "group_chat"
                 ? chat.localUserIndex
-                : this._liveState.communities.get({
-                      kind: "community",
-                      communityId: chat.id.communityId,
-                  })?.localUserIndex;
-
-        if (localUserIndex === undefined) {
-            throw new Error("Community not found");
-        }
+                : this.localUserIndexForCommunity(chat.id.communityId);
 
         return this.sendRequest({
             kind: "joinGroup",
@@ -3947,7 +3940,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
     inviteUsers(chatId: MultiUserChatIdentifier, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
-        return this.sendRequest({ kind: "inviteUsers", chatId, userIds })
+        const localUserIndex = this.localUserIndexForChat(chatId);
+        return this.sendRequest({ kind: "inviteUsers", chatId, localUserIndex, userIds })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersLocally(chatId, userIds);
@@ -3976,7 +3970,8 @@ export class OpenChat extends OpenChatAgentWorker {
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         this.inviteUsersToCommunityLocally(id, userIds);
-        return this.sendRequest({ kind: "inviteUsersToCommunity", id, userIds })
+        const localUserIndex = this.localUserIndexForCommunity(id.communityId);
+        return this.sendRequest({ kind: "inviteUsersToCommunity", id, localUserIndex, userIds })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersToCommunityLocally(id, userIds);
@@ -5398,6 +5393,24 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "tokenSwapStatus",
             swapId,
         });
+    }
+
+    private localUserIndexForChat(chatId: MultiUserChatIdentifier): string {
+        const chat = this._liveState.allChats.get(chatId);
+        if (chat?.kind === "group_chat") {
+            return chat.localUserIndex;
+        } else if (chat?.kind === "channel") {
+            return this.localUserIndexForCommunity(chat.id.communityId);
+        }
+        throw new Error("Chat not found");
+    }
+
+    private localUserIndexForCommunity(communityId: string): string {
+        const community = this._liveState.communities.get({ kind: "community", communityId });
+        if (community === undefined) {
+            throw new Error("Community not found");
+        }
+        return community.localUserIndex;
     }
 
     // **** Communities Stuff
