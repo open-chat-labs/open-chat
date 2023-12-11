@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix for NNS proposal deadlines not being updated ([#4978](https://github.com/open-chat-labs/open-chat/pull/4978))
+
 ## [[2.0.966](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.966-group)] - 2023-12-07
 
 ### Fixed
