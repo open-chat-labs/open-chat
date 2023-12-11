@@ -20,13 +20,12 @@ impl MessageFilters {
         if self.filters.iter().any(|f| f.regex == regex) {
             None
         } else {
-            let id = (self.filters.len() - 1) as u64;
             self.filters.push(Filter {
                 regex,
                 last_updated: now,
             });
             self.last_updated = now;
-            Some(id)
+            Some((self.filters.len() - 1) as u64)
         }
     }
 
