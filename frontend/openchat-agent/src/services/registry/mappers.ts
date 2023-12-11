@@ -17,6 +17,8 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
                     tokens.map((t) => tokenDetails(t)),
                 ) ?? [],
             nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
+            messageFiltersAdded: candid.Success.message_filters_added,
+            messageFiltersRemoved: Array.from(candid.Success.message_filters_removed),
         };
     }
     if ("SuccessNoUpdates" in candid) {

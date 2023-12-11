@@ -2711,6 +2711,8 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
+                messageFilters: [ ...current?.messageFilters ?? [], ...updates.messageFiltersAdded ]
+                    .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
             };
             setCachedRegistry(updated);
             return updated;
