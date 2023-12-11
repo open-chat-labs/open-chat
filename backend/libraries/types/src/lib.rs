@@ -187,16 +187,3 @@ pub fn is_empty_btreemap<K, V>(value: &BTreeMap<K, V>) -> bool {
 pub fn is_default<T: Default + Eq>(value: &T) -> bool {
     *value == Default::default()
 }
-
-// TODO remove this after next release cycle
-pub fn local_user_index_canister_id(canister_id: CanisterId) -> CanisterId {
-    let bytes = canister_id.as_slice();
-    if bytes > &[0, 0, 0, 0, 2, 32, 0, 0, 1, 1] && bytes < &[0, 0, 0, 0, 2, 48, 0, 0, 1, 1] {
-        return CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap();
-    }
-    if bytes > &[0, 0, 0, 0, 0, 160, 0, 0, 1, 1] && bytes < &[0, 0, 0, 0, 0, 176, 0, 0, 1, 1] {
-        return CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap();
-    }
-    // This will only be reached during tests + local development
-    CanisterId::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap()
-}

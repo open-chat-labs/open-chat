@@ -1,9 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{
-    local_user_index_canister_id, AccessGate, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds,
-    Rules, UserId,
-};
+use types::{AccessGate, CanisterId, ChatId, Document, GroupPermissions, GroupSubtype, Milliseconds, Rules, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -32,18 +29,4 @@ pub enum Response {
 pub struct SuccessResult {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResultPrevious {
-    pub chat_id: ChatId,
-}
-
-impl From<SuccessResultPrevious> for SuccessResult {
-    fn from(value: SuccessResultPrevious) -> Self {
-        SuccessResult {
-            chat_id: value.chat_id,
-            local_user_index_canister_id: local_user_index_canister_id(value.chat_id.into()),
-        }
-    }
 }
