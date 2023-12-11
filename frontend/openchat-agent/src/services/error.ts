@@ -5,6 +5,7 @@ import {
     SessionExpiryError,
     AuthError,
     DestinationInvalidError,
+    InvalidDelegationError,
 } from "openchat-shared";
 
 export class ReplicaNotUpToDateError extends Error {
@@ -65,6 +66,9 @@ export function toCanisterResponseError(
             getTimeUntilSessionExpiryMs(identity),
         );
         return new SessionExpiryError(code, error);
+    }
+    if (code === 403 && error.message.includes("Invalid delegation")) {
+        return new InvalidDelegationError(error);
     }
 
     return code === 401 || code === 403 ? new AuthError(code, error) : new HttpError(code, error);
