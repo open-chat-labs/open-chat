@@ -1202,6 +1202,7 @@
             "error": "Ошибка свопа - средства не потеряны"
         },
         "swapToken": "Обмен {tokenIn}",
-        "swapTokenTo": "Замените {tokenIn} на {tokenOut}"
+        "swapTokenTo": "Замените {tokenIn} на {tokenOut}",
+        "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}."
     }
 }

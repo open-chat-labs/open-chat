@@ -1204,6 +1204,7 @@
             "error": "Swap-Fehler – es sind keine Gelder verloren gegangen"
         },
         "swapToken": "Tausche {tokenIn}",
-        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus"
+        "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
+        "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet."
     }
 }

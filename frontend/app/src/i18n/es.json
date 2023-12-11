@@ -1204,6 +1204,7 @@
             "error": "Error de intercambio: no se han perdido fondos"
         },
         "swapToken": "Intercambiar {tokenIn}",
-        "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}"
+        "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
+        "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}."
     }
 }
