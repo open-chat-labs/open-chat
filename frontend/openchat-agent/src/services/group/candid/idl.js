@@ -769,8 +769,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
-  const LocalUserIndexArgs = IDL.Record({});
-  const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MessagesByMessageIndexArgs = IDL.Record({
     'messages' : IDL.Vec(MessageIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -1433,11 +1431,6 @@ export const idlFactory = ({ IDL }) => {
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'follow_thread' : IDL.Func([FollowThreadArgs], [FollowThreadResponse], []),
     'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
-    'local_user_index' : IDL.Func(
-        [LocalUserIndexArgs],
-        [LocalUserIndexResponse],
-        ['query'],
-      ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],

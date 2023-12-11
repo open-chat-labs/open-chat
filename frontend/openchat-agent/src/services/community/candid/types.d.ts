@@ -1126,7 +1126,6 @@ export type LeaveChannelResponse = { 'UserNotInChannel' : null } |
   { 'UserNotInCommunity' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null };
-export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -2122,7 +2121,6 @@ export interface _SERVICE {
   'import_group' : ActorMethod<[ImportGroupArgs], ImportGroupResponse>,
   'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
   'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,
-  'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse

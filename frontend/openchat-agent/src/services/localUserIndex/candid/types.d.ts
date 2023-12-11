@@ -172,6 +172,36 @@ export interface ChatEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface ChatEventsArgs { 'requests' : Array<ChatEventsArgsInner> }
+export interface ChatEventsArgsInner {
+  'context' : { 'Group' : [ChatId, [] | [MessageIndex]] } |
+    { 'Channel' : [CommunityId, ChannelId, [] | [MessageIndex]] } |
+    { 'Direct' : UserId },
+  'args' : {
+      'Page' : {
+        'max_messages' : number,
+        'max_events' : number,
+        'ascending' : boolean,
+        'start_index' : EventIndex,
+      }
+    } |
+    { 'ByIndex' : { 'events' : Uint32Array | number[] } } |
+    {
+      'Window' : {
+        'mid_point' : MessageIndex,
+        'max_messages' : number,
+        'max_events' : number,
+      }
+    },
+  'latest_known_update' : [] | [TimestampMillis],
+}
+export type ChatEventsResponse = { 'Success' : Array<ChatEventsResponseInner> };
+export type ChatEventsResponseInner = {
+    'ReplicaNotUpToDate' : TimestampMillis
+  } |
+  { 'NotFound' : null } |
+  { 'Success' : EventsSuccessResult } |
+  { 'InternalError' : string };
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
@@ -530,6 +560,12 @@ export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
 }
+export interface GroupAndCommunitySummaryUpdatesArgs {
+  'requests' : Array<SummaryUpdatesArgs>,
+}
+export type GroupAndCommunitySummaryUpdatesResponse = {
+    'Success' : Array<SummaryUpdatesResponse>
+  };
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
   'metrics' : ChatMetrics,
@@ -1360,6 +1396,21 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export interface SummaryUpdatesArgs {
+  'updates_since' : [] | [TimestampMillis],
+  'canister_id' : CanisterId,
+  'invite_code' : [] | [bigint],
+  'is_community' : boolean,
+}
+export type SummaryUpdatesResponse = {
+    'SuccessCommunity' : CommunityCanisterCommunitySummary
+  } |
+  { 'SuccessGroupUpdates' : GroupCanisterGroupChatSummaryUpdates } |
+  { 'SuccessCommunityUpdates' : CommunityCanisterCommunitySummaryUpdates } |
+  { 'NotFound' : null } |
+  { 'SuccessGroup' : GroupCanisterGroupChatSummary } |
+  { 'SuccessNoUpdates' : null } |
+  { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1498,6 +1549,11 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'chat_events' : ActorMethod<[ChatEventsArgs], ChatEventsResponse>,
+  'group_and_community_summary_updates' : ActorMethod<
+    [GroupAndCommunitySummaryUpdatesArgs],
+    GroupAndCommunitySummaryUpdatesResponse
+  >,
   'invite_users_to_channel' : ActorMethod<
     [InviteUsersToChannelArgs],
     InviteUsersToChannelResponse

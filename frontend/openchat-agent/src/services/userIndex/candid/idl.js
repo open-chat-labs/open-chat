@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
   const ChatId = CanisterId;
   const AssignPlatformModeratorsGroupArgs = IDL.Record({ 'group_id' : ChatId });
   const AssignPlatformModeratorsGroupResponse = IDL.Variant({
+    'AlreadySet' : ChatId,
     'Success' : IDL.Null,
   });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
@@ -126,13 +127,10 @@ export const idlFactory = ({ IDL }) => {
     'PaymentAlreadyInProgress' : IDL.Null,
     'CurrencyNotSupported' : IDL.Null,
     'Success' : DiamondMembershipDetails,
+    'AlreadyLifetimeDiamondMember' : IDL.Null,
     'PriceMismatch' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
-    'CannotExtend' : IDL.Record({
-      'can_extend_at' : TimestampMillis,
-      'diamond_membership_expires_at' : TimestampMillis,
-    }),
     'UserNotFound' : IDL.Null,
     'InsufficientFunds' : IDL.Nat64,
   });
@@ -218,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
     'DisplayNameInvalid' : IDL.Null,
     'Success' : IDL.Null,
     'DisplayNameTooLong' : IDL.Nat16,
+    'Unauthorized' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
     'UserNotFound' : IDL.Null,
   });

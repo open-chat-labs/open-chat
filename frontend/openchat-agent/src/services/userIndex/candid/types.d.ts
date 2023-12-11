@@ -61,7 +61,8 @@ export type ApproveError = {
   { 'Expired' : { 'ledger_time' : bigint } } |
   { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface AssignPlatformModeratorsGroupArgs { 'group_id' : ChatId }
-export type AssignPlatformModeratorsGroupResponse = { 'Success' : null };
+export type AssignPlatformModeratorsGroupResponse = { 'AlreadySet' : ChatId } |
+  { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -1137,15 +1138,10 @@ export type PayForDiamondMembershipResponse = {
   } |
   { 'CurrencyNotSupported' : null } |
   { 'Success' : DiamondMembershipDetails } |
+  { 'AlreadyLifetimeDiamondMember' : null } |
   { 'PriceMismatch' : null } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
-  {
-    'CannotExtend' : {
-      'can_extend_at' : TimestampMillis,
-      'diamond_membership_expires_at' : TimestampMillis,
-    }
-  } |
   { 'UserNotFound' : null } |
   { 'InsufficientFunds' : bigint };
 export interface PaymentGate {
@@ -1342,6 +1338,7 @@ export interface SetDisplayNameArgs { 'display_name' : [] | [string] }
 export type SetDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
   { 'DisplayNameTooLong' : number } |
+  { 'Unauthorized' : null } |
   { 'DisplayNameTooShort' : number } |
   { 'UserNotFound' : null };
 export interface SetModerationFlagsArgs { 'moderation_flags_enabled' : number }
