@@ -2957,4 +2957,12 @@ export class OpenChatAgent extends EventTarget {
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
         return this._userIndexClient.diamondMembershipFees();
     }
+
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this._registryClient.addMessageFilter(regex);
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this._registryClient.removeMessageFilter(id);
+    }
 }

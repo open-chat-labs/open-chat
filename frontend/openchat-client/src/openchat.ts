@@ -4516,6 +4516,14 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this.sendRequest({ kind: "addMessageFilter", regex });
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this.sendRequest({ kind: "removeMessageFilter", id });
+    }
+
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.sendRequest({ kind: "suspendUser", userId, reason })
             .then((resp) => resp === "success")
