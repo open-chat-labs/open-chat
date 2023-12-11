@@ -187,7 +187,7 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
+        duration.icp_price_e8s() - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
     );
 }
 
