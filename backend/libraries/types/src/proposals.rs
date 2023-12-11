@@ -108,6 +108,9 @@ impl NnsProposal {
         if let Some(latest_tally) = update.latest_tally {
             self.tally = latest_tally;
         }
+        if let Some(deadline) = update.deadline {
+            self.deadline = deadline;
+        }
         self.last_updated = now;
     }
 }
