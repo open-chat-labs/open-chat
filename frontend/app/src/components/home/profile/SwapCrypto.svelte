@@ -21,12 +21,21 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    type State = "quote" | "swap" | "finished";
+    type Result =
+        | "success"
+        | "rateChanged"
+        | "insufficientFunds"
+        | "error"
+        | "quoteTooLow"
+        | undefined;
+
     let error: string | undefined = undefined;
     let amountIn: bigint = BigInt(0);
     let busy = false;
     let valid = false;
-    let state: "quote" | "swap" | "finished" = "quote";
-    let result: "success" | "rateChanged" | "insufficientFunds" | "error" | undefined = undefined;
+    let state: State = "quote";
+    let result: Result = undefined;
     let validAmount = false;
     let ledgerOut: string | undefined;
     let swaps = {} as Record<string, DexId[]>;
@@ -60,19 +69,23 @@
     $: remainingBalance =
         amountIn > BigInt(0) ? balanceIn - amountIn - detailsIn.transferFee : balanceIn;
 
-    $: primaryButtonText = $_(
-        `tokenSwap.${
-            state === "quote"
-                ? "quote"
-                : state === "swap"
-                  ? "swap"
-                  : result === "insufficientFunds"
-                    ? "back"
-                    : "requote"
-        }`,
-    );
+    $: primaryButtonText = getPrimaryButtonText(state, result);
 
     onMount(() => loadSwaps(ledgerIn));
+
+    function getPrimaryButtonText(state: State, result: Result): string {
+        let label;
+
+        if (state === "quote") {
+            label = result === "quoteTooLow" ? (label = "back") : "quote";
+        } else if (state === "swap") {
+            label = "swap";
+        } else {
+            label = result === "insufficientFunds" ? "back" : "requote";
+        }
+
+        return $_(`tokenSwap.${label}`);
+    }
 
     function quote() {
         if (!valid) return;
@@ -89,24 +102,37 @@
                     error = $_("tokenSwap.noQuotes", { values: { tokenIn: detailsIn.symbol } });
                 } else {
                     bestQuote = response[0];
-                    state = "swap";
 
                     const [dexId, quote] = bestQuote!;
                     const amountOutText = client.formatTokens(quote, 0, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const swapText = $_("tokenSwap.swap");
-                    message = $_("tokenSwap.swapInfo", {
-                        values: {
-                            amountIn: amountInText,
-                            tokenIn: detailsIn.symbol,
-                            rate,
-                            amountOut: amountOutText,
-                            tokenOut: detailsOut!.symbol,
-                            dex,
-                            swap: swapText,
-                        },
-                    });
+                    const minAmountOut = BigInt(10 * detailsOut!.decimals);
+                    const minAmountOutText = client.formatTokens(
+                        minAmountOut,
+                        0,
+                        detailsOut!.decimals,
+                    );
+
+                    let values = {
+                        amountIn: amountInText,
+                        tokenIn: detailsIn.symbol,
+                        rate,
+                        amountOut: amountOutText,
+                        tokenOut: detailsOut!.symbol,
+                        dex,
+                        swap: swapText,
+                        minAmountOut: minAmountOutText,
+                    };
+
+                    if (quote > minAmountOut) {
+                        state = "swap";
+                        message = $_("tokenSwap.swapInfo", { values });
+                    } else {
+                        result = "quoteTooLow";
+                        message = $_("tokenSwap.quoteTooLow", { values });
+                    }
                 }
             })
             .catch((err) => {
@@ -159,13 +185,16 @@
     }
 
     function onPrimaryClick() {
-        if (state === "quote" || result === "rateChanged") {
+        if (
+            (state === "finished" && result === "insufficientFunds") ||
+            (state === "quote" && result === "quoteTooLow")
+        ) {
+            amountIn = BigInt(0);
+            state = "quote";
+        } else if (state === "quote" || result === "rateChanged") {
             quote();
         } else if (state === "swap") {
             swap();
-        } else if (result === "insufficientFunds") {
-            amountIn = BigInt(0);
-            state = "quote";
         }
     }
 

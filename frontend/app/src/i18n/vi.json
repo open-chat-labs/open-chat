@@ -1203,6 +1203,7 @@
             "error": "Lỗi hoán đổi - không có khoản tiền nào bị mất"
         },
         "swapToken": "Hoán đổi {tokenIn}",
-        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}"
+        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
+        "quoteTooLow": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Bạn chỉ có thể hoán đổi nếu số tiền trích dẫn vượt quá {minAmountOut}."
     }
 }

@@ -655,6 +655,7 @@
         "quoteError": "Error getting quotes to swap {tokenIn}",
         "findingAvailableTokens": "finding available tokens to swap...",
         "swapInfo": "The best rate quoted is **{rate}** {tokenOut} per {tokenIn} from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. The swap will only go ahead if the amount of {tokenOut} to be received is at least 98% of the amount quoted. Would you like to go ahead and attempt the `{swap}`?",
+        "quoteTooLow": "The best rate quoted is **{rate}** {tokenOut} per {tokenIn} from {dex}. This gives **{amountOut}** {tokenOut} for **{amountIn}** {tokenIn}. You can only swap if the quoted amount out exceeds {minAmountOut}.",
         "progress": {
             "get": "Get deposit account",
             "deposit": "Transfer {amountIn} {tokenIn} to {dex}",
