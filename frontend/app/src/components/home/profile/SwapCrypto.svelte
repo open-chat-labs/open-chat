@@ -108,7 +108,7 @@
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const swapText = $_("tokenSwap.swap");
-                    const minAmountOut = BigInt(10 * detailsOut!.decimals);
+                    const minAmountOut = BigInt(10) * detailsOut!.transferFee;
                     const minAmountOutText = client.formatTokens(
                         minAmountOut,
                         0,
