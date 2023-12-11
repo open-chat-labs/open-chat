@@ -2,13 +2,14 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
-use local_user_index_canister::chat_events::{EventsArgs, EventsArgsInner, EventsByIndexArgs, EventsContext};
+use local_user_index_canister::chat_events::{EventsArgs, EventsArgsInner, EventsByIndexArgs, EventsContext, EventsResponse};
+use local_user_index_canister::group_and_community_summary_updates::{SummaryUpdatesArgs, SummaryUpdatesResponse};
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{ChannelId, ChatEvent, ChatId, CommunityId};
+use types::{CanisterId, ChannelId, ChatEvent, ChatId, CommunityId};
 
 #[test]
-fn send_message_succeeds() {
+fn get_batched_events_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -76,7 +77,58 @@ fn send_message_succeeds() {
     assert_is_message_with_text(responses.get(3).unwrap(), "Channel: 3");
 }
 
-fn assert_is_message_with_text(response: &local_user_index_canister::chat_events::EventsResponse, text: &str) {
+#[test]
+fn get_batched_summaries_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        group_id1,
+        group_id2,
+        community_id,
+        ..
+    } = init_test_data(env, canister_ids, *controller);
+
+    let local_user_index_canister::group_and_community_summary_updates::Response::Success(responses) =
+        client::local_user_index::group_and_community_summary_updates(
+            env,
+            user1.principal,
+            canister_ids.local_user_index,
+            &local_user_index_canister::group_and_community_summary_updates::Args {
+                requests: vec![
+                    SummaryUpdatesArgs {
+                        canister_id: group_id1.into(),
+                        is_community: false,
+                        invite_code: None,
+                        updates_since: None,
+                    },
+                    SummaryUpdatesArgs {
+                        canister_id: group_id2.into(),
+                        is_community: false,
+                        invite_code: None,
+                        updates_since: None,
+                    },
+                    SummaryUpdatesArgs {
+                        canister_id: community_id.into(),
+                        is_community: true,
+                        invite_code: None,
+                        updates_since: None,
+                    },
+                ],
+            },
+        );
+
+    assert_is_summary_with_id(responses.get(0).unwrap(), group_id1.into(), false);
+    assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
+    assert_is_summary_with_id(responses.get(2).unwrap(), community_id.into(), true);
+}
+
+fn assert_is_message_with_text(response: &EventsResponse, text: &str) {
     if let local_user_index_canister::chat_events::EventsResponse::Success(result) = response {
         assert_eq!(result.events.len(), 1);
         if let ChatEvent::Message(message) = &result.events.first().unwrap().event {
@@ -85,6 +137,16 @@ fn assert_is_message_with_text(response: &local_user_index_canister::chat_events
         }
     }
     panic!("{response:?}")
+}
+
+fn assert_is_summary_with_id(response: &SummaryUpdatesResponse, canister_id: CanisterId, is_community: bool) {
+    match response {
+        SummaryUpdatesResponse::SuccessCommunity(c) if is_community => {
+            assert_eq!(CanisterId::from(c.community_id), canister_id)
+        }
+        SummaryUpdatesResponse::SuccessGroup(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
+        _ => panic!(),
+    }
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
