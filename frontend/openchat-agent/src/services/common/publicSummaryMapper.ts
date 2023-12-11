@@ -56,6 +56,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
         membership: nullMembership(),
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 

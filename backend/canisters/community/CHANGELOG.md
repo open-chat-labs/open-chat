@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed `local_user_index` endpoint since that is now included in the summary ([#4977](https://github.com/open-chat-labs/open-chat/pull/4977))
+
 ### Fixed
 
 - Fix for NNS proposal deadlines not being updated ([#4978](https://github.com/open-chat-labs/open-chat/pull/4978))

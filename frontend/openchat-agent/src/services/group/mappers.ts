@@ -131,6 +131,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         rulesAccepted: candid.rules_accepted,
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
