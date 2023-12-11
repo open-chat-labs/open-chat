@@ -4,6 +4,7 @@ use types::{BuildVersion, CanisterId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub user_index_canister_id: CanisterId,
     pub governance_principals: Vec<Principal>,
     pub proposals_bot_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
