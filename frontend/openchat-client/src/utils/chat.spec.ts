@@ -78,6 +78,7 @@ const defaultGroupChat: GroupChatSummary = {
             },
         ],
     },
+    localUserIndex: "",
 };
 
 function createUser(userId: string, username: string): UserSummary {

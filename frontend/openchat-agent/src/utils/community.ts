@@ -147,6 +147,7 @@ export function mergeCommunityUpdates(
                 c?.userGroups ?? [],
                 c?.userGroupsDeleted ?? new Set(),
             ),
+            localUserIndex: community.localUserIndex,
         };
     });
 }

@@ -596,6 +596,7 @@ export const idlFactory = ({ IDL }) => {
     'user_groups' : IDL.Vec(UserGroup),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'membership' : IDL.Opt(CommunityMembership),
+    'local_user_index_canister_id' : CanisterId,
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),
@@ -685,6 +686,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
     'membership' : IDL.Opt(GroupMembership),
+    'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -714,7 +716,6 @@ export const idlFactory = ({ IDL }) => {
   const RegisterUserArgs = IDL.Record({
     'username' : IDL.Text,
     'public_key' : IDL.Vec(IDL.Nat8),
-    'display_name' : IDL.Opt(IDL.Text),
     'referral_code' : IDL.Opt(IDL.Text),
   });
   const RegisterUserResponse = IDL.Variant({
@@ -722,14 +723,11 @@ export const idlFactory = ({ IDL }) => {
     'UsernameInvalid' : IDL.Null,
     'AlreadyRegistered' : IDL.Null,
     'UserLimitReached' : IDL.Null,
-    'DisplayNameInvalid' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Record({
       'icp_account' : AccountIdentifier,
       'user_id' : UserId,
     }),
-    'DisplayNameTooLong' : IDL.Nat16,
-    'DisplayNameTooShort' : IDL.Nat16,
     'PublicKeyInvalid' : IDL.Text,
     'ReferralCodeAlreadyClaimed' : IDL.Null,
     'ReferralCodeExpired' : IDL.Null,

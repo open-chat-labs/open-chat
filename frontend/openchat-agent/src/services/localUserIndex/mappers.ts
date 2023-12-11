@@ -21,7 +21,7 @@ import {
 
 export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
-    communityId: string
+    communityId: string,
 ): JoinGroupResponse {
     if ("Success" in candid) {
         return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
@@ -66,15 +66,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("UsernameInvalid" in candid) {
         return { kind: "username_invalid" };
     }
-    if ("DisplayNameTooShort" in candid) {
-        return { kind: "display_name_too_short" };
-    }
-    if ("DisplayNameTooLong" in candid) {
-        return { kind: "display_name_too_long" };
-    }
-    if ("DisplayNameInvalid" in candid) {
-        return { kind: "display_name_invalid" };
-    }
     if ("AlreadyRegistered" in candid) {
         return { kind: "already_registered" };
     }
@@ -107,7 +98,7 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
 }
 
 export function inviteUsersResponse(
-    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse
+    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse,
 ): InviteUsersResponse {
     if ("Success" in candid) {
         return "success";

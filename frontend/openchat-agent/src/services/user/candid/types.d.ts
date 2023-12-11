@@ -331,6 +331,7 @@ export interface CommunityCanisterCommunitySummary {
   'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -779,6 +780,7 @@ export interface GroupCanisterGroupChatSummary {
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
   'membership' : [] | [GroupMembership],
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -851,6 +853,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -1506,6 +1509,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -1990,6 +1994,7 @@ export interface UserCanisterCommunitySummary {
   'community_id' : CommunityId,
   'channels' : Array<UserCanisterChannelSummary>,
   'pinned' : Array<ChannelId>,
+  'local_user_index_canister_id' : CanisterId,
   'index' : number,
   'archived' : boolean,
 }
@@ -2001,6 +2006,7 @@ export interface UserCanisterCommunitySummaryUpdates {
   'archived' : [] | [boolean],
 }
 export interface UserCanisterGroupChatSummary {
+  'local_user_index_canister_id' : CanisterId,
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
