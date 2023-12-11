@@ -2,6 +2,7 @@ use crate::model::nervous_systems::{NervousSystemMetrics, NervousSystems};
 use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
+use model::message_filters::MessageFilters;
 use registry_canister::NervousSystemDetails;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -68,19 +69,27 @@ impl RuntimeState {
 struct Data {
     governance_principals: HashSet<Principal>,
     proposals_bot_canister_id: CanisterId,
+    #[serde(default = "default_user_index_canister_id")]
+    user_index_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
+    message_filters: MessageFilters,
     rng_seed: [u8; 32],
     test_mode: bool,
+}
+
+fn default_user_index_canister_id() -> CanisterId {
+    Principal::anonymous()
 }
 
 impl Data {
     pub fn new(
         governance_principals: HashSet<Principal>,
         proposals_bot_canister_id: CanisterId,
+        user_index_canister_id: CanisterId,
         sns_wasm_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
@@ -88,11 +97,13 @@ impl Data {
         Data {
             governance_principals,
             proposals_bot_canister_id,
+            user_index_canister_id,
             sns_wasm_canister_id,
             cycles_dispenser_canister_id,
             tokens: Tokens::default(),
             nervous_systems: NervousSystems::default(),
             failed_sns_launches: HashSet::new(),
+            message_filters: MessageFilters::default(),
             rng_seed: [0; 32],
             test_mode,
         }
