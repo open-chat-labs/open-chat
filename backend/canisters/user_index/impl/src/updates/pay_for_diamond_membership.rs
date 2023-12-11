@@ -155,7 +155,7 @@ fn process_charge(
         let now_nanos = state.env.now_nanos();
 
         if let Some(share_with) = share_with {
-            let amount_to_referrer = args.expected_price_e8s / 2;
+            let amount_to_referrer = amount_to_referer(&args.token, args.duration);
             amount_to_treasury = amount_to_treasury.saturating_sub(amount_to_referrer + transaction_fee);
 
             let referral_payment = PendingPayment {
@@ -249,6 +249,22 @@ fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<Us
     }
 
     None
+}
+
+fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDuration) -> u64 {
+    // The referral reward is only for membership payments for the first year, so if a user pays for
+    // lifetime Diamond membership, the referer is rewarded as if they had paid for 1 year.
+    let reward_based_on_duration = if matches!(duration, DiamondMembershipPlanDuration::Lifetime) {
+        DiamondMembershipPlanDuration::OneYear
+    } else {
+        duration
+    };
+
+    if matches!(token, Cryptocurrency::CHAT) {
+        reward_based_on_duration.chat_price_e8s() / 2
+    } else {
+        reward_based_on_duration.icp_price_e8s() / 2
+    }
 }
 
 fn process_error(transfer_error: TransferError) -> Response {
