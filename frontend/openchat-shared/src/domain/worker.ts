@@ -596,12 +596,14 @@ type RemoveMember = {
 
 type InviteUsers = {
     chatId: MultiUserChatIdentifier;
+    localUserIndex: string;
     userIds: string[];
     kind: "inviteUsers";
 };
 
 type InviteUsersToCommunity = {
     id: CommunityIdentifier;
+    localUserIndex: string;
     userIds: string[];
     kind: "inviteUsersToCommunity";
 };
@@ -737,12 +739,14 @@ type UpdateGroup = {
 
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
+    localUserIndex: string;
     kind: "joinGroup";
     credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
+    localUserIndex: string;
     kind: "joinCommunity";
     credential?: string;
 };

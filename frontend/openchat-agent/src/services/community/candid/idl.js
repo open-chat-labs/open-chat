@@ -1510,6 +1510,7 @@ export const idlFactory = ({ IDL }) => {
     'user_groups' : IDL.Vec(UserGroup),
     'avatar_id' : IDL.Opt(IDL.Nat),
     'membership' : IDL.Opt(CommunityMembership),
+    'local_user_index_canister_id' : CanisterId,
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'banner_id' : IDL.Opt(IDL.Nat),

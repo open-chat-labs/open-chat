@@ -270,6 +270,7 @@ export function mergeGroupChatUpdates(
                 archived: u?.archived ?? c.membership.archived,
                 rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
+            localUserIndex: c.localUserIndex,
         };
     });
 }
@@ -323,6 +324,7 @@ export function mergeGroupChats(
                 archived: u?.archived ?? false,
                 rulesAccepted: g.rulesAccepted,
             },
+            localUserIndex: g.localUserIndex,
         };
     });
 }

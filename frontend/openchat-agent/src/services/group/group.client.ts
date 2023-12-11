@@ -845,13 +845,6 @@ export class GroupClient extends CandidService {
         );
     }
 
-    localUserIndex(): Promise<string> {
-        return this.handleQueryResponse(
-            () => this.groupService.local_user_index({}),
-            (resp) => resp.Success.toString(),
-        );
-    }
-
     declineInvitation(): Promise<DeclineInvitationResponse> {
         return this.handleResponse(
             this.groupService.decline_invitation({}),
