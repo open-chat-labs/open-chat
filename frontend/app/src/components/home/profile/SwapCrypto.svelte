@@ -22,13 +22,7 @@
     const dispatch = createEventDispatcher();
 
     type State = "quote" | "swap" | "finished";
-    type Result =
-        | "success"
-        | "rateChanged"
-        | "insufficientFunds"
-        | "error"
-        | "quoteTooLow"
-        | undefined;
+    type Result = "success" | "rateChanged" | "insufficientFunds" | "error" | undefined;
 
     let error: string | undefined = undefined;
     let amountIn: bigint = BigInt(0);
@@ -76,12 +70,10 @@
     function getPrimaryButtonText(state: State, result: Result): string {
         let label;
 
-        if (state === "quote") {
-            label = result === "quoteTooLow" ? (label = "back") : "quote";
-        } else if (state === "swap") {
-            label = "swap";
-        } else {
+        if (state === "finished") {
             label = result === "insufficientFunds" ? "back" : "requote";
+        } else {
+            label = state;
         }
 
         return $_(`tokenSwap.${label}`);
@@ -130,8 +122,7 @@
                         state = "swap";
                         message = $_("tokenSwap.swapInfo", { values });
                     } else {
-                        result = "quoteTooLow";
-                        message = $_("tokenSwap.quoteTooLow", { values });
+                        error = $_("tokenSwap.quoteTooLow", { values });
                     }
                 }
             })
@@ -185,10 +176,7 @@
     }
 
     function onPrimaryClick() {
-        if (
-            (state === "finished" && result === "insufficientFunds") ||
-            (state === "quote" && result === "quoteTooLow")
-        ) {
+        if (state === "finished" && result === "insufficientFunds") {
             amountIn = BigInt(0);
             state = "quote";
         } else if (state === "quote" || result === "rateChanged") {

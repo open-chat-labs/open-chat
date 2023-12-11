@@ -1204,6 +1204,6 @@
         },
         "swapToken": "{tokenIn}を交換する",
         "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
-        "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり **{tokenIn}** {dex} です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
+        "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
     }
 }

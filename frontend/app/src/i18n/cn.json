@@ -1204,6 +1204,6 @@
         },
         "swapToken": "交换{tokenIn}",
         "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
-        "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / **{tokenIn}** @{dex}。这将从 **{amountIn}** {tokenIn} 兑换 **{amountOut}** {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。"
+        "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / {tokenIn} @{dex}。这将从 {amountIn} {tokenIn} 兑换 {amountOut} {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。"
     }
 }
