@@ -42,29 +42,27 @@ async fn make_c2c_call(args: SummaryUpdatesArgs, principal: Principal) -> Summar
                 .await,
             )
         }
+    } else if let Some(updates_since) = args.updates_since {
+        map_response(
+            group_canister_c2c_client::c2c_summary_updates(
+                args.canister_id,
+                &group_canister::c2c_summary_updates::Args {
+                    updates_since,
+                    on_behalf_of: Some(principal),
+                },
+            )
+            .await,
+        )
     } else {
-        if let Some(updates_since) = args.updates_since {
-            map_response(
-                group_canister_c2c_client::c2c_summary_updates(
-                    args.canister_id,
-                    &group_canister::c2c_summary_updates::Args {
-                        updates_since,
-                        on_behalf_of: Some(principal),
-                    },
-                )
-                .await,
+        map_response(
+            group_canister_c2c_client::c2c_summary(
+                args.canister_id,
+                &group_canister::c2c_summary::Args {
+                    on_behalf_of: Some(principal),
+                },
             )
-        } else {
-            map_response(
-                group_canister_c2c_client::c2c_summary(
-                    args.canister_id,
-                    &group_canister::c2c_summary::Args {
-                        on_behalf_of: Some(principal),
-                    },
-                )
-                .await,
-            )
-        }
+            .await,
+        )
     }
 }
 

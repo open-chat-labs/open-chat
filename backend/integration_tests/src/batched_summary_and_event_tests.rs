@@ -141,8 +141,10 @@ fn assert_is_message_with_text(response: &EventsResponse, text: &str) {
 
 fn assert_is_summary_with_id(response: &SummaryUpdatesResponse, canister_id: CanisterId, is_community: bool) {
     match response {
-        SummaryUpdatesResponse::SuccessCommunity(c) if is_community => assert_eq!(c.community_id.into(), canister_id),
-        SummaryUpdatesResponse::SuccessGroup(c) if !is_community => assert_eq!(c.chat_id.into(), canister_id),
+        SummaryUpdatesResponse::SuccessCommunity(c) if is_community => {
+            assert_eq!(CanisterId::from(c.community_id), canister_id)
+        }
+        SummaryUpdatesResponse::SuccessGroup(c) if !is_community => assert_eq!(CanisterId::from(c.chat_id), canister_id),
         _ => panic!(),
     }
 }
