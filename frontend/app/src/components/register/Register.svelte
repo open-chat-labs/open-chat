@@ -66,12 +66,6 @@
                 error.set("register.usernameTooLong");
             } else if (resp.kind === "username_invalid") {
                 error.set("register.usernameInvalid");
-            } else if (resp.kind === "display_name_too_short") {
-                error.set("register.displayNameTooShort");
-            } else if (resp.kind === "display_name_too_long") {
-                error.set("register.displayNameTooLong");
-            } else if (resp.kind === "display_name_invalid") {
-                error.set("register.displayNameInvalid");
             } else if (resp.kind === "user_limit_reached") {
                 error.set("register.userLimitReached");
             } else if (resp.kind === "internal_error") {
