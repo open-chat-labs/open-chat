@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{local_user_index_canister_id, CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 use user_canister::mark_read::ThreadRead;
 use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
