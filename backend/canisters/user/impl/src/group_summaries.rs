@@ -168,7 +168,7 @@ mod c2c {
         }
 
         let mut summaries = Vec::new();
-        let args = group_canister::summary::Args {};
+        let args = group_canister::c2c_summary::Args { on_behalf_of: None };
         for batch in &chat_ids.into_iter().chunks(5) {
             let futures: Vec<_> = batch
                 .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
@@ -176,7 +176,7 @@ mod c2c {
 
             // Exit if any failed, this ensures we never miss any updates
             for response in futures::future::try_join_all(futures).await? {
-                if let group_canister::summary::Response::Success(result) = response {
+                if let group_canister::c2c_summary::Response::Success(result) = response {
                     summaries.push(result.summary);
                 }
             }
@@ -194,8 +194,8 @@ mod c2c {
 
         async fn get_summary_updates(
             canister_id: CanisterId,
-            args: group_canister::summary_updates::Args,
-        ) -> CallResult<group_canister::summary_updates::Response> {
+            args: group_canister::c2c_summary_updates::Args,
+        ) -> CallResult<group_canister::c2c_summary_updates::Response> {
             group_canister_c2c_client::c2c_summary_updates(canister_id, &args).await
         }
 
@@ -203,14 +203,17 @@ mod c2c {
         for batch in &group_chats.into_iter().chunks(5) {
             let futures: Vec<_> = batch
                 .map(|(g, t)| {
-                    let args = group_canister::summary_updates::Args { updates_since: t };
+                    let args = group_canister::c2c_summary_updates::Args {
+                        updates_since: t,
+                        on_behalf_of: None,
+                    };
                     get_summary_updates(g.into(), args)
                 })
                 .collect();
 
             // Exit if any failed, this ensures we never miss any updates
             for response in futures::future::try_join_all(futures).await? {
-                if let group_canister::summary_updates::Response::Success(result) = response {
+                if let group_canister::c2c_summary_updates::Response::Success(result) = response {
                     summary_updates.push(result.updates);
                 }
             }

@@ -5,6 +5,8 @@ use community_canister::*;
 generate_c2c_call!(c2c_events);
 generate_c2c_call!(c2c_events_by_index);
 generate_c2c_call!(c2c_events_window);
+generate_c2c_call!(c2c_summary);
+generate_c2c_call!(c2c_summary_updates);
 
 // Updates
 generate_c2c_call!(c2c_create_proposals_channel);
