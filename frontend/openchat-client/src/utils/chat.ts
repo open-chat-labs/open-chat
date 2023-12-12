@@ -46,7 +46,6 @@ import type {
 } from "openchat-shared";
 import {
     emptyChatMetrics,
-    getContentAsText,
     nullMembership,
     ChatMap,
     MessageMap,
@@ -55,6 +54,8 @@ import {
     updateFromOptions,
     defaultOptionalMessagePermissions,
     defaultOptionalChatPermissions,
+    getContentAsFormattedText,
+    getContentAsText,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -265,7 +266,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
-    const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
+    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -422,6 +423,8 @@ export function mergeUnconfirmedIntoSummary(
     localUpdates: MessageMap<LocalMessageUpdates>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: RegExp[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -448,7 +451,9 @@ export function mergeUnconfirmedIntoSummary(
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
-        if (updates !== undefined || translation !== undefined || senderBlocked) {
+        const failedMessageFilter = !filterMessage(latestMessage.event, messageFilters, currentUserId);
+
+        if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
@@ -460,6 +465,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     senderBlocked,
                     false,
+                    failedMessageFilter
                 ),
             };
         }
@@ -1238,6 +1244,8 @@ export function mergeEventsAndLocalUpdates(
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: RegExp[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1274,6 +1282,8 @@ export function mergeEventsAndLocalUpdates(
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 blockedUsers.has(e.event.repliesTo.senderId);
 
+            const failedMessageFilter = !filterMessage(e.event, messageFilters, currentUserId);
+
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1281,7 +1291,8 @@ export function mergeEventsAndLocalUpdates(
                 translation !== undefined ||
                 replyTranslation !== undefined ||
                 senderBlocked ||
-                repliesToSenderBlocked
+                repliesToSenderBlocked || 
+                failedMessageFilter
             ) {
                 return {
                     ...e,
@@ -1293,7 +1304,8 @@ export function mergeEventsAndLocalUpdates(
                         translation,
                         replyTranslation,
                         senderBlocked,
-                        repliesToSenderBlocked,
+                        repliesToSenderBlocked,   
+                        failedMessageFilter,                     
                     ),
                 };
             }
@@ -1327,6 +1339,24 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
+function filterMessage(message: Message, filters: RegExp[], currentUserId: string): boolean {
+    if (message.sender === currentUserId) {
+        return true;
+    }
+
+    const text = getContentAsText(message.content);
+
+    if (text !== undefined) {
+        for (const f of filters) {
+            if (f.test(text)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
@@ -1336,6 +1366,7 @@ function mergeLocalUpdates(
     replyTranslation: string | undefined,
     senderBlocked: boolean,
     repliesToSenderBlocked: boolean,
+    failedMessageFilter: boolean
 ): Message {
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1350,9 +1381,9 @@ function mergeLocalUpdates(
     }
 
     if (
-        senderBlocked &&
-        localUpdates?.blockedMessageRevealed !== true &&
-        message.content.kind !== "deleted_content"
+        localUpdates?.hiddenMessageRevealed !== true &&
+        message.content.kind !== "deleted_content" &&
+        (senderBlocked || failedMessageFilter)
     ) {
         return {
             ...message,
@@ -1450,7 +1481,7 @@ function mergeLocalUpdates(
             };
         } else if (
             repliesToSenderBlocked &&
-            replyContextLocalUpdates?.blockedMessageRevealed !== true
+            replyContextLocalUpdates?.hiddenMessageRevealed !== true
         ) {
             message.repliesTo = {
                 ...message.repliesTo,

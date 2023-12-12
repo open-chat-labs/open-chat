@@ -1178,7 +1178,6 @@
     "offlineMessage": "离线",
     "offlineError": "抱歉 - 您目前似乎处于离线状态",
     "renderPreviews": "自动渲染链接预览",
-    "messageBlocked": "由于发件人被阻止，邮件被隐藏",
     "tokenSwap": {
         "swap": "兑换",
         "quote": "报价",
@@ -1205,5 +1204,6 @@
         "swapToken": "交换{tokenIn}",
         "swapTokenTo": "将 {tokenIn} 交换为 {tokenOut}",
         "quoteTooLow": "所报的最佳费率是 {rate}  {tokenOut} / {tokenIn} @{dex}。这将从 {amountIn} {tokenIn} 兑换 {amountOut} {tokenOut} 。仅当报价金额超过 {minAmountOut} 时，您才可以进行交换。"
-    }
+    },
+    "messageBlocked": "消息已隐藏"
 }

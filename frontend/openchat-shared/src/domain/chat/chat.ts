@@ -579,7 +579,7 @@ export type LocalMessageUpdates = {
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
     tips?: TipsReceived;
-    blockedMessageRevealed?: boolean;
+    hiddenMessageRevealed?: boolean;
     lastUpdated: number;
 };
 

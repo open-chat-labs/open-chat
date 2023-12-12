@@ -37,7 +37,7 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { currentUser, suspendedUsers, userStore } from "./user";
+import { currentUser, currentUserIdStore, suspendedUsers, userStore } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
@@ -61,6 +61,7 @@ import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
+import { messageFiltersStore } from "./messageFilters";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -262,6 +263,8 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         localMessageUpdates,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
     ([
         summaries,
@@ -271,6 +274,8 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         localUpdates,
         translations,
         blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
     ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
@@ -291,6 +296,8 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                         localUpdates,
                         translations,
                         blockedOrSuspendedUsers,
+                        $currentUserId,
+                        $messageFilters,
                     ),
                 );
                 return result;
@@ -465,6 +472,8 @@ export const threadEvents = derived(
         proposalTallies,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
     ([
         $serverEvents,
@@ -475,6 +484,8 @@ export const threadEvents = derived(
         $proposalTallies,
         $translationStore,
         $blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -491,6 +502,8 @@ export const threadEvents = derived(
             $proposalTallies,
             $translationStore,
             $blockedOrSuspendedUsers,
+            $currentUserId,
+            $messageFilters,
         );
     },
 );
@@ -643,6 +656,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         proposalTallies,
         translationStore,
         currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
     ([
         $serverEventsForSelectedChat,
@@ -653,6 +668,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $proposalTallies,
         $translationStore,
         $blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
@@ -667,6 +684,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $proposalTallies,
             $translationStore,
             $blockedOrSuspendedUsers,
+            $currentUserId,
+            $messageFilters,
         );
     },
 );

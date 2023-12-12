@@ -3,7 +3,7 @@ use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::message_filters::MessageFilters;
-use registry_canister::NervousSystemDetails;
+use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -55,6 +55,7 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             tokens: self.data.tokens.get_all().iter().map(|t| t.into()).collect(),
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
+            message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
                 proposals_bot: self.data.proposals_bot_canister_id,
@@ -164,6 +165,7 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub tokens: Vec<TokenMetrics>,
     pub nervous_systems: Vec<NervousSystemMetrics>,
+    pub message_filters: Vec<MessageFilterSummary>,
     pub failed_sns_launches: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }

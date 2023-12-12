@@ -1179,7 +1179,6 @@
     "offlineMessage": "Offline",
     "offlineError": "Entschuldigung, es sieht so aus, als wären Sie im Moment offline",
     "renderPreviews": "Linkvorschauen automatisch rendern",
-    "messageBlocked": "Nachricht ausgeblendet, da der Absender blockiert ist",
     "tokenSwap": {
         "swap": "Tauschen",
         "quote": "Zitat",
@@ -1206,5 +1205,6 @@
         "swapToken": "Tausche {tokenIn}",
         "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet."
-    }
+    },
+    "messageBlocked": "Nachricht ausgeblendet"
 }
