@@ -860,6 +860,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "addMessageFilter":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.addMessageFilter(payload.regex),
+                );
+                break;
+
+            case "removeMessageFilter":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.removeMessageFilter(payload.id),
+                );
+                break;
+
             case "suspendUser":
                 executeThenReply(
                     payload,

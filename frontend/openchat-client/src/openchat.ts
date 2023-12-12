@@ -364,7 +364,7 @@ import {
     missingUserIds,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
-    getContentAsText,
+    getContentAsFormattedText,
     indexRangeForChat,
     getDisplayDate,
     MessagesReadFromServer,
@@ -439,6 +439,7 @@ import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
+import { messageFiltersStore } from "./stores/messageFilters";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1344,7 +1345,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
-        return getContentAsText(formatter, content, get(cryptoLookup));
+        return getContentAsFormattedText(formatter, content, get(cryptoLookup));
     }
 
     groupAvatarUrl<T extends { blobUrl?: string; subtype?: GroupSubtype }>(chat?: T): string {
@@ -4516,6 +4517,21 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    addMessageFilter(regex: string): Promise<boolean> {
+        try {
+            new RegExp(regex);
+        } catch(e) {
+            this._logger.error("Unable to add message filter - invalid regex", regex);
+            return Promise.resolve(false);
+        }
+
+        return this.sendRequest({ kind: "addMessageFilter", regex });
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this.sendRequest({ kind: "removeMessageFilter", id });
+    }
+
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.sendRequest({ kind: "suspendUser", userId, reason })
             .then((resp) => resp === "success")
@@ -4618,7 +4634,7 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
+                    getContentAsFormattedText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -5180,23 +5196,35 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateRegistry() {
-        const registry = await this.sendRequest({
+        const [registry, updated] = await this.sendRequest({
             kind: "updateRegistry",
         });
 
-        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
+        if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+            const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
-        nervousSystemLookup.set(
-            toRecord(
-                registry.nervousSystemSummary.map((ns) => ({
-                    ...ns,
-                    token: cryptoRecord[ns.ledgerCanisterId],
-                })),
-                (ns) => ns.governanceCanisterId,
-            ),
-        );
+            nervousSystemLookup.set(
+                toRecord(
+                    registry.nervousSystemSummary.map((ns) => ({
+                        ...ns,
+                        token: cryptoRecord[ns.ledgerCanisterId],
+                    })),
+                    (ns) => ns.governanceCanisterId,
+                ),
+            );
 
-        cryptoLookup.set(cryptoRecord);
+            cryptoLookup.set(cryptoRecord);
+
+            messageFiltersStore.set(registry.messageFilters
+                .map((f) => {
+                    try {
+                        return new RegExp(f.regex);
+                    } catch {
+                        return undefined;
+                    }
+                })
+                .filter((f) => f !== undefined) as RegExp[]);
+        }
 
         if (!this._liveState.anonUser) {
             window.setTimeout(() => this.refreshBalancesInSeries(), 0);

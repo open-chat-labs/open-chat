@@ -1175,7 +1175,6 @@
     "offlineMessage": "לא מקוון",
     "offlineError": "סליחה - נראה שאתה במצב לא מקוון כרגע",
     "renderPreviews": "תצוגה מקדימה של קישורים לעיבוד אוטומטי",
-    "messageBlocked": "ההודעה מוסתרת כי השולח חסום",
     "tokenSwap": {
         "swap": "לְהַחלִיף",
         "quote": "ציטוט",
@@ -1202,5 +1201,6 @@
         "swapToken": "החלפה {tokenIn}",
         "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}",
         "quoteTooLow": "התעריף הטוב ביותר שצוטט הוא {rate} {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן {amountOut} {tokenOut} עבור {amountIn} {tokenIn}. אתה יכול להחליף רק אם הסכום הנקוב עולה על {minAmountOut}."
-    }
+    },
+    "messageBlocked": "הודעה מוסתרת"
 }

@@ -1196,5 +1196,5 @@
         "disabled": "Disappearing messages disabled"
     },
     "offlineMessage": "Offline",
-    "messageBlocked": "Message hidden because sender is blocked"
+    "messageBlocked": "Message hidden"
 }

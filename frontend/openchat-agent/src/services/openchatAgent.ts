@@ -2695,7 +2695,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 
-    async getRegistry(): Promise<RegistryValue> {
+    async getRegistry(): Promise<[RegistryValue, boolean]> {
         const current = await getCachedRegistry();
 
         const updates = await this._registryClient.updates(current?.lastUpdated);
@@ -2711,11 +2711,13 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
+                messageFilters: [ ...current?.messageFilters ?? [], ...updates.messageFiltersAdded ]
+                    .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
             };
             setCachedRegistry(updated);
-            return updated;
+            return [updated, true];
         } else if (current !== undefined) {
-            return current;
+            return [current, false];
         } else {
             throw new Error("Registry is empty... this should never happen!");
         }
@@ -2956,5 +2958,13 @@ export class OpenChatAgent extends EventTarget {
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
         return this._userIndexClient.diamondMembershipFees();
+    }
+
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this._registryClient.addMessageFilter(regex);
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this._registryClient.removeMessageFilter(id);
     }
 }

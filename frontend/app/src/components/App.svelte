@@ -97,6 +97,8 @@
             removeHotGroupExclusion,
             setCommunityModerationFlags,
             unfreezeGroup,
+            addMessageFilter,
+            removeMessageFilter,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -174,6 +176,14 @@
                 console.log("Failed to unfreeze group", chatId);
             }
         });
+    }
+
+    function addMessageFilter(regex: string): void {
+        client.addMessageFilter(regex);
+    }
+
+    function removeMessageFilter(id: bigint): void {
+        client.removeMessageFilter(id);
     }
 
     function deleteChannelMessage(
