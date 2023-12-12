@@ -12,7 +12,6 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
-use icrc_ledger_types::icrc1::account::Subaccount;
 use model::contacts::Contacts;
 use model::favourite_chats::FavouriteChats;
 use notifications_canister::c2c_push_notification;
@@ -142,6 +141,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -161,6 +161,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    #[serde(default = "escrow_canister_id")]
+    pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -186,6 +188,10 @@ struct Data {
     pub rng_seed: [u8; 32],
 }
 
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -195,6 +201,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
         username: String,
         test_mode: bool,
         now: TimestampMillis,
@@ -211,6 +218,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             proposals_bot_canister_id,
+            escrow_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -292,13 +300,6 @@ fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }
 
-fn p2p_trade_subaccount(id: u32) -> Subaccount {
-    let mut subaccount = [0; 32];
-    subaccount[25..28].copy_from_slice(b"P2P");
-    subaccount[28..].copy_from_slice(&id.to_be_bytes());
-    subaccount
-}
-
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
@@ -306,5 +307,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

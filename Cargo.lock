@@ -2029,6 +2029,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "escrow_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "escrow_canister",
+ "ic-cdk 0.11.3",
+ "msgpack",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "escrow_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -7085,6 +7098,8 @@ dependencies = [
  "chat_events",
  "community_canister",
  "community_canister_c2c_client",
+ "escrow_canister",
+ "escrow_canister_c2c_client",
  "fire_and_forget_handler",
  "futures",
  "group_canister",

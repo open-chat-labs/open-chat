@@ -1,25 +1,25 @@
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{MessageId, TimestampMillis, TokenInfo};
+use types::{TimestampMillis, TokenInfo};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PTrades {
-    offers: HashMap<MessageId, P2PTradeOffer>,
+    offers: HashMap<u32, P2PTradeOffer>,
 }
 
 impl P2PTrades {
-    pub fn create_offer(
+    pub fn add(
         &mut self,
-        message_id: MessageId,
+        id: u32,
         input_token: TokenInfo,
         input_amount: u128,
         output_token: TokenInfo,
         output_amount: u128,
+        expires_at: TimestampMillis,
         now: TimestampMillis,
     ) -> u32 {
-        let id = self.offers.len() as u32;
-        if let Vacant(e) = self.offers.entry(message_id) {
+        if let Vacant(e) = self.offers.entry(id) {
             e.insert(P2PTradeOffer {
                 id,
                 created: now,
@@ -29,6 +29,7 @@ impl P2PTrades {
                 input_amount,
                 output_token,
                 output_amount,
+                expires_at,
             });
         } else {
             unreachable!()
@@ -36,8 +37,8 @@ impl P2PTrades {
         id
     }
 
-    pub fn set_offer_status(&mut self, message_id: MessageId, status: P2PTradeOfferStatus, now: TimestampMillis) {
-        if let Some(offer) = self.offers.get_mut(&message_id) {
+    pub fn set_offer_status(&mut self, id: u32, status: P2PTradeOfferStatus, now: TimestampMillis) {
+        if let Some(offer) = self.offers.get_mut(&id) {
             offer.status = status;
             offer.last_updated = now;
         } else {
@@ -56,6 +57,7 @@ pub struct P2PTradeOffer {
     pub input_amount: u128,
     pub output_token: TokenInfo,
     pub output_amount: u128,
+    pub expires_at: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize)]
