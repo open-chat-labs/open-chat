@@ -1071,6 +1071,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "addMessageFilter":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.addMessageFilter(payload.regex),
@@ -1079,6 +1080,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeMessageFilter":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.removeMessageFilter(payload.id),
