@@ -451,7 +451,9 @@ export function mergeUnconfirmedIntoSummary(
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
-        if (updates !== undefined || translation !== undefined || senderBlocked) {
+        const failedMessageFilter = !filterMessage(latestMessage.event, messageFilters, currentUserId);
+
+        if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
@@ -463,7 +465,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     senderBlocked,
                     false,
-                    messageFilterer(messageFilters, currentUserId)
+                    failedMessageFilter
                 ),
             };
         }
@@ -1280,6 +1282,8 @@ export function mergeEventsAndLocalUpdates(
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 blockedUsers.has(e.event.repliesTo.senderId);
 
+            const failedMessageFilter = !filterMessage(e.event, messageFilters, currentUserId);
+
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1287,7 +1291,8 @@ export function mergeEventsAndLocalUpdates(
                 translation !== undefined ||
                 replyTranslation !== undefined ||
                 senderBlocked ||
-                repliesToSenderBlocked
+                repliesToSenderBlocked || 
+                failedMessageFilter
             ) {
                 return {
                     ...e,
@@ -1299,8 +1304,8 @@ export function mergeEventsAndLocalUpdates(
                         translation,
                         replyTranslation,
                         senderBlocked,
-                        repliesToSenderBlocked,
-                        messageFilterer(messageFilters, currentUserId)
+                        repliesToSenderBlocked,   
+                        failedMessageFilter,                     
                     ),
                 };
             }
@@ -1334,10 +1339,6 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
-function messageFilterer(filters: RegExp[], currentUserId: string): (message: Message) => boolean {
-    return (message: Message) => filterMessage(message, filters, currentUserId);
-}
-
 function filterMessage(message: Message, filters: RegExp[], currentUserId: string): boolean {
     if (message.sender === currentUserId) {
         return true;
@@ -1365,7 +1366,7 @@ function mergeLocalUpdates(
     replyTranslation: string | undefined,
     senderBlocked: boolean,
     repliesToSenderBlocked: boolean,
-    messageFilter: (message: Message) => boolean,
+    failedMessageFilter: boolean
 ): Message {
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1380,9 +1381,9 @@ function mergeLocalUpdates(
     }
 
     if (
-        localUpdates?.blockedMessageRevealed !== true &&
+        localUpdates?.hiddenMessageRevealed !== true &&
         message.content.kind !== "deleted_content" &&
-        (senderBlocked || !messageFilter(message))
+        (senderBlocked || failedMessageFilter)
     ) {
         return {
             ...message,
@@ -1480,7 +1481,7 @@ function mergeLocalUpdates(
             };
         } else if (
             repliesToSenderBlocked &&
-            replyContextLocalUpdates?.blockedMessageRevealed !== true
+            replyContextLocalUpdates?.hiddenMessageRevealed !== true
         ) {
             message.repliesTo = {
                 ...message.repliesTo,

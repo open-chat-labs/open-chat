@@ -5200,7 +5200,7 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "updateRegistry",
         });
 
-        if (updated) {
+        if (updated || Object.keys(get(cryptoLookup)).length === 0) {
             const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
             nervousSystemLookup.set(
