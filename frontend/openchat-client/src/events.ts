@@ -100,3 +100,11 @@ export class UserLoggedIn extends CustomEvent<string> {
         });
     }
 }
+
+export class NotificationClicked extends CustomEvent<string> {
+    constructor(path: string) {
+        super("openchat_event", {
+            detail: path,
+        });
+    }
+}

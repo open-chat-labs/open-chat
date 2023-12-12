@@ -2,7 +2,6 @@
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
-    import { closeNotificationsForChat } from "../../utils/notifications";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import {
         type ChatEvent,
@@ -127,7 +126,7 @@
     }
 
     function onWindowFocus() {
-        closeNotificationsForChat(chat.id);
+        client.closeNotificationsForChat(chat.id);
     }
 
     function createPoll() {
@@ -201,7 +200,7 @@
                     messageContext,
                     text,
                     $currentChatAttachment,
-                    $currentChatEditingEvent
+                    $currentChatEditingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -216,7 +215,7 @@
     function sendMessageWithAttachment(
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
-        mentioned: User[] = []
+        mentioned: User[] = [],
     ) {
         dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }

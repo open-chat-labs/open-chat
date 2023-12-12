@@ -229,6 +229,7 @@ import {
     LoadedMessageWindow,
     LoadedNewMessages,
     LoadedPreviousMessages,
+    NotificationClicked,
     ReactionSelected,
     SelectedChatInvalid,
     SendingMessage,
@@ -392,6 +393,7 @@ import {
     isPaymentGate,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
+    routeForChatIdentifier,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -448,6 +450,10 @@ const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
+
+// https://datatracker.ietf.org/doc/html/draft-thomson-webpush-vapid
+export const PUBLIC_VAPID_KEY =
+    "BD8RU5tDBbFTDFybDoWhFzlL5+mYptojI6qqqqiit68KSt17+vt33jcqLTHKhAXdSzu6pXntfT9e4LccBv+iV3A=";
 
 export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
@@ -544,6 +550,174 @@ export class OpenChat extends OpenChatAgentWorker {
 
     logDebug(message?: unknown, ...optionalParams: unknown[]): void {
         this._logger.debug(message, ...optionalParams);
+    }
+
+    private get isCanisterUrl(): boolean {
+        return /https:\/\/.*\.ic0\.app/.test(window.location.origin);
+    }
+
+    private get notificationsSupported(): boolean {
+        return (
+            !this.isCanisterUrl &&
+            "serviceWorker" in navigator &&
+            "PushManager" in window &&
+            "Notification" in window
+        );
+    }
+
+    private extract_p256dh_key(subscription: PushSubscription): string {
+        const json = subscription.toJSON();
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const key = json.keys!["p256dh"];
+        return key;
+    }
+
+    private async trySubscribe(): Promise<boolean> {
+        console.debug("PUSH: checking user's subscription status");
+        const registration = await this.getServiceWorkerRegistration();
+        if (registration === undefined) {
+            console.debug("PUSH: couldn't find push notifications service worker");
+            return false;
+        }
+
+        // Check if the user has subscribed already
+        let pushSubscription = await registration.pushManager.getSubscription();
+        if (pushSubscription) {
+            console.debug("PUSH: found existing push subscription");
+            // Check if the subscription has already been pushed to the notifications canister
+            if (await this.subscriptionExists(this.extract_p256dh_key(pushSubscription))) {
+                console.debug("PUSH: subscription exists in the backend");
+                return true;
+            }
+        } else {
+            // Subscribe the user to webpush notifications
+            console.debug("PUSH: creating a new subscription");
+            pushSubscription = await this.subscribeUserToPush(registration);
+            if (pushSubscription == null) {
+                return false;
+            }
+        }
+
+        // Add the subscription to the user record on the notifications canister
+        try {
+            console.debug(
+                "PUSH: saving new subscription",
+                pushSubscription,
+                pushSubscription.toJSON(),
+            );
+            await this.pushSubscription(pushSubscription.toJSON());
+            return true;
+        } catch (e) {
+            console.log("PUSH: Push subscription failed: ", e);
+            return false;
+        }
+    }
+
+    private toUint8Array(base64String: string): Uint8Array {
+        return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
+    }
+
+    private async subscribeUserToPush(
+        registration: ServiceWorkerRegistration,
+    ): Promise<PushSubscription | null> {
+        const subscribeOptions = {
+            userVisibleOnly: true,
+            applicationServerKey: this.toUint8Array(PUBLIC_VAPID_KEY),
+        };
+
+        try {
+            const pushSubscription = await registration.pushManager.subscribe(subscribeOptions);
+            return pushSubscription;
+        } catch (e) {
+            console.log(e);
+            return null;
+        }
+    }
+
+    async closeNotifications(shouldClose: (notification: Notification) => boolean): Promise<void> {
+        const registration = await this.getServiceWorkerRegistration();
+        if (registration !== undefined) {
+            const notifications = await registration.getNotifications();
+            for (const notification of notifications) {
+                const raw = notification?.data?.notification as Notification;
+                if (raw !== undefined && shouldClose(raw)) {
+                    notification.close();
+                }
+            }
+        }
+    }
+
+    async closeNotificationsForChat(chatId: ChatIdentifier): Promise<void> {
+        const registration = await this.getServiceWorkerRegistration();
+        if (registration !== undefined) {
+            const notifications = await registration.getNotifications();
+            for (const notification of notifications) {
+                const url = routeForChatIdentifier("none", chatId);
+                if (notification.data?.path.startsWith(url)) {
+                    notification.close();
+                }
+            }
+        }
+    }
+
+    async subscribeToNotifications(
+        onNotification: (notification: Notification) => void,
+    ): Promise<boolean> {
+        if (!this.notificationsSupported) {
+            console.debug("PUSH: notifications not supported");
+            return false;
+        }
+
+        // Double check that the service worker registration is available
+        const registration = await this.getServiceWorkerRegistration();
+        if (registration == null) {
+            return false;
+        }
+
+        navigator.serviceWorker.addEventListener("message", (event) => {
+            if (event.data.type === "NOTIFICATION_RECEIVED") {
+                console.debug(
+                    "PUSH: received push notification from the service worker",
+                    event.data,
+                );
+                onNotification(event.data.data as Notification);
+            } else if (event.data.type === "NOTIFICATION_CLICKED") {
+                console.debug(
+                    "PUSH: notification clicked existing client routing to: ",
+                    event.data.path,
+                );
+                this.dispatchEvent(new NotificationClicked(event.data.path));
+            }
+        });
+
+        notificationStatus.subscribe((status) => {
+            switch (status) {
+                case "granted":
+                    this.trySubscribe();
+                    break;
+                case "pending-init":
+                    break;
+                default:
+                    this.unsubscribeNotifications();
+                    break;
+            }
+        });
+
+        return true;
+    }
+
+    private async unsubscribeNotifications(): Promise<void> {
+        console.debug("PUSH: unsubscribing from notifications");
+        const registration = await this.getServiceWorkerRegistration();
+        if (registration !== undefined) {
+            const pushSubscription = await registration.pushManager.getSubscription();
+            if (pushSubscription) {
+                if (await this.subscriptionExists(this.extract_p256dh_key(pushSubscription))) {
+                    console.debug("PUSH: removing push subscription");
+                    await this.removeSubscription(pushSubscription.toJSON());
+                }
+            }
+        }
     }
 
     login(): void {

@@ -44,6 +44,7 @@
         routeForChatIdentifier,
         routeForMessage,
         UserSuspensionChanged,
+        NotificationClicked,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -53,11 +54,6 @@
     import { pathParams, routeForScope } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
-    import {
-        closeNotificationsForChat,
-        closeNotifications,
-        subscribeToNotifications,
-    } from "../../utils/notifications";
     import {
         filterByChatType,
         filterRightPanelHistory,
@@ -217,7 +213,7 @@
     }
 
     onMount(() => {
-        subscribeToNotifications(client, (n) => client.notificationReceived(n));
+        client.subscribeToNotifications((n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
 
         if ($suspendedUser) {
@@ -240,7 +236,7 @@
                 toastStore.showFailureToast("errorSendingMessage");
             }
         } else if (ev instanceof ChatsUpdated) {
-            closeNotifications((notification: Notification) => {
+            client.closeNotifications((notification: Notification) => {
                 if (
                     notification.kind === "channel_notification" ||
                     notification.kind === "direct_notification" ||
@@ -262,6 +258,8 @@
         } else if (ev instanceof UserSuspensionChanged) {
             // The latest suspension details will be picked up on reload when user_index::current_user is called
             window.location.reload();
+        } else if (ev instanceof NotificationClicked) {
+            page(ev.detail);
         }
     }
 
@@ -336,7 +334,7 @@
             }
 
             // if it's a known chat let's select it
-            closeNotificationsForChat(chat.id);
+            client.closeNotificationsForChat(chat.id);
             $eventListScrollTop = undefined;
             client.setSelectedChat(chat.id, messageIndex, threadMessageIndex);
             resetRightPanel();

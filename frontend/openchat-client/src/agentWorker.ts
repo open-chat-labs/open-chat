@@ -29,50 +29,52 @@ type PromiseResolver<T> = {
  * This is a wrapper around the OpenChatAgent which brokers communication with the agent inside a web worker
  */
 export class OpenChatAgentWorker extends EventTarget {
-    private _registration: ServiceWorkerRegistration | undefined = undefined;
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
     private _unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     private _connectedToWorker = false;
     private _messagePort: MessagePort | undefined;
+    private _registration: Promise<ServiceWorkerRegistration> | undefined;
 
     constructor(protected config: OpenChatConfig) {
         super();
+        this._registration = this.getServiceWorkerRegistration();
     }
 
-    private async registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
-        try {
-            const registration = await navigator.serviceWorker.register(
-                "process.env.SERVICE_WORKER_PATH",
-                {
-                    type: "module",
-                },
-            );
-            registration.update();
-            return registration;
-        } catch (e) {
-            console.log(e);
-            return undefined;
+    protected getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration> {
+        if (this._registration === undefined) {
+            this._registration = this.registerServiceWorker();
         }
+        return this._registration;
+    }
+
+    protected registerServiceWorker(): Promise<ServiceWorkerRegistration> {
+        return navigator.serviceWorker
+            .register("process.env.SERVICE_WORKER_PATH", { type: "module" })
+            .then((reg) => {
+                reg.update();
+                return reg;
+            })
+            .catch((err) => {
+                console.error("SW_CLIENT: error registering service worker", err);
+                throw new Error(
+                    "SW_CLIENT: Unable to register service worker - this is a fatal error",
+                );
+            });
     }
 
     /**
      * This might be a bit iffy. We need to wait until we have an active service worker to try to cover the condition
      * where the service worker is updated or not installed at all.
      */
-    private serviceWorker(attempts = 0): Promise<ServiceWorker> {
-        return this.registerServiceWorker().then((reg) => {
-            if (reg === null || reg === undefined) {
-                throw new Error("Unable to register service worker - this is a fatal error");
-            }
-            this._registration = reg;
-            if (this._registration?.active) {
-                return this._registration.active;
+    private activeServiceWorker(attempts = 0): Promise<ServiceWorker> {
+        return this.getServiceWorkerRegistration().then((reg) => {
+            if (reg.active) {
+                return reg.active;
             }
             if (attempts < 5) {
                 return new Promise((resolve) => {
-                    setTimeout(() => resolve(this.serviceWorker(attempts + 1)), 100);
+                    setTimeout(() => resolve(this.activeServiceWorker(attempts + 1)), 100);
                 });
             } else {
                 throw new Error("SW: no active service found - this is a fatal error");
@@ -111,7 +113,7 @@ export class OpenChatAgentWorker extends EventTarget {
             }
         };
 
-        const serviceWorker = await this.serviceWorker();
+        const serviceWorker = await this.activeServiceWorker();
 
         const ready = new Promise<boolean>((resolve) => {
             const correlationId = v4();
