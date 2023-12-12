@@ -1156,7 +1156,7 @@ export type WorkerResponseInner =
     | ImportGroupResponse
     | PublicGroupSummaryResponse
     | AddMembersToChannelResponse
-    | RegistryValue
+    | [RegistryValue, boolean]
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
@@ -1701,7 +1701,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
     : T extends UpdateRegistry
-    ? RegistryValue
+    ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
     : T extends CreateUserGroup

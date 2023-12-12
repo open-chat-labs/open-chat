@@ -439,7 +439,7 @@ import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
-import { messageFilters } from "./stores/messageFilters";
+import { messageFiltersStore } from "./stores/messageFilters";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -5196,33 +5196,35 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateRegistry() {
-        const registry = await this.sendRequest({
+        const [registry, updated] = await this.sendRequest({
             kind: "updateRegistry",
         });
 
-        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
+        if (updated) {
+            const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
-        nervousSystemLookup.set(
-            toRecord(
-                registry.nervousSystemSummary.map((ns) => ({
-                    ...ns,
-                    token: cryptoRecord[ns.ledgerCanisterId],
-                })),
-                (ns) => ns.governanceCanisterId,
-            ),
-        );
+            nervousSystemLookup.set(
+                toRecord(
+                    registry.nervousSystemSummary.map((ns) => ({
+                        ...ns,
+                        token: cryptoRecord[ns.ledgerCanisterId],
+                    })),
+                    (ns) => ns.governanceCanisterId,
+                ),
+            );
 
-        cryptoLookup.set(cryptoRecord);
+            cryptoLookup.set(cryptoRecord);
 
-        messageFilters.set(registry.messageFilters
-            .map((f) => {
-                try {
-                    return new RegExp(f.regex);
-                } catch {
-                    return undefined;
-                }
-            })
-            .filter((f) => f !== undefined) as RegExp[]);
+            messageFiltersStore.set(registry.messageFilters
+                .map((f) => {
+                    try {
+                        return new RegExp(f.regex);
+                    } catch {
+                        return undefined;
+                    }
+                })
+                .filter((f) => f !== undefined) as RegExp[]);
+        }
 
         if (!this._liveState.anonUser) {
             window.setTimeout(() => this.refreshBalancesInSeries(), 0);

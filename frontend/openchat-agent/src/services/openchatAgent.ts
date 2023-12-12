@@ -2695,7 +2695,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 
-    async getRegistry(): Promise<RegistryValue> {
+    async getRegistry(): Promise<[RegistryValue, boolean]> {
         const current = await getCachedRegistry();
 
         const updates = await this._registryClient.updates(current?.lastUpdated);
@@ -2715,9 +2715,9 @@ export class OpenChatAgent extends EventTarget {
                     .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
             };
             setCachedRegistry(updated);
-            return updated;
+            return [updated, true];
         } else if (current !== undefined) {
-            return current;
+            return [current, false];
         } else {
             throw new Error("Registry is empty... this should never happen!");
         }
