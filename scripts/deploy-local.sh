@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 # Deploys everything needed to test OpenChat locally (OpenChat, OpenStorage and the NNS canisters)
 
 IDENTITY=${1:-default}
-WASM_SRC=${2:-latest} # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
+WASM_SRC=${2:-latest} # WASM_SRC is either empty, "build", "latest", "local", "prod" the commit Id or the release version
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

@@ -515,8 +515,7 @@
             "to": "A",
             "type": "Tipo"
         },
-        "swap": "Intercambio",
-        "swapToken": "Intercambiar {symbol}"
+        "swap": "Intercambio"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",
@@ -1066,7 +1065,6 @@
         "importBtn": "Importar",
         "noOwned": "No eres el propietario de ninguna comunidad.",
         "chooseCommunity": "Elige una comunidad",
-        "otherChannels": "Otros canales",
         "defaultInfo": "Los usuarios que se unan a esta comunidad se agregarán automáticamente a todos los canales públicos",
         "saveChanges": "Guardar cambios",
         "exploreMobile": "Explorar",
@@ -1083,7 +1081,8 @@
         "userGroupName": "Nombre del grupo de usuarios",
         "noSpaces": "no se permiten espacios",
         "noMatch": "No se encontraron comunidades coincidentes",
-        "refineSearch": "intenta refinar tu búsqueda"
+        "refineSearch": "intenta refinar tu búsqueda",
+        "otherChannels": "Otros canales públicos"
     },
     "groupCreatedBy": "{username} creó el {level}",
     "groupName": "{level} nombre",
@@ -1182,15 +1181,30 @@
     "renderPreviews": "Vistas previas de enlaces de renderizado automático",
     "messageBlocked": "Mensaje oculto porque el remitente está bloqueado",
     "tokenSwap": {
-        "title": "Intercambio",
+        "swap": "Intercambio",
         "quote": "Cita",
+        "requote": "Volver a cotizar",
+        "back": "Atrás",
         "swapNotAvailable": "Actualmente no es posible intercambiar {tokenIn} por ningún otro token",
         "noQuotes": "Ningún DEX proporcionó una cotización para intercambiar {tokenIn}",
         "getTokenSwapsError": "Error al obtener intercambios para {tokenIn}",
         "quoteError": "Error al obtener cotizaciones para intercambiar {tokenIn}",
         "findingAvailableTokens": "encontrando tokens disponibles para intercambiar...",
-        "swapFailed": "No se pudo intercambiar **{amountIn}** {tokenIn} por al menos **{minAmountOut}** {tokenOut} usando {dex}",
-        "swapSucceeded": "Se intercambió exitosamente **{amountIn}** {tokenIn} por **{amountOut}** {tokenOut} usando {dex}",
-        "swapInfo": "La mejor tarifa cotizada es **{rate}** de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?"
+        "swapInfo": "La mejor tarifa cotizada es **{rate}** {tokenOut} por {tokenIn} de {dex}. Esto da **{amountOut}** {tokenOut} para **{amountIn}** {tokenIn}. El intercambio solo se llevará a cabo si la cantidad de {tokenOut} a recibir es al menos el 98% de la cantidad cotizada. ¿Le gustaría seguir adelante e intentar el `{swap}`?",
+        "progress": {
+            "get": "Obtener cuenta de depósito",
+            "deposit": "Transferir {amountIn} {tokenIn} a {dex}",
+            "notify": "Notificar a {dex} del depósito",
+            "swap": "Indique a {dex} que realice el intercambio",
+            "withdraw": "Retirar {amountOut} {tokenOut} de {dex}",
+            "refund": "Reembolso {amountIn} {tokenIn} de {dex}",
+            "done": "Intercambio completo",
+            "failed": "El intercambio falló: el tipo de cambio ha cambiado",
+            "insufficientFunds": "El intercambio falló: fondos insuficientes",
+            "error": "Error de intercambio: no se han perdido fondos"
+        },
+        "swapToken": "Intercambiar {tokenIn}",
+        "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
+        "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}."
     }
 }

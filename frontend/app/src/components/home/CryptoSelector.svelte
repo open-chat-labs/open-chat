@@ -1,9 +1,11 @@
 <script lang="ts">
-    import { fade } from "svelte/transition";
     import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
+    import MenuIcon from "../MenuIcon.svelte";
+    import Menu from "../Menu.svelte";
+    import MenuItem from "../MenuItem.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -14,12 +16,13 @@
     let selecting = false;
     let ignoreClick = false;
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
-    $: crypto = Object.values($cryptoLookup).filter((t) => filter(t));
+    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoTokensSorted = client.cryptoTokensSorted;
+    $: cryptoTokensFiltered = $cryptoTokensSorted.filter((t) => filter(t));
 
     $: {
-        if (ledger === undefined && crypto.length > 0) {
-            ledger = crypto[0].ledger;
+        if (ledger === undefined && cryptoTokensFiltered.length > 0) {
+            ledger = cryptoTokensFiltered[0].ledger;
         }
     }
 
@@ -35,13 +38,6 @@
         }
     }
 
-    function toggle() {
-        selecting = !selecting;
-        if (selecting) {
-            ignoreClick = true;
-        }
-    }
-
     function windowClick() {
         if (selecting && !ignoreClick) {
             selecting = false;
@@ -50,93 +46,70 @@
     }
 </script>
 
-{#if crypto.length > 0 && ledger !== undefined}
-    <div class="selected" on:click={toggle}>
-        <div class="symbol">
-            {$cryptoLookup[ledger].symbol}
+{#if cryptoTokensFiltered.length > 0 && ledger !== undefined}
+    <MenuIcon centered position={"bottom"} align={"start"}>
+        <div class="token-selector-trigger" slot="icon">
+            <div class="symbol">
+                {$cryptoLookup[ledger].symbol}
+            </div>
+            <ChevronDown viewBox={"0 0 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
         </div>
-        <div class="icon" class:selecting>
-            <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-    </div>
 
-    {#if selecting}
-        <div transition:fade|local={{ duration: 100 }} class="tokens">
-            {#each crypto as token}
-                <div class="token" on:click={() => selectToken(token.ledger, token.urlFormat)}>
-                    <img class="icon" src={token.logo} />
-                    <div class="name">
-                        {token.name}
-                    </div>
-                    <div class="symbol">
-                        {token.symbol}
-                    </div>
-                </div>
-            {/each}
+        <div slot="menu">
+            <Menu centered>
+                {#each cryptoTokensFiltered as token}
+                    <MenuItem on:click={() => selectToken(token.ledger, token.urlFormat)}>
+                        <img slot="icon" class="token-icon" src={token.logo} />
+                        <div class="token-text" slot="text">
+                            <div class="name">
+                                {token.name}
+                            </div>
+                            <div class="symbol">
+                                {token.symbol}
+                            </div>
+                        </div>
+                    </MenuItem>
+                {/each}
+            </Menu>
         </div>
-    {/if}
+    </MenuIcon>
 {/if}
 
 <svelte:window on:click={windowClick} on:keydown={onKeyDown} />
 
 <style lang="scss">
-    .tokens {
-        position: absolute;
-        background-color: var(--menu-bg);
-        @include z-index("popup-menu");
-        box-shadow: var(--menu-sh);
-        border-radius: var(--rd);
-        border: 1px solid var(--menu-bd);
-        cursor: pointer;
-        max-height: 250px;
-        @include nice-scrollbar();
+    :global(.token-selector-trigger .menu-icon.open) {
+        transform: rotate(180deg);
     }
 
-    .icon {
+    :global(.token-selector-trigger .menu-icon) {
         transition: transform 250ms ease-in-out;
         transform-origin: 50%;
-        &.selecting {
-            transform: rotate(180deg);
-        }
     }
 
-    .selected {
+    .token-selector-trigger {
+        display: flex;
+        cursor: pointer;
+        align-items: center;
+        gap: $sp1;
+    }
+
+    .token-icon {
+        background-size: contain;
+        height: $sp5;
+        width: $sp5;
+        border-radius: 50%;
+        background-repeat: no-repeat;
+        background-position: top;
+    }
+
+    .token-text {
         display: flex;
         align-items: center;
-        gap: $sp2;
-        cursor: pointer;
+        gap: $sp3;
     }
 
     .symbol {
         color: var(--primary);
-    }
-
-    .token {
-        padding: $sp3 $sp4;
-        display: flex;
-        align-items: center;
-        gap: $sp3;
-        color: var(--menu-txt);
-        @include font(bold, normal, fs-80);
-        font-family: var(--font);
-
-        @media (hover: hover) {
-            &:hover {
-                background-color: var(--menu-hv);
-            }
-        }
-
-        .symbol {
-            color: var(--primary);
-        }
-
-        .icon {
-            background-size: contain;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background-repeat: no-repeat;
-            background-position: top;
-        }
     }
 </style>

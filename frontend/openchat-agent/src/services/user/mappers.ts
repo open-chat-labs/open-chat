@@ -867,6 +867,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             archived: candid.archived,
             rulesAccepted: candid.rules_accepted,
         },
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -1142,6 +1143,11 @@ export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensRes
             amountOut: candid.Success.amount_out,
         };
     }
+    if ("SwapFailed" in candid) {
+        return {
+            kind: "swap_failed",
+        };
+    }
     if ("InternalError" in candid) {
         return {
             kind: "internal_error",
@@ -1161,7 +1167,7 @@ export function tokenSwapStatusResponse(
             depositAccount: optional(candid.Success.deposit_account, result),
             transfer: optional(candid.Success.transfer, result),
             notifyDex: optional(candid.Success.notify_dex, result),
-            amountSwapped: optional(candid.Success.amount_swapped, result),
+            amountSwapped: optional(candid.Success.amount_swapped, resultOfResult),
             withdrawnFromDex: optional(candid.Success.withdraw_from_dex, result),
         };
     }
@@ -1186,7 +1192,24 @@ function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
     };
 }
 
-export function approveTransferResponse(candid: ApiApproveTransferResponse): ApproveTransferResponse {
+function resultOfResult<T>(
+    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string },
+): Result<Result<T>> {
+    if ("Ok" in candid) {
+        return {
+            kind: "ok",
+            value: result(candid.Ok),
+        };
+    }
+    return {
+        kind: "error",
+        error: candid.Err,
+    };
+}
+
+export function approveTransferResponse(
+    candid: ApiApproveTransferResponse,
+): ApproveTransferResponse {
     if ("Success" in candid) {
         return { kind: "success" };
     }

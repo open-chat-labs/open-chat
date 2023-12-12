@@ -10,7 +10,6 @@ mod events_window;
 mod explore_channels;
 mod http_request;
 mod invite_code;
-mod local_user_index;
 mod messages_by_message_index;
 mod search_channel;
 mod selected_channel_initial;

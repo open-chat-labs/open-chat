@@ -2,6 +2,7 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use types::{SubscriptionInfo, SubscriptionKeys};
@@ -20,7 +21,7 @@ fn direct_message_notification_succeeds() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -58,7 +59,7 @@ fn group_message_notification_succeeds() {
         vec![(user2.user_id, user2.principal)],
     );
 
-    client::group::happy_path::send_text_message(env, &user1, group_id, None, "TEXT", None);
+    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -86,7 +87,7 @@ fn direct_message_notification_muted() {
 
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT1", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
     client::user::mute_notifications(
         env,
         user2.principal,
@@ -98,7 +99,7 @@ fn direct_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT2", None);
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -142,7 +143,7 @@ fn group_message_notification_muted() {
 
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
-    client::group::happy_path::send_text_message(env, &user1, group_id, None, "TEXT", None);
+    client::group::happy_path::send_text_message(env, &user1, group_id, None, random_string(), None);
 
     let notifications_canister::notifications::Response::Success(notifications_response) = client::notifications::notifications(
         env,
@@ -154,6 +155,59 @@ fn group_message_notification_muted() {
     );
 
     assert!(notifications_response.notifications.is_empty());
+}
+
+#[test]
+fn only_store_up_to_10_subscriptions_per_user() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2 } = init_test_data(env, canister_ids);
+
+    for i in 0..20 {
+        client::notifications_index::push_subscription(
+            env,
+            user2.principal,
+            canister_ids.notifications_index,
+            &notifications_index_canister::push_subscription::Args {
+                subscription: SubscriptionInfo {
+                    keys: SubscriptionKeys {
+                        auth: i.to_string(),
+                        p256dh: i.to_string(),
+                    },
+                    endpoint: "https://xyz.com/".to_string(),
+                },
+            },
+        );
+    }
+
+    env.tick();
+
+    let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
+
+    client::user::happy_path::send_text_message(env, &user1, user2.user_id, random_string(), None);
+
+    let notifications_canister::notifications::Response::Success(mut notifications_response) =
+        client::notifications::notifications(
+            env,
+            *controller,
+            canister_ids.notifications,
+            &notifications_canister::notifications::Args {
+                from_notification_index: latest_notification_index + 1,
+            },
+        );
+
+    let subscriptions = notifications_response.subscriptions.remove(&user2.user_id).unwrap();
+
+    assert_eq!(
+        subscriptions.into_iter().map(|s| s.keys.p256dh).collect_vec(),
+        (10..20).map(|i| i.to_string()).collect_vec()
+    );
 }
 
 fn latest_notification_index(env: &PocketIc, notifications_canister_id: Principal, controller: Principal) -> u64 {

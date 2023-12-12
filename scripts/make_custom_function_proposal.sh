@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # cd into folder containing this script
 SCRIPT=$(readlink -f "$0")

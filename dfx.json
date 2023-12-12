@@ -97,6 +97,12 @@
       "wasm": "wasms/market_maker.wasm.gz",
       "build": "./scripts/generate-wasm.sh market_maker"
     },
+    "escrow": {
+      "type": "custom",
+      "candid": "backend/canisters/escrow/api/can.did",
+      "wasm": "wasms/escrow.wasm.gz",
+      "build": "./scripts/generate-wasm.sh escrow"
+    },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"

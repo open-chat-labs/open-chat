@@ -217,9 +217,6 @@ export type RegisterUserResponse =
     | { kind: "username_too_short" }
     | { kind: "username_too_long" }
     | { kind: "username_invalid" }
-    | { kind: "display_name_too_short" }
-    | { kind: "display_name_too_long" }
-    | { kind: "display_name_invalid" }
     | { kind: "public_key_invalid" }
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
@@ -334,6 +331,9 @@ export type SwapTokensResponse =
           kind: "success";
           amountOut: bigint;
       }
+    | {
+          kind: "swap_failed";
+      }
     | InternalError;
 
 export type Result<T> =
@@ -353,7 +353,7 @@ export type TokenSwapStatusResponse =
           depositAccount?: Result<null>;
           transfer?: Result<bigint>;
           notifyDex?: Result<null>;
-          amountSwapped?: Result<bigint>;
+          amountSwapped?: Result<Result<bigint>>;
           withdrawnFromDex?: Result<bigint>;
       }
     | {

@@ -5,7 +5,6 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import Pound from "svelte-material-icons/Pound.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
     import MenuIcon from "../../../MenuIcon.svelte";
     import Menu from "../../../Menu.svelte";
@@ -30,9 +29,6 @@
     }
     function invite() {
         pushRightPanelHistory({ kind: "invite_community_users" });
-    }
-    function showChannels() {
-        dispatch("showChannels");
     }
     function editCommunity() {
         if (canEdit) {
@@ -63,10 +59,6 @@
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
                     <div slot="text">{$_("communities.invite")}</div>
-                </MenuItem>
-                <MenuItem on:click={showChannels}>
-                    <Pound size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text">{$_("communities.publicChannels")}</span>
                 </MenuItem>
                 {#if canEdit}
                     <MenuItem on:click={editCommunity}>

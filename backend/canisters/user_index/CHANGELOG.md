@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pay rewards based on one year if referred user becomes lifetime member ([#4979](https://github.com/open-chat-labs/open-chat/pull/4979))
+
+### Removed
+
+- Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
+
+## [[2.0.964](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.964-user_index)] - 2023-12-06
+
+### Added
+
+- Expose number of lifetime Diamond members in metrics ([#4929](https://github.com/open-chat-labs/open-chat/pull/4929))
+- Optionally return suspended users from `users_v2` ([#4945](https://github.com/open-chat-labs/open-chat/pull/4945))
+
 ## [[2.0.955](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.955-user_index)] - 2023-12-05
 
 ### Added

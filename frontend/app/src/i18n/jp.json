@@ -514,8 +514,7 @@
             "to": "に",
             "type": "タイプ"
         },
-        "swap": "スワップ",
-        "swapToken": "{symbol}を交換する"
+        "swap": "スワップ"
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -1181,15 +1180,30 @@
     "renderPreviews": "自動レンダリングリンクプレビュー",
     "messageBlocked": "送信者がブロックされているためメッセージが非表示になりました",
     "tokenSwap": {
-        "title": "スワップ",
+        "swap": "スワップ",
         "quote": "引用",
+        "requote": "再引用",
+        "back": "戻る",
         "swapNotAvailable": "現在、{tokenIn} を他のトークンに交換することはできません",
         "noQuotes": "{tokenIn} をスワップするための見積もりを提供した DEX はありませんでした",
         "getTokenSwapsError": "{tokenIn} のスワップ取得エラー",
         "quoteError": "{tokenIn} を交換するための引用符の取得中にエラーが発生しました",
         "findingAvailableTokens": "交換できるトークンを見つけています...",
-        "swapFailed": "{amountIn} を使用して **{tokenIn}** {minAmountOut} を少なくとも **{tokenOut}** {dex} と交換できませんでした",
-        "swapSucceeded": "{amountIn} を使用して **{tokenIn}** {amountOut} を **{tokenOut}** {dex} に交換しました",
-        "swapInfo": "見積もられた最良レートは、{rate} の **{dex}** です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?"
+        "swapInfo": "見積もられた最良レートは、{rate} からの {tokenOut} あたり **{tokenIn}** {dex} です。これにより、**{amountOut}** {tokenOut} に対して **{amountIn}** {tokenIn} が得られます。スワップは、受け取る {tokenOut} の額が見積額の少なくとも 98% である場合にのみ続行されます。先に進んで「{swap}」を試してみませんか?",
+        "progress": {
+            "get": "預金口座を取得する",
+            "deposit": "{amountIn} {tokenIn} を {dex} に転送します",
+            "notify": "{dex} に入金を通知する",
+            "swap": "{dex} にスワップを実行するように指示します",
+            "withdraw": "{amountOut} {tokenOut} を {dex} から出金する",
+            "refund": "{amountIn} から {tokenIn} を払い戻します",
+            "done": "交換完了",
+            "failed": "スワップに失敗しました - 為替レートが変更されました",
+            "insufficientFunds": "スワップ失敗 - 資金不足",
+            "error": "スワップエラー - 資金は失われていません"
+        },
+        "swapToken": "{tokenIn}を交換する",
+        "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
+        "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
     }
 }

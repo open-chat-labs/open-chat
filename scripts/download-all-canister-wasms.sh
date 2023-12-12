@@ -1,12 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-WASM_SRC=$1 # WASM_SRC is either empty, "latest", "prod" or the commit Id
+WASM_SRC=$1 # WASM_SRC is either empty, "latest", "local", "prod" the commit Id or the release version
 
-if [ -z "$WASM_SRC" ] || [ $WASM_SRC = "latest" ]
+if [[ -z $WASM_SRC ]] || [[ $WASM_SRC = "latest" ]]
 then
   WASM_SRC=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
 fi

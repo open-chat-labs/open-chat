@@ -77,6 +77,12 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MessageFilterSummary {
+    pub id: u64,
+    pub regex: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 // TODO uncomment the line below once candid is aware of the `rename_all` attribute
 // #[serde(rename_all = "lowercase")]
 pub enum TokenStandard {

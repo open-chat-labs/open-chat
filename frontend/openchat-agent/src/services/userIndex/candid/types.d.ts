@@ -280,6 +280,7 @@ export interface CommunityCanisterCommunitySummary {
   'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -601,6 +602,7 @@ export interface GroupCanisterGroupChatSummary {
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
   'membership' : [] | [GroupMembership],
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -673,6 +675,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -1244,6 +1247,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -1538,6 +1542,7 @@ export interface UsersV2Args {
   'user_groups' : Array<
     { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
   >,
+  'users_suspended_since' : [] | [TimestampMillis],
 }
 export type UsersV2Response = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }

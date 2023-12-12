@@ -1,7 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::collections::VecDeque;
+use std::ops::RangeFrom;
 use types::IndexedEvent;
 
 const MAX_EVENTS: usize = 100_000;
@@ -13,21 +14,17 @@ pub struct EventStream<T: CandidType + Clone> {
 }
 
 impl<T: CandidType + Clone> EventStream<T> {
-    pub fn get(&self, from_event_index: u64, max_events: u32) -> Vec<IndexedEvent<T>> {
+    pub fn iter(&self, from_event_index: u64) -> Box<dyn Iterator<Item = IndexedEvent<T>> + '_> {
         if let Some(earliest_event_index) = self.events.front().map(|e| e.index) {
             let latest_event_index = self.events.back().unwrap().index;
-            if from_event_index > latest_event_index {
-                return Vec::new();
+            if from_event_index <= latest_event_index {
+                let from_event_index = max(from_event_index, earliest_event_index);
+                let start_index = (from_event_index - earliest_event_index) as usize;
+                return Box::new(self.events.range(RangeFrom { start: start_index }).cloned());
             }
-
-            let from_event_index = max(from_event_index, earliest_event_index);
-            let start_index = (from_event_index - earliest_event_index) as usize;
-            let end_index = min(start_index + (max_events as usize), self.events.len());
-
-            (start_index..end_index).filter_map(|i| self.events.get(i)).cloned().collect()
-        } else {
-            Vec::new()
         }
+
+        Box::new(std::iter::empty())
     }
 
     pub fn add(&mut self, event: T) -> u64 {
@@ -106,7 +103,7 @@ mod tests {
             events_collection.add(i);
         }
 
-        let events = events_collection.get(0, 5);
+        let events: Vec<_> = events_collection.iter(0).take(5).collect();
 
         assert_eq!(events.len(), 5);
 
@@ -124,7 +121,7 @@ mod tests {
             events_collection.add(i);
         }
 
-        let events = events_collection.get(6, 5);
+        let events: Vec<_> = events_collection.iter(6).take(5).collect();
 
         assert_eq!(events.len(), 5);
 
@@ -143,7 +140,7 @@ mod tests {
             events_collection.add(i);
         }
 
-        let events = events_collection.get(6, 10);
+        let events: Vec<_> = events_collection.iter(6).take(10).collect();
 
         assert_eq!(events.len(), 5);
 
@@ -164,7 +161,7 @@ mod tests {
 
         assert_eq!(events_collection.remove(5), 5);
 
-        let events = events_collection.get(0, 5);
+        let events: Vec<_> = events_collection.iter(0).take(5).collect();
 
         assert_eq!(events.len(), 5);
 
@@ -189,7 +186,7 @@ mod tests {
 
         assert_eq!(events_collection.remove(5), 5);
 
-        let events = events_collection.get(0, 5);
+        let events: Vec<_> = events_collection.iter(0).take(5).collect();
 
         assert_eq!(events.len(), 5);
 

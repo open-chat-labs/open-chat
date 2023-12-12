@@ -2,10 +2,9 @@ use crate::model::group_chat::{GroupChat, GroupMessagesRead};
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{local_user_index_canister_id, CanisterId, ChannelId, CommunityId, TimestampMillis, Timestamped};
+use types::{CanisterId, ChannelId, CommunityId, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "CommunityPrevious")]
 pub struct Community {
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
@@ -16,34 +15,6 @@ pub struct Community {
     pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
     pub pinned: Timestamped<Vec<ChannelId>>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct CommunityPrevious {
-    pub community_id: CommunityId,
-    pub date_joined: TimestampMillis,
-    pub channels: HashMap<ChannelId, Channel>,
-    pub index: Timestamped<u32>,
-    pub last_read: TimestampMillis,
-    pub last_changed_for_my_data: TimestampMillis,
-    pub archived: Timestamped<bool>,
-    pub pinned: Timestamped<Vec<ChannelId>>,
-}
-
-impl From<CommunityPrevious> for Community {
-    fn from(value: CommunityPrevious) -> Self {
-        Community {
-            community_id: value.community_id,
-            local_user_index_canister_id: local_user_index_canister_id(value.community_id.into()),
-            date_joined: value.date_joined,
-            channels: value.channels,
-            index: value.index,
-            last_read: value.last_read,
-            last_changed_for_my_data: value.last_changed_for_my_data,
-            archived: value.archived,
-            pinned: value.pinned,
-        }
-    }
 }
 
 impl Community {

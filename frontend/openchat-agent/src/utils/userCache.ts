@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { DiamondMembershipStatus, UserSummary } from "openchat-shared";
 
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 
 let db: UserDatabase | undefined;
 
@@ -11,6 +11,11 @@ export interface UserSchema extends DBSchema {
     users: {
         key: string;
         value: UserSummary;
+    };
+
+    suspendedUsersSyncedUpTo: {
+        key: "value";
+        value: bigint;
     };
 }
 
@@ -27,7 +32,11 @@ function openUserCache(): UserDatabase {
             if (db.objectStoreNames.contains("users")) {
                 db.deleteObjectStore("users");
             }
+            if (db.objectStoreNames.contains("suspendedUsersSyncedUpTo")) {
+                db.deleteObjectStore("suspendedUsersSyncedUpTo");
+            }
             db.createObjectStore("users");
+            db.createObjectStore("suspendedUsersSyncedUpTo");
         },
     });
 }
@@ -108,4 +117,14 @@ export async function setUserDiamondStatusInCache(
         await store.put(user, userId);
     }
     await tx.done;
+}
+
+export async function getSuspendedUsersSyncedUpTo(): Promise<bigint | undefined> {
+    const resolvedDb = await lazyOpenUserCache();
+    return await resolvedDb.get("suspendedUsersSyncedUpTo", "value");
+}
+
+export async function setSuspendedUsersSyncedUpTo(value: bigint): Promise<void> {
+    const resolvedDb = await lazyOpenUserCache();
+    await resolvedDb.put("suspendedUsersSyncedUpTo", value, "value");
 }

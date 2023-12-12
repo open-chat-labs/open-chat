@@ -8,7 +8,6 @@ export type RightPanelState =
     | ShowGroupMembersPanel
     | ShowCommunityMembers
     | ShowPinnedPanel
-    | ShowCommunityChannels
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
@@ -50,13 +49,9 @@ export type CommunityDetails = {
     kind: "community_details";
 };
 
-export type ShowCommunityChannels = {
-    kind: "community_channels";
-};
-
 export type ShowCommunityMembers = {
     kind: "show_community_members";
-    userGroupId?: number; 
+    userGroupId?: number;
 };
 
 export type ShowPinnedPanel = {
@@ -99,10 +94,6 @@ export function filterByChatType(chat: ChatSummary | undefined): void {
             (chat.previewed ||
                 (!(chat.subtype?.isNns ?? false) && panel.kind === "proposal_filters"))
         ) {
-            return false;
-        }
-
-        if (chat.kind !== "channel" && panel.kind === "community_channels") {
             return false;
         }
 

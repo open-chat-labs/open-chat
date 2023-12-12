@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 GOVERNANCE_CANISTER_ID=$1
 SNS_NAME=$2

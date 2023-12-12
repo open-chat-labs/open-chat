@@ -4,14 +4,14 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-BUILD_WASMS=${1:-true}
+WASM_SRC=${1:-build}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
 
-if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
+if [[ $OSTYPE == "linux-gnu"* ]] || [[ $RUNNER_OS == "Linux" ]]
 then
     PLATFORM=linux
-elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
+elif [[ $OSTYPE == "darwin"* ]] || [[ $RUNNER_OS == "macOS" ]]
 then
     PLATFORM=darwin
 else
@@ -19,9 +19,12 @@ else
     exit 1
 fi
 
-if [ $BUILD_WASMS = true ]
+if [[ $WASM_SRC == "build" ]]
 then
     ./scripts/generate-all-canister-wasms.sh
+elif [[ $WASM_SRC != "local" ]]
+then
+    ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
 fi
 
 cd backend/integration_tests

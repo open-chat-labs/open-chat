@@ -155,6 +155,7 @@ async fn install_service_canisters_impl(
 
     let registry_canister_wasm = get_canister_wasm(CanisterName::Registry, version);
     let registry_init_args = registry_canister::init::Args {
+        user_index_canister_id: canister_ids.user_index,
         governance_principals: vec![principal],
         proposals_bot_canister_id: canister_ids.proposals_bot,
         nns_ledger_canister_id: canister_ids.nns_ledger,

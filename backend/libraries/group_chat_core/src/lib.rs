@@ -732,7 +732,7 @@ impl GroupChatCore {
         Success(PrepareSendMessageSuccess {
             min_visible_event_index: member.min_visible_event_index(),
             mentions_disabled: false,
-            everyone_mentioned: is_everyone_mentioned(content),
+            everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
         })
     }
 

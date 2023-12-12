@@ -41,7 +41,6 @@ import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeRoleResponse,
-    ApiLocalUserIndexResponse,
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
@@ -213,10 +212,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
         console.warn("Unexpected ApiChangeRoleResponse type received", candid);
         return "failure";
     }
-}
-
-export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): string {
-    return candid.Success.toString();
 }
 
 export async function messagesByMessageIndexResponse(

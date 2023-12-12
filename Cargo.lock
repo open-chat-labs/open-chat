@@ -5320,6 +5320,8 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -6919,6 +6921,7 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "getrandom",
  "ic-ledger-types",
  "icrc-ledger-types",
  "rand",

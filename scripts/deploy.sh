@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Pass in network name, IC url, identity name, Governance canisterId, Ledger canisterId, CMC canisterId, and test mode (true/false)
 # eg './deploy.sh ic https://ic0.app/ openchat rrkah-fqaaa-aaaaa-aaaaq-cai ryjl3-tyaaa-aaaaa-aaaba-cai rkp4c-7iaaa-aaaaa-aaaca-cai false'
@@ -6,7 +6,7 @@
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
+WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", "prod" the commit Id or the release version
 NNS_ROOT_CANISTER_ID=$5
 NNS_GOVERNANCE_CANISTER_ID=$6
 NNS_INTERNET_IDENTITY_CANISTER_ID=$7

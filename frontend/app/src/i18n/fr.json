@@ -514,8 +514,7 @@
             "to": "À",
             "type": "Taper"
         },
-        "swap": "Échanger",
-        "swapToken": "Échanger {symbol}"
+        "swap": "Échanger"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",
@@ -1064,7 +1063,6 @@
         "importBtn": "Importer",
         "noOwned": "Vous n'êtes propriétaire d'aucune communauté",
         "chooseCommunity": "Choisissez une communauté",
-        "otherChannels": "Autres canaux",
         "defaultInfo": "Les utilisateurs rejoignant cette communauté seront automatiquement ajoutés à tous les canaux publics",
         "saveChanges": "Sauvegarder les modifications",
         "exploreMobile": "Explorer",
@@ -1081,7 +1079,8 @@
         "userGroupName": "Nom du groupe d'utilisateurs",
         "noSpaces": "aucun espace autorisé",
         "noMatch": "Aucune communauté correspondante trouvée",
-        "refineSearch": "essayez d'affiner votre recherche"
+        "refineSearch": "essayez d'affiner votre recherche",
+        "otherChannels": "Autres chaînes publiques"
     },
     "groupCreatedBy": "{username} a créé le {level}",
     "groupName": "{level} nom",
@@ -1180,15 +1179,30 @@
     "renderPreviews": "Aperçus des liens avec rendu automatique",
     "messageBlocked": "Message masqué car l'expéditeur est bloqué",
     "tokenSwap": {
-        "title": "Échanger",
+        "swap": "Échanger",
         "quote": "Citation",
+        "requote": "Re-citer",
+        "back": "Dos",
         "swapNotAvailable": "Actuellement, il n'est pas possible d'échanger {tokenIn} contre un autre jeton",
         "noQuotes": "Aucun DEX n'a fourni de devis pour échanger {tokenIn}",
         "getTokenSwapsError": "Erreur lors de l'obtention des échanges pour {tokenIn}",
         "quoteError": "Erreur lors de l'échange des devis {tokenIn}",
         "findingAvailableTokens": "trouver les jetons disponibles à échanger...",
-        "swapFailed": "Échec de l'échange de **{amountIn}** {tokenIn} contre au moins **{minAmountOut}** {tokenOut} à l'aide de {dex}",
-        "swapSucceeded": "Échange réussi de **{amountIn}** {tokenIn} contre **{amountOut}** {tokenOut} à l'aide de {dex}",
-        "swapInfo": "Le meilleur tarif indiqué est **{rate}** à partir de {dex}. Cela donne **{amountOut}** {tokenOut} pour **{amountIn}** {tokenIn}. L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est d'au moins 98 % du montant indiqué. Souhaitez-vous continuer et tenter le « {swap}  » ?"
+        "swapInfo": "Le meilleur tarif indiqué est de **{rate}** {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne **{amountOut}** {tokenOut} pour **{amountIn}** {tokenIn}. L'échange n'aura lieu que si le montant de {tokenOut} à recevoir est d'au moins 98 % du montant indiqué. Souhaitez-vous continuer et tenter le « {swap}  » ?",
+        "progress": {
+            "get": "Obtenir un compte de dépôt",
+            "deposit": "Transférer {amountIn} {tokenIn} vers {dex}",
+            "notify": "Informer {dex} du dépôt",
+            "swap": "Demandez à {dex} d'effectuer l'échange",
+            "withdraw": "Retirer {amountOut} {tokenOut} de {dex}",
+            "refund": "Rembourser {amountIn} {tokenIn} à partir de {dex}",
+            "done": "Échange terminé",
+            "failed": "Le swap a échoué : le taux de change a changé",
+            "insufficientFunds": "Échec du swap - fonds insuffisants",
+            "error": "Erreur d'échange - aucun fonds n'a été perdu"
+        },
+        "swapToken": "Échanger {tokenIn}",
+        "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
+        "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}."
     }
 }

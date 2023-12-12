@@ -515,8 +515,7 @@
             "to": "ĐẾN",
             "type": "Kiểu"
         },
-        "swap": "Tráo đổi",
-        "swapToken": "Hoán đổi {symbol}"
+        "swap": "Tráo đổi"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -1065,7 +1064,6 @@
         "importBtn": "Nhập khẩu",
         "noOwned": "Bạn không phải là chủ sở hữu của bất kỳ cộng đồng nào",
         "chooseCommunity": "Chọn một cộng đồng",
-        "otherChannels": "Các kênh khác",
         "defaultInfo": "Người dùng tham gia cộng đồng này sẽ tự động được thêm vào tất cả các kênh công khai",
         "saveChanges": "Lưu thay đổi",
         "exploreMobile": "Khám phá",
@@ -1082,7 +1080,8 @@
         "userGroupName": "Tên nhóm người dùng",
         "noSpaces": "không còn khoảng trống cho phép",
         "noMatch": "Không tìm thấy cộng đồng phù hợp",
-        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn"
+        "refineSearch": "hãy thử tinh chỉnh tìm kiếm của bạn",
+        "otherChannels": "Các kênh công cộng khác"
     },
     "groupCreatedBy": "{username} đã tạo {level}",
     "groupName": "tên {level}",
@@ -1181,15 +1180,30 @@
     "renderPreviews": "Tự động hiển thị bản xem trước liên kết",
     "messageBlocked": "Tin nhắn bị ẩn vì người gửi bị chặn",
     "tokenSwap": {
-        "title": "Tráo đổi",
+        "swap": "Tráo đổi",
         "quote": "Trích dẫn",
+        "requote": "Báo giá lại",
+        "back": "Mặt sau",
         "swapNotAvailable": "Hiện tại không thể hoán đổi {tokenIn} sang bất kỳ mã thông báo nào khác",
         "noQuotes": "Không có DEX nào cung cấp báo giá để hoán đổi {tokenIn}",
         "getTokenSwapsError": "Lỗi khi nhận giao dịch hoán đổi cho {tokenIn}",
         "quoteError": "Lỗi nhận báo giá để hoán đổi {tokenIn}",
         "findingAvailableTokens": "tìm kiếm token có sẵn để trao đổi...",
-        "swapFailed": "Không thể hoán đổi **{amountIn}** {tokenIn} lấy ít nhất **{minAmountOut}** {tokenOut} bằng cách sử dụng {dex}",
-        "swapSucceeded": "Đã hoán đổi thành công **{amountIn}** {tokenIn} cho **{amountOut}** {tokenOut} bằng cách sử dụng {dex}",
-        "swapInfo": "Giá được báo giá tốt nhất là **{rate}** từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ được tiến hành nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?"
+        "swapInfo": "Tỷ giá được báo giá tốt nhất là **{rate}** {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại **{amountOut}** {tokenOut} cho **{amountIn}** {tokenIn}. Việc hoán đổi sẽ chỉ tiếp tục nếu số lượng {tokenOut} được nhận ít nhất là 98% số tiền được báo giá. Bạn có muốn tiếp tục và thử `{swap}` không?",
+        "progress": {
+            "get": "Nhận tài khoản tiền gửi",
+            "deposit": "Chuyển {amountIn} {tokenIn} sang {dex}",
+            "notify": "Thông báo {dex} về khoản tiền gửi",
+            "swap": "Hướng dẫn {dex} thực hiện hoán đổi",
+            "withdraw": "Rút {amountOut} {tokenOut} từ {dex}",
+            "refund": "Hoàn tiền {amountIn} {tokenIn} từ {dex}",
+            "done": "Hoán đổi hoàn tất",
+            "failed": "Hoán đổi không thành công - tỷ giá hối đoái đã thay đổi",
+            "insufficientFunds": "Hoán đổi không thành công - không đủ tiền",
+            "error": "Lỗi hoán đổi - không có khoản tiền nào bị mất"
+        },
+        "swapToken": "Hoán đổi {tokenIn}",
+        "swapTokenTo": "Hoán đổi {tokenIn} thành {tokenOut}",
+        "quoteTooLow": "Tỷ giá được trích dẫn tốt nhất là {rate} {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại {amountOut} {tokenOut} cho {amountIn} {tokenIn}. Bạn chỉ có thể hoán đổi nếu số tiền trích dẫn vượt quá {minAmountOut}."
     }
 }

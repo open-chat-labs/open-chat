@@ -1521,6 +1521,7 @@ export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): Grou
             archived: false,
             rulesAccepted: candid.rules_accepted,
         },
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -1565,6 +1566,7 @@ export function communitySummary(candid: ApiCommunityCanisterCommunitySummary): 
         channels: candid.channels.map((c) => communityChannelSummary(c, communityId)),
         primaryLanguage: candid.primary_language,
         userGroups: new Map(candid.user_groups.map(userGroup)),
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 

@@ -3,6 +3,7 @@ use local_user_index_canister::*;
 
 // Queries
 generate_query_call!(chat_events);
+generate_query_call!(group_and_community_summary_updates);
 
 // Updates
 generate_update_call!(invite_users_to_channel);

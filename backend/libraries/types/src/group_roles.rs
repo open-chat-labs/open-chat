@@ -49,7 +49,7 @@ pub struct CustomPermission {
     pub role: GroupPermissionRole,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
@@ -63,7 +63,7 @@ pub struct OptionalGroupPermissions {
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
     pub text: OptionUpdate<GroupPermissionRole>,
