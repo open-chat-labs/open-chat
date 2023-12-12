@@ -4,9 +4,7 @@ import { OpenChatAgent } from "openchat-agent";
 import {
     type CorrelatedWorkerRequest,
     type Logger,
-    MessagesReadFromServer,
     StorageUpdated,
-    UsersLoaded,
     type WorkerEvent,
     inititaliseLogger,
     type WorkerResponseInner,
@@ -14,6 +12,8 @@ import {
     Stream,
     type InitMessage,
 } from "openchat-shared";
+
+declare const self: ServiceWorkerGlobalScope;
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
@@ -30,7 +30,6 @@ export class AgentAdapter extends EventTarget {
     private logger: Logger | undefined = undefined;
     private agent: OpenChatAgent | undefined = undefined;
     private auth: Promise<AuthClient>;
-    private messagePort: MessagePort | undefined;
 
     constructor() {
         super();
@@ -56,17 +55,6 @@ export class AgentAdapter extends EventTarget {
     }
 
     private handleAgentEvent(ev: Event): void {
-        if (ev instanceof MessagesReadFromServer) {
-            this.sendEvent({
-                event: {
-                    subkind: "messages_read_from_server",
-                    chatId: ev.detail.chatId,
-                    readByMeUpTo: ev.detail.readByMeUpTo,
-                    threadsRead: ev.detail.threadsRead,
-                    dateReadPinned: ev.detail.dateReadPinned,
-                },
-            });
-        }
         if (ev instanceof StorageUpdated) {
             this.sendEvent({
                 event: {
@@ -75,25 +63,19 @@ export class AgentAdapter extends EventTarget {
                 },
             });
         }
-        if (ev instanceof UsersLoaded) {
-            this.sendEvent({
-                event: {
-                    subkind: "users_loaded",
-                    users: ev.detail,
-                },
-            });
-        }
     }
 
-    private sendError(correlationId: string, error: unknown, payload?: unknown) {
-        if (!this.messagePort)
-            throw new Error("SW: no message port available to send error message");
-
+    private sendError(
+        replyTo: MessagePort,
+        correlationId: string,
+        error: unknown,
+        payload?: unknown,
+    ) {
         this.logger?.error("SW: sending error: ", error);
         if (payload !== undefined) {
             console.error("SW: error caused by payload: ", payload);
         }
-        this.messagePort.postMessage({
+        replyTo.postMessage({
             kind: "worker_error",
             correlationId,
             error: JSON.stringify(error, Object.getOwnPropertyNames(error)),
@@ -101,6 +83,7 @@ export class AgentAdapter extends EventTarget {
     }
 
     private streamReplies(
+        replyTo: MessagePort,
         payload: WorkerRequest,
         correlationId: string,
         chain: Stream<WorkerResponseInner>,
@@ -115,26 +98,30 @@ export class AgentAdapter extends EventTarget {
                     Date.now(),
                     final,
                 );
-                this.sendResponse(correlationId, value, final);
+                this.sendResponse(replyTo, correlationId, value, final);
             })
-            .catch((err) => this.sendError(correlationId, err, payload));
+            .catch((err) => this.sendError(replyTo, correlationId, err, payload));
     }
 
     private executeThenReply(
+        replyTo: MessagePort,
         payload: WorkerRequest,
         correlationId: string,
         promise: Promise<WorkerResponseInner>,
     ) {
         promise
-            .then((response) => this.sendResponse(correlationId, response))
-            .catch((err) => this.sendError(correlationId, err, payload));
+            .then((response) => this.sendResponse(replyTo, correlationId, response))
+            .catch((err) => this.sendError(replyTo, correlationId, err, payload));
     }
 
-    private sendResponse(correlationId: string, response: WorkerResponseInner, final = true): void {
-        if (!this.messagePort) throw new Error("SW: No message port available to send response");
-
+    private sendResponse(
+        port: MessagePort,
+        correlationId: string,
+        response: WorkerResponseInner,
+        final = true,
+    ): void {
         this.logger?.debug("SW: sending response: ", correlationId, response);
-        this.messagePort.postMessage({
+        port.postMessage({
             kind: "worker_response",
             correlationId,
             response,
@@ -142,20 +129,25 @@ export class AgentAdapter extends EventTarget {
         });
     }
 
-    private sendEvent(msg: Omit<WorkerEvent, "kind">): void {
-        console.debug("SW: sending event", msg);
+    private sendEvent(_msg: Omit<WorkerEvent, "kind">): void {
+        // TODO we need to store multiple ports and correlate them with a specific client
+        // otherwise things are not going to work with two tabs open at the same time
+        // Once we have done that, we can actually just iterate the saved ports and send the event to all of them
+        // here
+
+        console.log("SW: TODO events are not going to work at the moment. Not super important");
+
         // self.clients.matchAll().then((clients) => {
-        //     clients.forEach((client) => client.postMessage({ msg: "Hello from SW" }));
-        // });
-        // TODO - this needs to be some sort of broadcast
-        // port.postMessage({
-        //     kind: "worker_event",
-        //     ...msg,
+        //     clients.forEach((client) =>
+        //         client.postMessage({
+        //             kind: "worker_event",
+        //             ...msg,
+        //         }),
+        //     );
         // });
     }
 
-    init(port: MessagePort, msg: InitMessage) {
-        this.messagePort = port;
+    init(replyTo: MessagePort, msg: InitMessage) {
         this.getIdentity().then((id) => {
             console.debug("SW: anon: init worker", id, id?.getPrincipal().isAnonymous());
             this.logger = inititaliseLogger(msg.rollbarApiKey, msg.websiteVersion, msg.env);
@@ -165,15 +157,15 @@ export class AgentAdapter extends EventTarget {
                 logger: this.logger,
             });
             this.agent.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
-            this.sendResponse(msg.correlationId, undefined);
+            this.sendResponse(replyTo, msg.correlationId, undefined);
         });
-        this.messagePort.onmessage = (ev) => {
-            this.workerRequestReceived(ev.data as CorrelatedWorkerRequest);
+        replyTo.onmessage = (ev) => {
+            this.workerRequestReceived(replyTo, ev.data as CorrelatedWorkerRequest);
         };
         return;
     }
 
-    workerRequestReceived(payload: CorrelatedWorkerRequest) {
+    workerRequestReceived(replyTo: MessagePort, payload: CorrelatedWorkerRequest) {
         this.logger?.debug("SW: received ", payload.kind, payload.correlationId);
         const kind = payload.kind;
         const correlationId = payload.correlationId;
@@ -186,11 +178,17 @@ export class AgentAdapter extends EventTarget {
 
             switch (kind) {
                 case "getCurrentUser":
-                    this.streamReplies(payload, correlationId, this.agent.getCurrentUser());
+                    this.streamReplies(
+                        replyTo,
+                        payload,
+                        correlationId,
+                        this.agent.getCurrentUser(),
+                    );
                     break;
 
                 case "getDeletedGroupMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getDeletedGroupMessage(
@@ -203,6 +201,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getDeletedDirectMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getDeletedDirectMessage(payload.userId, payload.messageId),
@@ -211,6 +210,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getUpdates":
                     this.streamReplies(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getUpdates(payload.initialLoad),
@@ -219,11 +219,12 @@ export class AgentAdapter extends EventTarget {
 
                 case "createUserClient":
                     this.agent.createUserClient(payload.userId);
-                    this.sendResponse(correlationId, undefined);
+                    this.sendResponse(replyTo, correlationId, undefined);
                     break;
 
                 case "chatEvents":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.chatEvents(
@@ -239,6 +240,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getUsers":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getUsers(payload.users, payload.allowStale),
@@ -246,11 +248,17 @@ export class AgentAdapter extends EventTarget {
                     break;
 
                 case "getAllCachedUsers":
-                    this.executeThenReply(payload, correlationId, this.agent.getAllCachedUsers());
+                    this.executeThenReply(
+                        replyTo,
+                        payload,
+                        correlationId,
+                        this.agent.getAllCachedUsers(),
+                    );
                     break;
 
                 case "markMessagesRead":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.markMessagesRead(payload.payload),
@@ -259,6 +267,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getGroupDetails":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getGroupDetails(payload.chatId, payload.chatLastUpdated),
@@ -267,6 +276,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "lastOnline":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.lastOnline(payload.userIds),
@@ -275,6 +285,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "markAsOnline":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.markAsOnline().then(() => undefined),
@@ -283,6 +294,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "chatEventsWindow":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.chatEventsWindow(
@@ -297,6 +309,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "chatEventsByEventIndex":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.chatEventsByEventIndex(
@@ -310,6 +323,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "rehydrateMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.rehydrateMessage(
@@ -323,6 +337,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "checkUsername":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.checkUsername(payload.username),
@@ -331,6 +346,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "searchUsers":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.searchUsers(payload.searchTerm, payload.maxResults),
@@ -339,6 +355,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "migrateUserPrincipal":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.migrateUserPrincipal(payload.userId),
@@ -347,6 +364,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "initUserPrincipalMigration":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -357,6 +375,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getUserStorageLimits":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getUserStorageLimits(),
@@ -365,6 +384,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getPublicGroupSummary":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getPublicGroupSummary(payload.chatId),
@@ -373,6 +393,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "toggleMuteNotifications":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.toggleMuteNotifications(payload.chatId, payload.muted),
@@ -381,6 +402,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "archiveChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.archiveChat(payload.chatId),
@@ -389,6 +411,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unarchiveChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unarchiveChat(payload.chatId),
@@ -397,6 +420,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "pinChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.pinChat(payload.chatId, payload.favourite),
@@ -405,6 +429,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unpinChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unpinChat(payload.chatId, payload.favourite),
@@ -413,6 +438,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "blockUserFromDirectChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.blockUserFromDirectChat(payload.userId),
@@ -421,6 +447,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unblockUserFromDirectChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unblockUserFromDirectChat(payload.userId),
@@ -429,6 +456,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setUserAvatar":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setUserAvatar(payload.data),
@@ -437,6 +465,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.deleteGroup(payload.chatId),
@@ -445,6 +474,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "leaveGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.leaveGroup(payload.chatId),
@@ -453,6 +483,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "joinGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.joinGroup(payload.chatId, payload.credential),
@@ -461,6 +492,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "joinCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.joinCommunity(payload.id, payload.credential),
@@ -469,6 +501,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "updateGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.updateGroup(
@@ -487,6 +520,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "registerPollVote":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.registerPollVote(
@@ -501,6 +535,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.deleteMessage(
@@ -514,6 +549,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "undeleteMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.undeleteMessage(
@@ -526,6 +562,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "addReaction":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.addReaction(
@@ -541,6 +578,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeReaction":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.removeReaction(
@@ -554,6 +592,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "blockUserFromGroupChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.blockUserFromGroupChat(payload.chatId, payload.userId),
@@ -562,6 +601,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unblockUserFromGroupChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unblockUserFromGroupChat(payload.chatId, payload.userId),
@@ -570,6 +610,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getProposalVoteDetails":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getProposalVoteDetails(
@@ -582,6 +623,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "listNervousSystemFunctions":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.listNervousSystemFunctions(payload.snsGovernanceCanisterId),
@@ -590,6 +632,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unpinMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unpinMessage(payload.chatId, payload.messageIndex),
@@ -598,6 +641,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "pinMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.pinMessage(payload.chatId, payload.messageIndex),
@@ -606,6 +650,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "sendMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.sendMessage(
@@ -621,6 +666,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "editMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.editMessage(
@@ -633,6 +679,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "registerUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.registerUser(payload.username, payload.referralCode),
@@ -641,6 +688,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "subscriptionExists":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.subscriptionExists(payload.p256dh_key),
@@ -649,6 +697,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "pushSubscription":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.pushSubscription(payload.subscription).then(() => undefined),
@@ -657,6 +706,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeSubscription":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.removeSubscription(payload.subscription).then(() => undefined),
@@ -665,6 +715,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "inviteUsers":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.inviteUsers(payload.chatId, payload.userIds),
@@ -673,6 +724,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "inviteUsersToCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.inviteUsersToCommunity(payload.id, payload.userIds),
@@ -681,6 +733,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeMember":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.removeMember(payload.chatId, payload.userId),
@@ -689,6 +742,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "changeRole":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.changeRole(payload.chatId, payload.userId, payload.newRole),
@@ -697,6 +751,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "registerProposalVote":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.registerProposalVote(
@@ -709,6 +764,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getRecommendedGroups":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getRecommendedGroups(payload.exclusions),
@@ -717,6 +773,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "exploreCommunities":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.exploreCommunities(
@@ -731,6 +788,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "searchGroups":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.searchGroups(payload.searchTerm, payload.maxResults),
@@ -739,6 +797,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "dismissRecommendation":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.dismissRecommendation(payload.chatId).then(() => undefined),
@@ -747,16 +806,17 @@ export class AgentAdapter extends EventTarget {
 
                 case "communityInvite":
                     this.agent.communityInvite = payload.value;
-                    this.sendResponse(correlationId, undefined);
+                    this.sendResponse(replyTo, correlationId, undefined);
                     break;
 
                 case "groupInvite":
                     this.agent.groupInvite = payload.value;
-                    this.sendResponse(correlationId, undefined);
+                    this.sendResponse(replyTo, correlationId, undefined);
                     break;
 
                 case "searchGroupChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.searchGroupChat(
@@ -770,6 +830,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "searchDirectChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.searchDirectChat(
@@ -782,6 +843,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "refreshAccountBalance":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.refreshAccountBalance(payload.ledger, payload.principal),
@@ -790,6 +852,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getAccountTransactions":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getAccountTransactions(
@@ -802,6 +865,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "threadPreviews":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.threadPreviews(payload.threadsByChat),
@@ -810,6 +874,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getUser(payload.userId, payload.allowStale),
@@ -818,6 +883,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getPublicProfile":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getPublicProfile(payload.userId),
@@ -826,6 +892,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setUsername":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setUsername(payload.userId, payload.username),
@@ -834,6 +901,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setDisplayName":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setDisplayName(payload.userId, payload.displayName),
@@ -841,11 +909,17 @@ export class AgentAdapter extends EventTarget {
                     break;
 
                 case "setBio":
-                    this.executeThenReply(payload, correlationId, this.agent.setBio(payload.bio));
+                    this.executeThenReply(
+                        replyTo,
+                        payload,
+                        correlationId,
+                        this.agent.setBio(payload.bio),
+                    );
                     break;
 
                 case "getBio":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getBio(payload.userId),
@@ -854,6 +928,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "withdrawCryptocurrency":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.withdrawCryptocurrency(payload.domain),
@@ -862,6 +937,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getGroupMessagesByMessageIndex":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getGroupMessagesByMessageIndex(
@@ -874,6 +950,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getInviteCode":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getInviteCode(payload.id),
@@ -882,6 +959,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "enableInviteCode":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.enableInviteCode(payload.id),
@@ -890,6 +968,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "disableInviteCode":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.disableInviteCode(payload.id),
@@ -898,6 +977,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "resetInviteCode":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.resetInviteCode(payload.id),
@@ -906,6 +986,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "createGroupChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.createGroupChat(payload.candidate),
@@ -914,6 +995,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setCachedMessageFromNotification":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -928,6 +1010,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "freezeGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.freezeGroup(payload.chatId, payload.reason),
@@ -936,6 +1019,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unfreezeGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unfreezeGroup(payload.chatId),
@@ -944,6 +1028,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteFrozenGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.deleteFrozenGroup(payload.chatId),
@@ -952,6 +1037,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "addHotGroupExclusion":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.addHotGroupExclusion(payload.chatId),
@@ -960,6 +1046,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeHotGroupExclusion":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.removeHotGroupExclusion(payload.chatId),
@@ -968,6 +1055,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "suspendUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.suspendUser(payload.userId, payload.reason),
@@ -976,6 +1064,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unsuspendUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.unsuspendUser(payload.userId),
@@ -984,6 +1073,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setCommunityModerationFlags":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setCommunityModerationFlags(payload.communityId, payload.flags),
@@ -992,6 +1082,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setGroupUpgradeConcurrency":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setGroupUpgradeConcurrency(payload.value),
@@ -1000,6 +1091,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setCommunityUpgradeConcurrency":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setCommunityUpgradeConcurrency(payload.value),
@@ -1008,6 +1100,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setUserUpgradeConcurrency":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setUserUpgradeConcurrency(payload.value),
@@ -1016,6 +1109,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "stakeNeuronForSubmittingProposals":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.stakeNeuronForSubmittingProposals(
@@ -1026,11 +1120,17 @@ export class AgentAdapter extends EventTarget {
                     break;
 
                 case "loadFailedMessages":
-                    this.executeThenReply(payload, correlationId, this.agent.loadFailedMessages());
+                    this.executeThenReply(
+                        replyTo,
+                        payload,
+                        correlationId,
+                        this.agent.loadFailedMessages(),
+                    );
                     break;
 
                 case "deleteFailedMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1044,6 +1144,7 @@ export class AgentAdapter extends EventTarget {
                     break;
                 case "claimPrize":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.claimPrize(payload.chatId, payload.messageId),
@@ -1052,6 +1153,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "payForDiamondMembership":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.payForDiamondMembership(
@@ -1066,6 +1168,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "updateMarketMakerConfig":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.updateMarketMakerConfig(payload),
@@ -1074,6 +1177,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setMessageReminder":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setMessageReminder(
@@ -1088,6 +1192,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "cancelMessageReminder":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.cancelMessageReminder(payload.reminderId),
@@ -1096,6 +1201,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getReferralLeaderboard":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getReferralLeaderboard(payload.args),
@@ -1104,6 +1210,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "reportMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.reportMessage(
@@ -1117,6 +1224,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "approveTransfer":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.approveTransfer(
@@ -1130,6 +1238,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "declineInvitation":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.declineInvitation(payload.chatId),
@@ -1139,6 +1248,7 @@ export class AgentAdapter extends EventTarget {
                 // Community level functions
                 case "addMembersToChannel":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1154,6 +1264,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "blockCommunityUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1164,6 +1275,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "changeChannelRole":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1174,6 +1286,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "changeCommunityRole":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1184,6 +1297,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "declineChannelInvitation":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1194,6 +1308,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "channelMessagesByMessageIndex":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1209,6 +1324,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeCommunityMember":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1219,6 +1335,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "toggleMuteCommunityNotifications":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1229,6 +1346,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "unblockCommunityUser":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1239,6 +1357,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "updateCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1259,6 +1378,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "createCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.createCommunity(
@@ -1272,6 +1392,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getCommunitySummary":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getCommunitySummary(payload.communityId),
@@ -1280,6 +1401,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getChannelSummary":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1290,6 +1412,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "exploreChannels":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.exploreChannels(
@@ -1303,6 +1426,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getCommunityDetails":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1313,6 +1437,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "addToFavourites":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.addToFavourites(payload.chatId),
@@ -1321,6 +1446,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "removeFromFavourites":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.removeFromFavourites(payload.chatId),
@@ -1329,6 +1455,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "leaveCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.leaveCommunity(payload.id),
@@ -1337,6 +1464,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.deleteCommunity(payload.id),
@@ -1345,6 +1473,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "convertGroupToCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.convertGroupToCommunity(
@@ -1357,6 +1486,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "importGroupToCommunity":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1367,6 +1497,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setModerationFlags":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setModerationFlags(payload.flags),
@@ -1374,11 +1505,17 @@ export class AgentAdapter extends EventTarget {
                     break;
 
                 case "updateRegistry":
-                    this.executeThenReply(payload, correlationId, this.agent.getRegistry());
+                    this.executeThenReply(
+                        replyTo,
+                        payload,
+                        correlationId,
+                        this.agent.getRegistry(),
+                    );
                     break;
 
                 case "setCommunityIndexes":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setCommunityIndexes(payload.indexes),
@@ -1387,6 +1524,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "createUserGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.createUserGroup(
@@ -1399,6 +1537,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "updateUserGroup":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.updateUserGroup(
@@ -1413,6 +1552,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteUserGroups":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.deleteUserGroups(payload.communityId, payload.userGroupIds),
@@ -1421,6 +1561,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setMemberDisplayName":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.setMemberDisplayName(payload.communityId, payload.displayName),
@@ -1429,6 +1570,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "followThread":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.followThread(
@@ -1441,6 +1583,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "submitProposal":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.submitProposal(
@@ -1456,6 +1599,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getCachePrimerTimestamps":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getCachePrimerTimestamps(),
@@ -1464,6 +1608,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "setCachePrimerTimestamp":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent
@@ -1477,6 +1622,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "tipMessage":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.tipMessage(
@@ -1490,6 +1636,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "loadSavedCryptoAccounts":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.loadSavedCryptoAccounts(),
@@ -1498,6 +1645,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "saveCryptoAccount":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.userClient.saveCryptoAccount(payload.namedAccount),
@@ -1506,6 +1654,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "canSwap":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.canSwap(payload.tokenLedgers),
@@ -1514,6 +1663,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getTokenSwaps":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getTokenSwaps(
@@ -1525,6 +1675,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "getTokenSwapQuotes":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.getTokenSwapQuotes(
@@ -1537,6 +1688,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "swapTokens":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.swapTokens(
@@ -1552,6 +1704,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "tokenSwapStatus":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.tokenSwapStatus(payload.swapId),
@@ -1560,6 +1713,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "deleteDirectChat":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.deleteDirectChat(payload.userId, payload.blockUser),
@@ -1568,6 +1722,7 @@ export class AgentAdapter extends EventTarget {
 
                 case "diamondMembershipFees":
                     this.executeThenReply(
+                        replyTo,
                         payload,
                         correlationId,
                         this.agent.diamondMembershipFees(),
@@ -1579,7 +1734,7 @@ export class AgentAdapter extends EventTarget {
             }
         } catch (err) {
             this.logger?.debug("SW: unhandled error: ", err);
-            this.sendError(correlationId, err);
+            this.sendError(replyTo, correlationId, err);
         }
     }
 }

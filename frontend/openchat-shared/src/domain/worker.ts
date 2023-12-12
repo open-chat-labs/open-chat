@@ -39,7 +39,6 @@ import type {
     SendMessageResponse,
     ProposalVoteDetails,
     ThreadPreview,
-    ThreadRead,
     ThreadSyncDetails,
     UnblockUserResponse,
     UndeleteMessageResponse,
@@ -1174,25 +1173,11 @@ type WorkerEventCommon<T> = {
     event: T;
 };
 
-export type WorkerEvent =
-    | RelayedMessagesReadFromServer
-    | RelayedStorageUpdated
-    | RelayedUsersLoaded;
+export type WorkerEvent = RelayedStorageUpdated;
 
-export type RelayedMessagesReadFromServer = WorkerEventCommon<{
-    subkind: "messages_read_from_server";
-    chatId: ChatIdentifier;
-    readByMeUpTo: number | undefined;
-    threadsRead: ThreadRead[];
-    dateReadPinned: bigint | undefined;
-}>;
 export type RelayedStorageUpdated = WorkerEventCommon<{
     subkind: "storage_updated";
     status: StorageStatus;
-}>;
-export type RelayedUsersLoaded = WorkerEventCommon<{
-    subkind: "users_loaded";
-    users: UserSummary[];
 }>;
 
 type LoadFailedMessages = {

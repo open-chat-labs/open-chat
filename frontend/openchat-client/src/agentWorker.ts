@@ -1,9 +1,7 @@
 import {
     type WorkerRequest,
-    MessagesReadFromServer,
     type FromWorker,
     StorageUpdated,
-    UsersLoaded,
     type WorkerResponse,
     type WorkerError,
     type WorkerResult,
@@ -41,16 +39,6 @@ export class OpenChatAgentWorker extends EventTarget {
 
     constructor(protected config: OpenChatConfig) {
         super();
-
-        // TODO - move the push notification handling into here and refactor a bit
-
-        this.registerServiceWorker().then((reg) => {
-            if (reg === null || reg === undefined) {
-                throw new Error("Unable to register service worker - this is a fatal error");
-            }
-            this._registration = reg;
-            this.connectToWorker();
-        });
     }
 
     private async registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
@@ -69,14 +57,30 @@ export class OpenChatAgentWorker extends EventTarget {
         }
     }
 
-    get api(): ServiceWorker {
-        if (this._registration?.active) {
-            return this._registration.active;
-        }
-        throw new Error("No active serivce worker - this is a fatal error");
+    /**
+     * This might be a bit iffy. We need to wait until we have an active service worker to try to cover the condition
+     * where the service worker is updated or not installed at all.
+     */
+    private serviceWorker(attempts = 0): Promise<ServiceWorker> {
+        return this.registerServiceWorker().then((reg) => {
+            if (reg === null || reg === undefined) {
+                throw new Error("Unable to register service worker - this is a fatal error");
+            }
+            this._registration = reg;
+            if (this._registration?.active) {
+                return this._registration.active;
+            }
+            if (attempts < 5) {
+                return new Promise((resolve) => {
+                    setTimeout(() => resolve(this.serviceWorker(attempts + 1)), 100);
+                });
+            } else {
+                throw new Error("SW: no active service found - this is a fatal error");
+            }
+        });
     }
 
-    protected connectToWorker(): Promise<boolean> {
+    protected async connectToWorker(): Promise<boolean> {
         console.debug("SW_CLIENT loading worker with version: ", this.config.websiteVersion);
         const messageChannel = new MessageChannel();
         this._messagePort = messageChannel.port1;
@@ -90,22 +94,11 @@ export class OpenChatAgentWorker extends EventTarget {
 
             const data = ev.data as FromWorker;
 
+            // TODO - events, if they are needed at all, will be broadcast to all clients and therefore will not
+            // be sent to the port for this particular client
             if (data.kind === "worker_event") {
-                if (data.event.subkind === "messages_read_from_server") {
-                    this.dispatchEvent(
-                        new MessagesReadFromServer(
-                            data.event.chatId,
-                            data.event.readByMeUpTo,
-                            data.event.threadsRead,
-                            data.event.dateReadPinned,
-                        ),
-                    );
-                }
                 if (data.event.subkind === "storage_updated") {
                     this.dispatchEvent(new StorageUpdated(data.event.status));
-                }
-                if (data.event.subkind === "users_loaded") {
-                    this.dispatchEvent(new UsersLoaded(data.event.users));
                 }
             } else if (data.kind === "worker_response") {
                 console.debug("SW_CLIENT response: ", ev);
@@ -117,6 +110,8 @@ export class OpenChatAgentWorker extends EventTarget {
                 console.debug("SW_CLIENT unknown message: ", ev);
             }
         };
+
+        const serviceWorker = await this.serviceWorker();
 
         const ready = new Promise<boolean>((resolve) => {
             const correlationId = v4();
@@ -142,7 +137,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 env: this.config.env,
                 correlationId,
             };
-            this.api.postMessage(req, [messageChannel.port2]);
+            serviceWorker.postMessage(req, [messageChannel.port2]);
             return new Promise<WorkerResult<InitMessage>>(
                 this.responseHandler(req, correlationId, WORKER_TIMEOUT),
             ).then(() => {

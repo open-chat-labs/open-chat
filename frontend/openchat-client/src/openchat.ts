@@ -367,9 +367,7 @@ import {
     getContentAsText,
     indexRangeForChat,
     getDisplayDate,
-    MessagesReadFromServer,
     StorageUpdated,
-    UsersLoaded,
     userStatus,
     compareRoles,
     E8S_PER_TOKEN,
@@ -632,19 +630,8 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private handleAgentEvent(ev: Event): void {
-        if (ev instanceof MessagesReadFromServer) {
-            messagesRead.syncWithServer(
-                ev.detail.chatId,
-                ev.detail.readByMeUpTo,
-                ev.detail.threadsRead,
-                ev.detail.dateReadPinned,
-            );
-        }
         if (ev instanceof StorageUpdated) {
             storageStore.set(ev.detail);
-        }
-        if (ev instanceof UsersLoaded) {
-            userStore.addMany(ev.detail);
         }
     }
 
