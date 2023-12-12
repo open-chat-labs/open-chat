@@ -13,6 +13,7 @@
 
     $: selectedCommunity = client.selectedCommunity;
     $: chatSummariesListStore = client.chatSummariesListStore;
+    $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let searching = false;
     let pageIndex = 0;
@@ -28,11 +29,12 @@
     $: filteredResults = searchResults.filter((c) => !myChannels.has(c.id));
 
     function search(term: string, reset = false) {
-        if ($selectedCommunity === undefined) return;
-        if ($selectedCommunity.id.communityId !== matchedCommunityId) {
+        const communityId = selectedCommunityId;
+        if (communityId === undefined) return;
+        if (communityId !== matchedCommunityId) {
             searchResults = [];
         }
-        matchedCommunityId = $selectedCommunity.id.communityId;
+        matchedCommunityId = communityId;
         searching = true;
         if (reset) {
             pageIndex = 0;
@@ -41,7 +43,7 @@
         }
         client
             .exploreChannels(
-                $selectedCommunity.id,
+                { kind: "community", communityId },
                 term === "" ? undefined : term,
                 pageIndex,
                 pageSize,
@@ -49,7 +51,7 @@
             .then((results) => {
                 if (
                     results.kind === "success" &&
-                    $selectedCommunity?.id.communityId === matchedCommunityId
+                    communityId === matchedCommunityId
                 ) {
                     if (reset) {
                         searchResults = results.matches;
@@ -69,7 +71,7 @@
     }
 
     $: {
-        if ($selectedCommunity !== undefined) {
+        if (selectedCommunityId !== undefined) {
             search(searchTerm, true);
         } else {
             searchResults = [];
