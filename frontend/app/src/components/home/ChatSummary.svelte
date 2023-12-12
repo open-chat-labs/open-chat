@@ -35,7 +35,7 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import { notificationsSupported } from "../../utils/notifications";
+    import { notificationsSupported } from "../../utils/serviceWorker";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";

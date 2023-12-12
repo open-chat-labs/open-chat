@@ -162,10 +162,6 @@ function manualChunks(id) {
     }
 }
 
-function transformSourceMappingUrl(contents) {
-    return contents.toString().replace("//# sourceMappingURL=", "//# sourceMappingURL=./_/raw/");
-}
-
 function watchExternalFiles() {
     return {
         name: "watch-external-files",
@@ -173,7 +169,6 @@ function watchExternalFiles() {
             this.addWatchFile(
                 path.resolve(dirname, "../openchat-service-worker/lib/service_worker.js"),
             );
-            this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"));
         },
     };
 }
@@ -364,13 +359,9 @@ export default {
 
         production && filesize(),
 
-        // Pull in the worker and service worker
+        // Pull in the service worker
         copy({
             targets: [
-                {
-                    src: "../openchat-worker/lib/*",
-                    dest: "build",
-                },
                 {
                     src: "../openchat-service-worker/lib/*",
                     dest: "build",

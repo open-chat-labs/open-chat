@@ -5,8 +5,7 @@ import {
     routeForChatIdentifier,
 } from "openchat-client";
 import page from "page";
-
-import { isCanisterUrl } from "../utils/urls";
+import { notificationsSupported, registerServiceWorker } from "./serviceWorker";
 
 function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
@@ -62,17 +61,6 @@ export async function subscribeToNotifications(
     return true;
 }
 
-export const notificationsSupported = supported();
-
-function supported(): boolean {
-    return (
-        !isCanisterUrl &&
-        "serviceWorker" in navigator &&
-        "PushManager" in window &&
-        "Notification" in window
-    );
-}
-
 export async function closeNotificationsForChat(chatId: ChatIdentifier): Promise<void> {
     const registration = await getRegistration();
     if (registration !== undefined) {
@@ -98,22 +86,6 @@ export async function closeNotifications(
                 notification.close();
             }
         }
-    }
-}
-
-async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
-    // Does the browser have all the support needed for web push
-    if (!notificationsSupported) {
-        return undefined;
-    }
-
-    try {
-        return await navigator.serviceWorker.register("process.env.SERVICE_WORKER_PATH", {
-            type: "module",
-        });
-    } catch (e) {
-        console.log(e);
-        return undefined;
     }
 }
 

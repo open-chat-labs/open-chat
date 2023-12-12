@@ -23,7 +23,7 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import FontSize from "./FontSize.svelte";
     import Stats from "../Stats.svelte";
-    import { notificationsSupported } from "../../../utils/notifications";
+    import { notificationsSupported } from "../../../utils/serviceWorker";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {

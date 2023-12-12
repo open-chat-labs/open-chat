@@ -7,6 +7,7 @@ import {
     type WorkerResponse,
     type WorkerError,
     type WorkerResult,
+    type InitMessage,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -30,56 +31,64 @@ type PromiseResolver<T> = {
  * This is a wrapper around the OpenChatAgent which brokers communication with the agent inside a web worker
  */
 export class OpenChatAgentWorker extends EventTarget {
-    private _worker!: Worker;
+    private _registration: ServiceWorkerRegistration | undefined = undefined;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _pending: Map<string, PromiseResolver<any>> = new Map(); // in-flight requests
     private _unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     private _connectedToWorker = false;
+    private _messagePort: MessagePort | undefined;
 
     constructor(protected config: OpenChatConfig) {
         super();
+
+        // TODO - move the push notification handling into here and refactor a bit
+
+        this.registerServiceWorker().then((reg) => {
+            if (reg === null || reg === undefined) {
+                throw new Error("Unable to register service worker - this is a fatal error");
+            }
+            this._registration = reg;
+            this.connectToWorker();
+        });
+    }
+
+    private async registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
+        try {
+            const registration = await navigator.serviceWorker.register(
+                "process.env.SERVICE_WORKER_PATH",
+                {
+                    type: "module",
+                },
+            );
+            registration.update();
+            return registration;
+        } catch (e) {
+            console.log(e);
+            return undefined;
+        }
+    }
+
+    get api(): ServiceWorker {
+        if (this._registration?.active) {
+            return this._registration.active;
+        }
+        throw new Error("No active serivce worker - this is a fatal error");
     }
 
     protected connectToWorker(): Promise<boolean> {
-        console.debug("WORKER_CLIENT: loading worker with version: ", this.config.websiteVersion);
-        this._worker = new Worker(`/worker.js?v=${this.config.websiteVersion}`, { type: "module" });
-        const ready = new Promise<boolean>((resolve) => {
-            this.sendRequest(
-                {
-                    kind: "init",
-                    icUrl: this.config.icUrl ?? window.location.origin,
-                    iiDerivationOrigin: this.config.iiDerivationOrigin,
-                    openStorageIndexCanister: this.config.openStorageIndexCanister,
-                    groupIndexCanister: this.config.groupIndexCanister,
-                    notificationsCanister: this.config.notificationsCanister,
-                    onlineCanister: this.config.onlineCanister,
-                    userIndexCanister: this.config.userIndexCanister,
-                    registryCanister: this.config.registryCanister,
-                    internetIdentityUrl: this.config.internetIdentityUrl,
-                    nfidUrl: this.config.nfidUrl,
-                    userGeekApiKey: this.config.userGeekApiKey,
-                    enableMultiCrypto: this.config.enableMultiCrypto,
-                    blobUrlPattern: this.config.blobUrlPattern,
-                    proposalBotCanister: this.config.proposalBotCanister,
-                    marketMakerCanister: this.config.marketMakerCanister,
-                    websiteVersion: this.config.websiteVersion,
-                    rollbarApiKey: this.config.rollbarApiKey,
-                    env: this.config.env,
-                },
-                true,
-            ).then(() => {
-                resolve(true);
-                this._connectedToWorker = true;
-            });
-        });
+        console.debug("SW_CLIENT loading worker with version: ", this.config.websiteVersion);
+        const messageChannel = new MessageChannel();
+        this._messagePort = messageChannel.port1;
 
-        this._worker.onmessage = (ev: MessageEvent<FromWorker>) => {
-            if (!ev.data) {
-                console.debug("WORKER_CLIENT: event message with no data received");
+        messageChannel.port1.onmessage = (ev: MessageEvent<FromWorker>) => {
+            // TODO - have a look at what actually comes back and restrict the source probably
+            if (!("data" in ev)) {
+                console.debug("SW_CLIENT event message with no data received");
                 return;
             }
 
-            const data = ev.data;
+            const data = ev.data as FromWorker;
 
             if (data.kind === "worker_event") {
                 if (data.event.subkind === "messages_read_from_server") {
@@ -99,15 +108,49 @@ export class OpenChatAgentWorker extends EventTarget {
                     this.dispatchEvent(new UsersLoaded(data.event.users));
                 }
             } else if (data.kind === "worker_response") {
-                console.debug("WORKER_CLIENT: response: ", ev);
+                console.debug("SW_CLIENT response: ", ev);
                 this.resolveResponse(data);
             } else if (data.kind === "worker_error") {
-                console.debug("WORKER_CLIENT: error: ", ev);
+                console.debug("SW_CLIENT error: ", ev);
                 this.resolveError(data);
             } else {
-                console.debug("WORKER_CLIENT: unknown message: ", ev);
+                console.debug("SW_CLIENT unknown message: ", ev);
             }
         };
+
+        const ready = new Promise<boolean>((resolve) => {
+            const correlationId = v4();
+            const req: InitMessage = {
+                kind: "init",
+                icUrl: this.config.icUrl ?? window.location.origin,
+                iiDerivationOrigin: this.config.iiDerivationOrigin,
+                openStorageIndexCanister: this.config.openStorageIndexCanister,
+                groupIndexCanister: this.config.groupIndexCanister,
+                notificationsCanister: this.config.notificationsCanister,
+                onlineCanister: this.config.onlineCanister,
+                userIndexCanister: this.config.userIndexCanister,
+                registryCanister: this.config.registryCanister,
+                internetIdentityUrl: this.config.internetIdentityUrl,
+                nfidUrl: this.config.nfidUrl,
+                userGeekApiKey: this.config.userGeekApiKey,
+                enableMultiCrypto: this.config.enableMultiCrypto,
+                blobUrlPattern: this.config.blobUrlPattern,
+                proposalBotCanister: this.config.proposalBotCanister,
+                marketMakerCanister: this.config.marketMakerCanister,
+                websiteVersion: this.config.websiteVersion,
+                rollbarApiKey: this.config.rollbarApiKey,
+                env: this.config.env,
+                correlationId,
+            };
+            this.api.postMessage(req, [messageChannel.port2]);
+            return new Promise<WorkerResult<InitMessage>>(
+                this.responseHandler(req, correlationId, WORKER_TIMEOUT),
+            ).then(() => {
+                resolve(true);
+                this._connectedToWorker = true;
+            });
+        });
+
         return ready;
     }
 
@@ -120,7 +163,7 @@ export class OpenChatAgentWorker extends EventTarget {
                       Date.now() - unresolved.sentAt
                   }ms`;
         console.error(
-            `WORKER_CLIENT: unexpected correlationId received (${correlationId}). ${timedOut}`,
+            `SW_CLIENT unexpected correlationId received (${correlationId}). ${timedOut}`,
         );
     }
 
@@ -150,7 +193,7 @@ export class OpenChatAgentWorker extends EventTarget {
         this._unresolved.delete(data.correlationId);
     }
 
-    responseHandler<Req extends WorkerRequest, T>(
+    responseHandler<Req extends WorkerRequest | { kind: "init" }, T>(
         req: Req,
         correlationId: string,
         timeout: number,
@@ -162,7 +205,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 reject,
                 timeout: window.setTimeout(() => {
                     reject(
-                        `WORKER_CLIENT: Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
+                        `SW_CLIENT Request of kind ${req.kind} with correlationId ${correlationId} did not receive a response withing the ${WORKER_TIMEOUT}ms timeout`,
                     );
                     this._unresolved.set(correlationId, {
                         kind: req.kind,
@@ -180,10 +223,13 @@ export class OpenChatAgentWorker extends EventTarget {
         timeout: number = WORKER_TIMEOUT,
     ): Stream<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
-            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
+            throw new Error("SW_CLIENT the client is not yet connected to the worker");
         }
         const correlationId = v4();
-        this._worker.postMessage({
+        if (!this._messagePort) {
+            throw new Error("No channel port to send message via");
+        }
+        this._messagePort.postMessage({
             ...req,
             correlationId,
         });
@@ -196,13 +242,18 @@ export class OpenChatAgentWorker extends EventTarget {
         timeout: number = WORKER_TIMEOUT,
     ): Promise<WorkerResult<Req>> {
         if (!connecting && !this._connectedToWorker) {
-            throw new Error("WORKER_CLIENT: the client is not yet connected to the worker");
+            throw new Error("SW_CLIENT the client is not yet connected to the worker");
         }
         const correlationId = v4();
-        this._worker.postMessage({
-            ...req,
-            correlationId,
-        });
+
+        if (this._messagePort) {
+            this._messagePort.postMessage({
+                ...req,
+                correlationId,
+            });
+        } else {
+            throw new Error("No channel port to send message via");
+        }
         return new Promise<WorkerResult<Req>>(this.responseHandler(req, correlationId, timeout));
     }
 }

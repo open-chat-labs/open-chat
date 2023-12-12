@@ -149,6 +149,8 @@ import type { DexId } from "./dexes";
  * Worker request types
  */
 
+export type InitMessage = Init & { correlationId: string };
+
 export type CorrelatedWorkerRequest = WorkerRequest & {
     correlationId: string;
 };
@@ -209,7 +211,6 @@ export type WorkerRequest =
     | GetUsers
     | ChatEvents
     | CreateUserClient
-    | Init
     | CurrentUser
     | SetGroupInvite
     | SetCommunityInvite

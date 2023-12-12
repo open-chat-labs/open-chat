@@ -10,11 +10,11 @@ This is the svelte website itself.
 
 This is a the top level library which represents the interface that OpenChat exposes to the outside world. This library exposes a set of functions to perform useful tasks and a set of svelte stores to provide access to reactive application state.
 
-Internally, this library will install the openchat-worker package and provide async access to it.
+Internally, this library will install the openchat-service-worker package and provide async access to it.
 
-### openchat-worker
+### openchat-service-worker
 
-This is a thin layer that provides correlated async access to the openchat-agent via the postMessage api.
+This is a thin layer that provides correlated async access to the openchat-agent via the postMessage api and handles push notifications.
 
 ### openchat-agent
 

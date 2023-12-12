@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount, setContext } from "svelte";
+    import { getContext, onMount, setContext } from "svelte";
 
     import "../i18n/i18n";
     import "../utils/markdown";
@@ -39,8 +39,14 @@
         process.env.NODE_ENV!,
     );
 
-    function createOpenChatClient(): OpenChat {
-        return new OpenChat({
+    let client: OpenChat = getOpenChatClient();
+    let profileTrace = client.showTrace();
+
+    function getOpenChatClient(): OpenChat {
+        let client = getContext<OpenChat>("client");
+        if (client) return client;
+
+        client = new OpenChat({
             icUrl: process.env.IC_URL,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
             openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
@@ -62,13 +68,10 @@
             rollbarApiKey: process.env.ROLLBAR_ACCESS_TOKEN!,
             env: process.env.NODE_ENV!,
         });
+
+        setContext<OpenChat>("client", client);
+        return client;
     }
-
-    let client: OpenChat = createOpenChatClient();
-
-    let profileTrace = client.showTrace();
-
-    setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);

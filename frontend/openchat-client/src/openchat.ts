@@ -651,6 +651,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadUser(anon: boolean = false) {
         this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
+        console.log("SW: connected to worker");
 
         this.startRegistryPoller();
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>

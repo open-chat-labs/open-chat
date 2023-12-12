@@ -23,7 +23,7 @@
     import { _ } from "svelte-i18n";
     import type { ChatSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { notificationsSupported } from "../../utils/notifications";
+    import { notificationsSupported } from "../../utils/serviceWorker";
     import { toastStore } from "../../stores/toast";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
@@ -345,7 +345,7 @@
                                     {interpolateLevel(
                                         "group.inviteUsers",
                                         selectedChatSummary.level,
-                                        true
+                                        true,
                                     )}
                                 </div>
                             </MenuItem>

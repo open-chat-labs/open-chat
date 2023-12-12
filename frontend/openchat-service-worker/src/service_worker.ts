@@ -18,6 +18,7 @@ import type {
     ChannelReaction,
     ChannelMessageTipped,
     AddedToChannelNotification,
+    InitMessage,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -27,11 +28,25 @@ import {
     routeForChatIdentifier,
     toTitleCase,
 } from "openchat-shared";
+import { AgentAdapter } from "./agent_adapter";
 
 declare const self: ServiceWorkerGlobalScope;
 
 const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
+
+const api = new AgentAdapter();
+
+self.addEventListener("message", (ev: ExtendableMessageEvent) => {
+    // TODO - see what the source is and make sure that we limit the source
+    // otherwise external windows will be able to trigger api calls
+
+    // TODO - make sure that this does not pick up messages from host
+    // windows in integration mode
+    if (ev.data.kind === "init") {
+        api.init(ev.ports[0], ev.data as InitMessage);
+    }
+});
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {

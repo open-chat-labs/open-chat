@@ -20,8 +20,7 @@
         "openchat-agent",
         "openchat-client",
         "openchat-service-worker",
-        "openchat-shared",
-        "openchat-worker"
+        "openchat-shared"
     ],
     "devDependencies": {
         "@babel/core": "^7.22.10",
