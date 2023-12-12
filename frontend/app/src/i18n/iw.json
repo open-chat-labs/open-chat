@@ -956,7 +956,7 @@
         "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף",
         "approvePaymentTitle": "אשר תשלום",
         "paymentApprovalMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לשלם אסימונים של **{amount}** {token}.",
-        "paymentDistributionMessage": "מתוכם, 80% הולכים לבעלים של {level} ו-20% לאוצר OpenChat SNS.",
+        "paymentDistributionMessage": "מתוכם, 98% הולכים לבעלים של {level} ו-2% לאוצר OpenChat SNS.",
         "tokenNeuronHolder": "מחזיק נוירון {token}",
         "payment": "תַשְׁלוּם",
         "tokenPayment": "תשלום {token}",

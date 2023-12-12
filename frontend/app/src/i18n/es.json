@@ -960,7 +960,7 @@
         "credentialGateInfo": "Solo podrán unirse los usuarios que puedan proporcionar la credencial \"{credential}\" de {issuer}",
         "approvePaymentTitle": "Aprobar pago",
         "paymentApprovalMessage": "Para unirse a este {level}, debe pagar tokens **{amount}** {token}.",
-        "paymentDistributionMessage": "De esto, el 80 % va a los propietarios de {level} y el 20 % a la tesorería de OpenChat SNS.",
+        "paymentDistributionMessage": "De esto, el 98 % va a los propietarios de {level} y el 2 % a la tesorería de OpenChat SNS.",
         "tokenNeuronHolder": "{token} soporte de neurona",
         "payment": "Pago",
         "tokenPayment": "pago {token}",
