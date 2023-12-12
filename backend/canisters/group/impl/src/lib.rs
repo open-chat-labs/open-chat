@@ -119,7 +119,7 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT / 100)) / owner_count;
+        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
         let amount = owner_share.saturating_sub(gate.fee);
         if amount > 0 {
             for owner in owners {
