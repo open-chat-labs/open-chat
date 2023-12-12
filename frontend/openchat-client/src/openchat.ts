@@ -364,7 +364,7 @@ import {
     missingUserIds,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
-    getContentAsText,
+    getContentAsFormattedText,
     indexRangeForChat,
     getDisplayDate,
     MessagesReadFromServer,
@@ -1345,7 +1345,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
-        return getContentAsText(formatter, content, get(cryptoLookup));
+        return getContentAsFormattedText(formatter, content, get(cryptoLookup));
     }
 
     groupAvatarUrl<T extends { blobUrl?: string; subtype?: GroupSubtype }>(chat?: T): string {
@@ -4634,7 +4634,7 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
+                    getContentAsFormattedText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
                 ).forEach((id) => userIds.add(id));
             }
         });

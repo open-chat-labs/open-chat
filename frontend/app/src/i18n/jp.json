@@ -1178,7 +1178,6 @@
     "offlineMessage": "オフライン",
     "offlineError": "申し訳ありませんが、現在オフラインのようです",
     "renderPreviews": "自動レンダリングリンクプレビュー",
-    "messageBlocked": "送信者がブロックされているためメッセージが非表示になりました",
     "tokenSwap": {
         "swap": "スワップ",
         "quote": "引用",
@@ -1205,5 +1204,6 @@
         "swapToken": "{tokenIn}を交換する",
         "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
-    }
+    },
+    "messageBlocked": "メッセージが隠されています"
 }

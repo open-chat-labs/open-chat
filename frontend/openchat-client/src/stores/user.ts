@@ -112,6 +112,9 @@ export const userStore = {
 };
 
 export const currentUser = writable<CreatedUser>(anonymousUser());
+
+export const currentUserIdStore = derived(currentUser, ($currentUser) => $currentUser.userId);
+
 export const anonUser = derived(
     currentUser,
     ($currentUser) => $currentUser.userId === ANON_USER_ID,

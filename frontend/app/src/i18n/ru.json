@@ -1177,7 +1177,6 @@
     "offlineMessage": "Не в сети",
     "offlineError": "Извините, похоже, вы сейчас не в сети.",
     "renderPreviews": "Автоматический предварительный просмотр ссылок",
-    "messageBlocked": "Сообщение скрыто, поскольку отправитель заблокирован",
     "tokenSwap": {
         "swap": "Менять",
         "quote": "Цитировать",
@@ -1204,5 +1203,6 @@
         "swapToken": "Обмен {tokenIn}",
         "swapTokenTo": "Замените {tokenIn} на {tokenOut}",
         "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}."
-    }
+    },
+    "messageBlocked": "Сообщение скрыто"
 }

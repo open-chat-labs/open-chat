@@ -1177,7 +1177,6 @@
     "offlineMessage": "Hors ligne",
     "offlineError": "Désolé, il semble que vous soyez hors ligne pour le moment",
     "renderPreviews": "Aperçus des liens avec rendu automatique",
-    "messageBlocked": "Message masqué car l'expéditeur est bloqué",
     "tokenSwap": {
         "swap": "Échanger",
         "quote": "Citation",
@@ -1204,5 +1203,6 @@
         "swapToken": "Échanger {tokenIn}",
         "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}."
-    }
+    },
+    "messageBlocked": "Message masqué"
 }

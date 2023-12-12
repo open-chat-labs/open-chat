@@ -1179,7 +1179,6 @@
     "offlineMessage": "Desconectado",
     "offlineError": "Lo sentimos, parece que estás desconectado en este momento.",
     "renderPreviews": "Vistas previas de enlaces de renderizado automático",
-    "messageBlocked": "Mensaje oculto porque el remitente está bloqueado",
     "tokenSwap": {
         "swap": "Intercambio",
         "quote": "Cita",
@@ -1206,5 +1205,6 @@
         "swapToken": "Intercambiar {tokenIn}",
         "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
         "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}."
-    }
+    },
+    "messageBlocked": "Mensaje oculto"
 }

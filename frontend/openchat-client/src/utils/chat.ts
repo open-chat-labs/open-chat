@@ -46,7 +46,6 @@ import type {
 } from "openchat-shared";
 import {
     emptyChatMetrics,
-    getContentAsText,
     nullMembership,
     ChatMap,
     MessageMap,
@@ -55,6 +54,8 @@ import {
     updateFromOptions,
     defaultOptionalMessagePermissions,
     defaultOptionalChatPermissions,
+    getContentAsFormattedText,
+    getContentAsText,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -265,7 +266,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
-    const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
+    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -422,6 +423,8 @@ export function mergeUnconfirmedIntoSummary(
     localUpdates: MessageMap<LocalMessageUpdates>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: RegExp[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -460,6 +463,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     senderBlocked,
                     false,
+                    messageFilterer(messageFilters, currentUserId)
                 ),
             };
         }
@@ -1238,6 +1242,8 @@ export function mergeEventsAndLocalUpdates(
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: RegExp[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1294,6 +1300,7 @@ export function mergeEventsAndLocalUpdates(
                         replyTranslation,
                         senderBlocked,
                         repliesToSenderBlocked,
+                        messageFilterer(messageFilters, currentUserId)
                     ),
                 };
             }
@@ -1327,6 +1334,28 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
+function messageFilterer(filters: RegExp[], currentUserId: string): (message: Message) => boolean {
+    return (message: Message) => filterMessage(message, filters, currentUserId);
+}
+
+function filterMessage(message: Message, filters: RegExp[], currentUserId: string): boolean {
+    if (message.sender === currentUserId) {
+        return true;
+    }
+
+    const text = getContentAsText(message.content);
+
+    if (text !== undefined) {
+        for (const f of filters) {
+            if (f.test(text)) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
@@ -1336,6 +1365,7 @@ function mergeLocalUpdates(
     replyTranslation: string | undefined,
     senderBlocked: boolean,
     repliesToSenderBlocked: boolean,
+    messageFilter: (message: Message) => boolean,
 ): Message {
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1350,9 +1380,9 @@ function mergeLocalUpdates(
     }
 
     if (
-        senderBlocked &&
         localUpdates?.blockedMessageRevealed !== true &&
-        message.content.kind !== "deleted_content"
+        message.content.kind !== "deleted_content" &&
+        (senderBlocked || !messageFilter(message))
     ) {
         return {
             ...message,
