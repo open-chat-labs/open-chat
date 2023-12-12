@@ -70,21 +70,15 @@ impl RuntimeState {
 struct Data {
     governance_principals: HashSet<Principal>,
     proposals_bot_canister_id: CanisterId,
-    #[serde(default = "default_user_index_canister_id")]
     user_index_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
     tokens: Tokens,
     nervous_systems: NervousSystems,
     failed_sns_launches: HashSet<CanisterId>,
-    #[serde(default)]
     message_filters: MessageFilters,
     rng_seed: [u8; 32],
     test_mode: bool,
-}
-
-fn default_user_index_canister_id() -> CanisterId {
-    Principal::anonymous()
 }
 
 impl Data {
