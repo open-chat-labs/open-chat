@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
 
+### Changed
+
+- Reduce cut of payment gate fee for SNS from 20% -> 2% ([#4991](https://github.com/open-chat-labs/open-chat/pull/4991))
+
 ### Removed
 
 - Removed `local_user_index` endpoint since that is now included in the summary ([#4977](https://github.com/open-chat-labs/open-chat/pull/4977))
