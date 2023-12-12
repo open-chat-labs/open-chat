@@ -142,7 +142,11 @@ export class AgentAdapter extends EventTarget {
         });
     }
 
-    private sendEvent(_msg: Omit<WorkerEvent, "kind">): void {
+    private sendEvent(msg: Omit<WorkerEvent, "kind">): void {
+        console.debug("SW: sending event", msg);
+        // self.clients.matchAll().then((clients) => {
+        //     clients.forEach((client) => client.postMessage({ msg: "Hello from SW" }));
+        // });
         // TODO - this needs to be some sort of broadcast
         // port.postMessage({
         //     kind: "worker_event",
