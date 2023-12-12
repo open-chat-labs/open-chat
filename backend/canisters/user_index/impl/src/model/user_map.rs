@@ -19,7 +19,6 @@ pub struct UserMap {
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
-    #[serde(default)]
     suspended_or_unsuspended_users: BTreeSet<(TimestampMillis, UserId)>,
 }
 
