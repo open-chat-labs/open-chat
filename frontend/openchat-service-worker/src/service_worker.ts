@@ -64,6 +64,10 @@ self.addEventListener("install", (ev) => {
 });
 
 self.addEventListener("activate", (ev) => {
+    // TODO - what do we do when a new service worker is activated but the old one has been initialised by a client?
+    // Feels like we need to create a new instance of AgentAdapter and somehow tell all clients that they have to re-init.
+    // Very hard to test this.
+
     // upon activation take control of all clients (tabs & windows)
     ev.waitUntil(
         Promise.all([
