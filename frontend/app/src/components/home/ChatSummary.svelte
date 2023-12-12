@@ -35,7 +35,6 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import { notificationsSupported } from "../../utils/serviceWorker";
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
@@ -359,7 +358,7 @@
         <!-- this date formatting is OK for now but we might want to use something like this:
         https://date-fns.org/v2.22.1/docs/formatDistanceToNow -->
         <div class:rtl={$rtlStore} class="chat-date">
-            {#if muted && notificationsSupported}
+            {#if muted && client.notificationsSupported}
                 <div class="mute icon" class:rtl={$rtlStore}>
                     <MutedIcon size={"1em"} color={"var(--icon-txt)"} />
                 </div>
@@ -446,7 +445,7 @@
                                         <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
                                     </MenuItem>
                                 {/if}
-                                {#if notificationsSupported}
+                                {#if client.notificationsSupported}
                                     {#if muted}
                                         <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                             <BellIcon

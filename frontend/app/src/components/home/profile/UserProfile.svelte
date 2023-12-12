@@ -23,7 +23,6 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import FontSize from "./FontSize.svelte";
     import Stats from "../Stats.svelte";
-    import { notificationsSupported } from "../../../utils/serviceWorker";
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
@@ -384,7 +383,7 @@
                         on:change={() => dclickReply.toggle()}
                         label={$_(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
-                    {#if notificationsSupported}
+                    {#if client.notificationsSupported}
                         <Toggle
                             id={"notifications"}
                             small

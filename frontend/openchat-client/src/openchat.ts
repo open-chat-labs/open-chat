@@ -556,7 +556,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return /https:\/\/.*\.ic0\.app/.test(window.location.origin);
     }
 
-    private get notificationsSupported(): boolean {
+    get notificationsSupported(): boolean {
         return (
             !this.isCanisterUrl &&
             "serviceWorker" in navigator &&
@@ -946,6 +946,11 @@ export class OpenChat extends OpenChatAgentWorker {
             CHAT_UPDATE_IDLE_INTERVAL,
             true,
         );
+        // if we are offline we still want to run loadChats at least once otherwise
+        // we can't even get data from the cache
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startOnlinePoller() {

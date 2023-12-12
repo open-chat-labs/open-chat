@@ -23,7 +23,6 @@
     import { _ } from "svelte-i18n";
     import type { ChatSummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { notificationsSupported } from "../../utils/serviceWorker";
     import { toastStore } from "../../stores/toast";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
@@ -352,7 +351,7 @@
                         {/if}
                     {/if}
 
-                    {#if notificationsSupported}
+                    {#if client.notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                 <Bell
@@ -430,7 +429,7 @@
                             <div slot="text">{$_("showPinned")}</div>
                         </MenuItem>
                     {/if}
-                    {#if notificationsSupported}
+                    {#if client.notificationsSupported}
                         {#if selectedChatSummary.membership.notificationsMuted === true}
                             <MenuItem on:click={() => toggleMuteNotifications(false)}>
                                 <Bell
