@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_trades::P2PTradeOfferStatus;
+use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -269,7 +270,21 @@ async fn process_transaction(
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(completed) => {
             if let Some(id) = p2p_offer_id {
-                update_p2p_trade_status(id, P2PTradeOfferStatus::FundsTransferred);
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
+                            offer_id: id,
+                            attempt: 0,
+                        })),
+                        now,
+                        now,
+                    );
+                    state
+                        .data
+                        .p2p_trades
+                        .set_offer_status(id, P2PTradeOfferStatus::FundsTransferred, now);
+                });
             }
             Ok(completed)
         }
