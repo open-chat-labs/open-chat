@@ -14,6 +14,12 @@ export interface Account {
   'subaccount' : [] | [Subaccount],
 }
 export type AccountIdentifier = Uint8Array | number[];
+export interface AddMessageFilterArgs { 'regex' : string }
+export type AddMessageFilterResponse = { 'NotAuthorized' : null } |
+  { 'Success' : bigint } |
+  { 'InvalidRequest' : string } |
+  { 'InternalError' : string } |
+  { 'AlreadyAdded' : null };
 export interface AddedToChannelNotification {
   'channel_id' : ChannelId,
   'community_id' : CommunityId,
@@ -258,6 +264,7 @@ export interface CommunityCanisterCommunitySummary {
   'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -549,6 +556,7 @@ export interface GroupCanisterGroupChatSummary {
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
   'membership' : [] | [GroupMembership],
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -621,6 +629,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -878,6 +887,7 @@ export interface MessageEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface MessageFilterSummary { 'id' : bigint, 'regex' : string }
 export type MessageId = bigint;
 export type MessageIndex = number;
 export interface MessageIndexRange {
@@ -1169,6 +1179,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -1185,6 +1196,11 @@ export interface PushEventResult {
 export type Reaction = string;
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
+export interface RemoveMessageFilterArgs { 'id' : bigint }
+export type RemoveMessageFilterResponse = { 'NotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_index' : EventIndex,
@@ -1347,6 +1363,8 @@ export type UpdatesResponse = {
       'last_updated' : TimestampMillis,
       'token_details' : [] | [Array<TokenDetails>],
       'nervous_system_details' : Array<NervousSystemSummary>,
+      'message_filters_removed' : BigUint64Array | bigint[],
+      'message_filters_added' : Array<MessageFilterSummary>,
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -1405,5 +1423,13 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'add_message_filter' : ActorMethod<
+    [AddMessageFilterArgs],
+    AddMessageFilterResponse
+  >,
+  'remove_message_filter' : ActorMethod<
+    [RemoveMessageFilterArgs],
+    RemoveMessageFilterResponse
+  >,
   'updates' : ActorMethod<[UpdatesArgs], UpdatesResponse>,
 }

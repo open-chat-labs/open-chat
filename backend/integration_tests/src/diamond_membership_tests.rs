@@ -101,7 +101,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::upgrade_user(&user, env, canister_ids, *controller);
+    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
 
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
@@ -132,9 +132,10 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     assert_eq!(new_balance, 1_000_000_000 - 40_000_000);
 }
 
-#[test]
+#[test_case(true)]
+#[test_case(false)]
 #[serial]
-fn membership_payment_shared_with_referrer() {
+fn membership_payment_shared_with_referrer(lifetime: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -145,7 +146,13 @@ fn membership_payment_shared_with_referrer() {
 
     // Register referrer and upgrade to Diamond
     let user_a = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    client::upgrade_user(&user_a, env, canister_ids, *controller);
+    client::upgrade_user(
+        &user_a,
+        env,
+        canister_ids,
+        *controller,
+        DiamondMembershipPlanDuration::OneMonth,
+    );
 
     // Register user_b with referral from user_a
     let user_b = client::local_user_index::happy_path::register_user_with_referrer(
@@ -159,17 +166,28 @@ fn membership_payment_shared_with_referrer() {
     let init_referrer_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
 
     // Upgrade user_b to Diamond
-    client::upgrade_user(&user_b, env, canister_ids, *controller);
+    let duration = if lifetime {
+        DiamondMembershipPlanDuration::Lifetime
+    } else {
+        DiamondMembershipPlanDuration::OneMonth
+    };
+    client::upgrade_user(&user_b, env, canister_ids, *controller, duration);
+
+    let amount_to_referer = if lifetime {
+        DiamondMembershipPlanDuration::OneYear.icp_price_e8s() / 2
+    } else {
+        DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() / 2
+    } as u128;
 
     // Check the referrer has been credited with half the Diamond payment
     let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id);
-    assert_eq!(balance_referrer - init_referrer_balance, 10_000_000);
+    assert_eq!(balance_referrer - init_referrer_balance, amount_to_referer);
 
     // Check the treasury has received the remainder less the fees
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
+        u128::from(duration.icp_price_e8s()) - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
     );
 }
 
@@ -188,7 +206,7 @@ fn update_subscription_succeeds(disable: bool) {
 
     let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::upgrade_user(&user, env, canister_ids, *controller);
+    client::upgrade_user(&user, env, canister_ids, *controller, DiamondMembershipPlanDuration::OneMonth);
 
     client::user_index::update_diamond_membership_subscription(
         env,

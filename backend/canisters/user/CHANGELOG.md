@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Log error if any steps during a swap fail ([#4972](https://github.com/open-chat-labs/open-chat/pull/4972))
+- Expose logs of swaps ([#4980](https://github.com/open-chat-labs/open-chat/pull/4980))
+
+### Removed
+
+- Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
 
 ## [[2.0.963](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.963-user)] - 2023-12-05
 

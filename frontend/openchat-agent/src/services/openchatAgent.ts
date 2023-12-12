@@ -574,6 +574,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
+        localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -582,8 +583,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
-        const communityLocalUserIndex = await this.communityClient(id.communityId).localUserIndex();
-        return this.createLocalUserIndexClient(communityLocalUserIndex).inviteUsersToCommunity(
+        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
         );
@@ -591,6 +591,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
+        localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -599,22 +600,17 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
+        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+
         switch (chatId.kind) {
             case "group_chat":
-                const groupLocalUserIndex = await this.getGroupClient(
-                    chatId.groupId,
-                ).localUserIndex();
-                return this.createLocalUserIndexClient(groupLocalUserIndex).inviteUsersToGroup(
-                    chatId.groupId,
+                return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
+            case "channel":
+                return localUserIndexClient.inviteUsersToChannel(
+                    chatId.communityId,
+                    chatId.channelId,
                     userIds,
                 );
-            case "channel":
-                const communityLocalUserIndex = await this.communityClient(
-                    chatId.communityId,
-                ).localUserIndex();
-                return this.createLocalUserIndexClient(
-                    communityLocalUserIndex,
-                ).inviteUsersToChannel(chatId.communityId, chatId.channelId, userIds);
         }
     }
 
@@ -1819,40 +1815,31 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
+        localUserIndex: string,
         _credential?: string,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
+        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
+
         switch (chatId.kind) {
             case "group_chat":
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
-                const groupLocalUserIndex = await this.getGroupClient(
-                    chatId.groupId,
-                ).localUserIndex();
-                return this.createLocalUserIndexClient(groupLocalUserIndex).joinGroup(
-                    chatId.groupId,
-                    groupInviteCode,
-                );
+                return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
             case "channel":
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
-                const communityLocalIndex = await this.communityClient(
-                    chatId.communityId,
-                ).localUserIndex();
-                return this.createLocalUserIndexClient(communityLocalIndex).joinChannel(
-                    chatId,
-                    communityInviteCode,
-                );
+                return localUserIndexClient.joinChannel(chatId, communityInviteCode);
         }
     }
 
     async joinCommunity(
         id: CommunityIdentifier,
+        localUserIndex: string,
         _credential?: string,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
-        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
@@ -2708,7 +2695,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 
-    async getRegistry(): Promise<RegistryValue> {
+    async getRegistry(): Promise<[RegistryValue, boolean]> {
         const current = await getCachedRegistry();
 
         const updates = await this._registryClient.updates(current?.lastUpdated);
@@ -2724,11 +2711,13 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
+                messageFilters: [ ...current?.messageFilters ?? [], ...updates.messageFiltersAdded ]
+                    .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
             };
             setCachedRegistry(updated);
-            return updated;
+            return [updated, true];
         } else if (current !== undefined) {
-            return current;
+            return [current, false];
         } else {
             throw new Error("Registry is empty... this should never happen!");
         }
@@ -2863,16 +2852,24 @@ export class OpenChatAgent extends EventTarget {
         return this._dexesAgent.canSwap(tokenLedgers);
     }
 
-    getTokenSwaps(inputTokenLedger: string, outputTokenLedgers: string[]): Promise<Record<string, DexId[]>> {
-        return this._dexesAgent.getSwapPools(inputTokenLedger, new Set(outputTokenLedgers)).then((pools) => {
-            return pools.reduce(swapReducer, {} as Record<string, DexId[]>)
-        });
+    getTokenSwaps(
+        inputTokenLedger: string,
+        outputTokenLedgers: string[],
+    ): Promise<Record<string, DexId[]>> {
+        return this._dexesAgent
+            .getSwapPools(inputTokenLedger, new Set(outputTokenLedgers))
+            .then((pools) => {
+                return pools.reduce(swapReducer, {} as Record<string, DexId[]>);
+            });
 
-        function swapReducer(result: Record<string, DexId[]>, pool: TokenSwapPool): Record<string, DexId[]> {
+        function swapReducer(
+            result: Record<string, DexId[]>,
+            pool: TokenSwapPool,
+        ): Record<string, DexId[]> {
             const outputTokenLedger = inputTokenLedger === pool.token0 ? pool.token1 : pool.token0;
-            return { 
-                ...result, 
-                [outputTokenLedger]: [...(result[outputTokenLedger] || []), pool.dex]
+            return {
+                ...result,
+                [outputTokenLedger]: [...(result[outputTokenLedger] || []), pool.dex],
             };
         }
     }
@@ -2882,13 +2879,18 @@ export class OpenChatAgent extends EventTarget {
         outputTokenLedger: string,
         amountIn: bigint,
     ): Promise<[DexId, bigint][]> {
-        return this._dexesAgent.quoteSwap(inputTokenLedger, outputTokenLedger, amountIn).then((quotes) => {
-            // Sort the quotes by amount descending so the first quote is the best
-            quotes.sort(compare);
-            return quotes;
-        });
+        return this._dexesAgent
+            .quoteSwap(inputTokenLedger, outputTokenLedger, amountIn)
+            .then((quotes) => {
+                // Sort the quotes by amount descending so the first quote is the best
+                quotes.sort(compare);
+                return quotes;
+            });
 
-        function compare([_dexA, amountA]: [DexId, bigint], [_dexB, amountB]: [DexId, bigint]): number {
+        function compare(
+            [_dexA, amountA]: [DexId, bigint],
+            [_dexB, amountB]: [DexId, bigint],
+        ): number {
             if (amountA > amountB) {
                 return -1;
             }
@@ -2910,12 +2912,16 @@ export class OpenChatAgent extends EventTarget {
         return this._dexesAgent
             .getSwapPools(inputTokenDetails.ledger, new Set([outputTokenDetails.ledger]))
             .then((pools) => {
-                const pool = pools.find((p) => p.dex === dex && p.token0 === inputTokenDetails.ledger || p.token0 === outputTokenDetails.ledger);
+                const pool = pools.find(
+                    (p) =>
+                        (p.dex === dex && p.token0 === inputTokenDetails.ledger) ||
+                        p.token0 === outputTokenDetails.ledger,
+                );
 
                 if (pool === undefined) {
                     return Promise.reject("Cannot find a matching pool");
                 }
-                
+
                 const exchangeArgs: ExchangeTokenSwapArgs = {
                     dex,
                     swapCanisterId: pool.canisterId,
@@ -2929,7 +2935,7 @@ export class OpenChatAgent extends EventTarget {
                     amountIn,
                     minAmountOut,
                     exchangeArgs,
-                );        
+                );
             });
     }
 
@@ -2952,5 +2958,13 @@ export class OpenChatAgent extends EventTarget {
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
         return this._userIndexClient.diamondMembershipFees();
+    }
+
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this._registryClient.addMessageFilter(regex);
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this._registryClient.removeMessageFilter(id);
     }
 }

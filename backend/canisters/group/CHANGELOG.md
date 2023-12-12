@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
+
+### Removed
+
+- Removed `local_user_index` endpoint since that is now included in the summary ([#4977](https://github.com/open-chat-labs/open-chat/pull/4977))
+- Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
+
+### Fixed
+
+- Fix for NNS proposal deadlines not being updated ([#4978](https://github.com/open-chat-labs/open-chat/pull/4978))
+
 ## [[2.0.966](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.966-group)] - 2023-12-07
 
 ### Fixed

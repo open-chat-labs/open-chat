@@ -23,6 +23,10 @@ impl TokenSwaps {
     pub fn get(&self, swap_id: u128) -> Option<&TokenSwap> {
         self.swaps.get(&swap_id)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &TokenSwap> {
+        self.swaps.values()
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

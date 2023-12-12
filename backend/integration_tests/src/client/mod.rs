@@ -91,21 +91,20 @@ pub fn execute_update_no_response<P: CandidType>(
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-    upgrade_user(&user, env, canister_ids, controller);
+    upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
     user
 }
 
-pub fn upgrade_user(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
+pub fn upgrade_user(
+    user: &User,
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    duration: DiamondMembershipPlanDuration,
+) {
     icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
-    user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
-        false,
-        true,
-    );
+    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
 
     tick_many(env, 4);
 }

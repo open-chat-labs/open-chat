@@ -13,7 +13,6 @@ generate_c2c_call!(public_summary);
 
 generate_candid_c2c_call!(events);
 generate_candid_c2c_call!(invite_code);
-generate_candid_c2c_call!(local_user_index);
 generate_candid_c2c_call!(selected_initial);
 
 // Updates

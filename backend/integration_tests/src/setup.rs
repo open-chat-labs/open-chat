@@ -246,6 +246,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let registry_init_args = registry_canister::init::Args {
+        user_index_canister_id,
         governance_principals: vec![controller],
         proposals_bot_canister_id,
         nns_ledger_canister_id,

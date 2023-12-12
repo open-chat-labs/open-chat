@@ -46,14 +46,14 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsText(fakeFormatter, e.event.repliesTo.content, {}),
+                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content, {}),
                     ).forEach((id) => userIds.add(id));
                 }
                 if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 }
                 extractUserIdsFromMentions(
-                    getContentAsText(fakeFormatter, e.event.content, {}),
+                    getContentAsFormattedText(fakeFormatter, e.event.content, {}),
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -110,7 +110,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
-export function getContentAsText(
+export function getContentAsFormattedText(
     formatter: MessageFormatter,
     content: MessageContent,
     cryptoLookup: Record<string, CryptocurrencyDetails>,
@@ -161,6 +161,16 @@ export function getContentAsText(
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
+}
+
+export function getContentAsText(content: MessageContent): string | undefined {
+    if ("text" in content) {
+        return content.text;
+    } else if ("caption" in content) {
+        return content.caption;
+    } else if (content.kind === "poll_content") {
+        return content.config.text;
+    }
 }
 
 function captionedContent(type: string, caption?: string): string {

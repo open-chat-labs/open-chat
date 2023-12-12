@@ -15,7 +15,7 @@
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, SessionExpiryError, UserLoggedIn } from "openchat-client";
+    import { OpenChat, UserLoggedIn } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -101,6 +101,8 @@
             removeHotGroupExclusion,
             setCommunityModerationFlags,
             unfreezeGroup,
+            addMessageFilter,
+            removeMessageFilter,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -178,6 +180,14 @@
                 console.log("Failed to unfreeze group", chatId);
             }
         });
+    }
+
+    function addMessageFilter(regex: string): void {
+        client.addMessageFilter(regex);
+    }
+
+    function removeMessageFilter(id: bigint): void {
+        client.removeMessageFilter(id);
     }
 
     function deleteChannelMessage(
@@ -311,7 +321,7 @@
 
     function unhandledError(ev: Event) {
         logger?.error("Unhandled error: ", ev);
-        if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
+        if (ev instanceof PromiseRejectionEvent && (ev.reason?.name === "SessionExpiryError" || ev.reason?.name === "InvalidDelegationError")) {
             client.logout();
             ev.preventDefault();
         }

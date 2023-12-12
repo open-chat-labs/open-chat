@@ -867,6 +867,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             archived: candid.archived,
             rulesAccepted: candid.rules_accepted,
         },
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -1191,7 +1192,9 @@ function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
     };
 }
 
-function resultOfResult<T>(candid: { Ok: { Ok: T; } | { Err: string; }; } | { Err: string; }): Result<Result<T>> {
+function resultOfResult<T>(
+    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string },
+): Result<Result<T>> {
     if ("Ok" in candid) {
         return {
             kind: "ok",
@@ -1204,7 +1207,9 @@ function resultOfResult<T>(candid: { Ok: { Ok: T; } | { Err: string; }; } | { Er
     };
 }
 
-export function approveTransferResponse(candid: ApiApproveTransferResponse): ApproveTransferResponse {
+export function approveTransferResponse(
+    candid: ApiApproveTransferResponse,
+): ApproveTransferResponse {
     if ("Success" in candid) {
         return { kind: "success" };
     }

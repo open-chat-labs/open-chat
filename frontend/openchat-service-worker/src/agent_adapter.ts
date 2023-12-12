@@ -486,7 +486,11 @@ export class AgentAdapter extends EventTarget {
                         replyTo,
                         payload,
                         correlationId,
-                        this.agent.joinGroup(payload.chatId, payload.credential),
+                        this.agent.joinGroup(
+                            payload.chatId,
+                            payload.localUserIndex,
+                            payload.credential,
+                        ),
                     );
                     break;
 
@@ -495,7 +499,11 @@ export class AgentAdapter extends EventTarget {
                         replyTo,
                         payload,
                         correlationId,
-                        this.agent.joinCommunity(payload.id, payload.credential),
+                        this.agent.joinCommunity(
+                            payload.id,
+                            payload.localUserIndex,
+                            payload.credential,
+                        ),
                     );
                     break;
 
@@ -718,7 +726,11 @@ export class AgentAdapter extends EventTarget {
                         replyTo,
                         payload,
                         correlationId,
-                        this.agent.inviteUsers(payload.chatId, payload.userIds),
+                        this.agent.inviteUsers(
+                            payload.chatId,
+                            payload.localUserIndex,
+                            payload.userIds,
+                        ),
                     );
                     break;
 
@@ -727,7 +739,11 @@ export class AgentAdapter extends EventTarget {
                         replyTo,
                         payload,
                         correlationId,
-                        this.agent.inviteUsersToCommunity(payload.id, payload.userIds),
+                        this.agent.inviteUsersToCommunity(
+                            payload.id,
+                            payload.localUserIndex,
+                            payload.userIds,
+                        ),
                     );
                     break;
 
@@ -1050,6 +1066,22 @@ export class AgentAdapter extends EventTarget {
                         payload,
                         correlationId,
                         this.agent.removeHotGroupExclusion(payload.chatId),
+                    );
+                    break;
+
+                case "addMessageFilter":
+                    this.executeThenReply(
+                        payload,
+                        correlationId,
+                        this.agent.addMessageFilter(payload.regex),
+                    );
+                    break;
+
+                case "removeMessageFilter":
+                    this.executeThenReply(
+                        payload,
+                        correlationId,
+                        this.agent.removeMessageFilter(payload.id),
                     );
                     break;
 

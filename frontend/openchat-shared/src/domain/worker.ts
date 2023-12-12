@@ -237,6 +237,8 @@ export type WorkerRequest =
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddMessageFilter
+    | RemoveMessageFilter
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
@@ -596,12 +598,14 @@ type RemoveMember = {
 
 type InviteUsers = {
     chatId: MultiUserChatIdentifier;
+    localUserIndex: string;
     userIds: string[];
     kind: "inviteUsers";
 };
 
 type InviteUsersToCommunity = {
     id: CommunityIdentifier;
+    localUserIndex: string;
     userIds: string[];
     kind: "inviteUsersToCommunity";
 };
@@ -737,12 +741,14 @@ type UpdateGroup = {
 
 type JoinGroup = {
     chatId: MultiUserChatIdentifier;
+    localUserIndex: string;
     kind: "joinGroup";
     credential?: string;
 };
 
 type JoinCommunity = {
     id: CommunityIdentifier;
+    localUserIndex: string;
     kind: "joinCommunity";
     credential?: string;
 };
@@ -911,6 +917,16 @@ type AddHotGroupExclusion = {
 type RemoveHotGroupExclusion = {
     chatId: GroupChatIdentifier;
     kind: "removeHotGroupExclusion";
+};
+
+type AddMessageFilter = {
+    regex: string;
+    kind: "addMessageFilter";
+};
+
+type RemoveMessageFilter = {
+    id: bigint;
+    kind: "removeMessageFilter";
 };
 
 type SuspendUser = {
@@ -1106,6 +1122,8 @@ export type WorkerResponseInner =
     | DeleteFrozenGroupResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddMessageFilter
+    | RemoveMessageFilter
     | SuspendUserResponse
     | UnsuspendUserResponse
     | UpdatesResult
@@ -1138,7 +1156,7 @@ export type WorkerResponseInner =
     | ImportGroupResponse
     | PublicGroupSummaryResponse
     | AddMembersToChannelResponse
-    | RegistryValue
+    | [RegistryValue, boolean]
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
@@ -1574,6 +1592,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddMessageFilter
+    ? boolean
+    : T extends RemoveMessageFilter
+    ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse
     : T extends SuspendUser
@@ -1665,7 +1687,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
     : T extends UpdateRegistry
-    ? RegistryValue
+    ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
     : T extends CreateUserGroup
