@@ -52,7 +52,12 @@ pub mod happy_path {
         }
     }
 
-    pub fn notify_deposit(env: &mut PocketIc, user_id: UserId, escrow_canister_id: CanisterId, offer_id: u32) {
+    pub fn notify_deposit(
+        env: &mut PocketIc,
+        user_id: UserId,
+        escrow_canister_id: CanisterId,
+        offer_id: u32,
+    ) -> escrow_canister::notify_deposit::SuccessResult {
         let response = super::notify_deposit(
             env,
             user_id.into(),
@@ -61,7 +66,7 @@ pub mod happy_path {
         );
 
         match response {
-            escrow_canister::notify_deposit::Response::Success => {}
+            escrow_canister::notify_deposit::Response::Success(result) => result,
             response => panic!("'notify_deposit' error: {response:?}"),
         }
     }

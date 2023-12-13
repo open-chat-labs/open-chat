@@ -48,6 +48,7 @@ pub struct P2PTradeOffer {
 }
 
 impl P2PTradeOffer {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: u32,
         created_by: UserId,

@@ -719,7 +719,7 @@ impl ChatEvents {
 
                             let event_index = event.index;
                             self.last_updated_timestamps.mark_updated(None, event_index, now);
-                            Success(result)
+                            Success(Box::new(result))
                         }
                         Err(ReserveP2PTradeError::Expired) => Expired,
                         Err(ReserveP2PTradeError::Cancelled) => Cancelled,
@@ -1559,7 +1559,7 @@ pub enum UnreservePrizeResult {
 }
 
 pub enum ReserveP2PTradeResult {
-    Success(ReserveP2PTradeOfferSuccess),
+    Success(Box<ReserveP2PTradeOfferSuccess>),
     Cancelled,
     Expired,
     AlreadyReserved(UserId),
