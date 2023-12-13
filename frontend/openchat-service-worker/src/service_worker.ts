@@ -37,29 +37,40 @@ const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
 staticResourceCache({
-    // matchCallback: ({ request }) => {
-    //     return [
-    //         /assets\/.*png|jpg|svg|gif|mp4|css/,
-    //         /main-.*[css|js]$/,
-    //         /vendor-.*[css|js]$/,
-    //         /ArchitecturePage-.*js$/,
-    //         /HashLinkTarget-.*js$/,
-    //         /Headline-.*js$/,
-    //         /RoadmapPage-.*js$/,
-    //         /Miami-.*js$/,
-    //         /DiamondPage-.*js$/,
-    //         /FAQPage-.*js$/,
-    //         /GuidelinesPage-.*js$/,
-    //         /BlogPostPage-.*js$/,
-    //         /SMSUpgrade-.*js$/,
-    //         /WhitepaperPage-.*js$/,
-    //         /worker.js/,
-    //         /openchat.webmanifest/,
-    //         /icon.png/,
-    //         /apple-touch-icon.png/,
-    //         /oc-logo2.svg/,
-    //     ].some((re) => re.test(request.url));
-    // },
+    matchCallback: ({ request }) => {
+        return [
+            "style",
+            "script",
+            "worker",
+            "audio",
+            "font",
+            "frame",
+            "image",
+            "manifest",
+            "video",
+        ].includes(request.destination);
+        // return [
+        //     /assets\/.*png|jpg|svg|gif|mp4|css/,
+        //     /main-.*[css|js]$/,
+        //     /vendor-.*[css|js]$/,
+        //     /ArchitecturePage-.*js$/,
+        //     /HashLinkTarget-.*js$/,
+        //     /Headline-.*js$/,
+        //     /RoadmapPage-.*js$/,
+        //     /Miami-.*js$/,
+        //     /DiamondPage-.*js$/,
+        //     /FAQPage-.*js$/,
+        //     /GuidelinesPage-.*js$/,
+        //     /BlogPostPage-.*js$/,
+        //     /SMSUpgrade-.*js$/,
+        //     /WhitepaperPage-.*js$/,
+        //     /worker.js/,
+        //     /openchat.webmanifest/,
+        //     /icon.png/,
+        //     /apple-touch-icon.png/,
+        //     /oc-logo2.svg/,
+        // ].some((re) => re.test(request.url));
+    },
     cacheName: "openchat_stale_while_revalidate",
     plugins: [
         new CacheableResponsePlugin({
@@ -75,6 +86,13 @@ pageCache({
     matchCallback: ({ request }) => request.mode === "navigate",
     networkTimeoutSeconds: 3,
     cacheName: "openchat_network_first",
+    plugins: [
+        {
+            cacheKeyWillBeUsed: async () => {
+                return "openchat_document";
+            },
+        },
+    ],
 });
 
 // Always install updated SW immediately
