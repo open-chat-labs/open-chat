@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction};
 use utils::consts::MEMO_PRIZE_REFUND;
-use utils::time::MINUTE_IN_MS;
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -16,6 +16,8 @@ pub enum TimerJob {
     RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
+    NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
+    // NotifyUserOfP2PTradeCompleted(NotifyUserOfP2PTradeCompletedJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -49,6 +51,19 @@ pub struct MakeTransferJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoveExpiredEventsJob;
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NotifyEscrowCanisterOfDepositJob {
+    pub offer_id: u32,
+    pub attempt: u32,
+}
+
+impl NotifyEscrowCanisterOfDepositJob {
+    pub fn run(offer_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+        job.execute();
+    }
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -58,6 +73,7 @@ impl Job for TimerJob {
             TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
+            TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
         }
     }
 }
@@ -185,5 +201,39 @@ impl Job for MakeTransferJob {
 impl Job for RemoveExpiredEventsJob {
     fn execute(self) {
         mutate_state(|state| state.run_event_expiry_job());
+    }
+}
+
+impl Job for NotifyEscrowCanisterOfDepositJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::notify_deposit(
+                escrow_canister_id,
+                &escrow_canister::notify_deposit::Args {
+                    offer_id: self.offer_id,
+                    user_id: None,
+                },
+            )
+            .await
+            {
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
+                Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
+                                offer_id: self.offer_id,
+                                attempt: self.attempt + 1,
+                            }),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
     }
 }

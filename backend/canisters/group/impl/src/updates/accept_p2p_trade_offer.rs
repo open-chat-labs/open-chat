@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ReserveP2PTradeResult;
@@ -26,8 +27,9 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
                     args.message_index,
                     transaction_index,
                     state.env.now(),
-                )
+                );
             });
+            NotifyEscrowCanisterOfDepositJob::run(c2c_args.offer_id);
             Success
         }
         Ok(user_canister::c2c_accept_p2p_trade_offer::Response::TransferError(TransferError::InsufficientFunds { .. })) => {

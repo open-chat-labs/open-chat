@@ -10,7 +10,7 @@ generate_update_call!(notify_deposit);
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, Cryptocurrency, TimestampMillis, TokenInfo, UserId};
+    use types::{CanisterId, Cryptocurrency, TimestampMillis, UserId};
 
     #[allow(clippy::too_many_arguments)]
     pub fn create_offer(
@@ -28,19 +28,9 @@ pub mod happy_path {
             sender,
             escrow_canister_id,
             &escrow_canister::create_offer::Args {
-                input_token: TokenInfo {
-                    token: input_token.clone(),
-                    ledger: input_token.ledger_canister_id().unwrap(),
-                    decimals: input_token.decimals().unwrap(),
-                    fee: input_token.fee().unwrap(),
-                },
+                input_token: input_token.try_into().unwrap(),
                 input_amount,
-                output_token: TokenInfo {
-                    token: output_token.clone(),
-                    ledger: output_token.ledger_canister_id().unwrap(),
-                    decimals: output_token.decimals().unwrap(),
-                    fee: output_token.fee().unwrap(),
-                },
+                output_token: output_token.try_into().unwrap(),
                 output_amount,
                 expires_at,
             },
