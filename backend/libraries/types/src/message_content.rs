@@ -563,7 +563,7 @@ impl P2PTradeContent {
 
     pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> Result<(), ReserveP2PTradeError> {
         match self.status {
-            P2PTradeStatus::Open if now > self.expires_at => {
+            P2PTradeStatus::Open if now < self.expires_at => {
                 self.status = P2PTradeStatus::Reserved(user_id, now);
                 Ok(())
             }

@@ -77,10 +77,13 @@ fn p2p_trade_succeeds() {
         },
     );
 
-    assert!(matches!(
-        accept_offer_response,
-        group_canister::accept_p2p_trade_offer::Response::Success
-    ));
+    assert!(
+        matches!(
+            accept_offer_response,
+            group_canister::accept_p2p_trade_offer::Response::Success
+        ),
+        "{accept_offer_response:?}"
+    );
 
     tick_many(env, 5);
 
