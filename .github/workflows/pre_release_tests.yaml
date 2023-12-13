@@ -7,20 +7,17 @@ on:
 name: Run pre-release tests
 
 jobs:
-  download_or_build_canister_wasms:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download canister wasms
-        run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
-      - name: Build canister wasms
-        if: ${{ failure() }}
-        uses: ./.github/workflows/push_canister_wasms.yaml
   run_tests:
     name: Run pre-release tests
     runs-on: ubuntu-latest
-    needs: download_or_build_canister_wasms
     steps:
       - uses: actions/checkout@v4
+      - name: Download canister wasms
+        run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
+        continue-on-error: true
+      - name: Build canister wasms
+        if: ${{ failure() }}
+        uses: ./.github/workflows/push_canister_wasms.yaml
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

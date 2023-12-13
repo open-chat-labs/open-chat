@@ -5218,7 +5218,7 @@ export class OpenChat extends OpenChatAgentWorker {
             messageFiltersStore.set(registry.messageFilters
                 .map((f) => {
                     try {
-                        return new RegExp(f.regex);
+                        return new RegExp(f.regex, "mi");
                     } catch {
                         return undefined;
                     }
