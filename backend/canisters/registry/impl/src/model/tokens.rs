@@ -27,6 +27,7 @@ impl Tokens {
         info_url: String,
         how_to_buy_url: String,
         transaction_url_format: String,
+        supported_standards: Vec<String>,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {
@@ -44,7 +45,7 @@ impl Tokens {
                 transaction_url_format,
                 added: now,
                 last_updated: now,
-                supported_standards: Vec::new(),
+                supported_standards,
             });
             self.last_updated = now;
             true
