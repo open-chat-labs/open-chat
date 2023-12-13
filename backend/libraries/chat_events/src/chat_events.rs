@@ -732,6 +732,45 @@ impl ChatEvents {
         OfferNotFound
     }
 
+    pub fn complete_p2p_trade(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        transaction_index: u64,
+        now: TimestampMillis,
+    ) -> bool {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
+        {
+            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+                if content.complete(user_id, transaction_index, now) {
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return true;
+                };
+            }
+        }
+        false
+    }
+
+    pub fn unreserve_p2p_trade(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
+        {
+            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+                if content.unreserve(user_id) {
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                };
+            }
+        }
+    }
+
     #[allow(clippy::too_many_arguments)]
     pub fn report_message(
         &mut self,

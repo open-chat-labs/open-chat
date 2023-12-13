@@ -570,8 +570,28 @@ impl P2PTradeContent {
             P2PTradeStatus::Open => Err(ReserveP2PTradeError::Expired),
             P2PTradeStatus::Cancelled => Err(ReserveP2PTradeError::Cancelled),
             P2PTradeStatus::Reserved(u, _) => Err(ReserveP2PTradeError::AlreadyReserved(u)),
-            P2PTradeStatus::Completed(u, _) => Err(ReserveP2PTradeError::AlreadyCompleted(u)),
+            P2PTradeStatus::Completed(u, _, _) => Err(ReserveP2PTradeError::AlreadyCompleted(u)),
         }
+    }
+
+    pub fn unreserve(&mut self, user_id: UserId) -> bool {
+        if let P2PTradeStatus::Reserved(u, _) = self.status {
+            if u == user_id {
+                self.status = P2PTradeStatus::Open;
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn complete(&mut self, user_id: UserId, transaction_index: u64, now: TimestampMillis) -> bool {
+        if let P2PTradeStatus::Reserved(u, _) = self.status {
+            if u == user_id {
+                self.status = P2PTradeStatus::Completed(user_id, transaction_index, now);
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -580,7 +600,7 @@ pub enum P2PTradeStatus {
     Open,
     Cancelled,
     Reserved(UserId, TimestampMillis),
-    Completed(UserId, Box<CompletedCryptoTransaction>),
+    Completed(UserId, u64, TimestampMillis), // u64 is the transaction index
 }
 
 pub enum ReserveP2PTradeError {

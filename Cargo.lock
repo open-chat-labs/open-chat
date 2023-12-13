@@ -2443,6 +2443,8 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "escrow_canister",
+ "escrow_canister_c2c_client",
  "fire_and_forget_handler",
  "futures",
  "gated_groups",

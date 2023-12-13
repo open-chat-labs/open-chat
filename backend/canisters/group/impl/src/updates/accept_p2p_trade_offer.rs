@@ -4,23 +4,44 @@ use canister_tracing_macros::trace;
 use chat_events::ReserveP2PTradeResult;
 use group_canister::accept_p2p_trade_offer::{Response::*, *};
 use ic_cdk_macros::update;
-use types::UserId;
+use icrc_ledger_types::icrc1::transfer::TransferError;
+use types::{MessageIndex, UserId};
 
 #[update]
 #[trace]
 async fn accept_p2p_trade_offer(args: Args) -> Response {
     run_regular_jobs();
 
-    let ReserveP2PTradeOfferResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_trade_offer(args, state)) {
+    let ReserveP2PTradeOfferResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_trade_offer(&args, state)) {
         Ok(result) => result,
         Err(response) => return response,
     };
 
-    match user_canister_c2c_client::c2c_accept_p2p_trade_offer(user_id.into(), &c2c_args).await {
-        _ => {}
+    let result = match user_canister_c2c_client::c2c_accept_p2p_trade_offer(user_id.into(), &c2c_args).await {
+        Ok(user_canister::c2c_accept_p2p_trade_offer::Response::Success(transaction_index)) => {
+            mutate_state(|state| {
+                state.data.chat.events.complete_p2p_trade(
+                    user_id,
+                    args.thread_root_message_index,
+                    args.message_index,
+                    transaction_index,
+                    state.env.now(),
+                )
+            });
+            Success
+        }
+        Ok(user_canister::c2c_accept_p2p_trade_offer::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
+            InsufficientFunds
+        }
+        Ok(response) => InternalError(format!("{response:?}")),
+        Err(error) => InternalError(format!("{error:?}")),
+    };
+
+    if !matches!(result, Success) {
+        mutate_state(|state| rollback(user_id, args.thread_root_message_index, args.message_index, state));
     }
 
-    Success
+    result
 }
 
 struct ReserveP2PTradeOfferResult {
@@ -28,7 +49,7 @@ struct ReserveP2PTradeOfferResult {
     c2c_args: user_canister::c2c_accept_p2p_trade_offer::Args,
 }
 
-fn reserve_p2p_trade_offer(args: Args, state: &mut RuntimeState) -> Result<ReserveP2PTradeOfferResult, Response> {
+fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PTradeOfferResult, Response> {
     if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
@@ -77,4 +98,17 @@ fn reserve_p2p_trade_offer(args: Args, state: &mut RuntimeState) -> Result<Reser
     } else {
         Err(CallerNotInGroup)
     }
+}
+
+fn rollback(
+    user_id: UserId,
+    thread_root_message_index: Option<MessageIndex>,
+    message_index: MessageIndex,
+    state: &mut RuntimeState,
+) {
+    state
+        .data
+        .chat
+        .events
+        .unreserve_p2p_trade(user_id, thread_root_message_index, message_index, state.env.now());
 }
