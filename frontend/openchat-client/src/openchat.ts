@@ -785,6 +785,11 @@ export class OpenChat extends OpenChatAgentWorker {
             CHAT_UPDATE_IDLE_INTERVAL,
             true,
         );
+
+        // we need to load chats at least once if we are completely offline
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startOnlinePoller() {
@@ -4520,7 +4525,7 @@ export class OpenChat extends OpenChatAgentWorker {
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);
-        } catch(e) {
+        } catch (e) {
             this._logger.error("Unable to add message filter - invalid regex", regex);
             return Promise.resolve(false);
         }
@@ -4634,7 +4639,11 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsFormattedText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
+                    getContentAsFormattedText(
+                        (k) => k,
+                        chat.latestMessage.event.content,
+                        get(cryptoLookup),
+                    ),
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -5215,15 +5224,17 @@ export class OpenChat extends OpenChatAgentWorker {
 
             cryptoLookup.set(cryptoRecord);
 
-            messageFiltersStore.set(registry.messageFilters
-                .map((f) => {
-                    try {
-                        return new RegExp(f.regex, "mi");
-                    } catch {
-                        return undefined;
-                    }
-                })
-                .filter((f) => f !== undefined) as RegExp[]);
+            messageFiltersStore.set(
+                registry.messageFilters
+                    .map((f) => {
+                        try {
+                            return new RegExp(f.regex, "mi");
+                        } catch {
+                            return undefined;
+                        }
+                    })
+                    .filter((f) => f !== undefined) as RegExp[],
+            );
         }
 
         if (!this._liveState.anonUser) {
