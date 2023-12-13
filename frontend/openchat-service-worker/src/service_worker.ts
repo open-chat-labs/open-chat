@@ -29,23 +29,79 @@ import {
 } from "openchat-shared";
 
 declare const self: ServiceWorkerGlobalScope;
+const CACHE_NAME = "openchat_asset_cache";
+const OPENCHAT_DOCUMENT_KEY = "openchat_document_key";
 
 const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
-    ev.waitUntil(self.skipWaiting().then(() => console.debug("SW: skipWaiting promise resolved")));
+    ev.waitUntil(
+        Promise.all([
+            self.skipWaiting().then(() => console.debug("SW: skipWaiting promise resolved")),
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.addAll(["/"]);
+            }),
+        ]),
+    );
 });
 
 self.addEventListener("activate", (ev) => {
     // upon activation take control of all clients (tabs & windows)
-    ev.waitUntil(self.clients.claim());
-    console.debug("SW: actived");
+    ev.waitUntil(
+        Promise.all([
+            self.clients.claim(),
+            caches.keys().then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((name) => {
+                        if (name !== CACHE_NAME) {
+                            return caches.delete(name);
+                        }
+                    }),
+                );
+            }),
+        ]),
+    );
+    console.debug("SW: activated");
 });
 
-self.addEventListener("fetch", () => {
-    console.debug("SW: dummy fetch interceptor");
+self.addEventListener("fetch", (ev: FetchEvent) => {
+    const requestURL = new URL(ev.request.url);
+    const path = requestURL.pathname;
+
+    // Check for a navigation request i.e. a request for the document itself
+    if (ev.request.mode === "navigate") {
+        console.debug("SW: using NetworkFirst cache strategy for: ", path);
+        ev.respondWith(
+            fetch(ev.request)
+                .then((networkResponse: Response) => {
+                    // If the fetch is successful, update the cache
+                    if (networkResponse.ok) {
+                        return caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(OPENCHAT_DOCUMENT_KEY, networkResponse.clone());
+                            return networkResponse;
+                        });
+                    }
+                    return networkResponse;
+                })
+                .catch(() => {
+                    // If the fetch fails, try to serve from cache
+                    return caches.match(OPENCHAT_DOCUMENT_KEY).then((cachedResponse) => {
+                        // finally if there is nothing in the cache then we must just fail
+                        return (
+                            cachedResponse ||
+                            new Response("Offline", {
+                                status: 500,
+                                headers: { "Content-Type": "text/plain" },
+                            })
+                        );
+                    });
+                }),
+        );
+    } else {
+        ev.respondWith(fetch(ev.request));
+    }
 });
 
 self.addEventListener("push", (ev: PushEvent) => {
