@@ -69,7 +69,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub notifications: EventStream<NotificationEnvelope>,
     pub subscriptions: Subscriptions,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }

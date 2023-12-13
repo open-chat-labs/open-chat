@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
+use types::SNS_FEE_SHARE_PERCENT;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
@@ -103,7 +104,7 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (amount_available * 4 / 5) / owner_count;
+        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
         let amount = owner_share.saturating_sub(gate.fee);
         if amount > 0 {
             for owner in owners {

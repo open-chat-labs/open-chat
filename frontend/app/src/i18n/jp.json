@@ -959,7 +959,7 @@
         "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます",
         "approvePaymentTitle": "支払いの承認",
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
-        "paymentDistributionMessage": "このうち 80% は {level} の所有者に、20% は OpenChat SNS の財務省に寄付されます。",
+        "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
         "tokenNeuronHolder": "{token} ニューロン ホルダー",
         "payment": "支払い",
         "tokenPayment": "{token} の支払い",
