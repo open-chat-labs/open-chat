@@ -50,7 +50,7 @@ export class OpenChatAgentWorker extends EventTarget {
 
     protected registerServiceWorker(): Promise<ServiceWorkerRegistration> {
         return navigator.serviceWorker
-            .register("process.env.SERVICE_WORKER_PATH", { type: "module" })
+            .register(`/service_worker.js?${this.config.websiteVersion}`, { type: "module" })
             .then((reg) => {
                 reg.update();
                 return reg;

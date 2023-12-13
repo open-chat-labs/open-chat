@@ -47,6 +47,7 @@ self.addEventListener("message", (ev: ExtendableMessageEvent) => {
     // TODO - make sure that this does not pick up messages from host
     // windows in integration mode
     if (ev.data.kind === "init") {
+        console.debug("SW: received init message in the service worker 123");
         api.init(ev.ports[0], ev.data as InitMessage);
     }
 });

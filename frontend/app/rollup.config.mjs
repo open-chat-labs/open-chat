@@ -92,7 +92,6 @@ if (production && !process.env.USERGEEK_APIKEY) {
 if (production && !process.env.METERED_APIKEY) {
     throw Error("METERED_APIKEY environment variable not set");
 }
-const SERVICE_WORKER_PATH = "/service_worker.js";
 
 console.log("BUILD_ENV", build_env);
 console.log("ENV", env);
@@ -249,7 +248,6 @@ export default {
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,
             ),
-            "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
         }),
 
         html({
