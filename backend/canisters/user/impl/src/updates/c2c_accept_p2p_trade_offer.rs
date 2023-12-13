@@ -25,7 +25,7 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
     };
 
     match icrc_ledger_canister_c2c_client::icrc1_transfer(
-        escrow_canister_id,
+        args.output_token.ledger,
         &TransferArg {
             from_subaccount: None,
             to: Account {
