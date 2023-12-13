@@ -126,7 +126,6 @@ struct Data {
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
