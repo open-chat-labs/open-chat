@@ -5205,6 +5205,8 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async updateRegistry() {
+        if (this._liveState.offlineStore) return;
+
         const [registry, updated] = await this.sendRequest({
             kind: "updateRegistry",
         });

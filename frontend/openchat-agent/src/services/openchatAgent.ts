@@ -1612,6 +1612,7 @@ export class OpenChatAgent extends EventTarget {
     getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
         return new Stream(async (resolve, reject) => {
             const cachedState = await getCachedChats(this.db, this.principal);
+            const isOffline = offline();
             if (cachedState && initialLoad) {
                 resolve(
                     {
@@ -1620,14 +1621,16 @@ export class OpenChatAgent extends EventTarget {
                         anyUpdates: false,
                         suspensionChanged: undefined,
                     },
-                    false,
+                    isOffline,
                 );
             }
-            try {
-                const updates = await this._getUpdates(cachedState);
-                resolve(updates, true);
-            } catch (err) {
-                reject(err);
+            if (!isOffline) {
+                try {
+                    const updates = await this._getUpdates(cachedState);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
             }
         });
     }
@@ -2141,6 +2144,13 @@ export class OpenChatAgent extends EventTarget {
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
+        if (offline()) {
+            return Promise.resolve({
+                byteLimit: 0,
+                bytesUsed: 0,
+            });
+        }
+
         return DataClient.create(this.identity, this.config).storageStatus();
     }
 
@@ -2711,8 +2721,10 @@ export class OpenChatAgent extends EventTarget {
                     [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
                     (ns) => ns.governanceCanisterId,
                 ),
-                messageFilters: [ ...current?.messageFilters ?? [], ...updates.messageFiltersAdded ]
-                    .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
+                messageFilters: [
+                    ...(current?.messageFilters ?? []),
+                    ...updates.messageFiltersAdded,
+                ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
             };
             setCachedRegistry(updated);
             return [updated, true];

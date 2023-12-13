@@ -19,7 +19,7 @@ import type {
     SetDisplayNameResponse,
     DiamondMembershipFees,
 } from "openchat-shared";
-import { Stream } from "openchat-shared";
+import { offline, Stream } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
@@ -73,18 +73,22 @@ export class UserIndexClient extends CandidService {
                 const principal = this.identity.getPrincipal().toString();
                 const cachedUser = await getCachedCurrentUser(principal);
 
+                const isOffline = offline();
+
                 if (cachedUser !== undefined) {
-                    resolve(cachedUser, false);
+                    resolve(cachedUser, isOffline);
                 }
 
-                const liveUser = await this.handleQueryResponse(
-                    () => this.userIndexService.current_user({}),
-                    currentUserResponse,
-                );
-                if (liveUser.kind === "created_user") {
-                    setCachedCurrentUser(principal, liveUser);
+                if (!isOffline) {
+                    const liveUser = await this.handleQueryResponse(
+                        () => this.userIndexService.current_user({}),
+                        currentUserResponse,
+                    );
+                    if (liveUser.kind === "created_user") {
+                        setCachedCurrentUser(principal, liveUser);
+                    }
+                    resolve(liveUser, true);
                 }
-                resolve(liveUser, true);
             } catch (err) {
                 reject(err);
             }
