@@ -168,13 +168,6 @@ type SwapTokensResponse = variant {
     InternalError : text;
 };
 
-type TokenInfo = record {
-    token : Cryptocurrency;
-    ledger : CanisterId;
-    decimals : nat8;
-    fee: nat;
-};
-
 type TokenSwapStatusArgs = record {
     swap_id : nat;
 };
@@ -553,6 +546,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PTradeSetUpFailed : text;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
@@ -589,6 +583,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PTradeSetUpFailed : text;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
