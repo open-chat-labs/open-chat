@@ -3,6 +3,7 @@ pub mod add_reaction;
 pub mod approve_transfer;
 pub mod archive_unarchive_chats;
 pub mod block_user;
+pub mod c2c_accept_p2p_trade_offer;
 pub mod c2c_charge_user_account;
 pub mod c2c_delete_messages;
 pub mod c2c_edit_message;

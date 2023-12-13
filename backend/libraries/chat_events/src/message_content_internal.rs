@@ -52,7 +52,11 @@ pub enum MessageContentInternal {
 }
 
 impl MessageContentInternal {
-    pub fn new_with_transfer(content: MessageContentInitial, transfer: CompletedCryptoTransaction) -> MessageContentInternal {
+    pub fn new_with_transfer(
+        content: MessageContentInitial,
+        transfer: CompletedCryptoTransaction,
+        p2p_trade_offer_id: Option<u32>,
+    ) -> MessageContentInternal {
         match content {
             MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(CryptoContentInternal {
                 recipient: c.recipient,
@@ -60,7 +64,9 @@ impl MessageContentInternal {
                 caption: c.caption,
             }),
             MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
-            MessageContentInitial::P2PTrade(c) => MessageContentInternal::P2PTrade(P2PTradeContent::new(c, transfer)),
+            MessageContentInitial::P2PTrade(c) => {
+                MessageContentInternal::P2PTrade(P2PTradeContent::new(p2p_trade_offer_id.unwrap(), c, transfer))
+            }
             _ => unreachable!("Message must include a crypto transfer"),
         }
     }

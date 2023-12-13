@@ -170,7 +170,7 @@ fn send_message_impl(
         message_id: args.message_id,
         sender: my_user_id,
         content: if let Some(transfer) = completed_transfer.clone() {
-            MessageContentInternal::new_with_transfer(args.content.clone(), transfer)
+            MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None)
         } else {
             args.content.clone().try_into().unwrap()
         },

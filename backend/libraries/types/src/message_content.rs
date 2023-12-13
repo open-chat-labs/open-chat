@@ -535,8 +535,10 @@ pub struct P2PTradeContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PTradeContent {
+    pub offer_id: u32,
     pub input_token: TokenInfo,
-    pub input_transfer: CompletedCryptoTransaction,
+    pub input_amount: u128,
+    pub input_transaction_index: u64,
     pub output_token: TokenInfo,
     pub output_amount: u128,
     pub expires_at: TimestampMillis,
@@ -545,15 +547,30 @@ pub struct P2PTradeContent {
 }
 
 impl P2PTradeContent {
-    pub fn new(content: P2PTradeContentInitial, transfer: CompletedCryptoTransaction) -> P2PTradeContent {
+    pub fn new(offer_id: u32, content: P2PTradeContentInitial, transfer: CompletedCryptoTransaction) -> P2PTradeContent {
         P2PTradeContent {
+            offer_id,
             input_token: content.input_token,
-            input_transfer: transfer,
+            input_amount: transfer.units(),
+            input_transaction_index: transfer.index(),
             output_token: content.output_token,
             output_amount: content.output_amount,
             expires_at: content.expires_at,
             status: P2PTradeStatus::Open,
             caption: content.caption,
+        }
+    }
+
+    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> Result<(), ReserveP2PTradeError> {
+        match self.status {
+            P2PTradeStatus::Open if now > self.expires_at => {
+                self.status = P2PTradeStatus::Reserved(user_id, now);
+                Ok(())
+            }
+            P2PTradeStatus::Open => Err(ReserveP2PTradeError::Expired),
+            P2PTradeStatus::Cancelled => Err(ReserveP2PTradeError::Cancelled),
+            P2PTradeStatus::Reserved(u, _) => Err(ReserveP2PTradeError::AlreadyReserved(u)),
+            P2PTradeStatus::Completed(u, _) => Err(ReserveP2PTradeError::AlreadyCompleted(u)),
         }
     }
 }
@@ -564,6 +581,13 @@ pub enum P2PTradeStatus {
     Cancelled,
     Reserved(UserId, TimestampMillis),
     Completed(UserId, Box<CompletedCryptoTransaction>),
+}
+
+pub enum ReserveP2PTradeError {
+    Cancelled,
+    Expired,
+    AlreadyReserved(UserId),
+    AlreadyCompleted(UserId),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

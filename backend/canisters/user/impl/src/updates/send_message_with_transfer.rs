@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::model::p2p_trades::P2PTradeOfferStatus;
+use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -46,13 +46,10 @@ async fn send_message_with_transfer_to_channel(
     };
 
     // Make the crypto transfer
-    let completed_transaction = match process_transaction(pending_transaction, p2p_offer_id).await {
-        Ok(completed) => completed,
+    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id).await {
+        Ok((c, t)) => (c, t),
         Err(error) => return TransferFailed(error),
     };
-
-    // Mutate the content so it now includes the completed transaction
-    let content = MessageContentInternal::new_with_transfer(args.content, completed_transaction.clone());
 
     // Build the send_message args
     let c2c_args = community_canister::c2c_send_message::Args {
@@ -134,13 +131,10 @@ async fn send_message_with_transfer_to_group(
     };
 
     // Make the crypto transfer
-    let completed_transaction = match process_transaction(pending_transaction, p2p_offer_id).await {
-        Ok(completed) => completed,
+    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id).await {
+        Ok((c, t)) => (c, t),
         Err(error) => return TransferFailed(error),
     };
-
-    // Mutate the content so it now includes the completed transaction
-    let content = MessageContentInternal::new_with_transfer(args.content, completed_transaction.clone());
 
     // Build the send_message args
     let c2c_args = group_canister::c2c_send_message::Args {
@@ -264,9 +258,10 @@ fn prepare(content: &MessageContentInitial, state: &mut RuntimeState) -> Prepare
 }
 
 async fn process_transaction(
+    content: MessageContentInitial,
     pending_transaction: PendingCryptoTransaction,
     p2p_offer_id: Option<u32>,
-) -> Result<CompletedCryptoTransaction, String> {
+) -> Result<(MessageContentInternal, CompletedCryptoTransaction), String> {
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(completed) => {
             if let Some(id) = p2p_offer_id {
@@ -286,7 +281,10 @@ async fn process_transaction(
                         .set_offer_status(id, P2PTradeOfferStatus::FundsTransferred, now);
                 });
             }
-            Ok(completed)
+            Ok((
+                MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_offer_id),
+                completed,
+            ))
         }
         Err(failed) => {
             if let Some(id) = p2p_offer_id {
@@ -310,19 +308,20 @@ async fn set_up_p2p_trade(
     };
 
     mutate_state(|state| {
+        let my_user_id = UserId::from(state.env.canister_id());
         let now = state.env.now();
 
-        state.data.p2p_trades.add(
+        state.data.p2p_trades.add(P2PTradeOffer::new(
             id,
+            my_user_id,
             args.input_token.clone(),
             args.input_amount,
             args.output_token.clone(),
             args.output_amount,
             args.expires_at,
             now,
-        );
+        ));
 
-        let my_user_id = UserId::from(state.env.canister_id());
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: args.input_token.ledger,
             token: args.input_token.token.clone(),
