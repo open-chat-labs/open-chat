@@ -20,6 +20,5 @@ pub struct Args {
 pub enum Response {
     Success(u64), // The transaction index
     TransferError(TransferError),
-    UserNotInGroupOrCommunity,
     InternalError(String),
 }

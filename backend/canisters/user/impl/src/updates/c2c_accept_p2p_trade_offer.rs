@@ -1,16 +1,16 @@
-use crate::guards::caller_is_owner;
+use crate::guards::caller_is_known_group_or_community_canister;
 use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
-use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{CanisterId, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_trade_offer::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update(guard = "caller_is_owner")]
+#[update_msgpack(guard = "caller_is_known_group_or_community_canister")]
 #[trace]
 async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
     run_regular_jobs();
@@ -72,19 +72,14 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = state.env.caller();
-    if state.data.group_chats.exists(&caller.into()) || state.data.communities.exists(&caller.into()) {
-        if let Some(offer) = state.data.p2p_trades.get(args.offer_id) {
-            if let Some(index) = offer.output_transaction_index {
-                return Err(Success(index));
-            }
+    if let Some(offer) = state.data.p2p_trades.get(args.offer_id) {
+        if let Some(index) = offer.output_transaction_index {
+            return Err(Success(index));
         }
-        Ok(PrepareResult {
-            my_user_id: state.env.canister_id().into(),
-            escrow_canister_id: state.data.escrow_canister_id,
-            now: state.env.now(),
-        })
-    } else {
-        Err(UserNotInGroupOrCommunity)
     }
+    Ok(PrepareResult {
+        my_user_id: state.env.canister_id().into(),
+        escrow_canister_id: state.data.escrow_canister_id,
+        now: state.env.now(),
+    })
 }
