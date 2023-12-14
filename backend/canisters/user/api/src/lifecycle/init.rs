@@ -10,6 +10,7 @@ pub struct Args {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub username: String,
     pub openchat_bot_messages: Vec<MessageContent>,

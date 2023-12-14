@@ -246,6 +246,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
+                escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -273,6 +274,8 @@ struct Data {
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
+    #[serde(default = "escrow_canister_id")]
+    escrow_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
     channels: Channels,
@@ -295,6 +298,10 @@ struct Data {
     pub total_payment_receipts: PaymentReceipts,
 }
 
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
@@ -314,6 +321,7 @@ impl Data {
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         gate: Option<AccessGate>,
         default_channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
@@ -341,6 +349,7 @@ impl Data {
             local_group_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             date_created: now,
             members,
             channels,
@@ -469,5 +478,6 @@ pub struct CanisterIds {
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

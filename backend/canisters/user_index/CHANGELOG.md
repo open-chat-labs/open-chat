@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Some adjustments to modclub submissions ([#5000](https://github.com/open-chat-labs/open-chat/pull/5000))
+- Add `escrow_canister_id` to LocalUserIndex canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+
 
 ### Fixed
 

@@ -47,11 +47,13 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
+        let sender_is_bot = member.is_bot;
 
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.validate_and_send_message(
             user_id,
+            sender_is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,

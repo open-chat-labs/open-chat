@@ -9,7 +9,7 @@ pub struct Offers {
 
 impl Offers {
     pub fn push(&mut self, caller: UserId, args: escrow_canister::create_offer::Args, now: TimestampMillis) -> u32 {
-        let id = self.map.last_key_value().map_or(1, |(k, _)| *k);
+        let id = self.map.last_key_value().map(|(k, _)| *k).unwrap_or_default();
         self.map.insert(id, Offer::new(id, caller, args, now));
         id
     }
