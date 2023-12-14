@@ -17,6 +17,7 @@ pub struct Args {
     pub mentioned: Vec<User>,
     pub correlation_id: u64,
     pub rules_accepted: Option<Version>,
+    pub message_filter_failed: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

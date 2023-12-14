@@ -17,6 +17,8 @@ pub struct SendMessageArgs {
     pub content: MessageContentInternal,
     pub replies_to: Option<crate::c2c_send_messages::C2CReplyContext>,
     pub forwarding: bool,
+    #[serde(default)]
+    pub message_filter_failed: Option<u64>,
     pub correlation_id: u64,
 }
 
@@ -30,6 +32,7 @@ impl From<crate::c2c_send_messages::SendMessageArgs> for SendMessageArgs {
             content: MessageContentInitial::from(value.content).try_into().unwrap(),
             replies_to: value.replies_to,
             forwarding: value.forwarding,
+            message_filter_failed: value.message_filter_failed,
             correlation_id: value.correlation_id,
         }
     }

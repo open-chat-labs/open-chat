@@ -68,6 +68,7 @@ fn prize_messages_can_be_claimed_successfully() {
             mentioned: Vec::new(),
             correlation_id: 0,
             rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
@@ -155,6 +156,7 @@ fn unclaimed_prizes_get_refunded(delete_message: bool) {
             mentioned: Vec::new(),
             correlation_id: 0,
             rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
