@@ -59,6 +59,7 @@ fn p2p_trade_succeeds() {
             mentioned: Vec::new(),
             correlation_id: 0,
             rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
