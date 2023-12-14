@@ -7,7 +7,6 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
-    localUserIndexResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
