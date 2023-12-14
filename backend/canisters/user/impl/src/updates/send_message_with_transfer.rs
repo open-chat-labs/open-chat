@@ -14,7 +14,7 @@ use types::{
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
 use utils::consts::{MEMO_MESSAGE, MEMO_P2P_OFFER, MEMO_PRIZE};
-use utils::time::NANOS_PER_MILLISECOND;
+use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -243,7 +243,11 @@ fn prepare(content: &MessageContentInitial, state: &mut RuntimeState) -> Prepare
                 input_amount: p.input_amount,
                 output_token: p.output_token.clone(),
                 output_amount: p.output_amount,
-                expires_at: p.expires_at,
+                // Add 10 minutes to the expiry in the Escrow canister.
+                // By doing this we ensure that if the trade is accepted in the Group/Community
+                // before it expires then there will still be time to notify the Escrow canister
+                // before the trade expires there.
+                expires_at: p.expires_at + (10 * MINUTE_IN_MS),
             };
             return P2PTrade(state.data.escrow_canister_id, create_offer_args);
         }
