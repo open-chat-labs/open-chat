@@ -1186,6 +1186,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'recipient' : UserId,
     'forwarding' : IDL.Bool,
     'correlation_id' : IDL.Nat64,
@@ -1237,6 +1238,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_rules_accepted' : IDL.Opt(Version),
     'community_id' : CommunityId,
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'community_rules_accepted' : IDL.Opt(Version),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
@@ -1271,6 +1273,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageWithTransferToGroupArgs = IDL.Record({
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
     'group_id' : ChatId,

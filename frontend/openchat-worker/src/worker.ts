@@ -553,6 +553,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.event,
                         payload.rulesAccepted,
                         payload.communityRulesAccepted,
+                        payload.messageFilterFailed,
                     ),
                 );
                 break;

@@ -169,6 +169,7 @@ export class AnonUserClient {
     sendMessage(
         _chatId: DirectChatIdentifier,
         _event: EventWrapper<Message>,
+        _messageFilterFailed: bigint | undefined,
         _threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         throw new AnonymousOperationError();

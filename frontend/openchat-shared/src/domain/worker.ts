@@ -645,6 +645,7 @@ type SendMessage = {
     event: EventWrapper<Message>;
     rulesAccepted: number | undefined;
     communityRulesAccepted: number | undefined;
+    messageFilterFailed: bigint | undefined;
     kind: "sendMessage";
 };
 

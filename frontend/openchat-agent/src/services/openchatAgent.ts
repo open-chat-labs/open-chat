@@ -381,6 +381,7 @@ export class OpenChatAgent extends EventTarget {
         event: EventWrapper<Message>,
         rulesAccepted: number | undefined,
         communityRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -402,6 +403,7 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     communityRulesAccepted,
                     rulesAccepted,
+                    messageFilterFailed,
                 );
             }
             return this.sendChannelMessage(
@@ -413,6 +415,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 communityRulesAccepted,
                 rulesAccepted,
+                messageFilterFailed,
             );
         }
         if (chatId.kind === "group_chat") {
@@ -427,6 +430,7 @@ export class OpenChatAgent extends EventTarget {
                     event,
                     threadRootMessageIndex,
                     rulesAccepted,
+                    messageFilterFailed,
                 );
             }
             return this.sendGroupMessage(
@@ -437,10 +441,11 @@ export class OpenChatAgent extends EventTarget {
                 event,
                 threadRootMessageIndex,
                 rulesAccepted,
+                messageFilterFailed,
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId, event, threadRootMessageIndex);
+            return this.sendDirectMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -454,6 +459,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -464,6 +470,7 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             communityRulesAccepted,
             channelRulesAccepted,
+            messageFilterFailed,
         );
     }
 
@@ -475,6 +482,7 @@ export class OpenChatAgent extends EventTarget {
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -483,6 +491,7 @@ export class OpenChatAgent extends EventTarget {
             event,
             threadRootMessageIndex,
             rulesAccepted,
+            messageFilterFailed,
         );
     }
 
@@ -509,9 +518,10 @@ export class OpenChatAgent extends EventTarget {
     private sendDirectMessage(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(chatId, event, threadRootMessageIndex);
+        return this.userClient.sendMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
     }
 
     private editDirectMessage(
