@@ -1,4 +1,6 @@
-use crate::{CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, TimestampMillis, UserId};
+use crate::{
+    local_user_index_canister_id, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, TimestampMillis, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -33,12 +35,33 @@ pub struct DeletedCommunityInfo {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[serde(from = "CommunityImportedIntoPrevious")]
 pub struct CommunityImportedInto {
     pub community_name: String,
     pub community_id: CommunityId,
     pub local_user_index_canister_id: CanisterId,
     pub channel: ChannelLatestMessageIndex,
     pub other_default_channels: Vec<ChannelLatestMessageIndex>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct CommunityImportedIntoPrevious {
+    pub community_name: String,
+    pub community_id: CommunityId,
+    pub channel: ChannelLatestMessageIndex,
+    pub other_default_channels: Vec<ChannelLatestMessageIndex>,
+}
+
+impl From<CommunityImportedIntoPrevious> for CommunityImportedInto {
+    fn from(value: CommunityImportedIntoPrevious) -> Self {
+        CommunityImportedInto {
+            community_name: value.community_name,
+            community_id: value.community_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.community_id.into()),
+            channel: value.channel,
+            other_default_channels: value.other_default_channels,
+        }
+    }
 }
 
 impl From<DeletedGroupInfoInternal> for DeletedGroupInfo {

@@ -10,6 +10,7 @@ fn main() {
     generate_candid_method!(community, events, query);
     generate_candid_method!(community, explore_channels, query);
     generate_candid_method!(community, invite_code, query);
+    generate_candid_method!(community, local_user_index, query);
     generate_candid_method!(community, messages_by_message_index, query);
     generate_candid_method!(community, search_channel, query);
     generate_candid_method!(community, selected_channel_initial, query);
@@ -22,6 +23,7 @@ fn main() {
     generate_candid_method!(community, summary_updates, query);
     generate_candid_method!(community, thread_previews, query);
 
+    generate_candid_method!(community, accept_p2p_trade_offer, update);
     generate_candid_method!(community, add_members_to_channel, update);
     generate_candid_method!(community, add_reaction, update);
     generate_candid_method!(community, block_user, update);

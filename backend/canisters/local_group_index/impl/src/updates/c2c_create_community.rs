@@ -84,6 +84,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
+        escrow_canister_id: state.data.escrow_canister_id,
         avatar: args.avatar,
         banner: args.banner,
         gate: args.gate,

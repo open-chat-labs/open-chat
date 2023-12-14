@@ -103,6 +103,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                escrow_canister_id: self.data.escrow_canister_id,
             },
         }
     }
@@ -125,6 +126,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    #[serde(default = "escrow_canister_id")]
+    pub escrow_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -133,6 +136,10 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub rng_seed: [u8; 32],
+}
+
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {
@@ -145,6 +152,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -163,6 +171,7 @@ impl Data {
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -244,6 +253,7 @@ impl Default for Data {
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
+            escrow_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
@@ -311,4 +321,5 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub escrow_canister_id: CanisterId,
 }

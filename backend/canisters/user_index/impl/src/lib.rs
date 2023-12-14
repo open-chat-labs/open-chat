@@ -181,6 +181,8 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                storage_index: self.data.storage_index_canister_id,
+                escrow: self.data.escrow_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
@@ -203,6 +205,8 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
+    #[serde(default = "escrow_canister_id")]
+    pub escrow_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
@@ -226,6 +230,10 @@ struct Data {
     pub rng_seed: [u8; 32],
 }
 
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -237,6 +245,7 @@ impl Data {
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
         test_mode: bool,
@@ -254,6 +263,7 @@ impl Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id,
+            escrow_canister_id,
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
@@ -334,6 +344,7 @@ impl Default for Data {
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id: Principal::anonymous(),
+            escrow_canister_id: Principal::anonymous(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
@@ -421,5 +432,7 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub storage_index: CanisterId,
+    pub escrow: CanisterId,
     pub internet_identity: CanisterId,
 }

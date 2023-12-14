@@ -10,13 +10,18 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
     BalanceTooLow(BalanceTooLowResult),
     OfferAlreadyAccepted,
     OfferCancelled,
     OfferExpired,
     OfferNotFound,
     InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub complete: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

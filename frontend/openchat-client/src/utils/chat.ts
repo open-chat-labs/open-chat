@@ -75,6 +75,7 @@ import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
 import { bigIntMax, messagePermissionsList } from "openchat-shared";
+import type { MessageFilter } from "../stores/messageFilters";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -424,7 +425,7 @@ export function mergeUnconfirmedIntoSummary(
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
-    messageFilters: RegExp[],
+    messageFilters: MessageFilter[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -451,7 +452,11 @@ export function mergeUnconfirmedIntoSummary(
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
-        const failedMessageFilter = !filterMessage(latestMessage.event, messageFilters, currentUserId);
+
+        // Don't hide the sender's own messages
+        const failedMessageFilter = latestMessage.event.sender !== currentUserId 
+            ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined 
+            : false;
 
         if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
@@ -1245,7 +1250,7 @@ export function mergeEventsAndLocalUpdates(
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
     currentUserId: string,
-    messageFilters: RegExp[],
+    messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1282,8 +1287,11 @@ export function mergeEventsAndLocalUpdates(
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 blockedUsers.has(e.event.repliesTo.senderId);
 
-            const failedMessageFilter = !filterMessage(e.event, messageFilters, currentUserId);
-
+            // Don't hide the sender's own messages
+            const failedMessageFilter = e.event.sender !== currentUserId 
+                ? doesMessageFailFilter(e.event, messageFilters) !== undefined 
+                : false;
+    
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1339,22 +1347,18 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
-function filterMessage(message: Message, filters: RegExp[], currentUserId: string): boolean {
-    if (message.sender === currentUserId) {
-        return true;
-    }
-
+export function doesMessageFailFilter(message: Message, filters: MessageFilter[]): bigint | undefined {
     const text = getContentAsText(message.content);
 
     if (text !== undefined) {
         for (const f of filters) {
-            if (f.test(text)) {
-                return false;
+            if (f.regex.test(text)) {
+                return f.id;
             }
         }
     }
 
-    return true;
+    return undefined;
 }
 
 function mergeLocalUpdates(

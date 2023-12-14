@@ -521,6 +521,7 @@ impl GroupChatCore {
     pub fn validate_and_send_message(
         &mut self,
         sender: UserId,
+        sender_is_bot: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -534,7 +535,7 @@ impl GroupChatCore {
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -1682,6 +1683,7 @@ impl GroupChatCore {
             crypto: new.crypto.apply_to(old.crypto),
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
+            p2p_trade: new.p2p_trade.apply_to(old.p2p_trade),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }

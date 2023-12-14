@@ -113,6 +113,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         proposals_bot_canister_id,
         cycles_dispenser_canister_id,
         storage_index_canister_id,
+        escrow_canister_id,
         nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         wasm_version: BuildVersion::min(),
@@ -134,6 +135,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         user_index_canister_id,
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
+        escrow_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };

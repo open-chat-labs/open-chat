@@ -14,6 +14,7 @@ pub struct Args {
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub wasm_version: BuildVersion,

@@ -5,10 +5,12 @@ use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::time::SECOND_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -18,6 +20,7 @@ pub enum TimerJob {
     MessageReminder(Box<MessageReminderJob>),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
+    NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -58,6 +61,19 @@ pub struct ProcessTokenSwapJob {
     pub attempt: u32,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NotifyEscrowCanisterOfDepositJob {
+    pub offer_id: u32,
+    pub attempt: u32,
+}
+
+impl NotifyEscrowCanisterOfDepositJob {
+    pub fn run(offer_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+        job.execute();
+    }
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -67,6 +83,7 @@ impl Job for TimerJob {
             TimerJob::MessageReminder(job) => job.execute(),
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::ProcessTokenSwap(job) => job.execute(),
+            TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
         }
     }
 }
@@ -156,5 +173,39 @@ impl Job for ProcessTokenSwapJob {
         ic_cdk::spawn(async move {
             process_token_swap(self.token_swap, self.attempt).await;
         });
+    }
+}
+
+impl Job for NotifyEscrowCanisterOfDepositJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::notify_deposit(
+                escrow_canister_id,
+                &escrow_canister::notify_deposit::Args {
+                    offer_id: self.offer_id,
+                    user_id: None,
+                },
+            )
+            .await
+            {
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
+                Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
+                                offer_id: self.offer_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
     }
 }
