@@ -5,7 +5,7 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{ChatId, Cryptocurrency, MessageContentInitial, P2PTradeContentInitial};
+use types::{ChatEvent, ChatId, Cryptocurrency, MessageContent, MessageContentInitial, P2PTradeContentInitial, P2PTradeStatus};
 use utils::time::DAY_IN_MS;
 
 #[test]
@@ -77,13 +77,10 @@ fn p2p_trade_succeeds() {
         },
     );
 
-    assert!(
-        matches!(
-            accept_offer_response,
-            group_canister::accept_p2p_trade_offer::Response::Success
-        ),
-        "{accept_offer_response:?}"
-    );
+    assert!(matches!(
+        accept_offer_response,
+        group_canister::accept_p2p_trade_offer::Response::Success
+    ));
 
     tick_many(env, 10);
 
@@ -96,6 +93,18 @@ fn p2p_trade_succeeds() {
         client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user2.user_id)),
         1_000_000_000
     );
+
+    let event = client::group::happy_path::events_by_index(env, &user1, group_id, vec![1.into()])
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = event {
+        if let MessageContent::P2PTrade(p) = m.content {
+            assert!(matches!(p.status, P2PTradeStatus::Completed(u, _, _) if u == user2.user_id));
+        }
+    }
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
