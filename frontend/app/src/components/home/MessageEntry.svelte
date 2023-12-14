@@ -31,6 +31,7 @@
     import PreviewFooter from "./PreviewFooter.svelte";
     import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
     import { scream } from "../../utils/scream";
+    import { snowing } from "../../stores/snow";
 
     const client = getContext<OpenChat>("client");
 
@@ -314,6 +315,10 @@
                 document.body.classList.remove("witch");
             }, 2000);
             return false;
+        }
+
+        if (/snow|xmas|christmas|noel/.test(txt)) {
+            $snowing = true;
         }
 
         if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
