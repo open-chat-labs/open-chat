@@ -93,6 +93,7 @@ fn send_crypto_in_channel() {
             mentioned: Vec::new(),
             community_rules_accepted: None,
             channel_rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
@@ -160,6 +161,7 @@ fn send_prize_in_channel() {
             mentioned: Vec::new(),
             community_rules_accepted: None,
             channel_rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
@@ -656,6 +658,7 @@ fn send_dummy_message_with_rules(
             forwarding: false,
             community_rules_accepted,
             channel_rules_accepted,
+            message_filter_failed: None,
         },
     )
 }

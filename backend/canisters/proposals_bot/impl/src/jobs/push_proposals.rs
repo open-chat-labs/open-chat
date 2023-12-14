@@ -66,6 +66,7 @@ async fn push_group_proposal(governance_canister_id: CanisterId, group_id: ChatI
         mentioned: Vec::new(),
         forwarding: false,
         rules_accepted: None,
+        message_filter_failed: None,
         correlation_id: 0,
     };
 
@@ -97,6 +98,7 @@ async fn push_channel_proposal(
         channel_id,
         community_rules_accepted: None,
         channel_rules_accepted: None,
+        message_filter_failed: None,
     };
 
     let response = community_canister_c2c_client::c2c_send_message(community_id.into(), &send_message_args).await;

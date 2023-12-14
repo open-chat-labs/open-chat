@@ -75,7 +75,7 @@ async fn c2c_send_messages_impl(args: user_canister::c2c_send_messages_v2::Args)
                     sender_avatar_id: args.sender_avatar_id,
                     now,
                 },
-                false,
+                message.message_filter_failed.is_some(),
                 state,
             );
         }

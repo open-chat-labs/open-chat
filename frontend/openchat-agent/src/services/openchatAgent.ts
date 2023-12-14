@@ -1612,6 +1612,7 @@ export class OpenChatAgent extends EventTarget {
     getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
         return new Stream(async (resolve, reject) => {
             const cachedState = await getCachedChats(this.db, this.principal);
+            const isOffline = offline();
             if (cachedState && initialLoad) {
                 resolve(
                     {
@@ -1620,14 +1621,16 @@ export class OpenChatAgent extends EventTarget {
                         anyUpdates: false,
                         suspensionChanged: undefined,
                     },
-                    false,
+                    isOffline,
                 );
             }
-            try {
-                const updates = await this._getUpdates(cachedState);
-                resolve(updates, true);
-            } catch (err) {
-                reject(err);
+            if (!isOffline) {
+                try {
+                    const updates = await this._getUpdates(cachedState);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
             }
         });
     }
@@ -2145,6 +2148,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
+        if (offline()) return Promise.resolve(0n);
+
         return this.getLedgerClient(ledger).accountBalance(principal);
     }
 
@@ -2695,32 +2700,45 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 
-    async getRegistry(): Promise<[RegistryValue, boolean]> {
-        const current = await getCachedRegistry();
+    getRegistry(): Stream<[RegistryValue, boolean]> {
+        return new Stream(async (resolve, reject) => {
+            const current = await getCachedRegistry();
+            const isOffline = offline();
+            if (current !== undefined) {
+                resolve([current, false], isOffline);
+            }
 
-        const updates = await this._registryClient.updates(current?.lastUpdated);
-
-        if (updates.kind === "success") {
-            const updated = {
-                lastUpdated: updates.lastUpdated,
-                tokenDetails: distinctBy(
-                    [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
-                    (t) => t.ledger,
-                ),
-                nervousSystemSummary: distinctBy(
-                    [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
-                    (ns) => ns.governanceCanisterId,
-                ),
-                messageFilters: [ ...current?.messageFilters ?? [], ...updates.messageFiltersAdded ]
-                    .filter((f) => !updates.messageFiltersRemoved.includes(f.id))
-            };
-            setCachedRegistry(updated);
-            return [updated, true];
-        } else if (current !== undefined) {
-            return [current, false];
-        } else {
-            throw new Error("Registry is empty... this should never happen!");
-        }
+            if (!isOffline) {
+                const updates = await this._registryClient.updates(current?.lastUpdated);
+                if (updates.kind === "success") {
+                    const updated = {
+                        lastUpdated: updates.lastUpdated,
+                        tokenDetails: distinctBy(
+                            [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
+                            (t) => t.ledger,
+                        ),
+                        nervousSystemSummary: distinctBy(
+                            [
+                                ...updates.nervousSystemSummary,
+                                ...(current?.nervousSystemSummary ?? []),
+                            ],
+                            (ns) => ns.governanceCanisterId,
+                        ),
+                        messageFilters: [
+                            ...(current?.messageFilters ?? []),
+                            ...updates.messageFiltersAdded,
+                        ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                    };
+                    setCachedRegistry(updated);
+                    resolve([updated, true], true);
+                } else if (updates.kind === "success_no_updates" && current !== undefined) {
+                    resolve([current, false], true);
+                } else {
+                    // this is a fallback for is we had nothing in the cache and nothing from the api
+                    reject("Registry is empty... this should never happen!");
+                }
+            }
+        });
     }
 
     setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {

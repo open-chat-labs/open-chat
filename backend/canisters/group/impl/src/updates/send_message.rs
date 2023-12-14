@@ -48,6 +48,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.mentioned.iter().map(|u| u.user_id).collect(),
             args.forwarding,
             args.rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );
@@ -90,6 +91,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.mentioned.iter().map(|u| u.user_id).collect(),
             args.forwarding,
             args.rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );

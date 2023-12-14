@@ -785,6 +785,11 @@ export class OpenChat extends OpenChatAgentWorker {
             CHAT_UPDATE_IDLE_INTERVAL,
             true,
         );
+
+        // we need to load chats at least once if we are completely offline
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startOnlinePoller() {
@@ -2001,13 +2006,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
-        makeRtcConnections(
-            this._liveState.user.userId,
-            chat,
-            resp.events,
-            this._liveState.userStore,
-            this.config.meteredApiKey,
-        );
+        if (!this._liveState.offlineStore) {
+            makeRtcConnections(
+                this._liveState.user.userId,
+                chat,
+                resp.events,
+                this._liveState.userStore,
+                this.config.meteredApiKey,
+            );
+        }
 
         return true;
     }
@@ -2345,13 +2352,15 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-            makeRtcConnections(
-                this._liveState.user.userId,
-                chat,
-                this._liveState.threadEvents,
-                this._liveState.userStore,
-                this.config.meteredApiKey,
-            );
+            if (!this._liveState.offlineStore) {
+                makeRtcConnections(
+                    this._liveState.user.userId,
+                    chat,
+                    this._liveState.threadEvents,
+                    this._liveState.userStore,
+                    this.config.meteredApiKey,
+                );
+            }
 
             if (ascending) {
                 this.dispatchEvent(new LoadedNewMessages({ chatId, threadRootMessageIndex }));
@@ -4520,7 +4529,7 @@ export class OpenChat extends OpenChatAgentWorker {
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);
-        } catch(e) {
+        } catch (e) {
             this._logger.error("Unable to add message filter - invalid regex", regex);
             return Promise.resolve(false);
         }
@@ -4634,7 +4643,11 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsFormattedText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
+                    getContentAsFormattedText(
+                        (k) => k,
+                        chat.latestMessage.event.content,
+                        get(cryptoLookup),
+                    ),
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -5195,40 +5208,52 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private async updateRegistry() {
-        const [registry, updated] = await this.sendRequest({
-            kind: "updateRegistry",
-        });
+    private async updateRegistry(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sendStreamRequest({
+                kind: "updateRegistry",
+            })
+                .subscribe(([registry, updated], final) => {
+                    if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
-        if (updated || Object.keys(get(cryptoLookup)).length === 0) {
-            const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
+                        nervousSystemLookup.set(
+                            toRecord(
+                                registry.nervousSystemSummary.map((ns) => ({
+                                    ...ns,
+                                    token: cryptoRecord[ns.ledgerCanisterId],
+                                })),
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                        );
 
-            nervousSystemLookup.set(
-                toRecord(
-                    registry.nervousSystemSummary.map((ns) => ({
-                        ...ns,
-                        token: cryptoRecord[ns.ledgerCanisterId],
-                    })),
-                    (ns) => ns.governanceCanisterId,
-                ),
-            );
+                        cryptoLookup.set(cryptoRecord);
 
-            cryptoLookup.set(cryptoRecord);
+                        messageFiltersStore.set(
+                            registry.messageFilters
+                                .map((f) => {
+                                    try {
+                                        return new RegExp(f.regex, "mi");
+                                    } catch {
+                                        return undefined;
+                                    }
+                                })
+                                .filter((f) => f !== undefined) as RegExp[],
+                        );
+                    }
 
-            messageFiltersStore.set(registry.messageFilters
-                .map((f) => {
-                    try {
-                        return new RegExp(f.regex, "mi");
-                    } catch {
-                        return undefined;
+                    if (!this._liveState.anonUser && final) {
+                        window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+                    }
+
+                    if (final) {
+                        resolve();
                     }
                 })
-                .filter((f) => f !== undefined) as RegExp[]);
-        }
-
-        if (!this._liveState.anonUser) {
-            window.setTimeout(() => this.refreshBalancesInSeries(), 0);
-        }
+                .catch((err) => {
+                    reject(`Failed to update the registry: ${err}`);
+                });
+        });
     }
 
     private async refreshBalancesInSeries() {
