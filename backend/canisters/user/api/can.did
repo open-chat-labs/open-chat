@@ -7,6 +7,7 @@ type SendMessageV2Args = record {
     content : MessageContentInitial;
     replies_to : opt ReplyContext;
     forwarding : bool;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -172,7 +173,7 @@ type TokenInfo = record {
     token : Cryptocurrency;
     ledger : CanisterId;
     decimals : nat8;
-    fee: nat;
+    fee : nat;
 };
 
 type TokenSwapStatusArgs = record {
@@ -533,6 +534,7 @@ type SendMessageWithTransferToChannelArgs = record {
     mentioned : vec User;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -570,6 +572,7 @@ type SendMessageWithTransferToGroupArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 

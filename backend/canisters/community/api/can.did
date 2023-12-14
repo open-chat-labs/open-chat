@@ -741,6 +741,7 @@ type SendMessageArgs = record {
     forwarding : bool;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
 };
 
 type SendMessageResponse = variant {

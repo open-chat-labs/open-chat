@@ -16,6 +16,7 @@ pub struct Args {
     pub mentioned: Vec<User>,
     pub forwarding: bool,
     pub rules_accepted: Option<Version>,
+    pub message_filter_failed: Option<u64>,
     pub correlation_id: u64,
 }
 

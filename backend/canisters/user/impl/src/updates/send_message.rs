@@ -215,6 +215,7 @@ fn send_message_impl(
                 }
             }),
             forwarding: args.forwarding,
+            message_filter_failed: args.message_filter_failed,
             correlation_id: args.correlation_id,
         };
 
