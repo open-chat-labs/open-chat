@@ -10,7 +10,7 @@ generate_update_call!(notify_deposit);
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, Cryptocurrency, TimestampMillis, TokenInfo, UserId};
+    use types::{CanisterId, Cryptocurrency, TimestampMillis, UserId};
 
     #[allow(clippy::too_many_arguments)]
     pub fn create_offer(
@@ -28,19 +28,9 @@ pub mod happy_path {
             sender,
             escrow_canister_id,
             &escrow_canister::create_offer::Args {
-                input_token: TokenInfo {
-                    token: input_token.clone(),
-                    ledger: input_token.ledger_canister_id().unwrap(),
-                    decimals: input_token.decimals().unwrap(),
-                    fee: input_token.fee().unwrap(),
-                },
+                input_token: input_token.try_into().unwrap(),
                 input_amount,
-                output_token: TokenInfo {
-                    token: output_token.clone(),
-                    ledger: output_token.ledger_canister_id().unwrap(),
-                    decimals: output_token.decimals().unwrap(),
-                    fee: output_token.fee().unwrap(),
-                },
+                output_token: output_token.try_into().unwrap(),
                 output_amount,
                 expires_at,
             },
@@ -52,7 +42,12 @@ pub mod happy_path {
         }
     }
 
-    pub fn notify_deposit(env: &mut PocketIc, user_id: UserId, escrow_canister_id: CanisterId, offer_id: u32) {
+    pub fn notify_deposit(
+        env: &mut PocketIc,
+        user_id: UserId,
+        escrow_canister_id: CanisterId,
+        offer_id: u32,
+    ) -> escrow_canister::notify_deposit::SuccessResult {
         let response = super::notify_deposit(
             env,
             user_id.into(),
@@ -61,7 +56,7 @@ pub mod happy_path {
         );
 
         match response {
-            escrow_canister::notify_deposit::Response::Success => {}
+            escrow_canister::notify_deposit::Response::Success(result) => result,
             response => panic!("'notify_deposit' error: {response:?}"),
         }
     }

@@ -55,6 +55,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 notifications_canister_id: args.notifications_canister_id,
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
+                escrow_canister_id: state.data.escrow_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 test_mode: state.data.test_mode,
             },
