@@ -635,6 +635,12 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    localUserIndex(): Promise<string> {
+        return this.handleResponse(this.service.local_user_index({}), (resp) =>
+            resp.Success.toString(),
+        );
+    }
+
     messagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: number[],

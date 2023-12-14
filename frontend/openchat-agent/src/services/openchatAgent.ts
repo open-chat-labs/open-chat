@@ -584,7 +584,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -593,6 +593,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
+        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
@@ -601,7 +602,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -610,17 +611,23 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
-        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-
         switch (chatId.kind) {
-            case "group_chat":
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
-            case "channel":
+            }
+            case "channel": {
+                const localUserIndex = await this.communityClient(
+                    chatId.communityId,
+                ).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToChannel(
                     chatId.communityId,
                     chatId.channelId,
                     userIds,
                 );
+            }
         }
     }
 
@@ -1828,31 +1835,38 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         _credential?: string,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-
         switch (chatId.kind) {
-            case "group_chat":
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
                 return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
-            case "channel":
+            }
+            case "channel": {
+                const localUserIndex = await this.communityClient(
+                    chatId.communityId,
+                ).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
                 return localUserIndexClient.joinChannel(chatId, communityInviteCode);
+            }
         }
     }
 
     async joinCommunity(
         id: CommunityIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         _credential?: string,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
+        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
