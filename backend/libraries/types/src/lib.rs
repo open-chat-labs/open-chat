@@ -200,3 +200,17 @@ pub fn local_user_index_canister_id(canister_id: CanisterId) -> CanisterId {
     // This will only be reached during tests + local development
     CanisterId::from_text("be2us-64aaa-aaaaa-qaabq-cai").unwrap()
 }
+
+#[test]
+fn test_subnet_eq6en() {
+    let index = local_user_index_canister_id(CanisterId::from_text("2rgzm-4iaaa-aaaaf-aaa5a-cai").unwrap());
+
+    assert_eq!(index, CanisterId::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap());
+}
+
+#[test]
+fn test_subnet_2fq7c() {
+    let index = local_user_index_canister_id(CanisterId::from_text("dgegb-daaaa-aaaar-arlhq-cai").unwrap());
+
+    assert_eq!(index, CanisterId::from_text("aboy3-giaaa-aaaar-aaaaq-cai").unwrap());
+}
