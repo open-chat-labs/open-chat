@@ -67,6 +67,13 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub attempt: u32,
 }
 
+impl NotifyEscrowCanisterOfDepositJob {
+    pub fn run(offer_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+        job.execute();
+    }
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {

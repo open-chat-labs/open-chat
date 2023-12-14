@@ -35,7 +35,7 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
             fee: Some(args.output_token.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
             memo: None,
-            amount: args.output_amount.into(),
+            amount: (args.output_amount + args.output_token.fee).into(),
         },
     )
     .await

@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
-use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, TimerJob};
+use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -267,19 +267,12 @@ async fn process_transaction(
             if let Some(id) = p2p_offer_id {
                 mutate_state(|state| {
                     let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
-                            offer_id: id,
-                            attempt: 0,
-                        })),
-                        now,
-                        now,
-                    );
                     state
                         .data
                         .p2p_trades
                         .set_offer_status(id, P2PTradeOfferStatus::FundsTransferred, now);
                 });
+                NotifyEscrowCanisterOfDepositJob::run(id);
             }
             Ok((
                 MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_offer_id),
@@ -325,9 +318,9 @@ async fn set_up_p2p_trade(
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: args.input_token.ledger,
             token: args.input_token.token.clone(),
-            amount: args.input_amount,
+            amount: args.input_amount + args.input_token.fee,
             to: Account {
-                owner: state.env.canister_id(),
+                owner: state.data.escrow_canister_id,
                 subaccount: Some(deposit_subaccount(my_user_id, id)),
             },
             fee: args.input_token.fee,

@@ -47,9 +47,9 @@ fn p2p_trade_succeeds() {
             message_id: random_message_id(),
             content: MessageContentInitial::P2PTrade(P2PTradeContentInitial {
                 input_token: Cryptocurrency::InternetComputer.try_into().unwrap(),
-                input_amount: 1_000_010_000,
+                input_amount: 1_000_000_000,
                 output_token: Cryptocurrency::CHAT.try_into().unwrap(),
-                output_amount: 10_000_100_000,
+                output_amount: 10_000_000_000,
                 expires_at: now + DAY_IN_MS,
                 caption: None,
             }),
