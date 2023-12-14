@@ -29,7 +29,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
                     state.env.now(),
                 );
             });
-            NotifyEscrowCanisterOfDepositJob::run(c2c_args.offer_id);
+            NotifyEscrowCanisterOfDepositJob::run(user_id, c2c_args.offer_id);
             Success
         }
         Ok(user_canister::c2c_accept_p2p_trade_offer::Response::TransferError(TransferError::InsufficientFunds { .. })) => {

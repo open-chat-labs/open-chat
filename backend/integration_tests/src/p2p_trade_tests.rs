@@ -85,7 +85,7 @@ fn p2p_trade_succeeds() {
         "{accept_offer_response:?}"
     );
 
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
         client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),

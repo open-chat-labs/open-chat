@@ -4,7 +4,7 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction};
+use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -53,13 +53,18 @@ pub struct RemoveExpiredEventsJob;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
+    pub user_id: UserId,
     pub offer_id: u32,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
-    pub fn run(offer_id: u32) {
-        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+    pub fn run(user_id: UserId, offer_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob {
+            user_id,
+            offer_id,
+            attempt: 0,
+        };
         job.execute();
     }
 }
@@ -213,18 +218,21 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
                     offer_id: self.offer_id,
-                    user_id: None,
+                    user_id: Some(self.user_id),
                 },
             )
             .await
             {
-                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
+                Ok(escrow_canister::notify_deposit::Response::Success(result)) => {
+                    panic!("group notified. {}", result.complete);
+                }
                 Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
                     mutate_state(|state| {
                         let now = state.env.now();
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
                                 offer_id: self.offer_id,
+                                user_id: self.user_id,
                                 attempt: self.attempt + 1,
                             }),
                             now + 10 * SECOND_IN_MS,
