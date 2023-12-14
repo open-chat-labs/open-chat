@@ -12,6 +12,7 @@ generate_query_call!(summary);
 generate_query_call!(summary_updates);
 
 // Updates
+generate_update_call!(accept_p2p_trade_offer);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);

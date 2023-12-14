@@ -334,6 +334,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
+                escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -350,6 +351,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    #[serde(default = "escrow_canister_id")]
+    pub escrow_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
@@ -366,6 +369,10 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
+}
+
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {
@@ -393,6 +400,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
@@ -422,6 +430,7 @@ impl Data {
             local_user_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
@@ -613,6 +622,7 @@ pub struct CanisterIds {
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub icp_ledger: CanisterId,
 }
 

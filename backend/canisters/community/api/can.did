@@ -277,6 +277,28 @@ type ThreadPreviewsResponse = variant {
     ReplicaNotUpToDate : TimestampMillis;
 };
 
+type AcceptP2PTradeOfferArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+};
+
+type AcceptP2PTradeOfferResponse = variant {
+    Success;
+    InsufficientFunds;
+    AlreadyAccepted;
+    AlreadyCompleted;
+    OfferExpired;
+    OfferCancelled;
+    OfferNotFound;
+    ChannelNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
 type AddMembersToChannelArgs = record {
     channel_id : ChannelId;
     user_ids : vec UserId;
@@ -963,6 +985,7 @@ service : {
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
+    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);

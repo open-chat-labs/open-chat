@@ -8,9 +8,9 @@ use types::{
     is_default, is_empty_hashmap, is_empty_hashset, is_empty_slice, AudioContent, BlobReference, CanisterId,
     CompletedCryptoTransaction, CryptoContent, CryptoTransaction, CustomContent, FileContent, GiphyContent, GiphyImageVariant,
     ImageContent, MessageContent, MessageContentInitial, MessageIndex, MessageReminderContent, MessageReminderCreatedContent,
-    MessageReport, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent, PrizeContentInitial,
-    PrizeWinnerContent, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, TextContent, ThumbnailData,
-    TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoContent, VoteOperation,
+    MessageReport, P2PTradeContent, PendingCryptoTransaction, PollConfig, PollContent, PollVotes, PrizeContent,
+    PrizeContentInitial, PrizeWinnerContent, Proposal, ProposalContent, RegisterVoteResult, ReportedMessage, TextContent,
+    ThumbnailData, TimestampMillis, TimestampNanos, TotalVotes, UserId, VideoContent, VoteOperation,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -45,12 +45,18 @@ pub enum MessageContentInternal {
     MessageReminder(MessageReminderContentInternal),
     #[serde(rename = "rm")]
     ReportedMessage(ReportedMessageInternal),
+    #[serde(rename = "p2p")]
+    P2PTrade(P2PTradeContent),
     #[serde(rename = "cu")]
     Custom(CustomContentInternal),
 }
 
 impl MessageContentInternal {
-    pub fn new_with_transfer(content: MessageContentInitial, transfer: CompletedCryptoTransaction) -> MessageContentInternal {
+    pub fn new_with_transfer(
+        content: MessageContentInitial,
+        transfer: CompletedCryptoTransaction,
+        p2p_trade_offer_id: Option<u32>,
+    ) -> MessageContentInternal {
         match content {
             MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(CryptoContentInternal {
                 recipient: c.recipient,
@@ -58,6 +64,9 @@ impl MessageContentInternal {
                 caption: c.caption,
             }),
             MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
+            MessageContentInitial::P2PTrade(c) => {
+                MessageContentInternal::P2PTrade(P2PTradeContent::new(p2p_trade_offer_id.unwrap(), c, transfer))
+            }
             _ => unreachable!("Message must include a crypto transfer"),
         }
     }
@@ -79,6 +88,7 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.hydrate(my_user_id)),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.hydrate(my_user_id)),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.hydrate(my_user_id)),
+            MessageContentInternal::P2PTrade(p) => MessageContent::P2PTrade(p.clone()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.hydrate(my_user_id)),
         }
     }
@@ -97,6 +107,7 @@ impl MessageContentInternal {
             MessageContentInternal::Prize(c) => c.caption.as_deref(),
             MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInternal::P2PTrade(p) => p.caption.as_deref(),
             MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::ReportedMessage(_)
@@ -142,6 +153,7 @@ impl MessageContentInternal {
             | MessageContentInternal::MessageReminderCreated(_)
             | MessageContentInternal::MessageReminder(_)
             | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::P2PTrade(_)
             | MessageContentInternal::Custom(_) => {}
         }
 
@@ -166,8 +178,7 @@ impl TryFrom<MessageContentInitial> for MessageContentInternal {
             MessageContentInitial::MessageReminderCreated(r) => Ok(MessageContentInternal::MessageReminderCreated(r.into())),
             MessageContentInitial::MessageReminder(r) => Ok(MessageContentInternal::MessageReminder(r.into())),
             MessageContentInitial::Custom(c) => Ok(MessageContentInternal::Custom(c.into())),
-            MessageContentInitial::Crypto(c) => Ok(MessageContentInternal::Crypto(c.into())),
-            MessageContentInitial::Prize(_) => {
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PTrade(_) | MessageContentInitial::Prize(_) => {
                 // These should be created via `new_with_transfer`
                 Err(())
             }
@@ -230,6 +241,12 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
+            MessageContentInternal::P2PTrade(p) => {
+                document.add_field("trade".to_string(), 1.0, false);
+                document.add_field(p.input_token.token.token_symbol().to_string(), 1.0, false);
+                document.add_field(p.output_token.token.token_symbol().to_string(), 1.0, false);
+                try_add_caption(&mut document, p.caption.as_ref())
+            }
             MessageContentInternal::Custom(c) => {
                 document.add_field(c.kind.clone(), 1.0, false);
             }

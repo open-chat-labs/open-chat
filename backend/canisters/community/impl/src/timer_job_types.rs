@@ -6,9 +6,9 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction};
+use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
-use utils::time::MINUTE_IN_MS;
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -21,6 +21,7 @@ pub enum TimerJob {
     MarkGroupImportComplete(MarkGroupImportCompleteJob),
     RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
+    NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -75,6 +76,39 @@ pub struct MakeTransferJob {
     pub pending_transaction: PendingCryptoTransaction,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NotifyEscrowCanisterOfDepositJob {
+    pub user_id: UserId,
+    pub offer_id: u32,
+    pub channel_id: ChannelId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub transaction_index: u64,
+    pub attempt: u32,
+}
+
+impl NotifyEscrowCanisterOfDepositJob {
+    pub fn run(
+        user_id: UserId,
+        offer_id: u32,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        transaction_index: u64,
+    ) {
+        let job = NotifyEscrowCanisterOfDepositJob {
+            user_id,
+            offer_id,
+            channel_id,
+            thread_root_message_index,
+            message_index,
+            transaction_index,
+            attempt: 0,
+        };
+        job.execute();
+    }
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -87,6 +121,7 @@ impl Job for TimerJob {
             TimerJob::MarkGroupImportComplete(job) => job.execute(),
             TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
+            TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
         }
     }
 }
@@ -237,5 +272,66 @@ impl Job for MakeTransferJob {
                 });
             }
         }
+    }
+}
+
+impl Job for NotifyEscrowCanisterOfDepositJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::notify_deposit(
+                escrow_canister_id,
+                &escrow_canister::notify_deposit::Args {
+                    offer_id: self.offer_id,
+                    user_id: Some(self.user_id),
+                },
+            )
+            .await
+            {
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
+                    mutate_state(|state| {
+                        if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                            channel.chat.events.complete_p2p_trade(
+                                self.user_id,
+                                self.thread_root_message_index,
+                                self.message_index,
+                                self.transaction_index,
+                                state.env.now(),
+                            );
+                        }
+                    });
+                }
+                Ok(escrow_canister::notify_deposit::Response::OfferExpired) => mutate_state(|state| {
+                    if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                        channel.chat.events.unreserve_p2p_trade(
+                            self.user_id,
+                            self.thread_root_message_index,
+                            self.message_index,
+                            state.env.now(),
+                        );
+                    }
+                }),
+                Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
+                                offer_id: self.offer_id,
+                                user_id: self.user_id,
+                                channel_id: self.channel_id,
+                                thread_root_message_index: self.thread_root_message_index,
+                                message_index: self.message_index,
+                                transaction_index: self.transaction_index,
+                                attempt: self.attempt + 1,
+                            }),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
     }
 }

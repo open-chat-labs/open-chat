@@ -1416,6 +1416,7 @@ export const idlFactory = ({ IDL }) => {
     'channel_id' : ChannelId,
     'channel_rules_accepted' : IDL.Opt(Version),
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'community_rules_accepted' : IDL.Opt(Version),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),

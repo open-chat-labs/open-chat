@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
 use types::{
-    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary,
-    TimestampMillis,
+    local_user_index_canister_id, AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex,
+    Milliseconds, PublicGroupSummary, TimestampMillis,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -37,6 +37,7 @@ impl CachedHotGroups {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(from = "CachedPublicGroupSummaryPrevious")]
 pub struct CachedPublicGroupSummary {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -48,6 +49,36 @@ pub struct CachedPublicGroupSummary {
     pub events_ttl: Option<Milliseconds>,
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CachedPublicGroupSummaryPrevious {
+    pub chat_id: ChatId,
+    pub last_updated: TimestampMillis,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: EventIndex,
+    pub latest_message_index: Option<MessageIndex>,
+    pub participant_count: u32,
+    pub events_ttl: Option<Milliseconds>,
+    pub events_ttl_last_updated: TimestampMillis,
+    pub gate: Option<AccessGate>,
+}
+
+impl From<CachedPublicGroupSummaryPrevious> for CachedPublicGroupSummary {
+    fn from(value: CachedPublicGroupSummaryPrevious) -> Self {
+        CachedPublicGroupSummary {
+            chat_id: value.chat_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.chat_id.into()),
+            last_updated: value.last_updated,
+            latest_message: value.latest_message,
+            latest_event_index: value.latest_event_index,
+            latest_message_index: value.latest_message_index,
+            participant_count: value.participant_count,
+            events_ttl: value.events_ttl,
+            events_ttl_last_updated: value.events_ttl_last_updated,
+            gate: value.gate,
+        }
+    }
 }
 
 impl From<PublicGroupSummary> for CachedPublicGroupSummary {

@@ -21,6 +21,7 @@ pub struct Args {
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub gate: Option<AccessGate>,
     pub default_channels: Vec<String>,
     pub default_channel_rules: Option<Rules>,

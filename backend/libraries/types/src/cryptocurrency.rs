@@ -243,6 +243,13 @@ impl CompletedCryptoTransaction {
             CompletedCryptoTransaction::ICRC1(t) => t.fee,
         }
     }
+
+    pub fn index(&self) -> u64 {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.block_index,
+            CompletedCryptoTransaction::ICRC1(t) => t.block_index,
+        }
+    }
 }
 
 impl FailedCryptoTransaction {
