@@ -115,6 +115,7 @@ pub mod happy_path {
                 forwarding: false,
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
+                message_filter_failed: None,
             },
         );
 

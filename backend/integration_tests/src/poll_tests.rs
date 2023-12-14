@@ -127,6 +127,7 @@ fn polls_ended_correctly() {
             mentioned: Vec::new(),
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -252,6 +253,7 @@ fn init_test_data(env: &mut PocketIc, local_user_index: CanisterId, poll_config:
             mentioned: Vec::new(),
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );

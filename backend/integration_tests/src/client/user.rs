@@ -60,6 +60,7 @@ pub mod happy_path {
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
+                message_filter_failed: None,
                 correlation_id: 0,
             },
         );

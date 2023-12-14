@@ -55,6 +55,7 @@ fn suspend_user() {
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -77,6 +78,7 @@ fn suspend_user() {
             mentioned: Vec::new(),
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -108,6 +110,7 @@ fn suspend_user() {
             content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -130,6 +133,7 @@ fn suspend_user() {
             mentioned: Vec::new(),
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
