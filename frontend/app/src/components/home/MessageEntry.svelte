@@ -325,14 +325,6 @@
 
         if (/snow|xmas|christmas|noel/.test(txt)) {
             $snowing = true;
-            if ($currentTheme.name !== "xmasdark" && $currentTheme.name !== "xmaslight") {
-                if ($currentTheme.mode === "light") {
-                    preferredLightThemeName.set("xmaslight");
-                }
-                if ($currentTheme.mode === "dark") {
-                    preferredLightThemeName.set("xmasdark");
-                }
-            }
         }
 
         if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
