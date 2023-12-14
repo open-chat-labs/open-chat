@@ -80,14 +80,29 @@ pub struct MakeTransferJob {
 pub struct NotifyEscrowCanisterOfDepositJob {
     pub user_id: UserId,
     pub offer_id: u32,
+    pub channel_id: ChannelId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub transaction_index: u64,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
-    pub fn run(user_id: UserId, offer_id: u32) {
+    pub fn run(
+        user_id: UserId,
+        offer_id: u32,
+        channel_id: ChannelId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_index: MessageIndex,
+        transaction_index: u64,
+    ) {
         let job = NotifyEscrowCanisterOfDepositJob {
             user_id,
             offer_id,
+            channel_id,
+            thread_root_message_index,
+            message_index,
+            transaction_index,
             attempt: 0,
         };
         job.execute();
@@ -274,7 +289,29 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             )
             .await
             {
-                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
+                    mutate_state(|state| {
+                        if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                            channel.chat.events.complete_p2p_trade(
+                                self.user_id,
+                                self.thread_root_message_index,
+                                self.message_index,
+                                self.transaction_index,
+                                state.env.now(),
+                            );
+                        }
+                    });
+                }
+                Ok(escrow_canister::notify_deposit::Response::OfferExpired) => mutate_state(|state| {
+                    if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                        channel.chat.events.unreserve_p2p_trade(
+                            self.user_id,
+                            self.thread_root_message_index,
+                            self.message_index,
+                            state.env.now(),
+                        );
+                    }
+                }),
                 Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
                     mutate_state(|state| {
                         let now = state.env.now();
@@ -282,6 +319,10 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
                                 offer_id: self.offer_id,
                                 user_id: self.user_id,
+                                channel_id: self.channel_id,
+                                thread_root_message_index: self.thread_root_message_index,
+                                message_index: self.message_index,
+                                transaction_index: self.transaction_index,
                                 attempt: self.attempt + 1,
                             }),
                             now + 10 * SECOND_IN_MS,

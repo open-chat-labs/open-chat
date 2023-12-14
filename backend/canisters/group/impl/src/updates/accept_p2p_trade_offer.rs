@@ -20,16 +20,13 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
 
     let result = match user_canister_c2c_client::c2c_accept_p2p_trade_offer(user_id.into(), &c2c_args).await {
         Ok(user_canister::c2c_accept_p2p_trade_offer::Response::Success(transaction_index)) => {
-            mutate_state(|state| {
-                state.data.chat.events.complete_p2p_trade(
-                    user_id,
-                    args.thread_root_message_index,
-                    args.message_index,
-                    transaction_index,
-                    state.env.now(),
-                );
-            });
-            NotifyEscrowCanisterOfDepositJob::run(user_id, c2c_args.offer_id);
+            NotifyEscrowCanisterOfDepositJob::run(
+                user_id,
+                c2c_args.offer_id,
+                args.thread_root_message_index,
+                args.message_index,
+                transaction_index,
+            );
             Success
         }
         Ok(user_canister::c2c_accept_p2p_trade_offer::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
