@@ -27,11 +27,52 @@ import {
     routeForChatIdentifier,
     toTitleCase,
 } from "openchat-shared";
+import { CacheableResponsePlugin } from "workbox-cacheable-response";
+import { ExpirationPlugin } from "workbox-expiration";
+import { pageCache, staticResourceCache } from "workbox-recipes";
 
 declare const self: ServiceWorkerGlobalScope;
 
 const FILE_ICON =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAA30lEQVRoge2ZMQ6CQBBFn8baA2jNPS09ig29dyIWcAEtxMRY6Cw7O6Pmv2QLEpj/X4YKQAhhoQN6YAKulecQ3J0OuDgUT5PoncuHS3i8NqkSr6Fecx7nWFuwNNhrTphEhEBTiSiBZhKRAk0kogXcJTIEXCWyBEwSK2Nw6TOWOVbe5q0XDv0aNoFZ1s0VbernNyCBbCSQjQSykUA2EshGAtlIIBsJZCOBbCSQjeWrxARsn65rPm6VMn66wbKBs0ORpbhk74GB+t9JpWcAdh4CzINO3Ffauvg4Z7mVF+KfuQEADATf0SgDdQAAAABJRU5ErkJggg==";
+
+staticResourceCache({
+    matchCallback: ({ request }) => {
+        return [
+            "style",
+            "script",
+            "worker",
+            "audio",
+            "font",
+            "frame",
+            "image",
+            "manifest",
+            "video",
+        ].includes(request.destination);
+    },
+    cacheName: "openchat_stale_while_revalidate",
+    plugins: [
+        new CacheableResponsePlugin({
+            statuses: [200],
+        }),
+        new ExpirationPlugin({
+            maxAgeSeconds: 30 * 24 * 60 * 60,
+        }),
+    ],
+});
+
+pageCache({
+    matchCallback: ({ request }) => request.mode === "navigate",
+    networkTimeoutSeconds: 3,
+    cacheName: "openchat_network_first",
+    plugins: [
+        {
+            cacheKeyWillBeUsed: async () => {
+                return "openchat_document";
+            },
+        },
+    ],
+});
 
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
@@ -41,11 +82,7 @@ self.addEventListener("install", (ev) => {
 self.addEventListener("activate", (ev) => {
     // upon activation take control of all clients (tabs & windows)
     ev.waitUntil(self.clients.claim());
-    console.debug("SW: actived");
-});
-
-self.addEventListener("fetch", () => {
-    console.debug("SW: dummy fetch interceptor");
+    console.debug("SW: activated");
 });
 
 self.addEventListener("push", (ev: PushEvent) => {

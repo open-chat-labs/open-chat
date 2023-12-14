@@ -861,19 +861,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "addMessageFilter":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.addMessageFilter(payload.regex),
-                );
+                executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
                 break;
 
             case "removeMessageFilter":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.removeMessageFilter(payload.id),
-                );
+                executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
                 break;
 
             case "suspendUser":
@@ -1262,7 +1254,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "updateRegistry":
-                executeThenReply(payload, correlationId, agent.getRegistry());
+                streamReplies(payload, correlationId, agent.getRegistry());
                 break;
 
             case "setCommunityIndexes":
