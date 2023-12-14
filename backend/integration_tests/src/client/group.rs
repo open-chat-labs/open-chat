@@ -63,6 +63,7 @@ pub mod happy_path {
                 mentioned: Vec::new(),
                 forwarding: false,
                 rules_accepted: None,
+                message_filter_failed: None,
                 correlation_id: 0,
             },
         );

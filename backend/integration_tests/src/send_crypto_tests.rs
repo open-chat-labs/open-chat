@@ -50,6 +50,7 @@ fn send_direct_message_with_transfer_succeeds() {
             }),
             replies_to: None,
             forwarding: false,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -109,6 +110,7 @@ fn send_message_with_transfer_to_group_succeeds() {
             replies_to: None,
             mentioned: Vec::new(),
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -163,6 +165,7 @@ fn send_icp_as_icrc1_converted_to_nns_format() {
             }),
             replies_to: None,
             forwarding: false,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );

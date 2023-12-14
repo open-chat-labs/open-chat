@@ -18,6 +18,7 @@ pub struct Args {
     pub forwarding: bool,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
+    pub message_filter_failed: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

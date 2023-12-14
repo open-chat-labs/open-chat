@@ -809,7 +809,7 @@ export class OpenChat extends OpenChatAgentWorker {
             () => this.updateRegistry(),
             REGISTRY_UPDATE_INTERVAL,
             REGISTRY_UPDATE_INTERVAL,
-            true,
+            false,
         );
     }
 

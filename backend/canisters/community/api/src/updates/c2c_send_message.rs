@@ -15,6 +15,8 @@ pub struct Args {
     pub forwarding: bool,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
+    #[serde(default)]
+    pub message_filter_failed: Option<u64>,
 }
 
 pub type Response = crate::send_message::Response;

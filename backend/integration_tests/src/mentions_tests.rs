@@ -45,6 +45,7 @@ fn mention_users_succeeds(mention_everyone: bool) {
             mentioned: if mention_everyone { Vec::new() } else { vec![(&user2).into(), (&user3).into()] },
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
@@ -116,6 +117,7 @@ fn mention_everyone_only_succeeds_if_authorized(authorized: bool) {
             mentioned: Vec::new(),
             forwarding: false,
             rules_accepted: None,
+            message_filter_failed: None,
             correlation_id: 0,
         },
     );
