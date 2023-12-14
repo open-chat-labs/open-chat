@@ -223,9 +223,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             )
             .await
             {
-                Ok(escrow_canister::notify_deposit::Response::Success(result)) => {
-                    panic!("group notified. {}", result.complete);
-                }
+                Ok(escrow_canister::notify_deposit::Response::Success(_)) => {}
                 Ok(escrow_canister::notify_deposit::Response::InternalError(_)) | Err(_) if self.attempt < 20 => {
                     mutate_state(|state| {
                         let now = state.env.now();
