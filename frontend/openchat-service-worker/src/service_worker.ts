@@ -31,6 +31,10 @@ import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { ExpirationPlugin } from "workbox-expiration";
 import { pageCache, staticResourceCache } from "workbox-recipes";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-expect-error
+self.__WB_DISABLE_DEV_LOGS = true;
+
 declare const self: ServiceWorkerGlobalScope;
 
 const FILE_ICON =
