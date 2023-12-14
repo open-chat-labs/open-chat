@@ -452,7 +452,11 @@ export function mergeUnconfirmedIntoSummary(
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
-        const failedMessageFilter = doesMessageFailFilter(latestMessage.event, messageFilters, currentUserId) !== undefined;
+
+        // Don't hide the sender's own messages
+        const failedMessageFilter = latestMessage.event.sender !== currentUserId 
+            ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined 
+            : false;
 
         if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
@@ -1283,8 +1287,11 @@ export function mergeEventsAndLocalUpdates(
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 blockedUsers.has(e.event.repliesTo.senderId);
 
-            const failedMessageFilter = doesMessageFailFilter(e.event, messageFilters, currentUserId) !== undefined;
-
+            // Don't hide the sender's own messages
+            const failedMessageFilter = e.event.sender !== currentUserId 
+                ? doesMessageFailFilter(e.event, messageFilters) !== undefined 
+                : false;
+    
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1340,11 +1347,7 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
-export function doesMessageFailFilter(message: Message, filters: MessageFilter[], currentUserId: string): bigint | undefined {
-    if (message.sender === currentUserId) {
-        return undefined;
-    }
-
+export function doesMessageFailFilter(message: Message, filters: MessageFilter[]): bigint | undefined {
     const text = getContentAsText(message.content);
 
     if (text !== undefined) {

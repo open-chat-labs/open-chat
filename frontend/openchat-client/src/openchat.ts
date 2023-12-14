@@ -3097,7 +3097,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(retryEvent.event.content);
 
-        const messageFilterFailed = doesMessageFailFilter(event.event, get(messageFiltersStore), this._liveState.user.userId);        
+        const messageFilterFailed = doesMessageFailFilter(event.event, get(messageFiltersStore));
 
         // add the *new* event to unconfirmed
         unconfirmed.add(messageContext, retryEvent);
@@ -3286,7 +3286,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(msg.content);
 
-        const messageFilterFailed = doesMessageFailFilter(msg, get(messageFiltersStore), this._liveState.user.userId);        
+        const messageFilterFailed = doesMessageFailFilter(msg, get(messageFiltersStore));
 
         this.sendRequest({
             kind: "sendMessage",
