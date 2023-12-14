@@ -29,8 +29,15 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
+    import {
+        preferredDarkThemeName,
+        themeType,
+        currentThemeName,
+        currentTheme,
+        preferredLightThemeName,
+    } from "../../theme/themes";
     import { scream } from "../../utils/scream";
+    import { snowing } from "../../stores/snow";
 
     const client = getContext<OpenChat>("client");
 
@@ -314,6 +321,18 @@
                 document.body.classList.remove("witch");
             }, 2000);
             return false;
+        }
+
+        if (/snow|xmas|christmas|noel/.test(txt)) {
+            $snowing = true;
+            if ($currentTheme.name !== "xmasdark" && $currentTheme.name !== "xmaslight") {
+                if ($currentTheme.mode === "light") {
+                    preferredLightThemeName.set("xmaslight");
+                }
+                if ($currentTheme.mode === "dark") {
+                    preferredLightThemeName.set("xmasdark");
+                }
+            }
         }
 
         if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {

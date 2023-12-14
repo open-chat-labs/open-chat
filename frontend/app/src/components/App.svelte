@@ -31,6 +31,8 @@
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
     import Head from "./Head.svelte";
+    import { snowing } from "../stores/snow";
+    import Snow from "./Snow.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
@@ -317,7 +319,11 @@
 
     function unhandledError(ev: Event) {
         logger?.error("Unhandled error: ", ev);
-        if (ev instanceof PromiseRejectionEvent && (ev.reason?.name === "SessionExpiryError" || ev.reason?.name === "InvalidDelegationError")) {
+        if (
+            ev instanceof PromiseRejectionEvent &&
+            (ev.reason?.name === "SessionExpiryError" ||
+                ev.reason?.name === "InvalidDelegationError")
+        ) {
             client.logout();
             ev.preventDefault();
         }
@@ -360,6 +366,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />

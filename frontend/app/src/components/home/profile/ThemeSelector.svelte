@@ -36,6 +36,8 @@
             }
             return p;
         }, partitionedThemes);
+        partitionedThemes.light.sort((a, b) => a.label.localeCompare(b.label));
+        partitionedThemes.dark.sort((a, b) => a.label.localeCompare(b.label));
     });
 
     function selectLightTheme(ev: CustomEvent<string>) {
