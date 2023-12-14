@@ -2148,6 +2148,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
+        if (offline()) return Promise.resolve(0n);
+
         return this.getLedgerClient(ledger).accountBalance(principal);
     }
 
