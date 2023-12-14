@@ -1,3 +1,8 @@
 import { writable } from "svelte/store";
 
-export const messageFiltersStore = writable<RegExp[]>([]);
+export type MessageFilter = {
+    id: bigint;
+    regex: RegExp;
+};
+
+export const messageFiltersStore = writable<MessageFilter[]>([]);

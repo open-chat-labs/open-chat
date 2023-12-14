@@ -63,6 +63,7 @@ import {
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     activeUserIdFromEvent,
+    doesMessageFailFilter,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -439,7 +440,7 @@ import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
 import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
-import { messageFiltersStore } from "./stores/messageFilters";
+import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3096,6 +3097,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(retryEvent.event.content);
 
+        const messageFilterFailed = doesMessageFailFilter(event.event, get(messageFiltersStore), this._liveState.user.userId);        
+
         // add the *new* event to unconfirmed
         unconfirmed.add(messageContext, retryEvent);
 
@@ -3109,6 +3112,7 @@ export class OpenChat extends OpenChatAgentWorker {
             event: retryEvent,
             rulesAccepted,
             communityRulesAccepted,
+            messageFilterFailed,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3282,6 +3286,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(msg.content);
 
+        const messageFilterFailed = doesMessageFailFilter(msg, get(messageFiltersStore), this._liveState.user.userId);        
+
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
@@ -3291,6 +3297,7 @@ export class OpenChat extends OpenChatAgentWorker {
             event,
             rulesAccepted,
             communityRulesAccepted,
+            messageFilterFailed,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -5233,12 +5240,12 @@ export class OpenChat extends OpenChatAgentWorker {
                             registry.messageFilters
                                 .map((f) => {
                                     try {
-                                        return new RegExp(f.regex, "mi");
+                                        return { id: f.id, regex: new RegExp(f.regex, "mi") };
                                     } catch {
                                         return undefined;
                                     }
                                 })
-                                .filter((f) => f !== undefined) as RegExp[],
+                                .filter((f) => f !== undefined) as MessageFilter[],
                         );
                     }
 

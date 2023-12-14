@@ -1637,6 +1637,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'RecipientNotFound' : null };
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'recipient' : UserId,
   'forwarding' : boolean,
   'correlation_id' : bigint,
@@ -1649,6 +1650,7 @@ export interface SendMessageWithTransferToChannelArgs {
   'channel_rules_accepted' : [] | [Version],
   'community_id' : CommunityId,
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'community_rules_accepted' : [] | [Version],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
@@ -1685,6 +1687,7 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
   'group_id' : ChatId,
