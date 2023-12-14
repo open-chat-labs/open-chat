@@ -29,13 +29,7 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import PreviewFooter from "./PreviewFooter.svelte";
-    import {
-        preferredDarkThemeName,
-        themeType,
-        currentThemeName,
-        currentTheme,
-        preferredLightThemeName,
-    } from "../../theme/themes";
+    import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
     import { scream } from "../../utils/scream";
     import { snowing } from "../../stores/snow";
 
