@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{local_user_index_canister_id, CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 use user_canister::mark_read::ThreadRead;
 use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
 
 #[derive(Serialize, Deserialize)]
+#[serde(from = "GroupChatPrevious")]
 pub struct GroupChat {
     pub chat_id: ChatId,
     pub local_user_index_canister_id: CanisterId,
@@ -13,6 +14,28 @@ pub struct GroupChat {
     pub messages_read: GroupMessagesRead,
     pub last_changed_for_my_data: TimestampMillis,
     pub archived: Timestamped<bool>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct GroupChatPrevious {
+    chat_id: ChatId,
+    date_joined: TimestampMillis,
+    messages_read: GroupMessagesRead,
+    last_changed_for_my_data: TimestampMillis,
+    archived: Timestamped<bool>,
+}
+
+impl From<GroupChatPrevious> for GroupChat {
+    fn from(value: GroupChatPrevious) -> Self {
+        GroupChat {
+            chat_id: value.chat_id,
+            local_user_index_canister_id: local_user_index_canister_id(value.chat_id.into()),
+            date_joined: value.date_joined,
+            messages_read: value.messages_read,
+            last_changed_for_my_data: value.last_changed_for_my_data,
+            archived: value.archived,
+        }
+    }
 }
 
 impl GroupChat {
