@@ -29,7 +29,7 @@
     {/each}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .snow {
         position: absolute;
         width: 120vw;
