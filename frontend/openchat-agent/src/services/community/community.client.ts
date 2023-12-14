@@ -7,6 +7,7 @@ import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
     blockUserResponse,
+    localUserIndexResponse,
     messagesByMessageIndexResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
@@ -632,6 +633,12 @@ export class CommunityClient extends CandidService {
                 channel_id: BigInt(chatId.channelId),
             }),
             leaveGroupResponse,
+        );
+    }
+
+    localUserIndex(): Promise<string> {
+        return this.handleResponse(this.service.local_user_index({}), (resp) =>
+            resp.Success.toString(),
         );
     }
 

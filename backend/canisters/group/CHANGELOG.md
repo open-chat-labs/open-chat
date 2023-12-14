@@ -17,7 +17,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Removed `local_user_index` endpoint since that is now included in the summary ([#4977](https://github.com/open-chat-labs/open-chat/pull/4977))
 - Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
 
 ### Fixed
