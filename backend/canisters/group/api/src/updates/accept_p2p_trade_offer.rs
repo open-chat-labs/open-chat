@@ -17,7 +17,7 @@ pub enum Response {
     OfferExpired,
     OfferCancelled,
     OfferNotFound,
-    CallerNotInGroup,
+    UserNotInGroup,
     UserSuspended,
     ChatFrozen,
     InternalError(String),

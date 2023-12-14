@@ -98,7 +98,7 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
             ReserveP2PTradeResult::OfferNotFound => Err(OfferNotFound),
         }
     } else {
-        Err(CallerNotInGroup)
+        Err(UserNotInGroup)
     }
 }
 
