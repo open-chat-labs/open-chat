@@ -162,6 +162,11 @@ export class UserIndexClient extends CandidService {
         users: UsersArgs,
         suspendedUsersSyncedUpTo: bigint | undefined,
     ): Promise<UsersResponse> {
+        if (offline())
+            return Promise.resolve({
+                users: [],
+            });
+
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
         const args = {
