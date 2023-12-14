@@ -49,27 +49,6 @@ staticResourceCache({
             "manifest",
             "video",
         ].includes(request.destination);
-        // return [
-        //     /assets\/.*png|jpg|svg|gif|mp4|css/,
-        //     /main-.*[css|js]$/,
-        //     /vendor-.*[css|js]$/,
-        //     /ArchitecturePage-.*js$/,
-        //     /HashLinkTarget-.*js$/,
-        //     /Headline-.*js$/,
-        //     /RoadmapPage-.*js$/,
-        //     /Miami-.*js$/,
-        //     /DiamondPage-.*js$/,
-        //     /FAQPage-.*js$/,
-        //     /GuidelinesPage-.*js$/,
-        //     /BlogPostPage-.*js$/,
-        //     /SMSUpgrade-.*js$/,
-        //     /WhitepaperPage-.*js$/,
-        //     /worker.js/,
-        //     /openchat.webmanifest/,
-        //     /icon.png/,
-        //     /apple-touch-icon.png/,
-        //     /oc-logo2.svg/,
-        // ].some((re) => re.test(request.url));
     },
     cacheName: "openchat_stale_while_revalidate",
     plugins: [

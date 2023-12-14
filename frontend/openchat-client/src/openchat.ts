@@ -2006,13 +2006,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
-        makeRtcConnections(
-            this._liveState.user.userId,
-            chat,
-            resp.events,
-            this._liveState.userStore,
-            this.config.meteredApiKey,
-        );
+        if (!this._liveState.offlineStore) {
+            makeRtcConnections(
+                this._liveState.user.userId,
+                chat,
+                resp.events,
+                this._liveState.userStore,
+                this.config.meteredApiKey,
+            );
+        }
 
         return true;
     }
@@ -2350,13 +2352,15 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-            makeRtcConnections(
-                this._liveState.user.userId,
-                chat,
-                this._liveState.threadEvents,
-                this._liveState.userStore,
-                this.config.meteredApiKey,
-            );
+            if (!this._liveState.offlineStore) {
+                makeRtcConnections(
+                    this._liveState.user.userId,
+                    chat,
+                    this._liveState.threadEvents,
+                    this._liveState.userStore,
+                    this.config.meteredApiKey,
+                );
+            }
 
             if (ascending) {
                 this.dispatchEvent(new LoadedNewMessages({ chatId, threadRootMessageIndex }));
@@ -5204,44 +5208,52 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private async updateRegistry() {
-        if (this._liveState.offlineStore) return;
+    private async updateRegistry(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sendStreamRequest({
+                kind: "updateRegistry",
+            })
+                .subscribe(([registry, updated], final) => {
+                    if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
 
-        const [registry, updated] = await this.sendRequest({
-            kind: "updateRegistry",
+                        nervousSystemLookup.set(
+                            toRecord(
+                                registry.nervousSystemSummary.map((ns) => ({
+                                    ...ns,
+                                    token: cryptoRecord[ns.ledgerCanisterId],
+                                })),
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                        );
+
+                        cryptoLookup.set(cryptoRecord);
+
+                        messageFiltersStore.set(
+                            registry.messageFilters
+                                .map((f) => {
+                                    try {
+                                        return new RegExp(f.regex, "mi");
+                                    } catch {
+                                        return undefined;
+                                    }
+                                })
+                                .filter((f) => f !== undefined) as RegExp[],
+                        );
+                    }
+
+                    if (!this._liveState.anonUser && final) {
+                        window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+                    }
+
+                    if (final) {
+                        resolve();
+                    }
+                })
+                .catch((err) => {
+                    reject(`Failed to update the registry: ${err}`);
+                });
         });
-
-        if (updated || Object.keys(get(cryptoLookup)).length === 0) {
-            const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
-
-            nervousSystemLookup.set(
-                toRecord(
-                    registry.nervousSystemSummary.map((ns) => ({
-                        ...ns,
-                        token: cryptoRecord[ns.ledgerCanisterId],
-                    })),
-                    (ns) => ns.governanceCanisterId,
-                ),
-            );
-
-            cryptoLookup.set(cryptoRecord);
-
-            messageFiltersStore.set(
-                registry.messageFilters
-                    .map((f) => {
-                        try {
-                            return new RegExp(f.regex, "mi");
-                        } catch {
-                            return undefined;
-                        }
-                    })
-                    .filter((f) => f !== undefined) as RegExp[],
-            );
-        }
-
-        if (!this._liveState.anonUser) {
-            window.setTimeout(() => this.refreshBalancesInSeries(), 0);
-        }
     }
 
     private async refreshBalancesInSeries() {
