@@ -21,6 +21,7 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notifications_canister_id,
         args.proposals_bot_canister_id,
+        args.escrow_canister_id,
         args.username,
         args.test_mode,
         env.now(),

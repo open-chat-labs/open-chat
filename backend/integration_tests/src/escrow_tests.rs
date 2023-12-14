@@ -60,8 +60,11 @@ fn trade_via_escrow_canister_succeeds() {
         chat_amount + 100_000,
     );
 
-    client::escrow::happy_path::notify_deposit(env, user1.user_id, canister_ids.escrow, offer_id);
-    client::escrow::happy_path::notify_deposit(env, user2.user_id, canister_ids.escrow, offer_id);
+    let result1 = client::escrow::happy_path::notify_deposit(env, user1.user_id, canister_ids.escrow, offer_id);
+    let result2 = client::escrow::happy_path::notify_deposit(env, user2.user_id, canister_ids.escrow, offer_id);
+
+    assert!(!result1.complete);
+    assert!(result2.complete);
 
     tick_many(env, 5);
 

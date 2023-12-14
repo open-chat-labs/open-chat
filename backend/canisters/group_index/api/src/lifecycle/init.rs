@@ -13,6 +13,7 @@ pub struct Args {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

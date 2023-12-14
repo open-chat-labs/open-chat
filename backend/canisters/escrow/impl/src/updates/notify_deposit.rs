@@ -39,7 +39,8 @@ async fn notify_deposit(args: Args) -> Response {
                     offer.accepted_by = Some((user_id, now));
                     offer.token1_received = true;
                 }
-                if offer.token0_received && offer.token1_received {
+                let complete = offer.token0_received && offer.token1_received;
+                if complete {
                     let accepted_by = offer.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
                         user_id: offer.created_by,
@@ -59,7 +60,7 @@ async fn notify_deposit(args: Args) -> Response {
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
-                Success
+                Success(SuccessResult { complete })
             }
         }),
         Err(error) => InternalError(format!("{error:?}")),
@@ -85,7 +86,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
 
             if offer.created_by == user_id {
                 if offer.token0_received {
-                    Err(Success)
+                    Err(Success(SuccessResult {
+                        complete: offer.token1_received,
+                    }))
                 } else {
                     Ok(PrepareResult {
                         user_id,
@@ -99,7 +102,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Respo
                 }
             } else if let Some((accepted_by, _)) = offer.accepted_by {
                 if accepted_by == user_id {
-                    Err(Success)
+                    Err(Success(SuccessResult {
+                        complete: offer.token0_received,
+                    }))
                 } else {
                     Err(OfferAlreadyAccepted)
                 }

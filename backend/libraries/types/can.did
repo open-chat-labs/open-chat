@@ -789,6 +789,7 @@ type MessageContentInitial = variant {
     Giphy : GiphyContent;
     GovernanceProposal : ProposalContent;
     Prize : PrizeContentInitial;
+    P2PTrade : P2PTradeContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     Custom : CustomMessageContent;
@@ -809,6 +810,7 @@ type MessageContent = variant {
     PrizeWinner : PrizeWinnerContent;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
+    P2PTrade : P2PTradeContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -1229,6 +1231,7 @@ type MessagePermissions = record {
     crypto : opt PermissionRole;
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
+    p2p_trade : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
@@ -1261,6 +1264,7 @@ type OptionalMessagePermissions = record {
     crypto : PermissionRoleUpdate;
     giphy : PermissionRoleUpdate;
     prize : PermissionRoleUpdate;
+    p2p_trade : PermissionRoleUpdate;
     custom_updated : vec CustomPermission;
     custom_deleted : vec text;
 };
@@ -1534,6 +1538,34 @@ type MessageReport = record {
     notes : opt text;
 };
 
+type P2PTradeContentInitial = record {
+    input_token : TokenInfo;
+    input_amount : nat;
+    output_token : TokenInfo;
+    output_amount : nat;
+    expires_at : TimestampMillis;
+    caption : opt text;
+};
+
+type P2PTradeContent = record {
+    offer_id : nat32;
+    input_token : TokenInfo;
+    input_amount : nat;
+    input_transaction_index : nat64;
+    output_token : TokenInfo;
+    output_amount : nat;
+    expires_at : TimestampMillis;
+    status : P2PTradeStatus;
+    caption : opt text;
+};
+
+type P2PTradeStatus = variant {
+    Open;
+    Cancelled;
+    Reserved : record { UserId; TimestampMillis };
+    Completed : record { UserId; BlockIndex; TimestampMillis };
+};
+
 type EmptyArgs = record {};
 
 type CommunityMatch = record {
@@ -1591,4 +1623,11 @@ type OptionalMessagePermissionsUpdate = variant {
     NoChange;
     SetToNone;
     SetToSome : OptionalMessagePermissions;
+};
+
+type TokenInfo = record {
+    token : Cryptocurrency;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee : nat;
 };
