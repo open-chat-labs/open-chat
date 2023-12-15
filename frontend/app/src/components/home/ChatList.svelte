@@ -9,6 +9,7 @@
         type ChatSummary as ChatSummaryType,
         type GroupMatch,
         type UserSummary,
+        type ChatListScope,
         OpenChat,
         type GroupSearchResponse,
         routeForChatIdentifier,
@@ -16,7 +17,7 @@
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
@@ -44,10 +45,10 @@
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
+    let previousScope: ChatListScope | undefined = undefined;
+    let previousView: "chats" | "threads" = "chats";
 
     const dispatch = createEventDispatcher();
-
-    let view: "chats" | "threads" = "chats";
 
     $: createdUser = client.user;
     $: selectedChatId = client.selectedChatId;
@@ -71,6 +72,7 @@
     $: unreadGroupCounts = client.unreadGroupCounts;
     $: unreadFavouriteCounts = client.unreadFavouriteCounts;
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
+    $: view = "chats" as "chats" | "threads";
 
     let unreadCounts = emptyCombinedUnreadCounts();
     $: {
@@ -104,6 +106,19 @@
             view = "chats";
         }
     }
+
+    beforeUpdate(() => {
+        if (previousScope !== undefined && (previousScope !== $chatListScope || previousView !== view)) {
+            const scrollPosKey = getScrollPosKey(previousScope, previousView);
+            chatListScroll.insert(scrollPosKey, chatListElement.scrollTop);
+        }
+    });
+
+    afterUpdate(() => {
+        if (previousScope !== $chatListScope || previousView !== view) {
+            onScopeChanged();
+        }
+    });
 
     function cancelPreview() {
         if ($selectedCommunity) {
@@ -159,26 +174,38 @@
     }
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
-        chatScrollTop = chatListElement.scrollTop;
         const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
         page(url);
         closeSearch();
     }
 
     let chatListElement: HTMLElement;
-    let chatScrollTop = 0;
 
     onMount(() => {
+        onScopeChanged();
+    });
+
+    function onScopeChanged() {
+        const scrollPosKey = getScrollPosKey($chatListScope, view);
+        previousScope = $chatListScope;
+        previousView = view;
+
         tick().then(() => {
             if (chatListElement) {
-                chatListElement.scrollTop = $chatListScroll;
+                chatListElement.scrollTop = $chatListScroll.get(scrollPosKey) ?? 0;
             }
         });
+    }
 
-        return () => {
-            chatListScroll.set(chatScrollTop);
-        };
-    });
+    function getScrollPosKey(scope: ChatListScope, view: "chats" | "threads"): string {
+        const prefix = scope.kind === "community"
+            ? "community-" + scope.id.communityId
+            : scope.kind;
+
+        return scope.kind === "direct_chat" || scope.kind === "none"
+            ? prefix
+            : prefix + "-" + view;
+    }
 
     function onSearchEntered(ev: CustomEvent<unknown>) {
         setView("chats");
@@ -187,8 +214,6 @@
 
     function setView(v: "chats" | "threads"): void {
         view = v;
-        chatListElement.scrollTop = 0;
-        chatListScroll.set(0);
     }
 </script>
 
