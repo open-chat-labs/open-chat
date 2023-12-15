@@ -1357,8 +1357,6 @@ export function doesMessageFailFilter(message: Message, filters: MessageFilter[]
             }
         }
     }
-
-    return undefined;
 }
 
 function mergeLocalUpdates(

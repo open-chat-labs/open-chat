@@ -27,10 +27,11 @@
 
     let drawOpen = false;
 
-    $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
+    $: useDrawer = !editing;
+    $: narrow = mode == "thread" || $mobileWidth;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
-    $: supportedActions = buildListOfActions(permittedMessages, messageAction);
+    $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
 
     export function close() {
         drawOpen = false;
@@ -91,13 +92,16 @@
     function buildListOfActions(
         permissions: Map<MessagePermission, boolean>,
         messageAction: MessageAction,
+        includeAll: boolean,
     ): Map<string, number> {
         const actions = new Map<string, number>();
-        if (permissions.get("text") || messageAction === "file") {
-            actions.set("emoji", actions.size);
-        }
-        if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
-            actions.set("attach", actions.size);
+        if (includeAll) {
+            if (permissions.get("text") || messageAction === "file") {
+                actions.set("emoji", actions.size);
+            }
+            if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
+                actions.set("attach", actions.size);
+            }
         }
         if (permissions.get("crypto")) {
             actions.set("crypto", actions.size);
@@ -143,6 +147,22 @@
         }
     }} />
 
+{#if !narrow}
+    {#if (permittedMessages.get("text") || messageAction === "file") && messageAction !== "emoji"}
+        <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={iconColour} />
+            </HoverIcon>
+        </div>
+    {/if}
+
+    {#if !editing && attachment === undefined && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
+        <div class="attach">
+            <FileAttacher on:fileSelected on:open={() => (messageAction = "file")} />
+        </div>
+    {/if}
+{/if}
+
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || attachment !== undefined}
@@ -163,25 +183,15 @@
             style={`${cssVars("emoji")}`}
             class="emoji"
             on:click|stopPropagation={toggleEmojiPicker}>
-            {#if messageAction === "emoji"}
-                <HoverIcon title={$_("close")}>
-                    <Close size={$iconSize} color={iconColour} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon title={$_("pickEmoji")}>
-                    <Smiley color={iconColour} />
-                </HoverIcon>
-            {/if}
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={iconColour} />
+            </HoverIcon>
         </div>
     {/if}
     {#if !editing}
         {#if supportedActions.has("attach")}
-            <div class="attach" style={`${cssVars("attach")}`}>
-                <FileAttacher
-                    open={attachment !== undefined}
-                    on:fileSelected
-                    on:open={() => (messageAction = "file")}
-                    on:close={close} />
+            <div style={`${cssVars("attach")}`} class="attach">
+                <FileAttacher on:fileSelected on:open={() => (messageAction = "file")} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}
