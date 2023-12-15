@@ -6,6 +6,7 @@
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
     import {
+        type ChatListScope,
         type ChatSummary as ChatSummaryType,
         type GroupMatch,
         type UserSummary,
@@ -16,11 +17,10 @@
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import { chatListScroll } from "../../stores/scrollPos";
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
@@ -44,10 +44,11 @@
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
+    let chatsScrollTop: number = 0;
+    let previousScope: ChatListScope | undefined = undefined;
+    let previousView: "chats" | "threads" = "chats";
 
     const dispatch = createEventDispatcher();
-
-    let view: "chats" | "threads" = "chats";
 
     $: createdUser = client.user;
     $: selectedChatId = client.selectedChatId;
@@ -71,6 +72,7 @@
     $: unreadGroupCounts = client.unreadGroupCounts;
     $: unreadFavouriteCounts = client.unreadFavouriteCounts;
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
+    $: view = "chats" as "chats" | "threads";
 
     let unreadCounts = emptyCombinedUnreadCounts();
     $: {
@@ -95,13 +97,6 @@
             }
             default:
                 unreadCounts = emptyCombinedUnreadCounts();
-        }
-    }
-
-    $: {
-        // need to make sure that we reset the view each time the chat list scope changes
-        if ($chatListScope) {
-            view = "chats";
         }
     }
 
@@ -159,25 +154,25 @@
     }
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
-        chatScrollTop = chatListElement.scrollTop;
         const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
         page(url);
         closeSearch();
     }
 
     let chatListElement: HTMLElement;
-    let chatScrollTop = 0;
 
-    onMount(() => {
-        tick().then(() => {
-            if (chatListElement) {
-                chatListElement.scrollTop = $chatListScroll;
-            }
-        });
+    beforeUpdate(() => {
+        if (previousScope === $chatListScope && previousView !== view && previousView === "chats") {
+            chatsScrollTop = chatListElement.scrollTop;
+        }
+    });
 
-        return () => {
-            chatListScroll.set(chatScrollTop);
-        };
+    afterUpdate(() => {
+        if (previousScope !== $chatListScope) {
+            onScopeChanged();
+        } else if (previousView !== view) {
+            onViewChanged();
+        }
     });
 
     function onSearchEntered(ev: CustomEvent<unknown>) {
@@ -187,8 +182,19 @@
 
     function setView(v: "chats" | "threads"): void {
         view = v;
-        chatListElement.scrollTop = 0;
-        chatListScroll.set(0);
+    }
+
+    function onScopeChanged() {
+        previousScope = $chatListScope;
+        view = "chats";
+        chatsScrollTop = 0;
+        onViewChanged();
+    }
+
+    function onViewChanged() {
+        previousView = view;
+        const scrollTop = view === "chats" ? chatsScrollTop : 0;
+        tick().then(() => chatListElement.scrollTop = scrollTop);
     }
 </script>
 
