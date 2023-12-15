@@ -5892,7 +5892,7 @@ export class OpenChat extends OpenChatAgentWorker {
     setChatListScope(scope: ChatListScope): void {
         if (scope.kind === "none") {
             chatListScopeStore.set(this.getDefaultScope());
-        } else {
+        } else if (this._liveState.chatListScope !== scope) {
             chatListScopeStore.set(scope);
         }
     }

@@ -11,10 +11,13 @@
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
     import {
         AvatarSize,
+        type ChatListScope,
         type CommunitySummary,
         type OpenChat,
         type UserSummary,
+        chatListScopeToString,
         emptyCombinedUnreadCounts,
+        routeForChatIdentifier,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
@@ -27,6 +30,7 @@
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
+    import { chatListScopeContext } from "../../../stores/chatListScopeContext";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -106,24 +110,53 @@
     }
 
     function directChats() {
-        page("/user");
+        redirect({ kind: "direct_chat" });
     }
 
     function groupChats() {
-        page("/group");
+        redirect({ kind: "group_chat" });
     }
 
     function favouriteChats() {
-        page("/favourite");
+        redirect({ kind: "favourite" });
     }
 
     function selectCommunity(community: CommunitySummary) {
-        page(`/community/${community.id.communityId}`);
+        redirect({ kind: "community", id: community.id });
+    }
+
+    function redirect(scope: ChatListScope) {
+        const context = $chatListScopeContext.get(chatListScopeToString(scope));
+
+        const path = context?.selectedChat !== undefined
+            ? routeForChatIdentifier(scope.kind, context.selectedChat)
+            : defaultRouteForScope(scope);
+
+        page(path);
     }
 
     function closeIfOpen() {
         if ($navOpen) {
             navOpen.set(false);
+        }
+    }
+
+    function defaultRouteForScope(scope: ChatListScope): string {
+        switch (scope.kind) {
+            case "none":
+                return "";
+
+            case "direct_chat":
+                return "/user";
+
+            case "group_chat":
+                return "/group";
+
+            case "favourite":
+                return "/favourite";
+
+            case "community":
+                return `/community/${scope.id.communityId}`;
         }
     }
 </script>

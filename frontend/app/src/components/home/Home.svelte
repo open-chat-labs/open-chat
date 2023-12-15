@@ -40,6 +40,7 @@
         ThreadSelected,
         defaultChatRules,
         chatIdentifiersEqual,
+        chatListScopeToString,
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
@@ -92,6 +93,7 @@
     import AnonFooter from "./AnonFooter.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
+    import { chatListScopeContext } from "../../stores/chatListScopeContext";
 
     type ViewProfileConfig = {
         userId: string;
@@ -378,9 +380,7 @@
                 return;
             }
 
-            if ("scope" in pathParams) {
-                client.setChatListScope(pathParams.scope);
-            }
+            const scopeChanged = "scope" in pathParams && client.setChatListScope(pathParams.scope);
 
             // When we have a middle panel and this route is for a chat list then select the first chat
             if (
@@ -388,6 +388,16 @@
                 (pathParams.kind === "selected_community_route" ||
                     pathParams.kind === "chat_list_route")
             ) {
+                if (scopeChanged) {
+                    const selectedChatId = $chatListScopeContext.get(chatListScopeToString(pathParams.scope))?.selectedChat;
+                    if (selectedChatId !== undefined) {
+                        const chat = $chatSummariesListStore.find((c) => chatIdentifiersEqual(c.id, selectedChatId));
+                        if (chat !== undefined) {
+                            page.redirect(routeForChatIdentifier($chatListScope.kind, chat.id));
+                            return;
+                        }
+                    }
+                }
                 const first = $chatSummariesListStore.find((c) => !c.membership.archived);
                 if (first !== undefined) {
                     page.redirect(routeForChatIdentifier($chatListScope.kind, first.id));
