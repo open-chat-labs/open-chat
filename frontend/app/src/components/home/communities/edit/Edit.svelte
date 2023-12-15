@@ -38,7 +38,7 @@
     let step = 0;
     let busy = false;
     let confirming = false;
-    let candidate = original;
+    let candidate = structuredClone(original);
     let candidateRules = { ...originalRules, newVersion: false };
     let members: CandidateMember[] = [];
     let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
