@@ -24,6 +24,15 @@
         return chatListScope.subscribe((_) => clearSearch());
     });
 
+    $: {
+        if (searchTerm === "") {
+            searching = false;
+            searchResultsAvailable = false;
+            groupSearchResults = undefined;
+            userSearchResults = undefined;
+        }
+    }
+
     function getPlaceholder(scope: ChatListScope["kind"]): string {
         switch (scope) {
             case "community":
@@ -41,10 +50,6 @@
 
     function clearSearch() {
         searchTerm = "";
-        searching = false;
-        searchResultsAvailable = false;
-        groupSearchResults = undefined;
-        userSearchResults = undefined;
     }
 
     async function performSearch(ev: CustomEvent<string>) {
