@@ -1,8 +1,7 @@
 import { writable } from "svelte/store";
 import { mobileOperatingSystem } from "../utils/devices";
-import { createMapStore } from "openchat-client";
 
-export const chatListScroll = createMapStore(writable(new Map<string, number>()));
+export const chatListScroll = writable<number>(0);
 
 export const eventListScrollTop = writable<number | undefined>(undefined);
 
