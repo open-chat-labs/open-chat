@@ -162,7 +162,7 @@
     let chatListElement: HTMLElement;
 
     beforeUpdate(() => {
-        if (previousScope === $chatListScope && previousView !== view && previousView === "chats") {
+        if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
             chatsScrollTop = chatListElement.scrollTop;
         }
     });
