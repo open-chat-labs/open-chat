@@ -6,10 +6,10 @@
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
     import {
+        type ChatListScope,
         type ChatSummary as ChatSummaryType,
         type GroupMatch,
         type UserSummary,
-        type ChatListScope,
         OpenChat,
         type GroupSearchResponse,
         routeForChatIdentifier,
@@ -17,11 +17,10 @@
         emptyCombinedUnreadCounts,
         chatIdentifierToString,
     } from "openchat-client";
-    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import { chatListScroll } from "../../stores/scrollPos";
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
@@ -45,6 +44,7 @@
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
+    let chatsScrollTop: number = 0;
     let previousScope: ChatListScope | undefined = undefined;
     let previousView: "chats" | "threads" = "chats";
 
@@ -99,26 +99,6 @@
                 unreadCounts = emptyCombinedUnreadCounts();
         }
     }
-
-    $: {
-        // need to make sure that we reset the view each time the chat list scope changes
-        if ($chatListScope) {
-            view = "chats";
-        }
-    }
-
-    beforeUpdate(() => {
-        if (previousScope !== undefined && (previousScope !== $chatListScope || previousView !== view)) {
-            const scrollPosKey = getScrollPosKey(previousScope, previousView);
-            chatListScroll.insert(scrollPosKey, chatListElement.scrollTop);
-        }
-    });
-
-    afterUpdate(() => {
-        if (previousScope !== $chatListScope || previousView !== view) {
-            onScopeChanged();
-        }
-    });
 
     function cancelPreview() {
         if ($selectedCommunity) {
@@ -181,31 +161,19 @@
 
     let chatListElement: HTMLElement;
 
-    onMount(() => {
-        onScopeChanged();
+    beforeUpdate(() => {
+        if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
+            chatsScrollTop = chatListElement.scrollTop;
+        }
     });
 
-    function onScopeChanged() {
-        const scrollPosKey = getScrollPosKey($chatListScope, view);
-        previousScope = $chatListScope;
-        previousView = view;
-
-        tick().then(() => {
-            if (chatListElement) {
-                chatListElement.scrollTop = $chatListScroll.get(scrollPosKey) ?? 0;
-            }
-        });
-    }
-
-    function getScrollPosKey(scope: ChatListScope, view: "chats" | "threads"): string {
-        const prefix = scope.kind === "community"
-            ? "community-" + scope.id.communityId
-            : scope.kind;
-
-        return scope.kind === "direct_chat" || scope.kind === "none"
-            ? prefix
-            : prefix + "-" + view;
-    }
+    afterUpdate(() => {
+        if (previousScope !== $chatListScope) {
+            onScopeChanged();
+        } else if (previousView !== view) {
+            onViewChanged();
+        }
+    });
 
     function onSearchEntered(ev: CustomEvent<unknown>) {
         setView("chats");
@@ -214,6 +182,19 @@
 
     function setView(v: "chats" | "threads"): void {
         view = v;
+    }
+
+    function onScopeChanged() {
+        previousScope = $chatListScope;
+        view = "chats";
+        chatsScrollTop = 0;
+        onViewChanged();
+    }
+
+    function onViewChanged() {
+        previousView = view;
+        const scrollTop = view === "chats" ? chatsScrollTop : 0;
+        tick().then(() => chatListElement.scrollTop = scrollTop);
     }
 </script>
 
