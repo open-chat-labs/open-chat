@@ -54,6 +54,10 @@
         messageAction = "emoji";
     }
 
+    function openFilePicker() {
+        messageAction = "file";
+    }
+
     function toggleDraw() {
         if (drawOpen || attachment !== undefined) {
             close();
@@ -146,7 +150,7 @@
 
     {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
         <div class="attach">
-            <FileAttacher on:fileSelected on:open={() => (messageAction = "file")} />
+            <FileAttacher on:fileSelected on:open={openFilePicker} />
         </div>
     {/if}
 {/if}
@@ -176,7 +180,7 @@
     {#if !editing}
         {#if supportedActions.has("attach")}
             <div style={`${cssVars("attach")}`} class="attach">
-                <FileAttacher on:fileSelected on:open={() => (messageAction = "file")} />
+                <FileAttacher on:fileSelected on:open={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}
