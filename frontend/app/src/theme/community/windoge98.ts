@@ -31,9 +31,9 @@ export function getTheme(base: Theme): Theme {
     base.accent = magenta;
     base.disabledTxt = txt40;
     base.placeholder = txt60;
-    base.font = `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base.font}`;
-    base["font-bold"] =
-        `'Monaco', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', ${base["font-bold"]}`;
+    base.fontUrl = "https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap";
+    base.font = `'Ubuntu Mono', monospace`;
+    base["font-bold"] = `'Ubuntu Mono', monospace`;
 
     base.timeline.txt = txt40;
     base.time.txt = txt60;
