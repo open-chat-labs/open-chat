@@ -100,6 +100,12 @@
         }
     }
 
+    $: {
+        if (view === "threads" && searchTerm !== "") {
+            view = "chats";
+        }
+    }
+
     function cancelPreview() {
         if ($selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
@@ -137,7 +143,6 @@
 
     function chatWith(userId: string): void {
         dispatch("chatWith", { kind: "direct_chat", userId });
-        closeSearch();
     }
 
     /**
@@ -146,17 +151,13 @@
      */
     function selectGroup({ chatId }: GroupMatch): void {
         page(routeForChatIdentifier($chatListScope.kind, chatId));
-        closeSearch();
-    }
-
-    function closeSearch() {
-        dispatch("searchEntered", "");
+        searchTerm = "";
     }
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
         page(url);
-        closeSearch();
+        searchTerm = "";
     }
 
     let chatListElement: HTMLElement;
@@ -175,13 +176,12 @@
         }
     });
 
-    function onSearchEntered(ev: CustomEvent<unknown>) {
-        setView("chats");
-        dispatch("searchEntered", ev.detail);
-    }
-
     function setView(v: "chats" | "threads"): void {
         view = v;
+
+        if (view === "threads") {
+            searchTerm = "";
+        }
     }
 
     function onScopeChanged() {
@@ -194,7 +194,7 @@
     function onViewChanged() {
         previousView = view;
         const scrollTop = view === "chats" ? chatsScrollTop : 0;
-        tick().then(() => chatListElement.scrollTop = scrollTop);
+        tick().then(() => (chatListElement.scrollTop = scrollTop));
     }
 </script>
 
@@ -219,8 +219,7 @@
         bind:userSearchResults
         bind:groupSearchResults
         bind:searchResultsAvailable
-        bind:searchTerm
-        on:searchEntered={onSearchEntered} />
+        bind:searchTerm />
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">

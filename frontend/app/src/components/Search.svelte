@@ -24,16 +24,15 @@
         if (ev.key === "Tab") {
             return;
         }
+        if (ev.key === "Escape") {
+            searchTerm = "";
+        }
         if (timer !== undefined) {
             window.clearTimeout(timer);
         }
         timer = window.setTimeout(() => {
-            if (searchTerm.length > 1) {
+            if (searchTerm.length != 1) {
                 performSearch();
-            } else {
-                if (searchTerm.length === 0) {
-                    performSearch();
-                }
             }
         }, 300);
     }
