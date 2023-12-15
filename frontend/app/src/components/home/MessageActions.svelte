@@ -4,7 +4,6 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
@@ -29,7 +28,7 @@
 
     $: useDrawer = !editing;
     $: narrow = mode == "thread" || $mobileWidth;
-    $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
+    $: showActions = !useDrawer || drawOpen;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
     $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
 
@@ -39,17 +38,6 @@
             dispatch("clearAttachment");
         }
         messageAction = undefined;
-    }
-
-    function toggleAction(action: MessageAction) {
-        if (messageAction === action) {
-            messageAction = undefined;
-            if (attachment !== undefined) {
-                dispatch("clearAttachment");
-            }
-        } else {
-            messageAction = action;
-        }
     }
 
     function createTokenTransfer() {
@@ -62,8 +50,8 @@
         drawOpen = false;
     }
 
-    function toggleEmojiPicker() {
-        toggleAction("emoji");
+    function openEmojiPicker() {
+        messageAction = "emoji";
     }
 
     function toggleDraw() {
@@ -148,15 +136,15 @@
     }} />
 
 {#if !narrow}
-    {#if (permittedMessages.get("text") || messageAction === "file") && messageAction !== "emoji"}
-        <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
+    {#if permittedMessages.get("text") || messageAction === "file"}
+        <div class="emoji" on:click|stopPropagation={openEmojiPicker}>
             <HoverIcon title={$_("pickEmoji")}>
                 <Smiley color={iconColour} />
             </HoverIcon>
         </div>
     {/if}
 
-    {#if !editing && attachment === undefined && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
+    {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
         <div class="attach">
             <FileAttacher on:fileSelected on:open={() => (messageAction = "file")} />
         </div>
@@ -179,10 +167,7 @@
 
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     {#if supportedActions.has("emoji")}
-        <div
-            style={`${cssVars("emoji")}`}
-            class="emoji"
-            on:click|stopPropagation={toggleEmojiPicker}>
+        <div style={`${cssVars("emoji")}`} class="emoji" on:click|stopPropagation={openEmojiPicker}>
             <HoverIcon title={$_("pickEmoji")}>
                 <Smiley color={iconColour} />
             </HoverIcon>
