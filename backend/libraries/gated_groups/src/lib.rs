@@ -16,7 +16,6 @@ pub enum CheckIfPassesGateResult {
 
 pub struct CheckGateArgs {
     pub gate: AccessGate,
-    pub user_index_canister: CanisterId,
     pub user_id: UserId,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,

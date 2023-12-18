@@ -119,7 +119,6 @@ fn is_permitted_to_join(
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| CheckGateArgs {
                     gate: g.clone(),
-                    user_index_canister: state.data.user_index_canister_id,
                     user_id: member.user_id,
                     diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),

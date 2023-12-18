@@ -321,6 +321,7 @@ type AddMembersToChannelResponse = variant {
     ChannelNotFound;
     UserLimitReached : nat32;
     NotAuthorized;
+    InternalError : text;
 };
 
 type AddMembersToChannelPartialSuccess = record {
