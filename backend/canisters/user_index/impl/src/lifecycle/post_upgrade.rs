@@ -38,6 +38,7 @@ fn post_upgrade(args: Args) {
                 }
             }
         }
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
     });
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
