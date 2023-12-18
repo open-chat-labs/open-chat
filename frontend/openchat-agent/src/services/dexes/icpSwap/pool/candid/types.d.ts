@@ -12,4 +12,6 @@ export interface QuoteArgs {
 }
 export type QuoteResponse = { 'ok' : bigint } |
   { 'err' : Error };
-export interface _SERVICE { 'quote' : ActorMethod<[QuoteArgs], QuoteResponse> }
+export interface _SERVICE {
+  'quoteForAll' : ActorMethod<[QuoteArgs], QuoteResponse>,
+}
