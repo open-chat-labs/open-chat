@@ -179,10 +179,15 @@ async fn get_diamond_membership_expiry_dates_if_needed(args: &Args) -> Result<Ha
             )
         });
 
-        match local_user_index_canister_c2c_client::get_diamond_membership_expiry_dates(user_ids, local_user_index_canister_id)
-            .await
+        match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
+            local_user_index_canister_id,
+            &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args { user_ids },
+        )
+        .await
         {
-            Ok(expiry_dates) => Ok(expiry_dates),
+            Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
+                Ok(expiry_dates)
+            }
             Err(error) => Err(InternalError(format!("{error:?}"))),
         }
     } else {
