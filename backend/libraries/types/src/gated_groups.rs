@@ -13,6 +13,12 @@ pub enum AccessGate {
     Payment(PaymentGate),
 }
 
+impl AccessGate {
+    pub fn synchronous(&self) -> bool {
+        matches!(self, AccessGate::DiamondMember)
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct VerifiedCredentialGate {
     pub issuer: String,

@@ -40,6 +40,7 @@ fn c2c_create_proposals_channel(args: Args) -> Response {
                 invite_code: None,
                 is_platform_moderator: false,
                 is_bot: true,
+                diamond_membership_expires_at: None,
             },
             state,
         )

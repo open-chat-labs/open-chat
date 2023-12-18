@@ -34,8 +34,9 @@ async fn add_members_to_channel(args: Args) -> Response {
                     gate: gate.clone(),
                     user_index_canister: prepare_result.user_index_canister,
                     user_id: *user_id,
+                    diamond_membership_expires_at: None,
                     this_canister: prepare_result.this_canister,
-                    now_nanos: prepare_result.now_nanos,
+                    now: prepare_result.now_nanos,
                 })
             })
             .collect();
