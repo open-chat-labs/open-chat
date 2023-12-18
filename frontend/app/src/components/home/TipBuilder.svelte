@@ -89,8 +89,13 @@
         return Math.round(cents);
     }
 
+    function to2SigFigs(num: number): number {
+        return parseFloat(num.toPrecision(2));
+    }
+
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / exchangeRate;
+        const e8s =
+            ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / to2SigFigs(exchangeRate);
         return BigInt(Math.round(e8s));
     }
 

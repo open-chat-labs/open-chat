@@ -105,6 +105,6 @@ export type AccountTransactions = {
 export type AccountTransactionResult = Failure | (Success & AccountTransactions);
 
 export type TokenExchangeRates = {
-    to_icp: number | undefined;
-    to_usd: number | undefined;
+    toICP: number | undefined;
+    toUSD: number | undefined;
 };

@@ -10,9 +10,9 @@ export function getLatestResponse(candid: Array<LatestTokenRow>): Record<string,
         const [from, to] = parseSymbolPair(pairText);
 
         if (to === "usd") {
-            results[from] = { ...results[from], to_usd: rate } ;
+            results[from] = { ...results[from], toUSD: rate } ;
         } else if (to === "icp") {
-            results[from] = { ...results[from], to_icp: rate } ;
+            results[from] = { ...results[from], toICP: rate } ;
         }
     }
 
