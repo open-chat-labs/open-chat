@@ -17,7 +17,8 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
     } = wrapper.env();
 
     let user1 = client::register_diamond_user(env, canister_ids, *controller);
-    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::register_diamond_user(env, canister_ids, *controller);
+    let user3 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), true, vec![random_string()]);
 
@@ -27,9 +28,14 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
         client::community::happy_path::create_gated_channel(env, user1.principal, community_id, true, random_string(), AccessGate::DiamondMember)
     };
 
+    client::local_user_index::happy_path::invite_users_to_channel(env, user1.principal, canister_ids.local_user_index, community_id, channel_id, vec![user2.user_id]);
+    client::local_user_index::happy_path::join_channel(env, user2.principal, canister_ids.local_user_index, community_id, channel_id);
+
     for i in 0..5 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, i.to_string(), None);
     }
+
+    client::community::happy_path::leave_channel(env, user2.principal, community_id, channel_id);
 
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
     client::community::happy_path::update_channel(
@@ -49,11 +55,16 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
         },
     );
 
-    // Check that user2 has been added to the channel
-    let channel_summary = client::community::happy_path::channel_summary(env, &user2, community_id, channel_id);
+    // Check that user2 has not been re-added to the channel
+    let user2_channel_summary = client::community::happy_path::summary(env, &user2, community_id);
 
-    assert!(channel_summary.is_public);
-    assert!(channel_summary.gate.is_none());
-    assert_eq!(channel_summary.min_visible_event_index, 7.into());
-    assert_eq!(channel_summary.min_visible_message_index, 5.into());
+    assert!(!user2_channel_summary.channels.iter().any(|c| c.channel_id == channel_id));
+
+    // Check that user3 has been added to the channel
+    let user3_channel_summary = client::community::happy_path::channel_summary(env, &user3, community_id, channel_id);
+
+    assert!(user3_channel_summary.is_public);
+    assert!(user3_channel_summary.gate.is_none());
+    assert_eq!(user3_channel_summary.min_visible_event_index, 7.into());
+    assert_eq!(user3_channel_summary.min_visible_message_index, 5.into());
 }

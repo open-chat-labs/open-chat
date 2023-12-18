@@ -50,7 +50,9 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                         // existing community members to the channel
                         if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
                             for m in state.data.members.iter_mut() {
-                                join_channel_unchecked(channel, m, true, now);
+                                if !m.channels_removed.iter().any(|c| c.value == channel.id) {
+                                    join_channel_unchecked(channel, m, true, now);
+                                }
                             }
                         }
                     }
