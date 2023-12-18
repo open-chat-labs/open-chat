@@ -129,7 +129,10 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         .is_active());
 
     let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-    assert_eq!(new_balance, 1_000_000_000 - 40_000_000);
+    assert_eq!(
+        new_balance,
+        1_000_000_000 - (2 * DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() as u128)
+    );
 }
 
 #[test_case(true)]
@@ -240,7 +243,10 @@ fn update_subscription_succeeds(disable: bool) {
         ));
 
         let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-        assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
+        assert_eq!(
+            new_balance,
+            1_000_000_000 - DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() as u128
+        );
     } else {
         let one_year_millis = DiamondMembershipPlanDuration::OneYear.as_millis();
         assert_eq!(
@@ -253,6 +259,11 @@ fn update_subscription_succeeds(disable: bool) {
         ));
 
         let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
-        assert_eq!(new_balance, 1_000_000_000 - 170_000_000);
+        assert_eq!(
+            new_balance,
+            1_000_000_000
+                - (DiamondMembershipPlanDuration::OneMonth.icp_price_e8s()
+                    + DiamondMembershipPlanDuration::OneYear.icp_price_e8s()) as u128
+        );
     }
 }
