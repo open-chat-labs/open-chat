@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
-- Add `c2c_lookup_users` ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
+- Add `c2c_diamond_membership_expiry_dates` ([#5036](https://github.com/open-chat-labs/open-chat/pull/5036))
 
 ### Changed
 
