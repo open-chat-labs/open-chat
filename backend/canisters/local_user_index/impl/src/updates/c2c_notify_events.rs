@@ -125,6 +125,11 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             );
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
+            state
+                .data
+                .global_users
+                .set_diamond_membership_expiry_date(ev.user_id, ev.expires_at);
+
             state.push_event_to_user(
                 ev.user_id,
                 UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
@@ -147,6 +152,12 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .data
                 .referral_codes
                 .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
+        }
+        Event::DiamondMembershipExpiryDate(user_id, expires_at) => {
+            state
+                .data
+                .global_users
+                .set_diamond_membership_expiry_date(user_id, expires_at);
         }
     }
 }
