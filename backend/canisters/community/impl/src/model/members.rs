@@ -342,6 +342,7 @@ pub struct CommunityMemberInternal {
 impl CommunityMemberInternal {
     pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
         if self.channels.remove(&channel_id) {
+            self.channels_removed.retain(|c| c.value != channel_id);
             self.channels_removed.push(Timestamped::new(channel_id, now));
         }
     }
