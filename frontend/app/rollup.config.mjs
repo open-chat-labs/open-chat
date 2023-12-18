@@ -50,6 +50,7 @@ if (dfxNetwork) {
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
         process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
+        process.env.ICPCOINS_CANISTER = canisters.icpcoins[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
@@ -59,6 +60,7 @@ if (dfxNetwork) {
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
         console.log("Registry: ", process.env.REGISTRY_CANISTER);
         console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
+        console.log("Icpcoins: ", process.env.ICPCOINS_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -246,6 +248,7 @@ export default {
             ),
             "process.env.REGISTRY_CANISTER": JSON.stringify(process.env.REGISTRY_CANISTER),
             "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
+            "process.env.ICPCOINS_CANISTER": JSON.stringify(process.env.ICPCOINS_CANISTER),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),

@@ -1,10 +1,10 @@
 import { derived, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 import {
-    dollarExchangeRates,
     type CryptocurrencyDetails,
     type NervousSystemDetails,
     DEFAULT_TOKENS,
+    type TokenExchangeRates,
 } from "openchat-shared";
 import { toRecord } from "../utils/list";
 
@@ -15,6 +15,8 @@ type BalanceByCrypto = Record<LedgerCanister, bigint>;
 
 export const cryptoLookup = writable<Record<LedgerCanister, CryptocurrencyDetails>>({});
 export const nervousSystemLookup = writable<Record<GovernanceCanister, NervousSystemDetails>>({});
+export const exchangeRatesLookupStore = writable<Record<string, TokenExchangeRates>>({});
+
 const cryptoBalanceStore = writable<BalanceByCrypto>({});
 
 export const cryptoBalance = {
@@ -40,13 +42,14 @@ export const lastCryptoSent = {
 };
 
 export const enhancedCryptoLookup = derived(
-    [cryptoLookup, cryptoBalance],
-    ([$lookup, $balance]) => {
+    [cryptoLookup, cryptoBalance, exchangeRatesLookupStore],
+    ([$lookup, $balance, $exchangeRatesLookup]) => {
         const accounts = Object.values($lookup).map((t) => {
             const balance = $balance[t.ledger] ?? BigInt(0);
-            const xr = dollarExchangeRates[t.symbol.toLowerCase()];
+            const symbolLower = t.symbol.toLowerCase();
+            const xr = $exchangeRatesLookup[symbolLower]?.to_usd ?? 0;
             const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
-            const dollarBalance = xr > 0 ? balanceWholeUnits / xr : 0;
+            const dollarBalance = xr * balanceWholeUnits;
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
             return {
                 ...t,

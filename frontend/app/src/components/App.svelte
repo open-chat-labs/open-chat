@@ -58,6 +58,7 @@
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
+            icpCoinsCanister: process.env.ICPCOINS_CANISTER!,
             i18nFormatter: $_,
             logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,

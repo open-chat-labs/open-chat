@@ -140,6 +140,7 @@ import {
     cryptoLookup,
     cryptoTokensSorted,
     enhancedCryptoLookup,
+    exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
 } from "./stores/crypto";
@@ -450,6 +451,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
@@ -468,6 +470,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _chatsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
+    private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
 
@@ -655,6 +658,8 @@ export class OpenChat extends OpenChatAgentWorker {
         await this.connectToWorker();
 
         this.startRegistryPoller();
+        this.startExchangeRatePoller();
+
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
@@ -811,6 +816,16 @@ export class OpenChat extends OpenChatAgentWorker {
             REGISTRY_UPDATE_INTERVAL,
             REGISTRY_UPDATE_INTERVAL,
             false,
+        );
+    }
+
+    private startExchangeRatePoller() {
+        this._exchangeRatePoller?.stop();
+        this._exchangeRatePoller = new Poller(
+            () => this.updateExchangeRates(),
+            EXCHANGE_RATE_UPDATE_INTERVAL,
+            EXCHANGE_RATE_UPDATE_INTERVAL,
+            true,
         );
     }
 
@@ -5263,6 +5278,12 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private async updateExchangeRates(): Promise<void> {
+        const exchangeRates = await this.sendRequest({ kind: "exchangeRates" });
+
+        exchangeRatesLookupStore.set(exchangeRates);
+    }
+
     private async refreshBalancesInSeries() {
         for (const t of Object.values(get(cryptoLookup))) {
             await this.refreshAccountBalance(t.ledger);
@@ -5943,6 +5964,7 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
+    exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;
