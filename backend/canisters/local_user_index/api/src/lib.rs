@@ -31,6 +31,7 @@ pub enum Event {
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
+    DiamondMembershipExpiryDate(UserId, TimestampMillis), // Temp event type to populate expiry dates
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -181,4 +182,5 @@ pub struct GlobalUser {
     pub principal: Principal,
     pub is_bot: bool,
     pub is_platform_moderator: bool,
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
 }
