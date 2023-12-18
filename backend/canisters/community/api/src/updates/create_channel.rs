@@ -34,6 +34,7 @@ pub enum Response {
     UserSuspended,
     NotAuthorized,
     CommunityFrozen,
+    InternalError(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
