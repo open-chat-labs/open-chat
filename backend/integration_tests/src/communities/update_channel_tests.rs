@@ -2,7 +2,7 @@ use crate::env::ENV;
 use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
-use test_case::test_case;;
+use test_case::test_case;
 use types::{AccessGate, OptionUpdate};
 
 #[test_case(true)]
@@ -25,11 +25,31 @@ fn members_added_if_channel_made_public_or_gate_removed(make_public: bool) {
     let channel_id = if make_public {
         client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string())
     } else {
-        client::community::happy_path::create_gated_channel(env, user1.principal, community_id, true, random_string(), AccessGate::DiamondMember)
+        client::community::happy_path::create_gated_channel(
+            env,
+            user1.principal,
+            community_id,
+            true,
+            random_string(),
+            AccessGate::DiamondMember,
+        )
     };
 
-    client::local_user_index::happy_path::invite_users_to_channel(env, user1.principal, canister_ids.local_user_index, community_id, channel_id, vec![user2.user_id]);
-    client::local_user_index::happy_path::join_channel(env, user2.principal, canister_ids.local_user_index, community_id, channel_id);
+    client::local_user_index::happy_path::invite_users_to_channel(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        community_id,
+        channel_id,
+        vec![user2.user_id],
+    );
+    client::local_user_index::happy_path::join_channel(
+        env,
+        user2.principal,
+        canister_ids.local_user_index,
+        community_id,
+        channel_id,
+    );
 
     for i in 0..5 {
         client::community::happy_path::send_text_message(env, &user1, community_id, channel_id, None, i.to_string(), None);
