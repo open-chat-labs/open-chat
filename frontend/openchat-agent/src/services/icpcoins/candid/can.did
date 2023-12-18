@@ -1,0 +1,14 @@
+type TokenId = nat;
+
+type LatestTokenRow = record {
+    record {
+        TokenId;
+        TokenId;
+    };
+    text;
+    float64;
+};
+
+service : {
+    get_latest : () -> (vec LatestTokenRow) query;
+};

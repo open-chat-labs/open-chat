@@ -143,7 +143,7 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
+import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 /**
  * Worker request types
@@ -307,7 +307,8 @@ export type WorkerRequest =
     | TokenSwapStatus
     | ApproveTransfer
     | DeleteDirectChat
-    | GetDiamondMembershipFees;
+    | GetDiamondMembershipFees
+    | GetExchangeRates;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1173,7 +1174,8 @@ export type WorkerResponseInner =
     | [DexId, bigint][]
     | SwapTokensResponse
     | TokenSwapStatusResponse
-    | DiamondMembershipFees[];
+    | DiamondMembershipFees[]
+    | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1430,6 +1432,10 @@ type DeleteDirectChat = {
 
 type GetDiamondMembershipFees = {
     kind: "diamondMembershipFees";
+};
+
+type GetExchangeRates = {
+    kind: "exchangeRates";
 };
 
 // prettier-ignore
@@ -1735,4 +1741,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? boolean
     : T extends GetDiamondMembershipFees
     ? DiamondMembershipFees[]
+    : T extends GetExchangeRates
+    ? Record<string, TokenExchangeRates>
     : never;
