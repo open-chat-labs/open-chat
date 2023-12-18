@@ -47,7 +47,7 @@ export const enhancedCryptoLookup = derived(
         const accounts = Object.values($lookup).map((t) => {
             const balance = $balance[t.ledger] ?? BigInt(0);
             const symbolLower = t.symbol.toLowerCase();
-            const xr = $exchangeRatesLookup[symbolLower]?.to_usd ?? 0;
+            const xr = $exchangeRatesLookup[symbolLower]?.toUSD ?? 0;
             const balanceWholeUnits = Number(balance) / Math.pow(10, t.decimals);
             const dollarBalance = xr * balanceWholeUnits;
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);

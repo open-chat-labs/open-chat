@@ -51,7 +51,7 @@
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
-    $: exchangeRate = $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.to_usd ?? 0;
+    $: exchangeRate = $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0;
     $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
     $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
