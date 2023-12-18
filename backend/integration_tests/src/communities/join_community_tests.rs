@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use test_case::test_case;
-use types::{AccessGate, CommunityId, Empty, MessageContent, Rules};
+use types::{AccessGate, CommunityId, Empty, MessageContent};
 
 #[test]
 fn join_public_community_succeeds() {
