@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
 - Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- One time job to add members to Diamond member gated channels ([#5037](https://github.com/open-chat-labs/open-chat/pull/5037))
 
 ### Changed
 
