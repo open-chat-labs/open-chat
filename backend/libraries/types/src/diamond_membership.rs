@@ -62,7 +62,7 @@ impl DiamondMembershipPlanDuration {
             DiamondMembershipPlanDuration::OneMonth => 200_000_000,    // 2 CHAT
             DiamondMembershipPlanDuration::ThreeMonths => 500_000_000, // 5 CHAT
             DiamondMembershipPlanDuration::OneYear => 1_500_000_000,   // 15 CHAT
-            DiamondMembershipPlanDuration::Lifetime => 60_000_000_000, // 60 CHAT
+            DiamondMembershipPlanDuration::Lifetime => 6_000_000_000,  // 60 CHAT
         }
     }
 

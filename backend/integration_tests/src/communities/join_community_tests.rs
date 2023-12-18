@@ -7,7 +7,7 @@ use pocket_ic::PocketIc;
 use std::collections::HashSet;
 use std::ops::Deref;
 use test_case::test_case;
-use types::{AccessGate, CommunityId, Empty, MessageContent, Rules};
+use types::{AccessGate, CommunityId, Empty, MessageContent};
 
 #[test]
 fn join_public_community_succeeds() {
@@ -273,29 +273,14 @@ fn user_joined_to_all_public_channels(diamond_member: bool) {
     let channel1 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let channel2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
     let channel3 = client::community::happy_path::create_channel(env, user1.principal, community_id, false, random_string());
-    let channel4_response = client::community::create_channel(
+    let channel4 = client::community::happy_path::create_gated_channel(
         env,
         user1.principal,
-        community_id.into(),
-        &community_canister::create_channel::Args {
-            is_public: true,
-            name: random_string(),
-            description: random_string(),
-            rules: Rules::default(),
-            subtype: None,
-            avatar: None,
-            history_visible_to_new_joiners: true,
-            permissions_v2: None,
-            events_ttl: None,
-            gate: Some(AccessGate::DiamondMember),
-        },
+        community_id,
+        true,
+        random_string(),
+        AccessGate::DiamondMember,
     );
-
-    let channel4 = if let community_canister::create_channel::Response::Success(result) = channel4_response {
-        result.channel_id
-    } else {
-        panic!()
-    };
 
     let community_summary =
         client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
