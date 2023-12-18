@@ -471,6 +471,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    InternalError : text;
 };
 
 type CreateUserGroupArgs = record {

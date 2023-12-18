@@ -56,7 +56,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     }
 }
 
-pub(crate) fn join_channel_auto(
+pub(crate) fn join_channel_synchronously(
     channel_id: ChannelId,
     user_principal: Principal,
     diamond_membership_expires_at: Option<TimestampMillis>,
