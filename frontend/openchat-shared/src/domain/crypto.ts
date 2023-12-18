@@ -59,7 +59,7 @@ export type NervousSystemDetails = {
 };
 
 // approximate dollar exchange rates - until we come up with something better
-const dollarToICP = 0.225;
+const dollarToICP = 0.1069;
 
 export const dollarExchangeRates: Record<string, number> = {
     icp: to2SigFigs(dollarToICP),
