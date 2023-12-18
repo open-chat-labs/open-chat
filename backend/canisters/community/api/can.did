@@ -321,6 +321,7 @@ type AddMembersToChannelResponse = variant {
     ChannelNotFound;
     UserLimitReached : nat32;
     NotAuthorized;
+    InternalError : text;
 };
 
 type AddMembersToChannelPartialSuccess = record {
@@ -470,6 +471,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    InternalError : text;
 };
 
 type CreateUserGroupArgs = record {

@@ -12,7 +12,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const QuoteResponse = IDL.Variant({ 'ok' : IDL.Nat, 'err' : Error });
   return IDL.Service({
-    'quote' : IDL.Func([QuoteArgs], [QuoteResponse], ['query']),
+    'quoteForAll' : IDL.Func([QuoteArgs], [QuoteResponse], ['query']),
   });
 };
 export const init = ({ IDL }) => { return []; };

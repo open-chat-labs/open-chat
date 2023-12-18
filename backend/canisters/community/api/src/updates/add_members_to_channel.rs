@@ -22,6 +22,7 @@ pub enum Response {
     ChannelNotFound,
     UserLimitReached(u32),
     NotAuthorized,
+    InternalError(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

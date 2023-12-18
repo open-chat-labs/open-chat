@@ -3,10 +3,10 @@ use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampNanos, UserId, VerifiedCredentialGate,
+    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, UserId, VerifiedCredentialGate,
 };
-use user_index_canister_c2c_client::LookupUserError;
 use utils::consts::MEMO_JOINING_FEE;
+use utils::time::NANOS_PER_MILLISECOND;
 
 pub enum CheckIfPassesGateResult {
     Success,
@@ -16,32 +16,36 @@ pub enum CheckIfPassesGateResult {
 
 pub struct CheckGateArgs {
     pub gate: AccessGate,
-    pub user_index_canister: CanisterId,
     pub user_id: UserId,
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
     pub this_canister: CanisterId,
-    pub now_nanos: TimestampNanos,
+    pub now: TimestampMillis,
 }
 
 pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResult {
     match args.gate {
         AccessGate::VerifiedCredential(g) => check_verified_credential_gate(&g, args.user_id).await,
-        AccessGate::DiamondMember => check_diamond_member_gate(args.user_id, args.user_index_canister).await,
+        AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
-        AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now_nanos).await,
+        AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
     }
 }
 
-async fn check_diamond_member_gate(user_id: UserId, user_index_canister_id: CanisterId) -> CheckIfPassesGateResult {
-    match user_index_canister_c2c_client::lookup_user(user_id.into(), user_index_canister_id).await {
-        Ok(user) if user.is_diamond_member => CheckIfPassesGateResult::Success,
-        Ok(_) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotDiamondMember),
-        Err(error) => {
-            let msg = match error {
-                LookupUserError::UserNotFound => "User not found".to_string(),
-                LookupUserError::InternalError(m) => m,
-            };
-            CheckIfPassesGateResult::InternalError(msg)
-        }
+pub fn check_if_passes_gate_synchronously(args: CheckGateArgs) -> CheckIfPassesGateResult {
+    match args.gate {
+        AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
+        _ => CheckIfPassesGateResult::InternalError("Gate check could not be performed synchronously".to_string()),
+    }
+}
+
+fn check_diamond_member_gate(
+    diamond_membership_expires_at: Option<TimestampMillis>,
+    now: TimestampMillis,
+) -> CheckIfPassesGateResult {
+    if diamond_membership_expires_at > Some(now) {
+        CheckIfPassesGateResult::Success
+    } else {
+        CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotDiamondMember)
     }
 }
 
@@ -92,7 +96,7 @@ async fn try_transfer_from(
     gate: &PaymentGate,
     user_id: UserId,
     this_canister_id: CanisterId,
-    now_nanos: TimestampNanos,
+    now: TimestampMillis,
 ) -> CheckIfPassesGateResult {
     let from: Principal = user_id.into();
     match icrc_ledger_canister_c2c_client::icrc2_transfer_from(
@@ -105,7 +109,7 @@ async fn try_transfer_from(
             amount: (gate.amount - 2 * gate.fee).into(),
             fee: Some(gate.fee.into()),
             memo: Some(MEMO_JOINING_FEE.to_vec().into()),
-            created_at_time: Some(now_nanos),
+            created_at_time: Some(now * NANOS_PER_MILLISECOND),
         },
     )
     .await

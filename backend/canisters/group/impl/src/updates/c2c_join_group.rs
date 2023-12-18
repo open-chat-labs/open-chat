@@ -45,10 +45,10 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
     } else {
         Ok(state.data.chat.gate.as_ref().map(|g| CheckGateArgs {
             gate: g.clone(),
-            user_index_canister: state.data.user_index_canister_id,
             user_id: args.user_id,
+            diamond_membership_expires_at: args.diamond_membership_expires_at,
             this_canister: state.env.canister_id(),
-            now_nanos: state.env.now_nanos(),
+            now: state.env.now(),
         }))
     }
 }
