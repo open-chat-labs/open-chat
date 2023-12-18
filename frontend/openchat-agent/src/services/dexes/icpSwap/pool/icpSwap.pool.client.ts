@@ -37,7 +37,7 @@ export class IcpSwapPoolClient extends CandidService {
             zeroForOne,
         };
 
-        return this.handleQueryResponse(() => this.service.quote(args), quoteResponse, args);
+        return this.handleQueryResponse(() => this.service.quoteForAll(args), quoteResponse, args);
     }
 
     private zeroForOne(inputToken: string, outputToken: string): boolean {

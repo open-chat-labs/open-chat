@@ -17,5 +17,5 @@ type Error = variant {
   UnsupportedToken: text;
 };
 service : {
-  quote: (QuoteArgs) -> (QuoteResponse) query;
+  quoteForAll: (QuoteArgs) -> (QuoteResponse) query;
 }
