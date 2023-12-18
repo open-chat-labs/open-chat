@@ -11,7 +11,6 @@
         OpenChat,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
-    import { dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -49,9 +48,10 @@
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
-    $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
+    $: exchangeRate = $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0;
     $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
     $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
     $: remainingBalance =
@@ -84,13 +84,18 @@
 
     function calculateCentAmount(e8s: bigint, exchangeRate: number): number {
         const tokens = Number(e8s) / Math.pow(10, tokenDetails.decimals);
-        const dollar = tokens / exchangeRate;
+        const dollar = tokens * exchangeRate;
         const cents = dollar * 100;
         return Math.round(cents);
     }
 
+    function to2SigFigs(num: number): number {
+        return parseFloat(num.toPrecision(2));
+    }
+
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = (centAmount / 100) * exchangeRate * Math.pow(10, tokenDetails.decimals);
+        const e8s =
+            ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / to2SigFigs(exchangeRate);
         return BigInt(Math.round(e8s));
     }
 
@@ -182,7 +187,7 @@
     }
 
     function hasExchangeRate(token: EnhancedTokenDetails): boolean {
-        return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
+        return $exchangeRatesLookup[token.symbol.toLowerCase()] !== undefined;
     }
 
     function maxAmount(balance: bigint): bigint {
@@ -251,13 +256,13 @@
                             <TipButton
                                 label={$_(amountLabel(increment))}
                                 on:click={(e) => clickAmount(e, increment)}
-                                disabled={exchangeRate === undefined ||
+                                disabled={exchangeRate === 0 ||
                                     calculateAmount(centAmount + increment, exchangeRate) >
                                         cryptoBalance - tokenDetails.transferFee} />
                         {/each}
                     </div>
                     <div in:fade|local={{ duration: 300 }} class="message">
-                        {#if exchangeRate !== undefined}
+                        {#if exchangeRate > 0}
                             {#if draftAmount > 0}
                                 <div class="summary">
                                     <div class="dollar-amount">
