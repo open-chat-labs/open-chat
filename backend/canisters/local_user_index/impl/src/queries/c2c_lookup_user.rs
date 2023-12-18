@@ -1,9 +1,6 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query_msgpack;
-use local_user_index_canister::{
-    c2c_lookup_user::{Response::*, *},
-    GlobalUser,
-};
+use local_user_index_canister::c2c_lookup_user::{Response::*, *};
 
 #[query_msgpack]
 fn c2c_lookup_user(args: Args) -> Response {
@@ -12,12 +9,7 @@ fn c2c_lookup_user(args: Args) -> Response {
 
 fn c2c_lookup_user_impl(args: Args, state: &RuntimeState) -> Response {
     if let Some(user) = state.data.global_users.get(&args.user_id_or_principal) {
-        Success(GlobalUser {
-            principal: user.principal,
-            user_id: user.user_id,
-            is_bot: user.is_bot,
-            is_platform_moderator: user.is_platform_moderator,
-        })
+        Success(user)
     } else {
         UserNotFound
     }
