@@ -5,6 +5,8 @@ import { CandidService } from "../candidService";
 import { getLatestResponse } from "./mappers";
 import type { AgentConfig } from "../../config";
 
+const ICPCOINS_CANISTER_ID = "u45jl-liaaa-aaaam-abppa-cai";
+
 export class ICPCoinsClient extends CandidService {
     private service: ICPCoinsService;
 
@@ -13,7 +15,7 @@ export class ICPCoinsClient extends CandidService {
 
         this.service = this.createServiceClient<ICPCoinsService>(
             idlFactory,
-            config.icpCoinsCanister,
+            ICPCOINS_CANISTER_ID,
             config
         );
     }

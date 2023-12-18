@@ -18,7 +18,6 @@ export type OpenChatConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
-    icpCoinsCanister: string;
     i18nFormatter: MessageFormatter;
     logger: Logger;
     websiteVersion: string;

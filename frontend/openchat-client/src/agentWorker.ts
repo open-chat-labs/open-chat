@@ -62,7 +62,6 @@ export class OpenChatAgentWorker extends EventTarget {
                     blobUrlPattern: this.config.blobUrlPattern,
                     proposalBotCanister: this.config.proposalBotCanister,
                     marketMakerCanister: this.config.marketMakerCanister,
-                    icpCoinsCanister: this.config.icpCoinsCanister,
                     websiteVersion: this.config.websiteVersion,
                     rollbarApiKey: this.config.rollbarApiKey,
                     env: this.config.env,

@@ -16,6 +16,5 @@ export type AgentConfig = {
     blobUrlPattern: string;
     proposalBotCanister: string;
     marketMakerCanister: string;
-    icpCoinsCanister: string;
     logger: Logger;
 };
