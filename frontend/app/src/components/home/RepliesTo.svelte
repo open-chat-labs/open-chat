@@ -22,6 +22,7 @@
     export let chatId: ChatIdentifier;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
+    export let intersecting: boolean;
 
     let debug = false;
 
@@ -71,6 +72,7 @@
                 {me}
                 {readonly}
                 {chatId}
+                {intersecting}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}
                 senderId={repliesTo.senderId}
