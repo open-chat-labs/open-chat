@@ -1689,7 +1689,7 @@ export function buildCryptoTransferText(
     const tokenDetails = cryptoLookup[content.transfer.ledger];
 
     const values = {
-        amount: formatTokens(content.transfer.amountE8s, 0, tokenDetails.decimals),
+        amount: formatTokens(content.transfer.amountE8s, tokenDetails.decimals),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
         token: tokenDetails.symbol,

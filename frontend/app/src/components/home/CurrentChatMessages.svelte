@@ -55,7 +55,7 @@
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: userGroupKeys = client.userGroupKeys;
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: chatListScope = client.chatListScope;
@@ -90,7 +90,7 @@
     }
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        currentChatDraftMessage.setEditing(chat.id, ev.detail);
+        draftMessagesStore.setEditing({ chatId: chat.id }, ev.detail);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {

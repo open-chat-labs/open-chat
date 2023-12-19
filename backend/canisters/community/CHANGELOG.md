@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
 - Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- One time job to add members to Diamond member gated channels ([#5037](https://github.com/open-chat-labs/open-chat/pull/5037))
 
 ### Changed
 
@@ -16,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
 - Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
 - Auto join Diamond members to newly created Diamond gated channels ([#5028](https://github.com/open-chat-labs/open-chat/pull/5028))
+- Join community members to public channel if it has its gate removed ([#5033](https://github.com/open-chat-labs/open-chat/pull/5033))
 
 ### Fixed
 

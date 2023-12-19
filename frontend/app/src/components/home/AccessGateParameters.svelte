@@ -40,7 +40,7 @@
         <div class="params">
             <div>
                 {`${$_("access.amountN", {
-                    values: { n: client.formatTokens(gate.amount, 0, tokenDetails.decimals) },
+                    values: { n: client.formatTokens(gate.amount, tokenDetails.decimals) },
                 })}`}
             </div>
         </div>
@@ -64,8 +64,7 @@
                         values: {
                             n: client.formatTokens(
                                 BigInt(gate.minStakeE8s),
-                                0,
-                                tokenDetails?.decimals ?? 8
+                                tokenDetails?.decimals ?? 8,
                             ),
                         },
                     })}`}
