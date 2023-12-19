@@ -35,7 +35,7 @@
         if (inputElement !== undefined) {
             const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
             if (validateResult.amount !== amount) {
-                inputElement.value = client.formatTokens(amount, tokenDecimals, ".");
+                inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
             }
             validate();
         }
