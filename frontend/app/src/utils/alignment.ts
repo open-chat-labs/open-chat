@@ -136,35 +136,26 @@ export function boundsCheck(
     let y = dim.y;
 
     if (topOverflow) {
-        if (position === "top" || (side && align === "start")) {
+        if (position === "top") {
             y = dim.y + dim.h + trigger.height + gutter * 2;
-        }
-        if (side && align === "end") {
+        } else if (side && align === "end") {
             y = dim.y + dim.h - trigger.height - gutter * 2;
-        }
-
-        if (side && align === "center") {
-            y = dim.y + dim.h - trigger.height / 2 - gutter;
         }
     }
 
     if (bottomOverflow) {
-        if (position === "bottom" || (side && align === "end")) {
+        if (position === "bottom") {
             y = dim.y - dim.h - trigger.height - gutter * 2;
-        }
-
-        if (side && align === "start") {
+        } else if (side && align === "start") {
             y = dim.y - dim.h + trigger.height + gutter * 2;
         }
     }
 
     if (rightOverflow) {
-        // this adjustment is different depending on the position and alignment *gulp*
         x = dim.x - dim.w - trigger.width;
     }
 
     if (leftOverflow) {
-        // this adjustment is different depending on the position and alignment *gulp*
         x = dim.x + dim.w + trigger.width;
     }
 
