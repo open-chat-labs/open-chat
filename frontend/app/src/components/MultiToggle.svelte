@@ -46,6 +46,7 @@
 
             &:hover,
             &.selected {
+                color: var(--button-txt);
                 background: var(--button-bg);
             }
 
