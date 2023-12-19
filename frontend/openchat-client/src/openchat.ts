@@ -4685,10 +4685,7 @@ export class OpenChat extends OpenChatAgentWorker {
             const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
                 const current = allUsers[userId];
-                if (
-                    current === undefined ||
-                    (current.updated < tenMinsAgo && current.kind === "user")
-                ) {
+                if (current === undefined || current.updated < tenMinsAgo) {
                     usersToUpdate.add(userId);
                 }
                 if (usersToUpdate.size >= 100) {
@@ -4706,7 +4703,7 @@ export class OpenChat extends OpenChatAgentWorker {
             // Also update any users who haven't been updated for at least 24 hours
             const oneDayAgo = now - BigInt(24 * ONE_HOUR);
             for (const user of Object.values(allUsers)) {
-                if (user.updated < oneDayAgo && user.kind === "user") {
+                if (user.updated < oneDayAgo) {
                     usersToUpdate.add(user.userId);
                     if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
                         break;
@@ -4714,8 +4711,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
-            usersToUpdate.delete(ANON_USER_ID);
-            usersToUpdate.delete(OPENCHAT_BOT_USER_ID);
+            for (const userId of Object.keys(get(specialUsers))) {
+                usersToUpdate.delete(userId);
+            }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
             const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
