@@ -54,7 +54,7 @@
     import { filterRightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
     import Diamond from "../icons/Diamond.svelte";
-    import IntersectionObserver from "./IntersectionObserver.svelte";
+    import IntersectionObserverComponent from "./IntersectionObserver.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -431,7 +431,7 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        <IntersectionObserver let:intersecting>
+        <IntersectionObserverComponent let:intersecting>
             <div
                 bind:this={msgElement}
                 class="message"
@@ -664,7 +664,7 @@
                     {/each}
                 </div>
             {/if}
-        </IntersectionObserver>
+        </IntersectionObserverComponent>
     </div>
 {/if}
 
