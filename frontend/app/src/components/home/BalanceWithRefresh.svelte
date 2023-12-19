@@ -11,7 +11,6 @@
     export let ledger: string;
     export let value: bigint;
     export let label: string | undefined = undefined;
-    export let minDecimals = 4;
     export let bold = false;
     export let toppingUp = false;
     export let showTopUp = false;
@@ -57,7 +56,7 @@
         <div class="label">{label}</div>
     {/if}
     <div class="amount" class:bold>
-        {client.formatTokens(value, minDecimals, tokenDetails.decimals)}
+        {client.formatTokens(value, tokenDetails.decimals)}
     </div>
     {#if showRefresh}
         <div class="refresh" class:refreshing on:click={refresh}>

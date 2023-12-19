@@ -69,7 +69,7 @@
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatAttachment = client.currentChatAttachment;
     $: currentChatEditingEvent = client.currentChatEditingEvent;
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: lastCryptoSent = client.lastCryptoSent;
     $: messagesRead = client.messagesRead;
     $: directlyBlockedUsers = client.blockedUsers;
@@ -151,7 +151,7 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        currentChatDraftMessage.setAttachment(chat.id, ev.detail);
+        draftMessagesStore.setAttachment({ chatId: chat.id }, ev.detail);
     }
 
     function attachGif(ev: CustomEvent<string>) {
@@ -170,7 +170,7 @@
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         showSearchHeader = false;
-        currentChatDraftMessage.setReplyingTo(chat.id, ev.detail);
+        draftMessagesStore.setReplyingTo({ chatId: chat.id }, ev.detail);
     }
 
     function searchChat(ev: CustomEvent<string>) {
@@ -226,7 +226,7 @@
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>): void {
-        currentChatDraftMessage.setTextContent(chat.id, ev.detail);
+        draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
     }
 
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
@@ -337,9 +337,9 @@
             {blocked}
             on:joinGroup
             on:upgrade
-            on:cancelReply={() => currentChatDraftMessage.setReplyingTo(chat.id, undefined)}
-            on:clearAttachment={() => currentChatDraftMessage.setAttachment(chat.id, undefined)}
-            on:cancelEditEvent={() => currentChatDraftMessage.clear(chat.id)}
+            on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
+            on:clearAttachment={() => draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+            on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, $user.userId)}
             on:stopTyping={() => client.stopTyping(chat, $user.userId)}

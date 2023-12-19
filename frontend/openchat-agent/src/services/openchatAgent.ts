@@ -183,6 +183,7 @@ import type {
     CryptocurrencyDetails,
     ApproveTransferResponse,
     TokenSwapPool,
+    TokenExchangeRates,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -207,6 +208,7 @@ import {
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
+import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -221,6 +223,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
+    private _icpcoinsClient: ICPCoinsClient;
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
@@ -241,6 +244,7 @@ export class OpenChatAgent extends EventTarget {
         this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
+        this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -3008,5 +3012,9 @@ export class OpenChatAgent extends EventTarget {
 
     removeMessageFilter(id: bigint): Promise<boolean> {
         return this._registryClient.removeMessageFilter(id);
+    }
+
+    exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+        return this._icpcoinsClient.exchangeRates();
     }
 }

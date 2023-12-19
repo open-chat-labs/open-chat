@@ -1,14 +1,12 @@
 use candid::Principal;
 use canister_client::{generate_c2c_call, generate_candid_c2c_call};
-use ic_cdk::api::call::CallResult;
 use local_user_index_canister::*;
-use std::collections::HashMap;
-use types::{CanisterId, TimestampMillis, UserId};
+use types::CanisterId;
 
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
+generate_c2c_call!(c2c_diamond_membership_expiry_dates);
 generate_c2c_call!(c2c_lookup_user);
-generate_c2c_call!(c2c_lookup_users);
 generate_c2c_call!(c2c_user_principals);
 generate_c2c_call!(chat_events);
 
@@ -35,20 +33,5 @@ pub async fn lookup_user(
         Ok(c2c_lookup_user::Response::Success(user)) => Ok(user),
         Ok(_) => Err(LookupUserError::UserNotFound),
         Err(error) => Err(LookupUserError::InternalError(format!("{error:?}"))),
-    }
-}
-
-pub async fn get_diamond_membership_expiry_dates(
-    user_ids: Vec<UserId>,
-    local_user_index_canister_id: CanisterId,
-) -> CallResult<HashMap<UserId, TimestampMillis>> {
-    let args = c2c_lookup_users::Args { user_ids };
-
-    match crate::c2c_lookup_users(local_user_index_canister_id, &args).await {
-        Ok(c2c_lookup_users::Response::Success(users)) => Ok(users
-            .into_iter()
-            .filter_map(|u| u.diamond_membership_expires_at.map(|ts| (u.user_id, ts)))
-            .collect()),
-        Err(error) => Err(error),
     }
 }

@@ -28,13 +28,17 @@ async fn add_members_to_channel(args: Args) -> Response {
 
     if let Some(gate) = prepare_result.gate {
         let diamond_membership_expiry_dates: HashMap<_, _> = if matches!(gate, AccessGate::DiamondMember) {
-            match local_user_index_canister_c2c_client::get_diamond_membership_expiry_dates(
-                prepare_result.users_to_add.clone(),
+            match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
                 prepare_result.local_user_index_canister_id,
+                &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args {
+                    user_ids: prepare_result.users_to_add.clone(),
+                },
             )
             .await
             {
-                Ok(expiry_dates) => expiry_dates,
+                Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
+                    expiry_dates
+                }
                 Err(error) => return InternalError(format!("{error:?}")),
             }
         } else {

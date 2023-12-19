@@ -16,7 +16,7 @@
     $: logo = $cryptoLookup[content.transaction.ledger]?.logo ?? "";
     $: tokenDetails = $cryptoLookup[content.transaction.ledger];
     $: symbol = tokenDetails.symbol;
-    $: amount = client.formatTokens(content.transaction.amountE8s, 0, tokenDetails.decimals);
+    $: amount = client.formatTokens(content.transaction.amountE8s, tokenDetails.decimals);
     $: winner = `${username(content.transaction.recipient)}`;
     $: me = $user.userId === content.transaction.recipient;
     $: transactionLinkText = client.buildTransactionLink($_, content.transaction);

@@ -1399,6 +1399,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
+            gate_update: OptionUpdate::NoChange,
             rules_version: None,
         };
 
@@ -1497,6 +1498,7 @@ impl GroupChatCore {
         if let Some(gate) = gate.expand() {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
+                result.gate_update = OptionUpdate::from_update(gate.clone());
 
                 events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
@@ -1872,6 +1874,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
+    pub gate_update: OptionUpdate<AccessGate>,
     pub rules_version: Option<Version>,
 }
 

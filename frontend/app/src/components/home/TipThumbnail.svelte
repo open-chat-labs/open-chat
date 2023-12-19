@@ -54,12 +54,12 @@
                         @{$userStore[userId]?.username}
                     </div>
                     <div class="amount">
-                        {client.formatTokens(amount, 0, tokenDetails.decimals)}
+                        {client.formatTokens(amount, tokenDetails.decimals)}
                     </div>
                 {/each}
                 {#if userTipsList.length > 1}
                     <div class="total">
-                        {client.formatTokens(totalAmount, 0, tokenDetails.decimals)}
+                        {client.formatTokens(totalAmount, tokenDetails.decimals)}
                     </div>
                 {/if}
             </div>

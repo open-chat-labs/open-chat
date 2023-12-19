@@ -140,10 +140,10 @@ import {
     cryptoLookup,
     cryptoTokensSorted,
     enhancedCryptoLookup,
+    exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
 } from "./stores/crypto";
-import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
@@ -437,10 +437,10 @@ import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpda
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
+import { draftMessagesStore } from "./stores/draftMessages";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -450,6 +450,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
@@ -468,6 +469,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _chatsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
+    private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
 
@@ -655,6 +657,8 @@ export class OpenChat extends OpenChatAgentWorker {
         await this.connectToWorker();
 
         this.startRegistryPoller();
+        this.startExchangeRatePoller();
+
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
@@ -819,6 +823,16 @@ export class OpenChat extends OpenChatAgentWorker {
             REGISTRY_UPDATE_INTERVAL,
             REGISTRY_UPDATE_INTERVAL,
             false,
+        );
+    }
+
+    private startExchangeRatePoller() {
+        this._exchangeRatePoller?.stop();
+        this._exchangeRatePoller = new Poller(
+            () => this.updateExchangeRates(),
+            EXCHANGE_RATE_UPDATE_INTERVAL,
+            EXCHANGE_RATE_UPDATE_INTERVAL,
+            true,
         );
     }
 
@@ -3240,13 +3254,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.threadEvents;
     }
 
-    private draftMessageForMessageContext({
-        threadRootMessageIndex,
-    }: MessageContext): DraftMessage | undefined {
-        if (threadRootMessageIndex === undefined) return this._liveState.currentChatDraftMessage;
-        return this._liveState.draftThreadMessages[threadRootMessageIndex];
-    }
-
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
         if (chat.kind === "group_chat" || chat.kind === "channel") {
             if (chat.eventsTTL !== undefined) {
@@ -3270,7 +3277,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const draftMessage = this.draftMessageForMessageContext(messageContext);
+        const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -3438,9 +3445,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chat.id);
-            }
+            draftMessagesStore.delete(context);
 
             this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
                 this.dispatchEvent(new SentMessage(context, messageEvent));
@@ -3500,8 +3505,6 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        const { chatId, threadRootMessageIndex } = messageContext;
-
         if (textContent || attachment) {
             const msg = {
                 ...editingEvent.event,
@@ -3509,16 +3512,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 content: this.getMessageContent(textContent ?? undefined, attachment),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
-
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chatId);
-            }
+            draftMessagesStore.delete(messageContext);
 
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
-                threadRootMessageIndex,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -4675,9 +4675,10 @@ export class OpenChat extends OpenChatAgentWorker {
             const allUsers = this._liveState.userStore;
             const usersToUpdate = new Set<string>([this._liveState.user.userId]);
 
+            const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
                 const current = allUsers[userId];
-                if (current === undefined || now - current.updated > 10 * ONE_MINUTE_MILLIS) {
+                if (current === undefined || current.updated < tenMinsAgo) {
                     usersToUpdate.add(userId);
                 }
                 if (usersToUpdate.size >= 100) {
@@ -4693,8 +4694,9 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             // Also update any users who haven't been updated for at least 24 hours
+            const oneDayAgo = now - BigInt(24 * ONE_HOUR);
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
+                if (user.updated < oneDayAgo) {
                     usersToUpdate.add(user.userId);
                     if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
                         break;
@@ -4702,8 +4704,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
-            usersToUpdate.delete(ANON_USER_ID);
-            usersToUpdate.delete(OPENCHAT_BOT_USER_ID);
+            for (const userId of Object.keys(get(specialUsers))) {
+                usersToUpdate.delete(userId);
+            }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
             const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
@@ -5269,6 +5272,12 @@ export class OpenChat extends OpenChatAgentWorker {
                     reject(`Failed to update the registry: ${err}`);
                 });
         });
+    }
+
+    private async updateExchangeRates(): Promise<void> {
+        const exchangeRates = await this.sendRequest({ kind: "exchangeRates" });
+
+        exchangeRatesLookupStore.set(exchangeRates);
     }
 
     private async refreshBalancesInSeries() {
@@ -5951,8 +5960,9 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
+    exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;
-    draftThreadMessages = draftThreadMessages;
+    draftMessagesStore = draftMessagesStore;
     translationStore = translationStore;
     eventsStore = eventsStore;
     selectedChatStore = selectedChatStore;

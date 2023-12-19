@@ -4,15 +4,12 @@ import type {
     ChatSpecificState,
     ChatSummary,
     DirectChatSummary,
-    EnhancedReplyContext,
     EventWrapper,
-    Message,
     ThreadSyncDetails,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
     ChatListScope,
-    AttachmentContent,
     ExpiredEventsRange,
     MessageContext,
 } from "openchat-shared";
@@ -23,7 +20,6 @@ import {
     ChatMap,
     nullMembership,
     chatIdentifiersEqual,
-    isAttachmentContent,
     messageContextsEqual,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
@@ -37,13 +33,12 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { currentUser, currentUserIdStore, suspendedUsers, userStore } from "./user";
+import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
-import type { DraftMessage } from "./draftMessageFactory";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
@@ -62,6 +57,7 @@ import { safeWritable } from "./safeWritable";
 import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
 import { messageFiltersStore } from "./messageFilters";
+import { draftMessagesStore } from "./draftMessages";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
@@ -733,40 +729,13 @@ export function clearServerEvents(id: ChatIdentifier): void {
     chatStateStore.setProp(id, "expiredEventRanges", new DRange());
 }
 
-/**
- * You might think that this belongs in the chatStateStore, but this needs to persist across chat selection boundary
- * so it has a different scope.
- */
-const draftMessages = createChatSpecificObjectStore<DraftMessage>(selectedChatId, () => ({}));
-
-export const currentChatDraftMessage = {
-    ...draftMessages,
-    setTextContent: (id: ChatIdentifier, textContent: string | undefined): void =>
-        draftMessages.setProp(id, "textContent", textContent),
-    setAttachment: (id: ChatIdentifier, attachment: AttachmentContent | undefined): void =>
-        draftMessages.setProp(id, "attachment", attachment),
-    setReplyingTo: (id: ChatIdentifier, replyingTo: EnhancedReplyContext | undefined): void =>
-        draftMessages.setProp(id, "replyingTo", replyingTo),
-    setEditing: (id: ChatIdentifier, editingEvent: EventWrapper<Message>): void => {
-        const users = get(userStore);
-        const updated = {
-            editingEvent,
-            attachment: isAttachmentContent(editingEvent.event.content)
-                ? editingEvent.event.content
-                : undefined,
-            replyingTo:
-                editingEvent.event.repliesTo &&
-                editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
-                    ? {
-                          ...editingEvent.event.repliesTo,
-                          content: editingEvent.event.content,
-                          sender: users[editingEvent.event.sender],
-                      }
-                    : undefined,
-        };
-        draftMessages.update(id, (d) => ({ ...d, ...updated }));
+export const currentChatDraftMessage = derived(
+    [draftMessagesStore, selectedChatId],
+    ([draftMessages, chatId]) => {
+        return chatId !== undefined ? draftMessages.get({ chatId }) ?? {} : {};
     },
-};
+);
+
 export const currentChatTextContent = createDerivedPropStore(
     currentChatDraftMessage,
     "textContent",

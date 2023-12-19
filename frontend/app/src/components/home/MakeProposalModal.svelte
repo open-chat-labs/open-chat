@@ -116,7 +116,7 @@
     }
 
     function defaultMessage(): string {
-        const cost = client.formatTokens(requiredFunds, 0, tokenDetails.decimals);
+        const cost = client.formatTokens(requiredFunds, tokenDetails.decimals);
         return $_("proposal.maker.message", { values: { cost, token: symbol } });
     }
 
@@ -186,7 +186,7 @@
                         addTokenLedgerCanisterId,
                         addTokenInfoUrl,
                         addTokenHowToBuyUrl,
-                        addTokenTransactionUrlFormat
+                        addTokenTransactionUrlFormat,
                     ),
                 };
             }
@@ -221,7 +221,7 @@
     function wrappedSummary(summary: string) {
         const groupPath = routeForChatIdentifier(
             selectedMultiUserChat.kind === "group_chat" ? "group_chat" : "community",
-            selectedMultiUserChat.id
+            selectedMultiUserChat.id,
         );
 
         return `${summary}
