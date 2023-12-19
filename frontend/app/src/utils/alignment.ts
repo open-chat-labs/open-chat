@@ -115,7 +115,14 @@ function viewportDimensions(): { w: number; h: number } {
 
 // Once the coordinates have been figured out we need to check whether the element
 // overflows the bounds of the screen. It it does we need make adjustments
-export function boundsCheck(trigger: DOMRect, dim: Dimensions, gutter = 8): Dimensions {
+export function boundsCheck(
+    position: Position,
+    align: Alignment,
+    trigger: DOMRect,
+    dim: Dimensions,
+    gutter = 8,
+): Dimensions {
+    const side = position === "right" || position === "left";
     const viewport = viewportDimensions();
     const right = dim.x + dim.w;
     const left = dim.x;
@@ -129,11 +136,19 @@ export function boundsCheck(trigger: DOMRect, dim: Dimensions, gutter = 8): Dime
     let y = dim.y;
 
     if (topOverflow) {
-        y = dim.y + dim.h + trigger.height + gutter * 2;
+        if (position === "top") {
+            y = dim.y + dim.h + trigger.height + gutter * 2;
+        } else if (side && align === "end") {
+            y = dim.y + dim.h - trigger.height - gutter * 2;
+        }
     }
 
     if (bottomOverflow) {
-        y = dim.y - dim.h - trigger.height - gutter * 2;
+        if (position === "bottom") {
+            y = dim.y - dim.h - trigger.height - gutter * 2;
+        } else if (side && align === "start") {
+            y = dim.y - dim.h + trigger.height + gutter * 2;
+        }
     }
 
     if (rightOverflow) {
