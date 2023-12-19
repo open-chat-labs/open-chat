@@ -4685,7 +4685,10 @@ export class OpenChat extends OpenChatAgentWorker {
             const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
                 const current = allUsers[userId];
-                if (current === undefined || current.updated < tenMinsAgo) {
+                if (
+                    current === undefined ||
+                    (current.updated < tenMinsAgo && current.kind === "user")
+                ) {
                     usersToUpdate.add(userId);
                 }
                 if (usersToUpdate.size >= 100) {
