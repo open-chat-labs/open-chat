@@ -50,6 +50,8 @@ export const menuStore = {
                 centered && get(mobileWidth)
                     ? centerOfScreen(elementRect)
                     : boundsCheck(
+                          position,
+                          align,
                           triggerRect,
                           derivePosition(triggerRect, elementRect, position, align, gutter),
                           gutter,
