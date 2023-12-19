@@ -572,51 +572,49 @@
                         <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
                     {/if}
 
-                    {#if showChatMenu}
-                        {#if true}
-                            <ChatMessageMenu
-                                bind:this={messageMenu}
-                                {chatId}
-                                {isProposal}
-                                {inert}
-                                {publicGroup}
-                                {confirmed}
-                                {failed}
-                                {canShare}
-                                {me}
-                                {canPin}
-                                {canTip}
-                                {pinned}
-                                {supportsReply}
-                                {canQuoteReply}
-                                {threadRootMessage}
-                                {canStartThread}
-                                {multiUserChat}
-                                {msg}
-                                {canForward}
-                                {canBlockUser}
-                                {canEdit}
-                                {canDelete}
-                                {canUndelete}
-                                {canRevealDeleted}
-                                {canRevealBlocked}
-                                {crypto}
-                                translatable={canTranslate}
-                                {translated}
-                                on:collapseMessage
-                                on:forward
-                                on:reply={reply}
-                                on:retrySend
-                                on:upgrade
-                                on:initiateThread
-                                on:deleteFailedMessage
-                                on:replyPrivately={replyPrivately}
-                                on:editMessage={editMessage}
-                                on:tipMessage={tipMessage}
-                                on:reportMessage={reportMessage}
-                                on:cancelReminder={cancelReminder}
-                                on:remindMe={remindMe} />
-                        {/if}
+                    {#if showChatMenu && intersecting}
+                        <ChatMessageMenu
+                            bind:this={messageMenu}
+                            {chatId}
+                            {isProposal}
+                            {inert}
+                            {publicGroup}
+                            {confirmed}
+                            {failed}
+                            {canShare}
+                            {me}
+                            {canPin}
+                            {canTip}
+                            {pinned}
+                            {supportsReply}
+                            {canQuoteReply}
+                            {threadRootMessage}
+                            {canStartThread}
+                            {multiUserChat}
+                            {msg}
+                            {canForward}
+                            {canBlockUser}
+                            {canEdit}
+                            {canDelete}
+                            {canUndelete}
+                            {canRevealDeleted}
+                            {canRevealBlocked}
+                            {crypto}
+                            translatable={canTranslate}
+                            {translated}
+                            on:collapseMessage
+                            on:forward
+                            on:reply={reply}
+                            on:retrySend
+                            on:upgrade
+                            on:initiateThread
+                            on:deleteFailedMessage
+                            on:replyPrivately={replyPrivately}
+                            on:editMessage={editMessage}
+                            on:tipMessage={tipMessage}
+                            on:reportMessage={reportMessage}
+                            on:cancelReminder={cancelReminder}
+                            on:remindMe={remindMe} />
                     {/if}
                 </div>
 
