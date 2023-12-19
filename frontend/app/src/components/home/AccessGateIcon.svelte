@@ -43,7 +43,6 @@
                         values: {
                             n: client.formatTokens(
                                 BigInt(gate.minStakeE8s),
-                                0,
                                 tokenDetails?.decimals ?? 8,
                             ),
                         },
@@ -53,7 +52,7 @@
         } else if (isPaymentGate(gate)) {
             parts.push(
                 `${$_("access.amountN", {
-                    values: { n: client.formatTokens(gate.amount, 0, tokenDetails?.decimals ?? 8) },
+                    values: { n: client.formatTokens(gate.amount, tokenDetails?.decimals ?? 8) },
                 })}`,
             );
         }

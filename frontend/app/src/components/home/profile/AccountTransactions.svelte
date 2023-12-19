@@ -176,7 +176,6 @@
                                 <td
                                     >{client.formatTokens(
                                         transaction.amount,
-                                        0,
                                         tokenDetails.decimals,
                                     )}</td>
                                 <td class="truncate">{translateMemo(transaction)}</td>

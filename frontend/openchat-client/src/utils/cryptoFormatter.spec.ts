@@ -74,29 +74,34 @@ describe("crypto formatter", () => {
     });
 
     describe("format", () => {
-        test("1 ICP with min decimals = 4", () => {
-            const formatted = formatTokens(BigInt(100_000_000), 4, 8);
-            expect(formatted).toEqual("1.0000");
+        test("123.456 ICP with comma separator", () => {
+            const formatted = formatTokens(BigInt(12_345_600_000), 8, ",");
+            expect(formatted).toEqual("123,456");
+        });
+        
+        test("123456789.12345678 ICP formatted as expected", () => {
+            const formatted = formatTokens(BigInt(12_345_678_912_345_678), 8, ".");
+            expect(formatted).toEqual("123456789");
+        });
+        
+        test("123.456789 ICP formatted as expected", () => {
+            const formatted = formatTokens(BigInt(12_345_678_900), 8, ".");
+            expect(formatted).toEqual("123.456");
+        });
+        
+        test("0.000123456789000000 ckETH formatted as expected", () => {
+            const formatted = formatTokens(BigInt(123_456_789_000_000), 18, ".");
+            expect(formatted).toEqual("0.000123456");
+        });
+        
+        test("12345 ICP formatted as expected", () => {
+            const formatted = formatTokens(BigInt(1_234_500_000_000), 8, ".");
+            expect(formatted).toEqual("12345.0");
         });
 
-        test("1 ICP with min decimals = 0", () => {
-            const formatted = formatTokens(BigInt(100_000_000), 0, 8);
-            expect(formatted).toEqual("1");
-        });
-
-        test("1.23456789 ICP with min decimals = 0", () => {
-            const formatted = formatTokens(BigInt(123_456_789), 0, 8);
-            expect(formatted).toEqual("1.23456789");
-        });
-
-        test("123456789.12345678 ICP with min decimals = 2", () => {
-            const formatted = formatTokens(BigInt(12_345_678_912_345_678), 0, 8);
-            expect(formatted).toEqual("123456789.12345678");
-        });
-
-        test("123456789.12345678 ICP with comma separator", () => {
-            const formatted = formatTokens(BigInt(12_345_678_912_345_678), 0, 8, ",");
-            expect(formatted).toEqual("123456789,12345678");
+        test("1234 ICP formatted as expected", () => {
+            const formatted = formatTokens(BigInt(123_400_000_000), 8, ".");
+            expect(formatted).toEqual("1234.00");
         });
     });
 });

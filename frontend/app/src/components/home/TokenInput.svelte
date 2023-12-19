@@ -27,7 +27,7 @@
 
     onMount(() => {
         if (amount > BigInt(0)) {
-            inputElement.value = client.formatTokens(amount, 0, tokenDecimals, ".");
+            inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
         }
     });
 
@@ -35,7 +35,7 @@
         if (inputElement !== undefined) {
             const validateResult = client.validateTokenInput(inputElement.value, tokenDecimals);
             if (validateResult.amount !== amount) {
-                inputElement.value = client.formatTokens(amount, 0, tokenDecimals, ".");
+                inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
             }
             validate();
         }
@@ -85,7 +85,7 @@
             <span>
                 {$_("tokenTransfer.fee", {
                     values: {
-                        fee: client.formatTokens(transferFees, 0, tokenDecimals),
+                        fee: client.formatTokens(transferFees, tokenDecimals),
                         token: symbol,
                     },
                 })}
