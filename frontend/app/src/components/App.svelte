@@ -108,6 +108,8 @@
             setUserUpgradeConcurrency,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            pauseEventLoop: () => client.pauseEventLoop(),
+            resumeEventLoop: () => client.resumeEventLoop(),
         };
 
         framed.set(window.self !== window.top);

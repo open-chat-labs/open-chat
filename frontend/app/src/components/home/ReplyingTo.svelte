@@ -51,6 +51,7 @@
         {chatId}
         fill={false}
         {me}
+        intersecting={true}
         messageId={replyingTo.messageId}
         messageIndex={replyingTo.messageIndex}
         senderId={replyingTo.senderId}

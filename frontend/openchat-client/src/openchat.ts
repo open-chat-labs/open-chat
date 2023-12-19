@@ -782,6 +782,14 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
+    pauseEventLoop() {
+        this._chatsPoller?.stop();
+    }
+
+    resumeEventLoop() {
+        this.startChatsPoller();
+    }
+
     private startChatsPoller() {
         this._chatsPoller?.stop();
         this._chatsPoller = new Poller(
