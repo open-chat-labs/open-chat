@@ -28,7 +28,7 @@
     $: cryptoBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
     $: insufficientFunds = cryptoBalance < gate.amount;
     $: approvalMessage = interpolateLevel("access.paymentApprovalMessage", group.level, true, {
-        amount: client.formatTokens(gate.amount, 0, token.decimals),
+        amount: client.formatTokens(gate.amount, token.decimals),
         token: token.symbol,
     });
     $: distributionMessage = interpolateLevel(

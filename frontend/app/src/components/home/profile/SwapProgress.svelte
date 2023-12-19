@@ -59,7 +59,6 @@
                 if (response.amountSwapped.value.kind === "ok") {
                     amountOut = client.formatTokens(
                         response.amountSwapped.value.value,
-                        0,
                         decimalsOut,
                     );
                     updateProgress(4, true);

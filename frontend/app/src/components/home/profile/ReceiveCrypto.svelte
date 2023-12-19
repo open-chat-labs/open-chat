@@ -41,7 +41,6 @@
             {ledger}
             value={$cryptoBalance[ledger]}
             label={$_("cryptoAccount.shortBalanceLabel")}
-            minDecimals={2}
             bold
             on:refreshed={onBalanceRefreshed}
             on:error={onBalanceRefreshError} />

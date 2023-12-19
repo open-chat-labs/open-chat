@@ -120,7 +120,7 @@
         if (isPaymentGate(gate)) {
             const token = client.tryGetCryptocurrency(gate.ledgerCanister);
             if (token !== undefined) {
-                return client.formatTokens(gate.amount, 0, token.decimals);
+                return client.formatTokens(gate.amount, token.decimals);
             }
         }
 

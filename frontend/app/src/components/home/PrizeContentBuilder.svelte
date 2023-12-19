@@ -69,7 +69,7 @@
         if (tokenInputState === "too_low") {
             error = $_("minimumAmount", {
                 values: {
-                    amount: client.formatTokens(minAmount, 0, tokenDetails.decimals),
+                    amount: client.formatTokens(minAmount, tokenDetails.decimals),
                     symbol,
                 },
             });
