@@ -27,7 +27,7 @@
 
     onMount(() => {
         if (amount > BigInt(0)) {
-            inputElement.value = client.formatTokens(amount, tokenDecimals, ".");
+            inputElement.value = client.formatTokens(amount, tokenDecimals, ".", true);
         }
     });
 

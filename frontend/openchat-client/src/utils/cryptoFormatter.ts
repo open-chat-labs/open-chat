@@ -59,22 +59,24 @@ export function parseBigInt(value: string): bigint | undefined {
 export function formatTokens(
     amount: bigint,
     powTenPerWhole: number,
-    decimalSeparatorOverride?: string
+    decimalSeparatorOverride?: string,
+    fullPrecision = false,
 ): string {
     if (amount < 0) {
         amount = BigInt(0);
     }
-    return format(amount, powTenPerWhole, decimalSeparatorOverride);
+    return format(amount, powTenPerWhole, decimalSeparatorOverride, fullPrecision);
 }
 
 function format(
     units: bigint,
     powTenPerWhole: number,
-    decimalSeparatorOverride?: string
+    decimalSeparatorOverride: string | undefined,
+    fullPrecision: boolean
 ): string {
     // This is a bespoke notion of significant figures!
     const maxSignificantFigures = 6;
-    
+
     // 1. Always show the full integral part of the number
     // 2. If the integral part >= 6 digits then remove the fractional part
     // 3. Otherwise if there is an integral part the max total number of digits (integral + fractional) = 6
@@ -89,17 +91,19 @@ function format(
 
     let fractionalString = fractional.toString().padStart(powTenPerWhole, "0");
 
-    if (integral > 0) {
-        const maxFractionalDecimalPlaces = Math.max(maxSignificantFigures - integralString.length, 0);
-        if (fractionalString.length > maxFractionalDecimalPlaces) {
-            fractionalString = fractionalString.substring(0, maxFractionalDecimalPlaces);
-        }
+    if (!fullPrecision) {
+        if (integral > 0) {
+            const maxFractionalDecimalPlaces = Math.max(maxSignificantFigures - integralString.length, 0);
+            if (fractionalString.length > maxFractionalDecimalPlaces) {
+                fractionalString = fractionalString.substring(0, maxFractionalDecimalPlaces);
+            }
 
-    } else {
-        const significantFigures = fractionalString.replace(/^0+/, '').length;
-        if (significantFigures > maxSignificantFigures) {
-            const indexToRemove = maxSignificantFigures + fractionalString.length - significantFigures
-            fractionalString = fractionalString.substring(0, indexToRemove);
+        } else {
+            const significantFigures = fractionalString.replace(/^0+/, '').length;
+            if (significantFigures > maxSignificantFigures) {
+                const indexToRemove = maxSignificantFigures + fractionalString.length - significantFigures
+                fractionalString = fractionalString.substring(0, indexToRemove);
+            }
         }
     }
 
