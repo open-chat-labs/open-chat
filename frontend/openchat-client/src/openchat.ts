@@ -144,7 +144,6 @@ import {
     lastCryptoSent,
     nervousSystemLookup,
 } from "./stores/crypto";
-import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
@@ -438,10 +437,10 @@ import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpda
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
+import { draftMessagesStore } from "./stores/draftMessages";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3247,13 +3246,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.threadEvents;
     }
 
-    private draftMessageForMessageContext({
-        threadRootMessageIndex,
-    }: MessageContext): DraftMessage | undefined {
-        if (threadRootMessageIndex === undefined) return this._liveState.currentChatDraftMessage;
-        return this._liveState.draftThreadMessages[threadRootMessageIndex];
-    }
-
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
         if (chat.kind === "group_chat" || chat.kind === "channel") {
             if (chat.eventsTTL !== undefined) {
@@ -3277,7 +3269,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const draftMessage = this.draftMessageForMessageContext(messageContext);
+        const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -3445,9 +3437,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chat.id);
-            }
+            draftMessagesStore.delete(context);
 
             this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
                 this.dispatchEvent(new SentMessage(context, messageEvent));
@@ -3507,8 +3497,6 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        const { chatId, threadRootMessageIndex } = messageContext;
-
         if (textContent || attachment) {
             const msg = {
                 ...editingEvent.event,
@@ -3516,16 +3504,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 content: this.getMessageContent(textContent ?? undefined, attachment),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
-
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chatId);
-            }
+            draftMessagesStore.delete(messageContext);
 
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
-                threadRootMessageIndex,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -5969,7 +5954,7 @@ export class OpenChat extends OpenChatAgentWorker {
     nervousSystemLookup = nervousSystemLookup;
     exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;
-    draftThreadMessages = draftThreadMessages;
+    draftMessagesStore = draftMessagesStore;
     translationStore = translationStore;
     eventsStore = eventsStore;
     selectedChatStore = selectedChatStore;
