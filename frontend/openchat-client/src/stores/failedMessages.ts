@@ -6,7 +6,7 @@ import {
 } from "openchat-shared";
 import { createMessageContextSpecificObjectStore } from "./dataByMessageContextFactory";
 
-type FailedMessageState = Record<number, EventWrapper<Message>>;
+type FailedMessageState = Record<string, EventWrapper<Message>>;
 export type FailedMessages = MessageContextMap<FailedMessageState>;
 
 function createFailedMessagesStore() {
@@ -21,17 +21,18 @@ function createFailedMessagesStore() {
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
             store.update(key, (chatState) => ({
                 ...chatState,
-                [Number(message.event.messageId)]: message,
+                [message.event.messageId.toString()]: message,
             }));
         },
         contains: (key: MessageContext, messageId: bigint): boolean => {
             const chatState = store.get(key);
-            return chatState ? chatState[Number(messageId)] !== undefined : false;
+            return chatState ? chatState[messageId.toString()] !== undefined : false;
         },
         delete: (key: MessageContext, messageId: bigint): boolean => {
             const chatState = store.get(key);
-            if (chatState && chatState[Number(messageId)]) {
-                delete chatState[Number(messageId)];
+            const messageIdString = messageId.toString();
+            if (chatState && chatState[messageIdString]) {
+                delete chatState[messageIdString];
                 store.set(key, chatState);
                 return true;
             }
