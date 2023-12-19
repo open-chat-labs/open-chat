@@ -51,9 +51,11 @@
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: tokenDetails = $cryptoLookup[ledger];
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
-    $: exchangeRate = $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0;
     $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
     $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
+    $: exchangeRate = to2SigFigs(
+        $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0,
+    );
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
     $: valid =
@@ -94,8 +96,7 @@
     }
 
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s =
-            ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / to2SigFigs(exchangeRate);
+        const e8s = ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / exchangeRate;
         return BigInt(Math.round(e8s));
     }
 
