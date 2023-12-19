@@ -269,7 +269,7 @@
     // if we can't find the user or user group just leave it as is
     function expandMentions(text?: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/^@(\w+)|[^\/]@(\w+)/g, (match, p1) => {
+        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
