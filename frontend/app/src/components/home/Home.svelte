@@ -180,7 +180,7 @@
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: chatsInitialised = client.chatsInitialised;
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
@@ -681,8 +681,8 @@
         });
 
         const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
-        currentChatDraftMessage.setTextContent(chatId, "");
-        currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
+        draftMessagesStore.setTextContent({ chatId }, "");
+        draftMessagesStore.setReplyingTo({ chatId }, ev.detail);
         if (chat) {
             page(routeForChatIdentifier($chatListScope.kind, chatId));
         } else {
@@ -872,7 +872,7 @@
             text += shareUrl;
         }
 
-        currentChatDraftMessage.setTextContent(chatId, text);
+        draftMessagesStore.setTextContent({ chatId }, text);
     }
 
     function groupCreated(
