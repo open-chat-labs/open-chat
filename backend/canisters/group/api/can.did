@@ -10,6 +10,7 @@ type SendMessageV2Args = record {
     mentioned : vec User;
     forwarding : bool;
     rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -97,6 +98,25 @@ type RegisterPollVoteResponse = variant {
     UserSuspended;
     ChatFrozen;
     UserCannotChangeVote;
+};
+
+type AcceptP2PTradeOfferArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_index : MessageIndex;
+};
+
+type AcceptP2PTradeOfferResponse = variant {
+    Success;
+    InsufficientFunds;
+    AlreadyAccepted;
+    AlreadyCompleted;
+    OfferExpired;
+    OfferCancelled;
+    OfferNotFound;
+    UserNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
 };
 
 type AddReactionArgs = record {
@@ -425,6 +445,12 @@ type EventsResponse = variant {
     ReplicaNotUpToDateV2 : TimestampMillis;
 };
 
+type LocalUserIndexArgs = record {};
+
+type LocalUserIndexResponse = variant {
+    Success : CanisterId;
+};
+
 type MessagesByMessageIndexArgs = record {
     thread_root_message_index : opt MessageIndex;
     messages : vec MessageIndex;
@@ -622,6 +648,7 @@ service : {
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
+    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
@@ -641,6 +668,7 @@ service : {
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
     events_window : (EventsWindowArgs) -> (EventsResponse) query;
+    local_user_index : (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
     deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;

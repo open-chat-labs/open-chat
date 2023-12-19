@@ -1029,6 +1029,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
     'forwarding' : IDL.Bool,

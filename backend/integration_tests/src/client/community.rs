@@ -41,7 +41,7 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        AccessGate, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
         MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
@@ -68,6 +68,38 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
+            },
+        );
+
+        match response {
+            community_canister::create_channel::Response::Success(result) => result.channel_id,
+            response => panic!("'create_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn create_gated_channel(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        is_public: bool,
+        name: String,
+        gate: AccessGate,
+    ) -> ChannelId {
+        let response = super::create_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::create_channel::Args {
+                is_public,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                rules: Rules::default(),
+                subtype: None,
+                avatar: None,
+                history_visible_to_new_joiners: is_public,
+                permissions_v2: None,
+                events_ttl: None,
+                gate: Some(gate),
             },
         );
 
@@ -115,6 +147,7 @@ pub mod happy_path {
                 forwarding: false,
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
+                message_filter_failed: None,
             },
         );
 

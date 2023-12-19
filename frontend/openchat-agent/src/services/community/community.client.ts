@@ -635,6 +635,12 @@ export class CommunityClient extends CandidService {
         );
     }
 
+    localUserIndex(): Promise<string> {
+        return this.handleResponse(this.service.local_user_index({}), (resp) =>
+            resp.Success.toString(),
+        );
+    }
+
     messagesByMessageIndex(
         chatId: ChannelIdentifier,
         messageIndexes: number[],
@@ -881,6 +887,7 @@ export class CommunityClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, chatId, event.event.messageId, threadRootMessageIndex);
@@ -909,6 +916,7 @@ export class CommunityClient extends CandidService {
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_filter_failed: apiOptional(identity, messageFilterFailed),
             };
             return this.handleResponse(this.service.send_message(args), sendMessageResponse)
                 .then((resp) => {

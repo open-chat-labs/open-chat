@@ -21,7 +21,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId};
+    use types::{CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
 
     pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -166,7 +166,7 @@ pub mod happy_path {
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
-    ) {
+    ) -> CommunityCanisterCommunitySummary {
         let response = super::join_community(
             env,
             sender,
@@ -178,7 +178,7 @@ pub mod happy_path {
         );
 
         match response {
-            local_user_index_canister::join_community::Response::Success(_) => {}
+            local_user_index_canister::join_community::Response::Success(result) => *result,
             response => panic!("'join_community' error: {response:?}"),
         }
     }

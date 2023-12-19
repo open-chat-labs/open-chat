@@ -107,6 +107,8 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
         return undefined;
     }
 
+    await unregisterOldServiceWorker();
+
     try {
         return await navigator.serviceWorker.register("process.env.SERVICE_WORKER_PATH", {
             type: "module",
@@ -115,6 +117,17 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
         console.log(e);
         return undefined;
     }
+}
+
+// not sure whether this is necessary but it appears that it might be
+async function unregisterOldServiceWorker() {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    registrations.forEach((reg) => {
+        if (reg.active && reg.active.scriptURL.endsWith("sw.js")) {
+            console.debug("SW_CLIENT: unregistering old service worker");
+            return reg.unregister();
+        }
+    });
 }
 
 async function trySubscribe(client: OpenChat): Promise<boolean> {

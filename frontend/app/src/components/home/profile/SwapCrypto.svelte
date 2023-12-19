@@ -42,7 +42,7 @@
     $: detailsOut = ledgerOut !== undefined ? $cryptoLookup[ledgerOut] : undefined;
     $: anySwapsAvailable = Object.keys(swaps).length > 0 && detailsOut !== undefined;
     $: swapping = state === "swap" && busy;
-    $: amountInText = client.formatTokens(amountIn, 0, detailsIn.decimals);
+    $: amountInText = client.formatTokens(amountIn, detailsIn.decimals);
     $: minAmountOut =
         bestQuote !== undefined ? (bestQuote[1] * BigInt(98)) / BigInt(100) : BigInt(0);
 
@@ -96,14 +96,13 @@
                     bestQuote = response[0];
 
                     const [dexId, quote] = bestQuote!;
-                    const amountOutText = client.formatTokens(quote, 0, detailsOut!.decimals);
+                    const amountOutText = client.formatTokens(quote, detailsOut!.decimals);
                     const rate = (Number(amountOutText) / Number(amountInText)).toPrecision(3);
                     const dex = dexName(dexId);
                     const swapText = $_("tokenSwap.swap");
                     const minAmountOut = BigInt(10) * detailsOut!.transferFee;
                     const minAmountOutText = client.formatTokens(
                         minAmountOut,
-                        0,
                         detailsOut!.decimals,
                     );
 
@@ -203,7 +202,6 @@
                 ledger={ledgerIn}
                 value={remainingBalance}
                 label={$_("cryptoAccount.shortBalanceLabel")}
-                minDecimals={2}
                 bold
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />

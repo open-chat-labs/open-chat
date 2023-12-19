@@ -38,6 +38,7 @@ fn init(args: Args) {
         args.local_group_index_canister_id,
         args.notifications_canister_id,
         args.proposals_bot_user_id,
+        args.escrow_canister_id,
         args.gate,
         default_channels,
         args.default_channel_rules,

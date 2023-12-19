@@ -535,10 +535,11 @@ export class UserClient extends CandidService {
     sendMessage(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(chatId, event, threadRootMessageIndex)
+        return this.sendMessageToBackend(chatId, event, messageFilterFailed, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -556,6 +557,7 @@ export class UserClient extends CandidService {
     sendMessageToBackend(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
@@ -575,6 +577,7 @@ export class UserClient extends CandidService {
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
@@ -590,6 +593,7 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
@@ -599,6 +603,7 @@ export class UserClient extends CandidService {
             event,
             threadRootMessageIndex,
             rulesAccepted,
+            messageFilterFailed,
         )
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
@@ -614,6 +619,7 @@ export class UserClient extends CandidService {
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -630,6 +636,7 @@ export class UserClient extends CandidService {
                 (replyContext) => apiReplyContextArgs(groupId, replyContext),
                 event.event.repliesTo,
             ),
+            message_filter_failed: apiOptional(identity, messageFilterFailed),
             correlation_id: generateUint64(),
         };
         return this.handleResponse(
@@ -663,6 +670,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
@@ -673,6 +681,7 @@ export class UserClient extends CandidService {
             threadRootMessageIndex,
             communityRulesAccepted,
             channelRulesAccepted,
+            messageFilterFailed,
         )
             .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
             .catch((err) => {
@@ -689,6 +698,7 @@ export class UserClient extends CandidService {
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -707,6 +717,7 @@ export class UserClient extends CandidService {
             ),
             community_rules_accepted: apiOptional(identity, communityRulesAccepted),
             channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
+            message_filter_failed: apiOptional(identity, messageFilterFailed),
         };
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_channel(req),

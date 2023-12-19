@@ -38,7 +38,7 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
     }
     markBlockedMessageRevealed(messageId: bigint): void {
         this.applyUpdate(messageId, (_) => ({
-            blockedMessageRevealed: true,
+            hiddenMessageRevealed: true,
         }));
     }
     markContentEdited(messageId: bigint, content: MessageContent): void {

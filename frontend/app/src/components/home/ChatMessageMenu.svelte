@@ -131,7 +131,7 @@
             $user.userId,
             msg.sender === $user.userId,
             msg,
-            $cryptoLookup
+            $cryptoLookup,
         );
     }
 

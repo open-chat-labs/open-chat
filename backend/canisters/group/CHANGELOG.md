@@ -8,15 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
+- Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
 
-### Removed
+### Changed
 
-- Removed `local_user_index` endpoint since that is now included in the summary ([#4977](https://github.com/open-chat-labs/open-chat/pull/4977))
-- Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
+- Reduce cut of payment gate fee for SNS from 20% -> 2% ([#4991](https://github.com/open-chat-labs/open-chat/pull/4991))
+- Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
+- Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
 
 ### Fixed
 
 - Fix for NNS proposal deadlines not being updated ([#4978](https://github.com/open-chat-labs/open-chat/pull/4978))
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
 
 ## [[2.0.966](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.966-group)] - 2023-12-07
 

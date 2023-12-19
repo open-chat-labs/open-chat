@@ -7,6 +7,7 @@ type SendMessageV2Args = record {
     content : MessageContentInitial;
     replies_to : opt ReplyContext;
     forwarding : bool;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -166,13 +167,6 @@ type SwapTokensResponse = variant {
     };
     SwapFailed;
     InternalError : text;
-};
-
-type TokenInfo = record {
-    token : Cryptocurrency;
-    ledger : CanisterId;
-    decimals : nat8;
-    fee: nat;
 };
 
 type TokenSwapStatusArgs = record {
@@ -533,6 +527,7 @@ type SendMessageWithTransferToChannelArgs = record {
     mentioned : vec User;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -553,6 +548,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PTradeSetUpFailed : text;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
@@ -570,6 +566,7 @@ type SendMessageWithTransferToGroupArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -589,6 +586,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PTradeSetUpFailed : text;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;

@@ -47,11 +47,13 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
         let user_id = member.user_id;
+        let sender_is_bot = member.is_bot;
 
         let users_mentioned = extract_users_mentioned(args.mentioned, args.content.text(), &state.data.members);
 
         let result = channel.chat.validate_and_send_message(
             user_id,
+            sender_is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -59,6 +61,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             users_mentioned.all_users_mentioned,
             args.forwarding,
             args.channel_rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );
@@ -112,6 +115,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             users_mentioned.all_users_mentioned,
             args.forwarding,
             args.channel_rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );

@@ -19,6 +19,7 @@ members = [
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
     "backend/canisters/escrow/api",
+    "backend/canisters/escrow/c2c_client",
     "backend/canisters/escrow/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
@@ -151,7 +152,7 @@ dotenv = "0.15.0"
 futures = "0.3.29"
 getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
-ic-agent = { version = "0.29.0", default-features = false }
+ic-agent = "0.29.0"
 ic-cdk = "0.11.3"
 ic-cdk-macros = "0.7.0"
 ic-cdk-timers = "0.5.1"

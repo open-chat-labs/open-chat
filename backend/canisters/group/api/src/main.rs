@@ -7,6 +7,7 @@ fn main() {
     generate_candid_method!(group, events_by_index, query);
     generate_candid_method!(group, events_window, query);
     generate_candid_method!(group, invite_code, query);
+    generate_candid_method!(group, local_user_index, query);
     generate_candid_method!(group, messages_by_message_index, query);
     generate_candid_method!(group, thread_previews, query);
     generate_candid_method!(group, public_summary, query);
@@ -17,6 +18,7 @@ fn main() {
     generate_candid_method!(group, summary, query);
     generate_candid_method!(group, summary_updates, query);
 
+    generate_candid_method!(group, accept_p2p_trade_offer, update);
     generate_candid_method!(group, add_reaction, update);
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);

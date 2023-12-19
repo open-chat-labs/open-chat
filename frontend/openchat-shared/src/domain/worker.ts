@@ -143,7 +143,7 @@ import type { RegistryValue } from "./registry";
 import type { StakeNeuronForSubmittingProposalsResponse } from "./proposalsBot";
 import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
-import type { AccountTransactionResult, CryptocurrencyDetails } from "./crypto";
+import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
 /**
  * Worker request types
@@ -237,6 +237,8 @@ export type WorkerRequest =
     | DeleteFrozenGroup
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddMessageFilter
+    | RemoveMessageFilter
     | SuspendUser
     | UnsuspendUser
     | GetUpdates
@@ -305,7 +307,8 @@ export type WorkerRequest =
     | TokenSwapStatus
     | ApproveTransfer
     | DeleteDirectChat
-    | GetDiamondMembershipFees;
+    | GetDiamondMembershipFees
+    | GetExchangeRates;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -643,6 +646,7 @@ type SendMessage = {
     event: EventWrapper<Message>;
     rulesAccepted: number | undefined;
     communityRulesAccepted: number | undefined;
+    messageFilterFailed: bigint | undefined;
     kind: "sendMessage";
 };
 
@@ -917,6 +921,16 @@ type RemoveHotGroupExclusion = {
     kind: "removeHotGroupExclusion";
 };
 
+type AddMessageFilter = {
+    regex: string;
+    kind: "addMessageFilter";
+};
+
+type RemoveMessageFilter = {
+    id: bigint;
+    kind: "removeMessageFilter";
+};
+
 type SuspendUser = {
     userId: string;
     reason: string;
@@ -1110,6 +1124,8 @@ export type WorkerResponseInner =
     | DeleteFrozenGroupResponse
     | AddHotGroupExclusion
     | RemoveHotGroupExclusion
+    | AddMessageFilter
+    | RemoveMessageFilter
     | SuspendUserResponse
     | UnsuspendUserResponse
     | UpdatesResult
@@ -1142,7 +1158,7 @@ export type WorkerResponseInner =
     | ImportGroupResponse
     | PublicGroupSummaryResponse
     | AddMembersToChannelResponse
-    | RegistryValue
+    | [RegistryValue, boolean]
     | CreateUserGroupResponse
     | UpdateUserGroupResponse
     | DeleteUserGroupsResponse
@@ -1158,7 +1174,8 @@ export type WorkerResponseInner =
     | [DexId, bigint][]
     | SwapTokensResponse
     | TokenSwapStatusResponse
-    | DiamondMembershipFees[];
+    | DiamondMembershipFees[]
+    | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1417,6 +1434,10 @@ type GetDiamondMembershipFees = {
     kind: "diamondMembershipFees";
 };
 
+type GetExchangeRates = {
+    kind: "exchangeRates";
+};
+
 // prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
@@ -1592,6 +1613,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? AddHotGroupExclusionResponse
     : T extends RemoveHotGroupExclusion
     ? RemoveHotGroupExclusionResponse
+    : T extends AddMessageFilter
+    ? boolean
+    : T extends RemoveMessageFilter
+    ? boolean
     : T extends DeleteFrozenGroup
     ? DeleteFrozenGroupResponse
     : T extends SuspendUser
@@ -1683,7 +1708,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends ImportGroupToCommunity
     ? ImportGroupResponse
     : T extends UpdateRegistry
-    ? RegistryValue
+    ? [RegistryValue, boolean]
     : T extends SetCommunityIndexes
     ? boolean
     : T extends CreateUserGroup
@@ -1716,4 +1741,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? boolean
     : T extends GetDiamondMembershipFees
     ? DiamondMembershipFees[]
+    : T extends GetExchangeRates
+    ? Record<string, TokenExchangeRates>
     : never;

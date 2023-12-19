@@ -402,6 +402,7 @@ export class GroupClient extends CandidService {
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
@@ -428,6 +429,7 @@ export class GroupClient extends CandidService {
                 mentioned: mentioned.map(apiUser),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.groupService.send_message_v2(args), sendMessageResponse)
@@ -842,6 +844,13 @@ export class GroupClient extends CandidService {
                 message_index: messageIdx,
             }),
             registerProposalVoteResponse,
+        );
+    }
+
+    localUserIndex(): Promise<string> {
+        return this.handleQueryResponse(
+            () => this.groupService.local_user_index({}),
+            (resp) => resp.Success.toString(),
         );
     }
 

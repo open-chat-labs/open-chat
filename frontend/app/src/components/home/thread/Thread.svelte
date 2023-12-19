@@ -49,7 +49,7 @@
     $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
     $: lastCryptoSent = client.lastCryptoSent;
-    $: draftThreadMessages = client.draftThreadMessages;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: unconfirmed = client.unconfirmed;
     $: messagesRead = client.messagesRead;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
@@ -59,8 +59,8 @@
     $: messageContext = { chatId: chat.id, threadRootMessageIndex };
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
-    $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
-        draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {})),
+    $: draftMessage = readable(draftMessagesStore.get(messageContext), (set) =>
+        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {}))
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -112,11 +112,10 @@
         } else {
             sendMessageWithAttachment(text, $attachment, mentioned);
         }
-        draftThreadMessages.delete(threadRootMessageIndex);
     }
 
     function editEvent(ev: EventWrapper<Message>): void {
-        draftThreadMessages.setEditing(threadRootMessageIndex, ev);
+        draftMessagesStore.setEditing(messageContext, ev);
     }
 
     function sendMessageWithAttachment(
@@ -128,19 +127,19 @@
     }
 
     function cancelReply() {
-        draftThreadMessages.setReplyingTo(threadRootMessageIndex, undefined);
+        draftMessagesStore.setReplyingTo(messageContext, undefined);
     }
 
     function clearAttachment() {
-        draftThreadMessages.setAttachment(threadRootMessageIndex, undefined);
+        draftMessagesStore.setAttachment(messageContext, undefined);
     }
 
     function cancelEditEvent() {
-        draftThreadMessages.delete(threadRootMessageIndex);
+        draftMessagesStore.delete(messageContext);
     }
 
     function setTextContent(ev: CustomEvent<string | undefined>) {
-        draftThreadMessages.setTextContent(threadRootMessageIndex, ev.detail);
+        draftMessagesStore.setTextContent(messageContext, ev.detail);
     }
 
     function onStartTyping() {
@@ -152,7 +151,7 @@
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
-        draftThreadMessages.setAttachment(threadRootMessageIndex, ev.detail);
+        draftMessagesStore.setAttachment(messageContext, ev.detail);
     }
 
     function tokenTransfer(ev: CustomEvent<{ ledger: string; amount: bigint } | undefined>) {
@@ -186,7 +185,7 @@
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
-        draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
+        draftMessagesStore.setReplyingTo(messageContext, ev.detail);
     }
 
     function defaultCryptoTransferReceiver(): string | undefined {

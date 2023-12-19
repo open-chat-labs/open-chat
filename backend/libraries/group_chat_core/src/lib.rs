@@ -521,6 +521,7 @@ impl GroupChatCore {
     pub fn validate_and_send_message(
         &mut self,
         sender: UserId,
+        sender_is_bot: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -528,12 +529,13 @@ impl GroupChatCore {
         mentioned: Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
+        suppressed: bool,
         proposals_bot_user_id: UserId,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
 
-        if let Err(error) = content.validate_for_new_message(false, forwarding, now) {
+        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -561,6 +563,7 @@ impl GroupChatCore {
                 mentioned,
                 forwarding,
                 rules_accepted,
+                suppressed,
                 proposals_bot_user_id,
                 now,
             )
@@ -579,6 +582,7 @@ impl GroupChatCore {
         mentioned: Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
+        suppressed: bool,
         proposals_bot_user_id: UserId,
         now: TimestampMillis,
     ) -> SendMessageResult {
@@ -621,7 +625,7 @@ impl GroupChatCore {
             thread_root_message_index,
             message_id,
             content,
-            mentioned: mentioned.clone(),
+            mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
             replies_to: replies_to.as_ref().map(|r| r.into()),
             forwarded: forwarding,
             correlation_id: 0,
@@ -634,45 +638,48 @@ impl GroupChatCore {
         let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
 
         let mut users_to_notify = HashSet::new();
-        let mut thread_followers: Option<Vec<UserId>> = None;
 
-        if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
-            self.events
-                .visible_main_events_reader(min_visible_event_index)
-                .message_internal(root_message_index.into())
-                .cloned()
-        }) {
-            if thread_root_message.sender != sender {
-                users_to_notify.insert(thread_root_message.sender);
-            }
+        if !suppressed {
+            let mut thread_followers: Option<Vec<UserId>> = None;
 
-            if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_followers = Some(thread_summary.participants_and_followers(false));
+            if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
+                self.events
+                    .visible_main_events_reader(min_visible_event_index)
+                    .message_internal(root_message_index.into())
+                    .cloned()
+            }) {
+                if thread_root_message.sender != sender {
+                    users_to_notify.insert(thread_root_message.sender);
+                }
 
-                let is_first_reply = thread_summary.reply_count == 1;
-                if is_first_reply {
-                    mentions.insert(thread_root_message.sender);
+                if let Some(thread_summary) = thread_root_message.thread_summary {
+                    thread_followers = Some(thread_summary.participants_and_followers(false));
+
+                    let is_first_reply = thread_summary.reply_count == 1;
+                    if is_first_reply {
+                        mentions.insert(thread_root_message.sender);
+                    }
+                }
+
+                for user_id in mentions.iter().copied().chain([sender]) {
+                    self.members.add_thread(&user_id, thread_root_message.message_index);
                 }
             }
 
-            for user_id in mentions.iter().copied().chain([sender]) {
-                self.members.add_thread(&user_id, thread_root_message.message_index);
-            }
-        }
+            for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
+                let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
 
-        for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
-            let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
+                if mentioned {
+                    // Mention this member
+                    member.mentions.add(thread_root_message_index, message_index, now);
+                }
 
-            if mentioned {
-                // Mention this member
-                member.mentions.add(thread_root_message_index, message_index, now);
-            }
+                let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
 
-            let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
-
-            if mentioned || (notification_candidate && !member.notifications_muted.value) {
-                // Notify this member
-                users_to_notify.insert(member.user_id);
+                if mentioned || (notification_candidate && !member.notifications_muted.value) {
+                    // Notify this member
+                    users_to_notify.insert(member.user_id);
+                }
             }
         }
 
@@ -1392,6 +1399,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
+            gate_update: OptionUpdate::NoChange,
             rules_version: None,
         };
 
@@ -1490,6 +1498,7 @@ impl GroupChatCore {
         if let Some(gate) = gate.expand() {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
+                result.gate_update = OptionUpdate::from_update(gate.clone());
 
                 events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
@@ -1676,6 +1685,7 @@ impl GroupChatCore {
             crypto: new.crypto.apply_to(old.crypto),
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
+            p2p_trade: new.p2p_trade.apply_to(old.p2p_trade),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }
@@ -1864,6 +1874,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
+    pub gate_update: OptionUpdate<AccessGate>,
     pub rules_version: Option<Version>,
 }
 

@@ -255,6 +255,11 @@ impl Job for JoinUserToGroup {
                     correlation_id: 0,
                     is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
                     is_bot: u.is_bot,
+                    diamond_membership_expires_at: state
+                        .data
+                        .users
+                        .get_by_user_id(&self.user_id)
+                        .and_then(|u| u.diamond_membership_details.expires_at()),
                 })
         }) {
             ic_cdk::spawn(join_group(self.group_id, args, self.attempt));

@@ -181,6 +181,7 @@ import type {
     CryptocurrencyDetails,
     ApproveTransferResponse,
     TokenSwapPool,
+    TokenExchangeRates,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary,
@@ -210,6 +211,7 @@ import {
 } from "../utils/community";
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
+import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -224,6 +226,7 @@ export class OpenChatAgent extends EventTarget {
     private _ledgerIndexClients: Record<string, LedgerIndexClient>;
     private _groupClients: Record<string, GroupClient>;
     private _communityClients: Record<string, CommunityClient>;
+    private _icpcoinsClient: ICPCoinsClient;
     private _dexesAgent: DexesAgent;
     private _groupInvite: GroupInvite | undefined;
     private _communityInvite: CommunityInvite | undefined;
@@ -244,6 +247,7 @@ export class OpenChatAgent extends EventTarget {
         this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
+        this._icpcoinsClient = ICPCoinsClient.create(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -384,6 +388,7 @@ export class OpenChatAgent extends EventTarget {
         event: EventWrapper<Message>,
         rulesAccepted: number | undefined,
         communityRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const { chatId, threadRootMessageIndex } = messageContext;
 
@@ -405,6 +410,7 @@ export class OpenChatAgent extends EventTarget {
                     threadRootMessageIndex,
                     communityRulesAccepted,
                     rulesAccepted,
+                    messageFilterFailed,
                 );
             }
             return this.sendChannelMessage(
@@ -416,6 +422,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 communityRulesAccepted,
                 rulesAccepted,
+                messageFilterFailed,
             );
         }
         if (chatId.kind === "group_chat") {
@@ -430,6 +437,7 @@ export class OpenChatAgent extends EventTarget {
                     event,
                     threadRootMessageIndex,
                     rulesAccepted,
+                    messageFilterFailed,
                 );
             }
             return this.sendGroupMessage(
@@ -440,10 +448,11 @@ export class OpenChatAgent extends EventTarget {
                 event,
                 threadRootMessageIndex,
                 rulesAccepted,
+                messageFilterFailed,
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId, event, threadRootMessageIndex);
+            return this.sendDirectMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -457,6 +466,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.communityClient(chatId.communityId).sendMessage(
             chatId,
@@ -467,6 +477,7 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             communityRulesAccepted,
             channelRulesAccepted,
+            messageFilterFailed,
         );
     }
 
@@ -478,6 +489,7 @@ export class OpenChatAgent extends EventTarget {
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         return this.getGroupClient(chatId.groupId).sendMessage(
             senderName,
@@ -486,6 +498,7 @@ export class OpenChatAgent extends EventTarget {
             event,
             threadRootMessageIndex,
             rulesAccepted,
+            messageFilterFailed,
         );
     }
 
@@ -512,9 +525,10 @@ export class OpenChatAgent extends EventTarget {
     private sendDirectMessage(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(chatId, event, threadRootMessageIndex);
+        return this.userClient.sendMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
     }
 
     private editDirectMessage(
@@ -577,7 +591,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsersToCommunity(
         id: CommunityIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -586,6 +600,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
+        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).inviteUsersToCommunity(
             id.communityId,
             userIds,
@@ -594,7 +609,7 @@ export class OpenChatAgent extends EventTarget {
 
     async inviteUsers(
         chatId: MultiUserChatIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         userIds: string[],
     ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
@@ -603,17 +618,23 @@ export class OpenChatAgent extends EventTarget {
 
         if (offline()) return Promise.resolve("failure");
 
-        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-
         switch (chatId.kind) {
-            case "group_chat":
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToGroup(chatId.groupId, userIds);
-            case "channel":
+            }
+            case "channel": {
+                const localUserIndex = await this.communityClient(
+                    chatId.communityId,
+                ).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 return localUserIndexClient.inviteUsersToChannel(
                     chatId.communityId,
                     chatId.channelId,
                     userIds,
                 );
+            }
         }
     }
 
@@ -1656,6 +1677,7 @@ export class OpenChatAgent extends EventTarget {
     getUpdates(initialLoad: boolean): Stream<UpdatesResult> {
         return new Stream(async (resolve, reject) => {
             const cachedState = await getCachedChats(this.db, this.principal);
+            const isOffline = offline();
             if (cachedState && initialLoad) {
                 resolve(
                     {
@@ -1664,14 +1686,16 @@ export class OpenChatAgent extends EventTarget {
                         anyUpdates: false,
                         suspensionChanged: undefined,
                     },
-                    false,
+                    isOffline,
                 );
             }
-            try {
-                const updates = await this._getUpdates(cachedState);
-                resolve(updates, true);
-            } catch (err) {
-                reject(err);
+            if (!isOffline) {
+                try {
+                    const updates = await this._getUpdates(cachedState);
+                    resolve(updates, true);
+                } catch (err) {
+                    reject(err);
+                }
             }
         });
     }
@@ -1859,31 +1883,38 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(
         chatId: MultiUserChatIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         _credential?: string,
     ): Promise<JoinGroupResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
-        const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
-
         switch (chatId.kind) {
-            case "group_chat":
+            case "group_chat": {
+                const localUserIndex = await this.getGroupClient(chatId.groupId).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const groupInviteCode = this.getProvidedGroupInviteCode(chatId);
                 return localUserIndexClient.joinGroup(chatId.groupId, groupInviteCode);
-            case "channel":
+            }
+            case "channel": {
+                const localUserIndex = await this.communityClient(
+                    chatId.communityId,
+                ).localUserIndex();
+                const localUserIndexClient = this.createLocalUserIndexClient(localUserIndex);
                 const communityInviteCode = this.getProvidedCommunityInviteCode(chatId.communityId);
                 return localUserIndexClient.joinChannel(chatId, communityInviteCode);
+            }
         }
     }
 
     async joinCommunity(
         id: CommunityIdentifier,
-        localUserIndex: string,
+        _localUserIndex: string,
         _credential?: string,
     ): Promise<JoinCommunityResponse> {
         if (offline()) return Promise.resolve(CommonResponses.offline());
 
         const inviteCode = this.getProvidedCommunityInviteCode(id.communityId);
+        const localUserIndex = await this.communityClient(id.communityId).localUserIndex();
         return this.createLocalUserIndexClient(localUserIndex).joinCommunity(
             id.communityId,
             inviteCode,
@@ -2189,6 +2220,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     refreshAccountBalance(ledger: string, principal: string): Promise<bigint> {
+        if (offline()) return Promise.resolve(0n);
+
         return this.getLedgerClient(ledger).accountBalance(principal);
     }
 
@@ -2739,30 +2772,45 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId.groupId).convertToCommunity(historyVisible, rules);
     }
 
-    async getRegistry(): Promise<RegistryValue> {
-        const current = await getCachedRegistry();
+    getRegistry(): Stream<[RegistryValue, boolean]> {
+        return new Stream(async (resolve, reject) => {
+            const current = await getCachedRegistry();
+            const isOffline = offline();
+            if (current !== undefined) {
+                resolve([current, false], isOffline);
+            }
 
-        const updates = await this._registryClient.updates(current?.lastUpdated);
-
-        if (updates.kind === "success") {
-            const updated = {
-                lastUpdated: updates.lastUpdated,
-                tokenDetails: distinctBy(
-                    [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
-                    (t) => t.ledger,
-                ),
-                nervousSystemSummary: distinctBy(
-                    [...updates.nervousSystemSummary, ...(current?.nervousSystemSummary ?? [])],
-                    (ns) => ns.governanceCanisterId,
-                ),
-            };
-            setCachedRegistry(updated);
-            return updated;
-        } else if (current !== undefined) {
-            return current;
-        } else {
-            throw new Error("Registry is empty... this should never happen!");
-        }
+            if (!isOffline) {
+                const updates = await this._registryClient.updates(current?.lastUpdated);
+                if (updates.kind === "success") {
+                    const updated = {
+                        lastUpdated: updates.lastUpdated,
+                        tokenDetails: distinctBy(
+                            [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
+                            (t) => t.ledger,
+                        ),
+                        nervousSystemSummary: distinctBy(
+                            [
+                                ...updates.nervousSystemSummary,
+                                ...(current?.nervousSystemSummary ?? []),
+                            ],
+                            (ns) => ns.governanceCanisterId,
+                        ),
+                        messageFilters: [
+                            ...(current?.messageFilters ?? []),
+                            ...updates.messageFiltersAdded,
+                        ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                    };
+                    setCachedRegistry(updated);
+                    resolve([updated, true], true);
+                } else if (updates.kind === "success_no_updates" && current !== undefined) {
+                    resolve([current, false], true);
+                } else {
+                    // this is a fallback for is we had nothing in the cache and nothing from the api
+                    reject("Registry is empty... this should never happen!");
+                }
+            }
+        });
     }
 
     setCommunityIndexes(communityIndexes: Record<string, number>): Promise<boolean> {
@@ -3000,5 +3048,17 @@ export class OpenChatAgent extends EventTarget {
 
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
         return this._userIndexClient.diamondMembershipFees();
+    }
+
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this._registryClient.addMessageFilter(regex);
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this._registryClient.removeMessageFilter(id);
+    }
+
+    exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
+        return this._icpcoinsClient.exchangeRates();
     }
 }

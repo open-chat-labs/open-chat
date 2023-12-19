@@ -46,7 +46,6 @@ import type {
 } from "openchat-shared";
 import {
     emptyChatMetrics,
-    getContentAsText,
     nullMembership,
     ChatMap,
     MessageMap,
@@ -55,6 +54,8 @@ import {
     updateFromOptions,
     defaultOptionalMessagePermissions,
     defaultOptionalChatPermissions,
+    getContentAsFormattedText,
+    getContentAsText,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -74,6 +75,7 @@ import { tallyKey } from "../stores/proposalTallies";
 import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
 import { bigIntMax, messagePermissionsList } from "openchat-shared";
+import type { MessageFilter } from "../stores/messageFilters";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -265,7 +267,7 @@ function messageMentionsUser(
     userId: string,
     msg: EventWrapper<Message>,
 ): boolean {
-    const txt = getContentAsText(formatter, msg.event.content, get(cryptoLookup));
+    const txt = getContentAsFormattedText(formatter, msg.event.content, get(cryptoLookup));
     return txt.indexOf(`@UserId(${userId})`) >= 0;
 }
 
@@ -422,6 +424,8 @@ export function mergeUnconfirmedIntoSummary(
     localUpdates: MessageMap<LocalMessageUpdates>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: MessageFilter[],
 ): ChatSummary {
     if (chatSummary.membership === undefined) return chatSummary;
 
@@ -448,7 +452,13 @@ export function mergeUnconfirmedIntoSummary(
         const updates = localUpdates.get(latestMessage.event.messageId);
         const translation = translations.get(latestMessage.event.messageId);
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
-        if (updates !== undefined || translation !== undefined || senderBlocked) {
+
+        // Don't hide the sender's own messages
+        const failedMessageFilter = latestMessage.event.sender !== currentUserId 
+            ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined 
+            : false;
+
+        if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
@@ -460,6 +470,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     senderBlocked,
                     false,
+                    failedMessageFilter
                 ),
             };
         }
@@ -1238,6 +1249,8 @@ export function mergeEventsAndLocalUpdates(
     proposalTallies: Record<string, Tally>,
     translations: MessageMap<string>,
     blockedUsers: Set<string>,
+    currentUserId: string,
+    messageFilters: MessageFilter[],
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
@@ -1274,6 +1287,11 @@ export function mergeEventsAndLocalUpdates(
                 e.event.repliesTo?.kind === "rehydrated_reply_context" &&
                 blockedUsers.has(e.event.repliesTo.senderId);
 
+            // Don't hide the sender's own messages
+            const failedMessageFilter = e.event.sender !== currentUserId 
+                ? doesMessageFailFilter(e.event, messageFilters) !== undefined 
+                : false;
+    
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1281,7 +1299,8 @@ export function mergeEventsAndLocalUpdates(
                 translation !== undefined ||
                 replyTranslation !== undefined ||
                 senderBlocked ||
-                repliesToSenderBlocked
+                repliesToSenderBlocked || 
+                failedMessageFilter
             ) {
                 return {
                     ...e,
@@ -1293,7 +1312,8 @@ export function mergeEventsAndLocalUpdates(
                         translation,
                         replyTranslation,
                         senderBlocked,
-                        repliesToSenderBlocked,
+                        repliesToSenderBlocked,   
+                        failedMessageFilter,                     
                     ),
                 };
             }
@@ -1327,6 +1347,18 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
+export function doesMessageFailFilter(message: Message, filters: MessageFilter[]): bigint | undefined {
+    const text = getContentAsText(message.content);
+
+    if (text !== undefined) {
+        for (const f of filters) {
+            if (f.regex.test(text)) {
+                return f.id;
+            }
+        }
+    }
+}
+
 function mergeLocalUpdates(
     message: Message,
     localUpdates: LocalMessageUpdates | undefined,
@@ -1336,6 +1368,7 @@ function mergeLocalUpdates(
     replyTranslation: string | undefined,
     senderBlocked: boolean,
     repliesToSenderBlocked: boolean,
+    failedMessageFilter: boolean
 ): Message {
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1350,9 +1383,9 @@ function mergeLocalUpdates(
     }
 
     if (
-        senderBlocked &&
-        localUpdates?.blockedMessageRevealed !== true &&
-        message.content.kind !== "deleted_content"
+        localUpdates?.hiddenMessageRevealed !== true &&
+        message.content.kind !== "deleted_content" &&
+        (senderBlocked || failedMessageFilter)
     ) {
         return {
             ...message,
@@ -1450,7 +1483,7 @@ function mergeLocalUpdates(
             };
         } else if (
             repliesToSenderBlocked &&
-            replyContextLocalUpdates?.blockedMessageRevealed !== true
+            replyContextLocalUpdates?.hiddenMessageRevealed !== true
         ) {
             message.repliesTo = {
                 ...message.repliesTo,
@@ -1656,7 +1689,7 @@ export function buildCryptoTransferText(
     const tokenDetails = cryptoLookup[content.transfer.ledger];
 
     const values = {
-        amount: formatTokens(content.transfer.amountE8s, 0, tokenDetails.decimals),
+        amount: formatTokens(content.transfer.amountE8s, tokenDetails.decimals),
         receiver: username(content.transfer.recipient),
         sender: username(senderId),
         token: tokenDetails.symbol,

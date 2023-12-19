@@ -4,7 +4,6 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
@@ -27,10 +26,11 @@
 
     let drawOpen = false;
 
-    $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
-    $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
+    $: useDrawer = !editing;
+    $: narrow = mode == "thread" || $mobileWidth;
+    $: showActions = !useDrawer || drawOpen;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
-    $: supportedActions = buildListOfActions(permittedMessages, messageAction);
+    $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
 
     export function close() {
         drawOpen = false;
@@ -38,17 +38,6 @@
             dispatch("clearAttachment");
         }
         messageAction = undefined;
-    }
-
-    function toggleAction(action: MessageAction) {
-        if (messageAction === action) {
-            messageAction = undefined;
-            if (attachment !== undefined) {
-                dispatch("clearAttachment");
-            }
-        } else {
-            messageAction = action;
-        }
     }
 
     function createTokenTransfer() {
@@ -61,8 +50,12 @@
         drawOpen = false;
     }
 
-    function toggleEmojiPicker() {
-        toggleAction("emoji");
+    function openEmojiPicker() {
+        messageAction = "emoji";
+    }
+
+    function openFilePicker() {
+        messageAction = "file";
     }
 
     function toggleDraw() {
@@ -91,13 +84,16 @@
     function buildListOfActions(
         permissions: Map<MessagePermission, boolean>,
         messageAction: MessageAction,
+        includeAll: boolean,
     ): Map<string, number> {
         const actions = new Map<string, number>();
-        if (permissions.get("text") || messageAction === "file") {
-            actions.set("emoji", actions.size);
-        }
-        if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
-            actions.set("attach", actions.size);
+        if (includeAll) {
+            if (permissions.get("text") || messageAction === "file") {
+                actions.set("emoji", actions.size);
+            }
+            if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
+                actions.set("attach", actions.size);
+            }
         }
         if (permissions.get("crypto")) {
             actions.set("crypto", actions.size);
@@ -143,6 +139,22 @@
         }
     }} />
 
+{#if !narrow}
+    {#if permittedMessages.get("text") || messageAction === "file"}
+        <div class="emoji" on:click|stopPropagation={openEmojiPicker}>
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={iconColour} />
+            </HoverIcon>
+        </div>
+    {/if}
+
+    {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
+        <div class="attach">
+            <FileAttacher on:fileSelected on:open={openFilePicker} />
+        </div>
+    {/if}
+{/if}
+
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
         {#if drawOpen || attachment !== undefined}
@@ -159,29 +171,16 @@
 
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     {#if supportedActions.has("emoji")}
-        <div
-            style={`${cssVars("emoji")}`}
-            class="emoji"
-            on:click|stopPropagation={toggleEmojiPicker}>
-            {#if messageAction === "emoji"}
-                <HoverIcon title={$_("close")}>
-                    <Close size={$iconSize} color={iconColour} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon title={$_("pickEmoji")}>
-                    <Smiley color={iconColour} />
-                </HoverIcon>
-            {/if}
+        <div style={`${cssVars("emoji")}`} class="emoji" on:click|stopPropagation={openEmojiPicker}>
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={iconColour} />
+            </HoverIcon>
         </div>
     {/if}
     {#if !editing}
         {#if supportedActions.has("attach")}
-            <div class="attach" style={`${cssVars("attach")}`}>
-                <FileAttacher
-                    open={attachment !== undefined}
-                    on:fileSelected
-                    on:open={() => (messageAction = "file")}
-                    on:close={close} />
+            <div style={`${cssVars("attach")}`} class="attach">
+                <FileAttacher on:fileSelected on:open={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}

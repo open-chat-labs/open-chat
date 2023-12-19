@@ -1,48 +1,45 @@
-import { writable } from "svelte/store";
-import { type EventWrapper, type Message, type MessageContext, MessageContextMap } from "openchat-shared";
+import {
+    type EventWrapper,
+    type Message,
+    type MessageContext,
+    MessageContextMap,
+} from "openchat-shared";
+import { createMessageContextSpecificObjectStore } from "./dataByMessageContextFactory";
 
-type FailedMessageState = Record<number, EventWrapper<Message>>;
+type FailedMessageState = Record<string, EventWrapper<Message>>;
 export type FailedMessages = MessageContextMap<FailedMessageState>;
 
 function createFailedMessagesStore() {
-    const store = writable<FailedMessages>(new MessageContextMap<FailedMessageState>());
-    let storeValue: FailedMessages = new MessageContextMap<FailedMessageState>();
-    store.subscribe((v) => (storeValue = v));
+    const store = createMessageContextSpecificObjectStore(() => ({}) as FailedMessageState);
 
     return {
         subscribe: store.subscribe,
         getMessages: (key: MessageContext): EventWrapper<Message>[] => {
-            const chatState = storeValue.get(key);
+            const chatState = store.get(key);
             return chatState ? Object.values(chatState) : [];
         },
         add: (key: MessageContext, message: EventWrapper<Message>): void => {
-            store.update((state) => {
-                const chatState = state.get(key) ?? {};
-                state.set(key, {
-                    ...chatState,
-                    [Number(message.event.messageId)]: message,
-                });
-                return state;
-            });
+            store.update(key, (chatState) => ({
+                ...chatState,
+                [message.event.messageId.toString()]: message,
+            }));
         },
         contains: (key: MessageContext, messageId: bigint): boolean => {
-            const chatState = storeValue.get(key);
-            return chatState ? chatState[Number(messageId)] !== undefined : false;
+            const chatState = store.get(key);
+            return chatState ? chatState[messageId.toString()] !== undefined : false;
         },
         delete: (key: MessageContext, messageId: bigint): boolean => {
-            const chatState = storeValue.get(key);
-            if (chatState && chatState[Number(messageId)]) {
-                delete chatState[Number(messageId)];
-                store.update((state) => {
-                    state.set(key, { ...chatState });
-                    return state;
-                });
+            const chatState = store.get(key);
+            const messageIdString = messageId.toString();
+            if (chatState && chatState[messageIdString]) {
+                delete chatState[messageIdString];
+                store.set(key, chatState);
                 return true;
             }
             return false;
         },
         initialise(data: FailedMessages) {
-            store.set(data);
+            store.clear(data);
         },
     };
 }

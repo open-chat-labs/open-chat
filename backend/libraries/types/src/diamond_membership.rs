@@ -50,19 +50,19 @@ impl DiamondMembershipPlanDuration {
 
     pub const fn icp_price_e8s(&self) -> u64 {
         match self {
-            DiamondMembershipPlanDuration::OneMonth => 20_000_000,    // 0.2 ICP
-            DiamondMembershipPlanDuration::ThreeMonths => 50_000_000, // 0.5 ICP
-            DiamondMembershipPlanDuration::OneYear => 150_000_000,    // 1.5 ICP
-            DiamondMembershipPlanDuration::Lifetime => 600_000_000,   // 6 ICP
+            DiamondMembershipPlanDuration::OneMonth => 15_000_000,    // 0.15 ICP
+            DiamondMembershipPlanDuration::ThreeMonths => 35_000_000, // 0.35 ICP
+            DiamondMembershipPlanDuration::OneYear => 100_000_000,    // 1 ICP
+            DiamondMembershipPlanDuration::Lifetime => 400_000_000,   // 4 ICP
         }
     }
 
     pub const fn chat_price_e8s(&self) -> u64 {
         match self {
-            DiamondMembershipPlanDuration::OneMonth => 300_000_000,    // 3 CHAT
-            DiamondMembershipPlanDuration::ThreeMonths => 750_000_000, // 7.5 CHAT
-            DiamondMembershipPlanDuration::OneYear => 2_500_000_000,   // 25 CHAT
-            DiamondMembershipPlanDuration::Lifetime => 10_000_000_000, // 100 CHAT
+            DiamondMembershipPlanDuration::OneMonth => 200_000_000,    // 2 CHAT
+            DiamondMembershipPlanDuration::ThreeMonths => 500_000_000, // 5 CHAT
+            DiamondMembershipPlanDuration::OneYear => 1_500_000_000,   // 15 CHAT
+            DiamondMembershipPlanDuration::Lifetime => 6_000_000_000,  // 60 CHAT
         }
     }
 

@@ -58,33 +58,6 @@ export type NervousSystemDetails = {
     token: CryptocurrencyDetails;
 };
 
-// approximate dollar exchange rates - until we come up with something better
-const dollarToICP = 0.225;
-
-export const dollarExchangeRates: Record<string, number> = {
-    icp: to2SigFigs(dollarToICP),
-    chat: to2SigFigs(dollarToICP / 0.0612),
-    hot: to2SigFigs(dollarToICP / 0.0045),
-    kinic: to2SigFigs(dollarToICP / 0.312),
-    ckbtc: to2SigFigs(0.000023),
-    cketh: to2SigFigs(0.00044),
-    dkp: to2SigFigs(dollarToICP / 430.69),
-    ghost: to2SigFigs(dollarToICP / 0.000013),
-    mod: to2SigFigs(dollarToICP / 0.0046),
-    cat: to2SigFigs(dollarToICP / 0.0061),
-    boom: to2SigFigs(dollarToICP / 0.0025),
-    icx: to2SigFigs(dollarToICP / 0.0063),
-    nua: to2SigFigs(dollarToICP / 0.0147),
-    sonic: to2SigFigs(dollarToICP / 0.0274),
-    sneed: to2SigFigs(dollarToICP / 22.25),
-    exe: to2SigFigs(dollarToICP / 0.0034),
-    taggr: to2SigFigs(dollarToICP / 0.1851),
-};
-
-function to2SigFigs(num: number): number {
-    return parseFloat(num.toPrecision(2));
-}
-
 type AccountTransactionCommon = {
     timestamp: Date;
     id: bigint;
@@ -130,3 +103,8 @@ export type AccountTransactions = {
 };
 
 export type AccountTransactionResult = Failure | (Success & AccountTransactions);
+
+export type TokenExchangeRates = {
+    toICP: number | undefined;
+    toUSD: number | undefined;
+};

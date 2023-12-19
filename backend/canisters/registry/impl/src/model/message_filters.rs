@@ -65,7 +65,7 @@ impl MessageFilters {
             .iter()
             .filter(|f| f.last_updated > since)
             .enumerate()
-            .filter_map(|(i, f)| if f.regex.is_some() { Some(i as u64) } else { None })
+            .filter_map(|(i, f)| if f.regex.is_none() { Some(i as u64) } else { None })
             .collect()
     }
 }

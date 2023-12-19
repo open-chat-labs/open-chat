@@ -553,6 +553,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.event,
                         payload.rulesAccepted,
                         payload.communityRulesAccepted,
+                        payload.messageFilterFailed,
                     ),
                 );
                 break;
@@ -858,6 +859,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     correlationId,
                     agent.removeHotGroupExclusion(payload.chatId),
                 );
+                break;
+
+            case "addMessageFilter":
+                executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
+                break;
+
+            case "removeMessageFilter":
+                executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
                 break;
 
             case "suspendUser":
@@ -1246,7 +1255,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "updateRegistry":
-                executeThenReply(payload, correlationId, agent.getRegistry());
+                streamReplies(payload, correlationId, agent.getRegistry());
                 break;
 
             case "setCommunityIndexes":
@@ -1418,6 +1427,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "diamondMembershipFees":
                 executeThenReply(payload, correlationId, agent.diamondMembershipFees());
+                break;
+
+            case "exchangeRates":
+                executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
 
             default:

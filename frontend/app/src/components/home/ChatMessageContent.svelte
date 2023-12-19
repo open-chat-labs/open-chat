@@ -19,7 +19,6 @@
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
-    import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { ChatIdentifier, MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
@@ -40,14 +39,13 @@
     export let messageIndex: number;
     export let collapsed = false;
     export let undeleting: boolean = false;
+    export let intersecting: boolean;
 </script>
 
 {#if content.kind === "text_content"}
     <TextContent {me} {fill} {truncate} {pinned} {content} {edited} />
 {:else if content.kind === "image_content"}
-    <IntersectionObserver let:intersecting>
-        <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
-    </IntersectionObserver>
+    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
     <VideoContent {edited} {fill} {content} {reply} {height} />
 {:else if content.kind === "audio_content"}
@@ -71,9 +69,7 @@
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}
-    <IntersectionObserver let:intersecting>
-        <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
-    </IntersectionObserver>
+    <GiphyContent {edited} {intersecting} {fill} {content} {reply} {height} />
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
@@ -91,9 +87,7 @@
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
 {:else if content.kind === "meme_fighter_content"}
-    <IntersectionObserver let:intersecting>
-        <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
-    </IntersectionObserver>
+    <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "user_referral_card"}
     <UserReferralCardContent />
 {/if}

@@ -63,6 +63,7 @@ import {
     permittedMessagesInDirectChat,
     permittedMessagesInGroup,
     activeUserIdFromEvent,
+    doesMessageFailFilter,
 } from "./utils/chat";
 import {
     buildUsernameList,
@@ -139,10 +140,10 @@ import {
     cryptoLookup,
     cryptoTokensSorted,
     enhancedCryptoLookup,
+    exchangeRatesLookupStore,
     lastCryptoSent,
     nervousSystemLookup,
 } from "./stores/crypto";
-import { draftThreadMessages } from "./stores/draftThreadMessages";
 import {
     disableAllProposalFilters,
     enableAllProposalFilters,
@@ -364,7 +365,7 @@ import {
     missingUserIds,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
-    getContentAsText,
+    getContentAsFormattedText,
     indexRangeForChat,
     getDisplayDate,
     MessagesReadFromServer,
@@ -436,9 +437,10 @@ import { localCommunitySummaryUpdates } from "./stores/localCommunitySummaryUpda
 import { hasFlag, moderationFlags } from "./stores/flagStore";
 import { hasOwnerRights } from "./utils/permissions";
 import { isDisplayNameValid, isUsernameValid } from "./utils/validation";
-import type { DraftMessage } from "./stores/draftMessageFactory";
 import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
+import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
+import { draftMessagesStore } from "./stores/draftMessages";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -448,6 +450,7 @@ const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
+const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
 const MAX_INT32 = Math.pow(2, 31) - 1;
 
@@ -466,6 +469,7 @@ export class OpenChat extends OpenChatAgentWorker {
     private _chatsPoller: Poller | undefined = undefined;
     private _registryPoller: Poller | undefined = undefined;
     private _userUpdatePoller: Poller | undefined = undefined;
+    private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
 
@@ -653,6 +657,8 @@ export class OpenChat extends OpenChatAgentWorker {
         await this.connectToWorker();
 
         this.startRegistryPoller();
+        this.startExchangeRatePoller();
+
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
@@ -776,6 +782,14 @@ export class OpenChat extends OpenChatAgentWorker {
         );
     }
 
+    pauseEventLoop() {
+        this._chatsPoller?.stop();
+    }
+
+    resumeEventLoop() {
+        this.startChatsPoller();
+    }
+
     private startChatsPoller() {
         this._chatsPoller?.stop();
         this._chatsPoller = new Poller(
@@ -784,6 +798,11 @@ export class OpenChat extends OpenChatAgentWorker {
             CHAT_UPDATE_IDLE_INTERVAL,
             true,
         );
+
+        // we need to load chats at least once if we are completely offline
+        if (this._liveState.offlineStore) {
+            this.loadChats();
+        }
     }
 
     private startOnlinePoller() {
@@ -803,6 +822,16 @@ export class OpenChat extends OpenChatAgentWorker {
             () => this.updateRegistry(),
             REGISTRY_UPDATE_INTERVAL,
             REGISTRY_UPDATE_INTERVAL,
+            false,
+        );
+    }
+
+    private startExchangeRatePoller() {
+        this._exchangeRatePoller?.stop();
+        this._exchangeRatePoller = new Poller(
+            () => this.updateExchangeRates(),
+            EXCHANGE_RATE_UPDATE_INTERVAL,
+            EXCHANGE_RATE_UPDATE_INTERVAL,
             true,
         );
     }
@@ -1344,7 +1373,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
-        return getContentAsText(formatter, content, get(cryptoLookup));
+        return getContentAsFormattedText(formatter, content, get(cryptoLookup));
     }
 
     groupAvatarUrl<T extends { blobUrl?: string; subtype?: GroupSubtype }>(chat?: T): string {
@@ -2000,13 +2029,15 @@ export class OpenChat extends OpenChatAgentWorker {
 
         this.addServerEventsToStores(chat.id, resp.events, undefined, resp.expiredEventRanges);
 
-        makeRtcConnections(
-            this._liveState.user.userId,
-            chat,
-            resp.events,
-            this._liveState.userStore,
-            this.config.meteredApiKey,
-        );
+        if (!this._liveState.offlineStore) {
+            makeRtcConnections(
+                this._liveState.user.userId,
+                chat,
+                resp.events,
+                this._liveState.userStore,
+                this.config.meteredApiKey,
+            );
+        }
 
         return true;
     }
@@ -2344,13 +2375,15 @@ export class OpenChat extends OpenChatAgentWorker {
             }
             await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
-            makeRtcConnections(
-                this._liveState.user.userId,
-                chat,
-                this._liveState.threadEvents,
-                this._liveState.userStore,
-                this.config.meteredApiKey,
-            );
+            if (!this._liveState.offlineStore) {
+                makeRtcConnections(
+                    this._liveState.user.userId,
+                    chat,
+                    this._liveState.threadEvents,
+                    this._liveState.userStore,
+                    this.config.meteredApiKey,
+                );
+            }
 
             if (ascending) {
                 this.dispatchEvent(new LoadedNewMessages({ chatId, threadRootMessageIndex }));
@@ -3086,6 +3119,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(retryEvent.event.content);
 
+        const messageFilterFailed = doesMessageFailFilter(event.event, get(messageFiltersStore));
+
         // add the *new* event to unconfirmed
         unconfirmed.add(messageContext, retryEvent);
 
@@ -3099,6 +3134,7 @@ export class OpenChat extends OpenChatAgentWorker {
             event: retryEvent,
             rulesAccepted,
             communityRulesAccepted,
+            messageFilterFailed,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3218,13 +3254,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this._liveState.threadEvents;
     }
 
-    private draftMessageForMessageContext({
-        threadRootMessageIndex,
-    }: MessageContext): DraftMessage | undefined {
-        if (threadRootMessageIndex === undefined) return this._liveState.currentChatDraftMessage;
-        return this._liveState.draftThreadMessages[threadRootMessageIndex];
-    }
-
     eventExpiry(chat: ChatSummary, timestamp: number): number | undefined {
         if (chat.kind === "group_chat" || chat.kind === "channel") {
             if (chat.eventsTTL !== undefined) {
@@ -3248,7 +3277,7 @@ export class OpenChat extends OpenChatAgentWorker {
             return;
         }
 
-        const draftMessage = this.draftMessageForMessageContext(messageContext);
+        const draftMessage = this._liveState.draftMessages.get(messageContext);
         const currentEvents = this.eventsForMessageContext(messageContext);
         const [nextEventIndex, nextMessageIndex] =
             threadRootMessageIndex !== undefined
@@ -3272,6 +3301,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const canRetry = this.canRetryMessage(msg.content);
 
+        const messageFilterFailed = doesMessageFailFilter(msg, get(messageFiltersStore));
+
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
@@ -3281,6 +3312,7 @@ export class OpenChat extends OpenChatAgentWorker {
             event,
             rulesAccepted,
             communityRulesAccepted,
+            messageFilterFailed,
         })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
@@ -3413,9 +3445,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 messagesRead.markReadUpTo(context, messageEvent.event.messageIndex - 1);
             }
 
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chat.id);
-            }
+            draftMessagesStore.delete(context);
 
             this.sendMessageWebRtc(chat, messageEvent, threadRootMessageIndex).then(() => {
                 this.dispatchEvent(new SentMessage(context, messageEvent));
@@ -3475,8 +3505,6 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve(false);
         }
 
-        const { chatId, threadRootMessageIndex } = messageContext;
-
         if (textContent || attachment) {
             const msg = {
                 ...editingEvent.event,
@@ -3484,16 +3512,13 @@ export class OpenChat extends OpenChatAgentWorker {
                 content: this.getMessageContent(textContent ?? undefined, attachment),
             };
             localMessageUpdates.markContentEdited(msg.messageId, msg.content);
-
-            if (threadRootMessageIndex === undefined) {
-                currentChatDraftMessage.clear(chatId);
-            }
+            draftMessagesStore.delete(messageContext);
 
             return this.sendRequest({
                 kind: "editMessage",
                 chatId: chat.id,
                 msg,
-                threadRootMessageIndex,
+                threadRootMessageIndex: messageContext.threadRootMessageIndex,
             })
                 .then((resp) => {
                     if (resp !== "success") {
@@ -4516,6 +4541,21 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    addMessageFilter(regex: string): Promise<boolean> {
+        try {
+            new RegExp(regex);
+        } catch (e) {
+            this._logger.error("Unable to add message filter - invalid regex", regex);
+            return Promise.resolve(false);
+        }
+
+        return this.sendRequest({ kind: "addMessageFilter", regex });
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this.sendRequest({ kind: "removeMessageFilter", id });
+    }
+
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.sendRequest({ kind: "suspendUser", userId, reason })
             .then((resp) => resp === "success")
@@ -4618,7 +4658,11 @@ export class OpenChat extends OpenChatAgentWorker {
             } else if (chat.latestMessage !== undefined) {
                 userIds.add(chat.latestMessage.event.sender);
                 this.extractUserIdsFromMentions(
-                    getContentAsText((k) => k, chat.latestMessage.event.content, get(cryptoLookup)),
+                    getContentAsFormattedText(
+                        (k) => k,
+                        chat.latestMessage.event.content,
+                        get(cryptoLookup),
+                    ),
                 ).forEach((id) => userIds.add(id));
             }
         });
@@ -4631,9 +4675,10 @@ export class OpenChat extends OpenChatAgentWorker {
             const allUsers = this._liveState.userStore;
             const usersToUpdate = new Set<string>([this._liveState.user.userId]);
 
+            const tenMinsAgo = now - BigInt(10 * ONE_MINUTE_MILLIS);
             for (const userId of this._recentlyActiveUsersTracker.consume()) {
                 const current = allUsers[userId];
-                if (current === undefined || now - current.updated > 10 * ONE_MINUTE_MILLIS) {
+                if (current === undefined || current.updated < tenMinsAgo) {
                     usersToUpdate.add(userId);
                 }
                 if (usersToUpdate.size >= 100) {
@@ -4649,8 +4694,9 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             // Also update any users who haven't been updated for at least 24 hours
+            const oneDayAgo = now - BigInt(24 * ONE_HOUR);
             for (const user of Object.values(allUsers)) {
-                if (now - user.updated > 24 * ONE_HOUR && user.kind === "user") {
+                if (user.updated < oneDayAgo) {
                     usersToUpdate.add(user.userId);
                     if (usersToUpdate.size >= MAX_USERS_TO_UPDATE_PER_BATCH) {
                         break;
@@ -4658,8 +4704,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
 
-            usersToUpdate.delete(ANON_USER_ID);
-            usersToUpdate.delete(OPENCHAT_BOT_USER_ID);
+            for (const userId of Object.keys(get(specialUsers))) {
+                usersToUpdate.delete(userId);
+            }
 
             console.log(`getting updates for ${usersToUpdate.size} user(s)`);
             const userGroups = groupBy<string, bigint>(usersToUpdate, (u) => {
@@ -5179,28 +5226,58 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private async updateRegistry() {
-        const registry = await this.sendRequest({
-            kind: "updateRegistry",
+    private async updateRegistry(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.sendStreamRequest({
+                kind: "updateRegistry",
+            })
+                .subscribe(([registry, updated], final) => {
+                    if (updated || Object.keys(get(cryptoLookup)).length === 0) {
+                        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
+
+                        nervousSystemLookup.set(
+                            toRecord(
+                                registry.nervousSystemSummary.map((ns) => ({
+                                    ...ns,
+                                    token: cryptoRecord[ns.ledgerCanisterId],
+                                })),
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                        );
+
+                        cryptoLookup.set(cryptoRecord);
+
+                        messageFiltersStore.set(
+                            registry.messageFilters
+                                .map((f) => {
+                                    try {
+                                        return { id: f.id, regex: new RegExp(f.regex, "mi") };
+                                    } catch {
+                                        return undefined;
+                                    }
+                                })
+                                .filter((f) => f !== undefined) as MessageFilter[],
+                        );
+                    }
+
+                    if (!this._liveState.anonUser && final) {
+                        window.setTimeout(() => this.refreshBalancesInSeries(), 0);
+                    }
+
+                    if (final) {
+                        resolve();
+                    }
+                })
+                .catch((err) => {
+                    reject(`Failed to update the registry: ${err}`);
+                });
         });
+    }
 
-        const cryptoRecord = toRecord(registry.tokenDetails, (t) => t.ledger);
+    private async updateExchangeRates(): Promise<void> {
+        const exchangeRates = await this.sendRequest({ kind: "exchangeRates" });
 
-        nervousSystemLookup.set(
-            toRecord(
-                registry.nervousSystemSummary.map((ns) => ({
-                    ...ns,
-                    token: cryptoRecord[ns.ledgerCanisterId],
-                })),
-                (ns) => ns.governanceCanisterId,
-            ),
-        );
-
-        cryptoLookup.set(cryptoRecord);
-
-        if (!this._liveState.anonUser) {
-            window.setTimeout(() => this.refreshBalancesInSeries(), 0);
-        }
+        exchangeRatesLookupStore.set(exchangeRates);
     }
 
     private async refreshBalancesInSeries() {
@@ -5832,7 +5909,7 @@ export class OpenChat extends OpenChatAgentWorker {
     setChatListScope(scope: ChatListScope): void {
         if (scope.kind === "none") {
             chatListScopeStore.set(this.getDefaultScope());
-        } else {
+        } else if (this._liveState.chatListScope !== scope) {
             chatListScopeStore.set(scope);
         }
     }
@@ -5883,8 +5960,9 @@ export class OpenChat extends OpenChatAgentWorker {
     cryptoTokensSorted = cryptoTokensSorted;
     enhancedCryptoLookup = enhancedCryptoLookup;
     nervousSystemLookup = nervousSystemLookup;
+    exchangeRatesLookupStore = exchangeRatesLookupStore;
     lastCryptoSent = lastCryptoSent;
-    draftThreadMessages = draftThreadMessages;
+    draftMessagesStore = draftMessagesStore;
     translationStore = translationStore;
     eventsStore = eventsStore;
     selectedChatStore = selectedChatStore;

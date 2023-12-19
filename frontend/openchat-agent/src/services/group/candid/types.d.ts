@@ -1517,6 +1517,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'RulesNotAccepted' : null };
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
   'forwarding' : boolean,

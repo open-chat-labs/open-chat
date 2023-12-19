@@ -33,11 +33,14 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(caller) {
+    if let Some(member) = state.data.get_member(caller) {
+        let user_id = member.user_id;
+        let sender_is_bot = member.is_bot;
         let now = state.env.now();
 
         let result = state.data.chat.validate_and_send_message(
             user_id,
+            sender_is_bot,
             args.thread_root_message_index,
             args.message_id,
             args.content,
@@ -45,6 +48,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             args.mentioned.iter().map(|u| u.user_id).collect(),
             args.forwarding,
             args.rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );
@@ -87,6 +91,7 @@ fn c2c_send_message_impl(args: C2CArgs, state: &mut RuntimeState) -> C2CResponse
             args.mentioned.iter().map(|u| u.user_id).collect(),
             args.forwarding,
             args.rules_accepted,
+            args.message_filter_failed.is_some(),
             state.data.proposals_bot_user_id,
             now,
         );

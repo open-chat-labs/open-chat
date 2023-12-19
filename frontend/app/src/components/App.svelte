@@ -31,6 +31,8 @@
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
     import Head from "./Head.svelte";
+    import { snowing } from "../stores/snow";
+    import Snow from "./Snow.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
@@ -97,6 +99,8 @@
             removeHotGroupExclusion,
             setCommunityModerationFlags,
             unfreezeGroup,
+            addMessageFilter,
+            removeMessageFilter,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -104,6 +108,8 @@
             setUserUpgradeConcurrency,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            pauseEventLoop: () => client.pauseEventLoop(),
+            resumeEventLoop: () => client.resumeEventLoop(),
         };
 
         framed.set(window.self !== window.top);
@@ -174,6 +180,14 @@
                 console.log("Failed to unfreeze group", chatId);
             }
         });
+    }
+
+    function addMessageFilter(regex: string): void {
+        client.addMessageFilter(regex);
+    }
+
+    function removeMessageFilter(id: bigint): void {
+        client.removeMessageFilter(id);
     }
 
     function deleteChannelMessage(
@@ -307,7 +321,11 @@
 
     function unhandledError(ev: Event) {
         logger?.error("Unhandled error: ", ev);
-        if (ev instanceof PromiseRejectionEvent && (ev.reason?.name === "SessionExpiryError" || ev.reason?.name === "InvalidDelegationError")) {
+        if (
+            ev instanceof PromiseRejectionEvent &&
+            (ev.reason?.name === "SessionExpiryError" ||
+                ev.reason?.name === "InvalidDelegationError")
+        ) {
             client.logout();
             ev.preventDefault();
         }
@@ -350,6 +368,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />

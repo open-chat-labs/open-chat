@@ -3,7 +3,7 @@ use crate::model::tokens::{TokenMetrics, Tokens};
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::message_filters::MessageFilters;
-use registry_canister::NervousSystemDetails;
+use registry_canister::{MessageFilterSummary, NervousSystemDetails};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -55,6 +55,7 @@ impl RuntimeState {
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             tokens: self.data.tokens.get_all().iter().map(|t| t.into()).collect(),
             nervous_systems: self.data.nervous_systems.get_all().iter().map(|ns| ns.into()).collect(),
+            message_filters: self.data.message_filters.added_since(0),
             failed_sns_launches: self.data.failed_sns_launches.iter().copied().collect(),
             canister_ids: CanisterIds {
                 proposals_bot: self.data.proposals_bot_canister_id,
@@ -69,7 +70,6 @@ impl RuntimeState {
 struct Data {
     governance_principals: HashSet<Principal>,
     proposals_bot_canister_id: CanisterId,
-    #[serde(default = "default_user_index_canister_id")]
     user_index_canister_id: CanisterId,
     sns_wasm_canister_id: CanisterId,
     cycles_dispenser_canister_id: CanisterId,
@@ -79,10 +79,6 @@ struct Data {
     message_filters: MessageFilters,
     rng_seed: [u8; 32],
     test_mode: bool,
-}
-
-fn default_user_index_canister_id() -> CanisterId {
-    Principal::anonymous()
 }
 
 impl Data {
@@ -149,6 +145,7 @@ impl Data {
             "https://dashboard.internetcomputer.org/transactions".to_string(),
             "https://www.finder.com/uk/how-to-buy-internet-computer".to_string(),
             "https://dashboard.internetcomputer.org/transaction/{transaction_hash}".to_string(),
+            ["ICRC-1".to_string(), "ICRC-2".to_string()].to_vec(),
             now,
         );
     }
@@ -164,6 +161,7 @@ pub struct Metrics {
     pub governance_principals: Vec<Principal>,
     pub tokens: Vec<TokenMetrics>,
     pub nervous_systems: Vec<NervousSystemMetrics>,
+    pub message_filters: Vec<MessageFilterSummary>,
     pub failed_sns_launches: Vec<CanisterId>,
     pub canister_ids: CanisterIds,
 }

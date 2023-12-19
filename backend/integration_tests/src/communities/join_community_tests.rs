@@ -4,8 +4,10 @@ use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
+use std::collections::HashSet;
 use std::ops::Deref;
-use types::{CommunityId, Empty, MessageContent};
+use test_case::test_case;
+use types::{AccessGate, CommunityId, Empty, MessageContent};
 
 #[test]
 fn join_public_community_succeeds() {
@@ -247,6 +249,48 @@ fn default_channels_marked_as_read_after_joining() {
 
     let channel3 = community.channels.iter().find(|c| c.channel_id == default3).unwrap();
     assert_eq!(channel3.read_by_me_up_to, Some(2.into()));
+}
+
+#[test_case(true)]
+#[test_case(false)]
+fn user_joined_to_all_public_channels(diamond_member: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, true);
+
+    let user = if diamond_member { client::register_diamond_user(env, canister_ids, *controller) } else { user2 };
+
+    let channel1 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+    let channel2 = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
+    let channel3 = client::community::happy_path::create_channel(env, user1.principal, community_id, false, random_string());
+    let channel4 = client::community::happy_path::create_gated_channel(
+        env,
+        user1.principal,
+        community_id,
+        true,
+        random_string(),
+        AccessGate::DiamondMember,
+    );
+
+    let community_summary =
+        client::local_user_index::happy_path::join_community(env, user.principal, canister_ids.local_user_index, community_id);
+
+    let channel_ids: HashSet<_> = community_summary.channels.iter().map(|c| c.channel_id).collect();
+
+    assert!(channel_ids.contains(&channel1));
+    assert!(channel_ids.contains(&channel2));
+    assert!(!channel_ids.contains(&channel3));
+    assert_eq!(channel_ids.contains(&channel4), diamond_member);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {

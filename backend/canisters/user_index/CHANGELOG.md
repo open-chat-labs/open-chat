@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Some adjustments to modclub submissions ([#5000](https://github.com/open-chat-labs/open-chat/pull/5000))
+- Add `escrow_canister_id` to LocalUserIndex canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- Store Diamond membership expiry dates in LocalUserIndex canisters ([#5025](https://github.com/open-chat-labs/open-chat/pull/5025))
+- Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
+- Reduce Diamond membership fees due to ICP price increase ([#5032](https://github.com/open-chat-labs/open-chat/pull/5032))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.969](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.969-user_index)] - 2023-12-12
+
+### Changed
+
 - Pay rewards based on one year if referred user becomes lifetime member ([#4979](https://github.com/open-chat-labs/open-chat/pull/4979))
 
 ### Removed

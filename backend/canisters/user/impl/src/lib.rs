@@ -5,6 +5,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
+use crate::model::p2p_trades::P2PTrades;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -140,6 +141,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -159,6 +161,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    #[serde(default = "escrow_canister_id")]
+    pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -179,7 +183,13 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
+    #[serde(default)]
+    pub p2p_trades: P2PTrades,
     pub rng_seed: [u8; 32],
+}
+
+fn escrow_canister_id() -> CanisterId {
+    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {
@@ -191,6 +201,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
         username: String,
         test_mode: bool,
         now: TimestampMillis,
@@ -207,6 +218,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             proposals_bot_canister_id,
+            escrow_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -227,6 +239,7 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
+            p2p_trades: P2PTrades::default(),
             rng_seed: [0; 32],
         }
     }
@@ -294,5 +307,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

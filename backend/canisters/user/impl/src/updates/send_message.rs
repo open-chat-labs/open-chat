@@ -117,7 +117,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     let now = state.env.now();
 
     let my_user_id: UserId = state.env.canister_id().into();
-    if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
+    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -132,13 +132,23 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
             }
         })
     } else if args.recipient == my_user_id {
-        if matches!(args.content, MessageContentInitial::Crypto(_)) {
+        if matches!(
+            args.content,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PTrade(_)
+        ) {
             ValidateRequestResult::Invalid(TransferCannotBeToSelf)
         } else {
             ValidateRequestResult::Valid(my_user_id, UserType::_Self)
         }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
-        let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
+        let user_type = if chat.is_bot {
+            if matches!(args.content, MessageContentInitial::P2PTrade(_)) {
+                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P trade with a bot".to_string()));
+            }
+            UserType::Bot
+        } else {
+            UserType::User
+        };
         ValidateRequestResult::Valid(my_user_id, user_type)
     } else {
         ValidateRequestResult::RecipientUnknown(my_user_id, state.data.local_user_index_canister_id)
@@ -160,7 +170,7 @@ fn send_message_impl(
         message_id: args.message_id,
         sender: my_user_id,
         content: if let Some(transfer) = completed_transfer.clone() {
-            MessageContentInternal::new_with_transfer(args.content.clone(), transfer)
+            MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None)
         } else {
             args.content.clone().try_into().unwrap()
         },
@@ -215,6 +225,7 @@ fn send_message_impl(
                 }
             }),
             forwarding: args.forwarding,
+            message_filter_failed: args.message_filter_failed,
             correlation_id: args.correlation_id,
         };
 
