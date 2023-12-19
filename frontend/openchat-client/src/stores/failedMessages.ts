@@ -9,8 +9,8 @@ import { createMessageContextSpecificObjectStore } from "./dataByMessageContextF
 type FailedMessageState = Record<number, EventWrapper<Message>>;
 export type FailedMessages = MessageContextMap<FailedMessageState>;
 
-function createFailedMessagesStore(data: FailedMessages) {
-    const store = createMessageContextSpecificObjectStore(() => ({}) as FailedMessageState, data);
+function createFailedMessagesStore() {
+    const store = createMessageContextSpecificObjectStore(() => ({}) as FailedMessageState);
 
     return {
         subscribe: store.subscribe,
@@ -36,6 +36,9 @@ function createFailedMessagesStore(data: FailedMessages) {
                 return true;
             }
             return false;
+        },
+        initialise(data: FailedMessages) {
+            store.clear(data);
         },
     };
 }

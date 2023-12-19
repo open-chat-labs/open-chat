@@ -25,19 +25,16 @@ function updateDataForMessageContext<T>(
     });
 }
 
-export function createMessageContextSpecificObjectStore<T>(
-    initValue: () => T,
-    initStore?: MessageContextMap<T>,
-) {
-    const store = writable(initStore ?? new MessageContextMap<T>());
+export function createMessageContextSpecificObjectStore<T>(init: () => T) {
+    const store = writable(new MessageContextMap<T>());
     let storeValue = new MessageContextMap<T>();
     store.subscribe((v) => (storeValue = v));
 
     return {
         subscribe: store.subscribe,
-        get: (context: MessageContext): T => storeValue.get(context) ?? initValue(),
+        get: (context: MessageContext): T => storeValue.get(context) ?? init(),
         update: (context: MessageContext, fn: (data: T) => T) =>
-            updateDataForMessageContext(store, context, fn, initValue()),
+            updateDataForMessageContext(store, context, fn, init()),
         set: (context: MessageContext, data: T) => setDataForMessageContext(store, context, data),
         delete: (context: MessageContext) => {
             if (storeValue.has(context)) {
@@ -49,6 +46,7 @@ export function createMessageContextSpecificObjectStore<T>(
             }
             return false;
         },
-        clear: (): void => store.set(new MessageContextMap<T>()),
+        clear: (newValue?: MessageContextMap<T>): void =>
+            store.set(newValue ?? new MessageContextMap<T>()),
     };
 }
