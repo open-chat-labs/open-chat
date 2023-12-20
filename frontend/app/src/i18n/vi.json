@@ -961,7 +961,7 @@
         "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ {issuer} mới được phép tham gia",
         "approvePaymentTitle": "Phê duyệt thanh toán",
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
-        "paymentDistributionMessage": "Trong số này, 80% thuộc về (các) chủ sở hữu {level} và 20% thuộc về kho bạc OpenChat SNS.",
+        "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",
         "tokenNeuronHolder": "{token} người giữ nơ-ron",
         "payment": "Sự chi trả",
         "tokenPayment": "thanh toán {token}",
