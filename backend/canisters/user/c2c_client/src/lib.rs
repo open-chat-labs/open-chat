@@ -15,7 +15,7 @@ generate_c2c_call!(c2c_notify_events);
 generate_c2c_call!(c2c_remove_from_community);
 generate_c2c_call!(c2c_remove_from_group);
 generate_c2c_call!(c2c_revoke_super_admin);
-generate_c2c_call!(c2c_send_messages);
+generate_c2c_call!(c2c_send_messages_v2);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_tip_message);
 generate_c2c_call!(c2c_toggle_reaction);

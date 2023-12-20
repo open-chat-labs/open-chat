@@ -274,7 +274,6 @@ struct Data {
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
-    #[serde(default = "escrow_canister_id")]
     escrow_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
@@ -296,10 +295,6 @@ struct Data {
     rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
-}
-
-fn escrow_canister_id() -> CanisterId {
-    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {

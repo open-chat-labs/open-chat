@@ -514,7 +514,9 @@
             "to": "に",
             "type": "タイプ"
         },
-        "swap": "スワップ"
+        "swap": "スワップ",
+        "tokens": "トークン",
+        "total": "合計"
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -905,7 +907,7 @@
         "deleteMessage": "報告されたメッセージを削除",
         "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
         "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています",
-        "advice": "このメッセージがこのグループのルールに違反していると思われる場合は、まずグループの所有者と管理者に連絡してください。 [プラットフォーム ルール]({rules}) に違反していると思われる場合にのみ、プラットフォームのモデレートのためにメッセージを報告してください。"
+        "advice": "このメッセージがこのグループのルールに違反していると思われる場合は、まずグループの所有者と管理者に連絡してください。 [プラットフォーム ルール]({rules}) に違反していると思われる場合にのみ、プラットフォーム モデレート用のメッセージを報告してください。違反している場合はモデレーターの時間を無駄にします。誤った報告を続けると、ご自身のアカウントが停止される可能性があります。"
     },
     "invitedBy": "{changedBy} が {changed} を {level} に招待しました",
     "halloffame": {
@@ -959,7 +961,7 @@
         "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます",
         "approvePaymentTitle": "支払いの承認",
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
-        "paymentDistributionMessage": "このうち 80% は {level} の所有者に、20% は OpenChat SNS の財務省に寄付されます。",
+        "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
         "tokenNeuronHolder": "{token} ニューロン ホルダー",
         "payment": "支払い",
         "tokenPayment": "{token} の支払い",

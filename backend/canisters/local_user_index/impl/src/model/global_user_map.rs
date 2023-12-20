@@ -10,7 +10,6 @@ pub struct GlobalUserMap {
     principal_to_user_id: HashMap<Principal, UserId>,
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
-    #[serde(default)]
     diamond_membership_expiry_dates: HashMap<UserId, TimestampMillis>,
 }
 

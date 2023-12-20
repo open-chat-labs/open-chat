@@ -35,7 +35,7 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
     RulesNotAccepted,
-    InternalError(String, CompletedCryptoTransaction),
+    Retrying(String, CompletedCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

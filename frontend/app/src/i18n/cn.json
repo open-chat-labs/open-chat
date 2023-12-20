@@ -513,7 +513,9 @@
             "to": "到",
             "type": "类型"
         },
-        "swap": "兑换"
+        "swap": "兑换",
+        "tokens": "代币",
+        "total": "全部的"
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -904,7 +906,7 @@
         "deleteMessage": "删除举报的消息",
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）",
-        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息。"
+        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息，否则会浪费审核者的时间。持续误报可能会导致您自己的帐户被暂停。"
     },
     "invitedBy": "{changedBy} 邀请 {changed} 参加 {level}",
     "halloffame": {
@@ -958,7 +960,7 @@
         "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入",
         "approvePaymentTitle": "批准付款",
         "paymentApprovalMessage": "为了加入此 {level}，您需要支付 **{amount}** {token} 代币。",
-        "paymentDistributionMessage": "其中，80% 归 {level} 所有者所有，20% 归 OpenChat SNS 金库。",
+        "paymentDistributionMessage": "其中，98% 归 {level} 所有者所有，2% 归 OpenChat SNS 金库。",
         "tokenNeuronHolder": "{token} 神经元支架",
         "payment": "支付",
         "tokenPayment": "{token}付款",

@@ -1,18 +1,22 @@
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::utils::now_nanos;
+use crate::utils::{now_nanos, tick_many};
 use crate::{client, TestEnv};
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::create_pending_transaction;
 use std::ops::Deref;
+use std::time::Duration;
+use test_case::test_case;
 use types::{
     ChatEvent, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, PendingCryptoTransaction,
 };
 
-#[test]
-fn send_direct_message_with_transfer_succeeds() {
+#[test_case(false)]
+#[test_case(true)]
+fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -26,6 +30,10 @@ fn send_direct_message_with_transfer_succeeds() {
 
     // Send user1 some ICP
     client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+
+    if with_c2c_error {
+        stop_canister(env, canister_ids.local_user_index, user2.canister());
+    }
 
     let send_message_result = client::user::send_message_v2(
         env,
@@ -55,19 +63,38 @@ fn send_direct_message_with_transfer_succeeds() {
         },
     );
 
-    if matches!(
+    assert!(matches!(
         send_message_result,
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
-    ) {
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
-        assert_eq!(user2_balance, 10000);
+    ));
+
+    tick_many(env, 3);
+
+    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    assert_eq!(user2_balance, 10000);
+
+    if with_c2c_error {
+        env.advance_time(Duration::from_secs(10));
+        start_canister(env, canister_ids.local_user_index, user2.canister());
+        tick_many(env, 3);
+    }
+
+    let event = client::user::happy_path::events(env, &user2, user1.user_id, 0.into(), true, 10, 10)
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = event {
+        assert!(matches!(m.content, MessageContent::Crypto(_)));
     } else {
-        panic!("{send_message_result:?}")
+        panic!("{event:?}");
     }
 }
 
-#[test]
-fn send_message_with_transfer_to_group_succeeds() {
+#[test_case(false)]
+#[test_case(true)]
+fn send_message_with_transfer_to_group_succeeds(with_c2c_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -83,6 +110,10 @@ fn send_message_with_transfer_to_group_succeeds() {
 
     // Send user1 some ICP
     client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user1.user_id, 1_000_000_000);
+
+    if with_c2c_error {
+        stop_canister(env, canister_ids.local_group_index, group_id.into());
+    }
 
     let send_message_result = client::user::send_message_with_transfer_to_group(
         env,
@@ -115,14 +146,36 @@ fn send_message_with_transfer_to_group_succeeds() {
         },
     );
 
-    if matches!(
-        send_message_result,
-        user_canister::send_message_with_transfer_to_group::Response::Success(_)
-    ) {
-        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
-        assert_eq!(user2_balance, 10000);
+    if with_c2c_error {
+        assert!(matches!(
+            send_message_result,
+            user_canister::send_message_with_transfer_to_group::Response::Retrying(..)
+        ));
     } else {
-        panic!("{send_message_result:?}")
+        assert!(matches!(
+            send_message_result,
+            user_canister::send_message_with_transfer_to_group::Response::Success(_)
+        ));
+    }
+
+    let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    assert_eq!(user2_balance, 10000);
+
+    if with_c2c_error {
+        env.advance_time(Duration::from_secs(10));
+        start_canister(env, canister_ids.local_group_index, group_id.into());
+    }
+
+    let event = client::group::happy_path::events(env, &user2, group_id, 0.into(), true, 10, 10)
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = event {
+        assert!(matches!(m.content, MessageContent::Crypto(_)));
+    } else {
+        panic!("{event:?}");
     }
 }
 
