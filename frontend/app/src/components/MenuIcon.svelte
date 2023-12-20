@@ -56,7 +56,6 @@
     }
 
     .menu {
-        // position: absolute;
         position: fixed;
         @include z-index("popup-menu");
     }
