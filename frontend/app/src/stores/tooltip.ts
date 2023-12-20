@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { type Alignment, type Position } from "../utils/alignment";
-import { reposition } from "nanopop";
+import { reposition } from "../utils/position";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -27,10 +27,17 @@ export const tooltipStore = {
     ): void =>
         update((tooltip) => {
             if (tooltip === undefined) return tooltip;
-            reposition(triggerEl, tooltip, {
+            const pos = reposition(triggerEl, tooltip, {
                 position: `${position}-${align}`,
                 margin: gutter,
             });
+            if (!pos) {
+                reposition(triggerEl, tooltip, {
+                    position: `${position}-${align}`,
+                    margin: gutter,
+                    force: true,
+                });
+            }
             return tooltip;
         }),
     show: (tooltip: HTMLElement): void =>

@@ -2,7 +2,7 @@ import { writable, get } from "svelte/store";
 import { navOpen } from "./layout";
 import { mobileWidth } from "./screenDimensions";
 import { type Alignment, type Position, centerOfScreen } from "../utils/alignment";
-import { reposition } from "nanopop";
+import { reposition } from "../utils/position";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -48,10 +48,17 @@ export const menuStore = {
             if (centered && get(mobileWidth)) {
                 positionInCenter(menu);
             } else {
-                reposition(triggerEl, menu, {
+                const pos = reposition(triggerEl, menu, {
                     position: `${position}-${align}`,
                     margin: gutter,
                 });
+                if (!pos) {
+                    reposition(triggerEl, menu, {
+                        position: `${position}-${align}`,
+                        margin: gutter,
+                        force: true,
+                    });
+                }
             }
             return menu;
         }),
