@@ -514,7 +514,9 @@
             "to": "に",
             "type": "タイプ"
         },
-        "swap": "スワップ"
+        "swap": "スワップ",
+        "tokens": "トークン",
+        "total": "合計"
     },
     "searchChat": "検索",
     "search": "検索...",
