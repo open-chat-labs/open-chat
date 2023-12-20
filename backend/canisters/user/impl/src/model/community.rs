@@ -1,5 +1,4 @@
 use crate::model::group_chat::{GroupChat, GroupMessagesRead};
-use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{local_user_index_canister_id, CanisterId, ChannelId, CommunityId, TimestampMillis, Timestamped};
@@ -113,7 +112,7 @@ impl Community {
     pub fn to_summary(&self) -> user_canister::CommunitySummary {
         user_canister::CommunitySummary {
             community_id: self.community_id,
-            local_user_index_canister_id: self.data.local_user_index_canister_id,
+            local_user_index_canister_id: self.local_user_index_canister_id,
             channels: self
                 .channels
                 .values()
