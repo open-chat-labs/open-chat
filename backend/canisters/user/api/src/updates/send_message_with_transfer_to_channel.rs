@@ -39,7 +39,7 @@ pub enum Response {
     CommunityFrozen,
     RulesNotAccepted,
     CommunityRulesNotAccepted,
-    InternalError(String, CompletedCryptoTransaction),
+    Retrying(String, CompletedCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
