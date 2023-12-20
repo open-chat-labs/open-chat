@@ -35,28 +35,32 @@
     .toggle-wrapper {
         display: flex;
         align-items: center;
-        border: 1px solid var(--bd);
-        border-radius: 4px;
+        border: var(--bw) solid var(--bd);
+        border-radius: var(--rd);
         cursor: pointer;
 
         .toggle {
             border: none;
             border-right: 1px solid var(--bd);
-            padding: 6px 10px 5px 9px;
+            padding: 6px 10px 5px 10px;
 
-            &:hover,
             &.selected {
                 color: var(--button-txt);
                 background: var(--button-bg);
             }
 
+            &:hover {
+                color: var(--button-hv-txt);
+                background: var(--button-hv);
+            }
+
             &.first {
-                border-radius: 4px 0 0 4px;
+                border-radius: var(--rd) 0 0 var(--rd);
             }
 
             &.last {
                 border-right: none;
-                border-radius: 0 4px 4px 0;
+                border-radius: 0 var(--rd) var(--rd) 0;
             }
         }
     }
