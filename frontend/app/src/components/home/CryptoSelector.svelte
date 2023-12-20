@@ -6,7 +6,6 @@
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
-    import BigDebugMenu from "./BigDebugMenu.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -57,8 +56,7 @@
         </div>
 
         <div slot="menu">
-            <BigDebugMenu />
-            <!-- <Menu centered>
+            <Menu centered>
                 {#each cryptoTokensFiltered as token}
                     <MenuItem on:click={() => selectToken(token.ledger, token.urlFormat)}>
                         <img slot="icon" class="token-icon" src={token.logo} />
@@ -72,7 +70,7 @@
                         </div>
                     </MenuItem>
                 {/each}
-            </Menu> -->
+            </Menu>
         </div>
     </MenuIcon>
 {/if}
