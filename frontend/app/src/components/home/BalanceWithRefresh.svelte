@@ -16,10 +16,17 @@
     export let showTopUp = false;
     export let showRefresh = true;
     export let refreshing = false;
+    export let conversion: "none" | "icp" | "usd" = "none";
 
-    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
+    $: formattedValue =
+        conversion === "none"
+            ? client.formatTokens(value, tokenDetails.decimals)
+            : conversion === "icp"
+              ? tokenDetails.icpBalance.toFixed(3)
+              : tokenDetails.dollarBalance.toFixed(2);
 
     $: {
         if (ledger) {
@@ -56,7 +63,7 @@
         <div class="label">{label}</div>
     {/if}
     <div class="amount" class:bold>
-        {client.formatTokens(value, tokenDetails.decimals)}
+        {formattedValue}
     </div>
     {#if showRefresh}
         <div class="refresh" class:refreshing on:click={refresh}>

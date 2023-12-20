@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { OpenChat } from "openchat-client";
+    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -18,6 +18,8 @@
     import SwapCrypto from "./SwapCrypto.svelte";
     import SendCrypto from "./SendCrypto.svelte";
     import ReceiveCrypto from "./ReceiveCrypto.svelte";
+    import MultiToggle from "../../MultiToggle.svelte";
+    import { sum } from "../../../utils/math";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,17 +30,38 @@
     let manageMode: "none" | "send" | "receive" | "swap" | "transactions";
     let selectedLedger: string | undefined = undefined;
     let transactionsFormat: string;
+    let conversionOptions = [
+        { id: "none", label: $_("cryptoAccount.tokens") },
+        { id: "usd", label: "USD" },
+        { id: "icp", label: "ICP" },
+    ];
+    let selectedConversion: "none" | "icp" | "usd" = "none";
 
     $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
     $: snsLedgers = new Set<string>(
         Object.values($nervousSystemLookup)
             .filter((ns) => !ns.isNns)
             .map((ns) => ns.ledgerCanisterId),
     );
+    $: total =
+        selectedConversion === "none"
+            ? ""
+            : selectedConversion === "usd"
+              ? calculateTotalUSD($cryptoLookup)
+              : calculateTotalICP($cryptoLookup);
 
     $: {
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
+    }
+
+    function calculateTotalUSD(lookup: Record<string, EnhancedTokenDetails>): string {
+        return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+    }
+
+    function calculateTotalICP(lookup: Record<string, EnhancedTokenDetails>): string {
+        return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
     }
 
     function onBalanceRefreshed() {
@@ -97,8 +120,9 @@
 <table>
     <tr>
         <th class="token-header">{$_("cryptoAccount.token")}</th>
-        <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
-        <th />
+        <th class="balance-header" colspan="2">
+            <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+        </th>
     </tr>
     {#each $accountsSorted as token}
         <tr class:hidden={token.zero && !showZeroBalance}>
@@ -114,10 +138,11 @@
                 <BalanceWithRefresh
                     ledger={token.ledger}
                     value={token.balance}
+                    conversion={selectedConversion}
                     on:refreshed={onBalanceRefreshed}
                     on:error={onBalanceRefreshError} />
             </td>
-            <td>
+            <td class="manage-col">
                 <div class="manage">
                     <MenuIcon position="bottom" align="end">
                         <span slot="icon" class="wallet-menu">
@@ -169,6 +194,18 @@
             </td>
         </tr>
     {/each}
+    {#if selectedConversion !== "none"}
+        <tr class="total">
+            <td>
+                <div class="token">
+                    <div class="icon"></div>
+                    {$_("cryptoAccount.total")}
+                </div>
+            </td>
+            <td class="total">{total}</td>
+            <td></td>
+        </tr>
+    {/if}
 </table>
 
 {#if balanceError !== undefined}
@@ -198,21 +235,40 @@
         th {
             @include font(book, normal, fs-70);
             padding-bottom: $sp4;
-            font-weight: 700;
 
             &.token-header {
+                font-weight: 700;
                 text-align: left;
             }
 
             &.balance-header {
-                padding-right: 28px;
-                text-align: right;
+                @include font-size(fs-60);
+                text-transform: uppercase;
             }
         }
 
         td {
             vertical-align: middle;
             padding-bottom: $sp3;
+
+            &.manage-col {
+                width: 0;
+            }
+
+            &.total {
+                @include font(bold, normal, fs-100, 22);
+                padding-right: 30px;
+                text-align: right;
+            }
+        }
+
+        tr.total {
+            color: var(--txt-light);
+
+            td {
+                padding-top: $sp3;
+                border-top: solid 1px var(--bd);
+            }
         }
 
         .token {

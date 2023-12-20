@@ -514,7 +514,9 @@
             "to": "A",
             "type": "Tipo"
         },
-        "swap": "Scambio"
+        "swap": "Scambio",
+        "tokens": "Gettoni",
+        "total": "Totale"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",
