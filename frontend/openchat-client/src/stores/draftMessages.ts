@@ -26,9 +26,9 @@ function createDraftMessages() {
     return {
         ...store,
         setTextContent: (context: MessageContext, textContent: string | undefined): void =>
-            store.set(context, { textContent }),
+            store.update(context, (current) => ({ ...current, textContent })),
         setAttachment: (context: MessageContext, attachment: AttachmentContent | undefined): void =>
-            store.set(context, { attachment }),
+            store.update(context, (current) => ({ ...current, attachment })),
         setEditing: (context: MessageContext, editingEvent: EventWrapper<Message>): void => {
             const users = get(userStore);
             store.update(context, (m) => ({
@@ -51,7 +51,7 @@ function createDraftMessages() {
         setReplyingTo: (
             context: MessageContext,
             replyingTo: EnhancedReplyContext | undefined,
-        ): void => store.set(context, { replyingTo }),
+        ): void => store.update(context, (current) => ({ ...current, replyingTo })),
     };
 }
 
