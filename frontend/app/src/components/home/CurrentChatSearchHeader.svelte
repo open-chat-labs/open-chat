@@ -130,7 +130,7 @@
         console.log(
             `all matches: ${matches.length}, topScore: ${topScore}, bottomScore: ${
                 matches[matches.length - 1].score
-            }`
+            }`,
         );
         matches = matches
             // Only show matches > than 20% of the top scoring match
@@ -242,9 +242,10 @@
         offset={searchBoxHeight ?? 80}
         direction={"down"}
         prefix={mentionPrefix}
+        mentionSelf
+        usersOnly
         on:close={cancelMention}
-        on:mention={mention}
-        mentionSelf />
+        on:mention={mention} />
 {/if}
 
 <SectionHeader shadow flush entry bind:height={searchBoxHeight}>
