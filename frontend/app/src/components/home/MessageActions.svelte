@@ -31,6 +31,7 @@
     $: showActions = !useDrawer || drawOpen;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
     $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
+    $: showClose = drawOpen || attachment !== undefined || messageAction === "emoji";
 
     export function close() {
         drawOpen = false;
@@ -59,7 +60,7 @@
     }
 
     function toggleDraw() {
-        if (drawOpen || attachment !== undefined) {
+        if (showClose) {
             close();
         } else {
             drawOpen = true;
@@ -157,7 +158,7 @@
 
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
-        {#if drawOpen || attachment !== undefined}
+        {#if showClose}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
