@@ -5277,6 +5277,10 @@ export class OpenChat extends OpenChatAgentWorker {
     private async updateExchangeRates(): Promise<void> {
         const exchangeRates = await this.sendRequest({ kind: "exchangeRates" });
 
+        // Handle couple of special cases
+        exchangeRates["dkp"] = exchangeRates["sns1"];
+        exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
+
         exchangeRatesLookupStore.set(exchangeRates);
     }
 

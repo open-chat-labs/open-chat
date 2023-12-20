@@ -24,6 +24,7 @@
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
+    import { round2 } from "../../../utils/math";
 
     const dispatch = createEventDispatcher();
 
@@ -125,15 +126,11 @@
     }
 
     function registerProposalVoteErrorMessage(
-        resp: RegisterProposalVoteResponse
+        resp: RegisterProposalVoteResponse,
     ): string | undefined {
         if (resp === "already_voted") return "alreadyVoted";
         if (resp === "proposal_not_accepting_votes") return "proposalNotAcceptingVotes";
         return "voteFailed";
-    }
-
-    function round2(num: number): number {
-        return Math.round((num + Number.EPSILON) * 100) / 100;
     }
 
     function onClick() {
@@ -158,11 +155,11 @@
 
     export function getProposalTopicLabel(
         content: ProposalContent,
-        proposalTopics: Map<number, string>
+        proposalTopics: Map<number, string>,
     ): string {
         return (
             proposalTopics.get(
-                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action
+                content.proposal.kind === "nns" ? content.proposal.topic : content.proposal.action,
             ) ?? "unknown"
         );
     }

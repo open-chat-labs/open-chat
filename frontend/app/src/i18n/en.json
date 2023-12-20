@@ -626,6 +626,8 @@
         "sendSucceeded": "Your {symbol} was successfully sent!",
         "sendFailed": "Failed to send {symbol}",
         "token": "Token",
+        "tokens": "Tokens",
+        "total": "Total",
         "scan": "Scan QR code",
         "comingSoon": "(coming soon)",
         "showZeroBalance": "show more",

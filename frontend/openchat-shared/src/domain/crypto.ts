@@ -33,6 +33,7 @@ export type CryptocurrencyDetails = {
 export type EnhancedTokenDetails = CryptocurrencyDetails & {
     balance: bigint;
     dollarBalance: number;
+    icpBalance: number;
     zero: boolean;
     urlFormat: string;
 };

@@ -515,7 +515,9 @@
             "to": "ĐẾN",
             "type": "Kiểu"
         },
-        "swap": "Tráo đổi"
+        "swap": "Tráo đổi",
+        "tokens": "Mã thông báo",
+        "total": "Tổng cộng"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
