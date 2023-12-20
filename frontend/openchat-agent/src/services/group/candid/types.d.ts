@@ -971,6 +971,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
+export type LocalUserIndexArgs = {};
+export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1812,6 +1814,10 @@ export interface _SERVICE {
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'follow_thread' : ActorMethod<[FollowThreadArgs], FollowThreadResponse>,
   'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
+  'local_user_index' : ActorMethod<
+    [LocalUserIndexArgs],
+    LocalUserIndexResponse
+  >,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse

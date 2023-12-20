@@ -1122,6 +1122,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
   });
+  const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MessagesByMessageIndexArgs = IDL.Record({
     'channel_id' : ChannelId,
     'messages' : IDL.Vec(MessageIndex),
@@ -1853,6 +1854,11 @@ export const idlFactory = ({ IDL }) => {
     'import_group' : IDL.Func([ImportGroupArgs], [ImportGroupResponse], []),
     'invite_code' : IDL.Func([EmptyArgs], [InviteCodeResponse], ['query']),
     'leave_channel' : IDL.Func([LeaveChannelArgs], [LeaveChannelResponse], []),
+    'local_user_index' : IDL.Func(
+        [EmptyArgs],
+        [LocalUserIndexResponse],
+        ['query'],
+      ),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
