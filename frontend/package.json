@@ -59,6 +59,7 @@
         "turbo": "^1.10.13"
     },
     "dependencies": {
+        "nanopop": "^2.3.0",
         "workbox-cacheable-response": "^7.0.0",
         "workbox-expiration": "^7.0.0",
         "workbox-recipes": "^7.0.0",

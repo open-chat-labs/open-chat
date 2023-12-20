@@ -8,7 +8,7 @@ import { get } from "svelte/store";
 import { rtlStore } from "../stores/rtl";
 
 export type Position = "top" | "right" | "bottom" | "left";
-export type Alignment = "start" | "center" | "end";
+export type Alignment = "start" | "middle" | "end";
 export type Dimensions = {
     x: number;
     y: number;
@@ -68,7 +68,7 @@ function horizontalPosition(
     align: Alignment,
 ): number {
     switch (align) {
-        case "center":
+        case "middle":
             return triggerCenter.x - elementRect.width / 2;
         case "start":
             return triggerCenter.x - triggerRect.width / 2;
@@ -84,7 +84,7 @@ function verticalPosition(
     align: Alignment,
 ): number {
     switch (align) {
-        case "center":
+        case "middle":
             return triggerCenter.y - elementRect.height / 2;
         case "start":
             return triggerCenter.y - triggerRect.height / 2;

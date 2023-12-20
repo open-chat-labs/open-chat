@@ -53,7 +53,7 @@
                     <AccessGateIcon
                         small
                         position={"bottom"}
-                        align={"center"}
+                        align={"middle"}
                         on:upgrade
                         gate={channel.gate} />
                 </div>
