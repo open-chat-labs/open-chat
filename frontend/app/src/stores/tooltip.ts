@@ -27,17 +27,12 @@ export const tooltipStore = {
     ): void =>
         update((tooltip) => {
             if (tooltip === undefined) return tooltip;
-            const pos = reposition(triggerEl, tooltip, {
+
+            reposition(triggerEl, tooltip, {
                 position: `${position}-${align}`,
                 margin: gutter,
             });
-            if (!pos) {
-                reposition(triggerEl, tooltip, {
-                    position: `${position}-${align}`,
-                    margin: gutter,
-                    force: true,
-                });
-            }
+
             return tooltip;
         }),
     show: (tooltip: HTMLElement): void =>

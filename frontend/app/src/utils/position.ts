@@ -89,13 +89,22 @@ export const defaults = {
     force: false,
 };
 
+export function reposition(
+    trigger: HTMLElement,
+    popup: HTMLElement,
+    opt?: Partial<NanoPopOptions>,
+): PositionMatch | null {
+    const pos = repositionInternal(trigger, popup, opt);
+    return pos ? pos : repositionInternal(trigger, popup, { ...opt, force: true });
+}
+
 /**
  * Repositions an element once using the provided options and elements.
  * @param trigger Reference element
  * @param popup Popper element
  * @param opt Optional, additional options
  */
-export const reposition = (
+const repositionInternal = (
     trigger: HTMLElement,
     popup: HTMLElement,
     opt?: Partial<NanoPopOptions>,

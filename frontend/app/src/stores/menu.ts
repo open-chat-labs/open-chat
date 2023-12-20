@@ -48,17 +48,10 @@ export const menuStore = {
             if (centered && get(mobileWidth)) {
                 positionInCenter(menu);
             } else {
-                const pos = reposition(triggerEl, menu, {
+                reposition(triggerEl, menu, {
                     position: `${position}-${align}`,
                     margin: gutter,
                 });
-                if (!pos) {
-                    reposition(triggerEl, menu, {
-                        position: `${position}-${align}`,
-                        margin: gutter,
-                        force: true,
-                    });
-                }
             }
             return menu;
         }),
