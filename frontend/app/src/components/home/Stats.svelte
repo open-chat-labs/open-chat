@@ -164,7 +164,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.textMessages.toLocaleString()}</span>{$_(
-                    "stats.textMessages"
+                    "stats.textMessages",
                 )}
             </div>
         </div>
@@ -172,7 +172,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.imageMessages.toLocaleString()}</span>{$_(
-                    "stats.imageMessages"
+                    "stats.imageMessages",
                 )}
             </div>
         </div>
@@ -180,7 +180,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.videoMessages.toLocaleString()}</span>{$_(
-                    "stats.videoMessages"
+                    "stats.videoMessages",
                 )}
             </div>
         </div>
@@ -188,7 +188,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.audioMessages.toLocaleString()}</span>{$_(
-                    "stats.audioMessages"
+                    "stats.audioMessages",
                 )}
             </div>
         </div>
@@ -196,7 +196,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.fileMessages.toLocaleString()}</span>{$_(
-                    "stats.fileMessages"
+                    "stats.fileMessages",
                 )}
             </div>
         </div>
@@ -210,7 +210,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{cryptoMessages.toLocaleString()}</span>{$_(
-                    "stats.cryptoTransfers"
+                    "stats.cryptoTransfers",
                 )}
             </div>
         </div>
@@ -218,7 +218,7 @@
             <div class="key" />
             <div class="label">
                 <span class="stat">{stats.giphyMessages.toLocaleString()}</span>{$_(
-                    "stats.giphyMessages"
+                    "stats.giphyMessages",
                 )}
             </div>
         </div>
@@ -243,7 +243,7 @@
         {$_("stats.deletedMessages")}
     </div>
     {#if showReported}
-        <TooltipWrapper position={"top"} align="center">
+        <TooltipWrapper position={"top"} align="middle">
             <div slot="target" class="reported-messages">
                 <span>
                     <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
