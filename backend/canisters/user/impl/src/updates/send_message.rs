@@ -13,8 +13,7 @@ use types::{
     BlobReference, CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper, Message,
     MessageContentInitial, MessageIndex, TimestampMillis, UserId,
 };
-use user_canister::c2c_send_messages;
-use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
+use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
 use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -164,16 +163,17 @@ fn send_message_impl(
     let now = state.env.now();
     let my_user_id = state.env.canister_id().into();
     let recipient = args.recipient;
+    let content = if let Some(transfer) = completed_transfer.clone() {
+        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None)
+    } else {
+        args.content.clone().try_into().unwrap()
+    };
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id,
         sender: my_user_id,
-        content: if let Some(transfer) = completed_transfer.clone() {
-            MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None)
-        } else {
-            args.content.clone().try_into().unwrap()
-        },
+        content: content.clone(),
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
@@ -206,7 +206,7 @@ fn send_message_impl(
         let send_message_args = SendMessageArgs {
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
-            content: args.content.into(),
+            content,
             replies_to: args.replies_to.and_then(|r| {
                 if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                     Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
@@ -246,12 +246,12 @@ fn send_message_impl(
                 let pending_messages = chat.get_pending_messages();
                 ic_cdk::spawn(send_to_recipients_canister(
                     recipient,
-                    c2c_send_messages::Args::new(
-                        pending_messages,
+                    c2c_send_messages_v2::Args {
+                        messages: pending_messages,
                         sender_name,
                         sender_display_name,
-                        state.data.avatar.value.as_ref().map(|d| d.id),
-                    ),
+                        sender_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+                    },
                     0,
                 ));
             }
@@ -278,11 +278,11 @@ fn send_message_impl(
     }
 }
 
-pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_messages::Args, attempt: u32) {
+pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_messages_v2::Args, attempt: u32) {
     // Note: We ignore any Blocked responses - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
-    if let Err(error) = user_canister_c2c_client::c2c_send_messages(recipient.into(), &args).await {
+    if let Err(error) = user_canister_c2c_client::c2c_send_messages_v2(recipient.into(), &args).await {
         let retry_interval = match attempt {
             0 => Some(10 * SECOND_IN_MS),
             1 => Some(20 * SECOND_IN_MS),

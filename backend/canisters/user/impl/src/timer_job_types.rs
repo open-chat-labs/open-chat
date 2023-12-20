@@ -7,8 +7,7 @@ use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
-use user_canister::c2c_send_messages;
-use user_canister::c2c_send_messages::C2CReplyContext;
+use user_canister::c2c_send_messages_v2::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
 
@@ -105,7 +104,12 @@ impl Job for RetrySendingFailedMessagesJob {
         });
 
         if !pending_messages.is_empty() {
-            let args = c2c_send_messages::Args::new(pending_messages, sender_name, sender_display_name, sender_avatar_id);
+            let args = user_canister::c2c_send_messages_v2::Args {
+                messages: pending_messages,
+                sender_name,
+                sender_display_name,
+                sender_avatar_id,
+            };
             ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
         }
     }
