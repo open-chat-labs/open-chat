@@ -1,4 +1,5 @@
 use crate::client::icrc1::happy_path::balance_of;
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
@@ -68,8 +69,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
     } = init_test_data(env, canister_ids, *controller);
 
     if with_c2c_error {
-        env.stop_canister(community_id.into(), Some(canister_ids.local_group_index))
-            .unwrap();
+        stop_canister(env, canister_ids.local_group_index, community_id.into());
     }
 
     let send_message_result = client::user::send_message_with_transfer_to_channel(
@@ -121,8 +121,7 @@ fn send_crypto_in_channel(with_c2c_error: bool) {
 
     if with_c2c_error {
         env.advance_time(Duration::from_secs(10));
-        env.start_canister(community_id.into(), Some(canister_ids.local_group_index))
-            .unwrap();
+        start_canister(env, canister_ids.local_group_index, community_id.into());
         env.tick();
     }
 
