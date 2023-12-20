@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Log error if any steps during a swap fail ([#4972](https://github.com/open-chat-labs/open-chat/pull/4972))
 - Expose logs of swaps ([#4980](https://github.com/open-chat-labs/open-chat/pull/4980))
 - Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
-- Retry sending messages with transfers to groups & channels ([#5051](https://github.com/open-chat-labs/open-chat/pull/5051))
+- Retry sending messages with crypto transfers to groups & channels ([#5051](https://github.com/open-chat-labs/open-chat/pull/5051))
 
 ### Fixed
 

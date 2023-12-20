@@ -225,6 +225,7 @@ pub mod happy_path {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn events(
         env: &PocketIc,
         sender: &User,
