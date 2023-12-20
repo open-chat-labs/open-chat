@@ -2,7 +2,7 @@ use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
 use types::{ChannelId, GroupReplyContext, MessageId, MessageIndex, User, Version};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,

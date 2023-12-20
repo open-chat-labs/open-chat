@@ -225,6 +225,37 @@ pub mod happy_path {
         }
     }
 
+    pub fn events(
+        env: &PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::events::Args {
+                channel_id,
+                thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            community_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_by_index' error: {response:?}"),
+        }
+    }
+
     pub fn events_by_index(
         env: &PocketIc,
         sender: &User,

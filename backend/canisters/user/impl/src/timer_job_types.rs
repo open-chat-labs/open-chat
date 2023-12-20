@@ -1,12 +1,14 @@
+use crate::model::p2p_trades::P2PTradeOfferStatus;
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::send_message::send_to_recipients_canister;
+use crate::updates::send_message_with_transfer::update_p2p_trade_status;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, Chat, ChatId, EventIndex, MessageId, MessageIndex, UserId};
+use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -21,6 +23,8 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
+    SendMessageToGroup(Box<SendMessageToGroupJob>),
+    SendMessageToChannel(Box<SendMessageToChannelJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -74,6 +78,22 @@ impl NotifyEscrowCanisterOfDepositJob {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SendMessageToGroupJob {
+    pub chat_id: ChatId,
+    pub args: group_canister::c2c_send_message::Args,
+    pub p2p_offer_id: Option<u32>,
+    pub attempt: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SendMessageToChannelJob {
+    pub community_id: CommunityId,
+    pub args: community_canister::c2c_send_message::Args,
+    pub p2p_offer_id: Option<u32>,
+    pub attempt: u32,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -84,6 +104,8 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::ProcessTokenSwap(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
+            TimerJob::SendMessageToGroup(job) => job.execute(),
+            TimerJob::SendMessageToChannel(job) => job.execute(),
         }
     }
 }
@@ -205,6 +227,66 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                     });
                 }
                 response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
+    }
+}
+
+impl Job for SendMessageToGroupJob {
+    fn execute(self) {
+        ic_cdk::spawn(async move {
+            match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
+                Ok(group_canister::c2c_send_message::Response::Success(_)) => {
+                    if let Some(id) = self.p2p_offer_id {
+                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
+                    }
+                }
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::SendMessageToGroup(Box::new(SendMessageToGroupJob {
+                                chat_id: self.chat_id,
+                                args: self.args,
+                                p2p_offer_id: self.p2p_offer_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to send message to group"),
+            };
+        })
+    }
+}
+
+impl Job for SendMessageToChannelJob {
+    fn execute(self) {
+        ic_cdk::spawn(async move {
+            match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
+                Ok(community_canister::c2c_send_message::Response::Success(_)) => {
+                    if let Some(id) = self.p2p_offer_id {
+                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
+                    }
+                }
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::SendMessageToChannel(Box::new(SendMessageToChannelJob {
+                                community_id: self.community_id,
+                                args: self.args,
+                                p2p_offer_id: self.p2p_offer_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to send message to channel"),
             };
         })
     }
