@@ -1,6 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
-use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
+use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::MessageContentInternal;
@@ -14,7 +14,7 @@ use types::{
 use user_canister::send_message_with_transfer_to_channel;
 use user_canister::send_message_with_transfer_to_group;
 use utils::consts::{MEMO_MESSAGE, MEMO_P2P_OFFER, MEMO_PRIZE};
-use utils::time::NANOS_PER_MILLISECOND;
+use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -97,8 +97,22 @@ async fn send_message_with_transfer_to_channel(
             | Response::InvalidRequest(_)
             | Response::TextTooLong(_) => unreachable!(),
         },
-        // TODO: We should retry sending the message
-        Err(error) => InternalError(format!("{error:?}"), completed_transaction),
+        Err(error) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::SendMessageToChannel(Box::new(SendMessageToChannelJob {
+                        community_id: args.community_id,
+                        args: c2c_args,
+                        p2p_offer_id,
+                        attempt: 0,
+                    })),
+                    now + 10 * SECOND_IN_MS,
+                    now,
+                );
+            });
+            Retrying(format!("{error:?}"), completed_transaction)
+        }
     }
 }
 
@@ -179,8 +193,22 @@ async fn send_message_with_transfer_to_group(
             | Response::InvalidRequest(_)
             | Response::TextTooLong(_) => unreachable!(),
         },
-        // TODO: We should retry sending the message
-        Err(error) => InternalError(format!("{error:?}"), completed_transaction),
+        Err(error) => {
+            mutate_state(|state| {
+                let now = state.env.now();
+                state.data.timer_jobs.enqueue_job(
+                    TimerJob::SendMessageToGroup(Box::new(SendMessageToGroupJob {
+                        chat_id: args.group_id,
+                        args: c2c_args,
+                        p2p_offer_id,
+                        attempt: 0,
+                    })),
+                    now + 10 * SECOND_IN_MS,
+                    now,
+                );
+            });
+            Retrying(format!("{error:?}"), completed_transaction)
+        }
     }
 }
 
@@ -334,7 +362,7 @@ async fn set_up_p2p_trade(
     })
 }
 
-fn update_p2p_trade_status(id: u32, status: P2PTradeOfferStatus) {
+pub(crate) fn update_p2p_trade_status(id: u32, status: P2PTradeOfferStatus) {
     mutate_state(|state| state.data.p2p_trades.set_offer_status(id, status, state.env.now()));
 }
 
