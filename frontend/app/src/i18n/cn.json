@@ -513,7 +513,9 @@
             "to": "到",
             "type": "类型"
         },
-        "swap": "兑换"
+        "swap": "兑换",
+        "tokens": "代币",
+        "total": "全部的"
     },
     "searchChat": "搜索",
     "search": "搜索...",

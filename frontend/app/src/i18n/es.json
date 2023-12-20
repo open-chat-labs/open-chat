@@ -515,7 +515,9 @@
             "to": "A",
             "type": "Tipo"
         },
-        "swap": "Intercambio"
+        "swap": "Intercambio",
+        "tokens": "Fichas",
+        "total": "Total"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",

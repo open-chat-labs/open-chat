@@ -514,7 +514,9 @@
             "to": "À",
             "type": "Taper"
         },
-        "swap": "Échanger"
+        "swap": "Échanger",
+        "tokens": "Jetons",
+        "total": "Total"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",

@@ -351,7 +351,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
-    #[serde(default = "escrow_canister_id")]
     pub escrow_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
@@ -369,10 +368,6 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub pending_payments_queue: PendingPaymentsQueue,
     pub total_payment_receipts: PaymentReceipts,
-}
-
-fn escrow_canister_id() -> CanisterId {
-    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 fn init_instruction_counts_log() -> InstructionCountsLog {

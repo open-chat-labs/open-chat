@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Expose logs of swaps ([#4980](https://github.com/open-chat-labs/open-chat/pull/4980))
 - Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
 - Retry sending messages with crypto transfers to groups & channels ([#5051](https://github.com/open-chat-labs/open-chat/pull/5051))
+- Switch over to using `c2c_send_message_v2` ([#5054](https://github.com/open-chat-labs/open-chat/pull/5054))
 
 ### Fixed
 

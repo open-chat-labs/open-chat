@@ -126,7 +126,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
-    #[serde(default = "escrow_canister_id")]
     pub escrow_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -136,10 +135,6 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub rng_seed: [u8; 32],
-}
-
-fn escrow_canister_id() -> CanisterId {
-    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {

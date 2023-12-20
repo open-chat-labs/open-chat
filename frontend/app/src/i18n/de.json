@@ -516,7 +516,9 @@
             "to": "Zu",
             "type": "Typ"
         },
-        "swap": "Tauschen"
+        "swap": "Tauschen",
+        "tokens": "Token",
+        "total": "Gesamt"
     },
     "searchChat": "Suche",
     "search": "Suche...",
