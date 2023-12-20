@@ -43,6 +43,7 @@
             border: none;
             border-right: 1px solid var(--bd);
             padding: 6px 10px 5px 10px;
+            white-space: nowrap;
 
             &.selected {
                 color: var(--button-txt);
