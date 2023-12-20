@@ -553,7 +553,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
-    InternalError : record { text; CompletedCryptoTransaction };
+    Retrying : record { text; CompletedCryptoTransaction };
 };
 
 type SendMessageWithTransferToGroupArgs = record {
@@ -590,7 +590,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
-    InternalError : record { text; CompletedCryptoTransaction };
+    Retrying : record { text; CompletedCryptoTransaction };
 };
 
 type WithdrawCryptoArgs = record {

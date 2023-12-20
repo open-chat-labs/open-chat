@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.978](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.978-local_group_index)] - 2023-12-19
+
 ### Changed
 
 - Add `escrow_canister_id` to Group & Community canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))

@@ -907,7 +907,7 @@
         "deleteMessage": "Xóa tin nhắn đã báo cáo",
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất",
-        "advice": "Nếu bạn cho rằng tin nhắn này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trước tiên. Chỉ báo cáo một thông báo để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [quy tắc nền tảng]({rules})."
+        "advice": "Nếu bạn cho rằng tin nhắn này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trước tiên. Chỉ báo cáo một thông báo để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [quy tắc nền tảng]({rules}), nếu không sẽ lãng phí thời gian của người kiểm duyệt. Việc báo cáo sai liên tục có thể dẫn đến việc tài khoản của bạn bị đình chỉ."
     },
     "invitedBy": "{changedBy} đã mời {changed} tham gia {level}",
     "halloffame": {
@@ -961,7 +961,7 @@
         "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ {issuer} mới được phép tham gia",
         "approvePaymentTitle": "Phê duyệt thanh toán",
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
-        "paymentDistributionMessage": "Trong số này, 80% thuộc về (các) chủ sở hữu {level} và 20% thuộc về kho bạc OpenChat SNS.",
+        "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",
         "tokenNeuronHolder": "{token} người giữ nơ-ron",
         "payment": "Sự chi trả",
         "tokenPayment": "thanh toán {token}",

@@ -908,7 +908,7 @@
         "deleteMessage": "Eliminar mensaje denunciado",
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)",
-        "advice": "Si cree que este mensaje viola las reglas de este grupo, comuníquese con los propietarios y administradores del grupo en primera instancia. Solo reporta un mensaje para moderación de la plataforma si crees que viola las [reglas de la plataforma]({rules})."
+        "advice": "Si cree que este mensaje viola las reglas de este grupo, comuníquese con los propietarios y administradores del grupo en primera instancia. Solo informe un mensaje para moderación de la plataforma si cree que viola las [reglas de la plataforma]({rules}); de lo contrario, hará perder el tiempo a los moderadores. Los informes erróneos persistentes podrían provocar la suspensión de su propia cuenta."
     },
     "invitedBy": "{changedBy} invitó a {changed} al {level}",
     "halloffame": {
@@ -962,7 +962,7 @@
         "credentialGateInfo": "Solo podrán unirse los usuarios que puedan proporcionar la credencial \"{credential}\" de {issuer}",
         "approvePaymentTitle": "Aprobar pago",
         "paymentApprovalMessage": "Para unirse a este {level}, debe pagar tokens **{amount}** {token}.",
-        "paymentDistributionMessage": "De esto, el 80 % va a los propietarios de {level} y el 20 % a la tesorería de OpenChat SNS.",
+        "paymentDistributionMessage": "De esto, el 98 % va a los propietarios de {level} y el 2 % a la tesorería de OpenChat SNS.",
         "tokenNeuronHolder": "{token} soporte de neurona",
         "payment": "Pago",
         "tokenPayment": "pago {token}",

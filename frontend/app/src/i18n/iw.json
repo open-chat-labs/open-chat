@@ -904,7 +904,7 @@
         "deleteMessage": "מחק הודעה שדווחה",
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
         "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות",
-        "advice": "אם אתה סבור שהודעה זו מפרה את הכללים של הקבוצה הזו, אנא צור קשר עם הבעלים והמנהלים של הקבוצה בשלב ראשון. דווח על הודעה לניהול פלטפורמה רק אם אתה מרגיש שהיא מפרה את [כללי הפלטפורמה]({rules})."
+        "advice": "אם אתה סבור שהודעה זו מפרה את הכללים של הקבוצה הזו, אנא צור קשר עם הבעלים והמנהלים בקבוצה בשלב ראשון. דווח על הודעה לניהול פלטפורמה רק אם אתה מרגיש שהיא מפרה את [כללי הפלטפורמה]({rules}), אחרת זה מבזבז זמן למנחים. דיווח שגוי מתמשך עלול להוביל להשעיית החשבון שלך."
     },
     "invitedBy": "{changedBy} הזמין את {changed} ל-{level}",
     "halloffame": {
@@ -958,7 +958,7 @@
         "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף",
         "approvePaymentTitle": "אשר תשלום",
         "paymentApprovalMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לשלם אסימונים של **{amount}** {token}.",
-        "paymentDistributionMessage": "מתוכם, 80% הולכים לבעלים של {level} ו-20% לאוצר OpenChat SNS.",
+        "paymentDistributionMessage": "מתוכם, 98% הולכים לבעלים של {level} ו-2% לאוצר OpenChat SNS.",
         "tokenNeuronHolder": "מחזיק נוירון {token}",
         "payment": "תַשְׁלוּם",
         "tokenPayment": "תשלום {token}",
