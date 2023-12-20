@@ -68,6 +68,8 @@ fn send_direct_message_with_transfer_succeeds(with_c2c_error: bool) {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
+    env.tick();
+
     let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id);
     assert_eq!(user2_balance, 10000);
 
