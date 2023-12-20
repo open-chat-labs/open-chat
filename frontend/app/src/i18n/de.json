@@ -908,7 +908,7 @@
         "deleteMessage": "Gemeldete Nachricht löschen",
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
         "showing": "Anzeige der neusten {count} von {total} Bericht(en)",
-        "advice": "Wenn Sie glauben, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur dann zur Plattformmoderation, wenn Sie der Meinung sind, dass sie gegen die [Plattformregeln]({rules}) verstößt."
+        "advice": "Wenn Sie glauben, dass diese Nachricht gegen die Regeln dieser Gruppe verstößt, wenden Sie sich bitte zunächst an die Eigentümer und Administratoren der Gruppe. Melden Sie eine Nachricht nur dann zur Plattformmoderation, wenn Sie das Gefühl haben, dass sie gegen die [Plattformregeln]({rules}) verstößt, andernfalls verschwendet sie Zeit für die Moderatoren. Anhaltende Falschmeldungen können zur Sperrung Ihres eigenen Kontos führen."
     },
     "invitedBy": "{changedBy} hat {changed} zum {level} eingeladen",
     "halloffame": {

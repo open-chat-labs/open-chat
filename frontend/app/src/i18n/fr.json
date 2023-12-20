@@ -906,7 +906,7 @@
         "deleteMessage": "Supprimer le message signalé",
         "messageReport": "Signalé par @{username} sur {timestamp} pour la raison suivante : **{reason}**",
         "showing": "Affichage du ou des rapports {count} sur {total} les plus récents",
-        "advice": "Si vous pensez que ce message enfreint les règles de ce groupe, veuillez contacter en premier lieu les propriétaires et les administrateurs du groupe. Signalez un message à la modération de la plateforme uniquement si vous pensez qu'il enfreint les [règles de la plateforme]({rules})."
+        "advice": "Si vous pensez que ce message enfreint les règles de ce groupe, veuillez contacter en premier lieu les propriétaires et les administrateurs du groupe. Signalez un message pour la modération de la plateforme uniquement si vous pensez qu'il enfreint les [règles de la plateforme]({rules}), sinon cela fait perdre du temps aux modérateurs. Des déclarations erronées persistantes pourraient entraîner la suspension de votre propre compte."
     },
     "invitedBy": "{changedBy} a invité {changed} au {level}",
     "halloffame": {
