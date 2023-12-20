@@ -906,7 +906,7 @@
         "deleteMessage": "删除举报的消息",
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）",
-        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息。"
+        "advice": "如果您认为此消息违反了该群组的规则，请首先联系该群组的所有者和管理员。仅当您认为平台审核违反了[平台规则]({rules}) 时才举报平台审核消息，否则会浪费审核者的时间。持续误报可能会导致您自己的帐户被暂停。"
     },
     "invitedBy": "{changedBy} 邀请 {changed} 参加 {level}",
     "halloffame": {

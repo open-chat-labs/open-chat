@@ -908,7 +908,7 @@
         "deleteMessage": "Eliminar mensaje denunciado",
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)",
-        "advice": "Si cree que este mensaje viola las reglas de este grupo, comuníquese con los propietarios y administradores del grupo en primera instancia. Solo reporta un mensaje para moderación de la plataforma si crees que viola las [reglas de la plataforma]({rules})."
+        "advice": "Si cree que este mensaje viola las reglas de este grupo, comuníquese con los propietarios y administradores del grupo en primera instancia. Solo informe un mensaje para moderación de la plataforma si cree que viola las [reglas de la plataforma]({rules}); de lo contrario, hará perder el tiempo a los moderadores. Los informes erróneos persistentes podrían provocar la suspensión de su propia cuenta."
     },
     "invitedBy": "{changedBy} invitó a {changed} al {level}",
     "halloffame": {
