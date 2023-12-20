@@ -263,7 +263,7 @@
         }
 
         tr.total {
-            color: var(--disabledTxt);
+            color: var(--txt-light);
 
             td {
                 padding-top: $sp3;
