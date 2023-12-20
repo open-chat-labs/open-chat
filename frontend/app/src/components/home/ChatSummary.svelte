@@ -289,10 +289,14 @@
     }
 
     $: displayDate = client.getDisplayDate(chatSummary);
-    $: selectedCommunity = client.selectedCommunity;
+    $: communities = client.communities;
+    $: community =
+        chatSummary.kind === "channel"
+            ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            : undefined;
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
     $: readonly = client.isChatReadOnly(chatSummary.id);
-    $: canDelete = getCanDelete(chatSummary, $selectedCommunity);
+    $: canDelete = getCanDelete(chatSummary, community);
     $: pinned = client.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
 
@@ -344,7 +348,13 @@
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
                 <div class="chat-name">
-                    <h4>{chat.name}</h4>
+                    <h4>
+                        {#if community !== undefined && $chatListScope.kind === "favourite"}
+                            <span>{community.name}</span>
+                            <span>{">"}</span>
+                        {/if}
+                        <span>{chat.name}</span>
+                    </h4>
                     <Diamond status={chat.diamondStatus} />
                 </div>
             </div>
@@ -672,7 +682,11 @@
             .chat-name {
                 h4 {
                     @include font(medium, normal, fs-100);
+                    display: flex;
+                    flex-direction: row;
+                    gap: $sp2;
                 }
+
                 display: flex;
                 align-items: center;
                 gap: $sp2;

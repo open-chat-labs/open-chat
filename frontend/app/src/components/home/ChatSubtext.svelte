@@ -1,13 +1,16 @@
 <script lang="ts">
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
     import VisibilityLabel from "./VisibilityLabel.svelte";
     import DisappearLabel from "./DisappearLabel.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
+
     export let chat: ChatSummary;
+    export let clickableMembers = false;
 
     $: userStore = client.userStore;
     $: userId = chat.kind === "direct_chat" ? chat.them.userId : "";
@@ -27,6 +30,12 @@
             });
         }
     }
+
+    function onMembersClick() {
+        if (clickableMembers) {
+            dispatch("membersClick");
+        }
+    }
 </script>
 
 {#if chat.kind === "direct_chat"}
@@ -37,7 +46,7 @@
             <DisappearLabel ttl={chat.eventsTTL} />
         {/if}
         <VisibilityLabel isPublic={chat.public} />
-        <div class="members">
+        <div class="members" class:clickable={clickableMembers} on:click={onMembersClick}>
             <span class="num">{chat.memberCount.toLocaleString()}</span>
             {$_("members")}
         </div>
@@ -57,5 +66,9 @@
             color: var(--txt);
             font-weight: 700;
         }
+    }
+
+    .clickable {
+        cursor: pointer;
     }
 </style>
