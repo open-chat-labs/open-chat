@@ -2,8 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
 use types::{
-    local_user_index_canister_id, AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex,
-    Milliseconds, PublicGroupSummary, TimestampMillis,
+    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary,
+    TimestampMillis,
 };
 
 #[derive(Serialize, Deserialize, Default)]

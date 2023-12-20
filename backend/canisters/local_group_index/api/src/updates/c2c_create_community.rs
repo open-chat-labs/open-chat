@@ -1,9 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{
-    local_user_index_canister_id, AccessGate, CanisterId, CommunityId, CommunityPermissions, Document, Rules, SourceGroup,
-    UserId,
-};
+use types::{AccessGate, CanisterId, CommunityId, CommunityPermissions, Document, Rules, SourceGroup, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {

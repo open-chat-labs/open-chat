@@ -2,9 +2,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    local_user_index_canister_id, CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency,
-    DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, ReferralType, SuspensionDuration,
-    TimestampMillis, UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
+    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
