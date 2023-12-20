@@ -113,7 +113,7 @@ impl Community {
     pub fn to_summary(&self) -> user_canister::CommunitySummary {
         user_canister::CommunitySummary {
             community_id: self.community_id,
-            local_user_index_canister_id: Principal::anonymous(),
+            local_user_index_canister_id: self.data.local_user_index_canister_id,
             channels: self
                 .channels
                 .values()
