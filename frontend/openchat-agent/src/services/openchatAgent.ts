@@ -452,7 +452,12 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
+            return this.sendDirectMessage(
+                chatId,
+                event,
+                messageFilterFailed,
+                threadRootMessageIndex,
+            );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -528,7 +533,12 @@ export class OpenChatAgent extends EventTarget {
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
+        return this.userClient.sendMessage(
+            chatId,
+            event,
+            messageFilterFailed,
+            threadRootMessageIndex,
+        );
     }
 
     private editDirectMessage(
@@ -1572,7 +1582,7 @@ export class OpenChatAgent extends EventTarget {
 
         const summaryUpdatesPromises: Promise<GroupAndCommunitySummaryUpdatesResponse[]>[] = [];
         for (const [localUserIndex, args] of byLocalUserIndex) {
-            for (const batch of chunk(args, 10)) {
+            for (const batch of chunk(args, 50)) {
                 summaryUpdatesPromises.push(
                     this.createLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
                         batch,
