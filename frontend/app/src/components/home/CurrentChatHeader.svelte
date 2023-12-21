@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat, type TypersByKey } from "openchat-client";
+    import {
+        AvatarSize,
+        routeForChatIdentifier,
+        type OpenChat,
+        type TypersByKey,
+    } from "openchat-client";
+    import page from "page";
     import { mobileWidth } from "../../stores/screenDimensions";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -38,6 +44,8 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
     $: selectedChatId = client.selectedChatId;
+    $: selectedCommunity = client.selectedCommunity;
+    $: chatListScope = client.chatListScope;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -104,6 +112,18 @@
         }
     }
 
+    function navigateToCommunity() {
+        if ($selectedCommunity !== undefined) {
+            page(`/community/${$selectedCommunity.id.communityId}`);
+        }
+    }
+
+    function navigateToChannel() {
+        if ($selectedCommunity !== undefined) {
+            page(routeForChatIdentifier("community", selectedChatSummary.id));
+        }
+    }
+
     $: chat = normaliseChatSummary($now, selectedChatSummary, $typersByContext);
 </script>
 
@@ -134,11 +154,21 @@
             size={AvatarSize.Default} />
     </div>
     <div class="chat-details">
-        <div class="chat-name" title={chat.name}>
+        <div class="chat-name">
             {#if isMultiUser && !readonly}
-                <span on:click={showGroupDetails} class="group-details">
-                    {chat.name}
-                </span>
+                <div class="title">
+                    {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
+                        <span on:click={navigateToCommunity} class="pointer">
+                            {$selectedCommunity.name}
+                        </span>
+                        <span>{">"}</span>
+                        <span on:click={navigateToChannel} class="pointer">
+                            {chat.name}
+                        </span>
+                    {:else}
+                        {chat.name}
+                    {/if}
+                </div>
             {:else if hasUserProfile}
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
@@ -157,9 +187,10 @@
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isMultiUser}
-                <div class="members" on:click={showGroupMembers}>
-                    <ChatSubtext chat={selectedChatSummary} />
-                </div>
+                <ChatSubtext
+                    chat={selectedChatSummary}
+                    clickableMembers
+                    on:membersClick={showGroupMembers} />
             {:else}
                 <ChatSubtext chat={selectedChatSummary} />
             {/if}
@@ -197,10 +228,6 @@
         @include font(book, normal, fs-80);
         @include ellipsis();
         color: var(--txt-light);
-
-        .members {
-            cursor: pointer;
-        }
     }
 
     .avatar {
@@ -211,7 +238,7 @@
         }
     }
 
-    .group-details {
+    .pointer {
         cursor: pointer;
     }
 
@@ -233,6 +260,12 @@
         flex: 1;
         overflow: auto;
         padding: 0 $sp2;
+    }
+
+    .title {
+        display: flex;
+        flex-direction: row;
+        gap: $sp3;
     }
 
     .back {
