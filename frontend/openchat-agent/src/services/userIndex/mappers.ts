@@ -264,6 +264,9 @@ export function setDisplayNameResponse(candid: ApiSetDisplayNameResponse): SetDi
     if ("DisplayNameInvalid" in candid) {
         return "display_name_invalid";
     }
+    if ("Unauthorized" in candid) {
+        return "unauthorized";
+    }
     throw new UnsupportedValueError("Unexpected ApiSetDisplayNameResponse type received", candid);
 }
 
@@ -365,6 +368,9 @@ export function payForDiamondMembershipResponse(
     }
     if ("InsufficientFunds" in candid) {
         return { kind: "insufficient_funds" };
+    }
+    if ("AlreadyLifetimeDiamondMember" in candid) {
+        return { kind: "already_lifetime_diamond_member" };
     }
     throw new UnsupportedValueError(
         "Unexpected ApiPayForDiamondMembershipResponse type received",

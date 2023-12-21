@@ -12,8 +12,6 @@ import type {
     GroupCanisterGroupChatSummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    GroupCanisterSummaryResponse,
-    GroupCanisterSummaryUpdatesResponse,
     GroupCanisterThreadDetails,
     UpdatedEvent,
     Metrics,
@@ -353,18 +351,6 @@ function mergeThreads(
             ? { ...t, readUpTo: readUpToUpdate }
             : t;
     });
-}
-
-export function isSuccessfulGroupSummaryResponse(
-    response: GroupCanisterSummaryResponse,
-): response is GroupCanisterGroupChatSummary {
-    return "id" in response;
-}
-
-export function isSuccessfulGroupSummaryUpdatesResponse(
-    response: GroupCanisterSummaryUpdatesResponse,
-): response is GroupCanisterGroupChatSummaryUpdates {
-    return "id" in response;
 }
 
 export function getUpdatedEvents(

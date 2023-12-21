@@ -1,4 +1,3 @@
-use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
@@ -30,7 +29,6 @@ use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod governance_clients;
-mod group_summaries;
 mod guards;
 mod lifecycle;
 mod memory;
@@ -161,7 +159,6 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
-    #[serde(default = "escrow_canister_id")]
     pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
@@ -170,7 +167,6 @@ struct Data {
     pub username: Timestamped<String>,
     pub display_name: Timestamped<Option<String>>,
     pub bio: Timestamped<String>,
-    pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
@@ -183,13 +179,8 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
-    #[serde(default)]
     pub p2p_trades: P2PTrades,
     pub rng_seed: [u8; 32],
-}
-
-fn escrow_canister_id() -> CanisterId {
-    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {
@@ -226,7 +217,6 @@ impl Data {
             username: Timestamped::new(username, now),
             display_name: Timestamped::default(),
             bio: Timestamped::new("".to_string(), now),
-            cached_group_summaries: None,
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
@@ -263,11 +253,6 @@ impl Data {
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
-
-        if let Some(cached_groups) = &mut self.cached_group_summaries {
-            cached_groups.remove_group(&chat_id);
-        }
-
         self.group_chats.remove(chat_id, now)
     }
 

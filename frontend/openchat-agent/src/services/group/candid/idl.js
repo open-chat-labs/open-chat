@@ -1315,6 +1315,7 @@ export const idlFactory = ({ IDL }) => {
     'giphy' : PermissionRoleUpdate,
     'custom_deleted' : IDL.Vec(IDL.Text),
     'default' : IDL.Opt(PermissionRole),
+    'p2p_trade' : PermissionRoleUpdate,
     'image' : PermissionRoleUpdate,
     'prize' : PermissionRoleUpdate,
   });

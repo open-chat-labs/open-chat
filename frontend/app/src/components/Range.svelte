@@ -2,13 +2,24 @@
     export let value: number;
     export let min: number;
     export let max: number;
+    export let fat = false;
+
+    let trackHeight = fat ? 9 : 6;
+    let thumbSize = fat ? 26 : 16;
 </script>
 
-<input class="range-input" type="range" {min} {max} bind:value on:change />
+<input
+    style={`--track-height: ${trackHeight}px; --thumb-size: ${thumbSize}px;`}
+    class="range-input"
+    type="range"
+    {min}
+    {max}
+    bind:value
+    on:change />
 
 <style lang="scss">
-    $trackHeight: 6px;
-    $thumbSize: 16px;
+    $trackHeight: var(--track-height);
+    $thumbSize: var(--thumb-size);
     $trackColor: var(--button-bg);
 
     input[type="range"] {
@@ -32,7 +43,7 @@
         background: #ffffff;
         cursor: pointer;
         -webkit-appearance: none;
-        margin-top: -6px;
+        margin-top: calc(-1 * $trackHeight);
     }
     input[type="range"]:focus::-webkit-slider-runnable-track {
         background: $trackColor;
@@ -56,7 +67,7 @@
         cursor: pointer;
         background: transparent;
         border-color: transparent;
-        border-width: 16px 0;
+        border-width: $thumbSize 0;
         color: transparent;
     }
     input[type="range"]::-ms-thumb {

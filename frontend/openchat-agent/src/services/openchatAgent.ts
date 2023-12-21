@@ -28,14 +28,12 @@ import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { RegistryClient } from "./registry/registry.client";
 import { DexesAgent } from "./dexes";
-import { distinctBy, toRecord } from "../utils/list";
+import { chunk, distinctBy, toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
     buildUserAvatarUrl,
     getUpdatedEvents,
-    isSuccessfulGroupSummaryResponse,
-    isSuccessfulGroupSummaryUpdatesResponse,
     mergeDirectChatUpdates,
     mergeGroupChats,
     mergeGroupChatUpdates,
@@ -184,6 +182,11 @@ import type {
     ApproveTransferResponse,
     TokenSwapPool,
     TokenExchangeRates,
+    GroupAndCommunitySummaryUpdatesArgs,
+    GroupAndCommunitySummaryUpdatesResponse,
+    GroupCanisterGroupChatSummary,
+    GroupCanisterGroupChatSummaryUpdates,
+    CommunityCanisterCommunitySummaryUpdates,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -195,6 +198,7 @@ import {
     ANON_USER_ID,
     offline,
     Stream,
+    getOrAdd,
     waitAll,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -202,7 +206,6 @@ import { AsyncMessageContextMap } from "../utils/messageContext";
 import { CommunityClient } from "./community/community.client";
 import {
     isSuccessfulCommunitySummaryResponse,
-    isSuccessfulCommunitySummaryUpdatesResponse,
     mergeCommunities,
     mergeCommunityUpdates,
 } from "../utils/community";
@@ -449,7 +452,12 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatId.kind === "direct_chat") {
-            return this.sendDirectMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
+            return this.sendDirectMessage(
+                chatId,
+                event,
+                messageFilterFailed,
+                threadRootMessageIndex,
+            );
         }
         throw new UnsupportedValueError("Unexpect chat type", chatId);
     }
@@ -525,7 +533,12 @@ export class OpenChatAgent extends EventTarget {
         messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(chatId, event, messageFilterFailed, threadRootMessageIndex);
+        return this.userClient.sendMessage(
+            chatId,
+            event,
+            messageFilterFailed,
+            threadRootMessageIndex,
+        );
     }
 
     private editDirectMessage(
@@ -1525,57 +1538,98 @@ export class OpenChatAgent extends EventTarget {
             latestActiveGroupsCheck = groupIndexResponse.timestamp;
         }
 
-        const addedGroupsPromises = groupsAdded.map((g) =>
-            this.getGroupClient(g.id.groupId).summary(),
-        );
+        const byLocalUserIndex: Map<string, GroupAndCommunitySummaryUpdatesArgs[]> = new Map();
 
-        const addedCommunitiesPromises = communitiesAdded.map((c) =>
-            this.communityClient(c.id.communityId).summary(),
-        );
+        for (const group of groupsAdded) {
+            getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
+                canisterId: group.id.groupId,
+                isCommunity: false,
+                inviteCode: undefined,
+                updatesSince: undefined,
+            });
+        }
 
-        const updatedGroupPromises = currentGroups
-            .filter((g) => groupsToCheckForUpdates.has(g.id.groupId))
-            .map((g) => this.getGroupClient(g.id.groupId).summaryUpdates(g.lastUpdated));
+        for (const community of communitiesAdded) {
+            getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
+                canisterId: community.id.communityId,
+                isCommunity: true,
+                inviteCode: undefined,
+                updatesSince: undefined,
+            });
+        }
 
-        const updatedCommunitiesPromises = currentCommunities
-            .filter((c) => communitiesToCheckForUpdates.has(c.id.communityId))
-            .map((c) => this.communityClient(c.id.communityId).summaryUpdates(c.lastUpdated));
+        for (const group of currentGroups) {
+            if (groupsToCheckForUpdates.has(group.id.groupId)) {
+                getOrAdd(byLocalUserIndex, group.localUserIndex, []).push({
+                    canisterId: group.id.groupId,
+                    isCommunity: false,
+                    inviteCode: undefined,
+                    updatesSince: group.lastUpdated,
+                });
+            }
+        }
 
-        numberOfAsyncCalls +=
-            addedGroupsPromises.length +
-            addedCommunitiesPromises.length +
-            updatedGroupPromises.length +
-            updatedCommunitiesPromises.length;
+        for (const community of currentCommunities) {
+            if (communitiesToCheckForUpdates.has(community.id.communityId)) {
+                getOrAdd(byLocalUserIndex, community.localUserIndex, []).push({
+                    canisterId: community.id.communityId,
+                    isCommunity: true,
+                    inviteCode: undefined,
+                    updatesSince: community.lastUpdated,
+                });
+            }
+        }
 
-        const groupPromiseResults = await waitAll(addedGroupsPromises);
-        const communityPromiseResults = await waitAll(addedCommunitiesPromises);
+        const summaryUpdatesPromises: Promise<GroupAndCommunitySummaryUpdatesResponse[]>[] = [];
+        for (const [localUserIndex, args] of byLocalUserIndex) {
+            for (const batch of chunk(args, 50)) {
+                summaryUpdatesPromises.push(
+                    this.createLocalUserIndexClient(localUserIndex).groupAndCommunitySummaryUpdates(
+                        batch,
+                    ),
+                );
+                numberOfAsyncCalls++;
+            }
+        }
 
-        const groupUpdatePromiseResults = await waitAll(updatedGroupPromises);
-        const communityUpdatePromiseResults = await waitAll(updatedCommunitiesPromises);
+        const summaryUpdatesResults = await waitAll(summaryUpdatesPromises);
 
-        const groupCanisterGroupSummaries = groupPromiseResults.success.filter(
-            isSuccessfulGroupSummaryResponse,
-        );
-        const communityCanisterCommunitySummaries = communityPromiseResults.success.filter(
-            isSuccessfulCommunitySummaryResponse,
-        );
+        const groupCanisterGroupSummaries: GroupCanisterGroupChatSummary[] = [];
+        const communityCanisterCommunitySummaries: CommunitySummary[] = [];
+        const groupUpdates: GroupCanisterGroupChatSummaryUpdates[] = [];
+        const communityUpdates: CommunityCanisterCommunitySummaryUpdates[] = [];
+        let anyErrors = summaryUpdatesResults.errors.length > 0;
 
-        const groupUpdates = groupUpdatePromiseResults.success.filter(
-            isSuccessfulGroupSummaryUpdatesResponse,
-        );
-        const communityUpdates = communityUpdatePromiseResults.success.filter(
-            isSuccessfulCommunitySummaryUpdatesResponse,
-        );
+        for (const response of summaryUpdatesResults.success) {
+            for (const result of response) {
+                switch (result.kind) {
+                    case "group": {
+                        groupCanisterGroupSummaries.push(result.value);
+                        break;
+                    }
+                    case "group_updates": {
+                        groupUpdates.push(result.value);
+                        break;
+                    }
+                    case "community": {
+                        communityCanisterCommunitySummaries.push(result.value);
+                        break;
+                    }
+                    case "community_updates": {
+                        communityUpdates.push(result.value);
+                        break;
+                    }
+                    case "error": {
+                        anyErrors = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         if (groupUpdates.length > 0 || communityUpdates.length > 0) {
             anyUpdates = true;
         }
-
-        const anyErrors =
-            groupPromiseResults.errors.length > 0 ||
-            groupUpdatePromiseResults.errors.length > 0 ||
-            communityPromiseResults.errors.length > 0 ||
-            communityUpdatePromiseResults.errors.length > 0;
 
         const groupChats = mergeGroupChats(groupsAdded, groupCanisterGroupSummaries)
             .concat(mergeGroupChatUpdates(currentGroups, userCanisterGroupUpdates, groupUpdates))

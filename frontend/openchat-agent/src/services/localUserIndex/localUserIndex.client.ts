@@ -3,6 +3,8 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
     ChannelIdentifier,
+    GroupAndCommunitySummaryUpdatesArgs,
+    GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -10,6 +12,7 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
+    groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
     joinCommunityResponse,
@@ -39,6 +42,25 @@ export class LocalUserIndexClient extends CandidService {
         canisterId: string,
     ): LocalUserIndexClient {
         return new LocalUserIndexClient(identity, config, canisterId);
+    }
+
+    groupAndCommunitySummaryUpdates(
+        requests: GroupAndCommunitySummaryUpdatesArgs[],
+    ): Promise<GroupAndCommunitySummaryUpdatesResponse[]> {
+        const args = {
+            requests: requests.map((r) => ({
+                canister_id: Principal.fromText(r.canisterId),
+                is_community: r.isCommunity,
+                invite_code: apiOptional(identity, r.inviteCode),
+                updates_since: apiOptional(identity, r.updatesSince),
+            })),
+        };
+
+        return this.handleQueryResponse(
+            () => this.localUserIndexService.group_and_community_summary_updates(args),
+            groupAndCommunitySummaryUpdates,
+            args,
+        );
     }
 
     registerUser(

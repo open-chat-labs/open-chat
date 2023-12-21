@@ -580,6 +580,7 @@ function userCanisterCommunitySummary(
             channelId: p.toString(),
         })),
         archived: candid.archived,
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -750,6 +751,7 @@ function userCanisterGroupSummary(
         ),
         archived: summary.archived,
         dateReadPinned: optional(summary.date_read_pinned, identity),
+        localUserIndex: summary.local_user_index_canister_id.toString(),
     };
 }
 

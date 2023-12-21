@@ -1,4 +1,5 @@
 import type {
+    GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -6,6 +7,7 @@ import type {
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiGroupAndCommunitySummaryUpdatesResponse,
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
     ApiJoinChannelResponse,
@@ -18,6 +20,57 @@ import {
     communitySummary,
     gateCheckFailedReason,
 } from "../common/chatMappers";
+import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
+import { communitySummaryUpdates } from "../community/mappers";
+
+export function groupAndCommunitySummaryUpdates(
+    candid: ApiGroupAndCommunitySummaryUpdatesResponse,
+): GroupAndCommunitySummaryUpdatesResponse[] {
+    const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
+    for (const result of candid.Success) {
+        if ("SuccessNoUpdates" in result) {
+            results.push({
+                kind: "no_updates",
+            });
+        } else if ("SuccessGroup" in result) {
+            results.push({
+                kind: "group",
+                value: groupChatSummary(result.SuccessGroup),
+            });
+        } else if ("SuccessGroupUpdates" in result) {
+            results.push({
+                kind: "group_updates",
+                value: groupChatSummaryUpdates(result.SuccessGroupUpdates),
+            });
+        } else if ("SuccessCommunity" in result) {
+            results.push({
+                kind: "community",
+                value: communitySummary(result.SuccessCommunity),
+            });
+        } else if ("SuccessCommunityUpdates" in result) {
+            results.push({
+                kind: "community_updates",
+                value: communitySummaryUpdates(result.SuccessCommunityUpdates),
+            });
+        } else if ("NotFound" in result) {
+            results.push({
+                kind: "not_found",
+            });
+        } else if ("InternalError" in result) {
+            results.push({
+                kind: "error",
+                error: result.InternalError,
+            });
+        } else {
+            throw new UnsupportedValueError(
+                "Unexpected ApiSummaryUpdatesResponse type received",
+                result,
+            );
+        }
+    }
+
+    return results;
+}
 
 export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
