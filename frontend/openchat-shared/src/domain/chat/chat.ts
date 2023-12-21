@@ -27,7 +27,11 @@ import type {
     Offline,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
-import type { CommunityIdentifier, CommunitySummary } from "../community";
+import type {
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityIdentifier,
+    CommunitySummary,
+} from "../community";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -993,6 +997,7 @@ export type UserCanisterCommunitySummary = {
     channels: UserCanisterChannelSummary[];
     pinned: ChannelIdentifier[];
     archived: boolean;
+    localUserIndex: string;
 };
 
 export type CommunitiesInitial = {
@@ -1070,6 +1075,7 @@ export type UserCanisterGroupChatSummary = {
     threadsRead: Record<number, number>;
     archived: boolean;
     dateReadPinned: bigint | undefined;
+    localUserIndex: string;
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
@@ -1926,3 +1932,35 @@ export type PublicGroupSummaryResponse =
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
 export type TipMessageResponse = Success | Failure;
+
+export type GroupAndCommunitySummaryUpdatesArgs = {
+    canisterId: string;
+    isCommunity: boolean;
+    inviteCode: bigint | undefined;
+    updatesSince: bigint | undefined;
+};
+
+export type GroupAndCommunitySummaryUpdatesResponse =
+    | {
+          kind: "group";
+          value: GroupCanisterGroupChatSummary;
+      }
+    | {
+          kind: "group_updates";
+          value: GroupCanisterGroupChatSummaryUpdates;
+      }
+    | {
+          kind: "community";
+          value: CommunitySummary;
+      }
+    | {
+          kind: "community_updates";
+          value: CommunityCanisterCommunitySummaryUpdates;
+      }
+    | {
+          kind: "no_updates";
+      }
+    | {
+          kind: "not_found";
+      }
+    | { kind: "error"; error: string };

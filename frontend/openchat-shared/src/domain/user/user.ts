@@ -196,7 +196,8 @@ export type SetDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid"
-    | "offline";
+    | "offline"
+    | "unauthorized";
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
@@ -263,6 +264,7 @@ export type PayForDiamondMembershipResponse =
     | { kind: "cannot_extend" }
     | { kind: "user_not_found" }
     | { kind: "insufficient_funds" }
+    | { kind: "already_lifetime_diamond_member" }
     | Offline;
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";

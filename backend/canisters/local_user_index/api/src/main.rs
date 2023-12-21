@@ -1,7 +1,9 @@
 use candid_gen::generate_candid_method;
 
-#[allow(deprecated)]
 fn main() {
+    generate_candid_method!(local_user_index, chat_events, query);
+    generate_candid_method!(local_user_index, group_and_community_summary_updates, query);
+
     generate_candid_method!(local_user_index, invite_users_to_channel, update);
     generate_candid_method!(local_user_index, invite_users_to_community, update);
     generate_candid_method!(local_user_index, invite_users_to_group, update);

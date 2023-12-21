@@ -230,7 +230,7 @@ export class UserClient extends CandidService {
 
     getInitialState(): Promise<InitialStateResponse> {
         const args = {
-            disable_cache: apiOptional(identity, false),
+            disable_cache: apiOptional(identity, true),
         };
         return this.handleQueryResponse(
             () => this.userService.initial_state(args),

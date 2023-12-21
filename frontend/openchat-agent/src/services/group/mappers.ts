@@ -99,7 +99,9 @@ export function summaryResponse(
     );
 }
 
-function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
+export function groupChatSummary(
+    candid: ApiGroupCanisterGroupChatSummary,
+): GroupCanisterGroupChatSummary {
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
@@ -153,7 +155,7 @@ export function summaryUpdatesResponse(
     );
 }
 
-function groupChatSummaryUpdates(
+export function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
