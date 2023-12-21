@@ -23,6 +23,7 @@
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
     import TextArea from "../TextArea.svelte";
+    import NumberInput from "../NumberInput.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -57,11 +58,11 @@
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFees = tokenDetails.transferFee;
-    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners);
+    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners ?? 0);
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
-        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: minAmount = BigInt(100) * BigInt(numberOfWinners) * transferFees;
+        draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
+    $: minAmount = 10n * BigInt(numberOfWinners ?? 0) * transferFees;
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
@@ -112,7 +113,7 @@
     function send() {
         // const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
         const prizes = generatePrizes();
-        const prizeFees = transferFees * BigInt(numberOfWinners);
+        const prizeFees = transferFees * BigInt(numberOfWinners ?? 0);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -161,6 +162,8 @@
     }
 
     function generatePrizes(): bigint[] {
+        if (!numberOfWinners) return [];
+
         const share = Math.round(Number(draftAmount) / numberOfWinners);
         switch (distribution) {
             case "equal":
@@ -262,8 +265,18 @@
                     <div class="winners">
                         <Legend
                             label={$_("prizes.numberOfWinners")}
-                            rules={numberOfWinners.toString()} />
-                        <Range min={1} max={100} bind:value={numberOfWinners} />
+                            rules={numberOfWinners?.toString()} />
+                        <div class="pickers">
+                            <Range fat min={1} max={1000} bind:value={numberOfWinners} />
+                            <div class="num-picker">
+                                <NumberInput
+                                    align={"right"}
+                                    defaultValue={20}
+                                    min={1}
+                                    max={1000}
+                                    bind:value={numberOfWinners} />
+                            </div>
+                        </div>
                     </div>
                     <Legend label={$_("prizes.distribution")} />
                     <div class="distributions">
@@ -416,6 +429,16 @@
         .restrictions,
         .duration {
             flex: 1;
+        }
+    }
+
+    .pickers {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+
+        .num-picker {
+            flex: 0 0 80px;
         }
     }
 </style>
