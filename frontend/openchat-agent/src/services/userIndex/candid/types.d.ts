@@ -1101,6 +1101,7 @@ export interface OptionalMessagePermissions {
   'giphy' : PermissionRoleUpdate,
   'custom_deleted' : Array<string>,
   'default' : [] | [PermissionRole],
+  'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
 }
