@@ -2,11 +2,12 @@
     import { fade } from "svelte/transition";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
+    import type { Alignment, Position } from "../utils/alignment";
 
     export let textLength: number = 100;
     export let longestWord: number = 10;
-    export let position: "top" | "right" | "bottom" | "left" = "top";
-    export let align: "start" | "center" | "end" = "start";
+    export let position: Position = "top";
+    export let align: Alignment = "start";
     export let autoWidth = false;
 
     $: maxWidth = autoWidth ? "unset" : calculateMaxWidth(textLength, longestWord, $mobileWidth);
@@ -21,7 +22,7 @@
         return (
             Math.max(
                 longestWord * CHAR_WIDTH,
-                Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.sqrt(numChars) * CHAR_WIDTH * 2))
+                Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.sqrt(numChars) * CHAR_WIDTH * 2)),
             ) / 16
         );
     }

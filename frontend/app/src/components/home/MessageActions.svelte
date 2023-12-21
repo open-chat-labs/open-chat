@@ -144,7 +144,7 @@
     {#if permittedMessages.get("text") || messageAction === "file"}
         <div class="emoji" on:click|stopPropagation={openEmojiPicker}>
             <HoverIcon title={$_("pickEmoji")}>
-                <Smiley color={iconColour} />
+                <Smiley color={"var(--icon-txt)"} />
             </HoverIcon>
         </div>
     {/if}
