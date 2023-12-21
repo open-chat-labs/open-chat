@@ -3,7 +3,7 @@
     import ChatList from "./ChatList.svelte";
 </script>
 
-<Panel resizable left>
+<Panel left>
     <div class="chat-list">
         <ChatList
             on:chatWith

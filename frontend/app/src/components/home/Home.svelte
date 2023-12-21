@@ -1135,7 +1135,7 @@
 {/if}
 
 {#if $layoutStore.rightPanel === "floating"}
-    <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
+    <Overlay on:close={closeRightPanel} dismissible>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:goToMessageIndex={goToMessageIndex}

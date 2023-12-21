@@ -4,6 +4,10 @@
     import { rtlStore } from "../stores/rtl";
     import { navOpen } from "../stores/layout";
     import { currentTheme } from "../theme/themes";
+    import { rightPanelWidth } from "../stores/layout";
+
+    const MIN_COL_WIDTH = 400;
+    const MAX_COL_WIDTH = 900;
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -13,41 +17,64 @@
     export let empty: boolean = false;
     export let resizable: boolean = false;
 
-    let resizeHandle: HTMLElement | undefined;
     let panel: HTMLElement | undefined;
 
     let previous = 0;
     let resizing = false;
-    let width = 0;
 
     function startResize(ev: MouseEvent) {
-        previous = ev.clientX;
-        // width = panel?.clientWidth;
+        previous = ev.screenX;
         resizing = true;
+        document.body.style.cursor = "ew-resize";
     }
 
     function stopResize() {
         resizing = false;
+        document.body.style.cursor = "";
+    }
+
+    function resetSize() {
+        rightPanelWidth.set(undefined);
+    }
+
+    function clampResize(size: number): number {
+        if (size > MAX_COL_WIDTH) return MAX_COL_WIDTH;
+        if (size < MIN_COL_WIDTH) return MIN_COL_WIDTH;
+        return size;
     }
 
     function drag(ev: MouseEvent) {
         if (resizing) {
-            const diff = ev.clientX - previous;
-            console.log("Dragged by ", diff);
+            const diff = previous - ev.screenX;
             if (panel) {
-                panel.style.setProperty("flex", `0 0 ${panel.clientWidth + diff}px`);
+                if (right) {
+                    rightPanelWidth.set(clampResize(panel.clientWidth + diff));
+                }
             }
-            previous = ev.clientX;
+            previous = ev.screenX;
         }
     }
 
     $: modal = !$mobileWidth && (forceModal || !$fullWidth);
+    $: resizedWidth = getWidthVar($rightPanelWidth);
+
+    function getWidthVar(rw: number | undefined): string {
+        if (right) {
+            if (modal) {
+                return rw ? `${rw}px` : "500px";
+            } else {
+                return rw ? `${rw}px` : "7";
+            }
+        }
+        return "auto";
+    }
 </script>
 
 <svelte:window on:mousemove={drag} on:mouseup={stopResize} />
 
 <section
     bind:this={panel}
+    style={`--resized-width: ${resizedWidth}`}
     class:rtl={$rtlStore}
     class:nav
     class:left
@@ -55,13 +82,22 @@
     class:middle
     class:modal
     class:resizable
+    class:resizing
+    class:resized={$rightPanelWidth !== undefined}
     class:offset={$layoutStore.showNav}
     class:hovering={$navOpen}
     class:halloween={$currentTheme.name === "halloween"}
     class:empty>
     <slot />
     {#if resizable}
-        <div on:mousedown={startResize} bind:this={resizeHandle} class="handle"></div>
+        <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+        <div
+            role="separator"
+            class:resizing
+            on:mousedown={startResize}
+            on:dblclick={resetSize}
+            class="handle">
+        </div>
     {/if}
 </section>
 
@@ -69,9 +105,6 @@
     :global(body.witch section.right.empty) {
         background: var(--panel-right-bg);
     }
-
-    $left-width: 40%;
-    $right-width: 500px;
 
     section {
         padding-bottom: 0;
@@ -89,6 +122,7 @@
         &.middle {
             padding-left: 0;
             padding-right: 0;
+            min-width: 500px;
             @include mobile() {
                 padding: 0;
             }
@@ -109,10 +143,11 @@
         }
 
         &.left {
+            flex: 0 1 500px;
+            min-width: 300px;
             position: relative;
             border-right: var(--bw) solid var(--bd);
             background: var(--panel-left-bg);
-            resize: horizontal;
 
             &.rtl {
                 border-right: none;
@@ -128,15 +163,33 @@
             }
         }
 
+        &.resizing {
+            user-select: none;
+        }
+
         &.resizable {
+            max-width: none;
+            &.resized {
+                flex: 0 0 var(--resized-width);
+            }
             .handle {
                 position: absolute;
                 right: 0;
                 height: 100%;
-                width: 10px;
-                background-color: red;
+                width: 5px;
                 cursor: ew-resize;
+                transition: background-color 300ms ease-in-out;
+
+                &.resizing,
+                &:hover {
+                    background-color: var(--accent);
+                }
             }
+        }
+
+        &.right.resizable .handle {
+            left: 0;
+            right: unset;
         }
 
         &.nav {
@@ -183,8 +236,12 @@
             &.modal.right {
                 background: var(--panel-right-modal);
                 @include fullHeight();
-                max-width: 500px;
+                // max-width: 500px;
                 min-width: 500px;
+
+                &.resized {
+                    width: var(--resized-width);
+                }
             }
 
             @include mobile() {

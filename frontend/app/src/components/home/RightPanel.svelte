@@ -343,7 +343,7 @@
     ) as Level;
 </script>
 
-<Panel right {empty}>
+<Panel resizable right {empty}>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <GroupDetails
             chat={$multiUserChat}
