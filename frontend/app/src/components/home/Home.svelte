@@ -6,7 +6,6 @@
     import Toast from "../Toast.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
-    import RightPanel from "./RightPanel.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import type {
@@ -47,7 +46,6 @@
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
-    import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
     import { pathParams, routeForScope } from "../../routes";
@@ -92,6 +90,7 @@
     import AnonFooter from "./AnonFooter.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
+    import RightPanelWrapper from "./RightPanelWrapper.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -992,13 +991,6 @@
         return true;
     }
 
-    function closeRightPanel() {
-        if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
-            page.replace(removeQueryStringParam("open"));
-        }
-        rightPanelHistory.set([]);
-    }
-
     function createCommunity() {
         const maxIndex = $communities
             .values()
@@ -1109,21 +1101,19 @@
             on:convertGroupToCommunity={convertGroupToCommunity}
             on:createCommunity={createCommunity} />
     {/if}
-    {#if $layoutStore.rightPanel === "inline"}
-        <RightPanel
-            on:goToMessageIndex={goToMessageIndex}
-            on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteGroupUsers={showInviteGroupUsers}
-            on:showGroupMembers={showGroupMembers}
-            on:chatWith={chatWith}
-            on:upgrade={upgrade}
-            on:deleteGroup={triggerConfirm}
-            on:editGroup={editGroup}
-            on:editCommunity={editCommunity}
-            on:deleteCommunity={triggerConfirm}
-            on:newChannel={newChannel}
-            on:groupCreated={groupCreated} />
-    {/if}
+    <RightPanelWrapper
+        on:goToMessageIndex={goToMessageIndex}
+        on:replyPrivatelyTo={replyPrivatelyTo}
+        on:showInviteGroupUsers={showInviteGroupUsers}
+        on:showGroupMembers={showGroupMembers}
+        on:chatWith={chatWith}
+        on:upgrade={upgrade}
+        on:deleteGroup={triggerConfirm}
+        on:editGroup={editGroup}
+        on:editCommunity={editCommunity}
+        on:deleteCommunity={triggerConfirm}
+        on:newChannel={newChannel}
+        on:groupCreated={groupCreated} />
 </main>
 
 {#if $anonUser}
@@ -1132,26 +1122,6 @@
 
 {#if $offlineStore}
     <OfflineFooter />
-{/if}
-
-{#if $layoutStore.rightPanel === "floating"}
-    <Overlay on:close={closeRightPanel} dismissible>
-        <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
-            <RightPanel
-                on:goToMessageIndex={goToMessageIndex}
-                on:replyPrivatelyTo={replyPrivatelyTo}
-                on:showInviteGroupUsers={showInviteGroupUsers}
-                on:showGroupMembers={showGroupMembers}
-                on:chatWith={chatWith}
-                on:upgrade={upgrade}
-                on:deleteGroup={triggerConfirm}
-                on:editGroup={editGroup}
-                on:editCommunity={editCommunity}
-                on:deleteCommunity={triggerConfirm}
-                on:newChannel={newChannel}
-                on:groupCreated={groupCreated} />
-        </div>
-    </Overlay>
 {/if}
 
 {#if confirmActionEvent !== undefined}
@@ -1255,23 +1225,6 @@
         }
         &.offline {
             margin-bottom: toRem(40);
-        }
-    }
-
-    .right-wrapper {
-        position: absolute;
-        top: 0;
-        &:not(.rtl) {
-            right: 0;
-        }
-        &.rtl {
-            left: 0;
-        }
-        @include z-index("right-panel");
-        @include box-shadow(3);
-        @include mobile() {
-            width: 100%;
-            height: 100%;
         }
     }
 </style>
