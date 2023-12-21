@@ -155,7 +155,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::initial_state::Args { disable_cache: None },
+            &user_canister::initial_state::Args {},
         );
 
         let user_canister::initial_state::Response::Success(result) = response;
