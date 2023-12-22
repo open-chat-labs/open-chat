@@ -654,35 +654,6 @@
             left: -1000px;
             @include z-index("dollar");
         }
-
-        .resizing {
-            user-select: none;
-        }
-
-        .resizable {
-            max-width: none !important;
-            &.resized {
-                flex: 0 0 var(--resized-width);
-            }
-
-            &.modal.resized {
-                width: var(--resized-width);
-            }
-        }
-
-        .resize-handle {
-            position: absolute;
-            left: 0;
-            height: 100%;
-            width: 5px;
-            cursor: ew-resize;
-            transition: background-color 300ms ease-in-out;
-
-            &.resizing,
-            &:hover {
-                background-color: var(--accent);
-            }
-        }
     }
 
     .burst-wrapper {
