@@ -65,3 +65,27 @@ export const layoutStore: Readable<Layout> = derived(
         }
     },
 );
+
+export function numberFromLocalStorage(key: string): number | undefined {
+    const val = localStorage.getItem(key);
+    return val ? Number(val) : undefined;
+}
+
+function createPanelWidthStore(key: string) {
+    const val = localStorage.getItem(key);
+    const store = writable<number | undefined>(val ? Number(val) : undefined);
+    return {
+        subscribe: store.subscribe,
+        set: (val: number | undefined): void => {
+            store.set(val);
+            if (val === undefined) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, val.toString());
+            }
+        },
+        update: store.update,
+    };
+}
+
+export const rightPanelWidth = createPanelWidthStore("openchat_right_panel_width");
