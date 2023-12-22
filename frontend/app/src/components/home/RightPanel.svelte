@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
@@ -33,12 +32,18 @@
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
     import { interpolateLevel } from "../../utils/i18n";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
+    import { currentTheme } from "../../theme/themes";
+    import Resizable from "../Resizable.svelte";
 
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
     let invitingUsers = false;
+    let section: HTMLElement;
+    let resized = false;
+    let resizing = false;
+    let resizedWidth = "7";
 
     $: currentUser = client.user;
     $: selectedChatId = client.selectedChatId;
@@ -343,7 +348,14 @@
     ) as Level;
 </script>
 
-<Panel resizable right {empty}>
+<section
+    bind:this={section}
+    class:modal
+    class:resized
+    class:resizing
+    style={`--resized-width: ${resizedWidth}`}
+    class:halloween={$currentTheme.name === "halloween"}
+    class:empty>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <GroupDetails
             chat={$multiUserChat}
@@ -443,4 +455,66 @@
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />
     {/if}
-</Panel>
+
+    <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />
+</section>
+
+<style lang="scss">
+    :global(body.witch section.right.empty) {
+        background: var(--panel-right-bg);
+    }
+
+    section {
+        overflow: auto;
+        overflow-x: hidden;
+        flex: 7;
+        display: flex;
+        flex-direction: column;
+
+        // @include size-above(xxl) {
+        //     flex: 5;
+        // }
+
+        border-left: var(--bw) solid var(--bd);
+        background: var(--panel-right-bg);
+        position: relative;
+
+        &.resizing {
+            user-select: none;
+        }
+
+        &.resized {
+            flex: 0 0 var(--resized-width);
+        }
+
+        &.modal {
+            background: var(--panel-right-modal);
+            @include fullHeight();
+            min-width: 500px;
+
+            &.resized {
+                width: var(--resized-width);
+            }
+        }
+
+        @include mobile() {
+            background: var(--panel-right-modal);
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            max-width: none;
+            border-left: none;
+        }
+
+        &.empty {
+            background: transparent;
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 0;
+            right: 0;
+            transform: scaleY(-1);
+        }
+    }
+</style>

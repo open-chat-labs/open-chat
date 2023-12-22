@@ -85,6 +85,7 @@ function createPanelWidthStore(key: string) {
                 localStorage.setItem(key, val.toString());
             }
         },
+        update: store.update,
     };
 }
 

@@ -90,7 +90,7 @@
     import AnonFooter from "./AnonFooter.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
-    import RightPanelWrapper from "./RightPanelWrapper.svelte";
+    import RightPanel from "./RightPanelWrapper.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1101,7 +1101,7 @@
             on:convertGroupToCommunity={convertGroupToCommunity}
             on:createCommunity={createCommunity} />
     {/if}
-    <RightPanelWrapper
+    <RightPanel
         on:goToMessageIndex={goToMessageIndex}
         on:replyPrivatelyTo={replyPrivatelyTo}
         on:showInviteGroupUsers={showInviteGroupUsers}
