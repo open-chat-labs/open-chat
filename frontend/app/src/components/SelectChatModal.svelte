@@ -15,7 +15,6 @@
     import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import { AvatarSize, chatIdentifiersEqual } from "openchat-client";
-    import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -250,7 +249,7 @@
     }
 </script>
 
-<Panel right forceModal>
+<section>
     <SectionHeader border={false} gap>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
@@ -419,7 +418,7 @@
             {/each}
         </div>
     {/if}
-</Panel>
+</section>
 
 <style lang="scss">
     :global(.selectable-chats .body) {
@@ -434,6 +433,19 @@
         flex: 1;
         margin: 0;
         margin-top: 2px;
+    }
+
+    section {
+        background: var(--panel-right-modal);
+        height: calc(var(--vh, 1vh) * 100);
+        position: relative;
+        width: 500px;
+        overflow: auto;
+        overflow-x: hidden;
+
+        @include mobile() {
+            width: 100%;
+        }
     }
 
     .no-chats {
