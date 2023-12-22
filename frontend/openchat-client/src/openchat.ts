@@ -3003,7 +3003,14 @@ export class OpenChat extends OpenChatAgentWorker {
         for (const event of newEvents) {
             if (event.event.kind === "message") {
                 const { messageIndex, messageId } = event.event;
-                failedMessagesStore.delete(context, messageId);
+                if (failedMessagesStore.delete(context, messageId)) {
+                    this.sendRequest({
+                        kind: "deleteFailedMessage",
+                        chatId,
+                        messageId,
+                        threadRootMessageIndex,
+                    });
+                }
                 if (unconfirmed.delete(context, messageId)) {
                     messagesRead.confirmMessage(context, messageIndex, messageId);
                 }
