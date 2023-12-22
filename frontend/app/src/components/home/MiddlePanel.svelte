@@ -79,7 +79,7 @@
     }
 
     section {
-        min-width: 500px;
+        min-width: 400px;
         overflow: auto;
         overflow-x: hidden;
         flex: 13;

@@ -4,7 +4,7 @@
     import { mobileWidth } from "../stores/screenDimensions";
 
     const MIN_COL_WIDTH = 400;
-    const MAX_COL_WIDTH = 1000;
+    const MAX_COL_WIDTH = 900;
 
     export let section: HTMLElement;
     export let modal: boolean;
@@ -22,7 +22,6 @@
     });
 
     function startResize(ev: MouseEvent) {
-        console.debug("ZZZ: starting resize at: ", ev.screenX);
         previous = ev.screenX;
         resizing = true;
         document.body.style.cursor = "ew-resize";
@@ -46,9 +45,7 @@
     function drag(ev: MouseEvent) {
         if (resizing) {
             const diff = previous - ev.screenX;
-            console.debug("ZZZ: diff since last move: ", diff);
             const updated = clampResize(section.offsetWidth + diff);
-            console.debug("ZZZ: updated panel width: ", updated);
             rightPanelWidth.set(updated);
             previous = ev.screenX;
         }
