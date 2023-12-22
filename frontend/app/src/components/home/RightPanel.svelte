@@ -471,13 +471,13 @@
         display: flex;
         flex-direction: column;
 
-        // @include size-above(xxl) {
-        //     flex: 5;
-        // }
-
         border-left: var(--bw) solid var(--bd);
         background: var(--panel-right-bg);
         position: relative;
+
+        @include size-above(xxl) {
+            flex: 5;
+        }
 
         &.resizing {
             user-select: none;

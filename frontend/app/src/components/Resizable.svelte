@@ -3,7 +3,7 @@
     import { rightPanelWidth } from "../stores/layout";
 
     const MIN_COL_WIDTH = 400;
-    const MAX_COL_WIDTH = 900;
+    const MAX_COL_WIDTH = 1000;
 
     export let section: HTMLElement;
     export let modal: boolean;
