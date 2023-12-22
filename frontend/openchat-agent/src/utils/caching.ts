@@ -30,6 +30,7 @@ import type {
     DataContent,
     CreatedUser,
     DiamondMembershipStatus,
+    TransferSuccess,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -683,7 +684,7 @@ export function setCachedMessageFromSendResponse(
     threadRootMessageIndex?: number,
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
-        if (resp.kind !== "success") {
+        if (resp.kind !== "success" && resp.kind !== "transfer_success") {
             recordFailedMessage(db, chatId, sentEvent, threadRootMessageIndex);
             return [resp, message];
         }
@@ -729,7 +730,10 @@ export async function setCachePrimerTimestamp(
     await (await db).put("cachePrimer", timestamp, chatIdentifierString);
 }
 
-function messageToEvent(message: Message, resp: SendMessageSuccess): EventWrapper<Message> {
+function messageToEvent(
+    message: Message,
+    resp: SendMessageSuccess | TransferSuccess,
+): EventWrapper<Message> {
     return {
         event: {
             ...message,
