@@ -382,7 +382,7 @@ pub mod proposal {
         SetDefaultFollowees(SetDefaultFollowees),
         RewardNodeProviders(RewardNodeProviders),
         RegisterKnownNeuron(KnownNeuron),
-        CreateServiceNervousSystem(CreateServiceNervousSystem),
+        CreateServiceNervousSystem(Box<CreateServiceNervousSystem>),
     }
 }
 
@@ -660,7 +660,7 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
         Ok(types::NnsProposal {
             id: p.id.ok_or("id not set".to_string())?.id,
             topic: p.topic,
-            proposer: p.proposer.ok_or("proposer not set".to_string())?.id.try_into().unwrap(),
+            proposer: p.proposer.ok_or("proposer not set".to_string())?.id,
             created: p.proposal_timestamp_seconds * 1000,
             title: proposal.title.ok_or("title not set".to_string())?,
             summary: proposal.summary,
