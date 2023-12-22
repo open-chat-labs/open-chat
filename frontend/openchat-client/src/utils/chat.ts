@@ -1260,13 +1260,13 @@ export function mergeEventsAndLocalUpdates(
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
-    const messageIds = new Set<bigint>();
+    const confirmedMessageIds = new Set<bigint>();
 
     function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
 
         if (e.event.kind === "message") {
-            messageIds.add(e.event.messageId);
+            confirmedMessageIds.add(e.event.messageId);
             const updates = localUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
@@ -1339,7 +1339,7 @@ export function mergeEventsAndLocalUpdates(
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
             if (
-                !messageIds.has(message.event.messageId) &&
+                !confirmedMessageIds.has(message.event.messageId) &&
                 ((eventIndexes.length === 0 && message.index <= 1) ||
                     eventIndexes
                         .subranges()
