@@ -2037,10 +2037,13 @@ impl ProposalData {
 }
 
 impl TryFrom<ProposalData> for types::Proposal {
-    type Error = &'static str;
+    type Error = String;
 
     fn try_from(value: ProposalData) -> Result<Self, Self::Error> {
-        types::SnsProposal::try_from(value).map(types::Proposal::SNS)
+        match types::SnsProposal::try_from(value) {
+            Ok(p) => Ok(types::Proposal::SNS(p)),
+            Err(s) => Err(s.to_string()),
+        }
     }
 }
 

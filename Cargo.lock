@@ -4087,8 +4087,11 @@ name = "nns_governance_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_time",
  "ic-ledger-types",
  "serde",
+ "serde_json",
+ "types",
 ]
 
 [[package]]
@@ -5106,6 +5109,8 @@ dependencies = [
  "itertools 0.11.0",
  "ledger_utils",
  "msgpack",
+ "nns_governance_canister",
+ "nns_governance_canister_c2c_client",
  "proposals_bot_canister",
  "rand",
  "registry_canister",

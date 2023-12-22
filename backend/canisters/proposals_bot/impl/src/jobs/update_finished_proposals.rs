@@ -1,9 +1,8 @@
-use crate::governance_clients::common::WrappedProposalId;
-use crate::governance_clients::nns::ListProposalInfo;
 use crate::jobs::update_proposals;
-use crate::{generate_message_id, governance_clients, mutate_state, RuntimeState};
+use crate::{generate_message_id, mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_timers::TimerId;
+use nns_governance_canister::types::ListProposalInfo;
 use sns_governance_canister::types::ListProposals;
 use std::cell::Cell;
 use std::time::Duration;
@@ -74,15 +73,16 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
 }
 
 async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<ProposalUpdate>> {
-    let response = governance_clients::nns::list_proposals(
+    let response = nns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposalInfo {
             limit: 1,
-            before_proposal: Some(WrappedProposalId { id: proposal_id + 1 }),
+            before_proposal: Some(nns_governance_canister::types::ProposalId { id: proposal_id + 1 }),
             ..Default::default()
         },
     )
-    .await?;
+    .await?
+    .proposal_info;
 
     Ok(response.into_iter().next().map(|p| ProposalUpdate {
         message_id: generate_message_id(governance_canister_id, proposal_id),

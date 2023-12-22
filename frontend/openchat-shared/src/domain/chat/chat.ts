@@ -294,6 +294,7 @@ export interface ProposalCommon {
     rewardStatus: ProposalRewardStatus;
     summary: string;
     proposer: string;
+    payloadTextRendering?: string;
 }
 
 export type ManageNeuronResponse =
@@ -361,7 +362,6 @@ export enum NnsProposalTopic {
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
     action: number;
-    payloadTextRendering?: string;
 }
 
 export interface ImageContent extends DataContent {
