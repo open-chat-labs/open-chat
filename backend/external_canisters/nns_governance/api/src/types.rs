@@ -672,7 +672,9 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
                 .map_err(|r| format!("unknown reward status: {r}"))?,
             tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
             deadline: p.deadline_timestamp_seconds.ok_or("deadline not set".to_string())?,
-            payload_text_rendering: proposal.action.and_then(|a| serde_json::to_string_pretty(&a).ok()),
+            payload_text_rendering: proposal
+                .action
+                .and_then(|a| serde_json::to_string_pretty(&a).ok_or("Failed to serialize payload".to_string())),
             last_updated: now,
         })
     }
