@@ -64,6 +64,7 @@ export class SafeMap<K, V> {
     }
 
     delete(key: K): boolean {
+        if (this._map.size === 0) return false;
         return this._map.delete(this.toString(key));
     }
     forEach(callbackfn: (value: V, key: K) => void): void {
