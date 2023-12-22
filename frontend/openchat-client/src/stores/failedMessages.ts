@@ -25,7 +25,6 @@ function createFailedMessagesStore() {
             }));
         },
         contains: (key: MessageContext, messageId: bigint): boolean => {
-            if (store.size() === 0) return false;
             const chatState = store.get(key);
             return chatState ? chatState[messageId.toString()] !== undefined : false;
         },
