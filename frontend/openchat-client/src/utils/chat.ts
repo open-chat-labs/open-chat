@@ -454,11 +454,17 @@ export function mergeUnconfirmedIntoSummary(
         const senderBlocked = blockedUsers.has(latestMessage.event.sender);
 
         // Don't hide the sender's own messages
-        const failedMessageFilter = latestMessage.event.sender !== currentUserId 
-            ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined 
-            : false;
+        const failedMessageFilter =
+            latestMessage.event.sender !== currentUserId
+                ? doesMessageFailFilter(latestMessage.event, messageFilters) !== undefined
+                : false;
 
-        if (updates !== undefined || translation !== undefined || senderBlocked || failedMessageFilter) {
+        if (
+            updates !== undefined ||
+            translation !== undefined ||
+            senderBlocked ||
+            failedMessageFilter
+        ) {
             latestMessage = {
                 ...latestMessage,
                 event: mergeLocalUpdates(
@@ -470,7 +476,7 @@ export function mergeUnconfirmedIntoSummary(
                     undefined,
                     senderBlocked,
                     false,
-                    failedMessageFilter
+                    failedMessageFilter,
                 ),
             };
         }
@@ -1254,11 +1260,13 @@ export function mergeEventsAndLocalUpdates(
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new DRange();
     eventIndexes.add(expiredEventRanges);
+    const confirmedMessageIds = new Set<bigint>();
 
     function processEvent(e: EventWrapper<ChatEvent>): EventWrapper<ChatEvent> {
         eventIndexes.add(e.index);
 
         if (e.event.kind === "message") {
+            confirmedMessageIds.add(e.event.messageId);
             const updates = localUpdates.get(e.event.messageId);
             const translation = translations.get(e.event.messageId);
 
@@ -1288,10 +1296,11 @@ export function mergeEventsAndLocalUpdates(
                 blockedUsers.has(e.event.repliesTo.senderId);
 
             // Don't hide the sender's own messages
-            const failedMessageFilter = e.event.sender !== currentUserId 
-                ? doesMessageFailFilter(e.event, messageFilters) !== undefined 
-                : false;
-    
+            const failedMessageFilter =
+                e.event.sender !== currentUserId
+                    ? doesMessageFailFilter(e.event, messageFilters) !== undefined
+                    : false;
+
             if (
                 updates !== undefined ||
                 replyContextUpdates !== undefined ||
@@ -1299,7 +1308,7 @@ export function mergeEventsAndLocalUpdates(
                 translation !== undefined ||
                 replyTranslation !== undefined ||
                 senderBlocked ||
-                repliesToSenderBlocked || 
+                repliesToSenderBlocked ||
                 failedMessageFilter
             ) {
                 return {
@@ -1312,8 +1321,8 @@ export function mergeEventsAndLocalUpdates(
                         translation,
                         replyTranslation,
                         senderBlocked,
-                        repliesToSenderBlocked,   
-                        failedMessageFilter,                     
+                        repliesToSenderBlocked,
+                        failedMessageFilter,
                     ),
                 };
             }
@@ -1330,10 +1339,11 @@ export function mergeEventsAndLocalUpdates(
             // Only include unconfirmed events that are either contiguous with the loaded confirmed events, or are the
             // first events in a new chat
             if (
-                (eventIndexes.length === 0 && message.index <= 1) ||
-                eventIndexes
-                    .subranges()
-                    .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1)
+                !confirmedMessageIds.has(message.event.messageId) &&
+                ((eventIndexes.length === 0 && message.index <= 1) ||
+                    eventIndexes
+                        .subranges()
+                        .some((s) => s.low - 1 <= message.index && message.index <= s.high + 1))
             ) {
                 merged.push(processEvent(message));
                 anyAdded = true;
@@ -1347,7 +1357,10 @@ export function mergeEventsAndLocalUpdates(
     return merged;
 }
 
-export function doesMessageFailFilter(message: Message, filters: MessageFilter[]): bigint | undefined {
+export function doesMessageFailFilter(
+    message: Message,
+    filters: MessageFilter[],
+): bigint | undefined {
     const text = getContentAsText(message.content);
 
     if (text !== undefined) {
@@ -1368,7 +1381,7 @@ function mergeLocalUpdates(
     replyTranslation: string | undefined,
     senderBlocked: boolean,
     repliesToSenderBlocked: boolean,
-    failedMessageFilter: boolean
+    failedMessageFilter: boolean,
 ): Message {
     if (localUpdates?.deleted !== undefined) {
         return {
