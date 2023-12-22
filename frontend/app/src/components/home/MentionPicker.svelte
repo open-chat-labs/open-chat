@@ -34,30 +34,44 @@
 
     $: prefixLower = prefix?.toLowerCase();
 
-    $: filtered = usersAndGroups.filter((userOrGroup) => {
-        switch (userOrGroup.kind) {
-            case "user_group":
-                return (
-                    !usersOnly &&
-                    (prefixLower === undefined ||
-                        (supportsUserGroups &&
-                            userOrGroup.name.toLowerCase().startsWith(prefixLower)))
-                );
-            case "everyone": {
-                return (
-                    !usersOnly &&
-                    (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
-                );
+    $: filtered = usersAndGroups
+        .filter((userOrGroup) => {
+            switch (userOrGroup.kind) {
+                case "user_group":
+                    return (
+                        !usersOnly &&
+                        (prefixLower === undefined ||
+                            (supportsUserGroups &&
+                                userOrGroup.name.toLowerCase().startsWith(prefixLower)))
+                    );
+                case "everyone": {
+                    return (
+                        !usersOnly &&
+                        (prefixLower === undefined || userOrGroup.kind.startsWith(prefixLower))
+                    );
+                }
+                default:
+                    return (
+                        (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
+                        (prefixLower === undefined ||
+                            userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
+                            userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
+                    );
             }
-            default:
-                return (
-                    (mentionSelf || userOrGroup.userId !== $currentUser.userId) &&
-                    (prefixLower === undefined ||
-                        userOrGroup.username.toLowerCase().startsWith(prefixLower) ||
-                        userOrGroup.displayName?.toLowerCase().startsWith(prefixLower))
-                );
-        }
-    });
+        })
+        .sort((a, b) => {
+            // 'everyone' first, then user groups, then users
+            if (a.kind === "everyone") return -1;
+            if (b.kind === "everyone") return 1;
+
+            if (a.kind === "user_group" && b.kind === "user_group") {
+                return compareMatchNames(a.name, b.name);
+            }
+            if (a.kind === "user" && b.kind === "user") {
+                return compareMatchNames(a.username, b.username);
+            }
+            return a.kind === "user_group" ? -1 : 1;
+        });
 
     $: style =
         direction === "up"
@@ -109,6 +123,15 @@
                 ev.stopPropagation();
                 break;
         }
+    }
+
+    function compareMatchNames(a: string, b: string): number {
+        // Order by length, then alphabetically
+        if (a === b) return 0;
+        if (a.length === b.length) {
+            return a < b ? -1 : 1;
+        }
+        return a.length < b.length ? -1 : 1;
     }
 </script>
 
