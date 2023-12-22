@@ -4,7 +4,6 @@ import { mobileWidth } from "./screenDimensions";
 import { rightPanelHistory } from "./rightPanel";
 import { type RouteParams, pathParams } from "../routes";
 import { disableLeftNav } from "./xframe";
-import { number } from "svelte-i18n";
 
 export const navOpen = writable<boolean>(false);
 
