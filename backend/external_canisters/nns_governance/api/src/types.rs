@@ -674,7 +674,7 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
             deadline: p.deadline_timestamp_seconds.ok_or("deadline not set".to_string())?,
             payload_text_rendering: proposal
                 .action
-                .and_then(|a| serde_json::to_string_pretty(&a).ok_or("Failed to serialize payload".to_string())),
+                .map(|a| serde_json::to_string_pretty(&a).unwrap_or("Failed to serialize payload".to_string())),
             last_updated: now,
         })
     }
