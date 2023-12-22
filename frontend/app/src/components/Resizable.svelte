@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { rightPanelWidth } from "../stores/layout";
+    import { mobileWidth } from "../stores/screenDimensions";
 
     const MIN_COL_WIDTH = 400;
     const MAX_COL_WIDTH = 1000;
@@ -60,14 +61,16 @@
 
 <svelte:window on:mousemove={drag} on:mouseup={stopResize} />
 
-<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-<div
-    role="separator"
-    class:resizing
-    on:mousedown={startResize}
-    on:dblclick={resetSize}
-    class="handle">
-</div>
+{#if !$mobileWidth}
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+    <div
+        role="separator"
+        class:resizing
+        on:mousedown={startResize}
+        on:dblclick={resetSize}
+        class="handle">
+    </div>
+{/if}
 
 <style lang="scss">
     .handle {

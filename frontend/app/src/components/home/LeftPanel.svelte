@@ -60,8 +60,8 @@
 
         @include mobile() {
             width: 100%;
-            max-width: none;
-            min-width: none;
+            max-width: unset;
+            min-width: unset;
             padding: 0;
             flex: auto;
             border-right: none;

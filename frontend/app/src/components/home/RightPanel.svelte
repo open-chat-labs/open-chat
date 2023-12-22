@@ -483,7 +483,7 @@
             user-select: none;
         }
 
-        &.resized {
+        &:not(.modal).resized {
             flex: 0 0 var(--resized-width);
         }
 
@@ -494,6 +494,13 @@
 
             &.resized {
                 width: var(--resized-width);
+                @include mobile() {
+                    width: 100%;
+                }
+            }
+
+            @include mobile() {
+                min-width: unset;
             }
         }
 
