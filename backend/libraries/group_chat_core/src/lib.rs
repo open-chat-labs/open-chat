@@ -1731,12 +1731,8 @@ impl GroupChatCore {
         })
     }
 
-    fn has_payment_gate(&self) -> bool {
-        self.gate
-            .value
-            .as_ref()
-            .map(|g| matches!(g, AccessGate::Payment(_)))
-            .unwrap_or_default()
+    pub fn has_payment_gate(&self) -> bool {
+        self.gate.value.as_ref().map(|g| g.is_payment_gate()).unwrap_or_default()
     }
 }
 
