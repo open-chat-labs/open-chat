@@ -17,6 +17,10 @@ impl AccessGate {
     pub fn synchronous(&self) -> bool {
         matches!(self, AccessGate::DiamondMember)
     }
+
+    pub fn is_payment_gate(&self) -> bool {
+        matches!(self, AccessGate::Payment(_))
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
