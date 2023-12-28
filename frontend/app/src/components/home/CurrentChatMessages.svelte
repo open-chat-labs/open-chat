@@ -349,6 +349,7 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
+                        on:removePreview
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}

@@ -43,7 +43,7 @@
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} />
+    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} on:removePreview />
 {:else if content.kind === "image_content"}
     <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}

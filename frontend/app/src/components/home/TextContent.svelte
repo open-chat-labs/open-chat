@@ -4,12 +4,16 @@
     import Markdown from "./Markdown.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import { _ } from "svelte-i18n";
-    import type { TextContent } from "openchat-client";
+    import type { OpenChat, TextContent } from "openchat-client";
     import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
     import { lowBandwidth, renderPreviews } from "../../stores/settings";
-    import LinkPreview from "./LinkPreview.svelte";
+    import LinkPreviews from "./LinkPreviews.svelte";
+    import { createEventDispatcher, getContext } from "svelte";
 
     const SIZE_LIMIT = 1000;
+    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
+
     export let content: TextContent;
     export let truncate: boolean = false;
     export let pinned: boolean = false;
@@ -18,6 +22,10 @@
     export let me: boolean;
 
     $: expanded = !$lowBandwidth && $renderPreviews;
+    $: text = truncateText(content.text);
+    $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
+    // Show at most 3 link previews
+    $: linkMatch = client.extractEnabledLinks(content.text).slice(0, 3);
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -32,9 +40,9 @@
         expanded = true;
     }
 
-    $: text = truncateText(content.text);
-    $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
-    $: linkMatch = content.text.match(/(https?:\/\/[^\s\)]+)/g);
+    function removePreview(ev: CustomEvent<HTMLElement>) {
+        dispatch("removePreview", ev.detail);
+    }
 </script>
 
 <Markdown inline={!containsCodeBlock} suppressLinks={pinned} {text} />
@@ -49,13 +57,13 @@
         </span>
     {:else}
         <IntersectionObserver unobserveOnIntersect={false} let:intersecting>
-            <LinkPreview
+            <LinkPreviews
                 {me}
                 {pinned}
                 {fill}
-                text={content.text}
                 links={linkMatch}
-                {intersecting} />
+                {intersecting}
+                on:remove={removePreview} />
         </IntersectionObserver>
     {/if}
 {/if}

@@ -95,7 +95,7 @@
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(editingEvent.event.content.text),
+                        formatUserMentions(client.stripLinkTags(editingEvent.event.content.text)),
                     );
                     selectedRange = undefined;
                     restoreSelection();
@@ -267,9 +267,9 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text?: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
+        let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -389,10 +389,10 @@
     }
 
     function sendMessage() {
-        const txt = inp.innerText?.trim();
+        const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
-            dispatch("sendMessage", expandMentions(txt));
+            dispatch("sendMessage", expandMentions(client.insertLinkTags(txt)));
         }
         inp.textContent = "";
         dispatch("setTextContent", undefined);

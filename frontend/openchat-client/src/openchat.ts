@@ -441,6 +441,7 @@ import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 import { draftMessagesStore } from "./stores/draftMessages";
+import { disableLinksInText, extractDisabledLinks, extractEnabledLinks, stripLinkTags, insertLinkTags } from "./utils/linkPreviews";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1414,6 +1415,10 @@ export class OpenChat extends OpenChatAgentWorker {
     getTypingString = getTypingString;
     getMessageText = getMessageText;
     contentTypeToPermission = contentTypeToPermission;
+    stripLinkTags = stripLinkTags;
+    extractEnabledLinks = extractEnabledLinks;
+    insertLinkTags = insertLinkTags;
+    disableLinksInText = disableLinksInText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
         return avatar?.blobUrl ?? buildIdenticonUrl(id);
@@ -3513,6 +3518,11 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         if (textContent || attachment) {
+            if (textContent && editingEvent.event.content.kind === "text_content") {
+                const disabledLinks = extractDisabledLinks(editingEvent.event.content.text);
+                textContent = disableLinksInText(textContent, disabledLinks);
+            }
+
             const msg = {
                 ...editingEvent.event,
                 edited: true,
@@ -3541,6 +3551,40 @@ export class OpenChat extends OpenChatAgentWorker {
                 });
         }
         return Promise.resolve(false);
+    }
+
+    hideLinkPreview(messageContext: MessageContext, event: EventWrapper<Message>, link: string): Promise<boolean> {
+        if (event.event.content.kind !== "text_content") {
+            return Promise.resolve(false);
+        }
+
+        const text = disableLinksInText(event.event.content.text, [link]);
+
+        const msg = {
+            ...event.event,
+            edited: true,
+            content: this.getMessageContent(text, undefined),
+        };
+        localMessageUpdates.markContentEdited(msg.messageId, msg.content);
+
+        return this.sendRequest({
+            kind: "editMessage",
+            chatId: messageContext.chatId,
+            msg,
+            threadRootMessageIndex: messageContext.threadRootMessageIndex,
+        })
+            .then((resp) => {
+                if (resp !== "success") {
+                    localMessageUpdates.revertEditedContent(msg.messageId);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Exception sending message", err);
+                localMessageUpdates.revertEditedContent(msg.messageId);
+                return false;
+            });
     }
 
     notificationReceived(notification: Notification): void {
