@@ -389,6 +389,7 @@ impl From<&Channel> for ChannelMatch {
             avatar_id: types::Document::id(&channel.chat.avatar),
             member_count: channel.chat.members.len(),
             gate: channel.chat.gate.value.clone(),
+            subtype: channel.chat.subtype.value.clone(),
         }
     }
 }

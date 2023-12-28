@@ -1589,6 +1589,7 @@ type GroupMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    subtype : opt GroupSubtype;
 };
 
 type ChannelMatch = record {
@@ -1598,6 +1599,7 @@ type ChannelMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    subtype : opt GroupSubtype;
 };
 
 type ThreadPreview = record {
