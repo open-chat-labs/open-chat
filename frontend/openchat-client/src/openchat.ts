@@ -2351,8 +2351,6 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const context = { chatId, threadRootMessageIndex };
 
-        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) return;
-
         const eventsResponse = await this.sendRequest({
             kind: "chatEvents",
             chatType: chat.kind,
@@ -2365,7 +2363,10 @@ export class OpenChat extends OpenChatAgentWorker {
         });
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            if (clearEvents) {
+            if (
+                clearEvents &&
+                messageContextsEqual(context, this._liveState.selectedMessageContext)
+            ) {
                 threadServerEventsStore.set([]);
             }
             await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
