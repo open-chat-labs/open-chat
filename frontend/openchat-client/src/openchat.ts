@@ -2349,9 +2349,9 @@ export class OpenChat extends OpenChatAgentWorker {
             return Promise.resolve();
         }
 
-        const context = this._liveState.selectedMessageContext;
+        const context = { chatId, threadRootMessageIndex };
 
-        if (context?.threadRootMessageIndex === undefined) return;
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) return;
 
         const eventsResponse = await this.sendRequest({
             kind: "chatEvents",
@@ -2363,11 +2363,6 @@ export class OpenChat extends OpenChatAgentWorker {
             threadRootMessageIndex,
             latestKnownUpdate: chat.lastUpdated,
         });
-
-        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) {
-            // the selected thread has changed while we were loading the messages
-            return;
-        }
 
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
             if (clearEvents) {
