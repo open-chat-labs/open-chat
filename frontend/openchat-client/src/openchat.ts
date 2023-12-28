@@ -2351,6 +2351,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const context = { chatId, threadRootMessageIndex };
 
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) return;
+
         const eventsResponse = await this.sendRequest({
             kind: "chatEvents",
             chatType: chat.kind,
