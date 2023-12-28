@@ -2362,11 +2362,13 @@ export class OpenChat extends OpenChatAgentWorker {
             latestKnownUpdate: chat.lastUpdated,
         });
 
+        if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) {
+            // the selected thread has changed while we were loading the messages
+            return;
+        }
+
         if (eventsResponse !== undefined && eventsResponse !== "events_failed") {
-            if (
-                clearEvents &&
-                messageContextsEqual(context, this._liveState.selectedMessageContext)
-            ) {
+            if (clearEvents) {
                 threadServerEventsStore.set([]);
             }
             await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
