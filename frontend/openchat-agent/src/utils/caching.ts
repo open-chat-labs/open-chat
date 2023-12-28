@@ -383,8 +383,12 @@ export async function getCachedEventByIndex<T extends ChatEvent>(
     const storeName =
         context.threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
     const key = createCacheKey(context, eventIndex);
+    const upperBound = createCacheKey(context, MAX_INDEX);
 
-    const event = processEventExpiry(await db.get(storeName, IDBKeyRange.lowerBound(key)), now);
+    const event = processEventExpiry(
+        await db.get(storeName, IDBKeyRange.bound(key, upperBound)),
+        now,
+    );
 
     if (
         (event?.kind === "event" && event.index === eventIndex) ||
