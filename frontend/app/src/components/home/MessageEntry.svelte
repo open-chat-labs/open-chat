@@ -68,7 +68,7 @@
     let emojiQuery: string | undefined;
     let messageEntryHeight: number;
     let messageActions: MessageActions;
-    let rangeToReplace: [number, number] | undefined = undefined;
+    let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = chat.id;
 
     // Update this to force a new textbox instance to be created
@@ -172,23 +172,26 @@
 
     function uptoCaret(
         inputContent: string | null,
-        fn: (slice: string, pos: number) => void,
+        fn: (slice: string, node: Node, pos: number) => void,
     ): void {
         if (inputContent === null) return;
 
-        const pos = window.getSelection()?.anchorOffset;
-        if (pos === undefined) return;
+        const selection = window.getSelection();
+        if (selection === null) return;
+        const anchorNode = selection.anchorNode;
+        if (anchorNode?.textContent == null) return;
+        const text = anchorNode.textContent;
 
-        const slice = inputContent.slice(0, pos);
-        fn(slice, pos);
+        const slice = text.slice(0, selection.anchorOffset);
+        fn(slice, anchorNode, selection.anchorOffset);
     }
 
     function triggerEmojiLookup(inputContent: string | null): void {
-        uptoCaret(inputContent, (slice: string, pos: number) => {
+        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
             const matches = slice.match(emojiRegex);
             if (matches !== null) {
                 if (matches.index !== undefined) {
-                    rangeToReplace = [matches.index, pos];
+                    rangeToReplace = [node, matches.index, pos];
                     emojiQuery = matches[1].toLowerCase() || undefined;
                     showEmojiSearch = true;
                 }
@@ -201,11 +204,11 @@
 
     function triggerMentionLookup(inputContent: string | null): void {
         if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
-        uptoCaret(inputContent, (slice: string, pos: number) => {
+        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
             const matches = slice.match(mentionRegex);
             if (matches !== null) {
                 if (matches.index !== undefined) {
-                    rangeToReplace = [matches.index, pos];
+                    rangeToReplace = [node, matches.index, pos];
                     mentionPrefix = matches[1].toLowerCase() || undefined;
                     showMentionPicker = true;
                 }
@@ -436,10 +439,10 @@
         sel?.addRange(range);
     }
 
-    function setCaretTo(pos: number) {
+    function setCaretTo(node: Node, pos: number) {
         const range = document.createRange();
-        range.selectNodeContents(inp);
-        range.setStart(inp.childNodes[0], pos);
+        range.selectNodeContents(node);
+        range.setStart(node, pos);
         range.collapse(true);
         const sel = window.getSelection();
         sel?.removeAllRanges();
@@ -454,18 +457,18 @@
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
-        const start = rangeToReplace[0];
+        const [node, start, end] = rangeToReplace;
 
-        const replaced = `${inp.textContent?.slice(
+        const replaced = `${node.textContent?.slice(
             0,
-            rangeToReplace[0],
-        )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
-        inp.textContent = replaced;
+            start,
+        )}${replacement} ${node.textContent?.slice(end)}`;
+        node.textContent = replaced;
 
         dispatch("setTextContent", inp.textContent || undefined);
 
         tick().then(() => {
-            setCaretTo(start + replacement.length);
+            setCaretTo(node, start + replacement.length + 1);
         });
 
         rangeToReplace = undefined;
