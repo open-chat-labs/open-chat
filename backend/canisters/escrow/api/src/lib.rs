@@ -4,11 +4,9 @@ use sha256::sha256;
 use types::UserId;
 
 mod lifecycle;
-mod queries;
 mod updates;
 
 pub use lifecycle::*;
-pub use queries::*;
 pub use updates::*;
 
 pub fn deposit_subaccount(user_id: UserId, offer_id: u32) -> Subaccount {

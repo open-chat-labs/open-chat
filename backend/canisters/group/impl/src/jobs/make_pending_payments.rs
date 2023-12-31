@@ -94,6 +94,6 @@ async fn make_payment(ledger_canister: CanisterId, transfer_args: TransferArg) -
 
 fn memo(reason: PendingPaymentReason) -> Memo {
     match reason {
-        PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().try_into().unwrap(),
+        PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().into(),
     }
 }
