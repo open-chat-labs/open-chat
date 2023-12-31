@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `subtype` to channel search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
+
 ### Fixed
 
 - Prevent latest messages of payment gated groups from being public ([#5080](https://github.com/open-chat-labs/open-chat/pull/5080))

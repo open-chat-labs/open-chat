@@ -71,7 +71,7 @@ fn get_batched_events_succeeds() {
         },
     );
 
-    assert_is_message_with_text(responses.get(0).unwrap(), "User: 0");
+    assert_is_message_with_text(responses.first().unwrap(), "User: 0");
     assert_is_message_with_text(responses.get(1).unwrap(), "Group1: 1");
     assert_is_message_with_text(responses.get(2).unwrap(), "Group2: 2");
     assert_is_message_with_text(responses.get(3).unwrap(), "Channel: 3");
@@ -123,13 +123,13 @@ fn get_batched_summaries_succeeds() {
             },
         );
 
-    assert_is_summary_with_id(responses.get(0).unwrap(), group_id1.into(), false);
+    assert_is_summary_with_id(responses.first().unwrap(), group_id1.into(), false);
     assert_is_summary_with_id(responses.get(1).unwrap(), group_id2.into(), false);
     assert_is_summary_with_id(responses.get(2).unwrap(), community_id.into(), true);
 }
 
 fn assert_is_message_with_text(response: &EventsResponse, text: &str) {
-    if let local_user_index_canister::chat_events::EventsResponse::Success(result) = response {
+    if let EventsResponse::Success(result) = response {
         assert_eq!(result.events.len(), 1);
         if let ChatEvent::Message(message) = &result.events.first().unwrap().event {
             assert_eq!(message.content.text().unwrap(), text);

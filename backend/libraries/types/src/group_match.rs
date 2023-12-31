@@ -1,4 +1,4 @@
-use crate::{AccessGate, ChannelId, ChatId, CommunityId};
+use crate::{AccessGate, ChannelId, ChatId, CommunityId, GroupSubtype};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,7 @@ pub struct GroupMatch {
     pub avatar_id: Option<u128>,
     pub member_count: u32,
     pub gate: Option<AccessGate>,
+    pub subtype: Option<GroupSubtype>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -35,4 +36,5 @@ pub struct ChannelMatch {
     pub avatar_id: Option<u128>,
     pub member_count: u32,
     pub gate: Option<AccessGate>,
+    pub subtype: Option<GroupSubtype>,
 }
