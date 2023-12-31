@@ -747,6 +747,7 @@ type InitialStateResponse = variant {
         avatar_id : opt nat;
         blocked_users : vec UserId;
         suspended : bool;
+        local_user_index_canister_id : CanisterId;
     };
 };
 
