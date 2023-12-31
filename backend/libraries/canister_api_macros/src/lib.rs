@@ -180,7 +180,7 @@ fn get_arg_names(signature: &Signature) -> Vec<Ident> {
 }
 
 fn get_validation_method_attribute(inputs: Vec<String>) -> ValidationMethodAttribute {
-    let service_name = inputs.get(0).unwrap().to_string();
+    let service_name = inputs.first().unwrap().to_string();
     let function_name = inputs.get(1).unwrap().to_string();
 
     ValidationMethodAttribute {
