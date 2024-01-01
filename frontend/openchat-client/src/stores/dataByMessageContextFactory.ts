@@ -48,5 +48,6 @@ export function createMessageContextSpecificObjectStore<T>(init: () => T) {
         },
         clear: (newValue?: MessageContextMap<T>): void =>
             store.set(newValue ?? new MessageContextMap<T>()),
+        size: (): number => storeValue.size,
     };
 }

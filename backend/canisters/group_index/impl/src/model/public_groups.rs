@@ -262,6 +262,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             avatar_id: group.avatar_id,
             member_count: group.activity.member_count,
             gate: group.gate.clone(),
+            subtype: group.subtype.clone(),
         }
     }
 }

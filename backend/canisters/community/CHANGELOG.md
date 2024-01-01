@@ -9,6 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
 
+### Changed
+
+- Add `subtype` to channel search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
+
+### Fixed
+
+- Prevent latest messages of payment gated groups from being public ([#5080](https://github.com/open-chat-labs/open-chat/pull/5080))
+
 ## [[2.0.985](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.985-community)] - 2023-12-19
 
 ### Added

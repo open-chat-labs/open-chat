@@ -1,6 +1,5 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import Panel from "../../Panel.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
@@ -27,6 +26,7 @@
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
+    import { rtlStore } from "../../../stores/rtl";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -130,7 +130,7 @@
 
 <svelte:body on:click={closeIfOpen} />
 
-<Panel nav>
+<section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
         <LeftNavItem separator label={$_("communities.mainMenu")}>
             <div class="hover logo">
@@ -235,7 +235,7 @@
             </div>
         </LeftNavItem>
     </div>
-</Panel>
+</section>
 
 <style lang="scss">
     :global(.hover svg path) {
@@ -268,6 +268,42 @@
 
     $size: toRem(48);
     $mobile-size: toRem(40);
+
+    .nav {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: toRem(80);
+        overflow-x: hidden;
+        height: 100%;
+        background: var(--panel-nav-bg);
+        padding: $sp2 0;
+        border-right: var(--bw) solid var(--bd);
+        @include z-index("left-nav");
+        transition: width 250ms ease-in-out;
+        overflow: auto;
+        overflow-x: hidden;
+
+        &.rtl {
+            border-right: none;
+            border-left: var(--bw) solid var(--bd);
+        }
+
+        @include mobile() {
+            width: toRem(60);
+            padding: $sp1 0;
+        }
+
+        &.open {
+            width: toRem(350);
+            box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
+
+            @include mobile() {
+                width: toRem(300);
+            }
+        }
+    }
 
     .top,
     .bottom,
