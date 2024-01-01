@@ -1,16 +1,18 @@
-use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
-use crate::governance_clients::nns::governance_response_types::ProposalInfo;
-use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
 use crate::jobs::{push_proposals, update_proposals};
+use crate::proposals::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
 use crate::timer_job_types::{ProcessUserRefundJob, TopUpNeuronJob};
-use crate::{governance_clients, mutate_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use canister_timer_jobs::Job;
 use ic_cdk::api::call::CallResult;
+use nns_governance_canister::types::{ListProposalInfo, ProposalInfo};
 use sns_governance_canister::types::ProposalData;
 use std::collections::HashSet;
 use std::time::Duration;
 use types::{CanisterId, Milliseconds, Proposal};
 use utils::time::MINUTE_IN_MS;
+
+pub const NNS_TOPIC_NEURON_MANAGEMENT: i32 = 1;
+pub const NNS_TOPIC_EXCHANGE_RATE: i32 = 2;
 
 const BATCH_SIZE_LIMIT: u32 = 50;
 const RETRIEVE_PROPOSALS_INTERVAL: Milliseconds = MINUTE_IN_MS;
@@ -51,12 +53,15 @@ async fn get_nns_proposals(governance_canister_id: CanisterId) -> CallResult<Vec
         let list_proposals_args = ListProposalInfo {
             limit: BATCH_SIZE_LIMIT,
             before_proposal: proposals.iter().next_back().and_then(|p| p.id.clone()),
-            exclude_topic: vec![TOPIC_NEURON_MANAGEMENT, TOPIC_EXCHANGE_RATE],
+            exclude_topic: vec![NNS_TOPIC_NEURON_MANAGEMENT, NNS_TOPIC_EXCHANGE_RATE],
             include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
             ..Default::default()
         };
 
-        let response = governance_clients::nns::list_proposals(governance_canister_id, &list_proposals_args).await?;
+        let response = nns_governance_canister_c2c_client::list_proposals(governance_canister_id, &list_proposals_args)
+            .await?
+            .proposal_info;
+
         let finished = response.len() < BATCH_SIZE_LIMIT as usize;
         proposals.extend(response);
 

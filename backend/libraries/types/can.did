@@ -948,6 +948,7 @@ type NnsProposal = record {
     reward_status : ProposalRewardStatus;
     tally : Tally;
     deadline : TimestampMillis;
+    payload_text_rendering : opt text;
     last_updated : TimestampMillis;
 };
 

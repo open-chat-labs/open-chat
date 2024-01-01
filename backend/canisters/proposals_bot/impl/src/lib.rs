@@ -13,12 +13,12 @@ use types::{
 };
 use utils::env::Environment;
 
-mod governance_clients;
 mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod proposals;
 mod queries;
 mod timer_job_types;
 mod updates;

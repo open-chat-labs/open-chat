@@ -94,6 +94,7 @@ pub struct NnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
+    pub payload_text_rendering: Option<String>,
     pub last_updated: TimestampMillis,
 }
 
