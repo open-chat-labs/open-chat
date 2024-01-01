@@ -8,6 +8,7 @@
     import { lowBandwidth } from "../../stores/settings";
     import CloseIcon from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { rtlStore } from "../../stores/rtl";
 
     type Preview = YoutubePreview | TwitterPreview | GenericPreview;
 
@@ -135,7 +136,7 @@
         class:visible={preview.kind !== "generic"}
         class:me>
         {#if me}
-            <div class="remove" on:click={() => removePreview(preview)}>
+            <div class="remove" class:rtl={$rtlStore} on:click={() => removePreview(preview)}>
                 <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
             </div>
         {/if}
@@ -181,6 +182,11 @@
             flex: 0;
             position: relative;
             left: 6px;
+
+            &.rtl {
+                right: 6px;
+                left: unset;
+            }
         }
 
         .inner {

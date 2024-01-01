@@ -1206,5 +1206,6 @@
         "swapTokenTo": "Замените {tokenIn} на {tokenOut}",
         "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}."
     },
-    "messageBlocked": "Сообщение скрыто"
+    "messageBlocked": "Сообщение скрыто",
+    "removePreviewQuestion": "Удалить предварительный просмотр?"
 }

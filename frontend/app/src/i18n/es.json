@@ -1208,5 +1208,6 @@
         "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
         "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}."
     },
-    "messageBlocked": "Mensaje oculto"
+    "messageBlocked": "Mensaje oculto",
+    "removePreviewQuestion": "¿Eliminar vista previa?"
 }
