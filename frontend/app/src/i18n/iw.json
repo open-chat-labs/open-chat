@@ -827,7 +827,7 @@
         "oneMonth": "חודש אחד",
         "threeMonths": "שלושה חודשים",
         "oneYear": "שנה אחת",
-        "insufficientFunds": "אנא ודא שחשבון ICP שלך מכיל לפחות {amount}",
+        "insufficientFunds": "אנא ודא שחשבון {token} שלך מכיל לפחות {amount}",
         "confirm": "לְאַשֵׁר",
         "allSupportedTokens": "כל האסימונים הנתמכים",
         "chatAndIcp": "ICP וצ'אט",

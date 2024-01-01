@@ -958,7 +958,7 @@
         "threeMonths": "Three months",
         "oneYear": "One year",
         "lifetime": "Lifetime",
-        "insufficientFunds": "Please ensure that your ICP account contains at least {amount}",
+        "insufficientFunds": "Please ensure that your {token} account contains at least {amount}",
         "confirm": "Confirm",
         "allSupportedTokens": "All supported tokens",
         "chatAndIcp": "ICP & CHAT",

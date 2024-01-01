@@ -829,7 +829,7 @@
         "oneMonth": "Один месяц",
         "threeMonths": "Три месяца",
         "oneYear": "Один год",
-        "insufficientFunds": "Пожалуйста, убедитесь, что ваша учетная запись ICP содержит как минимум {amount}",
+        "insufficientFunds": "Пожалуйста, убедитесь, что ваша учетная запись {token} содержит как минимум {amount}",
         "confirm": "Подтверждать",
         "allSupportedTokens": "Все поддерживаемые токены",
         "chatAndIcp": "ICP и чат",

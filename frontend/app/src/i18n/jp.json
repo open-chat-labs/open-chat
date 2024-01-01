@@ -830,7 +830,7 @@
         "oneMonth": "一か月",
         "threeMonths": "3ヶ月",
         "oneYear": "1年",
-        "insufficientFunds": "ICP アカウントに少なくとも {amount} が含まれていることを確認してください",
+        "insufficientFunds": "{token} アカウントに少なくとも {amount} が含まれていることを確認してください",
         "confirm": "確認",
         "allSupportedTokens": "サポートされているすべてのトークン",
         "chatAndIcp": "ICP & chat",
