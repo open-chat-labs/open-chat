@@ -142,13 +142,15 @@
         {/if}
         <div class="inner">
             {#if preview.kind === "twitter"}
-                <Tweet tweetId={preview.tweetId} {intersecting} />
+                <Tweet
+                    tweetId={preview.tweetId}
+                    {intersecting}
+                    on:rendered={(ev) => adjustScroll(ev.detail)} />
             {:else if preview.kind === "youtube"}
                 <YouTubePreview
                     {pinned}
                     fill={fill && previews.length === 1}
-                    youtubeMatch={preview.regexMatch}
-                    on:rendered={(ev) => adjustScroll(ev.detail)} />
+                    youtubeMatch={preview.regexMatch} />
             {:else}
                 <GenericPreview
                     url={preview.url}
