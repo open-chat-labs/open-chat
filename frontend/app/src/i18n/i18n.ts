@@ -79,17 +79,17 @@ register("vi", () => import("./vi.json"));
 register("iw", () => import("./iw.json"));
 
 export function getStoredLocale(): string {
-    return localStorage.getItem(configKeys.locale) ?? (getLocaleFromNavigator() || "en");
+    const fromStorage = localStorage.getItem(configKeys.locale);
+
+    if (fromStorage === null) {
+        return getLocaleFromNavigator() || "en";
+    }
+
+    return setDialectIfMatchesBrowserLocale(fromStorage);
 }
 
 export function setLocale(code: string): void {
-    const localeFromNavigator = getLocaleFromNavigator();
-
-    // If the browser is set to a dialect of the chosen locale, use that dialect, else use the locale passed in.
-    // Eg. if the user selects "en" and the browser is set to "en-US", then we use "en-US"
-    if (localeFromNavigator !== null && localeFromNavigator.startsWith(code)) {
-        code = localeFromNavigator;
-    }
+    code = setDialectIfMatchesBrowserLocale(code);
 
     localStorage.setItem(configKeys.locale, code);
 
@@ -100,6 +100,18 @@ export function setLocale(code: string): void {
 
 export function i18nFormatter(str: string): string {
     return get(_)(str);
+}
+
+function setDialectIfMatchesBrowserLocale(code: string): string {
+    const localeFromNavigator = getLocaleFromNavigator();
+
+    // If the browser is set to a dialect of the chosen locale, use that dialect, else use the locale passed in.
+    // Eg. if the user selects "en" and the browser is set to "en-US", then we use "en-US"
+    if (localeFromNavigator !== null && localeFromNavigator.startsWith(code)) {
+        return localeFromNavigator;
+    }
+
+    return code;
 }
 
 init({
