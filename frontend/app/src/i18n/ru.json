@@ -666,7 +666,8 @@
             "howToBuyUrl": "Как купить URL",
             "enterHowToBuyUrl": "Введите URL-адрес, показывающий, как купить токен",
             "transactionUrlFormat": "Формат URL транзакции",
-            "enterTransactionUrlFormat": "Например. https://token.com/?index={transaction_index}"
+            "enterTransactionUrlFormat": "Например. https://token.com/?index={transaction_index}",
+            "tokenLogo": "Логотип"
         },
         "neuronControllerAction": "Действия нейронного контроллера"
     },
