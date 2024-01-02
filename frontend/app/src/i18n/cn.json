@@ -829,7 +829,7 @@
         "oneMonth": "一个月",
         "threeMonths": "三个月",
         "oneYear": "一年",
-        "insufficientFunds": "请确保您的 ICP 帐户至少包含 {amount}",
+        "insufficientFunds": "请确保您的 {token} 帐户至少包含 {amount}",
         "confirm": "确认",
         "allSupportedTokens": "所有支持的代币",
         "chatAndIcp": "ICP & 聊天",

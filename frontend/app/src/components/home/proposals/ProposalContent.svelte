@@ -74,8 +74,7 @@
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: showFullSummary = proposal.summary.length < 400;
-    $: payload =
-        content.proposal.kind === "sns" ? content.proposal.payloadTextRendering : undefined;
+    $: payload = content.proposal.payloadTextRendering;
     $: payloadEmpty =
         payload === undefined || payload === EMPTY_MOTION_PAYLOAD || payload.length === 0;
 

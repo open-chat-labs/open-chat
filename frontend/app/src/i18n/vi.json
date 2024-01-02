@@ -830,7 +830,7 @@
         "oneMonth": "Mot thang",
         "threeMonths": "Ba tháng",
         "oneYear": "Một năm",
-        "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ICP của bạn chứa ít nhất {amount}",
+        "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản {token} của bạn chứa ít nhất {amount}",
         "confirm": "Xác nhận",
         "allSupportedTokens": "Tất cả các mã thông báo được hỗ trợ",
         "chatAndIcp": "ICP & TRÒ CHUYỆN",

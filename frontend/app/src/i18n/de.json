@@ -831,7 +831,7 @@
         "oneMonth": "Ein Monat",
         "threeMonths": "Drei Monate",
         "oneYear": "Ein Jahr",
-        "insufficientFunds": "Bitte stellen Sie sicher, dass Ihr ICP-Konto mindestens {amount} enthält",
+        "insufficientFunds": "Bitte stellen Sie sicher, dass Ihr {token}-Konto mindestens {amount} enthält",
         "confirm": "Bestätigen",
         "allSupportedTokens": "Alle unterstützten Token",
         "chatAndIcp": "ICP & CHAT",

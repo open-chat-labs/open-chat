@@ -59,10 +59,13 @@ export const supportedLanguages = [
     },
 ];
 
-export const supportedLanguagesByCode = supportedLanguages.reduce((rec, lang) => {
-    rec[lang.code] = lang;
-    return rec;
-}, {} as Record<string, { name: string; code: string }>);
+export const supportedLanguagesByCode = supportedLanguages.reduce(
+    (rec, lang) => {
+        rec[lang.code] = lang;
+        return rec;
+    },
+    {} as Record<string, { name: string; code: string }>,
+);
 
 // this can't be done in a loop from supportedLanguages because rollup won't understand that
 register("en", () => import("./en.json"));

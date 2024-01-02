@@ -191,7 +191,7 @@
                 {#if insufficientFunds && !refreshingBalance}
                     <ErrorMessage
                         >{$_("upgrade.insufficientFunds", {
-                            values: { amount: `${toPay} ICP` },
+                            values: { token: tokenDetails.symbol, amount: `${toPay} ${tokenDetails.symbol}` },
                         })}</ErrorMessage>
                 {/if}
 
