@@ -102,7 +102,6 @@
     let debug = false;
     let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
     let poll = msg.content.kind === "poll_content";
-    let prize = msg.content.kind === "prize_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
     let showReport = false;
@@ -121,7 +120,6 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll && !prize;
     $: mediaDimensions = extractDimensions(msg.content);
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
@@ -131,10 +129,12 @@
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";
+    $: isMemeFighter = msg.content.kind === "meme_fighter_content";
     $: inert =
         msg.content.kind === "deleted_content" ||
         msg.content.kind === "blocked_content" ||
         collapsed;
+    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
