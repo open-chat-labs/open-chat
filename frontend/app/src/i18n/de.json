@@ -1208,5 +1208,8 @@
         "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet."
     },
-    "messageBlocked": "Nachricht ausgeblendet"
+    "messageBlocked": "Nachricht ausgeblendet",
+    "removePreviewQuestion": "Vorschau entfernen?",
+    "showPreview": "Vorschau zeigen",
+    "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet."
 }

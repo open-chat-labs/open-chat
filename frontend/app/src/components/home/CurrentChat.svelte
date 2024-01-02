@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
@@ -35,6 +36,7 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { mobileWidth } from "../../stores/screenDimensions";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import AreYouSure from "../AreYouSure.svelte";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -59,6 +61,8 @@
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
+        undefined;
 
     $: user = client.user;
     $: suspendedUser = client.suspendedUser;
@@ -201,7 +205,7 @@
                     messageContext,
                     text,
                     $currentChatAttachment,
-                    $currentChatEditingEvent
+                    $currentChatEditingEvent,
                 )
                 .then((success) => {
                     if (!success) {
@@ -216,7 +220,7 @@
     function sendMessageWithAttachment(
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
-        mentioned: User[] = []
+        mentioned: User[] = [],
     ) {
         dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }
@@ -229,6 +233,25 @@
         draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
     }
 
+    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
+        removeLinkPreviewDetails = ev.detail;
+    }
+
+    function removePreview(yes: boolean): Promise<void> {
+        if (removeLinkPreviewDetails !== undefined && yes) {
+            const { event, url } = removeLinkPreviewDetails;
+
+            client.hideLinkPreview(messageContext, event, url).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("errorRemovingLinkPreview");
+                }
+            });
+        }
+
+        removeLinkPreviewDetails = undefined;
+        return Promise.resolve();
+    }
+
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
@@ -239,6 +262,10 @@
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+{#if removeLinkPreviewDetails !== undefined}
+    <AreYouSure title={$_("removePreviewQuestion")} action={removePreview} />
+{/if}
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
@@ -309,6 +336,7 @@
         on:upgrade
         on:forward
         on:retrySend
+        on:removePreview={onRemovePreview}
         {chat}
         {events}
         {filteredProposals}
@@ -338,7 +366,8 @@
             on:joinGroup
             on:upgrade
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-            on:clearAttachment={() => draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+            on:clearAttachment={() =>
+                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
             on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, $user.userId)}

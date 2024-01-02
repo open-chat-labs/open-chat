@@ -7,7 +7,7 @@
     import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
 
-    export let message: string;
+    export let message: string | undefined = undefined;
     export let action: (yes: boolean) => Promise<void>;
     export let doubleCheck: { challenge: string; response: string } | undefined = undefined;
     export let title: string | undefined = undefined;
@@ -31,23 +31,25 @@
 </script>
 
 <Overlay>
-    <ModalContent>
+    <ModalContent hideBody={message === undefined}>
         <span slot="header">{title ?? $_("areYouSure")}</span>
         <span slot="body">
-            <Markdown inline={false} text={message} />
+            {#if message !== undefined}
+                <Markdown inline={false} text={message} />
 
-            {#if doubleCheck !== undefined}
-                <p class="challenge">
-                    <Markdown text={doubleCheck.challenge} />
-                </p>
-                <Input
-                    invalid={false}
-                    disabled={inProgress}
-                    autofocus
-                    bind:value={response}
-                    minlength={0}
-                    maxlength={200}
-                    countdown={false} />
+                {#if doubleCheck !== undefined}
+                    <p class="challenge">
+                        <Markdown text={doubleCheck.challenge} />
+                    </p>
+                    <Input
+                        invalid={false}
+                        disabled={inProgress}
+                        autofocus
+                        bind:value={response}
+                        minlength={0}
+                        maxlength={200}
+                        countdown={false} />
+                {/if}
             {/if}
         </span>
         <span slot="footer">

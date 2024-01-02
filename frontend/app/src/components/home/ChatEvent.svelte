@@ -115,6 +115,10 @@
             }
         }
     }
+
+    function removePreview(ev: CustomEvent<string>) {
+        dispatch("removePreview", { event, url: ev.detail });
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -158,6 +162,7 @@
             on:forward
             on:expandMessage
             on:collapseMessage
+            on:removePreview={removePreview}
             on:initiateThread={initiateThread}
             on:deleteFailedMessage={deleteFailedMessage}
             eventIndex={event.index}

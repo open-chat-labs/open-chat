@@ -15,6 +15,7 @@
     export let fill: boolean = false;
     export let large: boolean = false;
     export let hideHeader: boolean = false;
+    export let hideBody: boolean = false;
     export let hideFooter: boolean = false;
     export let compactFooter: boolean = false;
     export let fadeDuration = 100;
@@ -106,9 +107,11 @@
             {/if}
         </div>
     {/if}
-    <div class="body" class:fill>
-        <slot name="body" />
-    </div>
+    {#if !hideBody}
+        <div class="body" class:fill>
+            <slot name="body" />
+        </div>
+    {/if}
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">

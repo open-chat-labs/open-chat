@@ -89,13 +89,16 @@
         (permittedMessages.get("text") ?? false) ||
         editingEvent !== undefined ||
         attachment !== undefined;
+    $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
 
     $: {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(editingEvent.event.content.text),
+                        formatUserMentions(
+                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                        ),
                     );
                     selectedRange = undefined;
                     restoreSelection();
@@ -270,9 +273,9 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text?: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
+        let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -392,7 +395,7 @@
     }
 
     function sendMessage() {
-        const txt = inp.innerText?.trim();
+        const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
             dispatch("sendMessage", expandMentions(txt));
@@ -534,26 +537,31 @@
         {/if}
         {#if canEnterText}
             {#key textboxId}
-                <div
-                    data-gram="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                    tabindex={0}
-                    bind:this={inp}
-                    on:blur={saveSelection}
-                    class="textbox"
-                    class:recording
-                    class:dragging
-                    contenteditable
-                    on:paste
-                    {placeholder}
-                    spellcheck
-                    on:dragover={() => (dragging = true)}
-                    on:dragenter={() => (dragging = true)}
-                    on:dragleave={() => (dragging = false)}
-                    on:drop={onDrop}
-                    on:input={onInput}
-                    on:keypress={keyPress} />
+                <div class="container">
+                    {#if excessiveLinks}
+                        <div class="note">{$_("excessiveLinksNote")}</div>
+                    {/if}
+                    <div
+                        data-gram="false"
+                        data-gramm_editor="false"
+                        data-enable-grammarly="false"
+                        tabindex={0}
+                        bind:this={inp}
+                        on:blur={saveSelection}
+                        class="textbox"
+                        class:recording
+                        class:dragging
+                        contenteditable
+                        on:paste
+                        {placeholder}
+                        spellcheck
+                        on:dragover={() => (dragging = true)}
+                        on:dragenter={() => (dragging = true)}
+                        on:dragleave={() => (dragging = false)}
+                        on:drop={onDrop}
+                        on:input={onInput}
+                        on:keypress={keyPress} />
+                </div>
             {/key}
         {:else}
             <div class="textbox light">
@@ -634,9 +642,13 @@
     .send {
         flex: 0 0 15px;
     }
-    .textbox {
-        flex: 1;
+
+    .container {
         margin: 0 $sp3;
+        flex: 1;
+    }
+
+    .textbox {
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
         border-radius: var(--entry-input-rd);
@@ -686,5 +698,10 @@
     .recording {
         padding: 0 $sp3;
         flex: auto;
+    }
+
+    .note {
+        @include font(book, normal, fs-70);
+        margin-bottom: $sp2;
     }
 </style>

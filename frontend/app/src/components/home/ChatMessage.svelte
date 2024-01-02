@@ -535,6 +535,7 @@
                         content={msg.content}
                         edited={msg.edited}
                         height={mediaCalculatedHeight}
+                        on:removePreview
                         on:registerVote={registerVote}
                         on:goToMessageIndex
                         on:upgrade

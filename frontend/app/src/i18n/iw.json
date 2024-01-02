@@ -1204,5 +1204,8 @@
         "swapTokenTo": "החלף את {tokenIn} ל-{tokenOut}",
         "quoteTooLow": "התעריף הטוב ביותר שצוטט הוא {rate} {tokenOut} לכל {tokenIn} מ-{dex}. זה נותן {amountOut} {tokenOut} עבור {amountIn} {tokenIn}. אתה יכול להחליף רק אם הסכום הנקוב עולה על {minAmountOut}."
     },
-    "messageBlocked": "הודעה מוסתרת"
+    "messageBlocked": "הודעה מוסתרת",
+    "removePreviewQuestion": "להסיר את התצוגה המקדימה?",
+    "showPreview": "הצג תצוגה מקדימה",
+    "excessiveLinksNote": "תצוגות מקדימות של קישורים מוסתרות עבור הודעות עם יותר מ-5 קישורים."
 }

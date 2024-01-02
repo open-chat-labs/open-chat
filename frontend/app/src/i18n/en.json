@@ -1198,5 +1198,8 @@
         "disabled": "Disappearing messages disabled"
     },
     "offlineMessage": "Offline",
-    "messageBlocked": "Message hidden"
+    "messageBlocked": "Message hidden",
+    "removePreviewQuestion": "Remove preview?",
+    "showPreview": "Show preview",
+    "excessiveLinksNote": "Link previews are hidden for messages with more than 5 links."
 }

@@ -1416,7 +1416,9 @@ function mergeLocalUpdates(
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;
-        message.edited = true;
+        if (!localUpdates.linkRemoved) {
+            message.edited = true;
+        }
     }
 
     if (localUpdates?.undeletedContent !== undefined) {
