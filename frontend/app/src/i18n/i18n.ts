@@ -1,7 +1,6 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
-import { configKeys } from "../utils/config";
-
 import { get } from "svelte/store";
+import { configKeys } from "../utils/config";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -79,20 +78,30 @@ register("ru", () => import("./ru.json"));
 register("vi", () => import("./vi.json"));
 register("iw", () => import("./iw.json"));
 
-init({
-    fallbackLocale: "en",
-    initialLocale: getStoredLocale(),
-});
-
 export function getStoredLocale(): string {
     return localStorage.getItem(configKeys.locale) ?? (getLocaleFromNavigator() || "en");
 }
 
 export function setLocale(code: string): void {
-    locale.set(code);
-    localStorage.setItem(configKeys.locale, code);
+    const localeFromNavigator = getLocaleFromNavigator();
+
+    // If the browser is set to a dialect of the chosen locale, use that dialect, else use the locale passed in.
+    // Eg. if the user selects "en" and the browser is set to "en-US", then we use "en-US"
+    if (localeFromNavigator !== null && localeFromNavigator.startsWith(code)) {
+        code = localeFromNavigator;
+    }
+
+    if (get(locale) !== code) {
+        locale.set(code);
+        localStorage.setItem(configKeys.locale, code);
+    }
 }
 
 export function i18nFormatter(str: string): string {
     return get(_)(str);
 }
+
+init({
+    fallbackLocale: "en",
+    initialLocale: getStoredLocale(),
+});
