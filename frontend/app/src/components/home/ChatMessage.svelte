@@ -102,6 +102,7 @@
     let debug = false;
     let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
     let poll = msg.content.kind === "poll_content";
+    let prize = msg.content.kind === "prize_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
     let showReport = false;
@@ -120,7 +121,7 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
+    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll && !prize;
     $: mediaDimensions = extractDimensions(msg.content);
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
