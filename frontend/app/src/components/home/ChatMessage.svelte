@@ -87,7 +87,7 @@
     export let editing: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
-    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
+    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
 
