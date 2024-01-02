@@ -18,7 +18,7 @@
     });
 
     function sync() {
-        gate.issuerOrigin = selectedCredentialIssuer.value;
+        gate.issuerOrigin = selectedCredentialIssuer.origin;
         gate.credentialId = selectedCredential.value;
     }
 
