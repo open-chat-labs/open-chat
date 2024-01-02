@@ -441,7 +441,7 @@ import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 import { draftMessagesStore } from "./stores/draftMessages";
-import { disableLinksInText, extractDisabledLinks, extractEnabledLinks, stripLinkTags, insertLinkTags } from "./utils/linkPreviews";
+import { disableLinksInText, extractDisabledLinks, extractEnabledLinks, stripLinkDisabledMarker } from "./utils/linkPreviews";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1415,9 +1415,8 @@ export class OpenChat extends OpenChatAgentWorker {
     getTypingString = getTypingString;
     getMessageText = getMessageText;
     contentTypeToPermission = contentTypeToPermission;
-    stripLinkTags = stripLinkTags;
+    stripLinkDisabledMarker = stripLinkDisabledMarker;
     extractEnabledLinks = extractEnabledLinks;
-    insertLinkTags = insertLinkTags;
     disableLinksInText = disableLinksInText;
 
     communityAvatarUrl(id: string, avatar: DataContent): string {
@@ -3562,10 +3561,9 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const msg = {
             ...event.event,
-            edited: true,
             content: this.getMessageContent(text, undefined),
         };
-        localMessageUpdates.markContentEdited(msg.messageId, msg.content);
+        localMessageUpdates.markLinkRemoved(msg.messageId, msg.content);
 
         return this.sendRequest({
             kind: "editMessage",
@@ -3575,7 +3573,7 @@ export class OpenChat extends OpenChatAgentWorker {
         })
             .then((resp) => {
                 if (resp !== "success") {
-                    localMessageUpdates.revertEditedContent(msg.messageId);
+                    localMessageUpdates.revertLinkRemoved(msg.messageId);
                     return false;
                 }
                 return true;

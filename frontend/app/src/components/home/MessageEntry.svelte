@@ -89,13 +89,16 @@
         (permittedMessages.get("text") ?? false) ||
         editingEvent !== undefined ||
         attachment !== undefined;
+    $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
 
     $: {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(client.stripLinkTags(editingEvent.event.content.text)),
+                        formatUserMentions(
+                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                        ),
                     );
                     selectedRange = undefined;
                     restoreSelection();
@@ -395,7 +398,7 @@
         const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
-            dispatch("sendMessage", expandMentions(client.insertLinkTags(txt)));
+            dispatch("sendMessage", expandMentions(txt));
         }
         inp.textContent = "";
         dispatch("setTextContent", undefined);
@@ -534,26 +537,31 @@
         {/if}
         {#if canEnterText}
             {#key textboxId}
-                <div
-                    data-gram="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                    tabindex={0}
-                    bind:this={inp}
-                    on:blur={saveSelection}
-                    class="textbox"
-                    class:recording
-                    class:dragging
-                    contenteditable
-                    on:paste
-                    {placeholder}
-                    spellcheck
-                    on:dragover={() => (dragging = true)}
-                    on:dragenter={() => (dragging = true)}
-                    on:dragleave={() => (dragging = false)}
-                    on:drop={onDrop}
-                    on:input={onInput}
-                    on:keypress={keyPress} />
+                <div class="container">
+                    {#if excessiveLinks}
+                        <div class="note">{$_("excessiveLinksNote")}</div>
+                    {/if}
+                    <div
+                        data-gram="false"
+                        data-gramm_editor="false"
+                        data-enable-grammarly="false"
+                        tabindex={0}
+                        bind:this={inp}
+                        on:blur={saveSelection}
+                        class="textbox"
+                        class:recording
+                        class:dragging
+                        contenteditable
+                        on:paste
+                        {placeholder}
+                        spellcheck
+                        on:dragover={() => (dragging = true)}
+                        on:dragenter={() => (dragging = true)}
+                        on:dragleave={() => (dragging = false)}
+                        on:drop={onDrop}
+                        on:input={onInput}
+                        on:keypress={keyPress} />
+                </div>
             {/key}
         {:else}
             <div class="textbox light">
@@ -634,9 +642,13 @@
     .send {
         flex: 0 0 15px;
     }
-    .textbox {
-        flex: 1;
+
+    .container {
         margin: 0 $sp3;
+        flex: 1;
+    }
+
+    .textbox {
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
         border-radius: var(--entry-input-rd);
@@ -686,5 +698,10 @@
     .recording {
         padding: 0 $sp3;
         flex: auto;
+    }
+
+    .note {
+        @include font(book, normal, fs-70);
+        margin-bottom: $sp2;
     }
 </style>

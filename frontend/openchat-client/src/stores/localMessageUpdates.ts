@@ -42,10 +42,16 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
         }));
     }
     markContentEdited(messageId: bigint, content: MessageContent): void {
-        this.applyUpdate(messageId, (_) => ({ editedContent: content }));
+        this.applyUpdate(messageId, (_) => ({ editedContent: content, linkRemoved: false }));
     }
     revertEditedContent(messageId: bigint): void {
-        this.applyUpdate(messageId, (_) => ({ editedContent: undefined }));
+        this.applyUpdate(messageId, (_) => ({ editedContent: undefined, linkRemoved: false }));
+    }
+    markLinkRemoved(messageId: bigint, content: MessageContent): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: content, linkRemoved: true }));
+    }
+    revertLinkRemoved(messageId: bigint): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: undefined, linkRemoved: false }));
     }
     markReaction(messageId: bigint, reaction: LocalReaction): void {
         this.applyUpdate(messageId, (updates) => ({

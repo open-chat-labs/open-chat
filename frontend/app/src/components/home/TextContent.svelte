@@ -24,8 +24,12 @@
     $: expanded = !$lowBandwidth && $renderPreviews;
     $: text = truncateText(content.text);
     $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
-    // Show at most 3 link previews
-    $: linkMatch = client.extractEnabledLinks(content.text).slice(0, 3);
+    $: previewUrls = extractPreviewUrls(content.text);
+
+    function extractPreviewUrls(text: string): string[] {
+        const urls = client.extractEnabledLinks(text);
+        return urls.length <= 5 ? urls : [];
+    }
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -50,7 +54,7 @@
     <span class="edited-msg">({$_("edited")})</span>
 {/if}
 
-{#if linkMatch}
+{#if previewUrls.length > 0}
     {#if !expanded}
         <span on:click={expand} class="expand" title={$_("showPreview")}>
             <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
@@ -61,7 +65,7 @@
                 {me}
                 {pinned}
                 {fill}
-                links={linkMatch}
+                links={previewUrls}
                 {intersecting}
                 on:remove={removePreview} />
         </IntersectionObserver>

@@ -575,6 +575,7 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    linkRemoved: boolean;
     cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;

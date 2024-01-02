@@ -1208,5 +1208,7 @@
         "quoteTooLow": "Tỷ giá được trích dẫn tốt nhất là {rate} {tokenOut} trên {tokenIn} từ {dex}. Điều này mang lại {amountOut} {tokenOut} cho {amountIn} {tokenIn}. Bạn chỉ có thể hoán đổi nếu số tiền trích dẫn vượt quá {minAmountOut}."
     },
     "messageBlocked": "Tin nhắn bị ẩn",
-    "removePreviewQuestion": "Xóa bản xem trước?"
+    "removePreviewQuestion": "Xóa bản xem trước?",
+    "showPreview": "Hiển thị bản xem trước",
+    "excessiveLinksNote": "Bản xem trước liên kết bị ẩn đối với các thư có hơn 5 liên kết."
 }

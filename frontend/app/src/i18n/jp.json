@@ -1208,5 +1208,7 @@
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
     },
     "messageBlocked": "メッセージが隠されています",
-    "removePreviewQuestion": "プレビューを削除しますか?"
+    "removePreviewQuestion": "プレビューを削除しますか?",
+    "showPreview": "ショープレビュー",
+    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。"
 }

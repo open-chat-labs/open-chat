@@ -147,7 +147,8 @@
                 <YouTubePreview
                     {pinned}
                     fill={fill && previews.length === 1}
-                    youtubeMatch={preview.regexMatch} />
+                    youtubeMatch={preview.regexMatch}
+                    on:rendered={(ev) => adjustScroll(ev.detail)} />
             {:else}
                 <GenericPreview
                     url={preview.url}

@@ -1207,5 +1207,7 @@
         "quoteTooLow": "Лучшая заявленная ставка составляет {rate} {tokenOut} за {tokenIn} от {dex}. Это дает {amountOut} {tokenOut} для {amountIn} {tokenIn}. Вы можете обменять только в том случае, если заявленная сумма превышает {minAmountOut}."
     },
     "messageBlocked": "Сообщение скрыто",
-    "removePreviewQuestion": "Удалить предварительный просмотр?"
+    "removePreviewQuestion": "Удалить предварительный просмотр?",
+    "showPreview": "Показать предварительный просмотр",
+    "excessiveLinksNote": "Предварительный просмотр ссылок скрыт для сообщений, содержащих более 5 ссылок."
 }

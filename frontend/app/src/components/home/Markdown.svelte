@@ -58,7 +58,7 @@
     $: {
         let parsed = replaceEveryone(
             replaceUserGroupIds(
-                replaceUserIds(replaceDatetimes(client.stripLinkTags(text))),
+                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
                 $userGroups,
             ),
         );

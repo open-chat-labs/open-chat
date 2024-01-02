@@ -1207,5 +1207,7 @@
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}."
     },
     "messageBlocked": "Message masqué",
-    "removePreviewQuestion": "Supprimer l'aperçu ?"
+    "removePreviewQuestion": "Supprimer l'aperçu ?",
+    "showPreview": "Afficher l'aperçu",
+    "excessiveLinksNote": "Les aperçus des liens sont masqués pour les messages contenant plus de 5 liens."
 }
