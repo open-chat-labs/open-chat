@@ -91,9 +91,10 @@ export function setLocale(code: string): void {
         code = localeFromNavigator;
     }
 
+    localStorage.setItem(configKeys.locale, code);
+
     if (get(locale) !== code) {
         locale.set(code);
-        localStorage.setItem(configKeys.locale, code);
     }
 }
 
