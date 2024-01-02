@@ -26,7 +26,7 @@
     export let fill: boolean;
     export let pinned: boolean;
     export let crypto: boolean;
-    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
+    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let deleted: boolean;
     export let undeleting: boolean;
 
