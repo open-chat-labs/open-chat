@@ -1389,6 +1389,43 @@ export class OpenChat extends OpenChatAgentWorker {
         return "/assets/group.svg";
     }
 
+    toShortTimeString(date: Date): string {
+        return toShortTimeString(date, this._liveState.locale);
+    }
+
+    toMonthString(date: Date): string {
+        return toMonthString(date, this._liveState.locale);
+    }
+
+    formatMessageDate(
+        timestamp: bigint,
+        today: string,
+        yesterday: string,
+        timeIfToday = false,
+        short = false,
+    ): string {
+        return formatMessageDate(
+            timestamp,
+            today,
+            yesterday,
+            this._liveState.locale,
+            timeIfToday,
+            short,
+        );
+    }
+
+    toDatetimeString(date: Date): string {
+        return toDatetimeString(date, this._liveState.locale);
+    }
+
+    toDateString(date: Date): string {
+        return toDateString(date, this._liveState.locale);
+    }
+
+    toLongDateString(date: Date): string {
+        return toLongDateString(date, this._liveState.locale);
+    }
+
     /**
      * Wrap a bunch of pure utility functions
      */
@@ -1398,9 +1435,6 @@ export class OpenChat extends OpenChatAgentWorker {
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     parseBigInt = parseBigInt;
-    toShortTimeString = toShortTimeString;
-    toMonthString = toMonthString;
-    formatMessageDate = formatMessageDate;
     userIdsFromEvents = userIdsFromEvents;
     missingUserIds = missingUserIds;
     userOrUserGroupName = userOrUserGroupName;
@@ -1408,7 +1442,6 @@ export class OpenChat extends OpenChatAgentWorker {
     extractUserIdsFromMentions = extractUserIdsFromMentions;
     toRecord2 = toRecord2;
     toRecord = toRecord;
-    toDatetimeString = toDatetimeString;
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
@@ -2221,8 +2254,6 @@ export class OpenChat extends OpenChatAgentWorker {
     disableAllProposalFilters = disableAllProposalFilters;
     toggleProposalFilter = toggleProposalFilter;
     formatTimeRemaining = formatTimeRemaining;
-    toDateString = toDateString;
-    toLongDateString = toLongDateString;
     formatLastOnlineDate = formatLastOnlineDate;
     buildUserAvatarUrl = buildUserAvatarUrl;
     buildUsernameList = buildUsernameList;

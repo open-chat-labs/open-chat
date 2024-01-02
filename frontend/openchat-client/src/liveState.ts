@@ -63,6 +63,7 @@ import {
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
 import { offlineStore } from "./stores/network";
 import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
+import { locale } from "svelte-i18n";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -115,6 +116,7 @@ export class LiveState {
     suspendedUser!: boolean;
     platformModerator!: boolean;
     offlineStore!: boolean;
+    locale!: string;
 
     constructor() {
         offlineStore.subscribe((offline) => (this.offlineStore = offline));
@@ -167,5 +169,6 @@ export class LiveState {
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
         draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
+        locale.subscribe((data) => (this.locale = data ?? "en"));
     }
 }
