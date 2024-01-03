@@ -157,7 +157,7 @@
                             eventIndex={thread.rootMessage.index}
                             timestamp={thread.rootMessage.timestamp}
                             expiresAt={thread.rootMessage.expiresAt}
-                            dateFormatter={client.toDatetimeString}
+                            dateFormatter={(date) => client.toDatetimeString(date)}
                             msg={thread.rootMessage.event} />
                     </div>
                     {#if missingMessages > 0}
@@ -200,7 +200,7 @@
                                 eventIndex={evt.index}
                                 timestamp={evt.timestamp}
                                 expiresAt={evt.expiresAt}
-                                dateFormatter={client.toDatetimeString}
+                                dateFormatter={(date) => client.toDatetimeString(date)}
                                 msg={evt.event} />
                         {/each}
                     {/each}
