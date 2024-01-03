@@ -45,7 +45,7 @@ pub struct CanisterEcdsaRequest {
 pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Result<String, String> {
     let body = match sign_envelope(request.envelope_content, request.public_key, request.key_id).await {
         Ok(bytes) => bytes,
-        Err(error) => return Err(format!("{error:?}")),
+        Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
     };
 
     let (response,) = ic_cdk::api::management_canister::http_request::http_request(
@@ -66,7 +66,7 @@ pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Resu
         100_000_000_000,
     )
     .await
-    .unwrap();
+    .map_err(|error| format!("Failed to make http request: {error:?}"))?;
 
     Ok(String::from_utf8(response.body).unwrap())
 }
