@@ -21,7 +21,7 @@ fn run() {
 }
 
 async fn run_async() {
-    let (nns_governance_canister_id, now) = read_state(|state| (state.data.nns_governance_canister_id, state.env.now()));
+    let nns_governance_canister_id = read_state(|state| state.data.nns_governance_canister_id);
 
     if let Ok(response) = nns_governance_canister_c2c_client::list_neurons(
         nns_governance_canister_id,
@@ -32,6 +32,8 @@ async fn run_async() {
     )
     .await
     {
+        let now = read_state(|state| state.env.now());
+
         let neurons_to_spawn: Vec<_> = response
             .full_neurons
             .iter()
@@ -47,7 +49,6 @@ async fn run_async() {
             .collect();
 
         mutate_state(|state| {
-            let now = state.env.now();
             state.data.neurons = Timestamped::new(response.full_neurons, now);
         });
 
