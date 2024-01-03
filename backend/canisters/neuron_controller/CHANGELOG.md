@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- One time job to transfer ICP from NeuronController to OpenChat treasury ([#5106](https://github.com/open-chat-labs/open-chat/pull/5106))
+
 ### Changed
 
 - Only disburse 1 ICP rather than full amount until we've seen it working ([#5103](https://github.com/open-chat-labs/open-chat/pull/5103))
