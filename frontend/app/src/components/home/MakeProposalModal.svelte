@@ -11,7 +11,7 @@
         type OpenChat,
         type Treasury,
     } from "openchat-client";
-    import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
+    import { isPrincipalValid, isSubAccountValid, isUrl } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -88,6 +88,7 @@
     $: addTokenHowToBuyUrl = "";
     $: addTokenInfoUrl = "";
     $: addTokenTransactionUrlFormat = "";
+    $: addTokenLogo = "";
     $: valid =
         !insufficientFunds &&
         titleValid &&
@@ -102,7 +103,8 @@
             (selectedProposalType === "add_token" &&
                 isPrincipalValid(addTokenLedgerCanisterId) &&
                 addTokenHowToBuyUrl.length > 0 &&
-                addTokenTransactionUrlFormat.length > 0));
+                addTokenTransactionUrlFormat.length > 0 &&
+                isTokenLogoValid(addTokenLogo)));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -187,6 +189,7 @@
                         addTokenInfoUrl,
                         addTokenHowToBuyUrl,
                         addTokenTransactionUrlFormat,
+                        addTokenLogo,
                     ),
                 };
             }
@@ -227,6 +230,10 @@
         return `${summary}
 
 > Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
+    }
+
+    function isTokenLogoValid(logo: string): boolean {
+        return logo.length === 0 || isUrl(logo);
     }
 </script>
 
@@ -431,6 +438,16 @@
                                 maxlength={100}
                                 bind:value={addTokenTransactionUrlFormat}
                                 placeholder={$_("proposal.maker.enterTransactionUrlFormat")} />
+                        </section>
+                        <section>
+                            <Legend label={$_("proposal.maker.tokenLogo")} />
+                            <Input
+                                disabled={busy}
+                                invalid={!isTokenLogoValid(addTokenLogo)}
+                                minlength={0}
+                                maxlength={5000}
+                                bind:value={addTokenLogo}
+                                placeholder={"data:image/svg+xml;base64,PHN2ZyB3aW..."} />
                         </section>
                     </div>
                 {/if}

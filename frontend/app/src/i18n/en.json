@@ -816,7 +816,8 @@
             "howToBuyUrl": "How to buy url",
             "enterHowToBuyUrl": "Enter a url showing how to buy the token",
             "transactionUrlFormat": "Transaction url format",
-            "enterTransactionUrlFormat": "Eg. https://token.com/?index={transaction_index}"
+            "enterTransactionUrlFormat": "Eg. https://token.com/?index={transaction_index}",
+            "tokenLogo": "Logo"
         }
     },
     "yes": "Yes",
