@@ -6,7 +6,7 @@ use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{Cryptocurrency, DiamondMembershipPlanDuration, DiamondMembershipSubscription};
+use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, DiamondMembershipSubscription};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -68,11 +68,13 @@ fn can_upgrade_to_diamond(pay_in_chat: bool, lifetime: bool) {
         .subscription
         .is_active());
 
+    let fees = DiamondMembershipFees::default();
+
     let (expected_price, transfer_fee) = if pay_in_chat {
-        (duration.chat_price_e8s() as u128, Cryptocurrency::CHAT.fee().unwrap())
+        (fees.chat_price_e8s(duration) as u128, Cryptocurrency::CHAT.fee().unwrap())
     } else {
         (
-            duration.icp_price_e8s() as u128,
+            fees.icp_price_e8s(duration) as u128,
             Cryptocurrency::InternetComputer.fee().unwrap(),
         )
     };
@@ -129,9 +131,11 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         .is_active());
 
     let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
+    let fees = DiamondMembershipFees::default();
+
     assert_eq!(
         new_balance,
-        1_000_000_000 - (2 * DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() as u128)
+        1_000_000_000 - (2 * fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128)
     );
 }
 
@@ -176,10 +180,12 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
     };
     client::upgrade_user(&user_b, env, canister_ids, *controller, duration);
 
+    let fees = DiamondMembershipFees::default();
+
     let amount_to_referer = if lifetime {
-        DiamondMembershipPlanDuration::OneYear.icp_price_e8s() / 2
+        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneYear) / 2
     } else {
-        DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() / 2
+        fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) / 2
     } as u128;
 
     // Check the referrer has been credited with half the Diamond payment
@@ -188,9 +194,11 @@ fn membership_payment_shared_with_referrer(lifetime: bool) {
 
     // Check the treasury has received the remainder less the fees
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let fees = DiamondMembershipFees::default();
+
     assert_eq!(
         treasury_balance - init_treasury_balance,
-        u128::from(duration.icp_price_e8s()) - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
+        u128::from(fees.icp_price_e8s(duration)) - amount_to_referer - (3 * Cryptocurrency::InternetComputer.fee().unwrap())
     );
 }
 
@@ -231,6 +239,7 @@ fn update_subscription_succeeds(disable: bool) {
     tick_many(env, 5);
 
     let user_response = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
+    let fees = DiamondMembershipFees::default();
 
     if disable {
         assert_eq!(
@@ -245,7 +254,7 @@ fn update_subscription_succeeds(disable: bool) {
         let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id);
         assert_eq!(
             new_balance,
-            1_000_000_000 - DiamondMembershipPlanDuration::OneMonth.icp_price_e8s() as u128
+            1_000_000_000 - fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth) as u128
         );
     } else {
         let one_year_millis = DiamondMembershipPlanDuration::OneYear.as_millis();
@@ -262,8 +271,8 @@ fn update_subscription_succeeds(disable: bool) {
         assert_eq!(
             new_balance,
             1_000_000_000
-                - (DiamondMembershipPlanDuration::OneMonth.icp_price_e8s()
-                    + DiamondMembershipPlanDuration::OneYear.icp_price_e8s()) as u128
+                - (fees.icp_price_e8s(DiamondMembershipPlanDuration::OneMonth)
+                    + fees.icp_price_e8s(DiamondMembershipPlanDuration::OneYear)) as u128
         );
     }
 }

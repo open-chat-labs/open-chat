@@ -309,6 +309,25 @@ type SetUserUpgradeConcurrencyResponse = variant {
     Success;
 };
 
+type SetDiamondMembershipFeesArgs = record {
+    fees : record {
+        chat_fees : DiamondMembershipFeesByDuration;
+        icp_fees : DiamondMembershipFeesByDuration;
+    };
+};
+
+type DiamondMembershipFeesByDuration = record {
+    one_month : nat64;
+    three_months : nat64;
+    one_year : nat64;
+    lifetime : nat64;
+};
+
+type SetDiamondMembershipFeesResponse = variant {
+    Success;
+    Invalid;
+};
+
 type AddReferralCodesArgs = record {
     referral_type : ReferralType;
     codes : vec text;
@@ -381,6 +400,7 @@ service : {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency : (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
+    set_diamond_membership_fees : (SetDiamondMembershipFeesArgs) -> (SetDiamondMembershipFeesResponse);
 
     // Only callable by OC dev team dfx identity
     add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);

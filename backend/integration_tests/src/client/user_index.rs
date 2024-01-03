@@ -29,7 +29,8 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, UserId, UserSummary,
+        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
+        DiamondMembershipPlanDuration, UserId, UserSummary,
     };
     use user_index_canister::users_v2::UserGroup;
 
@@ -80,6 +81,8 @@ pub mod happy_path {
         pay_in_chat: bool,
         recurring: bool,
     ) -> DiamondMembershipDetails {
+        let fees = DiamondMembershipFees::default();
+
         let response = super::pay_for_diamond_membership(
             env,
             sender,
@@ -87,7 +90,7 @@ pub mod happy_path {
             &user_index_canister::pay_for_diamond_membership::Args {
                 duration,
                 token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
-                expected_price_e8s: if pay_in_chat { duration.chat_price_e8s() } else { duration.icp_price_e8s() },
+                expected_price_e8s: if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) },
                 recurring,
             },
         );
