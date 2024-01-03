@@ -35,6 +35,59 @@ pub enum DiamondMembershipPlanDuration {
     Lifetime = 255,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct DiamondMembershipFees {
+    pub chat_fees: DiamondMembershipFeesByDuration,
+    pub icp_fees: DiamondMembershipFeesByDuration,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct DiamondMembershipFeesByDuration {
+    pub one_month: u64,
+    pub three_months: u64,
+    pub one_year: u64,
+    pub lifetime: u64,
+}
+
+impl DiamondMembershipFees {
+    pub fn chat_price_e8s(&self, duration: DiamondMembershipPlanDuration) -> u64 {
+        match duration {
+            DiamondMembershipPlanDuration::OneMonth => self.chat_fees.one_month,
+            DiamondMembershipPlanDuration::ThreeMonths => self.chat_fees.three_months,
+            DiamondMembershipPlanDuration::OneYear => self.chat_fees.one_year,
+            DiamondMembershipPlanDuration::Lifetime => self.chat_fees.lifetime,
+        }
+    }
+
+    pub fn icp_price_e8s(&self, duration: DiamondMembershipPlanDuration) -> u64 {
+        match duration {
+            DiamondMembershipPlanDuration::OneMonth => self.icp_fees.one_month,
+            DiamondMembershipPlanDuration::ThreeMonths => self.icp_fees.three_months,
+            DiamondMembershipPlanDuration::OneYear => self.icp_fees.one_year,
+            DiamondMembershipPlanDuration::Lifetime => self.icp_fees.lifetime,
+        }
+    }
+}
+
+impl Default for DiamondMembershipFees {
+    fn default() -> Self {
+        DiamondMembershipFees {
+            chat_fees: DiamondMembershipFeesByDuration {
+                one_month: 200_000_000,    // 2 CHAT
+                three_months: 500_000_000, // 5 CHAT
+                one_year: 1_500_000_000,   // 15 CHAT
+                lifetime: 6_000_000_000,   // 60 CHAT
+            },
+            icp_fees: DiamondMembershipFeesByDuration {
+                one_month: 15_000_000,    // 0.15 ICP
+                three_months: 35_000_000, // 0.35 ICP
+                one_year: 100_000_000,    // 1 ICP
+                lifetime: 400_000_000,    // 4 ICP
+            },
+        }
+    }
+}
+
 impl DiamondMembershipPlanDuration {
     // Using 1 year = 365.25 days
     const MONTH_IN_MS: Milliseconds = ((4 * 365) + 1) * 24 * 60 * 60 * 1000 / (4 * 12);
@@ -45,24 +98,6 @@ impl DiamondMembershipPlanDuration {
             Self::ThreeMonths => 3 * Self::MONTH_IN_MS,
             Self::OneYear => 12 * Self::MONTH_IN_MS,
             Self::Lifetime => 1000 * 12 * Self::MONTH_IN_MS,
-        }
-    }
-
-    pub const fn icp_price_e8s(&self) -> u64 {
-        match self {
-            DiamondMembershipPlanDuration::OneMonth => 15_000_000,    // 0.15 ICP
-            DiamondMembershipPlanDuration::ThreeMonths => 35_000_000, // 0.35 ICP
-            DiamondMembershipPlanDuration::OneYear => 100_000_000,    // 1 ICP
-            DiamondMembershipPlanDuration::Lifetime => 400_000_000,   // 4 ICP
-        }
-    }
-
-    pub const fn chat_price_e8s(&self) -> u64 {
-        match self {
-            DiamondMembershipPlanDuration::OneMonth => 200_000_000,    // 2 CHAT
-            DiamondMembershipPlanDuration::ThreeMonths => 500_000_000, // 5 CHAT
-            DiamondMembershipPlanDuration::OneYear => 1_500_000_000,   // 15 CHAT
-            DiamondMembershipPlanDuration::Lifetime => 6_000_000_000,  // 60 CHAT
         }
     }
 
