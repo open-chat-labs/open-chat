@@ -473,6 +473,7 @@
 
         border-left: var(--bw) solid var(--bd);
         background: var(--panel-right-bg);
+        max-width: 500px;
         position: relative;
 
         @include size-above(xxl) {
@@ -502,6 +503,10 @@
             @include mobile() {
                 min-width: unset;
             }
+        }
+
+        &.resized {
+            max-width: none;
         }
 
         @include mobile() {
