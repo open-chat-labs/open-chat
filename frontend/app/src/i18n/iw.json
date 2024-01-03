@@ -664,7 +664,8 @@
             "howToBuyUrl": "איך לקנות כתובת אתר",
             "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
             "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
-            "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}"
+            "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}",
+            "tokenLogo": "סֵמֶל"
         },
         "neuronControllerAction": "פעולות בקר נוירון"
     },

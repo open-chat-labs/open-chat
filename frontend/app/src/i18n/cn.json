@@ -666,7 +666,8 @@
             "howToBuyUrl": "如何购买网址",
             "enterHowToBuyUrl": "输入显示如何购买代币的网址",
             "transactionUrlFormat": "交易url格式",
-            "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}"
+            "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}",
+            "tokenLogo": "标识"
         },
         "neuronControllerAction": "神经元控制器动作"
     },
