@@ -23,7 +23,6 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
-        "process": "^0.11.10",
         "ts-loader": "^9.4.4",
         "typescript": "^5.1.6",
         "wait-on": "^7.0.1"
