@@ -56,8 +56,9 @@ import {
     defaultOptionalChatPermissions,
     getContentAsFormattedText,
     getContentAsText,
+    messageContextsEqual,
 } from "openchat-shared";
-import { distinctBy, groupWhile } from "../utils/list";
+import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
@@ -775,10 +776,46 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 export function mergeServerEvents(
     events: EventWrapper<ChatEvent>[],
     newEvents: EventWrapper<ChatEvent>[],
+    messageContext: MessageContext,
 ): EventWrapper<ChatEvent>[] {
+    updateReplyContexts(events, newEvents, messageContext);
+
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
     merged.sort(sortByTimestampThenEventIndex);
     return merged;
+}
+
+function updateReplyContexts(
+    events: EventWrapper<ChatEvent>[],
+    newEvents: EventWrapper<ChatEvent>[],
+    messageContext: MessageContext,
+) {
+    if (events.length == 0) return;
+
+    const lookup = toRecordFiltered(
+        newEvents,
+        (e) => e.index,
+        (e) => e,
+        (e) => e.event.kind === "message",
+    );
+
+    for (const event of events) {
+        if (
+            event.event.kind === "message" &&
+            event.event.repliesTo?.kind === "rehydrated_reply_context" &&
+            (event.event.repliesTo.sourceContext === undefined ||
+                messageContextsEqual(event.event.repliesTo.sourceContext, messageContext))
+        ) {
+            const updated = lookup[event.event.repliesTo.eventIndex];
+            if (updated?.event.kind === "message") {
+                event.event.repliesTo = {
+                    ...event.event.repliesTo,
+                    content: updated.event.content,
+                    edited: updated.event.edited,
+                };
+            }
+        }
+    }
 }
 
 function sortByTimestampThenEventIndex(

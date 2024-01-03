@@ -442,7 +442,12 @@ import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 import { draftMessagesStore } from "./stores/draftMessages";
 import { locale } from "svelte-i18n";
-import { disableLinksInText, extractDisabledLinks, extractEnabledLinks, stripLinkDisabledMarker } from "./utils/linkPreviews";
+import {
+    disableLinksInText,
+    extractDisabledLinks,
+    extractEnabledLinks,
+    stripLinkDisabledMarker,
+} from "./utils/linkPreviews";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3072,7 +3077,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (threadRootMessageIndex === undefined) {
             chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-                mergeServerEvents(events, newEvents),
+                mergeServerEvents(events, newEvents, context),
             );
             const selectedThreadRootMessageIndex = this._liveState.selectedThreadRootMessageIndex;
             if (selectedThreadRootMessageIndex !== undefined) {
@@ -3091,7 +3096,9 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
             }
         } else if (messageContextsEqual(context, this._liveState.selectedMessageContext)) {
-            threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
+            threadServerEventsStore.update((events) =>
+                mergeServerEvents(events, newEvents, context),
+            );
         }
 
         if (expiredEventRanges.length > 0) {
@@ -3588,7 +3595,11 @@ export class OpenChat extends OpenChatAgentWorker {
         return Promise.resolve(false);
     }
 
-    hideLinkPreview(messageContext: MessageContext, event: EventWrapper<Message>, link: string): Promise<boolean> {
+    hideLinkPreview(
+        messageContext: MessageContext,
+        event: EventWrapper<Message>,
+        link: string,
+    ): Promise<boolean> {
         if (event.event.content.kind !== "text_content") {
             return Promise.resolve(false);
         }
