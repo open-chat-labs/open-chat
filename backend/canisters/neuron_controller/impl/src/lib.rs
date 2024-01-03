@@ -71,16 +71,11 @@ struct Data {
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
-    #[serde(default = "cmc")]
     pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub neurons: Timestamped<Vec<Neuron>>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
-}
-
-fn cmc() -> CanisterId {
-    CanisterId::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()
 }
 
 impl Data {
