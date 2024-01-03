@@ -56,8 +56,9 @@ impl RuntimeState {
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
             canister_ids: CanisterIds {
-                nns_governance_canister_id: self.data.nns_governance_canister_id,
-                nns_ledger_canister_id: self.data.nns_ledger_canister_id,
+                nns_governance_canister: self.data.nns_governance_canister_id,
+                nns_ledger_canister: self.data.nns_ledger_canister_id,
+                cycles_minting_canister: self.data.cycles_minting_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -70,10 +71,16 @@ struct Data {
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
+    #[serde(default = "cmc")]
+    pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub neurons: Timestamped<Vec<Neuron>>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
+}
+
+fn cmc() -> CanisterId {
+    CanisterId::from_text("rkp4c-7iaaa-aaaaa-aaaca-cai").unwrap()
 }
 
 impl Data {
@@ -81,6 +88,7 @@ impl Data {
         governance_principals: Vec<Principal>,
         nns_governance_canister_id: CanisterId,
         nns_ledger_canister_id: CanisterId,
+        cycles_minting_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -89,6 +97,7 @@ impl Data {
             governance_principals,
             nns_governance_canister_id,
             nns_ledger_canister_id,
+            cycles_minting_canister_id,
             cycles_dispenser_canister_id,
             neurons: Timestamped::default(),
             rng_seed: [0; 32],
@@ -126,7 +135,8 @@ pub struct Metrics {
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
-    pub nns_governance_canister_id: CanisterId,
-    pub nns_ledger_canister_id: CanisterId,
+    pub nns_governance_canister: CanisterId,
+    pub nns_ledger_canister: CanisterId,
+    pub cycles_minting_canister: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

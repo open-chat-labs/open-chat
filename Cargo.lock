@@ -1554,6 +1554,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "cycles_minting_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+]
+
+[[package]]
+name = "cycles_minting_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "cycles_minting_canister",
+ "ic-cdk 0.11.3",
+ "types",
+]
+
+[[package]]
 name = "dashmap"
 version = "5.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4036,12 +4056,14 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "cycles_minting_canister_c2c_client",
  "hex",
  "http_request",
  "human_readable",
  "ic-cdk 0.11.3",
  "ic-cdk-macros 0.7.0",
  "ic-cdk-timers",
+ "ic-ledger-types",
  "ic-stable-structures",
  "ic-transport-types",
  "icrc-ledger-types",

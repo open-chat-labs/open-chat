@@ -10,6 +10,7 @@ use ic_cdk::api::management_canister::http_request::{
 use ic_cdk::query;
 use ic_transport_types::EnvelopeContent;
 use neuron_controller_canister::manage_nns_neuron::{Response::*, *};
+use nns_governance_canister::types::manage_neuron::Command;
 use nns_governance_canister::types::ManageNeuron;
 use rand::Rng;
 use types::CanisterId;
@@ -20,13 +21,17 @@ const IC_URL: &str = "https://icp-api.io";
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn manage_nns_neuron(args: Args) -> Response {
+    manage_nns_neuron_impl(args.neuron_id, args.command).await
+}
+
+pub(crate) async fn manage_nns_neuron_impl(neuron_id: u64, command: Command) -> Response {
     let PrepareResult {
         envelope_content,
         request_url,
         public_key,
         key_id,
         this_canister_id,
-    } = mutate_state(|state| prepare(args, state));
+    } = mutate_state(|state| prepare(neuron_id, command, state));
 
     let body = match sign_envelope(envelope_content, public_key, key_id).await {
         Ok(bytes) => bytes,
@@ -71,7 +76,7 @@ struct PrepareResult {
     this_canister_id: CanisterId,
 }
 
-fn prepare(args: Args, state: &mut RuntimeState) -> PrepareResult {
+fn prepare(neuron_id: u64, command: Command, state: &mut RuntimeState) -> PrepareResult {
     let nonce: [u8; 8] = state.env.rng().gen();
     let nns_governance_canister_id = state.data.nns_governance_canister_id;
 
@@ -81,7 +86,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> PrepareResult {
         sender: state.data.get_principal(),
         canister_id: nns_governance_canister_id,
         method_name: "manage_neuron".to_string(),
-        arg: candid::encode_one(ManageNeuron::from(args)).unwrap(),
+        arg: candid::encode_one(ManageNeuron::new(neuron_id, command)).unwrap(),
     };
 
     PrepareResult {
