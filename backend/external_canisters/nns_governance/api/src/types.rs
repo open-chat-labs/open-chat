@@ -2,6 +2,7 @@ use candid::{CandidType, Principal};
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
+use types::TimestampMillis;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Empty {}
@@ -35,6 +36,16 @@ pub struct Neuron {
     pub dissolve_state: Option<neuron::DissolveState>,
 }
 
+impl Neuron {
+    pub fn is_dissolved(&self, now: TimestampMillis) -> bool {
+        match self.dissolve_state {
+            Some(neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => ts * 1000 < now,
+            None => true,
+            _ => false,
+        }
+    }
+}
+
 pub mod neuron {
     use super::*;
 
@@ -55,6 +66,16 @@ pub struct ManageNeuron {
     pub id: Option<NeuronId>,
     pub neuron_id_or_subaccount: Option<manage_neuron::NeuronIdOrSubaccount>,
     pub command: Option<manage_neuron::Command>,
+}
+
+impl ManageNeuron {
+    pub fn new(neuron_id: u64, command: manage_neuron::Command) -> ManageNeuron {
+        ManageNeuron {
+            id: Some(NeuronId { id: neuron_id }),
+            neuron_id_or_subaccount: None,
+            command: Some(command),
+        }
+    }
 }
 
 pub mod manage_neuron {
@@ -144,7 +165,7 @@ pub mod manage_neuron {
         pub source_neuron_id: Option<NeuronId>,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
     pub struct Spawn {
         pub new_controller: Option<Principal>,
         pub nonce: Option<u64>,
