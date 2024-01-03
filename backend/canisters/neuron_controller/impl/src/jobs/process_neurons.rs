@@ -4,6 +4,7 @@ use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
+use tracing::info;
 use types::{Milliseconds, Timestamped};
 use utils::canister_timers::run_now_then_interval;
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
@@ -70,6 +71,7 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) {
         // Only spawn when the modulation is at least 102.5%
         if modulation >= 250 {
             for neuron_id in neuron_ids {
+                info!(neuron_id, "Spawning neuron from maturity");
                 manage_nns_neuron_impl(neuron_id, Command::Spawn(Spawn::default())).await;
             }
         }
@@ -78,6 +80,7 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) {
 
 async fn disburse_neurons(neuron_ids: Vec<u64>) {
     for neuron_id in neuron_ids {
+        info!(neuron_id, "Disbursing neuron");
         manage_nns_neuron_impl(
             neuron_id,
             Command::Disburse(Disburse {
