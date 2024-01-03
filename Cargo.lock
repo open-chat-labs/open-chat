@@ -4110,7 +4110,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_time",
- "ic-ledger-types",
  "serde",
  "serde_json",
  "types",

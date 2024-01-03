@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Only disburse 1 ICP rather than full amount until we've seen it working ([#5103](https://github.com/open-chat-labs/open-chat/pull/5103))
+
 ## [[2.0.993](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.993-neuron_controller)] - 2024-01-03
 
 ### Added

@@ -1,6 +1,7 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
+use nns_governance_canister::types::manage_neuron::disburse::Amount;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
@@ -79,13 +80,19 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) {
 }
 
 async fn disburse_neurons(neuron_ids: Vec<u64>) {
+    let account = nns_governance_canister::types::AccountIdentifier {
+        hash: AccountIdentifier::new(&SNS_GOVERNANCE_CANISTER_ID, &DEFAULT_SUBACCOUNT)
+            .as_ref()
+            .to_vec(),
+    };
+
     for neuron_id in neuron_ids {
         info!(neuron_id, "Disbursing neuron");
         manage_nns_neuron_impl(
             neuron_id,
             Command::Disburse(Disburse {
-                to_account: Some(AccountIdentifier::new(&SNS_GOVERNANCE_CANISTER_ID, &DEFAULT_SUBACCOUNT)),
-                amount: None,
+                to_account: Some(account.clone()),
+                amount: Some(Amount { e8s: E8S_PER_ICP }),
             }),
         )
         .await;
