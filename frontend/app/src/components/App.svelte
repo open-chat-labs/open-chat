@@ -72,12 +72,6 @@
 
     setContext<OpenChat>("client", client);
 
-    locale.subscribe((code) => {
-        if (code) {
-            client.setLocale(code);
-        }
-    });
-
     $: identityState = client.identityState;
     $: landingPageRoute = isLandingPageRoute($pathParams);
     $: anonUser = client.anonUser;
