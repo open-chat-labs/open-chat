@@ -8,7 +8,6 @@
         title: string | null | undefined;
         description: string | null | undefined;
         image: string | null | undefined;
-        removed: boolean;
     };
 
     const dispatch = createEventDispatcher();
@@ -27,11 +26,16 @@
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
             previewPromise = previewPromise ?? loadPreview(url);
-            previewPromise.then(() => {
-                // only render the preview if we are *still* intersecting
-                if (intersecting && !$eventListScrolling) {
-                    rendered = true;
-                    dispatch("rendered", url);
+            previewPromise.then((preview) => {
+                if (
+                    preview.title !== undefined ||
+                    preview.description !== undefined ||
+                    preview.image !== undefined
+                ) {
+                    if (intersecting && !$eventListScrolling) {
+                        rendered = true;
+                        dispatch("rendered", url);
+                    }
                 }
             });
         }
@@ -57,7 +61,6 @@
             title,
             description,
             image: image ? new URL(image, url).toString() : undefined,
-            removed: false,
         };
     }
 
@@ -71,7 +74,9 @@
         {#if preview !== undefined}
             <div bind:this={previewWrapper}>
                 {#if preview.title}
-                    <a class="title" href={preview.url} target="_blank">{preview.title}</a>
+                    <div class="title">
+                        <a href={preview.url} target="_blank">{preview.title}</a>
+                    </div>
                 {/if}
                 {#if preview.description}
                     <p class="desc">{preview.description}</p>
@@ -94,7 +99,7 @@
 <style lang="scss">
     .title {
         @include font(bold, normal, fs-120);
-        margin: $sp3 0 $sp2 0;
+        margin: $sp3 0 $sp3 0;
 
         &:hover {
             text-decoration: underline;

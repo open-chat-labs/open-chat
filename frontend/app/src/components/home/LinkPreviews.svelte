@@ -136,8 +136,10 @@
         class:visible={preview.kind !== "generic"}
         class:me>
         {#if me}
-            <div class="remove" class:rtl={$rtlStore} on:click={() => removePreview(preview)}>
-                <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
+            <div class="remove-wrapper" class:rtl={$rtlStore}>
+                <div class="remove" on:click={() => removePreview(preview)}>
+                    <CloseIcon viewBox="0 0 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                </div>
             </div>
         {/if}
         <div class="inner">
@@ -179,9 +181,7 @@
             display: flex;
         }
 
-        .remove {
-            cursor: pointer;
-            display: flex;
+        .remove-wrapper {
             flex: 0;
             position: relative;
             left: 6px;
@@ -190,6 +190,11 @@
                 right: 6px;
                 left: unset;
             }
+        }
+
+        .remove {
+            cursor: pointer;
+            display: flex;
         }
 
         .inner {
