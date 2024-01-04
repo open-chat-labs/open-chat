@@ -1463,6 +1463,7 @@ type AccessGate = variant {
     VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
     Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
 };
 
 type AccessGateUpdate = variant {
@@ -1493,12 +1494,18 @@ type PaymentGate = record {
     fee : nat;
 };
 
+type TokenBalanceGate = record {
+    ledger_canister_id : CanisterId;
+    min_balance : nat;
+};
+
 type GateCheckFailedReason = variant {
     NotDiamondMember;
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
     PaymentFailed : TransferFromError;
+    InsufficientBalance : nat;
 };
 
 type MessageReminderCreated = record {

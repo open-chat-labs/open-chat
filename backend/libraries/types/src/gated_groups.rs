@@ -11,6 +11,7 @@ pub enum AccessGate {
     VerifiedCredential(VerifiedCredentialGate),
     SnsNeuron(SnsNeuronGate),
     Payment(PaymentGate),
+    TokenBalance(TokenBalanceGate),
 }
 
 impl AccessGate {
@@ -43,6 +44,12 @@ pub struct PaymentGate {
     pub fee: u128,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct TokenBalanceGate {
+    pub ledger_canister_id: CanisterId,
+    pub min_balance: u128,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum GateCheckFailedReason {
     NotDiamondMember,
@@ -50,4 +57,5 @@ pub enum GateCheckFailedReason {
     NoSnsNeuronsWithRequiredStakeFound,
     NoSnsNeuronsWithRequiredDissolveDelayFound,
     PaymentFailed(TransferFromError),
+    InsufficientBalance(u128),
 }

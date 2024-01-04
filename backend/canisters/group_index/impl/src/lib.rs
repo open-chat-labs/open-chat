@@ -352,6 +352,7 @@ pub struct AccessGateMetrics {
     pub verified_credential: u32,
     pub sns_neuron: u32,
     pub payment: u32,
+    pub token_balance: u32,
 }
 
 impl AccessGateMetrics {
@@ -361,6 +362,7 @@ impl AccessGateMetrics {
             AccessGate::VerifiedCredential(_) => self.verified_credential += 1,
             AccessGate::SnsNeuron(_) => self.sns_neuron += 1,
             AccessGate::Payment(_) => self.payment += 1,
+            AccessGate::TokenBalance(_) => self.token_balance += 1,
         }
     }
 }
