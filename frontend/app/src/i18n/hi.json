@@ -810,13 +810,9 @@
             "treasury": "कोषागार से स्थानांतरण हेतु टोकन",
             "message": "प्रस्ताव प्रस्तुत करने के लिए {cost} {token} टोकन (हस्तांतरण शुल्क के दो सेट शामिल) जमा करना आवश्यक है जो प्रस्ताव स्वीकृत होने पर वापस कर दिया जाता है।",
             "ledgerCanisterId": "लेजर कनस्तर आईडी",
-            "enterLedgerCanisterId": "खाता बही कनस्तर आईडी दर्ज करें",
             "tokenInfoUrl": "टोकन जानकारी यूआरएल",
-            "enterTokenInfoUrl": "टोकन जानकारी दिखाने वाला यूआरएल दर्ज करें",
             "howToBuyUrl": "यूआरएल कैसे खरीदें",
-            "enterHowToBuyUrl": "टोकन खरीदने का तरीका बताने वाला यूआरएल दर्ज करें",
             "transactionUrlFormat": "लेन-देन यूआरएल प्रारूप",
-            "enterTransactionUrlFormat": "जैसे. https://token.com/?index={transaction_index}",
             "tokenLogo": "प्रतीक चिन्ह"
         }
     },

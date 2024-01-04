@@ -660,13 +660,9 @@
             "enterRecipientOwner": "Saisissez le principal du compte du destinataire",
             "enterRecipientSubaccount": "Saisissez un sous-compte de destinataire facultatif",
             "ledgerCanisterId": "Identifiant de la cartouche du grand livre",
-            "enterLedgerCanisterId": "Saisissez l'ID de la cartouche du grand livre",
             "tokenInfoUrl": "URL des informations sur le jeton",
-            "enterTokenInfoUrl": "Entrez une URL affichant les informations du jeton",
             "howToBuyUrl": "Comment acheter une URL",
-            "enterHowToBuyUrl": "Entrez une URL montrant comment acheter le jeton",
             "transactionUrlFormat": "Format de l'URL de la transaction",
-            "enterTransactionUrlFormat": "Par exemple. https://token.com/?index={transaction_index}",
             "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Actions du contrôleur de neurones"

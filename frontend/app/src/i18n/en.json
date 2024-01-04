@@ -810,13 +810,9 @@
             "treasury": "Token to transfer from treasury",
             "message": "A deposit of {cost} {token} tokens (includes two sets of transfer fees) is required to submit a proposal which is refunded if the proposal is adopted.",
             "ledgerCanisterId": "Ledger canister Id",
-            "enterLedgerCanisterId": "Enter the ledger canister Id",
             "tokenInfoUrl": "Token info url",
-            "enterTokenInfoUrl": "Enter a url showing the token info",
             "howToBuyUrl": "How to buy url",
-            "enterHowToBuyUrl": "Enter a url showing how to buy the token",
             "transactionUrlFormat": "Transaction url format",
-            "enterTransactionUrlFormat": "Eg. https://token.com/?index={transaction_index}",
             "tokenLogo": "Logo"
         }
     },
