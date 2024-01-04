@@ -163,24 +163,30 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    let edited = args.content.text().replace("#LINK_REMOVED") != message.content.text();
+                    let existing_text = message.content.text();
+                    let new_text = args.content.text();
 
-                    message.content = args.content.try_into().unwrap();
-                    message.last_updated = Some(args.now);
+                    if new_text != existing_text {
+                        let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
+                            != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
 
-                    if edited {
-                        message.last_edited = Some(args.now);
-                        add_to_metrics(
-                            &mut self.metrics,
-                            &mut self.per_user_metrics,
-                            args.sender,
-                            |m| incr(&mut m.edits),
-                            args.now,
-                        );
+                        message.content = args.content.try_into().unwrap();
+                        message.last_updated = Some(args.now);
+
+                        if edited {
+                            message.last_edited = Some(args.now);
+                            add_to_metrics(
+                                &mut self.metrics,
+                                &mut self.per_user_metrics,
+                                args.sender,
+                                |m| incr(&mut m.edits),
+                                args.now,
+                            );
+                        }
+
+                        self.last_updated_timestamps
+                            .mark_updated(args.thread_root_message_index, event_index, args.now);
                     }
-
-                    self.last_updated_timestamps
-                        .mark_updated(args.thread_root_message_index, event_index, args.now);
 
                     return EditMessageResult::Success;
                 }
