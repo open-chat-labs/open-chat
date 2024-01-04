@@ -6,7 +6,7 @@
     import "../utils/i18n";
     import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
-    import { _, isLoading, locale } from "svelte-i18n";
+    import { _, isLoading } from "svelte-i18n";
     import Router from "./Router.svelte";
     import { notFound, pathParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
