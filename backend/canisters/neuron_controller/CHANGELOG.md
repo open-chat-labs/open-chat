@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Disburse to CyclesDispenser if it is low otherwise send to treasury ([#5110](https://github.com/open-chat-labs/open-chat/pull/5110))
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
 
 ## [[2.0.994](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.994-neuron_controller)] - 2024-01-03
 
