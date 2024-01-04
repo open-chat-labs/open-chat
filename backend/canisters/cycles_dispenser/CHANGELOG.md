@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
 ## [[2.0.980](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.980-cycles_dispenser)] - 2023-12-19
 
 ### Changed

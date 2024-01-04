@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
 ### Fixed
 
 - Get standards in parallel + get them for new token ([#5004](https://github.com/open-chat-labs/open-chat/pull/5004))
