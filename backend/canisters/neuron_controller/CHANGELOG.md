@@ -5,6 +5,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Disburse to CyclesDispenser if it is low otherwise send to treasury ([#5110](https://github.com/open-chat-labs/open-chat/pull/5110))
+
+## [[2.0.994](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.994-neuron_controller)] - 2024-01-03
+
+### Added
+
+- One time job to transfer ICP from NeuronController to OpenChat treasury ([#5106](https://github.com/open-chat-labs/open-chat/pull/5106))
+
+### Changed
+
+- Only disburse 1 ICP rather than full amount until we've seen it working ([#5103](https://github.com/open-chat-labs/open-chat/pull/5103))
+- Extract code for making inter-canister calls via tECDSA ([#5105](https://github.com/open-chat-labs/open-chat/pull/5105))
+
+## [[2.0.993](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.993-neuron_controller)] - 2024-01-03
+
 ### Added
 
 - Automatically spawn neurons then disburse into the treasury ([#5097](https://github.com/open-chat-labs/open-chat/pull/5097))

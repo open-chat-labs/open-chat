@@ -21,7 +21,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -228,6 +229,8 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
+    #[serde(default)]
+    pub diamond_membership_fees: DiamondMembershipFees,
 }
 
 fn escrow_canister_id() -> CanisterId {
@@ -285,6 +288,7 @@ impl Data {
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
+            diamond_membership_fees: DiamondMembershipFees::default(),
         };
 
         // Register the ProposalsBot
@@ -366,6 +370,7 @@ impl Default for Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
+            diamond_membership_fees: DiamondMembershipFees::default(),
         }
     }
 }

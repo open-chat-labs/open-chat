@@ -17,6 +17,7 @@ pub mod modclub_callback;
 pub mod pay_for_diamond_membership;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
+pub mod set_diamond_membership_fees;
 pub mod set_display_name;
 pub mod set_max_concurrent_user_canister_upgrades;
 pub mod set_moderation_flags;

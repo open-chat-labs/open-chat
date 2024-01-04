@@ -1,5 +1,4 @@
 use candid::{CandidType, Principal};
-use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use types::TimestampMillis;
@@ -661,6 +660,11 @@ pub struct GlobalTimeOfDay {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Countries {
     pub iso_codes: Vec<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AccountIdentifier {
+    pub hash: Vec<u8>,
 }
 
 impl TryFrom<ProposalInfo> for types::Proposal {

@@ -24,6 +24,7 @@ fn main() {
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);
     generate_candid_method!(user_index, remove_platform_operator, update);
+    generate_candid_method!(user_index, set_diamond_membership_fees, update);
     generate_candid_method!(user_index, set_display_name, update);
     generate_candid_method!(user_index, set_user_upgrade_concurrency, update);
     generate_candid_method!(user_index, set_moderation_flags, update);
