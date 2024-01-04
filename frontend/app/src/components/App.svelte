@@ -286,7 +286,7 @@
             if (success) {
                 console.log("Diamond membership fees set", fees);
             } else {
-                console.log("Failed to set diamond membership fees concurrency", fees);
+                console.log("Failed to set diamond membership fees", fees);
             }
         });
     }
