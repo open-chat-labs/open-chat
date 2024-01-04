@@ -4,9 +4,10 @@
     "description": "Typescript library for interacting with the OpenChat backend",
     "main": "lib/index.js",
     "scripts": {
-        "build": "rollup -c",
-        "dev": "rollup -c -w",
-        "wait": "rm -rf lib && wait-on lib/index.js",
+        "build": "npm run clean && tsc",
+        "dev": "npm run clean && tsc -w",
+        "wait": "npm run clean && wait-on lib/index.js",
+        "clean": "rm -rf lib",
         "typecheck": "tsc --noEmit",
         "typecheck:watch": "tsc --noEmit -w",
         "test": "jest --detectOpenHandles --runInBand",
@@ -27,7 +28,7 @@
         "peerjs": "^1.4.7",
         "svelte": "^4.2.0",
         "svelte-i18n": "^3.7.0",
-        "usergeek-ic-js": "git+https://github.com/hpeebles/usergeek-ic-js.git#d00643807272a657cf546d34f5a983c593fc38f5",
+        "usergeek-ic-js": "git+https://github.com/hpeebles/usergeek-ic-js.git#b7e56319447c26e4f8f18779859435137aafc4c2",
         "uuid": "^9.0.0"
     },
     "devDependencies": {

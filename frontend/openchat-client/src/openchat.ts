@@ -441,7 +441,6 @@ import { verifyCredential } from "./utils/credentials";
 import { offlineStore } from "./stores/network";
 import { messageFiltersStore, type MessageFilter } from "./stores/messageFilters";
 import { draftMessagesStore } from "./stores/draftMessages";
-import { locale } from "svelte-i18n";
 import {
     disableLinksInText,
     extractDisabledLinks,
@@ -545,10 +544,6 @@ export class OpenChat extends OpenChatAgentWorker {
         const anon = id.getPrincipal().isAnonymous();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });
         this.loadUser(anon);
-    }
-
-    setLocale(code: string): void {
-        locale.set(code);
     }
 
     logError(message?: unknown, ...optionalParams: unknown[]): void {

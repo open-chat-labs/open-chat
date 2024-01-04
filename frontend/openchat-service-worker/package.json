@@ -6,8 +6,9 @@
     "scripts": {
         "build": "rollup -c",
         "dev": "rollup -cw",
+        "wait": "npm run clean && wait-on lib/service_worker.js",
+        "clean": "rm -f lib/service_worker.js",
         "typecheck": "tsc --noEmit",
-        "wait": "rm -f lib/service_worker.js && wait-on lib/service_worker.js",
         "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",

@@ -6,8 +6,9 @@
     "scripts": {
         "build": "rollup -c",
         "dev": "rollup -cw",
+        "wait": "npm run clean && wait-on lib/worker.js",
+        "clean": "rm -f lib/worker.js",
         "typecheck": "tsc --noEmit",
-        "wait": "rm -f lib/worker.js && wait-on lib/worker.js",
         "lint": "eslint ./src --fix",
         "codegen": "sh ./codegen.sh"
     },
