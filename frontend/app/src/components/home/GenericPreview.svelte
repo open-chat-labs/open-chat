@@ -17,8 +17,8 @@
     export let intersecting: boolean;
     export let rendered = false;
 
-    let previewPromise: Promise<LinkInfo> | undefined = undefined;
     let previewWrapper: HTMLElement;
+    let previewPromise: Promise<LinkInfo> | undefined = undefined;
 
     $: offlineStore = client.offlineStore;
 
