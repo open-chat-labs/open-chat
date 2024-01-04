@@ -211,6 +211,22 @@ export const idlFactory = ({ IDL }) => {
       'users' : IDL.Vec(UserSummary),
     }),
   });
+  const DiamondMembershipFeesByDuration = IDL.Record({
+    'one_year' : IDL.Nat64,
+    'lifetime' : IDL.Nat64,
+    'one_month' : IDL.Nat64,
+    'three_months' : IDL.Nat64,
+  });
+  const SetDiamondMembershipFeesArgs = IDL.Record({
+    'fees' : IDL.Record({
+      'icp_fees' : DiamondMembershipFeesByDuration,
+      'chat_fees' : DiamondMembershipFeesByDuration,
+    }),
+  });
+  const SetDiamondMembershipFeesResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const SetDisplayNameArgs = IDL.Record({ 'display_name' : IDL.Opt(IDL.Text) });
   const SetDisplayNameResponse = IDL.Variant({
     'DisplayNameInvalid' : IDL.Null,
@@ -377,6 +393,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_diamond_membership_fees' : IDL.Func(
+        [SetDiamondMembershipFeesArgs],
+        [SetDiamondMembershipFeesResponse],
+        [],
+      ),
     'set_display_name' : IDL.Func(
         [SetDisplayNameArgs],
         [SetDisplayNameResponse],
