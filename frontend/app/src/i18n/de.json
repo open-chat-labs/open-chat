@@ -157,7 +157,7 @@
     "previewing": "Vorschaugruppe",
     "userIsBlocked": "Entsperren Sie den Benutzer, um Nachrichten zu senden",
     "remove": "Entfernen",
-    "close": "Nah dran",
+    "close": "Schlie­ßen",
     "save": "Speichern",
     "discard": "Verwerfen",
     "submit": "einreichen",
@@ -1180,7 +1180,7 @@
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "tokenSwap": {
         "swap": "Tauschen",
-        "quote": "Zitat",
+        "quote": "Quotierung",
         "requote": "Nochmals zitieren",
         "back": "Zurück",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
