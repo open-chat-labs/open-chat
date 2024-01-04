@@ -4701,6 +4701,14 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
+    setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
+        return this.sendRequest({ kind: "setDiamondMembershipFees", fees })
+            .catch((err) => {
+                this._logger.error("Unable to set diamond membership fees", err);
+                return false;
+            });
+    }
+
     stakeNeuronForSubmittingProposals(
         governanceCanisterId: string,
         stake: bigint,

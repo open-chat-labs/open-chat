@@ -389,4 +389,35 @@ export class UserIndexClient extends CandidService {
             diamondMembershipFeesResponse,
         );
     }
+
+    setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
+        const chatFees = fees.find((f) => f.token === "CHAT");
+        const icpFees = fees.find((f) => f.token === "ICP");
+        
+        if (chatFees === undefined || icpFees === undefined) {
+            return Promise.resolve(false);
+        }
+
+        const args = {
+            fees: {
+                chat_fees: {
+                    one_month: chatFees.oneMonth,
+                    three_months: chatFees.threeMonths,
+                    one_year: chatFees.oneYear,
+                    lifetime: chatFees.lifetime,
+                },
+                icp_fees: {
+                    one_month: icpFees.oneMonth,
+                    three_months: icpFees.threeMonths,
+                    one_year: icpFees.oneYear,
+                    lifetime: icpFees.lifetime,
+                }
+            }
+        };
+
+        return this.handleQueryResponse(
+            () => this.userIndexService.set_diamond_membership_fees(args),
+            (res) => "Success" in res,
+        );
+    }
 }

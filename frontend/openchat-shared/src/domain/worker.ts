@@ -252,6 +252,7 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
@@ -963,6 +964,11 @@ type SetUserUpgradeConcurrency = {
     kind: "setUserUpgradeConcurrency";
 };
 
+type SetDiamondMembershipFees = {
+    fees: DiamondMembershipFees[];
+    kind: "setDiamondMembershipFees";
+};
+
 type StakeNeuronForSubmittingProposals = {
     governanceCanisterId: string;
     stake: bigint;
@@ -1631,6 +1637,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends SetDiamondMembershipFees
+    ? boolean
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
