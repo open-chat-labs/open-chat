@@ -17,7 +17,7 @@
     export let intersecting: boolean;
     export let rendered = false;
 
-    let preview: LinkInfo | undefined = undefined;
+    let previewPromise: Promise<LinkInfo> | undefined = undefined;
     let previewWrapper: HTMLElement;
 
     $: offlineStore = client.offlineStore;
@@ -25,21 +25,19 @@
     $: {
         if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
             // make sure we only actually *load* the preview once
-            if (preview === undefined) {
-                loadPreview(url).then((p) => {
-                    preview = p;
-                    if (
-                        preview.title !== undefined ||
-                        preview.description !== undefined ||
-                        preview.image !== undefined
-                    ) {
-                        if (intersecting && !$eventListScrolling) {
-                            rendered = true;
-                            dispatch("rendered", url);
-                        }
+            previewPromise = previewPromise ?? loadPreview(url);
+            previewPromise.then((preview) => {
+                if (
+                    preview.title !== undefined ||
+                    preview.description !== undefined ||
+                    preview.image !== undefined
+                ) {
+                    if (intersecting && !$eventListScrolling) {
+                        rendered = true;
+                        dispatch("rendered", url);
                     }
-                });
-            }
+                }
+            });
         }
     }
 
@@ -71,27 +69,31 @@
     }
 </script>
 
-{#if rendered && preview !== undefined}
-    <div bind:this={previewWrapper}>
-        {#if preview.title}
-            <div class="title">
-                <a href={preview.url} target="_blank">{preview.title}</a>
+{#if rendered}
+    {#await previewPromise then preview}
+        {#if preview !== undefined}
+            <div bind:this={previewWrapper}>
+                {#if preview.title}
+                    <div class="title">
+                        <a href={preview.url} target="_blank">{preview.title}</a>
+                    </div>
+                {/if}
+                {#if preview.description}
+                    <p class="desc">{preview.description}</p>
+                {/if}
+                {#if preview.image}
+                    <a href={preview.url} target="_blank">
+                        <img
+                            on:load={imageLoaded}
+                            on:error={imageLoaded}
+                            class="image"
+                            src={preview.image}
+                            alt="link preview image" />
+                    </a>
+                {/if}
             </div>
         {/if}
-        {#if preview.description}
-            <p class="desc">{preview.description}</p>
-        {/if}
-        {#if preview.image}
-            <a href={preview.url} target="_blank">
-                <img
-                    on:load={imageLoaded}
-                    on:error={imageLoaded}
-                    class="image"
-                    src={preview.image}
-                    alt="link preview image" />
-            </a>
-        {/if}
-    </div>
+    {/await}
 {/if}
 
 <style lang="scss">
