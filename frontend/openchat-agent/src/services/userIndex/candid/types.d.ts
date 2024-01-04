@@ -417,6 +417,12 @@ export interface DiamondMembershipDetails {
   'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
 }
+export interface DiamondMembershipFeesByDuration {
+  'one_year' : bigint,
+  'lifetime' : bigint,
+  'one_month' : bigint,
+  'three_months' : bigint,
+}
 export type DiamondMembershipFeesResponse = {
     'Success' : Array<
       {
@@ -1336,6 +1342,14 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
+export interface SetDiamondMembershipFeesArgs {
+  'fees' : {
+    'icp_fees' : DiamondMembershipFeesByDuration,
+    'chat_fees' : DiamondMembershipFeesByDuration,
+  },
+}
+export type SetDiamondMembershipFeesResponse = { 'Invalid' : null } |
+  { 'Success' : null };
 export interface SetDisplayNameArgs { 'display_name' : [] | [string] }
 export type SetDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
@@ -1625,6 +1639,10 @@ export interface _SERVICE {
     RemovePlatformOperatorResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'set_diamond_membership_fees' : ActorMethod<
+    [SetDiamondMembershipFeesArgs],
+    SetDiamondMembershipFeesResponse
+  >,
   'set_display_name' : ActorMethod<
     [SetDisplayNameArgs],
     SetDisplayNameResponse

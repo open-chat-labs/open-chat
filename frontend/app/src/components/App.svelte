@@ -15,7 +15,7 @@
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, UserLoggedIn } from "openchat-client";
+    import { OpenChat, UserLoggedIn, type DiamondMembershipFees } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -106,6 +106,7 @@
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            setDiamondMembershipFees,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -276,6 +277,16 @@
                 console.log("User upgrade concurrency set", value);
             } else {
                 console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
+    }
+
+    function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
+        client.setDiamondMembershipFees(fees).then((success) => {
+            if (success) {
+                console.log("Diamond membership fees set", fees);
+            } else {
+                console.log("Failed to set diamond membership fees concurrency", fees);
             }
         });
     }

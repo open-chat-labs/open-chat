@@ -913,6 +913,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "setDiamondMembershipFees":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setDiamondMembershipFees(payload.fees),
+                );
+                break;
+
             case "stakeNeuronForSubmittingProposals":
                 executeThenReply(
                     payload,
