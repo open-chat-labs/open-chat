@@ -163,19 +163,24 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
+                    let edited = args.content.text().replace("#LINK_REMOVED") != message.content.text();
+
                     message.content = args.content.try_into().unwrap();
                     message.last_updated = Some(args.now);
-                    message.last_edited = Some(args.now);
+
+                    if edited {
+                        message.last_edited = Some(args.now);
+                        add_to_metrics(
+                            &mut self.metrics,
+                            &mut self.per_user_metrics,
+                            args.sender,
+                            |m| incr(&mut m.edits),
+                            args.now,
+                        );
+                    }
+
                     self.last_updated_timestamps
                         .mark_updated(args.thread_root_message_index, event_index, args.now);
-
-                    add_to_metrics(
-                        &mut self.metrics,
-                        &mut self.per_user_metrics,
-                        args.sender,
-                        |m| incr(&mut m.edits),
-                        args.now,
-                    );
 
                     return EditMessageResult::Success;
                 }
