@@ -240,6 +240,10 @@ impl PublicCommunityInfo {
         self.moderation_flags = flags;
     }
 
+    pub fn gate(&self) -> Option<&AccessGate> {
+        self.gate.as_ref()
+    }
+
     pub fn to_match(&self, score: u32) -> CommunityMatch {
         CommunityMatch {
             id: self.id,

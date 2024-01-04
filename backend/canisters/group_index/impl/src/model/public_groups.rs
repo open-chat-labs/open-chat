@@ -251,6 +251,10 @@ impl PublicGroupInfo {
     pub fn set_hotness_score(&mut self, hotness_score: u32) {
         self.hotness_score = hotness_score;
     }
+
+    pub fn gate(&self) -> Option<&AccessGate> {
+        self.gate.as_ref()
+    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
