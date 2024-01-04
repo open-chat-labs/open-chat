@@ -1,6 +1,8 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state};
+use candid::Nat;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
+use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::disburse::Amount;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
@@ -80,14 +82,32 @@ async fn spawn_neurons(neuron_ids: Vec<u64>) {
 }
 
 async fn disburse_neurons(neuron_ids: Vec<u64>) {
-    let account = nns_governance_canister::types::AccountIdentifier {
-        hash: AccountIdentifier::new(&SNS_GOVERNANCE_CANISTER_ID, &DEFAULT_SUBACCOUNT)
-            .as_ref()
-            .to_vec(),
-    };
+    let (nns_ledger_canister_id, cycles_dispenser_canister_id) =
+        read_state(|state| (state.data.nns_ledger_canister_id, state.data.cycles_dispenser_canister_id));
+
+    // If the CyclesDispenser has less than 1000 ICP, top it up, otherwise send the ICP to the treasury
+    let mut top_up_cycles_dispenser =
+        icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
+            .await
+            .map(|r| r < Nat::from(1000 * E8S_PER_ICP))
+            .unwrap_or_default();
 
     for neuron_id in neuron_ids {
-        info!(neuron_id, "Disbursing neuron");
+        info!(neuron_id, top_up_cycles_dispenser, "Disbursing neuron");
+
+        let recipient_canister = if top_up_cycles_dispenser {
+            top_up_cycles_dispenser = false;
+            cycles_dispenser_canister_id
+        } else {
+            SNS_GOVERNANCE_CANISTER_ID
+        };
+
+        let account = nns_governance_canister::types::AccountIdentifier {
+            hash: AccountIdentifier::new(&recipient_canister, &DEFAULT_SUBACCOUNT)
+                .as_ref()
+                .to_vec(),
+        };
+
         manage_nns_neuron_impl(
             neuron_id,
             Command::Disburse(Disburse {
