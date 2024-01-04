@@ -658,13 +658,9 @@
             "enterRecipientOwner": "הזן את מנהל החשבון של הנמען",
             "enterRecipientSubaccount": "הזן חשבון משנה אופציונלי של נמען",
             "ledgerCanisterId": "מזהה מיכל פנקס",
-            "enterLedgerCanisterId": "הזן את מזהה מיכל הפנקס",
             "tokenInfoUrl": "כתובת אתר של מידע אסימון",
-            "enterTokenInfoUrl": "הזן כתובת אתר המציגה את פרטי האסימון",
             "howToBuyUrl": "איך לקנות כתובת אתר",
-            "enterHowToBuyUrl": "הזן כתובת אתר שמראה כיצד לקנות את האסימון",
             "transactionUrlFormat": "פורמט כתובת האתר של העסקה",
-            "enterTransactionUrlFormat": "לְמָשָׁל. https://token.com/?index={transaction_index}",
             "tokenLogo": "סֵמֶל"
         },
         "neuronControllerAction": "פעולות בקר נוירון"

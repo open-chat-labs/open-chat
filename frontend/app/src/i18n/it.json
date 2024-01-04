@@ -660,13 +660,9 @@
             "enterRecipientOwner": "Inserisci l'entità del conto del destinatario",
             "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo",
             "ledgerCanisterId": "ID contenitore registro",
-            "enterLedgerCanisterId": "Inserisci l'ID del contenitore del registro",
             "tokenInfoUrl": "URL delle informazioni sul token",
-            "enterTokenInfoUrl": "Inserisci un URL che mostri le informazioni sul token",
             "howToBuyUrl": "Come acquistare l'URL",
-            "enterHowToBuyUrl": "Inserisci un URL che mostri come acquistare il token",
             "transactionUrlFormat": "Formato dell'URL della transazione",
-            "enterTransactionUrlFormat": "Per esempio. https://token.com/?index={transaction_index}",
             "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Azioni del controller neuronale"

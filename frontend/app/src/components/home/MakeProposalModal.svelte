@@ -410,7 +410,7 @@
                                 minlength={CANISTER_ID_LENGTH}
                                 maxlength={CANISTER_ID_LENGTH}
                                 countdown
-                                placeholder={$_("proposal.maker.enterLedgerCanisterId")} />
+                                placeholder="2ouva-viaaa-aaaaq-aaamq-cai" />
                         </section>
                         <section>
                             <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
@@ -419,7 +419,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenInfoUrl}
-                                placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
+                                placeholder="https://token.com/info" />
                         </section>
                         <section>
                             <Legend label={$_("proposal.maker.howToBuyUrl")} required />
@@ -428,7 +428,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenHowToBuyUrl}
-                                placeholder={$_("proposal.maker.enterHowToBuyUrl")} />
+                                placeholder="https://token.com/how-to-buy" />
                         </section>
                         <section>
                             <Legend label={$_("proposal.maker.transactionUrlFormat")} required />
@@ -437,7 +437,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenTransactionUrlFormat}
-                                placeholder={$_("proposal.maker.enterTransactionUrlFormat")} />
+                                placeholder={`https://token.com/transactions/{transaction_index}`} />
                         </section>
                         <section>
                             <Legend label={$_("proposal.maker.tokenLogo")} />
@@ -447,7 +447,7 @@
                                 minlength={0}
                                 maxlength={5000}
                                 bind:value={addTokenLogo}
-                                placeholder={"data:image/svg+xml;base64,PHN2ZyB3aW..."} />
+                                placeholder="data:image/svg+xml;base64,PHN2ZyB3aW..." />
                         </section>
                     </div>
                 {/if}
