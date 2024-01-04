@@ -1,6 +1,5 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state};
-use candid::Nat;
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::disburse::Amount;
@@ -89,13 +88,14 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
     let mut top_up_cycles_dispenser =
         icrc_ledger_canister_c2c_client::icrc1_balance_of(nns_ledger_canister_id, &Account::from(cycles_dispenser_canister_id))
             .await
-            .map(|r| r < Nat::from(1000 * E8S_PER_ICP))
+            .map(|r| r < 1000 * E8S_PER_ICP)
             .unwrap_or_default();
 
     for neuron_id in neuron_ids {
         info!(neuron_id, top_up_cycles_dispenser, "Disbursing neuron");
 
         let recipient_canister = if top_up_cycles_dispenser {
+            // Set to false so that we only top it up once
             top_up_cycles_dispenser = false;
             cycles_dispenser_canister_id
         } else {
