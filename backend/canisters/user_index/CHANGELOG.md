@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add endpoint for platform_ops to set diamond fees ([#5108](https://github.com/open-chat-labs/open-chat/pull/5108))
+
 ### Changed
 
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
