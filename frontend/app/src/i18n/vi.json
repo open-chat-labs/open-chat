@@ -661,13 +661,9 @@
             "enterRecipientOwner": "Nhập số tiền gốc tài khoản của người nhận",
             "enterRecipientSubaccount": "Nhập tài khoản phụ người nhận tùy chọn",
             "ledgerCanisterId": "Id hộp sổ cái",
-            "enterLedgerCanisterId": "Nhập Id hộp sổ cái",
             "tokenInfoUrl": "Url thông tin mã thông báo",
-            "enterTokenInfoUrl": "Nhập url hiển thị thông tin mã thông báo",
             "howToBuyUrl": "Làm thế nào để mua url",
-            "enterHowToBuyUrl": "Nhập url hiển thị cách mua mã thông báo",
             "transactionUrlFormat": "Định dạng url giao dịch",
-            "enterTransactionUrlFormat": "Ví dụ. https://token.com/?index={transaction_index}",
             "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Hành động điều khiển nơ-ron"
