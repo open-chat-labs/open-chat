@@ -16,10 +16,11 @@
         emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import { communityListScrollTop } from "../../../stores/scrollPos";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
@@ -48,6 +49,7 @@
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
@@ -55,7 +57,13 @@
     let dragging = false;
 
     onMount(() => {
-        return communities.subscribe(initCommunitiesList);
+        const unsub = communities.subscribe(initCommunitiesList);
+        tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
+        return unsub;
+    });
+
+    onDestroy(() => {
+        communityListScrollTop.set(scrollingSection?.scrollTop);
     });
 
     function initCommunitiesList(communities: CommunitySummary[]) {
@@ -194,6 +202,7 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
+        bind:this={scrollingSection}
         on:consider={handleDndConsider}
         on:finalize={handleDndFinalize}
         class="middle">
