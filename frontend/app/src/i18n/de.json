@@ -1180,7 +1180,7 @@
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "tokenSwap": {
         "swap": "Tauschen",
-        "quote": "Zitat",
+        "quote": "Kurs anzeigen",
         "requote": "Nochmals zitieren",
         "back": "Zurück",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
