@@ -660,13 +660,9 @@
             "enterRecipientOwner": "输入收件人的账户主体",
             "enterRecipientSubaccount": "输入可选的收件人子帐户",
             "ledgerCanisterId": "分类帐容器 ID",
-            "enterLedgerCanisterId": "输入账本容器 ID",
             "tokenInfoUrl": "代币信息网址",
-            "enterTokenInfoUrl": "输入显示令牌信息的 url",
             "howToBuyUrl": "如何购买网址",
-            "enterHowToBuyUrl": "输入显示如何购买代币的网址",
             "transactionUrlFormat": "交易url格式",
-            "enterTransactionUrlFormat": "例如。 https://token.com/?index={transaction_index}",
             "tokenLogo": "标识"
         },
         "neuronControllerAction": "神经元控制器动作"

@@ -660,13 +660,9 @@
             "enterRecipientOwner": "Введите основную сумму счета получателя",
             "enterRecipientSubaccount": "Введите дополнительный дополнительный аккаунт получателя.",
             "ledgerCanisterId": "Идентификатор контейнера бухгалтерской книги",
-            "enterLedgerCanisterId": "Введите идентификатор контейнера реестра",
             "tokenInfoUrl": "URL-адрес информации о токене",
-            "enterTokenInfoUrl": "Введите URL-адрес, показывающий информацию о токене.",
             "howToBuyUrl": "Как купить URL",
-            "enterHowToBuyUrl": "Введите URL-адрес, показывающий, как купить токен",
             "transactionUrlFormat": "Формат URL транзакции",
-            "enterTransactionUrlFormat": "Например. https://token.com/?index={transaction_index}",
             "tokenLogo": "Логотип"
         },
         "neuronControllerAction": "Действия нейронного контроллера"
