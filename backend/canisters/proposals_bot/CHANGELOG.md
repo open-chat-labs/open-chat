@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
 - Expose active user submitted proposals in metrics ([#5126](https://github.com/open-chat-labs/open-chat/pull/5126))
 
+### Fixed
+
+- Refund successful user submitted proposals that don't reach majority ([#5123](https://github.com/open-chat-labs/open-chat/pull/5123))
+
 ## [[2.0.960](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.960-proposals_bot)] - 2023-12-05
 
 ### Changed
