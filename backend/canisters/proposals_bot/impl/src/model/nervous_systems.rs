@@ -16,18 +16,6 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn get_finished_user_submitted_proposals(&self) -> Vec<(CanisterId, ProposalId)> {
-        let mut results = Vec::new();
-        for ns in self.nervous_systems.values() {
-            for proposal_id in ns.active_user_submitted_proposals.keys() {
-                if !ns.active_proposals.contains_key(proposal_id) {
-                    results.push((ns.governance_canister_id, *proposal_id));
-                }
-            }
-        }
-        results
-    }
-
     pub fn add(&mut self, nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) {
         self.nervous_systems.insert(
             nervous_system.governance_canister_id,
