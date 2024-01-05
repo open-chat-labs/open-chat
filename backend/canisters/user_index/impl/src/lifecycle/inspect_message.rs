@@ -30,7 +30,7 @@ fn accept_if_valid(state: &RuntimeState) {
         }
         "add_referral_codes" => state.is_caller_dev_team_dfx_principal(),
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "set_user_upgrade_concurrency" => state.is_caller_platform_operator(),
+        "set_user_upgrade_concurrency" | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"
@@ -41,8 +41,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
-        | "suspected_bots"
-        | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
+        | "suspected_bots" => state.is_caller_governance_principal(),
         "create_challenge" | "modclub_callback" => true,
         _ => false,
     };
