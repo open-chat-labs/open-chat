@@ -18,6 +18,7 @@
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -30,7 +31,9 @@
     {#if !$anonUser}
         <MenuItem on:click={() => dispatch("wallet")}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("wallet")}</span>
+            <span slot="text">
+                <Translatable key={"wallet"} />
+            </span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("profile")}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />

@@ -4,6 +4,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import GroupChatsMenu from "./GroupChatsMenu.svelte";
+    import Translatable from "../../Translatable.svelte";
 </script>
 
 <SectionHeader slim border={false}>
@@ -12,7 +13,9 @@
             <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
-            <h4 class="name">{$_("communities.groupChats")}</h4>
+            <h4 class="name">
+                <Translatable key={"communities.groupChats"} />
+            </h4>
         </div>
     </div>
     <span class="menu">

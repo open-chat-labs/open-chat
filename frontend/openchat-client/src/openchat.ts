@@ -359,6 +359,7 @@ import type {
     Level,
     VersionedRules,
     DiamondMembershipStatus,
+    TranslationCorrections,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -447,6 +448,7 @@ import {
     extractEnabledLinks,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
+import { applyTranslationCorrections } from "./stores/i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -668,6 +670,12 @@ export class OpenChat extends OpenChatAgentWorker {
         this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
             failedMessagesStore.initialise(MessageContextMap.fromMap(res)),
         );
+
+        console.log("About to get translation corrections");
+        this.getTranslationCorrections().then((res) => {
+            console.log("Corrections: ", res);
+            applyTranslationCorrections(res);
+        });
 
         if (anon) {
             // short-circuit if we *know* that the user is anonymous
@@ -4702,11 +4710,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
-        return this.sendRequest({ kind: "setDiamondMembershipFees", fees })
-            .catch((err) => {
-                this._logger.error("Unable to set diamond membership fees", err);
-                return false;
-            });
+        return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch((err) => {
+            this._logger.error("Unable to set diamond membership fees", err);
+            return false;
+        });
     }
 
     stakeNeuronForSubmittingProposals(
@@ -5591,6 +5598,26 @@ export class OpenChat extends OpenChatAgentWorker {
             throw new Error("Community not found");
         }
         return community.localUserIndex;
+    }
+
+    setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
+        return this.sendRequest({
+            kind: "setTranslationCorrection",
+            locale,
+            key,
+            value,
+        }).then((success) => {
+            if (success) {
+                applyTranslationCorrections({ [locale]: { [key]: value } });
+            }
+            return success;
+        });
+    }
+
+    getTranslationCorrections(): Promise<TranslationCorrections> {
+        return this.sendRequest({
+            kind: "getTranslationCorrections",
+        });
     }
 
     // **** Communities Stuff

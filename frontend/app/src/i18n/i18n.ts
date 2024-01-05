@@ -1,5 +1,5 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
-import { get } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
 
 export const translationCodes: Record<string, string> = {
@@ -124,3 +124,5 @@ init({
     fallbackLocale: "en",
     initialLocale: getStoredLocale(),
 });
+
+export const editingLabel = writable<string | undefined>(undefined);

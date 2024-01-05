@@ -11,6 +11,8 @@ import {
     setCachedMessageIfNotExists,
     setCachePrimerTimestamp,
     recordFailedMessage,
+    setTranslationCorrection,
+    getTranslationCorrections,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -187,6 +189,7 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    TranslationCorrections,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3074,5 +3077,17 @@ export class OpenChatAgent extends EventTarget {
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return this._icpcoinsClient.exchangeRates();
+    }
+
+    setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
+        console.log("Setting translation correction: ", locale, key, value);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return setTranslationCorrection(locale, key, value).then((_) => true);
+    }
+
+    getTranslationCorrections(): Promise<TranslationCorrections> {
+        // TODO - this will just come from indexeddb for the time being
+        return getTranslationCorrections();
     }
 }

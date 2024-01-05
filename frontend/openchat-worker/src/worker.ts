@@ -1441,6 +1441,18 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
 
+            case "setTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTranslationCorrection(payload.locale, payload.key, payload.value),
+                );
+                break;
+
+            case "getTranslationCorrections":
+                executeThenReply(payload, correlationId, agent.getTranslationCorrections());
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

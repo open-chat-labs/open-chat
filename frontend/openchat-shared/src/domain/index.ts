@@ -29,3 +29,4 @@ export * from "./structure";
 export * from "./response";
 export * from "./proposals";
 export * from "./stream";
+export * from "./i18n";

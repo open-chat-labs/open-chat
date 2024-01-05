@@ -91,6 +91,7 @@
     import OfflineFooter from "../OfflineFooter.svelte";
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
+    import EditLabel from "../EditLabel.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1205,6 +1206,8 @@
 {/if}
 
 <Convert bind:group={convertGroup} />
+
+<EditLabel />
 
 <svelte:body on:profile-clicked={profileLinkClicked} />
 
