@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1001](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1001-proposals_bot)] - 2024-01-05
+
 ### Fixed
 
 - Fix deadline timestamp on NNS proposals ([#5136](https://github.com/open-chat-labs/open-chat/pull/5136))
