@@ -91,7 +91,6 @@ struct Data {
     pub orders_log: OrdersLog,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
-    #[serde(default)]
     pub balance_history: VecDeque<CanisterBalances>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
