@@ -42,7 +42,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "suspected_bots"
-        | "set_diamond_membership_fees" => state.is_caller_governance_principal(),
+        | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
         "create_challenge" | "modclub_callback" => true,
         _ => false,
     };
