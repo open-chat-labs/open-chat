@@ -445,7 +445,7 @@
                                 disabled={busy}
                                 invalid={!isTokenLogoValid(addTokenLogo)}
                                 minlength={0}
-                                maxlength={5000}
+                                maxlength={10000}
                                 bind:value={addTokenLogo}
                                 placeholder="data:image/svg+xml;base64,PHN2ZyB3aW..." />
                         </section>
