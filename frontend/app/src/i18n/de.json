@@ -676,7 +676,7 @@
     "groupNameReserved": "Der Name {level} ist reserviert",
     "loadingTweetPreview": "Tweet-Vorschau wird geladen...",
     "displayWidth": "Anzeigebreite",
-    "apply": "Sich bewerben",
+    "apply": "Auswählen",
     "archiveChat": "Chat archivieren",
     "archiveChatFailed": "Chat konnte nicht archiviert werden",
     "unarchiveChatFailed": "Archivierung des Chats fehlgeschlagen",
@@ -757,7 +757,7 @@
     "lowBandwidth": "Niedrige Bandbreite",
     "showTweet": "Tweet anzeigen",
     "showVideo": "Videos zeigen",
-    "wallet": "Geldbörse",
+    "wallet": "Wallet",
     "prizeMessage": "Gewinnnachricht",
     "prizes": {
         "click": "Klicken Sie auf die Schaltfläche unten, um einen Preis zu gewinnen.",
