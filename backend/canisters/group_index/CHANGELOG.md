@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose metrics of access gates on public groups and communities ([#5118](https://github.com/open-chat-labs/open-chat/pull/5118))
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
 
 ### Changed
 

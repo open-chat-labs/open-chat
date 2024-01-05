@@ -74,9 +74,7 @@
         {#if preview !== undefined}
             <div bind:this={previewWrapper}>
                 {#if preview.title}
-                    <div class="title">
-                        <a href={preview.url} target="_blank">{preview.title}</a>
-                    </div>
+                    <a class="title" href={preview.url} target="_blank">{preview.title}</a>
                 {/if}
                 {#if preview.description}
                     <p class="desc">{preview.description}</p>
@@ -100,6 +98,7 @@
     .title {
         @include font(bold, normal, fs-120);
         margin: $sp3 0 $sp3 0;
+        display: block;
 
         &:hover {
             text-decoration: underline;

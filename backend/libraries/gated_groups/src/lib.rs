@@ -1,9 +1,11 @@
 use candid::Principal;
+use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc2::transfer_from::TransferFromArgs;
 use sns_governance_canister::types::neuron::DissolveState;
 use sns_governance_canister::types::Neuron;
 use types::{
-    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, UserId, VerifiedCredentialGate,
+    AccessGate, CanisterId, GateCheckFailedReason, PaymentGate, SnsNeuronGate, TimestampMillis, TokenBalanceGate, UserId,
+    VerifiedCredentialGate,
 };
 use utils::consts::MEMO_JOINING_FEE;
 use utils::time::NANOS_PER_MILLISECOND;
@@ -28,6 +30,7 @@ pub async fn check_if_passes_gate(args: CheckGateArgs) -> CheckIfPassesGateResul
         AccessGate::DiamondMember => check_diamond_member_gate(args.diamond_membership_expires_at, args.now),
         AccessGate::SnsNeuron(g) => check_sns_neuron_gate(&g, args.user_id).await,
         AccessGate::Payment(g) => try_transfer_from(&g, args.user_id, args.this_canister, args.now).await,
+        AccessGate::TokenBalance(g) => check_token_balance_gate(&g, args.user_id).await,
     }
 }
 
@@ -119,6 +122,16 @@ async fn try_transfer_from(
             CheckIfPassesGateResult::Failed(GateCheckFailedReason::PaymentFailed(err))
         }
         Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'try_transfer_from': {error:?}")),
+    }
+}
+
+async fn check_token_balance_gate(gate: &TokenBalanceGate, user_id: UserId) -> CheckIfPassesGateResult {
+    match icrc_ledger_canister_c2c_client::icrc1_balance_of(gate.ledger_canister_id, &Account::from(user_id)).await {
+        Ok(balance) if balance >= gate.min_balance => CheckIfPassesGateResult::Success,
+        Ok(balance) => {
+            CheckIfPassesGateResult::Failed(GateCheckFailedReason::InsufficientBalance(balance.0.try_into().unwrap()))
+        }
+        Err(error) => CheckIfPassesGateResult::InternalError(format!("Error calling 'icrc1_balance_of': {error:?}")),
     }
 }
 
