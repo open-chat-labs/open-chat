@@ -229,7 +229,6 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub diamond_membership_fees: DiamondMembershipFees,
 }
 
