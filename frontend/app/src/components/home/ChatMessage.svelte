@@ -828,7 +828,6 @@
         min-width: 90px;
         overflow: hidden;
         overflow-wrap: break-word;
-        word-break: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
 
