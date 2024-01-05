@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
 use icdex_client::ICDexClient;
 use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
-use types::{CancelOrderRequest, MakeOrderRequest, MarketState};
+use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Order, TokenInfo};
 
 #[async_trait]
 impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
@@ -11,15 +11,24 @@ impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + S
         ICDEX_EXCHANGE_ID
     }
 
-    async fn market_state(&self) -> CallResult<MarketState> {
-        let (latest_price, my_open_orders, orderbook) =
-            futures::future::try_join3(self.latest_price(), self.my_open_orders(), self.orderbook()).await?;
+    fn quote_token(&self) -> &TokenInfo {
+        self.quote_token()
+    }
 
-        Ok(MarketState {
-            latest_price,
-            my_open_orders,
-            orderbook,
-        })
+    fn base_token(&self) -> &TokenInfo {
+        self.base_token()
+    }
+
+    async fn latest_price(&self) -> CallResult<u64> {
+        self.latest_price().await
+    }
+
+    async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
+        self.my_open_orders().await
+    }
+
+    async fn orderbook(&self) -> CallResult<AggregatedOrders> {
+        self.orderbook().await
     }
 
     async fn make_orders(&self, orders: Vec<MakeOrderRequest>) -> CallResult<()> {
