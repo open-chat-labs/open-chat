@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Refund successful user submitted proposals that don't reach majority ([#5123](https://github.com/open-chat-labs/open-chat/pull/5123))
+- One time job to process finished user submitted proposals ([#5124](https://github.com/open-chat-labs/open-chat/pull/5124))
 
 ## [[2.0.960](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.960-proposals_bot)] - 2023-12-05
 
