@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Expose active user submitted proposals in metrics ([#5126](https://github.com/open-chat-labs/open-chat/pull/5126))
 
 ### Fixed
 

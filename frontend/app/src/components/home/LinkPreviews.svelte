@@ -172,6 +172,7 @@
         display: none;
         flex-direction: row-reverse;
         gap: $sp1;
+        word-break: break-word;
 
         &.me {
             border-color: var(--currentChat-msg-me-separator);
