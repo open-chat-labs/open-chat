@@ -1,4 +1,4 @@
-use crate::NervousSystemMetrics;
+use crate::{generate_message_id, NervousSystemMetrics};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
@@ -205,8 +205,14 @@ impl NervousSystems {
             }
 
             for proposal in active_proposals {
-                ns.process_proposal(proposal);
+                ns.process_proposal(proposal, false);
             }
+        }
+    }
+
+    pub fn process_finished_proposal(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.process_proposal(proposal, true);
         }
     }
 
@@ -222,12 +228,6 @@ impl NervousSystems {
             mem::take(&mut ns.decided_user_submitted_proposals)
         } else {
             Vec::new()
-        }
-    }
-
-    pub fn queue_proposal_to_update(&mut self, governance_canister_id: CanisterId, proposal: ProposalUpdate) {
-        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
-            ns.proposals_to_be_updated.pending.insert(proposal.message_id, proposal);
         }
     }
 
@@ -370,7 +370,7 @@ impl NervousSystem {
         }
     }
 
-    pub fn process_proposal(&mut self, proposal: Proposal) {
+    pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
         let proposal_id = proposal.id();
 
         if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied() {
@@ -390,7 +390,16 @@ impl NervousSystem {
             }
         }
 
-        if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
+        if finished {
+            let update = ProposalUpdate {
+                message_id: generate_message_id(self.governance_canister_id, proposal_id),
+                status: Some(proposal.status()),
+                reward_status: Some(proposal.reward_status()),
+                latest_tally: Some(proposal.tally()),
+                deadline: None,
+            };
+            self.upsert_proposal_update(update);
+        } else if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
             let status = proposal.status();
             let reward_status = proposal.reward_status();
             let latest_tally = proposal.tally();
