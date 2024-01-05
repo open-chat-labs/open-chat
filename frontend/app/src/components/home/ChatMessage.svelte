@@ -134,7 +134,8 @@
         msg.content.kind === "deleted_content" ||
         msg.content.kind === "blocked_content" ||
         collapsed;
-    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
+    $: canEdit =
+        me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
@@ -827,6 +828,7 @@
         min-width: 90px;
         overflow: hidden;
         overflow-wrap: break-word;
+        word-break: break-word;
         border: var(--currentChat-msg-bd);
         box-shadow: var(--currentChat-msg-sh);
 
