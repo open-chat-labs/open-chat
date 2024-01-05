@@ -384,7 +384,7 @@ impl NervousSystem {
                 status: Some(proposal.status()),
                 reward_status: Some(proposal.reward_status()),
                 latest_tally: Some(proposal.tally()),
-                deadline: None,
+                deadline: Some(proposal.deadline()),
             };
             self.upsert_proposal_update(update);
         } else if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
@@ -400,7 +400,6 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
                 deadline: (deadline != previous.deadline()).then_some(deadline),
             };
-
             self.upsert_proposal_update(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
@@ -435,6 +434,9 @@ impl NervousSystem {
                 }
                 if let Some(t) = update.latest_tally {
                     current.latest_tally = Some(t);
+                }
+                if let Some(d) = update.deadline {
+                    current.deadline = Some(d);
                 }
             }
             Vacant(e) => {

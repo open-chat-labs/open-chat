@@ -93,6 +93,7 @@ pub struct NnsProposal {
     pub status: ProposalDecisionStatus,
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
+    #[serde(skip_deserializing)]
     pub deadline: TimestampMillis,
     pub payload_text_rendering: Option<String>,
     pub last_updated: TimestampMillis,
