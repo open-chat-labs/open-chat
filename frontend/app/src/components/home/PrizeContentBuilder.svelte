@@ -7,6 +7,7 @@
         PrizeContentInitial,
         MessageContext,
     } from "openchat-client";
+    import { bigIntMax } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -63,6 +64,7 @@
     $: remainingBalance =
         draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
     $: minAmount = 10n * BigInt(numberOfWinners ?? 0) * transferFees;
+    $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
@@ -81,10 +83,6 @@
 
     function reset() {
         balanceWithRefresh.refresh();
-    }
-
-    function maxAmount(balance: bigint): bigint {
-        return balance - transferFees;
     }
 
     function recipientFromContext({ chatId }: MessageContext) {
@@ -250,7 +248,7 @@
                             bind:state={tokenInputState}
                             transferFees={totalFees}
                             {minAmount}
-                            maxAmount={maxAmount(cryptoBalance)}
+                            {maxAmount}
                             bind:amount={draftAmount} />
                     </div>
                     <div class="message">
