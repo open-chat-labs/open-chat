@@ -20,8 +20,6 @@ fn p2p_trade_succeeds() {
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);
 
-    let now = now_millis(env);
-
     client::icrc1::happy_path::transfer(
         env,
         *controller,
