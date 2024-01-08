@@ -50,7 +50,7 @@ fn p2p_trade_succeeds() {
                 input_amount: 1_000_000_000,
                 output_token: Cryptocurrency::CHAT.try_into().unwrap(),
                 output_amount: 10_000_000_000,
-                expires_at: now + DAY_IN_MS,
+                expires_in: DAY_IN_MS,
                 caption: None,
             }),
             sender_name: user1.username(),
