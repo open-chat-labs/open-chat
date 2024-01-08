@@ -446,7 +446,7 @@ impl GroupChatCore {
                             NotAuthorized
                         }
                     } else {
-                        MessageNotDeleted
+                        Success(Box::new(message.content.hydrate(Some(user_id))))
                     };
                 }
             }
@@ -1893,7 +1893,6 @@ pub enum DeletedMessageResult {
     UserNotInGroup,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 

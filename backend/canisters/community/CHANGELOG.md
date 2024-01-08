@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `subtype` to channel search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
 - Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
 - Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
+- Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
 
 ### Fixed
 
