@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Split active neurons from disbursed neurons in metrics ([#5139](https://github.com/open-chat-labs/open-chat/pull/5139))
 
+### Fixed
+
+- Skip neurons that are spawning when detecting neurons to spawn from ([#5146](https://github.com/open-chat-labs/open-chat/pull/5146))
+
 ## [[2.0.995](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.995-neuron_controller)] - 2024-01-05
 
 ### Changed

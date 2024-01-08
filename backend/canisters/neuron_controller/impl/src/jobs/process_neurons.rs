@@ -40,7 +40,7 @@ async fn run_async() {
         let neurons_to_spawn: Vec<_> = response
             .full_neurons
             .iter()
-            .filter(|n| n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
+            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
             .filter_map(|n| n.id.as_ref().map(|id| id.id))
             .collect();
 
