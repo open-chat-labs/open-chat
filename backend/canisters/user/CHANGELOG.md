@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove group summary cache ([#5067](https://github.com/open-chat-labs/open-chat/pull/5067))
 
+### Fixed
+
+- Fix bug where `cancel_job` would fail to find the job to cancel ([#5148](https://github.com/open-chat-labs/open-chat/pull/5148))
+
 ## [[2.0.989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.989-user)] - 2023-12-20
 
 ### Added
