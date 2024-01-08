@@ -264,7 +264,11 @@ export class GroupClient extends CandidService {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], undefined, latestKnownUpdate);
+            return this.handleMissingEvents(
+                [cachedEvents, missing],
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            );
         }
     }
 
