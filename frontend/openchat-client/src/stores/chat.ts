@@ -429,7 +429,7 @@ export const proposalTopicsStore = derived(
                     [10, "Node Provider Rewards"],
                     [12, "Subnet Replica Version Management"],
                     [13, "Replica Version Management"],
-                    [14, "SNS & Neuron Fund"],
+                    [14, "SNS & Neurons' Fund"],
                 ]);
             } else {
                 const snsFunctionsMap = $snsFunctions.get(
