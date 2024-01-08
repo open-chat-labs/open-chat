@@ -490,7 +490,6 @@ type DeletedMessageResponse = variant {
     CallerNotInGroup;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 

@@ -987,7 +987,6 @@ type DeletedMessageResponse = variant {
     ChatNotFound;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
