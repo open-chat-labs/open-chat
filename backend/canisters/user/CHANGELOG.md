@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `local_user_index_canister_id` to `initial_state` response ([#5083](https://github.com/open-chat-labs/open-chat/pull/5083))
 - Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
+- Add `owner` principal to metrics ([#5138](https://github.com/open-chat-labs/open-chat/pull/5138))
 
 ### Removed
 
