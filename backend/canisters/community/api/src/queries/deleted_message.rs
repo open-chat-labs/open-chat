@@ -18,7 +18,6 @@ pub enum Response {
     UserNotInChannel,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 
