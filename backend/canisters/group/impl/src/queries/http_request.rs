@@ -21,11 +21,28 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&state.metrics())
     }
 
+    fn get_timer_jobs(state: &RuntimeState) -> HttpResponse {
+        let data: Vec<_> = if state.data.chat.is_public.value || state.data.test_mode {
+            state
+                .data
+                .timer_jobs
+                .jobs
+                .values()
+                .filter_map(|(ts, wrapper)| wrapper.borrow().as_ref().map(|j| (*ts, j.clone())))
+                .collect()
+        } else {
+            Vec::new()
+        };
+
+        build_json_response(&data)
+    }
+
     match extract_route(&request.url) {
         Route::Avatar(requested_avatar_id) => read_state(|state| get_avatar_impl(requested_avatar_id, state)),
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
+        Route::Other(p, _) if p == "timer_jobs" => read_state(get_timer_jobs),
         _ => HttpResponse::not_found(),
     }
 }
