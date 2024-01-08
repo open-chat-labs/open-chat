@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::utils::{now_millis, tick_many};
+use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
@@ -19,8 +19,6 @@ fn p2p_trade_succeeds() {
     } = wrapper.env();
 
     let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, true);
-
-    let now = now_millis(env);
 
     client::icrc1::happy_path::transfer(
         env,
@@ -50,7 +48,7 @@ fn p2p_trade_succeeds() {
                 input_amount: 1_000_000_000,
                 output_token: Cryptocurrency::CHAT.try_into().unwrap(),
                 output_amount: 10_000_000_000,
-                expires_at: now + DAY_IN_MS,
+                expires_in: DAY_IN_MS,
                 caption: None,
             }),
             sender_name: user1.username(),

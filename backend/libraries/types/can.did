@@ -1551,7 +1551,7 @@ type P2PTradeContentInitial = record {
     input_amount : nat;
     output_token : TokenInfo;
     output_amount : nat;
-    expires_at : TimestampMillis;
+    expires_in : Milliseconds;
     caption : opt text;
 };
 
