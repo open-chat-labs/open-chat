@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-pub const MAX_TEXT_LENGTH: u32 = 5_000;
+pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
