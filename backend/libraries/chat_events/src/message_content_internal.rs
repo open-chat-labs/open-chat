@@ -56,6 +56,7 @@ impl MessageContentInternal {
         content: MessageContentInitial,
         transfer: CompletedCryptoTransaction,
         p2p_trade_offer_id: Option<u32>,
+        now: TimestampMillis,
     ) -> MessageContentInternal {
         match content {
             MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(CryptoContentInternal {
@@ -65,7 +66,7 @@ impl MessageContentInternal {
             }),
             MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
             MessageContentInitial::P2PTrade(c) => {
-                MessageContentInternal::P2PTrade(P2PTradeContent::new(p2p_trade_offer_id.unwrap(), c, transfer))
+                MessageContentInternal::P2PTrade(P2PTradeContent::new(p2p_trade_offer_id.unwrap(), c, transfer, now))
             }
             _ => unreachable!("Message must include a crypto transfer"),
         }

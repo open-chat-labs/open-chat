@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    Milliseconds, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -529,7 +529,7 @@ pub struct P2PTradeContentInitial {
     pub input_amount: u128,
     pub output_token: TokenInfo,
     pub output_amount: u128,
-    pub expires_at: TimestampMillis,
+    pub expires_in: Milliseconds,
     pub caption: Option<String>,
 }
 
@@ -547,7 +547,12 @@ pub struct P2PTradeContent {
 }
 
 impl P2PTradeContent {
-    pub fn new(offer_id: u32, content: P2PTradeContentInitial, transfer: CompletedCryptoTransaction) -> P2PTradeContent {
+    pub fn new(
+        offer_id: u32,
+        content: P2PTradeContentInitial,
+        transfer: CompletedCryptoTransaction,
+        now: TimestampMillis,
+    ) -> P2PTradeContent {
         P2PTradeContent {
             offer_id,
             input_token: content.input_token,
@@ -555,7 +560,7 @@ impl P2PTradeContent {
             input_transaction_index: transfer.index(),
             output_token: content.output_token,
             output_amount: content.output_amount,
-            expires_at: content.expires_at,
+            expires_at: now + content.expires_in,
             status: P2PTradeStatus::Open,
             caption: content.caption,
         }
