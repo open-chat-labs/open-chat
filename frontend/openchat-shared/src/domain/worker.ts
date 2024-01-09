@@ -145,7 +145,7 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
-import type { TranslationCorrections } from "./i18n";
+import type { TranslationCorrection, TranslationCorrections } from "./i18n";
 /**
  * Worker request types
  */
@@ -311,6 +311,8 @@ export type WorkerRequest =
     | DeleteDirectChat
     | GetDiamondMembershipFees
     | SetTranslationCorrection
+    | ApproveTranslationCorrection
+    | RejectTranslationCorrection
     | GetTranslationCorrections
     | GetExchangeRates;
 
@@ -320,9 +322,17 @@ type GetTranslationCorrections = {
 
 type SetTranslationCorrection = {
     kind: "setTranslationCorrection";
-    locale: string;
-    key: string;
-    value: string;
+    correction: TranslationCorrection;
+};
+
+type ApproveTranslationCorrection = {
+    kind: "approveTranslationCorrection";
+    correction: TranslationCorrection;
+};
+
+type RejectTranslationCorrection = {
+    kind: "rejectTranslationCorrection";
+    correction: TranslationCorrection;
 };
 
 type LoadSavedCryptoAccounts = {
@@ -1767,7 +1777,11 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
     : T extends SetTranslationCorrection
-    ? boolean
+    ? TranslationCorrections
+    : T extends ApproveTranslationCorrection
+    ? TranslationCorrections
+    : T extends RejectTranslationCorrection
+    ? TranslationCorrections
     : T extends GetTranslationCorrections
     ? TranslationCorrections
     : never;

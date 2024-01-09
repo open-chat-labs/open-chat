@@ -32,6 +32,7 @@ import type {
     DiamondMembershipStatus,
     TransferSuccess,
     TranslationCorrections,
+    TranslationCorrection,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -52,12 +53,6 @@ export type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
     kind: "event";
     chatId: ChatIdentifier;
     messageKey: string | undefined;
-};
-
-type TranslationCorrection = {
-    locale: string;
-    key: string;
-    value: string;
 };
 
 export interface ChatSchema extends DBSchema {
@@ -1171,12 +1166,31 @@ export async function setCurrentUserDiamondStatusInCache(
 }
 
 export async function setTranslationCorrection(
-    locale: string,
-    key: string,
-    value: string,
-): Promise<void> {
-    if (db === undefined) return;
-    (await db).put("translationCorrections", { locale, key, value }, `${locale}_${key}`);
+    correction: TranslationCorrection,
+): Promise<TranslationCorrections> {
+    if (db === undefined) return {};
+    (await db).put("translationCorrections", correction, `${correction.locale}_${correction.key}`);
+    return getTranslationCorrections();
+}
+
+export async function approveTranslationCorrection(
+    correction: TranslationCorrection,
+): Promise<TranslationCorrections> {
+    if (db === undefined) return {};
+    (await db).put(
+        "translationCorrections",
+        { ...correction, approved: true },
+        `${correction.locale}_${correction.key}`,
+    );
+    return getTranslationCorrections();
+}
+
+export async function rejectTranslationCorrection(
+    correction: TranslationCorrection,
+): Promise<TranslationCorrections> {
+    if (db === undefined) return {};
+    (await db).delete("translationCorrections", `${correction.locale}_${correction.key}`);
+    return getTranslationCorrections();
 }
 
 export async function getTranslationCorrections(): Promise<TranslationCorrections> {
@@ -1184,7 +1198,7 @@ export async function getTranslationCorrections(): Promise<TranslationCorrection
     const corrections = await (await db).getAll("translationCorrections");
     return corrections.reduce<TranslationCorrections>((res, correction) => {
         const byLocale = res[correction.locale] ?? {};
-        byLocale[correction.key] = correction.value;
+        byLocale[correction.key] = correction;
         res[correction.locale] = byLocale;
         return res;
     }, {});

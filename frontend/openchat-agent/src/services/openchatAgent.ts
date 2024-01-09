@@ -13,6 +13,8 @@ import {
     recordFailedMessage,
     setTranslationCorrection,
     getTranslationCorrections,
+    rejectTranslationCorrection,
+    approveTranslationCorrection,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -190,6 +192,7 @@ import type {
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
     TranslationCorrections,
+    TranslationCorrection,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3079,11 +3082,29 @@ export class OpenChatAgent extends EventTarget {
         return this._icpcoinsClient.exchangeRates();
     }
 
-    setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
-        console.log("Setting translation correction: ", locale, key, value);
+    setTranslationCorrection(correction: TranslationCorrection): Promise<TranslationCorrections> {
+        console.log("Setting translation correction: ", correction);
         // TODO - for now I'm just going to record these corrections in indexed db
         // eventually we will want an api, but let's get the shape right first
-        return setTranslationCorrection(locale, key, value).then((_) => true);
+        return setTranslationCorrection(correction);
+    }
+
+    rejectTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Rejecting translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return rejectTranslationCorrection(correction);
+    }
+
+    approveTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Approving translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return approveTranslationCorrection(correction);
     }
 
     getTranslationCorrections(): Promise<TranslationCorrections> {

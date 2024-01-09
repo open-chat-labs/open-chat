@@ -3,6 +3,7 @@
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
+    import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
@@ -25,6 +26,7 @@
 
     $: canExtendDiamond = client.canExtendDiamond;
     $: anonUser = client.anonUser;
+    $: admin = !$anonUser && true; // TODO we need to control this somehow
 </script>
 
 <Menu>
@@ -92,6 +94,14 @@
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">{$_("login")}</span>
+        </MenuItem>
+    {/if}
+
+    {#if admin}
+        <MenuItem separator />
+        <MenuItem on:click={() => page("/admin")}>
+            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{"Admin"}</span>
         </MenuItem>
     {/if}
 </Menu>

@@ -9,14 +9,24 @@
     import TextArea from "./TextArea.svelte";
     import { getContext } from "svelte";
     import { OpenChat } from "openchat-client";
-    import { toastStore } from "../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
     let busy = false;
-    let suggestion = $editingLabel === undefined ? "" : $_($editingLabel);
+    let suggestion = "";
 
     $: yourLanguage = supportedLanguages.find((l) => l.code === $locale)?.name ?? "English";
+    $: corrections = client.translationCorrectionsStore;
+    $: userStore = client.userStore;
+
+    $: console.log("Corrections: ", $corrections);
+
+    $: existingCorrection =
+        $locale && $editingLabel && $corrections[$locale]
+            ? $corrections[$locale][$editingLabel]
+            : undefined;
+    $: correctedBy =
+        existingCorrection !== undefined ? $userStore[existingCorrection?.proposedBy].username : "";
 
     function close() {
         editingLabel.set(undefined);
@@ -27,14 +37,8 @@
             busy = true;
             client
                 .setTranslationCorrection($locale, $editingLabel, suggestion)
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast(
-                            "Sorry we were unable to record your translation correction",
-                        );
-                    } else {
-                        editingLabel.set(undefined);
-                    }
+                .then(() => {
+                    editingLabel.set(undefined);
                 })
                 .finally(() => (busy = false));
         }
@@ -54,8 +58,14 @@
                     The English value is <span class="value"
                         >{$_($editingLabel, { locale: "en" })}</span>
                 </p>
-                <p>The current translation is: <span class="value">{$_($editingLabel)}</span></p>
-                <Legend label="Suggested replacement"></Legend>
+                <p>The current translation is <span class="value">{$_($editingLabel)}</span></p>
+                {#if existingCorrection !== undefined}
+                    <p>
+                        The current translation was provided by <span class="value"
+                            >{correctedBy}</span>
+                    </p>
+                {/if}
+                <Legend label="Your proposed translation is"></Legend>
                 <TextArea
                     minlength={1}
                     maxlength={1000}

@@ -1,13 +1,20 @@
-import type { TranslationCorrections } from "openchat-shared";
+import type { TranslationCorrection, TranslationCorrections } from "openchat-shared";
 import { addMessages } from "svelte-i18n";
+import { writable } from "svelte/store";
 
 type LocaleDictionary = {
     [key: string]: LocaleDictionary | string | Array<string | LocaleDictionary> | null;
 };
 
-export function applyTranslationCorrections(corrections: TranslationCorrections): void {
+export const translationCorrectionsStore = writable<TranslationCorrections>({});
+
+export function applyTranslationCorrections(
+    userId: string,
+    corrections: TranslationCorrections,
+): void {
+    translationCorrectionsStore.set(corrections);
     Object.entries(corrections).forEach(([locale, byLocale]) => {
-        addMessages(locale, toLocaleDictionary(byLocale));
+        addMessages(locale, toLocaleDictionary(userId, byLocale));
     });
 }
 
@@ -15,19 +22,27 @@ export function applyTranslationCorrections(corrections: TranslationCorrections)
  * This takes a record where the key is the dotted path e.g. "a.b.c" with a value and converts
  * it to a nested dictionary as used by svelte-i18n e.g. { a: { b: { c: value }}}
  */
-function toLocaleDictionary(rec: Record<string, string>): LocaleDictionary {
+function toLocaleDictionary(
+    userId: string,
+    byLocale: Record<string, TranslationCorrection>,
+): LocaleDictionary {
     const expanded: LocaleDictionary = {};
 
-    for (const key in rec) {
-        const value = rec[key];
-        const keys = key.split(".");
+    for (const translationKey in byLocale) {
+        const correction = byLocale[translationKey];
+        const keyParts = translationKey.split(".");
+
+        // filter out any corrections made by another user which have not yet been approved
+        if (!correction.approved && correction.proposedBy !== userId) {
+            continue;
+        }
 
         let level = expanded;
 
-        keys.forEach((nestedKey, i) => {
+        keyParts.forEach((nestedKey, i) => {
             if (!level[nestedKey]) {
-                if (i === keys.length - 1) {
-                    level[nestedKey] = value;
+                if (i === keyParts.length - 1) {
+                    level[nestedKey] = correction.value;
                 } else {
                     level[nestedKey] = {};
                 }

@@ -39,7 +39,10 @@ export const layoutStore: Readable<Layout> = derived(
             const showLeft = !showMiddle && !showRight;
             const showNav =
                 !$disableLeftNav &&
-                (showLeft || ($pathParams.kind === "communities_route" && !showRight));
+                (showLeft ||
+                    (($pathParams.kind === "communities_route" ||
+                        $pathParams.kind === "admin_route") &&
+                        !showRight));
             return {
                 showNav,
                 showMiddle,
@@ -50,7 +53,8 @@ export const layoutStore: Readable<Layout> = derived(
         } else {
             const showRight = $rightPanelHistory.length > 0 || $fullWidth;
             const floatRight = !$fullWidth;
-            const showLeft = $pathParams.kind !== "communities_route";
+            const showLeft =
+                $pathParams.kind !== "communities_route" && $pathParams.kind !== "admin_route";
 
             return {
                 showNav: !$disableLeftNav,
