@@ -89,6 +89,7 @@
                     );
                 } else {
                     error = `Failed to set group upgrade concurrency to ${groupUpgradeConcurrency}`;
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
@@ -108,6 +109,7 @@
                     );
                 } else {
                     error = `Failed to set community upgrade concurrency to ${communityUpgradeConcurrency}`;
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
@@ -127,6 +129,7 @@
                     );
                 } else {
                     error = `Failed to set user upgrade concurrency to ${userUpgradeConcurrency}`;
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
@@ -144,6 +147,7 @@
                     toastStore.showSuccessToast(`Diamond membership fees set ${fees}`);
                 } else {
                     error = `Failed to set diamond membership fees ${userUpgradeConcurrency}`;
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
@@ -161,6 +165,7 @@
                     toastStore.showSuccessToast("Neuron staked successfully");
                 } else {
                     error = "Failed to stake neuron";
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
@@ -178,6 +183,7 @@
                     toastStore.showSuccessToast("Market maker config updated");
                 } else {
                     error = `Failed to update market maker config: ${resp}`;
+                    toastStore.showFailureToast(error);
                 }
             })
             .finally(() => {
