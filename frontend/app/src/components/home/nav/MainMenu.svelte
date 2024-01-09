@@ -39,17 +39,14 @@
         </MenuItem>
         <MenuItem on:click={() => dispatch("profile")}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("profile.title")}</span>
+            <span slot="text"><Translatable key="profile.title" /></span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("upgrade")}>
             <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
-                >{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
+                ><Translatable
+                    key={$canExtendDiamond ? "upgrade.extend" : "upgrade.diamond"} /></span>
         </MenuItem>
-        <!-- <MenuItem on:click={() => dispatch("halloffame")}>
-        <span class="halloffame" slot="icon">👑</span>
-        <span slot="text">{$_("halloffame.menu")}</span>
-    </MenuItem> -->
         <MenuItem separator />
     {/if}
     <MenuItem on:click={() => page("/home")}>
@@ -88,12 +85,12 @@
     {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("logout")}</span>
+            <span slot="text"><Translatable key="logout" /></span>
         </MenuItem>
     {:else}
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("login")}</span>
+            <span slot="text"><Translatable key="login" /></span>
         </MenuItem>
     {/if}
 

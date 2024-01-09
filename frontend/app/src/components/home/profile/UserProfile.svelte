@@ -51,6 +51,7 @@
     import CommunityProfile from "./CommunityProfile.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -232,7 +233,7 @@
 </script>
 
 <SectionHeader border={false} flush shadow>
-    <h4 class="title">{$_("profile.title")}</h4>
+    <h4 class="title"><Translatable key="profile.title" /></h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -248,7 +249,7 @@
             on:click={() => (view = "global")}
             class:selected={view === "global"}
             class="tab">
-            {$_("profile.global")}
+            <Translatable key="profile.global" />
         </div>
         <div
             tabindex="0"
@@ -256,7 +257,7 @@
             on:click={() => (view = "communities")}
             class:selected={view === "communities"}
             class="tab">
-            {$_("communities.communityLabel")}
+            <Translatable key="communities.communityLabel" />
         </div>
     </div>
 {/if}
@@ -283,9 +284,9 @@
                 </div>
                 {#if $anonUser}
                     <div class="guest">
-                        <p>{$_("guestUser")}</p>
+                        <p><Translatable key="guestUser" /></p>
                         <Button on:click={() => identityState.set({ kind: "logging_in" })}
-                            >{$_("login")}</Button>
+                            ><Translatable key="login" /></Button>
                     </div>
                 {:else}
                     <Legend label={$_("username")} rules={$_("usernameRules")} />

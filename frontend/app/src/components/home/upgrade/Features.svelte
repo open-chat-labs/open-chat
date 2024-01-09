@@ -7,6 +7,7 @@
     import { createEventDispatcher } from "svelte";
     import Feature from "./Feature.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import Translatable from "../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -24,14 +25,14 @@
 </script>
 
 <div class:landing class="grid header">
-    <div class="header-col">{$_("upgrade.feature")}</div>
-    <div class="header-col free">{$_("upgrade.free")}</div>
-    <div class="header-col diamond">{$_("upgrade.diamond")}</div>
+    <div class="header-col"><Translatable key="upgrade.feature" /></div>
+    <div class="header-col free"><Translatable key="upgrade.free" /></div>
+    <div class="header-col diamond"><Translatable key="upgrade.diamond" /></div>
 </div>
 
 <div class:landing class="grid body">
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.textMessages")}</div>
+        <div slot="title"><Translatable key="upgrade.textMessages" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -41,7 +42,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.giphys")}</div>
+        <div slot="title"><Translatable key="upgrade.giphys" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -51,7 +52,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.reactions")}</div>
+        <div slot="title"><Translatable key="upgrade.reactions" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -61,7 +62,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.polls")}</div>
+        <div slot="title"><Translatable key="upgrade.polls" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -71,7 +72,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.reminders")}</div>
+        <div slot="title"><Translatable key="upgrade.reminders" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -81,7 +82,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.crypto")}</div>
+        <div slot="title"><Translatable key="upgrade.crypto" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -91,31 +92,31 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.notifications")}</div>
-        <div slot="free">{$_("upgrade.freeNotifications")}</div>
-        <div slot="diamond">{$_("upgrade.diamondNotifications")}</div>
+        <div slot="title"><Translatable key="upgrade.notifications" /></div>
+        <div slot="free"><Translatable key="upgrade.freeNotifications" /></div>
+        <div slot="diamond"><Translatable key="upgrade.diamondNotifications" /></div>
     </Feature>
 
     <Feature
         {landing}
         diamondInfo={$_("upgrade.mediaLimits", { values: { image: "5mb", video: "50mb" } })}
         freeInfo={$_("upgrade.mediaLimits", { values: { image: "1mb", video: "5mb" } })}>
-        <div slot="title">{$_("upgrade.mediaMessages")}</div>
-        <div slot="free">{$_("upgrade.freeMediaMessages")}</div>
-        <div slot="diamond">{$_("upgrade.diamondMediaMessages")}</div>
+        <div slot="title"><Translatable key="upgrade.mediaMessages" /></div>
+        <div slot="free"><Translatable key="upgrade.freeMediaMessages" /></div>
+        <div slot="diamond"><Translatable key="upgrade.diamondMediaMessages" /></div>
     </Feature>
 
     <Feature
         {landing}
         diamondInfo={$_("upgrade.diamondStorageLimit")}
         freeInfo={$_("upgrade.freeStorageLimit")}>
-        <div slot="title">{$_("upgrade.storage")}</div>
-        <div slot="free">{$_("upgrade.freeStorage")}</div>
-        <div slot="diamond">{$_("upgrade.diamondStorage")}</div>
+        <div slot="title"><Translatable key="upgrade.storage" /></div>
+        <div slot="free"><Translatable key="upgrade.freeStorage" /></div>
+        <div slot="diamond"><Translatable key="upgrade.diamondStorage" /></div>
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.createCommunities")}</div>
+        <div slot="title"><Translatable key="upgrade.createCommunities" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -125,7 +126,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.directChats")}</div>
+        <div slot="title"><Translatable key="upgrade.directChats" /></div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
         </div>
@@ -135,31 +136,21 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.privateGroups")}</div>
-        <div slot="free">{$_("upgrade.freePrivateGroups")}</div>
-        <div slot="diamond">{$_("upgrade.diamondPrivateGroups")}</div>
+        <div slot="title"><Translatable key="upgrade.privateGroups" /></div>
+        <div slot="free"><Translatable key="upgrade.freePrivateGroups" /></div>
+        <div slot="diamond"><Translatable key="upgrade.diamondPrivateGroups" /></div>
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.publicGroups")}</div>
+        <div slot="title"><Translatable key="upgrade.publicGroups" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
-        <div slot="diamond">{$_("upgrade.diamondPublicGroups")}</div>
+        <div slot="diamond"><Translatable key="upgrade.diamondPublicGroups" /></div>
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.gatedGroups")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature {landing}>
-        <div slot="title">{$_("upgrade.translations")}</div>
+        <div slot="title"><Translatable key="upgrade.gatedGroups" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -169,7 +160,7 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.diamondBadge")}</div>
+        <div slot="title"><Translatable key="upgrade.translations" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -179,7 +170,17 @@
     </Feature>
 
     <Feature {landing}>
-        <div slot="title">{$_("upgrade.displayNames")}</div>
+        <div slot="title"><Translatable key="upgrade.diamondBadge" /></div>
+        <div slot="free">
+            <Minus size={"1em"} color={"var(--menu-warn)"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
+        <div slot="title"><Translatable key="upgrade.displayNames" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -189,15 +190,15 @@
     </Feature>
 
     <Feature {landing} diamondInfo={$_("upgrade.airdropsInfo")}>
-        <div slot="title">{$_("upgrade.airdrops")}</div>
+        <div slot="title"><Translatable key="upgrade.airdrops" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
-        <div slot="diamond">{$_("upgrade.eligible")}</div>
+        <div slot="diamond"><Translatable key="upgrade.eligible" /></div>
     </Feature>
 
     <Feature {landing} comingSoon>
-        <div slot="title">{$_("upgrade.customThemes")}</div>
+        <div slot="title"><Translatable key="upgrade.customThemes" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -207,7 +208,7 @@
     </Feature>
 
     <Feature {landing} comingSoon>
-        <div slot="title">{$_("upgrade.nftProfile")}</div>
+        <div slot="title"><Translatable key="upgrade.nftProfile" /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>
@@ -221,13 +222,13 @@
     <div class="footer">
         <Footer>
             <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
-                >{isDiamond ? $_("close") : $_("cancel")}</Button>
+                ><Translatable key={isDiamond ? "close" : "cancel"} /></Button>
             {#if !isDiamond}
                 <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                    >{$_("upgrade.button")}</Button>
+                    ><Translatable key="upgrade.button" /></Button>
             {:else if canExtend}
                 <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                    >{$_("upgrade.extendShort")}</Button>
+                    ><Translatable key="upgrade.extendShort" /></Button>
             {/if}
         </Footer>
     </div>
