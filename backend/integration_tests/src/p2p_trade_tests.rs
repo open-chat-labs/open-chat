@@ -72,7 +72,7 @@ fn p2p_trade_succeeds() {
         group_id.into(),
         &group_canister::accept_p2p_trade_offer::Args {
             thread_root_message_index: None,
-            message_index: 0.into(),
+            message_id: random_message_id(),
         },
     );
 
