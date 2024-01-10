@@ -50,8 +50,8 @@ export type MessagePermissions = {
     crypto?: ChatPermissionRole;
     giphy?: ChatPermissionRole;
     prize?: ChatPermissionRole;
-    p2pTrade?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
+    p2pTrade?: ChatPermissionRole;
 };
 
 export type OptionalChatPermissions = {
@@ -79,6 +79,7 @@ export type OptionalMessagePermissions = {
     giphy: OptionUpdate<ChatPermissionRole>;
     prize: OptionUpdate<ChatPermissionRole>;
     memeFighter: OptionUpdate<ChatPermissionRole>;
+    p2pTrade: OptionUpdate<ChatPermissionRole>;
 };
 
 export type CommunityPermissions = {
@@ -111,6 +112,7 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
         giphy: undefined,
         prize: undefined,
         memeFighter: undefined,
+        p2pTrade: undefined,
     };
 }
 

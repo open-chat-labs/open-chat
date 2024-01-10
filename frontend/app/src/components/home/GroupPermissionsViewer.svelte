@@ -29,15 +29,12 @@
                 reactToMessages: permissions.reactToMessages,
                 mentionAllMembers: permissions.mentionAllMembers,
             },
-            ""
+            "",
         );
-        messagePartition = partitionMessagePermissions(
-            permissions.messagePermissions,
-            "messagePermissions."
-        );
+        messagePartition = partitionMessagePermissions(permissions.messagePermissions, false);
         threadPartition = partitionMessagePermissions(
             permissions.threadPermissions ?? permissions.messagePermissions,
-            "threadPermissions."
+            true,
         );
     }
 
@@ -45,22 +42,28 @@
 
     function partitionMessagePermissions(
         mps: MessagePermissions,
-        translationExt: string
+        thread: boolean,
     ): PermissionsByRole {
+        let permissions: Record<string, ChatPermissionRole> = {
+            text: mps.text ?? mps.default,
+            image: mps.image ?? mps.default,
+            video: mps.video ?? mps.default,
+            audio: mps.audio ?? mps.default,
+            file: mps.file ?? mps.default,
+            poll: mps.poll ?? mps.default,
+            crypto: mps.crypto ?? mps.default,
+            giphy: mps.giphy ?? mps.default,
+            memeFighter: mps.memeFighter ?? mps.default,
+            p2pTrade: mps.p2pTrade ?? mps.default,
+        };
+
+        if (!thread) {
+            permissions = { ...permissions, prize: mps.prize ?? mps.default };
+        }
+
         return partitionPermissions(
-            {
-                text: mps.text ?? mps.default,
-                image: mps.image ?? mps.default,
-                video: mps.video ?? mps.default,
-                audio: mps.audio ?? mps.default,
-                file: mps.file ?? mps.default,
-                poll: mps.poll ?? mps.default,
-                crypto: mps.crypto ?? mps.default,
-                giphy: mps.giphy ?? mps.default,
-                prize: mps.prize ?? mps.default,
-                memeFighter: mps.memeFighter ?? mps.default,
-            },
-            translationExt
+            permissions,
+            thread ? "threadPermissions." : "messagePermissions.",
         );
     }
 
@@ -73,13 +76,13 @@
 
     function partitionPermissions(
         permissions: Record<string, ChatPermissionRole>,
-        translationExt: string
+        translationExt: string,
     ): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 const text = $_(
                     `permissions.${translationExt}${String(key)}`,
-                    key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {}
+                    key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {},
                 );
 
                 dict[val].add(text);
@@ -91,7 +94,7 @@
                 member: new Set(),
                 owner: new Set(),
                 none: new Set(),
-            } as PermissionsByRole
+            } as PermissionsByRole,
         );
     }
 </script>

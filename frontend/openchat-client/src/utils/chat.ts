@@ -1091,6 +1091,10 @@ export function canSendGroupMessage(
             ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
             : chat.permissions.messagePermissions;
 
+    if (permission === "prize" && mode === "thread") {
+        return false;
+    }
+
     return (
         !chat.frozen &&
         isPermitted(
@@ -1905,6 +1909,7 @@ function diffMessagePermissions(
     diff.giphy = updateFromOptions(original.giphy, updated.giphy);
     diff.prize = updateFromOptions(original.prize, updated.prize);
     diff.memeFighter = updateFromOptions(original.memeFighter, updated.memeFighter);
+    diff.p2pTrade = updateFromOptions(original.p2pTrade, updated.p2pTrade);
 
     return diff;
 }
