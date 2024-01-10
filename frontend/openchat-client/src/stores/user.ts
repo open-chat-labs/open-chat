@@ -128,6 +128,11 @@ export const platformModerator = derived(
     ($currentUser) => $currentUser.isPlatformModerator,
 );
 
+export const platformOperator = derived(
+    currentUser,
+    ($currentUser) => $currentUser.isPlatformOperator,
+);
+
 function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
     const suspended = [];
     const notSuspended = [];

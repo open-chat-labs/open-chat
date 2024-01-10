@@ -1,10 +1,8 @@
 <script lang="ts">
+    import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
-
-    import { interpolateLevel } from "../../utils/i18n";
     import Checkbox from "../Checkbox.svelte";
     import { type OpenChat, type CandidateGroupChat, type CommunitySummary } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
@@ -54,10 +52,16 @@
         group={"visibility"}>
         <div class="section-title">
             <div class={"img private"} />
-            <p>{interpolateLevel("group.privateGroup", candidate.level, true)}</p>
+            <p>
+                <Translatable
+                    resourceKey={i18nKey("group.privateGroup", undefined, candidate.level, true)} />
+            </p>
         </div>
         <div class="info">
-            <p>{interpolateLevel("privateGroupInfo", candidate.level, true)}</p>
+            <p>
+                <Translatable
+                    resourceKey={i18nKey("privateGroupInfo", undefined, candidate.level, true)} />
+            </p>
         </div>
     </Radio>
 </div>
@@ -72,14 +76,21 @@
         group={"visibility"}>
         <div class="section-title">
             <div class={"img public"} />
-            <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
+            <p>
+                <Translatable
+                    resourceKey={i18nKey("group.publicGroup", undefined, candidate.level, true)} />
+            </p>
         </div>
         <div class="info">
-            <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
             <p>
-                {candidate.level === "channel"
-                    ? $_("publicChannelInfo")
-                    : interpolateLevel("publicGroupInfo", candidate.level, true)}
+                <Translatable
+                    resourceKey={i18nKey("publicGroupUnique", undefined, candidate.level, true)} />
+            </p>
+            <p>
+                <Translatable
+                    resourceKey={candidate.level === "channel"
+                        ? i18nKey("publicChannelInfo")
+                        : i18nKey("publicGroupInfo", undefined, candidate.level, true)} />
             </p>
         </div>
     </Radio>
@@ -94,12 +105,14 @@
             label={i18nKey("historyVisible")}
             align={"start"}
             checked={candidate.historyVisible}>
-            <div class="section-title">{$_("historyVisible")}</div>
+            <div class="section-title">
+                <Translatable resourceKey={i18nKey("historyVisible")} />
+            </div>
             <div class="info">
                 {#if candidate.historyVisible}
-                    <p>{$_("historyOnInfo")}</p>
+                    <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                 {:else}
-                    <p>{$_("historyOffInfo")}</p>
+                    <p><Translatable resourceKey={i18nKey("historyOffInfo")} /></p>
                 {/if}
             </div>
         </Checkbox>
@@ -115,7 +128,9 @@
             label={i18nKey("disappearingMessages.label")}
             align={"start"}
             checked={disappearingMessages}>
-            <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
+            <div class="section-title disappear">
+                <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
+            </div>
             <div class="info">
                 {#if disappearingMessages}
                     <DisappearingMessages
@@ -133,12 +148,13 @@
 
 {#if requiresUpgrade}
     <div class="section">
-        <div class="section-title">{$_("upgrade.featuresTitle")}</div>
+        <div class="section-title">
+            <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
+        </div>
         <div class="upgrade info">
-            <p>
-                {$_("upgrade.groupMsg")}
-            </p>
-            <Button on:click={() => dispatch("upgrade")} tiny>{$_("upgrade.button")}</Button>
+            <p><Translatable resourceKey={i18nKey("upgrade.groupMsg")} /></p>
+            <Button on:click={() => dispatch("upgrade")} tiny
+                ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
         </div>
     </div>
 {/if}

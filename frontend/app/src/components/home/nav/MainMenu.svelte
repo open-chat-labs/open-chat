@@ -25,9 +25,10 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: platformOperator = client.platformOperator;
     $: canExtendDiamond = client.canExtendDiamond;
     $: anonUser = client.anonUser;
-    $: admin = !$anonUser && true; // TODO we need to control this somehow
+    $: admin = $platformOperator;
 </script>
 
 <Menu>

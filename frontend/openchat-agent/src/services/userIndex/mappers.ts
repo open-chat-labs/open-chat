@@ -121,6 +121,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                       : "in_progress",
             referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_platform_moderator,
+            isPlatformOperator: false, //TODO fill this in from the back end when it's there
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondStatus: diamondMembershipStatus(r.diamond_membership_status),

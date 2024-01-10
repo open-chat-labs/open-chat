@@ -130,6 +130,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     referrals: string[];
     isPlatformModerator: boolean;
+    isPlatformOperator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;

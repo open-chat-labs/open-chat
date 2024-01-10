@@ -2,12 +2,12 @@
     import Translate from "svelte-material-icons/Translate.svelte";
 
     import { _, locale } from "svelte-i18n";
-    import { editingLabel, type ResourceKey } from "../i18n/i18n";
+    import { editmode, editingLabel, type ResourceKey } from "../i18n/i18n";
     import type { MessageFormatter } from "openchat-shared";
 
     export let resourceKey: ResourceKey;
 
-    $: editable = !$locale?.startsWith("en");
+    $: editable = $editmode && !$locale?.startsWith("en");
 
     function editLabel() {
         editingLabel.set(resourceKey);

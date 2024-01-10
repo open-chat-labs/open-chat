@@ -185,6 +185,7 @@ import {
     anonUser,
     suspendedUser,
     platformModerator,
+    platformOperator,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -486,6 +487,7 @@ export class OpenChat extends OpenChatAgentWorker {
     anonUser = anonUser;
     suspendedUser = suspendedUser;
     platformModerator = platformModerator;
+    platformOperator = platformOperator;
 
     constructor(config: OpenChatConfig) {
         super(config);
