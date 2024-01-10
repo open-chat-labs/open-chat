@@ -6,7 +6,7 @@ use chat_events::ReserveP2PTradeResult;
 use community_canister::accept_p2p_trade_offer::{Response::*, *};
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{ChannelId, MessageIndex, UserId};
+use types::{ChannelId, MessageId, MessageIndex, UserId};
 
 #[update]
 #[trace]
@@ -25,7 +25,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
                 c2c_args.offer_id,
                 args.channel_id,
                 args.thread_root_message_index,
-                args.message_index,
+                args.message_id,
                 transaction_index,
             );
             Success
@@ -43,7 +43,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
                 args.channel_id,
                 user_id,
                 args.thread_root_message_index,
-                args.message_index,
+                args.message_id,
                 state,
             )
         });
@@ -79,7 +79,7 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
             match channel.chat.events.reserve_p2p_trade(
                 user_id,
                 args.thread_root_message_index,
-                args.message_index,
+                args.message_id,
                 channel_member.min_visible_event_index(),
                 now,
             ) {
@@ -119,13 +119,13 @@ fn rollback(
     channel_id: ChannelId,
     user_id: UserId,
     thread_root_message_index: Option<MessageIndex>,
-    message_index: MessageIndex,
+    message_id: MessageId,
     state: &mut RuntimeState,
 ) {
     if let Some(channel) = state.data.channels.get_mut(&channel_id) {
         channel
             .chat
             .events
-            .unreserve_p2p_trade(user_id, thread_root_message_index, message_index, state.env.now());
+            .unreserve_p2p_trade(user_id, thread_root_message_index, message_id, state.env.now());
     }
 }

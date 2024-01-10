@@ -82,7 +82,7 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub offer_id: u32,
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
-    pub message_index: MessageIndex,
+    pub message_id: MessageId,
     pub transaction_index: u64,
     pub attempt: u32,
 }
@@ -93,7 +93,7 @@ impl NotifyEscrowCanisterOfDepositJob {
         offer_id: u32,
         channel_id: ChannelId,
         thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
+        message_id: MessageId,
         transaction_index: u64,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
@@ -101,7 +101,7 @@ impl NotifyEscrowCanisterOfDepositJob {
             offer_id,
             channel_id,
             thread_root_message_index,
-            message_index,
+            message_id,
             transaction_index,
             attempt: 0,
         };
@@ -295,7 +295,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                             channel.chat.events.complete_p2p_trade(
                                 self.user_id,
                                 self.thread_root_message_index,
-                                self.message_index,
+                                self.message_id,
                                 self.transaction_index,
                                 state.env.now(),
                             );
@@ -307,7 +307,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         channel.chat.events.unreserve_p2p_trade(
                             self.user_id,
                             self.thread_root_message_index,
-                            self.message_index,
+                            self.message_id,
                             state.env.now(),
                         );
                     }
@@ -321,7 +321,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 user_id: self.user_id,
                                 channel_id: self.channel_id,
                                 thread_root_message_index: self.thread_root_message_index,
-                                message_index: self.message_index,
+                                message_id: self.message_id,
                                 transaction_index: self.transaction_index,
                                 attempt: self.attempt + 1,
                             }),

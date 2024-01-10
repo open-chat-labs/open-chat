@@ -702,7 +702,7 @@ impl ChatEvents {
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
+        message_id: MessageId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> ReserveP2PTradeResult {
@@ -710,7 +710,7 @@ impl ChatEvents {
 
         if let Some(event) = self
             .events_list_mut(min_visible_event_index, thread_root_message_index)
-            .and_then(|l| l.get_event_mut(message_index.into(), min_visible_event_index))
+            .and_then(|l| l.get_event_mut(message_id.into(), min_visible_event_index))
         {
             if let Some(message) = event.event.as_message_mut() {
                 if let MessageContentInternal::P2PTrade(content) = &mut message.content {
@@ -747,12 +747,12 @@ impl ChatEvents {
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
+        message_id: MessageId,
         transaction_index: u64,
         now: TimestampMillis,
     ) -> bool {
         if let Some((message, event_index)) =
-            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PTrade(content) = &mut message.content {
                 if content.complete(user_id, transaction_index, now) {
@@ -768,11 +768,11 @@ impl ChatEvents {
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
-        message_index: MessageIndex,
+        message_id: MessageId,
         now: TimestampMillis,
     ) {
         if let Some((message, event_index)) =
-            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_index.into())
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PTrade(content) = &mut message.content {
                 if content.unreserve(user_id) {
