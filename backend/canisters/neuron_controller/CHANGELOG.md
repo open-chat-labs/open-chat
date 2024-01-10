@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1002](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1002-neuron_controller)] - 2024-01-10
+
 ### Changed
 
 - Split active neurons from disbursed neurons in metrics ([#5139](https://github.com/open-chat-labs/open-chat/pull/5139))
