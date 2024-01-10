@@ -90,6 +90,7 @@
                     canisterUpgradeStatus: "not_required",
                     referrals: [],
                     isPlatformModerator: false,
+                    isPlatformOperator: false,
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
                     diamondStatus: { kind: "inactive" },
