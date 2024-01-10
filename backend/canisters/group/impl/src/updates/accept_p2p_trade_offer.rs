@@ -6,7 +6,7 @@ use chat_events::ReserveP2PTradeResult;
 use group_canister::accept_p2p_trade_offer::{Response::*, *};
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{MessageIndex, UserId};
+use types::{MessageId, MessageIndex, UserId};
 
 #[update]
 #[trace]
@@ -24,7 +24,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
                 user_id,
                 c2c_args.offer_id,
                 args.thread_root_message_index,
-                args.message_index,
+                args.message_id,
                 transaction_index,
             );
             Success
@@ -37,7 +37,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
     };
 
     if !matches!(result, Success) {
-        mutate_state(|state| rollback(user_id, args.thread_root_message_index, args.message_index, state));
+        mutate_state(|state| rollback(user_id, args.thread_root_message_index, args.message_id, state));
     }
 
     result
@@ -66,7 +66,7 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
         match state.data.chat.events.reserve_p2p_trade(
             user_id,
             args.thread_root_message_index,
-            args.message_index,
+            args.message_id,
             min_visible_event_index,
             now,
         ) {
@@ -99,15 +99,10 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
     }
 }
 
-fn rollback(
-    user_id: UserId,
-    thread_root_message_index: Option<MessageIndex>,
-    message_index: MessageIndex,
-    state: &mut RuntimeState,
-) {
+fn rollback(user_id: UserId, thread_root_message_index: Option<MessageIndex>, message_id: MessageId, state: &mut RuntimeState) {
     state
         .data
         .chat
         .events
-        .unreserve_p2p_trade(user_id, thread_root_message_index, message_index, state.env.now());
+        .unreserve_p2p_trade(user_id, thread_root_message_index, message_id, state.env.now());
 }
