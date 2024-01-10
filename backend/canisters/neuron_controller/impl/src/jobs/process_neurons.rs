@@ -1,5 +1,5 @@
 use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
-use crate::{mutate_state, read_state};
+use crate::{mutate_state, read_state, Neurons};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
 use nns_governance_canister::types::manage_neuron::disburse::Amount;
@@ -7,7 +7,7 @@ use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
 use tracing::info;
-use types::{Milliseconds, Timestamped};
+use types::Milliseconds;
 use utils::canister_timers::run_now_then_interval;
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::DAY_IN_MS;
@@ -40,7 +40,7 @@ async fn run_async() {
         let neurons_to_spawn: Vec<_> = response
             .full_neurons
             .iter()
-            .filter(|n| n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
+            .filter(|n| n.spawn_at_timestamp_seconds.is_none() && n.maturity_e8s_equivalent > 1000 * E8S_PER_ICP)
             .filter_map(|n| n.id.as_ref().map(|id| id.id))
             .collect();
 
@@ -52,7 +52,19 @@ async fn run_async() {
             .collect();
 
         mutate_state(|state| {
-            state.data.neurons = Timestamped::new(response.full_neurons, now);
+            let (active_neurons, disbursed_neurons): (Vec<_>, Vec<_>) = response
+                .full_neurons
+                .into_iter()
+                .partition(|n| n.maturity_e8s_equivalent > 0 || n.cached_neuron_stake_e8s > 0);
+
+            state.data.neurons = Neurons {
+                timestamp: now,
+                active_neurons,
+                disbursed_neurons: disbursed_neurons
+                    .into_iter()
+                    .filter_map(|n| n.id.as_ref().map(|id| id.id))
+                    .collect(),
+            }
         });
 
         if !neurons_to_spawn.is_empty() {

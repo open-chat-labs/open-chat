@@ -16,18 +16,6 @@ pub struct NervousSystems {
 }
 
 impl NervousSystems {
-    pub fn get_finished_user_submitted_proposals(&self) -> Vec<(CanisterId, ProposalId)> {
-        let mut results = Vec::new();
-        for ns in self.nervous_systems.values() {
-            for proposal_id in ns.active_user_submitted_proposals.keys() {
-                if !ns.active_proposals.contains_key(proposal_id) {
-                    results.push((ns.governance_canister_id, *proposal_id));
-                }
-            }
-        }
-        results
-    }
-
     pub fn add(&mut self, nervous_system: registry_canister::NervousSystemDetails, chat_id: MultiUserChat) {
         self.nervous_systems.insert(
             nervous_system.governance_canister_id,
@@ -396,7 +384,7 @@ impl NervousSystem {
                 status: Some(proposal.status()),
                 reward_status: Some(proposal.reward_status()),
                 latest_tally: Some(proposal.tally()),
-                deadline: None,
+                deadline: Some(proposal.deadline()),
             };
             self.upsert_proposal_update(update);
         } else if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
@@ -412,7 +400,6 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
                 deadline: (deadline != previous.deadline()).then_some(deadline),
             };
-
             self.upsert_proposal_update(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
@@ -447,6 +434,9 @@ impl NervousSystem {
                 }
                 if let Some(t) = update.latest_tally {
                     current.latest_tally = Some(t);
+                }
+                if let Some(d) = update.deadline {
+                    current.deadline = Some(d);
                 }
             }
             Vacant(e) => {

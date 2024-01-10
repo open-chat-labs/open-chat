@@ -17,7 +17,7 @@ async fn run_async() {
     let ledger_canister_ids: Vec<_> =
         read_state(|state| state.data.tokens.get_all().iter().map(|t| t.ledger_canister_id).collect());
 
-    let _results: Vec<_> = ledger_canister_ids.into_iter().map(get_supported_standards).collect();
+    futures::future::join_all(ledger_canister_ids.into_iter().map(get_supported_standards)).await;
 }
 
 async fn get_supported_standards(ledger: Principal) -> Result<(), (RejectionCode, String)> {

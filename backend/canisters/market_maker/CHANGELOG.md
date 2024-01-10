@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.999](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.999-market_maker)] - 2024-01-05
+
 ### Added
 
 - Record and expose MarketMaker balance history ([#5131](https://github.com/open-chat-labs/open-chat/pull/5131))

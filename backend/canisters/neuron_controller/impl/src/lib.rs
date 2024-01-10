@@ -80,13 +80,14 @@ impl RuntimeState {
             public_key_der: hex::encode(self.data.get_public_key_der()),
             principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
-            neurons: self
+            active_neurons: self
                 .data
                 .neurons
-                .value
+                .active_neurons
                 .iter()
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
+            disbursed_neurons: self.data.neurons.disbursed_neurons.clone(),
             canister_ids: CanisterIds {
                 nns_governance_canister: self.data.nns_governance_canister_id,
                 nns_ledger_canister: self.data.nns_ledger_canister_id,
@@ -105,7 +106,8 @@ struct Data {
     pub nns_ledger_canister_id: CanisterId,
     pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub neurons: Timestamped<Vec<Neuron>>,
+    #[serde(skip_deserializing)]
+    pub neurons: Neurons,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -126,7 +128,7 @@ impl Data {
             nns_ledger_canister_id,
             cycles_minting_canister_id,
             cycles_dispenser_canister_id,
-            neurons: Timestamped::default(),
+            neurons: Neurons::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -156,7 +158,8 @@ pub struct Metrics {
     pub public_key_der: String,
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
-    pub neurons: Vec<u64>,
+    pub active_neurons: Vec<u64>,
+    pub disbursed_neurons: Vec<u64>,
     pub canister_ids: CanisterIds,
 }
 
@@ -166,4 +169,11 @@ pub struct CanisterIds {
     pub nns_ledger_canister: CanisterId,
     pub cycles_minting_canister: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct Neurons {
+    timestamp: TimestampMillis,
+    active_neurons: Vec<Neuron>,
+    disbursed_neurons: Vec<u64>,
 }

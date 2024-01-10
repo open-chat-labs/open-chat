@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Get standards in parallel + get them for new token ([#5004](https://github.com/open-chat-labs/open-chat/pull/5004))
+- Fix job to update supported token standards ([#5155](https://github.com/open-chat-labs/open-chat/pull/5155))
 
 ## [[2.0.972](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.972-registry)] - 2023-12-12
 

@@ -13,10 +13,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add `local_user_index_canister_id` to `initial_state` response ([#5083](https://github.com/open-chat-labs/open-chat/pull/5083))
 - Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
+- Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
+- Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
+- Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
 
 ### Removed
 
 - Remove group summary cache ([#5067](https://github.com/open-chat-labs/open-chat/pull/5067))
+
+### Fixed
+
+- Fix bug where `cancel_job` would fail to find the job to cancel ([#5148](https://github.com/open-chat-labs/open-chat/pull/5148))
 
 ## [[2.0.989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.989-user)] - 2023-12-20
 

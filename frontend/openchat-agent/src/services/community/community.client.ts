@@ -503,7 +503,7 @@ export class CommunityClient extends CandidService {
             return this.handleMissingEvents(
                 chatId,
                 [cachedEvents, missing],
-                undefined,
+                threadRootMessageIndex,
                 latestKnownUpdate,
             );
         }

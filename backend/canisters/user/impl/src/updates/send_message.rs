@@ -164,7 +164,7 @@ fn send_message_impl(
     let my_user_id = state.env.canister_id().into();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
-        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None)
+        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None, now)
     } else {
         args.content.clone().try_into().unwrap()
     };
