@@ -6,7 +6,7 @@
     import Radio from "../Radio.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import DisappearingMessages from "./DisappearingMessages.svelte";
+    import DurationPicker from "./DurationPicker.svelte";
     import AccessGateControl from "./AccessGateControl.svelte";
 
     type T = $$Generic;
@@ -116,9 +116,9 @@
             <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
             <div class="info">
                 {#if disappearingMessages}
-                    <DisappearingMessages
-                        {canEditDisappearingMessages}
-                        bind:ttl={candidate.eventsTTL} />
+                    <DurationPicker
+                        disabled={!canEditDisappearingMessages}
+                        bind:milliseconds={candidate.eventsTTL} />
                 {/if}
             </div>
         </Checkbox>

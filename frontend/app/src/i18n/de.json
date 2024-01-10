@@ -1156,9 +1156,6 @@
     "sendTextDisabled": "Textnachrichten sind deaktiviert",
     "disappearingMessages": {
         "label": "Verschwindende Nachrichten",
-        "hours": "Std)",
-        "minutes": "Protokoll)",
-        "days": "Tage)",
         "summary": "Nachrichten verschwinden nach {duration}",
         "timeUpdatedBy": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
         "disabledBy": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
@@ -1208,5 +1205,31 @@
     "messageBlocked": "Nachricht ausgeblendet",
     "removePreviewQuestion": "Vorschau entfernen?",
     "showPreview": "Vorschau zeigen",
-    "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet."
+    "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet.",
+    "hours": "Std)",
+    "minutes": "Protokoll)",
+    "days": "Tage)",
+    "p2pTrade": {
+        "builderTitle": "Machen Sie ein Tauschangebot",
+        "expiryTime": "Ablaufdatum",
+        "creatingYourMessage": "Bitte warten Sie, während wir Ihre Tauschangebotsnachricht erstellen",
+        "expired": "Abgelaufen",
+        "accepted": "akzeptiert",
+        "accept": "Akzeptieren",
+        "cancel": "Stornieren",
+        "cancelled": "Abgesagt",
+        "reserved": "Reserviert",
+        "summary": "Dies ist ein Angebot zum Tausch von {fromAmount} {fromToken} gegen {toAmount} {toToken}.",
+        "clickToAccept": "Klicken Sie auf die Schaltfläche unten, um das Angebot anzunehmen.",
+        "clickToCancel": "Klicken Sie auf die Schaltfläche unten, um das Angebot zu stornieren.",
+        "youReserved": "Sie haben dieses Angebot reserviert.",
+        "youAccepted": "Sie haben dieses Angebot angenommen.",
+        "youCancelled": "Sie haben dieses Angebot storniert.",
+        "offerCancelled": "Dieses Angebot wurde storniert.",
+        "reservedBy": "Dieses Angebot wurde von {user} reserviert.",
+        "acceptedBy": "Dieses Angebot wurde von {user} angenommen.",
+        "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} von Ihrem Wallet in den OpenChat Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder jemand das Angebot annimmt. Möchten Sie fortfahren?",
+        "confirmAccept": "Wenn Sie dieses Angebot annehmen, wird {amount} {token} von Ihrem Wallet in den OpenChat Escrow-Kanister übertragen, der dann den Tausch durchführt. Möchten Sie fortfahren?",
+        "confirmCancel": "Wenn Sie dieses Angebot stornieren, wird {amount} {token} vom OpenChat-Escrow-Kanister zurück auf Ihr Wallet übertragen. Es besteht eine geringe Chance, dass jemand das Angebot noch annimmt, bevor es storniert wird. Möchten Sie fortfahren?"
+    }
 }

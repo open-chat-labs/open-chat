@@ -1183,9 +1183,6 @@
     "hideAuthProviders": "Hide options",
     "disappearingMessages": {
         "label": "Disappearing messages",
-        "hours": "Hour(s)",
-        "minutes": "Minute(s)",
-        "days": "Day(s)",
         "summary": "Messages will disappear after {duration}",
         "timeUpdatedBy": "{changedBy} set the disappearing message time to {duration}",
         "disabledBy": "{changedBy} disabled disappearing messages",
@@ -1198,5 +1195,31 @@
     "messageBlocked": "Message hidden",
     "removePreviewQuestion": "Remove preview?",
     "showPreview": "Show preview",
-    "excessiveLinksNote": "Link previews are hidden for messages with more than 5 links."
+    "excessiveLinksNote": "Link previews are hidden for messages with more than 5 links.",
+    "hours": "Hour(s)",
+    "minutes": "Minute(s)",
+    "days": "Day(s)",
+    "p2pTrade": {
+        "builderTitle": "Make swap offer",
+        "expiryTime": "Expiry time",
+        "creatingYourMessage": "Please wait while we create your swap offer message",
+        "expired": "Expired",
+        "accepted": "accepted",
+        "accept": "Accept",
+        "cancel": "Cancel",
+        "cancelled": "Cancelled",
+        "reserved": "Reserved",
+        "summary": "This is an offer to swap {fromAmount} {fromToken} for {toAmount} {toToken}.",
+        "clickToAccept": "Click the button below to accept the offer.",
+        "clickToCancel": "Click the button below to cancel the offer.",
+        "youReserved": "You have reserved this offer.",
+        "youAccepted": "You have accepted this offer.",
+        "youCancelled": "You have cancelled this offer.",
+        "offerCancelled": "This offer has been cancelled.",
+        "reservedBy": "This offer has been reserved by {user}.",
+        "acceptedBy": "This offer has been accepted by {user}.",
+        "confirmSend": "When you create this offer, {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
+        "confirmAccept": "When you accept this offer, {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister which will then perform the swap. Do you wish to proceed?",
+        "confirmCancel": "When you cancel this offer, {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. There is a small chance someone still accepts the offer before it is cancelled. Do you wish to proceed?"
+    }
 }

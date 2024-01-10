@@ -1152,9 +1152,6 @@
     "sendTextDisabled": "הודעות טקסט מושבתות",
     "disappearingMessages": {
         "label": "הודעות נעלמות",
-        "hours": "שעה (ות)",
-        "minutes": "דקות)",
-        "days": "ימים",
         "summary": "ההודעות ייעלמו לאחר {duration}",
         "timeUpdatedBy": "{changedBy} הגדר את זמן ההודעה הנעלמת ל-{duration}",
         "disabledBy": "{changedBy} השבית הודעות נעלמות",
@@ -1204,5 +1201,31 @@
     "messageBlocked": "הודעה מוסתרת",
     "removePreviewQuestion": "להסיר את התצוגה המקדימה?",
     "showPreview": "הצג תצוגה מקדימה",
-    "excessiveLinksNote": "תצוגות מקדימות של קישורים מוסתרות עבור הודעות עם יותר מ-5 קישורים."
+    "excessiveLinksNote": "תצוגות מקדימות של קישורים מוסתרות עבור הודעות עם יותר מ-5 קישורים.",
+    "hours": "שעה (ות)",
+    "minutes": "דקות)",
+    "days": "ימים",
+    "p2pTrade": {
+        "builderTitle": "תציעו הצעת החלפה",
+        "expiryTime": "זמן תפוגה",
+        "creatingYourMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הצעת ההחלפה שלך",
+        "expired": "לא בתוקף",
+        "accepted": "מְקוּבָּל",
+        "accept": "לְקַבֵּל",
+        "cancel": "לְבַטֵל",
+        "cancelled": "מבוטל",
+        "reserved": "שמורות",
+        "summary": "זוהי הצעה להחליף את {fromAmount} {fromToken} ב-{toAmount} {toToken}.",
+        "clickToAccept": "לחץ על הכפתור למטה כדי לקבל את ההצעה.",
+        "clickToCancel": "לחץ על הכפתור למטה כדי לבטל את ההצעה.",
+        "youReserved": "שמרת את ההצעה הזו.",
+        "youAccepted": "קיבלת את ההצעה הזו.",
+        "youCancelled": "ביטלת את ההצעה הזו.",
+        "offerCancelled": "הצעה זו בוטלה.",
+        "reservedBy": "הצעה זו נשמרה על ידי {user}.",
+        "acceptedBy": "הצעה זו התקבלה על ידי {user}.",
+        "confirmSend": "כאשר אתה יוצר את ההצעה הזו, {amount} {token} יועבר מהארנק שלך אל קופסת ה-OpenChat Escrow. זה יישאר שם עד שההצעה יפוג, תבטל את ההצעה או שמישהו יקבל את ההצעה. האם אתה מעוניין להמשיך?",
+        "confirmAccept": "כאשר תקבל הצעה זו, {amount} {token} יועבר מהארנק שלך אל קופסת ה-OpenChat Escrow אשר לאחר מכן יבצע את ההחלפה. האם אתה מעוניין להמשיך?",
+        "confirmCancel": "כאשר תבטל הצעה זו, {amount} {token} יועבר ממיכל ה-OpenChat Escrow בחזרה לארנק שלך. יש סיכוי קטן שמישהו עדיין יקבל את ההצעה לפני שהיא תבוטל. האם אתה מעוניין להמשיך?"
+    }
 }

@@ -1,5 +1,26 @@
 export const idlFactory = ({ IDL }) => {
   const ChannelId = IDL.Nat;
+  const MessageIndex = IDL.Nat32;
+  const AcceptP2PTradeOfferArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'message_index' : MessageIndex,
+  });
+  const AcceptP2PTradeOfferResponse = IDL.Variant({
+    'AlreadyAccepted' : IDL.Null,
+    'OfferNotFound' : IDL.Null,
+    'UserNotInChannel' : IDL.Null,
+    'OfferCancelled' : IDL.Null,
+    'ChannelNotFound' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'AlreadyCompleted' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'OfferExpired' : IDL.Null,
+    'InsufficientFunds' : IDL.Null,
+  });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const AddMembersToChannelArgs = IDL.Record({
@@ -25,6 +46,7 @@ export const idlFactory = ({ IDL }) => {
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : TransferFromError,
+    'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
@@ -61,9 +83,9 @@ export const idlFactory = ({ IDL }) => {
     'UserNotInCommunity' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const MessageId = IDL.Nat;
-  const MessageIndex = IDL.Nat32;
   const AddReactionArgs = IDL.Record({
     'channel_id' : ChannelId,
     'username' : IDL.Text,
@@ -197,6 +219,7 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
+    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
   });
@@ -224,6 +247,10 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
   const PaymentGate = IDL.Record({
     'fee' : IDL.Nat,
     'ledger_canister_id' : CanisterId,
@@ -232,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
   });
@@ -452,6 +480,29 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
+  const P2PTradeStatus = IDL.Variant({
+    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
+    'Open' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PTradeContent = IDL.Record({
+    'status' : P2PTradeStatus,
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'input_transaction_index' : IDL.Nat64,
+    'expires_at' : TimestampMillis,
+    'output_token' : TokenInfo,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -554,6 +605,7 @@ export const idlFactory = ({ IDL }) => {
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
+    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -755,6 +807,7 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'NameTooLong' : FieldTooLongResult,
     'NameTaken' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const CreateUserGroupArgs = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -844,6 +897,14 @@ export const idlFactory = ({ IDL }) => {
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
+  const P2PTradeContentInitial = IDL.Record({
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'expires_in' : Milliseconds,
+    'output_token' : TokenInfo,
+  });
   const MessageContentInitial = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -853,6 +914,7 @@ export const idlFactory = ({ IDL }) => {
     'Prize' : PrizeContentInitial,
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
+    'P2PTrade' : P2PTradeContentInitial,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -1061,6 +1123,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChannelMatch = IDL.Record({
     'id' : ChannelId,
+    'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -1770,6 +1833,11 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
   });
   return IDL.Service({
+    'accept_p2p_trade_offer' : IDL.Func(
+        [AcceptP2PTradeOfferArgs],
+        [AcceptP2PTradeOfferResponse],
+        [],
+      ),
     'add_members_to_channel' : IDL.Func(
         [AddMembersToChannelArgs],
         [AddMembersToChannelResponse],

@@ -1441,6 +1441,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
 
+            case "acceptP2PTradeOffer":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.acceptP2PTradeOffer(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageIndex,
+                    ),
+                );
+                break;
+
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

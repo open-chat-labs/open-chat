@@ -19,7 +19,6 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
-    export let chatId: ChatIdentifier;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -48,7 +47,7 @@
     </h4>
     <ChatMessageContent
         {readonly}
-        {chatId}
+        messageContext={replyingTo.sourceContext}
         fill={false}
         {me}
         intersecting={true}

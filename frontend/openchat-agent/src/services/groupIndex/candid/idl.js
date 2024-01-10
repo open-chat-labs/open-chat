@@ -66,6 +66,10 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
   const PaymentGate = IDL.Record({
     'fee' : IDL.Nat,
     'ledger_canister_id' : CanisterId,
@@ -74,6 +78,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
   });
@@ -106,8 +111,16 @@ export const idlFactory = ({ IDL }) => {
     'page_index' : IDL.Nat32,
     'search_term' : IDL.Opt(IDL.Text),
   });
+  const GovernanceProposalsSubtype = IDL.Record({
+    'is_nns' : IDL.Bool,
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupSubtype = IDL.Variant({
+    'GovernanceProposals' : GovernanceProposalsSubtype,
+  });
   const GroupMatch = IDL.Record({
     'id' : ChatId,
+    'subtype' : IDL.Opt(GroupSubtype),
     'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -181,13 +194,6 @@ export const idlFactory = ({ IDL }) => {
   const RecommendedGroupsArgs = IDL.Record({
     'count' : IDL.Nat8,
     'exclusions' : IDL.Vec(ChatId),
-  });
-  const GovernanceProposalsSubtype = IDL.Record({
-    'is_nns' : IDL.Bool,
-    'governance_canister_id' : CanisterId,
-  });
-  const GroupSubtype = IDL.Variant({
-    'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
@@ -395,6 +401,29 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
+  const P2PTradeStatus = IDL.Variant({
+    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
+    'Open' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PTradeContent = IDL.Record({
+    'status' : P2PTradeStatus,
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'input_transaction_index' : IDL.Nat64,
+    'expires_at' : TimestampMillis,
+    'output_token' : TokenInfo,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -497,6 +526,7 @@ export const idlFactory = ({ IDL }) => {
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
+    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,

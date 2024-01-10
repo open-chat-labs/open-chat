@@ -187,6 +187,7 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    AcceptP2PTradeOfferResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -400,11 +401,12 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "channel") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_trade_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_trade_content_initial" ? event.event.content.transfer.recipient : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -428,11 +430,12 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "group_chat") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_trade_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_trade_content_initial" ? event.event.content.transfer.recipient : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -3075,4 +3078,22 @@ export class OpenChatAgent extends EventTarget {
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return this._icpcoinsClient.exchangeRates();
     }
+
+    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).acceptP2PTradeOffer(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageIndex,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).acceptP2PTradeOffer(
+                threadRootMessageIndex,
+                messageIndex,
+            );
+        } else {
+            throw new Error("Not implemented yet");
+            //return this.userClient.acceptP2PTradeOffer(chatId, messageIndex);
+        }
+    }    
 }

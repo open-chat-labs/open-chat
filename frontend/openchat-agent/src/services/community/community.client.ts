@@ -31,6 +31,7 @@ import {
     setMemberDisplayNameResponse,
     followThreadResponse,
     reportMessageResponse,
+    acceptP2PTradeOfferResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -128,6 +129,7 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     OptionalChatPermissions,
+    AcceptP2PTradeOfferResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -1266,5 +1268,16 @@ export class CommunityClient extends CandidService {
             }),
             reportMessageResponse,
         );
+    }
+
+    acceptP2PTradeOffer(channelId: string, threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+        return this.handleResponse(
+            this.service.accept_p2p_trade_offer({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_index: messageIndex
+            }),
+            acceptP2PTradeOfferResponse,
+        );        
     }
 }

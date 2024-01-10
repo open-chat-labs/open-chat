@@ -1155,9 +1155,6 @@
     "sendTextDisabled": "テキストメッセージが無効になっています",
     "disappearingMessages": {
         "label": "消えるメッセージ",
-        "hours": "時間）",
-        "minutes": "分）",
-        "days": "日々）",
         "summary": "メッセージは {duration} 後に消えます",
         "timeUpdatedBy": "{changedBy} はメッセージが消える時間を {duration} に設定します",
         "disabledBy": "{changedBy} は消えるメッセージを無効にしました",
@@ -1207,5 +1204,31 @@
     "messageBlocked": "メッセージが隠されています",
     "removePreviewQuestion": "プレビューを削除しますか?",
     "showPreview": "ショープレビュー",
-    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。"
+    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。",
+    "hours": "時間）",
+    "minutes": "分）",
+    "days": "日々）",
+    "p2pTrade": {
+        "builderTitle": "交換オファーをする",
+        "expiryTime": "有効期限",
+        "creatingYourMessage": "スワップオファーメッセージを作成するまでお待ちください。",
+        "expired": "期限切れ",
+        "accepted": "受け入れられました",
+        "accept": "受け入れる",
+        "cancel": "キャンセル",
+        "cancelled": "キャンセル",
+        "reserved": "予約済み",
+        "summary": "これは、{fromAmount} {fromToken} と {toAmount} {toToken} を交換するオファーです。",
+        "clickToAccept": "オファーを受け入れるには、下のボタンをクリックしてください。",
+        "clickToCancel": "オファーをキャンセルするには、下のボタンをクリックしてください。",
+        "youReserved": "このオファーを予約しました。",
+        "youAccepted": "あなたはこの申し出を受け入れました。",
+        "youCancelled": "このオファーをキャンセルしました。",
+        "offerCancelled": "この特典はキャンセルされました。",
+        "reservedBy": "この特典は {user} によって予約されています。",
+        "acceptedBy": "このオファーは {user} によって受け入れられました。",
+        "confirmSend": "このオファーを作成すると、{amount} {token} がウォレットから OpenChat エスクロー キャニスターに転送されます。オファーの有効期限が切れるか、ユーザーがオファーをキャンセルするか、誰かがオファーを受け入れるまで、そこに残ります。続行しますか?",
+        "confirmAccept": "このオファーを受け入れると、{amount} {token} がウォレットから OpenChat エスクロー キャニスターに転送され、そこでスワップが実行されます。続行しますか?",
+        "confirmCancel": "このオファーをキャンセルすると、{amount} {token} が OpenChat エスクロー キャニスターからウォレットに戻されます。オファーがキャンセルされる前に、誰かがまだオファーを受け入れる可能性がわずかにあります。続行しますか?"
+    }
 }

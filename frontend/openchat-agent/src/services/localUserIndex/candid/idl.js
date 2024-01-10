@@ -266,6 +266,29 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
+  const P2PTradeStatus = IDL.Variant({
+    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
+    'Open' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PTradeContent = IDL.Record({
+    'status' : P2PTradeStatus,
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'input_transaction_index' : IDL.Nat64,
+    'expires_at' : TimestampMillis,
+    'output_token' : TokenInfo,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -368,6 +391,7 @@ export const idlFactory = ({ IDL }) => {
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
+    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -428,6 +452,7 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
+    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
   });
@@ -489,6 +514,10 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
   const PaymentGate = IDL.Record({
     'fee' : IDL.Nat,
     'ledger_canister_id' : CanisterId,
@@ -497,6 +526,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
   });
@@ -977,6 +1007,7 @@ export const idlFactory = ({ IDL }) => {
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
     'PaymentFailed' : TransferFromError,
+    'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,

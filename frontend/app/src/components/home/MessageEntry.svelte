@@ -597,6 +597,7 @@
                     editing={editingEvent !== undefined}
                     on:tokenTransfer
                     on:createPrizeMessage
+                    on:createP2PTradeMessage
                     on:attachGif
                     on:makeMeme
                     on:createPoll

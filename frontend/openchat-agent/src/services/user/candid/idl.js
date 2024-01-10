@@ -121,6 +121,10 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
   const PaymentGate = IDL.Record({
     'fee' : IDL.Nat,
     'ledger_canister_id' : CanisterId,
@@ -129,6 +133,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
   });
@@ -201,6 +206,7 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
+    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
   });
@@ -479,6 +485,29 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
+  const P2PTradeStatus = IDL.Variant({
+    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
+    'Open' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PTradeContent = IDL.Record({
+    'status' : P2PTradeStatus,
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'input_transaction_index' : IDL.Nat64,
+    'expires_at' : TimestampMillis,
+    'output_token' : TokenInfo,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -581,6 +610,7 @@ export const idlFactory = ({ IDL }) => {
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
+    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -603,6 +633,14 @@ export const idlFactory = ({ IDL }) => {
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
+  const P2PTradeContentInitial = IDL.Record({
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'expires_in' : Milliseconds,
+    'output_token' : TokenInfo,
+  });
   const MessageContentInitial = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -612,6 +650,7 @@ export const idlFactory = ({ IDL }) => {
     'Prize' : PrizeContentInitial,
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
+    'P2PTrade' : P2PTradeContentInitial,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -844,7 +883,7 @@ export const idlFactory = ({ IDL }) => {
   const InitUserPrincipalMigrationResponse = IDL.Variant({
     'Success' : IDL.Null,
   });
-  const InitialStateArgs = IDL.Record({ 'disable_cache' : IDL.Opt(IDL.Bool) });
+  const EmptyArgs = IDL.Record({});
   const UserCanisterChannelSummary = IDL.Record({
     'channel_id' : ChannelId,
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
@@ -1012,6 +1051,7 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'local_user_index_canister_id' : CanisterId,
       'suspended' : IDL.Bool,
     }),
   });
@@ -1160,7 +1200,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'NameTaken' : IDL.Null,
   });
-  const EmptyArgs = IDL.Record({});
   const SavedCryptoAccountsResponse = IDL.Variant({
     'Success' : IDL.Vec(NamedAccount),
   });
@@ -1249,7 +1288,9 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const SendMessageWithTransferToChannelResponse = IDL.Variant({
+    'Retrying' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'TextTooLong' : IDL.Nat32,
+    'P2PTradeSetUpFailed' : IDL.Text,
     'UserNotInChannel' : CompletedCryptoTransaction,
     'ChannelNotFound' : CompletedCryptoTransaction,
     'TransferCannotBeZero' : IDL.Null,
@@ -1268,7 +1309,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
-    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
@@ -1286,7 +1326,9 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const SendMessageWithTransferToGroupResponse = IDL.Variant({
+    'Retrying' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'TextTooLong' : IDL.Nat32,
+    'P2PTradeSetUpFailed' : IDL.Text,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
@@ -1302,7 +1344,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidRequest' : IDL.Text,
     'TransferCannotBeToSelf' : IDL.Null,
     'TransferFailed' : IDL.Text,
-    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'RulesNotAccepted' : IDL.Null,
     'CryptocurrencyNotSupported' : Cryptocurrency,
   });
@@ -1397,12 +1438,6 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceCanisterNotSupported' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
-  });
-  const TokenInfo = IDL.Record({
-    'fee' : IDL.Nat,
-    'decimals' : IDL.Nat8,
-    'token' : Cryptocurrency,
-    'ledger' : CanisterId,
   });
   const SwapTokensArgs = IDL.Record({
     'input_amount' : IDL.Nat,
@@ -1664,11 +1699,7 @@ export const idlFactory = ({ IDL }) => {
         [InitUserPrincipalMigrationResponse],
         [],
       ),
-    'initial_state' : IDL.Func(
-        [InitialStateArgs],
-        [InitialStateResponse],
-        ['query'],
-      ),
+    'initial_state' : IDL.Func([EmptyArgs], [InitialStateResponse], ['query']),
     'leave_community' : IDL.Func(
         [LeaveCommunityArgs],
         [LeaveCommunityResponse],

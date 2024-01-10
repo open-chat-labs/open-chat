@@ -56,6 +56,8 @@ export type MessageContent =
     | ProposalContent
     | PrizeContent
     | PrizeContentInitial
+    | P2PTradeContent
+    | P2PTradeContentInitial
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
@@ -72,6 +74,23 @@ export interface PrizeContentInitial {
     prizes: bigint[];
 }
 
+export interface P2PTradeContentInitial {
+    kind: "p2p_trade_content_initial";
+    inputToken: TokenInfo;
+    outputToken: TokenInfo;
+    inputAmount: bigint;
+    outputAmount: bigint;
+    caption?: string;
+    expiresIn: bigint;
+}
+
+export interface TokenInfo {
+    fee: bigint,
+    decimals: number,
+    symbol: string,
+    ledger: string,
+}
+  
 export type CaptionedContent =
     | AttachmentContent
     | CryptocurrencyContent
@@ -271,6 +290,42 @@ export interface PrizeContent {
     token: string;
     endDate: bigint;
     caption?: string;
+}
+
+export interface P2PTradeContent {
+    kind: "p2p_trade_content";
+    inputToken: TokenInfo;
+    outputToken: TokenInfo;
+    inputAmount: bigint;
+    outputAmount: bigint;
+    caption?: string;
+    expiresAt: bigint;
+    status: P2PTradeStatus;
+    offerId: number;
+    inputTransactionIndex: bigint;    
+}
+
+export type P2PTradeStatus = P2PTradeReserved | P2PTradeOpen | P2PTradeCancelled | P2PTradeCompleted;
+
+export interface P2PTradeReserved {
+    kind: "p2p_trade_reserved";
+    userId: string;
+    timestamp: bigint;
+}
+
+export interface P2PTradeOpen {
+    kind: "p2p_trade_open";
+}
+
+export interface P2PTradeCancelled {
+    kind: "p2p_trade_cancelled";
+}
+
+export interface P2PTradeCompleted {
+    kind: "p2p_trade_completed";
+    userId: string;
+    timestamp: bigint;
+    blockIndex: bigint;
 }
 
 export interface ProposalContent {
@@ -580,6 +635,7 @@ export type LocalMessageUpdates = {
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
+    p2pTradeOfferStatus?: P2PTradeStatus;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
@@ -890,7 +946,7 @@ export type DirectChatsInitial = {
     pinned: DirectChatIdentifier[];
 };
 
-export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
+export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
 export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
@@ -1573,7 +1629,8 @@ export type GateCheckFailedReason =
     | "no_sns_neuron_found"
     | "dissolve_delay_not_met"
     | "min_stake_not_met"
-    | "payment_failed";
+    | "payment_failed"
+    | "insufficient_balance";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1965,3 +2022,19 @@ export type GroupAndCommunitySummaryUpdatesResponse =
           kind: "not_found";
       }
     | { kind: "error"; error: string };
+
+export type AcceptP2PTradeOfferResponse = 
+    "already_accepted" | 
+    "channel_not_found" |
+    "user_not_in_group" | 
+    "user_not_in_community" |
+    "user_not_in_channel" |    
+    "offer_not_found" | 
+    "offer_cancelled" | 
+    "chat_frozen" | 
+    "success" | 
+    "user_suspended" | 
+    "already_completed" | 
+    "internal_error" | 
+    "offer_expired" | 
+    "insufficient_funds";

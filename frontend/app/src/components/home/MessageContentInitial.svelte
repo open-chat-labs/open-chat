@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";
 
+    export let text: string;
     export let me: boolean;
 </script>
 
@@ -10,7 +11,7 @@
         <div class="spinner">
             <FancyLoader />
         </div>
-        <p>{$_("prizes.creatingYourPrizeMessage")}</p>
+        <p>{text}</p>
     </div>
 {/if}
 

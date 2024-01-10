@@ -34,13 +34,17 @@
     $: displayName = me
         ? client.toTitleCase($_("you"))
         : client.getDisplayNameById(repliesTo.senderId, $communityMembers);
+    $: messageContext = {
+        chatId,
+        threadRootMessageIndex: repliesTo.sourceContext.threadRootMessageIndex,
+    };
 
     function getUrl() {
         const path = [
             routeForChatIdentifier($chatListScope.kind, repliesTo.sourceContext.chatId),
-            repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
+            messageContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
-        if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
+        if (messageContext.threadRootMessageIndex !== undefined) {
             path.push(repliesTo.messageIndex);
         }
         return path.join("/");
@@ -71,7 +75,7 @@
             <ChatMessageContent
                 {me}
                 {readonly}
-                {chatId}
+                {messageContext}
                 {intersecting}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}

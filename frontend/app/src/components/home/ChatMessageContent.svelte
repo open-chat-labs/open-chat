@@ -19,9 +19,10 @@
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
-    import type { ChatIdentifier, MessageContent } from "openchat-client";
+    import type { MessageContent, MessageContext } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import PrizeContentInitial from "./PrizeContentInitial.svelte";
+    import MessageContentInitial from "./MessageContentInitial.svelte";
+    import P2PTradeContent from "./P2PTradeContent.svelte";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -35,7 +36,7 @@
     export let myUserId: string | undefined;
     export let messageId: bigint;
     export let edited: boolean;
-    export let chatId: ChatIdentifier;
+    export let messageContext: MessageContext;
     export let messageIndex: number;
     export let collapsed = false;
     export let undeleting: boolean = false;
@@ -61,9 +62,13 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <PrizeContentInitial {me} />
+    <MessageContentInitial text={$_("prizes.creatingYourPrizeMessage")} {me} />
+{:else if content.kind === "p2p_trade_content_initial"}
+    <MessageContentInitial text={$_("p2pTrade.creatingYourMessage")} {me} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent on:upgrade {chatId} {messageId} {content} {me} />
+    <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
+{:else if content.kind === "p2p_trade_content"}
+    <P2PTradeContent {messageContext} {messageIndex} {messageId} {content} {me} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}
@@ -73,7 +78,7 @@
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
-        {chatId}
+        chatId={messageContext.chatId}
         {messageIndex}
         {messageId}
         {collapsed}

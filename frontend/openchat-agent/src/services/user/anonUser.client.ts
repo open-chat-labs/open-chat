@@ -185,7 +185,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToGroup(
         _groupId: GroupChatIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -204,7 +204,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToChannel(
         _id: ChannelIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,

@@ -588,7 +588,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToGroup(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -614,7 +614,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -664,7 +664,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToChannel(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -692,7 +692,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToChannelToBackend(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,

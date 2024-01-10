@@ -359,6 +359,7 @@ import type {
     Level,
     VersionedRules,
     DiamondMembershipStatus,
+    AcceptP2PTradeOfferResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5074,6 +5075,25 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Claiming prize failed", err);
                 return false;
+            });
+    }
+
+    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageIndex: number, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
+        localMessageUpdates.setP2PTradeOfferStatus(messageId, {
+            kind: "p2p_trade_reserved",
+            userId: this._liveState.user.userId,
+            timestamp: BigInt(Date.now()),
+        });
+        return this.sendRequest({ kind: "acceptP2PTradeOffer", chatId, threadRootMessageIndex, messageIndex })
+            // .then((resp) => {
+            //     if (resp !== "success") {
+            //         localMessageUpdates.setP2PTradeOfferStatus(messageId, { kind: "p2p_trade_cancelled"});
+            //     }
+            //     return resp;
+            // })
+            .catch((err) => {
+                this._logger.error("Accepting p2p trade failed", err);
+                return "internal_error";
             });
     }
 

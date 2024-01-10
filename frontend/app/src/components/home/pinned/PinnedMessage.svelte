@@ -90,7 +90,7 @@
                 pinned
                 {senderId}
                 {fill}
-                {chatId}
+                messageContext={{ chatId }}
                 edited={msg.edited}
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}

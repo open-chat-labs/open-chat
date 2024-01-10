@@ -63,6 +63,10 @@ import type {
     ApiChat,
     ApiPrizeCotentInitial,
     ApiMessagePermissions,
+    ApiP2PTradeContentInitial,
+    ApiTokenInfo,
+    ApiP2PTradeContent,
+    ApiP2PTradeStatus,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -152,6 +156,10 @@ import type {
     MessagePermissions,
     ExpiredEventsRange,
     ExpiredMessagesRange,
+    P2PTradeContentInitial,
+    P2PTradeContent,
+    P2PTradeStatus,
+    TokenInfo,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -337,6 +345,9 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("ReportedMessage" in candid) {
         return reportedMessage(candid.ReportedMessage);
     }
+    if ("P2PTrade" in candid) {
+        return p2pTradeContent(candid.P2PTrade);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
@@ -414,6 +425,59 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
         endDate: candid.end_date,
         caption: optional(candid.caption, identity),
     };
+}
+
+function p2pTradeContent(candid: ApiP2PTradeContent): P2PTradeContent {
+    return {
+        kind: "p2p_trade_content",
+        inputToken: tokenInfo(candid.input_token),
+        outputToken: tokenInfo(candid.output_token),
+        inputAmount: candid.input_amount,
+        outputAmount: candid.output_amount,
+        caption: optional(candid.caption, identity),
+        expiresAt: candid.expires_at,
+        status: p2pTradeStatus(candid.status),
+        offerId: candid.offer_id,
+        inputTransactionIndex: candid.input_transaction_index,
+    };
+}
+
+function tokenInfo(candid: ApiTokenInfo): TokenInfo {
+    return {
+        fee: candid.fee,
+        decimals: candid.decimals,
+        symbol: token(candid.token),
+        ledger: candid.ledger.toString(),
+    };
+}
+
+function p2pTradeStatus(candid: ApiP2PTradeStatus): P2PTradeStatus {
+    if ("Reserved" in candid) {
+        const [userId, timestamp] = candid.Reserved;
+        return { 
+            kind: "p2p_trade_reserved",
+            userId: userId.toString(),
+            timestamp,
+        };
+    }
+    if ("Open" in candid) {
+        return { kind: "p2p_trade_open" };
+    }
+    if ("Cancelled" in candid) {
+        return { kind: "p2p_trade_cancelled" };
+
+    }
+    if ("Completed" in candid) {
+        const [userId, blockIndex, timestamp] = candid.Completed;
+        return { 
+            kind: "p2p_trade_completed", 
+            userId: userId.toString(),
+            blockIndex,
+            timestamp,
+        };
+    }
+    
+    throw new UnsupportedValueError("Unexpected ApiP2PTradeStatus type received", candid);
 }
 
 export function apiUser(domain: User): ApiUser {
@@ -955,6 +1019,7 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         crypto: apiOptional(apiPermissionRole, permissions.crypto),
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
+        p2p_trade: apiOptional(apiPermissionRole, permissions.p2pTrade),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1102,6 +1167,9 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "prize_content_initial":
             return { Prize: apiPrizeContentInitial(domain) };
 
+        case "p2p_trade_content_initial":
+            return { P2PTrade: apiP2PTradeContentInitial(domain) };
+
         case "meme_fighter_content":
             // eslint-disable-next-line no-case-declarations
             const encoder = new TextEncoder();
@@ -1134,6 +1202,7 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "message_reminder_content":
         case "message_reminder_created_content":
         case "reported_message_content":
+        case "p2p_trade_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
@@ -1343,6 +1412,14 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             fee: candid.Payment.fee,
         };
     }
+    if ("TokenBalance" in candid) {
+        return {
+            kind: "token_balance_gate",
+            ledgerCanister: candid.TokenBalance.ledger_canister_id.toString(),
+            minBalance: candid.TokenBalance.min_balance,
+        }
+    }
+
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
 
@@ -1363,6 +1440,26 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
         end_date: domain.endDate,
         diamond_only: domain.diamondOnly,
         prizes: domain.prizes.map((p) => ({ e8s: p })),
+    };
+}
+
+export function apiP2PTradeContentInitial(domain: P2PTradeContentInitial): ApiP2PTradeContentInitial {
+    return {
+        input_token: apiTokenInfo(domain.inputToken),
+        output_token: apiTokenInfo(domain.outputToken),
+        input_amount: domain.inputAmount,
+        output_amount: domain.outputAmount,
+        caption: apiOptional(identity, domain.caption),
+        expires_in: domain.expiresIn,
+    };
+}
+
+function apiTokenInfo(domain: TokenInfo): ApiTokenInfo {
+    return {
+        fee: domain.fee,
+        decimals: domain.decimals,
+        token: apiToken(domain.symbol),
+        ledger: Principal.fromText(domain.ledger),
     };
 }
 
@@ -1657,6 +1754,9 @@ export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateChe
     if ("PaymentFailed" in candid) {
         console.warn("PaymentFailed: ", candid);
         return "payment_failed";
+    }
+    if ("InsufficientBalance" in candid) {
+        return "insufficient_balance";
     }
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

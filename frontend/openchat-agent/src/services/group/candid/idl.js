@@ -1,6 +1,23 @@
 export const idlFactory = ({ IDL }) => {
-  const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
+  const AcceptP2PTradeOfferArgs = IDL.Record({
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+    'message_index' : MessageIndex,
+  });
+  const AcceptP2PTradeOfferResponse = IDL.Variant({
+    'AlreadyAccepted' : IDL.Null,
+    'UserNotInGroup' : IDL.Null,
+    'OfferNotFound' : IDL.Null,
+    'OfferCancelled' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'AlreadyCompleted' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'OfferExpired' : IDL.Null,
+    'InsufficientFunds' : IDL.Null,
+  });
+  const MessageId = IDL.Nat;
   const AddReactionArgs = IDL.Record({
     'username' : IDL.Text,
     'display_name' : IDL.Opt(IDL.Text),
@@ -356,6 +373,29 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
+  const P2PTradeStatus = IDL.Variant({
+    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
+    'Open' : IDL.Null,
+    'Cancelled' : IDL.Null,
+    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PTradeContent = IDL.Record({
+    'status' : P2PTradeStatus,
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'input_transaction_index' : IDL.Nat64,
+    'expires_at' : TimestampMillis,
+    'output_token' : TokenInfo,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -431,6 +471,7 @@ export const idlFactory = ({ IDL }) => {
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
+    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -460,6 +501,15 @@ export const idlFactory = ({ IDL }) => {
     'transfer' : CryptoTransaction,
     'diamond_only' : IDL.Bool,
   });
+  const Milliseconds = IDL.Nat64;
+  const P2PTradeContentInitial = IDL.Record({
+    'input_amount' : IDL.Nat,
+    'output_amount' : IDL.Nat,
+    'caption' : IDL.Opt(IDL.Text),
+    'input_token' : TokenInfo,
+    'expires_in' : Milliseconds,
+    'output_token' : TokenInfo,
+  });
   const MessageContentInitial = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -469,6 +519,7 @@ export const idlFactory = ({ IDL }) => {
     'Prize' : PrizeContentInitial,
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
+    'P2PTrade' : P2PTradeContentInitial,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -597,6 +648,7 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
+    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
   });
@@ -652,11 +704,14 @@ export const idlFactory = ({ IDL }) => {
     'credential' : IDL.Text,
     'issuer' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
+  });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
   });
   const PaymentGate = IDL.Record({
     'fee' : IDL.Nat,
@@ -666,6 +721,7 @@ export const idlFactory = ({ IDL }) => {
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
     'Payment' : PaymentGate,
   });
@@ -1388,6 +1444,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Null,
   });
   return IDL.Service({
+    'accept_p2p_trade_offer' : IDL.Func(
+        [AcceptP2PTradeOfferArgs],
+        [AcceptP2PTradeOfferResponse],
+        [],
+      ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),

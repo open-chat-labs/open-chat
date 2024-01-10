@@ -109,7 +109,6 @@
     }
 
     function send() {
-        // const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
         const prizes = generatePrizes();
         const prizeFees = transferFees * BigInt(numberOfWinners ?? 0);
         const content: PrizeContentInitial = {

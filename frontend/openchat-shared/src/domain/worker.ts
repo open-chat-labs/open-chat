@@ -64,6 +64,7 @@ import type {
     MessageContext,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    AcceptP2PTradeOfferResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -309,7 +310,8 @@ export type WorkerRequest =
     | ApproveTransfer
     | DeleteDirectChat
     | GetDiamondMembershipFees
-    | GetExchangeRates;
+    | GetExchangeRates
+    | AcceptP2PTradeOffer;
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -1181,6 +1183,7 @@ export type WorkerResponseInner =
     | SwapTokensResponse
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
+    | AcceptP2PTradeOfferResponse
     | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1442,6 +1445,13 @@ type GetDiamondMembershipFees = {
 
 type GetExchangeRates = {
     kind: "exchangeRates";
+};
+
+type AcceptP2PTradeOffer = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageIndex: number;
+    kind: "acceptP2PTradeOffer";
 };
 
 // prettier-ignore
@@ -1751,4 +1761,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? DiamondMembershipFees[]
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
+    : T extends AcceptP2PTradeOffer
+    ? AcceptP2PTradeOfferResponse
     : never;

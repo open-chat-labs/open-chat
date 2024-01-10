@@ -1,4 +1,5 @@
 import type {
+    AcceptP2PTradeOfferResponse,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
@@ -75,6 +76,7 @@ import type {
     ApiSetMemberDisplayNameResponse,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
+    ApiAcceptP2PTradeOfferResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -133,6 +135,9 @@ export function addMembersToChannelResponse(
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
     }
+    if ("InternalError" in candid) {
+        return CommonResponses.internalError();
+    }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
         candid,
@@ -180,6 +185,10 @@ function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFaile
         console.warn("PaymentFailed: ", candid);
         return "payment_failed";
     }
+    if ("InsufficientBalance" in candid) {
+        return "insufficient_balance";
+    }
+
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 
@@ -738,4 +747,22 @@ export function followThreadResponse(
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function acceptP2PTradeOfferResponse(candid: ApiAcceptP2PTradeOfferResponse): AcceptP2PTradeOfferResponse {
+    if ("AlreadyAccepted" in candid) return "already_accepted";
+    if ("UserNotInCommunity" in candid) return "user_not_in_community";
+    if ("UserNotInChannel" in candid) return "user_not_in_channel";
+    if ("ChannelNotFound" in candid) return "channel_not_found";
+    if ("OfferNotFound" in candid) return "offer_not_found";
+    if ("OfferCancelled" in candid) return "offer_cancelled";
+    if ("ChatFrozen" in candid) return "chat_frozen";
+    if ("Success" in candid) return "success";
+    if ("UserSuspended" in candid) return "user_suspended";
+    if ("AlreadyCompleted" in candid) return "already_completed";
+    if ("InternalError" in candid) return "internal_error";
+    if ("OfferExpired" in candid) return "offer_expired";
+    if ("InsufficientFunds" in candid) return "insufficient_funds";
+
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PTradeOfferResponse type received", candid);
 }

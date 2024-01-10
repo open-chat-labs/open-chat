@@ -345,17 +345,27 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
-        return {
-            kind: "transfer_success",
-            timestamp: candid.Success.timestamp,
-            messageIndex: candid.Success.message_index,
-            eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            expiresAt: optional(candid.Success.expires_at, Number),
-        };
+        if (recipient !== undefined) {
+            return {
+                kind: "transfer_success",
+                timestamp: candid.Success.timestamp,
+                messageIndex: candid.Success.message_index,
+                eventIndex: candid.Success.event_index,
+                expiresAt: optional(candid.Success.expires_at, Number),
+                transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            };
+        } else {
+            return {
+                kind: "success",
+                timestamp: candid.Success.timestamp,
+                messageIndex: candid.Success.message_index,
+                eventIndex: candid.Success.event_index,
+                expiresAt: optional(candid.Success.expires_at, Number),
+            };
+        }
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
         return CommonResponses.failure();
@@ -365,17 +375,27 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
-        return {
-            kind: "transfer_success",
-            timestamp: candid.Success.timestamp,
-            messageIndex: candid.Success.message_index,
-            eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            expiresAt: optional(candid.Success.expires_at, Number),
-        };
+        if (recipient !== undefined) {
+            return {
+                kind: "transfer_success",
+                timestamp: candid.Success.timestamp,
+                messageIndex: candid.Success.message_index,
+                eventIndex: candid.Success.event_index,
+                expiresAt: optional(candid.Success.expires_at, Number),
+                transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
+            };
+        } else {
+            return {
+                kind: "success",
+                timestamp: candid.Success.timestamp,
+                messageIndex: candid.Success.message_index,
+                eventIndex: candid.Success.event_index,
+                expiresAt: optional(candid.Success.expires_at, Number),
+            };
+        }
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
         return CommonResponses.failure();

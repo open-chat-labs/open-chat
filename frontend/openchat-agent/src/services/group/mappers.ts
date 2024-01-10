@@ -18,6 +18,7 @@ import type {
     ApiOptionalMessagePermissions,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
+    ApiAcceptP2PTradeOfferResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -46,6 +47,7 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
+    AcceptP2PTradeOfferResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -683,4 +685,20 @@ export function followThreadResponse(
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function acceptP2PTradeOfferResponse(candid: ApiAcceptP2PTradeOfferResponse): AcceptP2PTradeOfferResponse {
+    if ("AlreadyAccepted" in candid) return "already_accepted";
+    if ("UserNotInGroup" in candid || "UserNotInChannel" in candid) return "user_not_in_group";
+    if ("OfferNotFound" in candid) return "offer_not_found";
+    if ("OfferCancelled" in candid) return "offer_cancelled";
+    if ("ChatFrozen" in candid) return "chat_frozen";
+    if ("Success" in candid) return "success";
+    if ("UserSuspended" in candid) return "user_suspended";
+    if ("AlreadyCompleted" in candid) return "already_completed";
+    if ("InternalError" in candid) return "internal_error";
+    if ("OfferExpired" in candid) return "offer_expired";
+    if ("InsufficientFunds" in candid) return "insufficient_funds";
+
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PTradeOfferResponse type received", candid);
 }

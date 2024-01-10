@@ -3,6 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
@@ -82,6 +83,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -541,6 +543,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : TransferFromError } |
+  { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -694,6 +697,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -985,6 +989,7 @@ export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
   { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
+  { 'P2PTrade' : P2PTradeContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -999,6 +1004,7 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'Prize' : PrizeContentInitial } |
   { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
+  { 'P2PTrade' : P2PTradeContentInitial } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -1034,6 +1040,7 @@ export interface MessagePermissions {
   'crypto' : [] | [PermissionRole],
   'giphy' : [] | [PermissionRole],
   'default' : PermissionRole,
+  'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
 }
@@ -1186,6 +1193,29 @@ export interface OptionalMessagePermissions {
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
+export interface P2PTradeContent {
+  'status' : P2PTradeStatus,
+  'input_amount' : bigint,
+  'output_amount' : bigint,
+  'offer_id' : number,
+  'caption' : [] | [string],
+  'input_token' : TokenInfo,
+  'input_transaction_index' : bigint,
+  'expires_at' : TimestampMillis,
+  'output_token' : TokenInfo,
+}
+export interface P2PTradeContentInitial {
+  'input_amount' : bigint,
+  'output_amount' : bigint,
+  'caption' : [] | [string],
+  'input_token' : TokenInfo,
+  'expires_in' : Milliseconds,
+  'output_token' : TokenInfo,
+}
+export type P2PTradeStatus = { 'Reserved' : [UserId, TimestampMillis] } |
+  { 'Open' : null } |
+  { 'Cancelled' : null } |
+  { 'Completed' : [UserId, BlockIndex, TimestampMillis] };
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1448,6 +1478,16 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface TokenBalanceGate {
+  'min_balance' : bigint,
+  'ledger_canister_id' : CanisterId,
+}
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |

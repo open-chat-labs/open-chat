@@ -36,6 +36,7 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { mobileWidth } from "../../stores/screenDimensions";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import P2PTradeContentBuilder from "./P2PTradeContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
 
     export let joining: MultiUserChat | undefined;
@@ -53,6 +54,7 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let creatingPrizeMessage = false;
+    let creatingP2PTradeMessage = false;
     let selectingGif = false;
     let buildingMeme = false;
     let pollBuilder: PollBuilder;
@@ -152,6 +154,10 @@
 
     function createPrizeMessage() {
         creatingPrizeMessage = true;
+    }
+
+    function createP2PTradeMessage() {
+        creatingP2PTradeMessage = true;
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
@@ -298,6 +304,13 @@
         on:close={() => (creatingPrizeMessage = false)} />
 {/if}
 
+{#if creatingP2PTradeMessage}
+    <P2PTradeContentBuilder
+        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:sendMessageWithContent
+        on:close={() => (creatingP2PTradeMessage = false)} />
+{/if}
+
 <GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
 
 <MemeBuilder on:sendMessageWithContent bind:this={memeBuilder} bind:open={buildingMeme} />
@@ -380,6 +393,7 @@
             on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}
             on:createPrizeMessage={createPrizeMessage}
+            on:createP2PTradeMessage={createP2PTradeMessage}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />
     {/if}

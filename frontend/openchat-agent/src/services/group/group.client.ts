@@ -47,6 +47,7 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     ToggleMuteNotificationResponse,
+    AcceptP2PTradeOfferResponse,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -72,6 +73,7 @@ import {
     apiUpdatedRules,
     followThreadResponse,
     reportMessageResponse,
+    acceptP2PTradeOfferResponse,
 } from "./mappers";
 import {
     type Database,
@@ -909,5 +911,15 @@ export class GroupClient extends CandidService {
             }),
             reportMessageResponse,
         );
+    }
+
+    acceptP2PTradeOffer(threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+        return this.handleResponse(
+            this.groupService.accept_p2p_trade_offer({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_index: messageIndex
+            }),
+            acceptP2PTradeOfferResponse,
+        );        
     }
 }

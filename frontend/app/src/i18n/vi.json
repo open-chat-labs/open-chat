@@ -1155,9 +1155,6 @@
     "sendTextDisabled": "Tin nhắn văn bản bị vô hiệu hóa",
     "disappearingMessages": {
         "label": "Tin nhắn biến mất",
-        "hours": "Giờ)",
-        "minutes": "Phút)",
-        "days": "(Các) ngày",
         "summary": "Tin nhắn sẽ biến mất sau {duration}",
         "timeUpdatedBy": "{changedBy} đặt thời gian tin nhắn biến mất thành {duration}",
         "disabledBy": "{changedBy} đã vô hiệu hóa các tin nhắn biến mất",
@@ -1207,5 +1204,31 @@
     "messageBlocked": "Tin nhắn bị ẩn",
     "removePreviewQuestion": "Xóa bản xem trước?",
     "showPreview": "Hiển thị bản xem trước",
-    "excessiveLinksNote": "Bản xem trước liên kết bị ẩn đối với các thư có hơn 5 liên kết."
+    "excessiveLinksNote": "Bản xem trước liên kết bị ẩn đối với các thư có hơn 5 liên kết.",
+    "hours": "Giờ)",
+    "minutes": "Phút)",
+    "days": "(Các) ngày",
+    "p2pTrade": {
+        "builderTitle": "Đưa ra đề nghị trao đổi",
+        "expiryTime": "Thời gian hết hạn",
+        "creatingYourMessage": "Vui lòng đợi trong khi chúng tôi tạo tin nhắn đề nghị trao đổi của bạn",
+        "expired": "Hết hạn",
+        "accepted": "Đã được chấp nhận",
+        "accept": "Chấp nhận",
+        "cancel": "Hủy bỏ",
+        "cancelled": "Đã hủy",
+        "reserved": "Kín đáo",
+        "summary": "Đây là đề nghị đổi {fromAmount} {fromToken} lấy {toAmount} {toToken}.",
+        "clickToAccept": "Nhấp vào nút bên dưới để chấp nhận lời đề nghị.",
+        "clickToCancel": "Nhấp vào nút bên dưới để hủy ưu đãi.",
+        "youReserved": "Bạn đã đặt trước ưu đãi này.",
+        "youAccepted": "Bạn đã chấp nhận lời đề nghị này.",
+        "youCancelled": "Bạn đã hủy ưu đãi này.",
+        "offerCancelled": "Ưu đãi này đã bị hủy.",
+        "reservedBy": "Ưu đãi này đã được đặt trước bởi {user}.",
+        "acceptedBy": "Ưu đãi này đã được {user} chấp nhận.",
+        "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ai đó chấp nhận ưu đãi. Bạn có muốn tiếp tục?",
+        "confirmAccept": "Khi bạn chấp nhận đề nghị này, {amount} {token} sẽ được chuyển từ ví của bạn sang hộp ký quỹ OpenChat, sau đó sẽ thực hiện chuyển đổi. Bạn có muốn tiếp tục?",
+        "confirmCancel": "Khi bạn hủy ưu đãi này, {amount} {token} sẽ được chuyển từ hộp Ký quỹ OpenChat trở lại ví của bạn. Có một khả năng nhỏ là ai đó vẫn chấp nhận lời đề nghị trước khi nó bị hủy. Bạn có muốn tiếp tục?"
+    }
 }

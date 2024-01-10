@@ -1477,6 +1477,10 @@ function mergeLocalUpdates(
         }
     }
 
+    if (localUpdates?.p2pTradeOfferStatus !== undefined && message.content.kind === "p2p_trade_content") {
+        message.content.status = localUpdates.p2pTradeOfferStatus;
+    }
+
     if (localUpdates?.reactions !== undefined) {
         let reactions = [...message.reactions];
         for (const localReaction of localUpdates.reactions) {
