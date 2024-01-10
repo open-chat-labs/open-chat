@@ -17,11 +17,15 @@
         formatter: MessageFormatter,
         { key, params, level, lowercase }: ResourceKey,
     ): string {
-        const levelTxt = formatter(`level.${level}`);
-        const p = params ?? {};
-        return formatter(key, {
-            values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
-        });
+        if (level !== undefined) {
+            const levelTxt = formatter(`level.${level}`);
+            const p = params ?? {};
+            return formatter(key, {
+                values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
+            });
+        } else {
+            return formatter(key, { values: params });
+        }
     }
 </script>
 
