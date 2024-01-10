@@ -174,5 +174,7 @@ pub struct CanisterIds {
 pub struct Neurons {
     timestamp: TimestampMillis,
     active_neurons: Vec<Neuron>,
+    #[serde(default)]
+    spawning_neurons: Vec<Neuron>,
     disbursed_neurons: Vec<u64>,
 }
