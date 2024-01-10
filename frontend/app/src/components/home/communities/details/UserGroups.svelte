@@ -20,6 +20,7 @@
     import { toastStore } from "../../../../stores/toast";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import User from "../../groupdetails/User.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,19 +52,22 @@
 
     function createLookup(
         members: Map<string, Member>,
-        allUsers: UserLookup
+        allUsers: UserLookup,
     ): Record<string, UserSummary> {
-        return [...members.values()].reduce((map, m) => {
-            const user = allUsers[m.userId];
-            if (user !== undefined) {
-                map[user.userId] = {
-                    ...user,
-                    displayName: m.displayName ?? user.displayName,
-                    username: user.username,
-                };
-            }
-            return map;
-        }, {} as Record<string, UserSummary>);
+        return [...members.values()].reduce(
+            (map, m) => {
+                const user = allUsers[m.userId];
+                if (user !== undefined) {
+                    map[user.userId] = {
+                        ...user,
+                        displayName: m.displayName ?? user.displayName,
+                        username: user.username,
+                    };
+                }
+                return map;
+            },
+            {} as Record<string, UserSummary>,
+        );
     }
 
     function matchesSearch(searchTerm: string, userGroup: UserGroupDetails): boolean {
@@ -157,7 +161,7 @@
                     <div class="user-group-card">
                         <CollapsibleCard
                             open={userGroup.id === openedGroupId}
-                            headerText={userGroup.name}>
+                            headerText={i18nKey(userGroup.name)}>
                             <h4 slot="titleSlot" class="name">
                                 {#if canManageUserGroups}
                                     <div
@@ -284,7 +288,9 @@
                 justify-content: space-between;
                 align-items: center;
                 padding: toRem(12) $sp4;
-                transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+                transition:
+                    background-color ease-in-out 100ms,
+                    border-color ease-in-out 100ms;
                 gap: 12px;
 
                 @media (hover: hover) {

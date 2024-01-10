@@ -1,10 +1,12 @@
 <script lang="ts">
+    import type { ResourceKey } from "../i18n/i18n";
     import { rtlStore } from "../stores/rtl";
+    import Translatable from "./Translatable.svelte";
     export let checked: boolean = false;
     export let disabled: boolean = false;
     export let waiting: boolean = false;
     export let id: string;
-    export let label: string | undefined;
+    export let label: ResourceKey | undefined;
     export let toggle: boolean = false;
     export let small: boolean = false; // only applies to toggles
     export let align: "center" | "start" = "center";
@@ -20,7 +22,9 @@
     <input {id} type="checkbox" bind:checked {disabled} on:change />
     <label class:small for={id}>
         <slot>
-            {label}
+            {#if label !== undefined}
+                <Translatable resourceKey={label} />
+            {/if}
         </slot>
     </label>
 </div>

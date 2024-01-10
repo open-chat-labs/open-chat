@@ -20,6 +20,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -34,18 +35,20 @@
         <MenuItem on:click={() => dispatch("wallet")}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text">
-                <Translatable key={"wallet"} />
+                <Translatable resourceKey={i18nKey("wallet")} />
             </span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("profile")}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable key="profile.title" /></span>
+            <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("upgrade")}>
             <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
                 ><Translatable
-                    key={$canExtendDiamond ? "upgrade.extend" : "upgrade.diamond"} /></span>
+                    resourceKey={i18nKey(
+                        $canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
+                    )} /></span>
         </MenuItem>
         <MenuItem separator />
     {/if}
@@ -85,12 +88,12 @@
     {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable key="logout" /></span>
+            <span slot="text"><Translatable resourceKey={i18nKey("logout")} /></span>
         </MenuItem>
     {:else}
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text"><Translatable key="login" /></span>
+            <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
         </MenuItem>
     {/if}
 

@@ -6,13 +6,15 @@
     import { _ } from "svelte-i18n";
     import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
+    import { i18nKey, type ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     export let message: string | undefined = undefined;
     export let action: (yes: boolean) => Promise<void>;
     export let doubleCheck: { challenge: string; response: string } | undefined = undefined;
-    export let title: string | undefined = undefined;
-    export let yesLabel: string | undefined = undefined;
-    export let noLabel: string | undefined = undefined;
+    export let title: ResourceKey | undefined = i18nKey("areYouSure");
+    export let yesLabel: ResourceKey | undefined = i18nKey("yesPlease");
+    export let noLabel: ResourceKey | undefined = i18nKey("noThanks");
 
     let inProgress = false;
     let response = "";
@@ -32,7 +34,11 @@
 
 <Overlay>
     <ModalContent hideBody={message === undefined}>
-        <span slot="header">{title ?? $_("areYouSure")}</span>
+        <span slot="header">
+            {#if title !== undefined}
+                <Translatable resourceKey={title} />
+            {/if}
+        </span>
         <span slot="body">
             {#if message !== undefined}
                 <Markdown inline={false} text={message} />
@@ -54,13 +60,20 @@
         </span>
         <span slot="footer">
             <ButtonGroup>
-                <Button disabled={inProgress} small on:click={() => onClick(false)} secondary
-                    >{noLabel ?? $_("noThanks")}</Button>
+                <Button disabled={inProgress} small on:click={() => onClick(false)} secondary>
+                    {#if noLabel !== undefined}
+                        <Translatable resourceKey={noLabel} />
+                    {/if}
+                </Button>
                 <Button
                     loading={inProgress}
                     disabled={!canConfirm}
                     small
-                    on:click={() => onClick(true)}>{yesLabel ?? $_("yesPlease")}</Button>
+                    on:click={() => onClick(true)}>
+                    {#if yesLabel !== undefined}
+                        <Translatable resourceKey={yesLabel} />
+                    {/if}
+                </Button>
             </ButtonGroup>
         </span>
     </ModalContent>

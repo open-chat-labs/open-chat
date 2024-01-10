@@ -1,22 +1,32 @@
 <script lang="ts">
-    import { type InterpolationValues } from "openchat-client";
     import Translate from "svelte-material-icons/Translate.svelte";
 
     import { _, locale } from "svelte-i18n";
-    import { editingLabel } from "../i18n/i18n";
+    import { editingLabel, type ResourceKey } from "../i18n/i18n";
+    import type { MessageFormatter } from "openchat-shared";
 
-    export let key: string;
-    export let params: InterpolationValues | undefined = undefined;
+    export let resourceKey: ResourceKey;
 
     $: editable = !$locale?.startsWith("en");
 
     function editLabel() {
-        editingLabel.set(key);
+        editingLabel.set(resourceKey);
+    }
+
+    function interpolate(
+        formatter: MessageFormatter,
+        { key, params, level, lowercase }: ResourceKey,
+    ): string {
+        const levelTxt = formatter(`level.${level}`);
+        const p = params ?? {};
+        return formatter(key, {
+            values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
+        });
     }
 </script>
 
 <span>
-    {$_(key, params)}
+    {interpolate($_, resourceKey)}
 </span>
 
 {#if editable}

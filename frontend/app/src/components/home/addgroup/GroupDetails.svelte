@@ -5,6 +5,7 @@
     import TextArea from "../../TextArea.svelte";
     import Legend from "../../Legend.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -27,7 +28,7 @@
 </script>
 
 <section>
-    <Legend label={interpolateLevel("group.image", candidateGroup.level)} />
+    <Legend label={i18nKey("group.image", undefined, candidateGroup.level)} />
     <div class="photo">
         <EditableAvatar
             overlayIcon
@@ -37,7 +38,7 @@
 </section>
 
 <section>
-    <Legend label={interpolateLevel("group.name", candidateGroup.level)} required />
+    <Legend label={i18nKey("group.name", undefined, candidateGroup.level)} required />
     <Input
         autofocus
         disabled={busy}
@@ -49,7 +50,7 @@
 </section>
 
 <section>
-    <Legend label={interpolateLevel("group.description", candidateGroup.level)} />
+    <Legend label={i18nKey("group.description", undefined, candidateGroup.level)} />
     <TextArea
         rows={4}
         disabled={busy}

@@ -11,13 +11,14 @@
     import type { Theme } from "../../../theme/types";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment } from "../../../utils/alignment";
+    import type { ResourceKey } from "../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let theme: Theme;
     export let otherThemes: Theme[];
-    export let label: string;
+    export let label: ResourceKey;
     export let align: Alignment;
 
     $: userStore = client.userStore;

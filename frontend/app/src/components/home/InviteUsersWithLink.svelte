@@ -22,6 +22,7 @@
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
     import { interpolateLevel } from "../../utils/i18n";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let container: MultiUserChat | CommunitySummary;
 
@@ -161,7 +162,7 @@
             },
             () => {
                 toastStore.showFailureToast("failedToCopyLinkToClipboard");
-            }
+            },
         );
     }
 
@@ -178,7 +179,7 @@
             on:change={toggleLink}
             disabled={loading}
             waiting={loading}
-            label={$_("invite.enableLink")}
+            label={i18nKey("invite.enableLink")}
             bind:checked />
 
         <div class:spinner />

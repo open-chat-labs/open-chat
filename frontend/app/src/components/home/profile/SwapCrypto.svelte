@@ -15,6 +15,7 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let ledgerIn: string;
 
@@ -201,7 +202,7 @@
             <BalanceWithRefresh
                 ledger={ledgerIn}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
@@ -212,7 +213,7 @@
             {#await client.swappableTokens() then swappableTokens}
                 <div class="swap">
                     <div class="select-from">
-                        <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
+                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
                         <div class="inner">
                             <CryptoSelector
                                 filter={(t) => t.balance > 0 && swappableTokens.has(t.ledger)}
@@ -229,7 +230,7 @@
                             bind:amount={amountIn} />
                     </div>
                     <div class="select-to">
-                        <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
+                        <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
                         <div class="inner">
                             <CryptoSelector
                                 filter={(t) => Object.keys(swaps).includes(t.ledger)}

@@ -1,13 +1,16 @@
 <script lang="ts">
-    export let label: string;
-    export let rules: string | undefined = undefined;
+    import type { ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
+
+    export let label: ResourceKey;
+    export let rules: ResourceKey | undefined = undefined;
     export let required = false;
 </script>
 
 <div class="legend">
-    <span class="label">{label}</span>
+    <span class="label"><Translatable resourceKey={label} /></span>
     {#if rules}
-        <span class="rules">({rules})</span>
+        <span class="rules">(<Translatable resourceKey={rules} />)</span>
     {/if}
     {#if required}
         <span class="required">*</span>

@@ -1,9 +1,12 @@
 <script lang="ts">
+    import type { ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
+
     export let group: string = "radio-group";
     export let value: string = "radio-value";
     export let checked: boolean = false;
     export let id: string;
-    export let label: string = "radio-label";
+    export let label: ResourceKey | undefined = undefined;
     export let align: "center" | "start" = "center";
     export let disabled: boolean = false;
     export let compact: boolean = false;
@@ -13,7 +16,9 @@
     <input {disabled} {id} type="radio" name={group} {checked} {value} on:change />
     <label class:disabled for={id}>
         <slot>
-            {label}
+            {#if label}
+                <Translatable resourceKey={label} />
+            {/if}
         </slot>
     </label>
 </div>

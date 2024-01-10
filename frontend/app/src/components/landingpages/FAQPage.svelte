@@ -8,6 +8,8 @@
     import { copyToClipboard } from "../../utils/urls";
     import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     let question: Questions | undefined = undefined;
 
@@ -33,10 +35,10 @@
             open={question === q}
             transition={false}
             on:opened={() => (question = q)}
-            headerText={$_(`faq.${q}_q`)}>
+            headerText={i18nKey(`faq.${q}_q`)}>
             <div class="header" slot="titleSlot">
                 <div class="title">
-                    {$_(`faq.${q}_q`)}
+                    <Translatable resourceKey={i18nKey(`faq.${q}_q`)} />
                     <div class="copy" on:click|stopPropagation={() => copyUrl(q)}>
                         <ContentCopy size={copySize} color={"var(--landing-txt)"} />
                     </div>

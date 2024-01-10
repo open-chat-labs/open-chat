@@ -1,6 +1,6 @@
 <script lang="ts">
     import { locale, _ } from "svelte-i18n";
-    import { editingLabel, supportedLanguages } from "../i18n/i18n";
+    import { editingLabel, i18nKey, supportedLanguages } from "../i18n/i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -23,7 +23,7 @@
 
     $: existingCorrection =
         $locale && $editingLabel && $corrections[$locale]
-            ? $corrections[$locale][$editingLabel]
+            ? $corrections[$locale][$editingLabel.key]
             : undefined;
     $: correctedBy =
         existingCorrection !== undefined ? $userStore[existingCorrection?.proposedBy].username : "";
@@ -36,7 +36,7 @@
         if ($locale && $editingLabel) {
             busy = true;
             client
-                .setTranslationCorrection($locale, $editingLabel, suggestion)
+                .setTranslationCorrection($locale, $editingLabel.key, suggestion)
                 .then(() => {
                     editingLabel.set(undefined);
                 })
@@ -56,16 +56,16 @@
                 </p>
                 <p>
                     The English value is <span class="value"
-                        >{$_($editingLabel, { locale: "en" })}</span>
+                        >{$_($editingLabel.key, { locale: "en" })}</span>
                 </p>
-                <p>The current translation is <span class="value">{$_($editingLabel)}</span></p>
+                <p>The current translation is <span class="value">{$_($editingLabel.key)}</span></p>
                 {#if existingCorrection !== undefined}
                     <p>
                         The current translation was provided by <span class="value"
                             >{correctedBy}</span>
                     </p>
                 {/if}
-                <Legend label="Your proposed translation is"></Legend>
+                <Legend label={i18nKey("Your proposed translation is")}></Legend>
                 <TextArea
                     minlength={1}
                     maxlength={1000}

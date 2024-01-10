@@ -37,6 +37,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
     import AreYouSure from "../AreYouSure.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -264,7 +265,7 @@
 <svelte:window on:focus={onWindowFocus} />
 
 {#if removeLinkPreviewDetails !== undefined}
-    <AreYouSure title={$_("removePreviewQuestion")} action={removePreview} />
+    <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
 {/if}
 
 {#if importToCommunities !== undefined}

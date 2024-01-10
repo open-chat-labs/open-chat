@@ -5,6 +5,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -75,7 +76,7 @@
 </script>
 
 <div class="label">
-    <Legend label={$_(label)} rules={symbol} />
+    <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
     <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
 </div>
 <div class="wrapper">

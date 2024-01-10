@@ -5,6 +5,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import GroupChatsMenu from "./GroupChatsMenu.svelte";
     import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 </script>
 
 <SectionHeader slim border={false}>
@@ -14,7 +15,7 @@
         </div>
         <div class="details">
             <h4 class="name">
-                <Translatable key={"communities.groupChats"} />
+                <Translatable resourceKey={i18nKey("communities.groupChats")} />
             </h4>
         </div>
     </div>

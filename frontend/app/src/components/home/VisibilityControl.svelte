@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { i18nKey } from "../../i18n/i18n";
+
     import { interpolateLevel } from "../../utils/i18n";
     import Checkbox from "../Checkbox.svelte";
     import { type OpenChat, type CandidateGroupChat, type CommunitySummary } from "openchat-client";
@@ -89,7 +91,7 @@
             id="history-visible"
             disabled={candidate.public || editing}
             on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
-            label={$_("historyVisible")}
+            label={i18nKey("historyVisible")}
             align={"start"}
             checked={candidate.historyVisible}>
             <div class="section-title">{$_("historyVisible")}</div>
@@ -110,7 +112,7 @@
             id="disappearing-messages"
             disabled={!canEditDisappearingMessages}
             on:change={toggleDisappearingMessages}
-            label={$_("disappearingMessages.label")}
+            label={i18nKey("disappearingMessages.label")}
             align={"start"}
             checked={disappearingMessages}>
             <div class="section-title disappear">{$_("disappearingMessages.label")}</div>
