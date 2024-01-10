@@ -42,6 +42,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: state.data.users.referrals(&u.user_id),
             is_platform_moderator: state.data.platform_moderators.contains(&u.user_id),
+            is_platform_operator: state.data.platform_operators.contains(&u.user_id),
             suspension_details,
             is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),

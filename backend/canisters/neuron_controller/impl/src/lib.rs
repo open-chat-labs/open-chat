@@ -106,7 +106,6 @@ struct Data {
     pub nns_ledger_canister_id: CanisterId,
     pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(skip_deserializing)]
     pub neurons: Neurons,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
@@ -175,5 +174,7 @@ pub struct CanisterIds {
 pub struct Neurons {
     timestamp: TimestampMillis,
     active_neurons: Vec<Neuron>,
+    #[serde(default)]
+    spawning_neurons: Vec<Neuron>,
     disbursed_neurons: Vec<u64>,
 }

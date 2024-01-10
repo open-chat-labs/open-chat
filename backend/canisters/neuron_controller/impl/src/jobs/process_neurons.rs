@@ -52,18 +52,26 @@ async fn run_async() {
             .collect();
 
         mutate_state(|state| {
-            let (active_neurons, disbursed_neurons): (Vec<_>, Vec<_>) = response
-                .full_neurons
-                .into_iter()
-                .partition(|n| n.maturity_e8s_equivalent > 0 || n.cached_neuron_stake_e8s > 0);
+            let mut active_neurons = Vec::new();
+            let mut spawning_neurons = Vec::new();
+            let mut disbursed_neurons = Vec::new();
+            for neuron in response.full_neurons.into_iter() {
+                if neuron.maturity_e8s_equivalent == 0 && neuron.cached_neuron_stake_e8s == 0 {
+                    if let Some(neuron_id) = neuron.id {
+                        disbursed_neurons.push(neuron_id.id);
+                    }
+                } else if neuron.spawn_at_timestamp_seconds.is_some() {
+                    spawning_neurons.push(neuron);
+                } else {
+                    active_neurons.push(neuron);
+                }
+            }
 
             state.data.neurons = Neurons {
                 timestamp: now,
                 active_neurons,
-                disbursed_neurons: disbursed_neurons
-                    .into_iter()
-                    .filter_map(|n| n.id.as_ref().map(|id| id.id))
-                    .collect(),
+                spawning_neurons,
+                disbursed_neurons,
             }
         });
 

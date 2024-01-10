@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1003](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1003-registry)] - 2024-01-10
+
 ### Changed
 
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
