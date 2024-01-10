@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Add `is_platform_operator` to `current_user` response ([#5161](https://github.com/open-chat-labs/open-chat/pull/5161))
 
 ## [[2.0.977](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.977-user_index)] - 2023-12-19
 
