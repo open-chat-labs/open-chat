@@ -75,12 +75,20 @@ async fn run_async() {
             }
         });
 
+        let mut neurons_updated = false;
         if !neurons_to_spawn.is_empty() {
             spawn_neurons(neurons_to_spawn).await;
+            neurons_updated = true;
         }
 
         if !neurons_to_disburse.is_empty() {
             disburse_neurons(neurons_to_disburse).await;
+            neurons_updated = true;
+        }
+
+        if neurons_updated {
+            // Refresh the neurons again given that they've been updated
+            ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(run_async()));
         }
     }
 }
