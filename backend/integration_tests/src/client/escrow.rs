@@ -33,6 +33,7 @@ pub mod happy_path {
                 output_token: output_token.try_into().unwrap(),
                 output_amount,
                 expires_at,
+                canister_to_notify: None,
             },
         );
 

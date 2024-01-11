@@ -5,10 +5,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub enum OfferStatus {
     Open,
-    Cancelled(OfferStatusCancelled),
+    Cancelled(Box<OfferStatusCancelled>),
     Expired,
-    Accepted(OfferStatusAccepted),
-    Completed(OfferStatusCompleted),
+    Accepted(Box<OfferStatusAccepted>),
+    Completed(Box<OfferStatusCompleted>),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -77,20 +77,20 @@ impl Offer {
             if let (Some(token0_transfer_out), Some(token1_transfer_out)) =
                 (self.token0_transfer_out.clone(), self.token1_transfer_out.clone())
             {
-                OfferStatus::Completed(OfferStatusCompleted {
+                OfferStatus::Completed(Box::new(OfferStatusCompleted {
                     accepted_by,
                     accepted_at,
                     token0_transfer_out,
                     token1_transfer_out,
-                })
+                }))
             } else {
-                OfferStatus::Accepted(OfferStatusAccepted {
+                OfferStatus::Accepted(Box::new(OfferStatusAccepted {
                     accepted_by,
                     accepted_at,
-                })
+                }))
             }
         } else if let Some(cancelled_at) = self.cancelled_at {
-            OfferStatus::Cancelled(OfferStatusCancelled { cancelled_at })
+            OfferStatus::Cancelled(Box::new(OfferStatusCancelled { cancelled_at }))
         } else if self.expires_at < now {
             OfferStatus::Expired
         } else {
