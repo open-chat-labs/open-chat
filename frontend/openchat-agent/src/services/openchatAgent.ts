@@ -3115,17 +3115,17 @@ export class OpenChatAgent extends EventTarget {
         return getTranslationCorrections();
     }
 
-    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PTradeOffer(
                 chatId.channelId,
                 threadRootMessageIndex,
-                messageIndex,
+                messageId,
             );
         } else if (chatId.kind === "group_chat") {
             return this.getGroupClient(chatId.groupId).acceptP2PTradeOffer(
                 threadRootMessageIndex,
-                messageIndex,
+                messageId,
             );
         } else {
             throw new Error("Not implemented yet");

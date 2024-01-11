@@ -1476,7 +1476,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     agent.acceptP2PTradeOffer(
                         payload.chatId,
                         payload.threadRootMessageIndex,
-                        payload.messageIndex,
+                        payload.messageId,
                     ),
                 );
                 break;

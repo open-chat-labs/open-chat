@@ -1,8 +1,9 @@
 export const idlFactory = ({ IDL }) => {
+  const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PTradeOfferArgs = IDL.Record({
+    'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'message_index' : MessageIndex,
   });
   const AcceptP2PTradeOfferResponse = IDL.Variant({
     'AlreadyAccepted' : IDL.Null,
@@ -17,7 +18,6 @@ export const idlFactory = ({ IDL }) => {
     'OfferExpired' : IDL.Null,
     'InsufficientFunds' : IDL.Null,
   });
-  const MessageId = IDL.Nat;
   const AddReactionArgs = IDL.Record({
     'username' : IDL.Text,
     'display_name' : IDL.Opt(IDL.Text),

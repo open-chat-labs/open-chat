@@ -113,7 +113,6 @@
                     .acceptP2PTradeOffer(
                         messageContext.chatId,
                         messageContext.threadRootMessageIndex,
-                        messageIndex,
                         messageId,
                     )
                     .then((resp) => {

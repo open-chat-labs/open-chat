@@ -1270,12 +1270,12 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    acceptP2PTradeOffer(channelId: string, threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+    acceptP2PTradeOffer(channelId: string, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
         return this.handleResponse(
             this.service.accept_p2p_trade_offer({
                 channel_id: BigInt(channelId),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_index: messageIndex
+                message_id: messageId
             }),
             acceptP2PTradeOfferResponse,
         );        

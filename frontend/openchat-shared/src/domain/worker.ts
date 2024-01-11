@@ -1475,7 +1475,7 @@ type GetExchangeRates = {
 type AcceptP2PTradeOffer = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
-    messageIndex: number;
+    messageId: bigint;
     kind: "acceptP2PTradeOffer";
 };
 

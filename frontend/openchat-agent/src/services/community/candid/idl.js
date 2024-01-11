@@ -1,10 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const ChannelId = IDL.Nat;
+  const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AcceptP2PTradeOfferArgs = IDL.Record({
     'channel_id' : ChannelId,
+    'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
-    'message_index' : MessageIndex,
   });
   const AcceptP2PTradeOfferResponse = IDL.Variant({
     'AlreadyAccepted' : IDL.Null,
@@ -85,7 +86,6 @@ export const idlFactory = ({ IDL }) => {
     'CommunityFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const MessageId = IDL.Nat;
   const AddReactionArgs = IDL.Record({
     'channel_id' : ChannelId,
     'username' : IDL.Text,

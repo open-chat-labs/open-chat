@@ -3,8 +3,8 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export interface AcceptP2PTradeOfferArgs {
   'channel_id' : ChannelId,
+  'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
-  'message_index' : MessageIndex,
 }
 export type AcceptP2PTradeOfferResponse = { 'AlreadyAccepted' : null } |
   { 'OfferNotFound' : null } |

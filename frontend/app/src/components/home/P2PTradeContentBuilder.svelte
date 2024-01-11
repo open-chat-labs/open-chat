@@ -15,6 +15,7 @@
     import DurationPicker from "./DurationPicker.svelte";
     import TextArea from "../TextArea.svelte";
     import AreYouSure from "../AreYouSure.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -132,7 +133,7 @@
             <BalanceWithRefresh
                 ledger={fromLedger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
@@ -140,7 +141,7 @@
         <form slot="body" class="body">
             <div class="row">
                 <div class="select-from">
-                    <Legend label={$_("cryptoAccount.transactionHeaders.from")} />
+                    <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
                     <div class="inner">
                         <CryptoSelector filter={(t) => t.balance > 0} bind:ledger={fromLedger} />
                     </div>
@@ -157,7 +158,7 @@
             </div>
             <div class="row">
                 <div class="select-to">
-                    <Legend label={$_("cryptoAccount.transactionHeaders.to")} />
+                    <Legend label={i18nKey("cryptoAccount.transactionHeaders.to")} />
                     <div class="inner">
                         <CryptoSelector
                             filter={(t) => t.ledger !== fromLedger}
@@ -172,11 +173,11 @@
                 </div>
             </div>
             <div class="duration">
-                <Legend label={$_("p2pTrade.expiryTime")} />
+                <Legend label={i18nKey("p2pTrade.expiryTime")} />
                 <DurationPicker bind:milliseconds={expiresIn} />
             </div>
             <div class="message">
-                <Legend label={$_("tokenTransfer.message")} />
+                <Legend label={i18nKey("tokenTransfer.message")} />
                 <TextArea
                     maxlength={200}
                     rows={3}

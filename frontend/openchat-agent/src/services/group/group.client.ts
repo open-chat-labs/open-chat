@@ -913,11 +913,11 @@ export class GroupClient extends CandidService {
         );
     }
 
-    acceptP2PTradeOffer(threadRootMessageIndex: number | undefined, messageIndex: number): Promise<AcceptP2PTradeOfferResponse> {
+    acceptP2PTradeOffer(threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_trade_offer({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-                message_index: messageIndex
+                message_id: messageId
             }),
             acceptP2PTradeOfferResponse,
         );        

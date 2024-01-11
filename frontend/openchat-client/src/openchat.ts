@@ -5087,13 +5087,13 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageIndex: number, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
+    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
         localMessageUpdates.setP2PTradeOfferStatus(messageId, {
             kind: "p2p_trade_reserved",
             userId: this._liveState.user.userId,
             timestamp: BigInt(Date.now()),
         });
-        return this.sendRequest({ kind: "acceptP2PTradeOffer", chatId, threadRootMessageIndex, messageIndex })
+        return this.sendRequest({ kind: "acceptP2PTradeOffer", chatId, threadRootMessageIndex, messageId })
             // .then((resp) => {
             //     if (resp !== "success") {
             //         localMessageUpdates.setP2PTradeOfferStatus(messageId, { kind: "p2p_trade_cancelled"});

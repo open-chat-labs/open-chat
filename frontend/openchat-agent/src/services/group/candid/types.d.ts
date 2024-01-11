@@ -2,8 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
 export interface AcceptP2PTradeOfferArgs {
+  'message_id' : MessageId,
   'thread_root_message_index' : [] | [MessageIndex],
-  'message_index' : MessageIndex,
 }
 export type AcceptP2PTradeOfferResponse = { 'AlreadyAccepted' : null } |
   { 'UserNotInGroup' : null } |
