@@ -140,7 +140,7 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
             neuron_id,
             Command::Disburse(Disburse {
                 to_account: Some(account.clone()),
-                amount: Some(Amount { e8s: E8S_PER_ICP }),
+                amount: None,
             }),
         )
         .await;
