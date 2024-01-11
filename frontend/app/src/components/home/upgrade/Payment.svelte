@@ -19,6 +19,7 @@
     import Expiry from "./Expiry.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import type { RemoteData } from "../../../utils/remoteData";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -180,7 +181,7 @@
             <Checkbox
                 id="auto-renew"
                 on:change={() => (autoRenew = !autoRenew)}
-                label={$_("upgrade.autorenew")}
+                label={i18nKey("upgrade.autorenew")}
                 align={"start"}
                 disabled={selectedDuration === "lifetime"}
                 checked={autoRenew && selectedDuration !== "lifetime"}>
@@ -191,7 +192,10 @@
                 {#if insufficientFunds && !refreshingBalance}
                     <ErrorMessage
                         >{$_("upgrade.insufficientFunds", {
-                            values: { token: tokenDetails.symbol, amount: `${toPay} ${tokenDetails.symbol}` },
+                            values: {
+                                token: tokenDetails.symbol,
+                                amount: `${toPay} ${tokenDetails.symbol}`,
+                            },
                         })}</ErrorMessage>
                 {/if}
 

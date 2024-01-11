@@ -35,6 +35,8 @@ fn p2p_trade_succeeds() {
         11_000_000_000,
     );
 
+    let message_id = random_message_id();
+
     let send_message_response = client::user::send_message_with_transfer_to_group(
         env,
         user1.principal,
@@ -42,7 +44,7 @@ fn p2p_trade_succeeds() {
         &user_canister::send_message_with_transfer_to_group::Args {
             group_id,
             thread_root_message_index: None,
-            message_id: random_message_id(),
+            message_id,
             content: MessageContentInitial::P2PTrade(P2PTradeContentInitial {
                 input_token: Cryptocurrency::InternetComputer.try_into().unwrap(),
                 input_amount: 1_000_000_000,
@@ -72,7 +74,7 @@ fn p2p_trade_succeeds() {
         group_id.into(),
         &group_canister::accept_p2p_trade_offer::Args {
             thread_root_message_index: None,
-            message_index: 0.into(),
+            message_id,
         },
     );
 

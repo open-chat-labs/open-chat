@@ -28,6 +28,8 @@
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -83,7 +85,7 @@
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: visibilityValid },
-            { labelKey: $_("rules.rules"), valid: rulesValid },
+            { labelKey: "rules.rules", valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -285,9 +287,10 @@
 
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">
-        {editing
-            ? interpolateLevel("group.edit", candidateGroup.level, true)
-            : interpolateLevel("group.createTitle", candidateGroup.level, true)}
+        <Translatable
+            resourceKey={editing
+                ? i18nKey("group.edit", undefined, candidateGroup.level, true)
+                : i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
     </div>
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
@@ -344,7 +347,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -353,7 +357,7 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => dispatch("close")}
-                    secondary>{$_("cancel")}</Button>
+                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                 {#if editing}
                     <Button
@@ -362,13 +366,19 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => updateGroup()}
-                        >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.update",
+                                undefined,
+                                candidateGroup.level,
+                                true,
+                            )} /></Button>
                 {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>
-                        {$_("group.next")}
+                        on:click={() => (step = step + 1)}
+                        ><Translatable resourceKey={i18nKey("group.next")} />
                     </Button>
                 {:else}
                     <Button
@@ -377,7 +387,13 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={createGroup}
-                        >{interpolateLevel("group.create", candidateGroup.level, true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.create",
+                                undefined,
+                                candidateGroup.level,
+                                true,
+                            )} /></Button>
                 {/if}
             </div>
         </div>

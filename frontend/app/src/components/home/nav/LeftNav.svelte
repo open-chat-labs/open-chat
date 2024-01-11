@@ -28,6 +28,7 @@
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
     import { rtlStore } from "../../../stores/rtl";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -140,7 +141,7 @@
 
 <section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
-        <LeftNavItem separator label={$_("communities.mainMenu")}>
+        <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
                     <span slot="icon">
@@ -156,14 +157,14 @@
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.title")} on:click={viewProfile}>
+            <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
 
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
-            label={$_("communities.directChats")}
+            label={i18nKey("communities.directChats")}
             disabled={$anonUser}
             unread={$unreadDirectCounts.chats}
             on:click={directChats}>
@@ -174,7 +175,7 @@
 
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
-            label={$_("communities.groupChats")}
+            label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             on:click={groupChats}>
             <div class="hover direct">
@@ -186,7 +187,7 @@
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
             disabled={$anonUser}
-            label={$_("communities.favourites")}
+            label={i18nKey("communities.favourites")}
             unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
             on:click={favouriteChats}>
             <div class="hover favs">
@@ -216,7 +217,7 @@
                         $unreadCommunityChannelCounts.get(community.id) ??
                             emptyCombinedUnreadCounts(),
                     )}
-                    label={community.name}
+                    label={i18nKey(community.name)}
                     on:click={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
@@ -232,13 +233,13 @@
     <div class="bottom">
         <LeftNavItem
             selected={communityExplorer}
-            label={$_("communities.explore")}
+            label={i18nKey("communities.explore")}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={$navOpen ? $_("collapse") : $_("expand")}>
+        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>

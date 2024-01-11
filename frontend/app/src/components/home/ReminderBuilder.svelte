@@ -12,6 +12,7 @@
     import { now } from "../../stores/time";
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let chatId: ChatIdentifier;
     export let eventIndex: number;
@@ -25,23 +26,23 @@
     let selectedIntervalIndex = 0;
     let intervals = [
         {
-            label: $_("reminders.twentyMinutes"),
+            label: i18nKey("reminders.twentyMinutes"),
             index: 0,
         },
         {
-            label: $_("reminders.oneHour"),
+            label: i18nKey("reminders.oneHour"),
             index: 1,
         },
         {
-            label: $_("reminders.threeHours"),
+            label: i18nKey("reminders.threeHours"),
             index: 2,
         },
         {
-            label: $_("reminders.tomorrow"),
+            label: i18nKey("reminders.tomorrow"),
             index: 3,
         },
         {
-            label: $_("reminders.nextWeek"),
+            label: i18nKey("reminders.nextWeek"),
             index: 4,
         },
     ];
@@ -111,7 +112,7 @@
         </span>
         <span slot="body">
             <div class="interval">
-                <Legend label={$_("reminders.menu")} />
+                <Legend label={i18nKey("reminders.menu")} />
                 <Select bind:value={selectedIntervalIndex}>
                     {#each intervals as interval}
                         <option value={interval.index}>{interval.label}</option>
@@ -119,7 +120,7 @@
                 </Select>
             </div>
             <div class="note">
-                <Legend label={$_("reminders.note")} rules={$_("reminders.optional")} />
+                <Legend label={i18nKey("reminders.note")} rules={i18nKey("reminders.optional")} />
                 <TextArea
                     maxlength={1000}
                     rows={4}

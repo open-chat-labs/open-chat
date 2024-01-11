@@ -5,7 +5,7 @@
     import TextArea from "../../../TextArea.svelte";
     import Select from "../../../Select.svelte";
     import Legend from "../../../Legend.svelte";
-    import { supportedLanguages } from "../../../../i18n/i18n";
+    import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
     import type { CommunitySummary } from "openchat-client";
 
     const MIN_LENGTH = 3;
@@ -40,7 +40,7 @@
 </script>
 
 <section class="images-section">
-    <Legend label={$_("communities.imageLabel")} />
+    <Legend label={i18nKey("communities.imageLabel")} />
     <div class="images">
         <div class="banner">
             <EditableAvatar
@@ -59,7 +59,7 @@
     </div>
 </section>
 <section>
-    <Legend required label={$_("communities.name")} />
+    <Legend required label={i18nKey("communities.name")} />
     <Input
         autofocus
         disabled={busy}
@@ -70,7 +70,7 @@
         placeholder={$_("communities.namePlaceholder")} />
 </section>
 <section>
-    <Legend label={$_("communities.primaryLanguage")} />
+    <Legend label={i18nKey("communities.primaryLanguage")} />
     <Select bind:value={candidate.primaryLanguage}>
         {#each supportedLanguages as lang}
             <option value={lang.code}>{lang.name}</option>
@@ -78,7 +78,10 @@
     </Select>
 </section>
 <section>
-    <Legend required label={$_("communities.description")} rules={$_("supportsMarkdown")} />
+    <Legend
+        required
+        label={i18nKey("communities.description")}
+        rules={i18nKey("supportsMarkdown")} />
     <TextArea
         rows={4}
         disabled={busy}

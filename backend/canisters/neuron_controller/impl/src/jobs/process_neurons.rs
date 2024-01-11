@@ -2,7 +2,6 @@ use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
-use nns_governance_canister::types::manage_neuron::disburse::Amount;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
@@ -52,27 +51,43 @@ async fn run_async() {
             .collect();
 
         mutate_state(|state| {
-            let (active_neurons, disbursed_neurons): (Vec<_>, Vec<_>) = response
-                .full_neurons
-                .into_iter()
-                .partition(|n| n.maturity_e8s_equivalent > 0 || n.cached_neuron_stake_e8s > 0);
+            let mut active_neurons = Vec::new();
+            let mut spawning_neurons = Vec::new();
+            let mut disbursed_neurons = Vec::new();
+            for neuron in response.full_neurons.into_iter() {
+                if neuron.maturity_e8s_equivalent == 0 && neuron.cached_neuron_stake_e8s == 0 {
+                    if let Some(neuron_id) = neuron.id {
+                        disbursed_neurons.push(neuron_id.id);
+                    }
+                } else if neuron.spawn_at_timestamp_seconds.is_some() {
+                    spawning_neurons.push(neuron);
+                } else {
+                    active_neurons.push(neuron);
+                }
+            }
 
             state.data.neurons = Neurons {
                 timestamp: now,
                 active_neurons,
-                disbursed_neurons: disbursed_neurons
-                    .into_iter()
-                    .filter_map(|n| n.id.as_ref().map(|id| id.id))
-                    .collect(),
+                spawning_neurons,
+                disbursed_neurons,
             }
         });
 
+        let mut neurons_updated = false;
         if !neurons_to_spawn.is_empty() {
             spawn_neurons(neurons_to_spawn).await;
+            neurons_updated = true;
         }
 
         if !neurons_to_disburse.is_empty() {
             disburse_neurons(neurons_to_disburse).await;
+            neurons_updated = true;
+        }
+
+        if neurons_updated {
+            // Refresh the neurons again given that they've been updated
+            ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(run_async()));
         }
     }
 }
@@ -124,7 +139,7 @@ async fn disburse_neurons(neuron_ids: Vec<u64>) {
             neuron_id,
             Command::Disburse(Disburse {
                 to_account: Some(account.clone()),
-                amount: Some(Amount { e8s: E8S_PER_ICP }),
+                amount: None,
             }),
         )
         .await;

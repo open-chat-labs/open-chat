@@ -19,6 +19,7 @@
     import { interpolateLevel } from "../../../utils/i18n";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,7 +67,7 @@
 
 {#if !busy}
     <div class="find-user">
-        <CollapsibleCard open headerText={$_("searchForUsername")}>
+        <CollapsibleCard open headerText={i18nKey("searchForUsername")}>
             <SelectUsers
                 {userLookup}
                 mode={"edit"}
@@ -77,7 +78,7 @@
         {#if canInvite}
             <CollapsibleCard
                 open
-                headerText={interpolateLevel("invite.inviteWithLink", container.level, true)}>
+                headerText={i18nKey("invite.inviteWithLink", undefined, container.level, true)}>
                 <InviteUsersWithLink {container} />
             </CollapsibleCard>
         {/if}

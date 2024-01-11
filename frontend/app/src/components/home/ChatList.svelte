@@ -37,6 +37,8 @@
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
     import Diamond from "../icons/Diamond.svelte";
     import BrowseChannels from "./communities/details/BrowseChannels.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -312,7 +314,9 @@
                     <div class="disc">
                         <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
-                    <div class="label">{$_("exploreGroups")}</div>
+                    <div class="label">
+                        <Translatable resourceKey={i18nKey("exploreGroups")} />
+                    </div>
                     <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>

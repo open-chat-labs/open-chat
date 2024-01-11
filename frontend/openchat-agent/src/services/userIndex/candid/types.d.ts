@@ -379,6 +379,7 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
+      'is_platform_operator' : boolean,
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,

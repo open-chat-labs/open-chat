@@ -18,6 +18,7 @@
     import Markdown from "../Markdown.svelte";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,13 +35,13 @@
     $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
     $: muted = chat?.membership?.notificationsMuted || false;
     $: syncDetails = chat?.membership?.latestThreads?.find(
-        (t) => t.threadRootMessageIndex === threadRootMessageIndex
+        (t) => t.threadRootMessageIndex === threadRootMessageIndex,
     );
     $: unreadCount = syncDetails
         ? client.unreadThreadMessageCount(
               thread.chatId,
               threadRootMessageIndex,
-              syncDetails.latestMessageIndex
+              syncDetails.latestMessageIndex,
           )
         : 0;
     $: chatData = {
@@ -78,7 +79,7 @@
                 unreadCount = client.unreadThreadMessageCount(
                     thread.chatId,
                     threadRootMessageIndex,
-                    syncDetails.latestMessageIndex
+                    syncDetails.latestMessageIndex,
                 );
             }
         });
@@ -88,14 +89,17 @@
         page(
             `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
-            }?open=true`
+            }?open=true`,
         );
     }
 </script>
 
 {#if chat !== undefined}
     <div class="wrapper">
-        <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
+        <CollapsibleCard
+            on:toggle={() => (open = !open)}
+            {open}
+            headerText={i18nKey("userInfoHeader")}>
             <div slot="titleSlot" class="header">
                 <div class="avatar">
                     <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />

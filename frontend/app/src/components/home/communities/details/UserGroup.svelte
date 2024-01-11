@@ -18,6 +18,7 @@
     import VirtualList from "../../../VirtualList.svelte";
     import Markdown from "../../Markdown.svelte";
     import Legend from "../../../Legend.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -74,8 +75,8 @@
                             $_(
                                 `communities.errors.${
                                     creating ? "createGroupFailed" : "updateGroupFailed"
-                                }`
-                            )
+                                }`,
+                            ),
                         );
                     }
                 }
@@ -133,7 +134,9 @@
 <div class="user-group">
     {#if canManageUserGroups}
         <div class="header">
-            <Legend label={$_("communities.userGroupName")} rules={$_("communities.noSpaces")} />
+            <Legend
+                label={i18nKey("communities.userGroupName")}
+                rules={i18nKey("communities.noSpaces")} />
             <Input
                 bind:value={userGroup.name}
                 minlength={MIN_LENGTH}

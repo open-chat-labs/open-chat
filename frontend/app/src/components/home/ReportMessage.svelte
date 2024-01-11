@@ -14,6 +14,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let chatId: ChatIdentifier;
     export let messageId: bigint;
@@ -64,7 +65,7 @@
         </span>
         <span slot="body">
             <div class="reason">
-                <Legend label={$_("report.reason")} />
+                <Legend label={i18nKey("report.reason")} />
                 <Select bind:value={selectedReasonIndex}>
                     {#each reasons as reason, i}
                         <option disabled={i === 0} value={i - 1}>{reason}</option>
@@ -75,7 +76,7 @@
                 <div class="delete">
                     <Checkbox
                         id={"delete_message"}
-                        label={$_("report.deleteMessage")}
+                        label={i18nKey("report.deleteMessage")}
                         bind:checked={deleteMessage} />
                 </div>
             {/if}

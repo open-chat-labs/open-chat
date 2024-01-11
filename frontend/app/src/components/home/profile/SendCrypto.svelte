@@ -18,6 +18,7 @@
     import Button from "../../Button.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let ledger: string;
 
@@ -154,7 +155,7 @@
             bind:this={balanceWithRefresh}
             {ledger}
             value={remainingBalance}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:refreshed={onBalanceRefreshed}
             on:error={onBalanceRefreshError} />

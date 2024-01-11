@@ -9,6 +9,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let ledger: string;
 
@@ -40,7 +41,7 @@
         <BalanceWithRefresh
             {ledger}
             value={$cryptoBalance[ledger]}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:refreshed={onBalanceRefreshed}
             on:error={onBalanceRefreshError} />

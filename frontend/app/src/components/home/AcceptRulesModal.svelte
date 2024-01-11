@@ -3,6 +3,7 @@
     import AreYouSure from "../AreYouSure.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { type OpenChat } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -34,8 +35,8 @@
 </script>
 
 <AreYouSure
-    title={$_("rules.acceptTitle")}
+    title={i18nKey("rules.acceptTitle")}
     message={client.combineRulesText($currentChatRules, $currentCommunityRules)}
-    yesLabel={$_("rules.accept")}
-    noLabel={$_("rules.reject")}
+    yesLabel={i18nKey("rules.accept")}
+    noLabel={i18nKey("rules.reject")}
     action={onAction} />

@@ -4,6 +4,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Legend from "../../Legend.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +29,7 @@
     }
 </script>
 
-<Legend label={$_("tokenTransfer.saveAccountMessage")} />
+<Legend label={i18nKey("tokenTransfer.saveAccountMessage")} />
 
 <p class="account">{account}</p>
 

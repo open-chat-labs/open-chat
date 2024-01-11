@@ -18,6 +18,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import TextArea from "../TextArea.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -140,7 +141,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 on:click={() => (confirming = false)}
@@ -161,7 +162,7 @@
                 {:else}
                     {#if multiUserChat}
                         <div class="receiver">
-                            <Legend label={$_("tokenTransfer.receiver")} />
+                            <Legend label={i18nKey("tokenTransfer.receiver")} />
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 autofocus={multiUserChat} />
@@ -177,7 +178,7 @@
                             bind:amount={draftAmount} />
                     </div>
                     <div class="message">
-                        <Legend label={$_("tokenTransfer.message")} />
+                        <Legend label={i18nKey("tokenTransfer.message")} />
                         <TextArea
                             maxlength={200}
                             rows={3}

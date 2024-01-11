@@ -13,6 +13,7 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import ThemeButton from "./ThemeButton.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     type PartitionedThemes = {
         light: Theme[];
@@ -64,13 +65,13 @@
     <ThemeButton
         align={"start"}
         on:select={selectLightTheme}
-        label={$_("theme.preferredLightTheme")}
+        label={i18nKey("theme.preferredLightTheme")}
         theme={$preferredLightTheme}
         otherThemes={partitionedThemes.light} />
     <ThemeButton
         align={"end"}
         on:select={selectDarkTheme}
-        label={$_("theme.preferredDarkTheme")}
+        label={i18nKey("theme.preferredDarkTheme")}
         theme={$preferredDarkTheme}
         otherThemes={partitionedThemes.dark} />
 </div>

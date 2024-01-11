@@ -1441,6 +1441,34 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
 
+            case "setTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "approveTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "rejectTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.rejectTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "getTranslationCorrections":
+                executeThenReply(payload, correlationId, agent.getTranslationCorrections());
+                break;
+
             case "acceptP2PTradeOffer":
                 executeThenReply(
                     payload,

@@ -1,17 +1,18 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
-    import Legend from "../Legend.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
-    export let label: string;
+    export let label: ResourceKey;
     export let rolePermission: string | undefined;
     export let roles: readonly string[];
     export let defaultRole: string | undefined = undefined;
@@ -32,7 +33,10 @@
     }
 </script>
 
-<Legend label={`${$_("permissions.whoCan")} ${label}`} />
+<div class="legend">
+    <span class="label"><Translatable resourceKey={i18nKey("permissions.whoCan")} /> </span>
+    <span class="label"><Translatable resourceKey={label} /></span>
+</div>
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div class:selecting class="permission-select" on:click|stopPropagation={() => menu.showMenu()}>
     <div class="role">
@@ -96,6 +100,14 @@
 
         .role {
             flex: auto;
+        }
+    }
+    .legend {
+        margin-bottom: $sp2;
+        display: flex;
+        gap: $sp3;
+        .label {
+            @include font(book, normal, fs-60);
         }
     }
 </style>

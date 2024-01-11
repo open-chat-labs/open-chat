@@ -114,6 +114,7 @@ export function anonymousUser(): CreatedUser {
         canisterUpgradeStatus: "not_required",
         referrals: [],
         isPlatformModerator: false,
+        isPlatformOperator: false,
         suspensionDetails: undefined,
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
@@ -130,6 +131,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     referrals: string[];
     isPlatformModerator: boolean;
+    isPlatformOperator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
