@@ -11,12 +11,12 @@
     import Markdown from "../../Markdown.svelte";
     import AccessGateSummary from "../../AccessGateSummary.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
-    import { interpolateLevel } from "../../../../utils/i18n";
     import { _ } from "svelte-i18n";
     import AdvancedSection from "./AdvancedSection.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Stats from "../../Stats.svelte";
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     export let community: CommunitySummary;
     export let rules: Rules | undefined;
@@ -29,17 +29,17 @@
     <CollapsibleCard
         on:toggle={communityVisibilityOpen.toggle}
         open={$communityVisibilityOpen}
-        headerText={$_("access.visibility")}>
+        headerText={i18nKey("access.visibility")}>
         {#if community.public}
-            <h4>{interpolateLevel("group.publicGroup", community.level, true)}</h4>
+            <h4>{i18nKey("group.publicGroup", undefined, community.level, true)}</h4>
         {:else}
-            <h4>{interpolateLevel("group.privateGroup", community.level, true)}</h4>
+            <h4>{i18nKey("group.privateGroup", undefined, community.level, true)}</h4>
         {/if}
         <div class="info">
             {#if community.public}
-                <p>{interpolateLevel("publicGroupInfo", community.level, true)}</p>
+                <p>{i18nKey("publicGroupInfo", undefined, community.level, true)}</p>
             {:else}
-                <p>{interpolateLevel("group.privateGroupInfo", community.level, true)}</p>
+                <p>{i18nKey("group.privateGroupInfo", undefined, community.level, true)}</p>
             {/if}
             {#if !community.public}
                 {#if community.historyVisible}
@@ -55,7 +55,7 @@
         <CollapsibleCard
             on:toggle={communityRulesOpen.toggle}
             open={$communityRulesOpen}
-            headerText={interpolateLevel("rules.levelRules", community.level)}>
+            headerText={i18nKey("rules.levelRules", undefined, community.level)}>
             <Markdown inline={false} text={rules.text} />
         </CollapsibleCard>
     {/if}
@@ -63,27 +63,27 @@
         <CollapsibleCard
             on:toggle={communityInviteUsersOpen.toggle}
             open={$communityInviteUsersOpen}
-            headerText={interpolateLevel("invite.inviteWithLink", community.level, true)}>
+            headerText={i18nKey("invite.inviteWithLink", undefined, community.level, true)}>
             <InviteUsersWithLink container={community} />
         </CollapsibleCard>
     {/if}
     <CollapsibleCard
         on:toggle={communityPermissionsOpen.toggle}
         open={$communityPermissionsOpen}
-        headerText={$_("permissions.permissions")}>
+        headerText={i18nKey("permissions.permissions")}>
         <PermissionsViewer isPublic={community.public} bind:permissions={community.permissions} />
     </CollapsibleCard>
     <CollapsibleCard
         on:toggle={communityStatsOpen.toggle}
         open={$communityStatsOpen}
-        headerText={interpolateLevel("stats.groupStats", community.level)}>
+        headerText={i18nKey("stats.groupStats", undefined, community.level)}>
         <Stats showReported={false} stats={metrics} />
     </CollapsibleCard>
     {#if canDelete}
         <CollapsibleCard
             on:toggle={communityAdvancedOpen.toggle}
             open={$communityAdvancedOpen}
-            headerText={$_("group.advanced")}>
+            headerText={i18nKey("group.advanced")}>
             <AdvancedSection on:deleteCommunity {community} />
         </CollapsibleCard>
     {/if}

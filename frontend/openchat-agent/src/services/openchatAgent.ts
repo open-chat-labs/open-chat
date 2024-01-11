@@ -11,6 +11,10 @@ import {
     setCachedMessageIfNotExists,
     setCachePrimerTimestamp,
     recordFailedMessage,
+    setTranslationCorrection,
+    getTranslationCorrections,
+    rejectTranslationCorrection,
+    approveTranslationCorrection,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -187,6 +191,8 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    TranslationCorrections,
+    TranslationCorrection,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3074,5 +3080,35 @@ export class OpenChatAgent extends EventTarget {
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return this._icpcoinsClient.exchangeRates();
+    }
+
+    setTranslationCorrection(correction: TranslationCorrection): Promise<TranslationCorrections> {
+        console.log("Setting translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return setTranslationCorrection(correction);
+    }
+
+    rejectTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Rejecting translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return rejectTranslationCorrection(correction);
+    }
+
+    approveTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Approving translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return approveTranslationCorrection(correction);
+    }
+
+    getTranslationCorrections(): Promise<TranslationCorrections> {
+        // TODO - this will just come from indexeddb for the time being
+        return getTranslationCorrections();
     }
 }

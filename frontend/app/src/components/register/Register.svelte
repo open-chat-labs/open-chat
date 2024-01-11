@@ -1,6 +1,6 @@
 <script lang="ts">
     import { locale } from "svelte-i18n";
-    import { setLocale, supportedLanguages } from "../../i18n/i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
@@ -90,6 +90,7 @@
                     canisterUpgradeStatus: "not_required",
                     referrals: [],
                     isPlatformModerator: false,
+                    isPlatformOperator: false,
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
                     diamondStatus: { kind: "inactive" },
@@ -149,7 +150,7 @@
             </div>
         {:else}
             <form class="username-wrapper" on:submit|preventDefault={register}>
-                <Legend label={$_("username")} rules={$_("usernameRules")} />
+                <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
                 <UsernameInput
                     {client}
                     disabled={busy}

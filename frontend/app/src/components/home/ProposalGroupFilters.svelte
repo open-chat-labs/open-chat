@@ -15,6 +15,7 @@
         proposalActionCategories,
         type ProposalActionCategory,
     } from "../../stores/proposalSections";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let selectedChat: ChatSummary;
 
@@ -102,13 +103,13 @@
             <CollapsibleCard
                 on:toggle={() => proposalActionCategories.toggle(category)}
                 open={$proposalActionCategories[category]}
-                headerText={$_(sectionLabels[category])}>
+                headerText={i18nKey(sectionLabels[category])}>
                 {#each topicsInCategory as [id, label]}
                     <div class="toggle">
                         <Checkbox
                             id={kebab(label)}
                             on:change={() => client.toggleProposalFilter(id)}
-                            {label}
+                            label={i18nKey(label)}
                             checked={!$filteredProposalsStore?.hasFilter(id)} />
                     </div>
                 {/each}
@@ -119,7 +120,7 @@
                     <Checkbox
                         id={kebab(label)}
                         on:change={() => client.toggleProposalFilter(id)}
-                        {label}
+                        label={i18nKey(label)}
                         checked={!$filteredProposalsStore?.hasFilter(id)} />
                 </div>
             {/each}

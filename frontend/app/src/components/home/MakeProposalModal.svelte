@@ -25,6 +25,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import { createAddTokenPayload } from "../../utils/sns";
+    import { i18nKey } from "../../i18n/i18n";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -244,7 +245,7 @@
             bind:this={balanceWithRefresh}
             {ledger}
             value={cryptoBalance}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:click={onStartRefreshingBalance}
             on:refreshed={onRefreshingBalanceSuccess}
@@ -261,7 +262,7 @@
             </div>
             <div class="common hidden" class:visible={step === 1}>
                 <section class="type">
-                    <Legend label={$_("proposal.maker.type")} />
+                    <Legend label={i18nKey("proposal.maker.type")} />
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
@@ -273,7 +274,7 @@
                     </Select>
                 </section>
                 <section>
-                    <Legend label={$_("proposal.maker.title")} required />
+                    <Legend label={i18nKey("proposal.maker.title")} required />
                     <Input
                         autofocus
                         disabled={busy}
@@ -286,8 +287,8 @@
                 </section>
                 <section>
                     <Legend
-                        label={$_("proposal.maker.url")}
-                        rules={$_("proposal.maker.urlRules")} />
+                        label={i18nKey("proposal.maker.url")}
+                        rules={i18nKey("proposal.maker.urlRules")} />
                     <Input
                         disabled={busy}
                         invalid={!urlValid}
@@ -300,8 +301,8 @@
                     <div class="summary-heading">
                         <Legend
                             required
-                            label={$_("proposal.maker.summary")}
-                            rules={$_("proposal.maker.summaryRules")} />
+                            label={i18nKey("proposal.maker.summary")}
+                            rules={i18nKey("proposal.maker.summaryRules")} />
                         <div
                             role="switch"
                             tabindex="1"
@@ -343,12 +344,12 @@
                 {#if selectedProposalType === "transfer_sns_funds"}
                     <div>
                         <section>
-                            <Legend label={$_("proposal.maker.treasury")} required />
+                            <Legend label={i18nKey("proposal.maker.treasury")} required />
                             <Radio
                                 id="chat_treasury"
                                 group="treasury"
                                 value={symbol}
-                                label={symbol}
+                                label={i18nKey(symbol)}
                                 disabled={busy}
                                 checked={treasury === "SNS"}
                                 on:change={() => (treasury = "SNS")} />
@@ -356,13 +357,13 @@
                                 id="icp_treasury"
                                 group="treasury"
                                 value="ICP"
-                                label="ICP"
+                                label={i18nKey("ICP")}
                                 disabled={busy}
                                 checked={treasury === "ICP"}
                                 on:change={() => (treasury = "ICP")} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.recipientOwner")} required />
+                            <Legend label={i18nKey("proposal.maker.recipientOwner")} required />
                             <Input
                                 disabled={busy}
                                 invalid={recipientOwner.length > 0 && !recipientOwnerValid}
@@ -372,8 +373,8 @@
                         </section>
                         <section>
                             <Legend
-                                label={$_("proposal.maker.recipientSubaccount")}
-                                rules={$_("proposal.maker.recipientSubaccountRules")} />
+                                label={i18nKey("proposal.maker.recipientSubaccount")}
+                                rules={i18nKey("proposal.maker.recipientSubaccountRules")} />
                             <Input
                                 disabled={busy}
                                 invalid={!recipientSubaccountValid}
@@ -383,8 +384,8 @@
                         </section>
                         <section>
                             <Legend
-                                label={$_("proposal.maker.amount")}
-                                rules={$_("proposal.maker.amountRules", { values: { token } })}
+                                label={i18nKey("proposal.maker.amount")}
+                                rules={i18nKey("proposal.maker.amountRules", { token })}
                                 required />
                             <Input
                                 disabled={busy}
@@ -400,7 +401,7 @@
                 {:else if selectedProposalType === "add_token"}
                     <div>
                         <section>
-                            <Legend label={$_("proposal.maker.ledgerCanisterId")} required />
+                            <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
                             <Input
                                 autofocus
                                 disabled={busy}
@@ -413,7 +414,7 @@
                                 placeholder="2ouva-viaaa-aaaaq-aaamq-cai" />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
+                            <Legend label={i18nKey("proposal.maker.tokenInfoUrl")} required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
@@ -422,7 +423,7 @@
                                 placeholder="https://token.com/info" />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.howToBuyUrl")} required />
+                            <Legend label={i18nKey("proposal.maker.howToBuyUrl")} required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
@@ -431,7 +432,9 @@
                                 placeholder="https://token.com/how-to-buy" />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.transactionUrlFormat")} required />
+                            <Legend
+                                label={i18nKey("proposal.maker.transactionUrlFormat")}
+                                required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
@@ -440,7 +443,7 @@
                                 placeholder={`https://token.com/transactions/{transaction_index}`} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.tokenLogo")} />
+                            <Legend label={i18nKey("proposal.maker.tokenLogo")} />
                             <Input
                                 disabled={busy}
                                 invalid={!isTokenLogoValid(addTokenLogo)}

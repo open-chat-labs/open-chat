@@ -21,6 +21,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -225,7 +226,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 bind:refreshing
@@ -255,7 +256,7 @@
                     <div class="amounts">
                         {#each increments as increment}
                             <TipButton
-                                label={$_(amountLabel(increment))}
+                                label={i18nKey(amountLabel(increment))}
                                 on:click={(e) => clickAmount(e, increment)}
                                 disabled={exchangeRate === 0 ||
                                     calculateAmount(centAmount + increment, exchangeRate) >

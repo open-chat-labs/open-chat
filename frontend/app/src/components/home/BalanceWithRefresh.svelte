@@ -4,13 +4,15 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import type { ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let ledger: string;
     export let value: bigint;
-    export let label: string | undefined = undefined;
+    export let label: ResourceKey | undefined = undefined;
     export let bold = false;
     export let toppingUp = false;
     export let showTopUp = false;
@@ -60,7 +62,7 @@
 
 <div class="container">
     {#if label !== undefined}
-        <div class="label">{label}</div>
+        <div class="label"><Translatable resourceKey={label} /></div>
     {/if}
     <div class="amount" class:bold>
         {formattedValue}

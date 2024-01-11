@@ -9,6 +9,7 @@
     import { AuthProvider, type OpenChat } from "openchat-client";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -105,7 +106,7 @@
                     compact
                     group="authprovider"
                     value={AuthProvider.II}
-                    label={AuthProvider.II}
+                    label={i18nKey(AuthProvider.II)}
                     disabled={state === "logging-in"}
                     checked={selected === AuthProvider.II}
                     on:change={() => selectProvider(AuthProvider.II)}>
@@ -121,7 +122,7 @@
                     compact
                     group="authprovider"
                     value={AuthProvider.NFID}
-                    label={AuthProvider.NFID}
+                    label={i18nKey(AuthProvider.NFID)}
                     disabled={state === "logging-in"}
                     checked={selected === AuthProvider.NFID}
                     on:change={() => selectProvider(AuthProvider.NFID)}>

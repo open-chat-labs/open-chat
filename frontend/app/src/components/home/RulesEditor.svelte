@@ -6,6 +6,7 @@
     import type { UpdatedRules, Level } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
     import { afterUpdate } from "svelte";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
 
     const MAX_RULES_LENGTH = 1024;
 
@@ -19,12 +20,12 @@
     $: isValid = !rules.enabled || (rules.text.length > 0 && rules.text.length <= MAX_RULES_LENGTH);
     $: rulesDirty = rules.text !== originalRules.text || rules.enabled !== originalRules.enabled;
 
-    function buildRulesExplanation(level: Level): string | undefined {
+    function buildRulesExplanation(level: Level): ResourceKey | undefined {
         switch (level) {
             case "community":
-                return $_("rules.communityRulesExplanation");
+                return i18nKey("rules.communityRulesExplanation");
             case "channel":
-                return $_("rules.channelRulesExplanation");
+                return i18nKey("rules.channelRulesExplanation");
             case "group":
                 return undefined;
         }
@@ -48,12 +49,12 @@
         small
         id="enable-rules"
         on:change={toggleRules}
-        label={$_("rules.enable")}
+        label={i18nKey("rules.enable")}
         checked={rules.enabled} />
     <div class="instructions">{interpolateLevel("rules.instructions", level, true)}</div>
 
     <Legend
-        label={interpolateLevel("rules.levelRules", level)}
+        label={i18nKey("rules.levelRules", undefined, level)}
         rules={buildRulesExplanation(level)} />
     <TextArea
         bind:value={rules.text}
@@ -66,7 +67,7 @@
             id="new-version"
             on:change={toggleNewVersion}
             checked={rules.newVersion && rulesDirty}
-            label={$_("rules.promptExistingUsers")}
+            label={i18nKey("rules.promptExistingUsers")}
             disabled={!rulesDirty}
             small />
 

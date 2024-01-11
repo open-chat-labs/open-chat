@@ -7,6 +7,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,7 +57,7 @@
 
 <form class="form" on:submit|preventDefault={saveUser}>
     <div class="form-fields">
-        <Legend label={$_("displayName")} rules={$_("communityDisplayNameRules")} />
+        <Legend label={i18nKey("displayName")} rules={i18nKey("communityDisplayNameRules")} />
         <DisplayNameInput
             on:upgrade
             {client}

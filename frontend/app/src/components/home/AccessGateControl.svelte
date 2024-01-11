@@ -28,6 +28,7 @@
     } from "openchat-client";
     import { interpolateLevel } from "../../utils/i18n";
     import Markdown from "./Markdown.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -197,7 +198,7 @@
             </Select>
         </div>
         {#if selectedGateKey === "neuron_gate_folder"}
-            <Legend label={$_("access.chooseNervousSystem")} />
+            <Legend label={i18nKey("access.chooseNervousSystem")} />
             <div class="choose-gate">
                 <Select margin={false} on:change={updateGate} bind:value={selectedNeuronGateKey}>
                     {#each neuronGateBindings as g}
@@ -206,21 +207,21 @@
                 </Select>
             </div>
 
-            <Legend label={$_("access.minDissolveDelay")} />
+            <Legend label={i18nKey("access.minDissolveDelay")} />
             <Input
                 maxlength={100}
                 placeholder={$_("access.optional")}
                 invalid={invalidDissolveDelay}
                 bind:value={minDissolveDelay} />
 
-            <Legend label={$_("access.minStake")} />
+            <Legend label={i18nKey("access.minStake")} />
             <Input
                 maxlength={100}
                 placeholder={$_("access.optional")}
                 invalid={invalidMinStake}
                 bind:value={minStake} />
         {:else if selectedGateKey === "payment_gate_folder"}
-            <Legend label={$_("access.chooseToken")} />
+            <Legend label={i18nKey("access.chooseToken")} />
             <div class="choose-gate">
                 <Select margin={false} on:change={updateGate} bind:value={selectedPaymentGateKey}>
                     {#each paymentGateBindings as g}
@@ -229,7 +230,7 @@
                 </Select>
             </div>
 
-            <Legend label={$_("access.amount")} required />
+            <Legend label={i18nKey("access.amount")} required />
             <Input maxlength={100} invalid={invalidAmount} bind:value={amountText} />
         {/if}
         {#if candidate.gate.kind === "diamond_gate"}

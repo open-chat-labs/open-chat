@@ -10,6 +10,7 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import Markdown from "./Markdown.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -101,7 +102,7 @@
             bind:this={balanceWithRefresh}
             ledger={gate.ledgerCanister}
             value={cryptoBalance}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:click={onStartRefreshingBalance}
             on:refreshed={onRefreshingBalanceSuccess}

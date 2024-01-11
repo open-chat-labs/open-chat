@@ -25,6 +25,7 @@
     import RandomDistribution from "../icons/RandomDistribution.svelte";
     import TextArea from "../TextArea.svelte";
     import NumberInput from "../NumberInput.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -222,7 +223,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 on:refreshed={onBalanceRefreshed}
@@ -252,7 +253,7 @@
                             bind:amount={draftAmount} />
                     </div>
                     <div class="message">
-                        <Legend label={$_("tokenTransfer.message")} />
+                        <Legend label={i18nKey("tokenTransfer.message")} />
                         <TextArea
                             maxlength={200}
                             rows={3}
@@ -262,8 +263,8 @@
                     </div>
                     <div class="winners">
                         <Legend
-                            label={$_("prizes.numberOfWinners")}
-                            rules={numberOfWinners?.toString()} />
+                            label={i18nKey("prizes.numberOfWinners")}
+                            rules={i18nKey(numberOfWinners?.toString())} />
                         <div class="pickers">
                             <Range fat min={1} max={1000} bind:value={numberOfWinners} />
                             <div class="num-picker">
@@ -276,7 +277,7 @@
                             </div>
                         </div>
                     </div>
-                    <Legend label={$_("prizes.distribution")} />
+                    <Legend label={i18nKey("prizes.distribution")} />
                     <div class="distributions">
                         <div
                             role="button"
@@ -301,30 +302,30 @@
                     </div>
                     <div class="config">
                         <div class="duration">
-                            <Legend label={$_("prizes.duration")} />
+                            <Legend label={i18nKey("prizes.duration")} />
                             {#each durations as d}
                                 <Radio
                                     on:change={() => (selectedDuration = d)}
                                     value={d}
                                     checked={selectedDuration === d}
                                     id={`duration_${d}`}
-                                    label={$_(`poll.${d}`)}
+                                    label={i18nKey(`poll.${d}`)}
                                     group={"prize_duration"} />
                             {/each}
                         </div>
                         <div class="restrictions">
-                            <Legend label={$_("prizes.whoCanWin")} />
+                            <Legend label={i18nKey("prizes.whoCanWin")} />
                             <Radio
                                 on:change={() => (diamondOnly = true)}
                                 checked={diamondOnly}
                                 id={`restricted_diamond`}
-                                label={$_(`prizes.onlyDiamond`)}
+                                label={i18nKey(`prizes.onlyDiamond`)}
                                 group={"prize_restriction"} />
                             <Radio
                                 on:change={() => (diamondOnly = false)}
                                 checked={!diamondOnly}
                                 id={`restricted_anyone`}
-                                label={$_(`prizes.anyone`)}
+                                label={i18nKey(`prizes.anyone`)}
                                 group={"prize_restriction"} />
                         </div>
                     </div>

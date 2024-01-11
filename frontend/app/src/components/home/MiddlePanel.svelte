@@ -11,6 +11,7 @@
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import { layoutStore } from "../../stores/layout";
+    import Loading from "../Loading.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -31,6 +32,14 @@
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:upgrade on:createCommunity />
+    {:else if $pathParams.kind === "admin_route"}
+        {#await import("./admin/Admin.svelte")}
+            <div class="loading">
+                <Loading />
+            </div>
+        {:then { default: Admin }}
+            <Admin />
+        {/await}
     {:else if $selectedChatId === undefined}
         {#if noChat}
             <div class="no-chat" in:fade>

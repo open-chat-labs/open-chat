@@ -28,6 +28,7 @@
     import Search from "./Search.svelte";
     import { compareBigints } from "../utils/bigints";
     import Diamond from "./icons/Diamond.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -278,7 +279,7 @@
                     open={searchTerm !== ""}
                     first
                     transition={false}
-                    headerText={$_("communities.directChats")}>
+                    headerText={i18nKey("communities.directChats")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -319,7 +320,7 @@
                 <CollapsibleCard
                     transition={false}
                     open={searchTerm !== ""}
-                    headerText={$_("communities.groupChats")}>
+                    headerText={i18nKey("communities.groupChats")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -352,7 +353,7 @@
                 <CollapsibleCard
                     transition={false}
                     open={searchTerm !== ""}
-                    headerText={$_("communities.favourites")}>
+                    headerText={i18nKey("communities.favourites")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -386,7 +387,7 @@
                     <CollapsibleCard
                         transition={false}
                         open={searchTerm !== ""}
-                        headerText={community.name}>
+                        headerText={i18nKey(community.name)}>
                         <div slot="titleSlot" class="card-header">
                             <div class="avatar">
                                 <Avatar url={community.avatarUrl} size={AvatarSize.Default} />

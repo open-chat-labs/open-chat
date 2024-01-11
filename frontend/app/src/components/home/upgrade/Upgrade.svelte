@@ -10,6 +10,8 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import CryptoSelector from "../CryptoSelector.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     let ledger: string = LEDGER_CANISTER_ICP;
@@ -52,11 +54,11 @@
                     <Diamond size={"1em"} show={"blue"} />
                     {#if step === "features"}
                         {#if $canExtendDiamond}
-                            {$_("upgrade.extend")}
+                            <Translatable resourceKey={i18nKey("upgrade.extend")} />
                         {:else if $isDiamond}
-                            {$_("upgrade.benefits")}
+                            <Translatable resourceKey={i18nKey("upgrade.benefits")} />
                         {:else}
-                            {$_("upgrade.featuresTitle")}
+                            <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
                         {/if}
                     {:else if step === "payment"}
                         <div>

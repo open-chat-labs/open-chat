@@ -185,6 +185,7 @@ import {
     anonUser,
     suspendedUser,
     platformModerator,
+    platformOperator,
 } from "./stores/user";
 import { userCreatedStore } from "./stores/userCreated";
 import { dataToBlobUrl } from "./utils/blob";
@@ -359,6 +360,8 @@ import type {
     Level,
     VersionedRules,
     DiamondMembershipStatus,
+    TranslationCorrections,
+    TranslationCorrection,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -447,6 +450,7 @@ import {
     extractEnabledLinks,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
+import { applyTranslationCorrections, translationCorrectionsStore } from "./stores/i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -483,6 +487,7 @@ export class OpenChat extends OpenChatAgentWorker {
     anonUser = anonUser;
     suspendedUser = suspendedUser;
     platformModerator = platformModerator;
+    platformOperator = platformOperator;
 
     constructor(config: OpenChatConfig) {
         super(config);
@@ -695,6 +700,11 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.identityState.set({ kind: "registering" });
                         break;
                     case "created_user":
+                        console.log("About to get translation corrections");
+                        this.getTranslationCorrections().then((res) => {
+                            console.log("Corrections: ", res);
+                            applyTranslationCorrections(user.userId, res);
+                        });
                         this.onCreatedUser(user);
                         break;
                 }
@@ -4702,11 +4712,10 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
-        return this.sendRequest({ kind: "setDiamondMembershipFees", fees })
-            .catch((err) => {
-                this._logger.error("Unable to set diamond membership fees", err);
-                return false;
-            });
+        return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch((err) => {
+            this._logger.error("Unable to set diamond membership fees", err);
+            return false;
+        });
     }
 
     stakeNeuronForSubmittingProposals(
@@ -5593,6 +5602,57 @@ export class OpenChat extends OpenChatAgentWorker {
         return community.localUserIndex;
     }
 
+    setTranslationCorrection(
+        locale: string,
+        key: string,
+        value: string,
+    ): Promise<TranslationCorrections> {
+        return this.sendRequest({
+            kind: "setTranslationCorrection",
+            correction: {
+                locale,
+                key,
+                value,
+                proposedBy: this._liveState.user.userId,
+                proposedAt: Date.now(),
+                approved: false,
+            },
+        }).then((updated) => {
+            applyTranslationCorrections(this._liveState.user.userId, updated);
+            return updated;
+        });
+    }
+
+    getTranslationCorrections(): Promise<TranslationCorrections> {
+        return this.sendRequest({
+            kind: "getTranslationCorrections",
+        });
+    }
+
+    rejectTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        return this.sendRequest({
+            kind: "rejectTranslationCorrection",
+            correction,
+        }).then((updated) => {
+            applyTranslationCorrections(this._liveState.user.userId, updated);
+            return updated;
+        });
+    }
+
+    approveTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        return this.sendRequest({
+            kind: "approveTranslationCorrection",
+            correction,
+        }).then((updated) => {
+            applyTranslationCorrections(this._liveState.user.userId, updated);
+            return updated;
+        });
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities
@@ -6103,6 +6163,7 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
+    translationCorrectionsStore = translationCorrectionsStore;
 
     // current community stores
     chatListScope = chatListScopeStore;
