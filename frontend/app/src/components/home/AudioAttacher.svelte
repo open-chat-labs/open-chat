@@ -7,6 +7,7 @@
     import { toastStore } from "../../stores/toast";
     import type { AudioContent, OpenChat } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     type EventMap = {
@@ -37,7 +38,7 @@
                     })
                     .catch((_err) => {
                         console.log(
-                            "unable to check microphone permissions (probably unsupported)"
+                            "unable to check microphone permissions (probably unsupported)",
                         );
                     });
             }
@@ -87,7 +88,7 @@
                         recording = false;
                         if (truncated) {
                             // let the user know if we stopped recording prematurely
-                            toastStore.showFailureToast("maxAudioSize");
+                            toastStore.showFailureToast(i18nKey("maxAudioSize"));
                         }
                         dispatch("audioCaptured", {
                             kind: "audio_content",

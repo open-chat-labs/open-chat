@@ -13,6 +13,7 @@
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let chatId: ChatIdentifier;
     export let eventIndex: number;
@@ -95,9 +96,9 @@
             .setMessageReminder(chatId, eventIndex, remindAtMs, note, threadRootMessageIndex)
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("reminders.success");
+                    toastStore.showSuccessToast(i18nKey("reminders.success"));
                 } else {
-                    toastStore.showFailureToast("reminders.failure");
+                    toastStore.showFailureToast(i18nKey("reminders.failure"));
                 }
             })
             .finally(() => (busy = false));
@@ -108,7 +109,7 @@
 <Overlay on:close dismissible>
     <ModalContent on:close closeIcon>
         <span slot="header">
-            <h1>⏰ {$_("reminders.title")}</h1>
+            <h1>⏰ <Translatable resourceKey={i18nKey("reminders.title")} /></h1>
         </span>
         <span slot="body">
             <div class="interval">
@@ -129,9 +130,10 @@
             </div>
 
             <div class="remind-at">
-                {$_("reminders.remindAt", {
-                    values: { datetime: client.toDatetimeString(remindAtDate) },
-                })}
+                <Translatable
+                    resourceKey={i18nKey("reminders.remindAt", {
+                        datetime: client.toDatetimeString(remindAtDate),
+                    })} />
             </div>
         </span>
         <span slot="footer">
@@ -140,13 +142,15 @@
                     secondary
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}>{$_("cancel")}</Button>
+                    on:click={() => dispatch("close")}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy}
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={createReminder}>{$_("reminders.create")}</Button>
+                    on:click={createReminder}
+                    ><Translatable resourceKey={i18nKey("reminders.create")} /></Button>
             </ButtonGroup>
         </span>
     </ModalContent>
