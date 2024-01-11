@@ -2,8 +2,7 @@
     import Translate from "svelte-material-icons/Translate.svelte";
 
     import { _, locale } from "svelte-i18n";
-    import { editmode, editingLabel, type ResourceKey } from "../i18n/i18n";
-    import type { MessageFormatter } from "openchat-shared";
+    import { editmode, editingLabel, type ResourceKey, interpolate } from "../i18n/i18n";
 
     export let resourceKey: ResourceKey;
 
@@ -11,21 +10,6 @@
 
     function editLabel() {
         editingLabel.set(resourceKey);
-    }
-
-    function interpolate(
-        formatter: MessageFormatter,
-        { key, params, level, lowercase }: ResourceKey,
-    ): string {
-        if (level !== undefined) {
-            const levelTxt = formatter(`level.${level}`);
-            const p = params ?? {};
-            return formatter(key, {
-                values: { ...p, level: lowercase ? levelTxt.toLowerCase() : levelTxt },
-            });
-        } else {
-            return formatter(key, { values: params });
-        }
     }
 </script>
 

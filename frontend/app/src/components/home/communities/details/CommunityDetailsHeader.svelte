@@ -15,6 +15,8 @@
     import type { CommunitySummary, Level } from "openchat-client";
     import { interpolateLevel } from "../../../../utils/i18n";
     import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
+    import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     export let community: CommunitySummary;
     export let canEdit: boolean;
@@ -51,14 +53,18 @@
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
-                    <div slot="text">{$_("communities.members")}</div>
+                    <div slot="text">
+                        <Translatable resourceKey={i18nKey("communities.members")} />
+                    </div>
                 </MenuItem>
                 <MenuItem on:click={invite}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
-                    <div slot="text">{$_("communities.invite")}</div>
+                    <div slot="text">
+                        <Translatable resourceKey={i18nKey("communities.invite")} />
+                    </div>
                 </MenuItem>
                 {#if canEdit}
                     <MenuItem on:click={editCommunity}>
@@ -66,7 +72,9 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("communities.edit")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("communities.edit")} />
+                        </div>
                     </MenuItem>
                 {/if}
             </Menu>

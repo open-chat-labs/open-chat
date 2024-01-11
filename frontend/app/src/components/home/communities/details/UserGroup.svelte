@@ -69,10 +69,12 @@
                     cancel();
                 } else {
                     if (resp.kind === "name_taken") {
-                        toastStore.showFailureToast($_("communities.errors.userGroupNameTaken"));
+                        toastStore.showFailureToast(
+                            i18nKey("communities.errors.userGroupNameTaken"),
+                        );
                     } else {
                         toastStore.showFailureToast(
-                            $_(
+                            i18nKey(
                                 `communities.errors.${
                                     creating ? "createGroupFailed" : "updateGroupFailed"
                                 }`,

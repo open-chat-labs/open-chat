@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import Legend from "../../Legend.svelte";
@@ -8,6 +7,7 @@
     import { toastStore } from "../../../stores/toast";
     import Button from "../../Button.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -46,7 +46,7 @@
                 }
             })
             .catch((err) => {
-                toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                 client.logError("Unable to save display name: ", err);
             })
             .finally(() => {
@@ -66,12 +66,14 @@
             bind:displayName
             bind:displayNameValid>
             {#if displayNameError !== undefined}
-                <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
+                <ErrorMessage
+                    ><Translatable resourceKey={i18nKey(displayNameError)} /></ErrorMessage>
             {/if}
         </DisplayNameInput>
     </div>
     <div class="cta">
-        <Button square fill loading={saving} disabled={!buttonEnabled}>{$_("update")}</Button>
+        <Button square fill loading={saving} disabled={!buttonEnabled}
+            ><Translatable resourceKey={i18nKey("update")} /></Button>
     </div>
 </form>
 

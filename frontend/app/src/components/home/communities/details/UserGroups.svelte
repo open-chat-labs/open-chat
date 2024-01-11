@@ -100,7 +100,9 @@
             .deleteUserGroup(community.id, groupToDelete)
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast($_("communities.errors.deleteUserGroupFailed"));
+                    toastStore.showFailureToast(
+                        i18nKey("communities.errors.deleteUserGroupFailed"),
+                    );
                 }
             })
             .finally(() => (groupToDelete = undefined));
