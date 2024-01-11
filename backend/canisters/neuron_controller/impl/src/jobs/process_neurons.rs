@@ -2,7 +2,6 @@ use crate::updates::manage_nns_neuron::manage_nns_neuron_impl;
 use crate::{mutate_state, read_state, Neurons};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
 use icrc_ledger_types::icrc1::account::Account;
-use nns_governance_canister::types::manage_neuron::disburse::Amount;
 use nns_governance_canister::types::manage_neuron::{Command, Disburse, Spawn};
 use nns_governance_canister::types::ListNeurons;
 use std::time::Duration;
