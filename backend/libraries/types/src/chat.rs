@@ -2,13 +2,23 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
-use crate::{ChannelId, ChatId, CommunityId};
+use crate::{CanisterId, ChannelId, ChatId, CommunityId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
 pub enum Chat {
     Direct(ChatId),
     Group(ChatId),
     Channel(CommunityId, ChannelId),
+}
+
+impl Chat {
+    pub fn canister_id(&self) -> CanisterId {
+        match *self {
+            Chat::Direct(c) => c.into(),
+            Chat::Group(g) => g.into(),
+            Chat::Channel(c, _) => c.into(),
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Eq, PartialEq, Hash, Clone, Copy)]
@@ -18,6 +28,13 @@ pub enum MultiUserChat {
 }
 
 impl MultiUserChat {
+    pub fn canister_id(&self) -> CanisterId {
+        match *self {
+            MultiUserChat::Group(g) => g.into(),
+            MultiUserChat::Channel(c, _) => c.into(),
+        }
+    }
+
     pub fn group_id(&self) -> Option<ChatId> {
         if let MultiUserChat::Group(group_id) = self {
             Some(*group_id)
@@ -32,6 +49,18 @@ impl From<MultiUserChat> for Chat {
         match value {
             MultiUserChat::Group(c) => Chat::Group(c),
             MultiUserChat::Channel(cm, ch) => Chat::Channel(cm, ch),
+        }
+    }
+}
+
+impl TryFrom<Chat> for MultiUserChat {
+    type Error = ();
+
+    fn try_from(value: Chat) -> Result<Self, Self::Error> {
+        match value {
+            Chat::Group(c) => Ok(MultiUserChat::Group(c)),
+            Chat::Channel(cm, ch) => Ok(MultiUserChat::Channel(cm, ch)),
+            Chat::Direct(_) => Err(()),
         }
     }
 }
