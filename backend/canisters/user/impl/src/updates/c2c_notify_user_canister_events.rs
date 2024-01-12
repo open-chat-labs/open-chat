@@ -8,7 +8,6 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_user_canister_events::{Response::*, *};
 use user_canister::UserCanisterEvent;
-use user_canister_c2c_client::c2c_mark_read_v2;
 
 #[update_msgpack]
 #[trace]
