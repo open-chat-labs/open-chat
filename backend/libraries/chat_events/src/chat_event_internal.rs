@@ -273,7 +273,7 @@ impl MessageInternal {
                 incr(&mut metrics.message_reminders);
             }
             MessageContentInternal::ReportedMessage(_) => {}
-            MessageContentInternal::P2PTrade(_) => incr(&mut metrics.p2p_trade_offers),
+            MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swap_offers),
             MessageContentInternal::Custom(_) => {
                 incr(&mut metrics.custom_type_messages);
             }
@@ -532,7 +532,7 @@ pub struct ChatMetricsInternal {
     #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
     pub message_reminders: u64,
     #[serde(rename = "pto", default, skip_serializing_if = "is_default")]
-    pub p2p_trade_offers: u64,
+    pub p2p_swap_offers: u64,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u64,
     #[serde(rename = "la")]

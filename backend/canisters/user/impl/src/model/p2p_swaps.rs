@@ -4,24 +4,24 @@ use std::collections::HashMap;
 use types::{Chat, TimestampMillis, TokenInfo, TransactionId, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct P2PTrades {
-    offers: HashMap<u32, P2PTradeOffer>,
+pub struct P2PSwaps {
+    offers: HashMap<u32, P2PSwapOffer>,
 }
 
-impl P2PTrades {
-    pub fn add(&mut self, trade_offer: P2PTradeOffer) {
-        if let Vacant(e) = self.offers.entry(trade_offer.id) {
-            e.insert(trade_offer);
+impl P2PSwaps {
+    pub fn add(&mut self, swap_offer: P2PSwapOffer) {
+        if let Vacant(e) = self.offers.entry(swap_offer.id) {
+            e.insert(swap_offer);
         } else {
             unreachable!()
         }
     }
 
-    pub fn get(&self, offer_id: u32) -> Option<&P2PTradeOffer> {
+    pub fn get(&self, offer_id: u32) -> Option<&P2PSwapOffer> {
         self.offers.get(&offer_id)
     }
 
-    pub fn set_offer_status(&mut self, id: u32, status: P2PTradeOfferStatus, now: TimestampMillis) {
+    pub fn set_offer_status(&mut self, id: u32, status: P2PSwapOfferStatus, now: TimestampMillis) {
         if let Some(offer) = self.offers.get_mut(&id) {
             offer.status = status;
             offer.last_updated = now;
@@ -32,12 +32,12 @@ impl P2PTrades {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct P2PTradeOffer {
+pub struct P2PSwapOffer {
     pub id: u32,
     pub chat: Chat,
     pub created_by: UserId,
     pub created: TimestampMillis,
-    pub status: P2PTradeOfferStatus,
+    pub status: P2PSwapOfferStatus,
     pub last_updated: TimestampMillis,
     pub token0: TokenInfo,
     pub token0_amount: u128,
@@ -48,7 +48,7 @@ pub struct P2PTradeOffer {
     pub expires_at: TimestampMillis,
 }
 
-impl P2PTradeOffer {
+impl P2PSwapOffer {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: u32,
@@ -60,13 +60,13 @@ impl P2PTradeOffer {
         token1_amount: u128,
         expires_at: TimestampMillis,
         now: TimestampMillis,
-    ) -> P2PTradeOffer {
-        P2PTradeOffer {
+    ) -> P2PSwapOffer {
+        P2PSwapOffer {
             id,
             chat,
             created_by,
             created: now,
-            status: P2PTradeOfferStatus::Pending,
+            status: P2PSwapOfferStatus::Pending,
             last_updated: now,
             token0,
             token0_amount,
@@ -80,7 +80,7 @@ impl P2PTradeOffer {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum P2PTradeOfferStatus {
+pub enum P2PSwapOfferStatus {
     Pending,
     FundsTransferred,
     TransferError(String),

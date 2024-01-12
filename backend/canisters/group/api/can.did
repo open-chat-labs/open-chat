@@ -100,12 +100,12 @@ type RegisterPollVoteResponse = variant {
     UserCannotChangeVote;
 };
 
-type AcceptP2PTradeOfferArgs = record {
+type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
     message_id : MessageId;
 };
 
-type AcceptP2PTradeOfferResponse = variant {
+type AcceptP2PSwapResponse = variant {
     Success : AcceptSwapSuccess;
     InsufficientFunds;
     StatusError : AcceptSwapStatusError;
@@ -644,7 +644,7 @@ service : {
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
-    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);

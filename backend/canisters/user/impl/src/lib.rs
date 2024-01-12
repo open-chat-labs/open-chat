@@ -4,7 +4,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
-use crate::model::p2p_trades::P2PTrades;
+use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -181,7 +181,7 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
-    pub p2p_trades: P2PTrades,
+    pub p2p_swaps: P2PSwaps,
     #[serde(default)]
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub rng_seed: [u8; 32],
@@ -233,7 +233,7 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
-            p2p_trades: P2PTrades::default(),
+            p2p_swaps: P2PSwaps::default(),
             user_canister_events_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],
         }

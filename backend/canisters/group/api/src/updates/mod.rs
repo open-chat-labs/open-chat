@@ -1,4 +1,4 @@
-pub mod accept_p2p_trade_offer;
+pub mod accept_p2p_swap;
 pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_delete_group;

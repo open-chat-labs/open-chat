@@ -789,7 +789,7 @@ type MessageContentInitial = variant {
     Giphy : GiphyContent;
     GovernanceProposal : ProposalContent;
     Prize : PrizeContentInitial;
-    P2PTrade : P2PTradeContentInitial;
+    P2PSwap : P2PSwapContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     Custom : CustomMessageContent;
@@ -810,7 +810,7 @@ type MessageContent = variant {
     PrizeWinner : PrizeWinnerContent;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
-    P2PTrade : P2PTradeContent;
+    P2PSwap : P2PSwapContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -1232,7 +1232,7 @@ type MessagePermissions = record {
     crypto : opt PermissionRole;
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
-    p2p_trade : opt PermissionRole;
+    p2p_swap : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
@@ -1265,7 +1265,7 @@ type OptionalMessagePermissions = record {
     crypto : PermissionRoleUpdate;
     giphy : PermissionRoleUpdate;
     prize : PermissionRoleUpdate;
-    p2p_trade : PermissionRoleUpdate;
+    p2p_swap : PermissionRoleUpdate;
     custom_updated : vec CustomPermission;
     custom_deleted : vec text;
 };
@@ -1546,7 +1546,7 @@ type MessageReport = record {
     notes : opt text;
 };
 
-type P2PTradeContentInitial = record {
+type P2PSwapContentInitial = record {
     token0 : TokenInfo;
     token0_amount : nat;
     token1 : TokenInfo;
@@ -1555,7 +1555,7 @@ type P2PTradeContentInitial = record {
     caption : opt text;
 };
 
-type P2PTradeContent = record {
+type P2PSwapContent = record {
     offer_id : nat32;
     token0 : TokenInfo;
     token0_amount : nat;
@@ -1563,47 +1563,47 @@ type P2PTradeContent = record {
     token1 : TokenInfo;
     token1_amount : nat;
     expires_at : TimestampMillis;
-    status : P2PTradeStatus;
+    status : P2PSwapStatus;
     caption : opt text;
 };
 
-type P2PTradeStatus = variant {
+type P2PSwapStatus = variant {
     Open;
-    Cancelled : P2PTradeCancelled;
-    Expired : P2PTradeExpired;
-    Reserved : P2PTradeReserved;
-    Accepted : P2PTradeAccepted;
-    Completed : P2PTradeCompleted;
+    Cancelled : P2PSwapCancelled;
+    Expired : P2PSwapExpired;
+    Reserved : P2PSwapReserved;
+    Accepted : P2PSwapAccepted;
+    Completed : P2PSwapCompleted;
 };
 
-type ReserveP2PTradeResult = variant {
-    Success : ReserveP2PTradeSuccess;
-    Failure : P2PTradeStatus;
+type ReserveP2PSwapResult = variant {
+    Success : ReserveP2PSwapSuccess;
+    Failure : P2PSwapStatus;
     OfferNotFound;
 };
 
-type ReserveP2PTradeSuccess = record {
-    content : P2PTradeContent;
+type ReserveP2PSwapSuccess = record {
+    content : P2PSwapContent;
     created : TimestampMillis;
     created_by : UserId;
 };
 
-type P2PTradeCancelled = record {
+type P2PSwapCancelled = record {
     token0_txn_out : opt TransactionId;
 };
 
-type P2PTradeExpired = P2PTradeCancelled;
+type P2PSwapExpired = P2PSwapCancelled;
 
-type P2PTradeReserved = record {
+type P2PSwapReserved = record {
     reserved_by : UserId;
 };
 
-type P2PTradeAccepted = record {
+type P2PSwapAccepted = record {
     accepted_by : UserId;
     token1_txn_in : TransactionId;
 };
 
-type P2PTradeCompleted = record {
+type P2PSwapCompleted = record {
     accepted_by : UserId;
     token1_txn_in : TransactionId;
     token0_txn_out : TransactionId;

@@ -16,8 +16,8 @@ use types::{
     CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PTradeResult,
-    ReserveP2PTradeSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -698,24 +698,24 @@ impl ChatEvents {
         UnreservePrizeResult::MessageNotFound
     }
 
-    pub fn reserve_p2p_trade(
+    pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> ReserveP2PTradeResult {
-        use ReserveP2PTradeResult::*;
+    ) -> ReserveP2PSwapResult {
+        use ReserveP2PSwapResult::*;
 
         if let Some(event) = self
             .events_list_mut(min_visible_event_index, thread_root_message_index)
             .and_then(|l| l.get_event_mut(message_id.into(), min_visible_event_index))
         {
             if let Some(message) = event.event.as_message_mut() {
-                if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+                if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                     if content.reserve(user_id, now) {
-                        return Success(ReserveP2PTradeSuccess {
+                        return Success(ReserveP2PSwapSuccess {
                             content: content.clone(),
                             created: event.timestamp,
                             created_by: message.sender,
@@ -729,7 +729,7 @@ impl ChatEvents {
         OfferNotFound
     }
 
-    pub fn accept_p2p_trade(
+    pub fn accept_p2p_swap(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -740,7 +740,7 @@ impl ChatEvents {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.accept(user_id, token1_txn_in) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return true;
@@ -750,7 +750,7 @@ impl ChatEvents {
         false
     }
 
-    pub fn complete_p2p_trade(
+    pub fn complete_p2p_swap(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -762,7 +762,7 @@ impl ChatEvents {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.complete(user_id, token0_txn_out, token1_txn_out) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return true;
@@ -772,7 +772,7 @@ impl ChatEvents {
         false
     }
 
-    pub fn unreserve_p2p_trade(
+    pub fn unreserve_p2p_swap(
         &mut self,
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
@@ -782,7 +782,7 @@ impl ChatEvents {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
-            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.unreserve(user_id) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                 };
