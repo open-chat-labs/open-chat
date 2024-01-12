@@ -12,4 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Transfer out funds once trade is complete ([#4906](https://github.com/open-chat-labs/open-chat/pull/4906))
 - Implement `cancel_offer` ([#4907](https://github.com/open-chat-labs/open-chat/pull/4907))
 - Support notifying a chosen canister when trade is completed ([#5167](https://github.com/open-chat-labs/open-chat/pull/5167))
+
+### Changed
+
 - Rename input/output to token0/token1 ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
