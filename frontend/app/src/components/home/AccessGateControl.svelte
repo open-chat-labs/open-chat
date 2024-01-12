@@ -26,9 +26,9 @@
         type CryptocurrencyDetails,
         type PaymentGate,
     } from "openchat-client";
-    import { interpolateLevel } from "../../utils/i18n";
     import Markdown from "./Markdown.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -169,10 +169,14 @@
         if (isPaymentGate(candidate.gate)) {
             const sentences = [
                 $_("access.tokenPaymentInfo", { values: tokenParams(candidate.gate) }),
-                interpolateLevel(
-                    "access.paymentDistributionMessage",
-                    candidate.id.kind === "group_chat" ? "group" : "community",
-                    true,
+                interpolate(
+                    $_,
+                    i18nKey(
+                        "access.paymentDistributionMessage",
+                        undefined,
+                        candidate.id.kind === "group_chat" ? "group" : "community",
+                        true,
+                    ),
                 ),
                 $_("access.subscriptionComingSoon"),
             ];
@@ -193,7 +197,8 @@
         <div class="choose-gate">
             <Select margin={false} on:change={updateGate} bind:value={selectedGateKey}>
                 {#each gateBindings as gate}
-                    <option disabled={!gate.enabled} value={gate.key}>{$_(gate.label)}</option>
+                    <option disabled={!gate.enabled} value={gate.key}
+                        ><Translatable resourceKey={i18nKey(gate.label)} /></option>
                 {/each}
             </Select>
         </div>
@@ -234,19 +239,18 @@
             <Input maxlength={100} invalid={invalidAmount} bind:value={amountText} />
         {/if}
         {#if candidate.gate.kind === "diamond_gate"}
-            <div class="info">{$_("access.diamondGateInfo")}</div>
+            <div class="info"><Translatable resourceKey={i18nKey("access.diamondGateInfo")} /></div>
         {:else if isNeuronGate(candidate.gate)}
             <div class="info">
-                {$_("access.neuronHolderInfo", {
-                    values: tokenParams(candidate.gate),
-                })}
+                <Translatable
+                    resourceKey={i18nKey("access.neuronHolderInfo", tokenParams(candidate.gate))} />
             </div>
         {:else if isPaymentGate(candidate.gate)}
             <div class="info">
                 <Markdown text={buildPaymentInfoMessage(candidate)} />
             </div>
         {:else if candidate.gate.kind === "no_gate"}
-            <div class="info">{$_("access.openAccessInfo")}</div>
+            <div class="info"><Translatable resourceKey={i18nKey("access.openAccessInfo")} /></div>
         {/if}
         {#if candidate.gate.kind === "credential_gate"}
             <CredentialSelector bind:gate={candidate.gate} />

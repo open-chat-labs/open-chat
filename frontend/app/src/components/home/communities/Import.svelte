@@ -3,7 +3,6 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import {
         AvatarSize,
@@ -14,6 +13,8 @@
     } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import { toastStore } from "../../../stores/toast";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -35,7 +36,7 @@
             .importToCommunity(groupId, selected.id)
             .then((channelId) => {
                 if (channelId === undefined) {
-                    toastStore.showFailureToast("communities.errors.importFailed");
+                    toastStore.showFailureToast(i18nKey("communities.errors.importFailed"));
                 } else {
                     dispatch("cancel");
                     dispatch("successfulImport", channelId);
@@ -56,7 +57,8 @@
 {#if communitiesList.length > 0}
     <Overlay>
         <ModalContent>
-            <span slot="header">{$_("communities.chooseCommunity")}</span>
+            <span slot="header"
+                ><Translatable resourceKey={i18nKey("communities.chooseCommunity")} /></span>
             <span slot="body">
                 {#each communitiesList as community}
                     <div
@@ -67,7 +69,7 @@
                             <Avatar
                                 url={client.communityAvatarUrl(
                                     community.id.communityId,
-                                    community.avatar
+                                    community.avatar,
                                 )}
                                 userId={undefined}
                                 size={AvatarSize.Default} />
@@ -80,9 +82,10 @@
             </span>
             <span slot="footer">
                 <ButtonGroup>
-                    <Button secondary on:click={() => dispatch("cancel")}>{$_("cancel")}</Button>
+                    <Button secondary on:click={() => dispatch("cancel")}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button loading={importing} disabled={importing} on:click={performImport}
-                        >{$_("communities.importBtn")}</Button>
+                        ><Translatable resourceKey={i18nKey("communities.importBtn")} /></Button>
                 </ButtonGroup>
             </span>
         </ModalContent>

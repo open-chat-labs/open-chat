@@ -39,9 +39,10 @@
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
-    import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
     import Diamond from "../icons/Diamond.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -234,7 +235,7 @@
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("pinChat.failed");
+                toastStore.showFailureToast(i18nKey("pinChat.failed"));
             }
         });
     }
@@ -242,7 +243,7 @@
     function unpinChat() {
         client.unpinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("pinChat.unpinFailed");
+                toastStore.showFailureToast(i18nKey("pinChat.unpinFailed"));
             }
         });
     }
@@ -255,7 +256,7 @@
         client.markAllRead(chatSummary);
         client.archiveChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("archiveChatFailed");
+                toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
         if (chatSummary.id === $selectedChatId) {
@@ -425,7 +426,10 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {$_("communities.addToFavourites")}
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "communities.addToFavourites",
+                                                )} />
                                         </div>
                                     </MenuItem>
                                 {:else}
@@ -435,7 +439,10 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {$_("communities.removeFromFavourites")}
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "communities.removeFromFavourites",
+                                                )} />
                                         </div>
                                     </MenuItem>
                                 {/if}
@@ -445,7 +452,10 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("pinChat.menuItem")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("pinChat.menuItem")} />
+                                        </div>
                                     </MenuItem>
                                 {:else}
                                     <MenuItem on:click={unpinChat}>
@@ -453,7 +463,10 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("pinChat.unpinMenuItem")} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if notificationsSupported}
@@ -463,7 +476,10 @@
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("unmuteNotifications")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("unmuteNotifications")} />
+                                            </div>
                                         </MenuItem>
                                     {:else}
                                         <MenuItem on:click={() => toggleMuteNotifications(true)}>
@@ -471,7 +487,10 @@
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("muteNotifications")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("muteNotifications")} />
+                                            </div>
                                         </MenuItem>
                                     {/if}
                                 {/if}
@@ -481,7 +500,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("unarchiveChat")}</div>
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                                        </div>
                                     </MenuItem>
                                 {:else}
                                     <MenuItem on:click={archiveChat}>
@@ -489,7 +510,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("archiveChat")}</div>
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("archiveChat")} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
@@ -499,10 +522,14 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {interpolateLevel(
-                                                "leaveGroup",
-                                                chatSummary.level,
-                                                true,
+                                            {interpolate(
+                                                $_,
+                                                i18nKey(
+                                                    "leaveGroup",
+                                                    undefined,
+                                                    chatSummary.level,
+                                                    true,
+                                                ),
                                             )}
                                         </div>
                                     </MenuItem>
@@ -514,7 +541,9 @@
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("markAllRead")}</div>
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("markAllRead")} />
+                                    </div>
                                 </MenuItem>
                             </Menu>
                         </div>

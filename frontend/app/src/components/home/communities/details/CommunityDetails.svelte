@@ -17,6 +17,7 @@
     import Stats from "../../Stats.svelte";
     import InviteUsersWithLink from "../../InviteUsersWithLink.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     export let community: CommunitySummary;
     export let rules: Rules | undefined;
@@ -31,9 +32,15 @@
         open={$communityVisibilityOpen}
         headerText={i18nKey("access.visibility")}>
         {#if community.public}
-            <h4>{i18nKey("group.publicGroup", undefined, community.level, true)}</h4>
+            <h4>
+                <Translatable
+                    resourceKey={i18nKey("group.publicGroup", undefined, community.level, true)} />
+            </h4>
         {:else}
-            <h4>{i18nKey("group.privateGroup", undefined, community.level, true)}</h4>
+            <h4>
+                <Translatable
+                    resourceKey={i18nKey("group.privateGroup", undefined, community.level, true)} />
+            </h4>
         {/if}
         <div class="info">
             {#if community.public}
@@ -43,9 +50,9 @@
             {/if}
             {#if !community.public}
                 {#if community.historyVisible}
-                    <p>{$_("historyOnInfo")}</p>
+                    <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                 {:else}
-                    <p>{$_("historyOffInfo")}</p>
+                    <p><Translatable resourceKey={i18nKey("historyOffInfo")} /></p>
                 {/if}
             {/if}
         </div>

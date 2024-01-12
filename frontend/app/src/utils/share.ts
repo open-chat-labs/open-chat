@@ -1,8 +1,15 @@
-import type { Message, MessageContent, MessageFormatter, ChatIdentifier, CryptocurrencyDetails } from "openchat-client";
+import type {
+    Message,
+    MessageContent,
+    MessageFormatter,
+    ChatIdentifier,
+    CryptocurrencyDetails,
+} from "openchat-client";
 import { buildCryptoTransferText, buildTransactionUrl, routeForMessage } from "openchat-client";
 import { toastStore } from "../stores/toast";
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
+import { i18nKey } from "../i18n/i18n";
 
 export type Share = {
     title: string | undefined;
@@ -42,19 +49,17 @@ const permittedMimeTypes: Record<string, string> = {
 export function copyMessageUrl(
     chatId: ChatIdentifier,
     messageIndex: number,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): void {
     const url = buildMessageUrl(chatId, messageIndex, threadRootMessageIndex);
 
     navigator.clipboard.writeText(url).then(
         () => {
-            toastStore.showSuccessToast("messageUrlCopiedToClipboard");
+            toastStore.showSuccessToast(i18nKey("messageUrlCopiedToClipboard"));
         },
         () => {
-            toastStore.showFailureToast("failedToCopyUrlToClipboard", {
-                values: { url },
-            });
-        }
+            toastStore.showFailureToast(i18nKey("failedToCopyUrlToClipboard", { url }));
+        },
     );
 }
 
@@ -97,7 +102,7 @@ export function shareMessage(
     userId: string,
     me: boolean,
     msg: Message,
-    cryptoLookup: Record<string, CryptocurrencyDetails>
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
 ): void {
     buildShareFromMessage(formatter, userId, me, msg, cryptoLookup).then(
         (share) =>
@@ -105,10 +110,10 @@ export function shareMessage(
                 if (e.name !== "AbortError") {
                     const errorMessage = "Failed to share message";
                     console.log(`${errorMessage}: ${e}`);
-                    toastStore.showFailureToast("failedToShareMessage");
+                    toastStore.showFailureToast(i18nKey("failedToShareMessage"));
                 }
             }),
-        () => toastStore.showFailureToast("failedToShareMessage")
+        () => toastStore.showFailureToast(i18nKey("failedToShareMessage")),
     );
 }
 
@@ -121,7 +126,7 @@ export function shareLink(url: string): void {
         if (e.name !== "AbortError") {
             const errorMessage = `Failed to share link ${url}`;
             console.log(`${errorMessage}: ${e}`);
-            toastStore.showFailureToast("failedToShareLink");
+            toastStore.showFailureToast(i18nKey("failedToShareLink"));
         }
     });
 }
@@ -173,7 +178,7 @@ async function buildShareFromMessage(
                 ? content.name
                 : buildDummyFilename(
                       mimeType,
-                      content.kind === "giphy_content" ? content.title : undefined
+                      content.kind === "giphy_content" ? content.title : undefined,
                   );
 
         let file: File;
@@ -194,7 +199,14 @@ async function buildShareFromMessage(
         // TODO:
         share.text = "TODO: Poll content";
     } else if (content.kind === "crypto_content") {
-        let text = buildCryptoTransferText(formatter, userId, msg.sender, content, me, cryptoLookup);
+        let text = buildCryptoTransferText(
+            formatter,
+            userId,
+            msg.sender,
+            content,
+            me,
+            cryptoLookup,
+        );
         if (content.caption !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";
@@ -251,11 +263,11 @@ function buildDummyFilename(mimeType: string, title?: string): string {
 export function buildMessageUrl(
     chatId: ChatIdentifier,
     messageIndex: number,
-    threadRootMessageIndex?: number
+    threadRootMessageIndex?: number,
 ): string {
     return `${window.location.origin}${routeForMessage(
         "none",
         { chatId, threadRootMessageIndex },
-        messageIndex
+        messageIndex,
     )}`;
 }

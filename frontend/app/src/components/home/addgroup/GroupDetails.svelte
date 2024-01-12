@@ -1,11 +1,11 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import type { CandidateGroupChat } from "openchat-client";
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import Legend from "../../Legend.svelte";
-    import { interpolateLevel } from "../../../utils/i18n";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -46,7 +46,10 @@
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
-        placeholder={interpolateLevel("newGroupName", candidateGroup.level, true)} />
+        placeholder={interpolate(
+            $_,
+            i18nKey("newGroupName", undefined, candidateGroup.level, true),
+        )} />
 </section>
 
 <section>
@@ -56,7 +59,10 @@
         disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
-        placeholder={interpolateLevel("newGroupDesc", candidateGroup.level, true)} />
+        placeholder={interpolate(
+            $_,
+            i18nKey("newGroupDesc", undefined, candidateGroup.level, true),
+        )} />
 </section>
 
 <style lang="scss">

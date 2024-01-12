@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -19,7 +18,8 @@
     import Expiry from "./Expiry.svelte";
     import Diamond from "../../icons/Diamond.svelte";
     import type { RemoteData } from "../../../utils/remoteData";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -37,22 +37,22 @@
     const options: Option[] = [
         {
             index: 0,
-            duration: $_("upgrade.oneMonth"),
+            duration: i18nKey("upgrade.oneMonth"),
             fee: "oneMonth",
         },
         {
             index: 1,
-            duration: $_("upgrade.threeMonths"),
+            duration: i18nKey("upgrade.threeMonths"),
             fee: "threeMonths",
         },
         {
             index: 2,
-            duration: $_("upgrade.oneYear"),
+            duration: i18nKey("upgrade.oneYear"),
             fee: "oneYear",
         },
         {
             index: 3,
-            duration: $_("upgrade.lifetime"),
+            duration: i18nKey("upgrade.lifetime"),
             fee: "lifetime",
         },
     ];
@@ -62,7 +62,7 @@
 
     type Option = {
         index: number;
-        duration: string;
+        duration: ResourceKey;
         fee: FeeKey;
     };
 
@@ -119,7 +119,7 @@
                 if (success) {
                     confirmed = true;
                 } else {
-                    toastStore.showFailureToast("upgrade.paymentFailed");
+                    toastStore.showFailureToast(i18nKey("upgrade.paymentFailed"));
                 }
             })
             .finally(() => (confirming = false));
@@ -185,22 +185,24 @@
                 align={"start"}
                 disabled={selectedDuration === "lifetime"}
                 checked={autoRenew && selectedDuration !== "lifetime"}>
-                <div class="section-title">{$_("upgrade.autorenew")}</div>
+                <div class="section-title">
+                    <Translatable resourceKey={i18nKey("upgrade.autorenew")} />
+                </div>
                 <div class="smallprint">
-                    {$_("upgrade.paymentSmallprint")}
+                    <Translatable resourceKey={i18nKey("upgrade.paymentSmallprint")} />
                 </div>
                 {#if insufficientFunds && !refreshingBalance}
                     <ErrorMessage
-                        >{$_("upgrade.insufficientFunds", {
-                            values: {
+                        ><Translatable
+                            resourceKey={i18nKey("upgrade.insufficientFunds", {
                                 token: tokenDetails.symbol,
                                 amount: `${toPay} ${tokenDetails.symbol}`,
-                            },
-                        })}</ErrorMessage>
+                            })} /></ErrorMessage>
                 {/if}
 
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: tokenDetails.symbol } })}
+                    <Translatable
+                        resourceKey={i18nKey("howToBuyToken", { token: tokenDetails.symbol })} />
                 </a>
 
                 {#if error}
@@ -212,26 +214,27 @@
 </div>
 <Footer align={$mobileWidth ? "center" : "end"}>
     {#if confirmed}
-        <Button small={!$mobileWidth} tiny={$mobileWidth} on:click={cancel}>{$_("close")}</Button>
+        <Button small={!$mobileWidth} tiny={$mobileWidth} on:click={cancel}
+            ><Translatable resourceKey={i18nKey("close")} /></Button>
     {:else}
         <Button
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
             secondary
-            on:click={cancel}>{$_("cancel")}</Button>
+            on:click={cancel}><Translatable resourceKey={i18nKey("cancel")} /></Button>
         <Button
             disabled={confirming}
             tiny={$mobileWidth}
             small={!$mobileWidth}
             secondary
-            on:click={features}>{$_("upgrade.features")}</Button>
+            on:click={features}><Translatable resourceKey={i18nKey("upgrade.features")} /></Button>
         <Button
             small={!$mobileWidth}
             disabled={confirming || insufficientFunds}
             loading={confirming || refreshingBalance}
             on:click={confirm}
-            tiny={$mobileWidth}>{$_("upgrade.confirm")}</Button>
+            tiny={$mobileWidth}><Translatable resourceKey={i18nKey("upgrade.confirm")} /></Button>
     {/if}
 </Footer>
 

@@ -30,10 +30,10 @@
     import page from "page";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
     import { currentTheme } from "../../theme/themes";
     import Resizable from "../Resizable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -117,11 +117,11 @@
                     case "success":
                         popRightPanelHistory();
                         if ($multiUserChat?.public ?? false) {
-                            toastStore.showSuccessToast("communities.usersInvited");
+                            toastStore.showSuccessToast(i18nKey("communities.usersInvited"));
                         }
                         break;
                     default:
-                        toastStore.showFailureToast("communities.errors.inviteUsers");
+                        toastStore.showFailureToast(i18nKey("communities.errors.inviteUsers"));
                         break;
                 }
             });
@@ -146,13 +146,14 @@
                         case "success":
                             popRightPanelHistory();
                             if ($multiUserChat?.public ?? false) {
-                                toastStore.showSuccessToast("group.usersInvited");
+                                toastStore.showSuccessToast(i18nKey("group.usersInvited"));
                             }
                             break;
                         default:
                             toastStore.showFailureToast(
-                                interpolateLevel(
+                                i18nKey(
                                     "group.inviteUsersFailed",
+                                    undefined,
                                     $multiUserChat.level,
                                     true,
                                 ),
@@ -163,7 +164,7 @@
                 .catch((err) => {
                     client.logError("InviteUsersFailed", err);
                     toastStore.showFailureToast(
-                        interpolateLevel("group.inviteUsersFailed", $multiUserChat.level, true),
+                        i18nKey("group.inviteUsersFailed", undefined, $multiUserChat.level, true),
                     );
                 });
 
@@ -214,8 +215,8 @@
             if (!success) {
                 const roleText = $_(newRole);
                 const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
-                    values: { role: roleText },
+                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
+                    role: roleText,
                 });
                 toastStore.showFailureToast(message);
             }
@@ -232,8 +233,8 @@
             if (!success) {
                 const roleText = $_(newRole);
                 const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
-                    values: { role: roleText },
+                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
+                    role: roleText,
                 });
                 toastStore.showFailureToast(message);
             }
@@ -245,12 +246,12 @@
             .removeCommunityMember(id, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    toastStore.showFailureToast("removeMemberFailed");
+                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
             .catch((err) => {
                 client.logError("Unable to remove member", err);
-                toastStore.showFailureToast("removeMemberFailed");
+                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
             });
     }
 
@@ -259,12 +260,12 @@
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    toastStore.showFailureToast("removeMemberFailed");
+                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
             .catch((err) => {
                 client.logError("Unable to remove member", err);
-                toastStore.showFailureToast("removeMemberFailed");
+                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
             });
     }
 
@@ -275,9 +276,9 @@
         ) {
             const success = await client.blockUser($selectedChatId, ev.detail.userId);
             if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("blockUserFailed");
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
             }
         }
     }
@@ -289,9 +290,9 @@
                 ev.detail.userId,
             );
             if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("blockUserFailed");
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
             }
         }
     }
@@ -303,9 +304,9 @@
         ) {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
             if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("unblockUserFailed");
+                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
             }
         }
     }
@@ -317,9 +318,9 @@
                 ev.detail.userId,
             );
             if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("unblockUserFailed");
+                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
             }
         }
     }

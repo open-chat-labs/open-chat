@@ -1,21 +1,13 @@
 import { writable } from "svelte/store";
+import type { ResourceKey } from "../i18n/i18n";
 
 export enum ToastType {
     Success,
     Failure,
 }
 
-type InterpolationValues =
-    | Record<string, string | number | boolean | Date | null | undefined>
-    | undefined;
-
-type MessageObject = {
-    values?: InterpolationValues;
-};
-
 export type Toast = {
-    text: string;
-    args?: MessageObject;
+    resourceKey: ResourceKey;
     type: ToastType;
 };
 
@@ -23,19 +15,17 @@ const { subscribe, update } = writable<Toast | undefined>(undefined);
 
 export const toastStore = {
     subscribe,
-    showFailureToast: (text: string, args?: MessageObject): void => {
+    showFailureToast: (resourceKey: ResourceKey): void => {
         return update(() => ({
-            text,
-            args,
+            resourceKey,
             type: ToastType.Failure,
         }));
     },
-    showSuccessToast: (text: string, args?: MessageObject): void => {
+    showSuccessToast: (resourceKey: ResourceKey): void => {
         window.setTimeout(() => update(() => undefined), 2500);
         return update(() => ({
+            resourceKey,
             type: ToastType.Success,
-            text,
-            args,
         }));
     },
     hideToast: (): void => update(() => undefined),
