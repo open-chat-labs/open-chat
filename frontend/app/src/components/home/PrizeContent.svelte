@@ -12,6 +12,8 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -51,7 +53,7 @@
                 .claimPrize(chatId, messageId)
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("prizes.claimFailed");
+                        toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
                     }
                 })
                 .finally(() => claimsStore.delete(messageId));
@@ -65,7 +67,7 @@
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if allClaimed && !finished}
-                    {$_("prizes.allClaimed")}
+                    <Translatable resourceKey={i18nKey("prizes.allClaimed")} />
                 {:else}
                     {timeRemaining}
                 {/if}
@@ -85,11 +87,11 @@
             </div>
         {/if}
         {#if !me}
-            <div class="click">{$_("prizes.click")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
         {:else if finished}
-            <div class="click">{$_("prizes.prizeFinished")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.prizeFinished")} /></div>
         {:else}
-            <div class="click">{$_("prizes.live")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.live")} /></div>
         {/if}
         <div class="progress" bind:clientWidth={progressWidth}>
             <div
@@ -112,13 +114,16 @@
             {#if !me}
                 <ButtonGroup align="fill">
                     <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
-                        >{claimedByYou
-                            ? $_("prizes.claimed")
-                            : finished
-                              ? $_("prizes.finished")
-                              : allClaimed
-                                ? $_("prizes.allClaimed")
-                                : $_("prizes.claim")}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                claimedByYou
+                                    ? "prizes.claimed"
+                                    : finished
+                                      ? "prizes.finished"
+                                      : allClaimed
+                                        ? "prizes.allClaimed"
+                                        : "prizes.claim",
+                            )} /></Button>
                 </ButtonGroup>
             {/if}
         </div>

@@ -82,7 +82,6 @@
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
-    import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import Register from "../register/Register.svelte";
@@ -92,6 +91,7 @@
     import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
 
     type ViewProfileConfig = {
         userId: string;
@@ -130,13 +130,13 @@
         kind: "delete";
         chatId: MultiUserChatIdentifier;
         level: Level;
-        doubleCheck: { challenge: string; response: string };
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmDeleteCommunityEvent = {
         kind: "delete_community";
         communityId: CommunityIdentifier;
-        doubleCheck: { challenge: string; response: string };
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     enum ModalType {
@@ -237,7 +237,7 @@
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
             if (ev.detail) {
-                toastStore.showFailureToast("errorSendingMessage");
+                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
@@ -533,23 +533,25 @@
     function unarchiveChat(chatId: ChatIdentifier) {
         client.unarchiveChat(chatId).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("unarchiveChatFailed");
+                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
             }
         });
     }
 
-    function getConfirmMessage(confirmActionEvent: ConfirmActionEvent | undefined): string {
-        if (confirmActionEvent === undefined) return "";
+    function getConfirmMessage(
+        confirmActionEvent: ConfirmActionEvent | undefined,
+    ): ResourceKey | undefined {
+        if (confirmActionEvent === undefined) return undefined;
 
         switch (confirmActionEvent.kind) {
             case "leave":
-                return interpolateLevel("confirmLeaveGroup", confirmActionEvent.level, true);
+                return i18nKey("confirmLeaveGroup", undefined, confirmActionEvent.level, true);
             case "leave_community":
-                return $_("communities.leaveMessage");
+                return i18nKey("communities.leaveMessage");
             case "delete_community":
-                return $_("communities.deleteMessage");
+                return i18nKey("communities.deleteMessage");
             case "delete":
-                return interpolateLevel("irreversible", confirmActionEvent.level, true);
+                return i18nKey("irreversible", undefined, confirmActionEvent.level, true);
         }
     }
 
@@ -594,9 +596,9 @@
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
-                toastStore.showSuccessToast(interpolateLevel("deleteGroupSuccess", level));
+                toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
-                toastStore.showFailureToast(interpolateLevel("deleteGroupFailure", level, true));
+                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
@@ -607,7 +609,7 @@
 
         client.deleteCommunity(id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("communities.errors.deleteFailed");
+                toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
                 page(`/community/${id.communityId}`);
             }
         });
@@ -620,7 +622,7 @@
 
         client.leaveCommunity(id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("communities.errors.leaveFailed");
+                toastStore.showFailureToast(i18nKey("communities.errors.leaveFailed"));
                 page(`/community/${id.communityId}`);
             }
         });
@@ -634,10 +636,10 @@
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
-                    toastStore.showFailureToast(interpolateLevel("ownerCantLeave", level, true));
+                    toastStore.showFailureToast(i18nKey("ownerCantLeave", undefined, level, true));
                 } else {
                     toastStore.showFailureToast(
-                        interpolateLevel("failedToLeaveGroup", level, true),
+                        i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
@@ -813,13 +815,13 @@
             .joinGroup(group, credential)
             .then((resp) => {
                 if (resp === "blocked") {
-                    toastStore.showFailureToast("youreBlocked");
+                    toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
                 } else if (resp === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
                     toastStore.showFailureToast(
-                        interpolateLevel("joinGroupFailed", group.level, true),
+                        i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
                     joining = undefined;
                 } else if (select) {
@@ -976,9 +978,11 @@
         const op = ev.detail.mute ? "muted" : "unmuted";
         client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                    values: { operation: $_(op) },
-                });
+                toastStore.showFailureToast(
+                    i18nKey("toggleMuteNotificationsFailed", {
+                        operation: $_(op),
+                    }),
+                );
             }
         });
     }

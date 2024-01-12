@@ -1,3 +1,4 @@
+import { AuthClient } from "@dfinity/auth-client";
 import { writable } from "svelte/store";
 import type { Theme } from "../theme/types";
 import page from "page";
@@ -7,6 +8,7 @@ import { routerReady } from "../routes";
 const FRAME_ANCESTORS = [
     "http://localhost:5173",
     "https://windoge98.com",
+    "https://signalsicp.com",
     "https://calm-pasca-49d7be.netlify.app", // betbase proof of concept
     "https://221bravo.app",
     "https://ht7v7-iaaaa-aaaak-qakga-cai.icp0.io", //221bravo
@@ -17,7 +19,7 @@ const FRAME_ANCESTORS = [
     "https://spyzr-gqaaa-aaaan-qd66q-cai.icp0.io", // vaultbet
 ];
 
-type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings;
+type InboundXFrameMessage = UpdateTheme | ChangeRoute | OverrideSettings | Logout;
 type OutboundXFrameMessage = UserLoggedIn | "openchat_ready";
 
 type UserLoggedIn = {
@@ -30,6 +32,10 @@ type OverrideSettings = {
     settings: {
         disableLeftNav: boolean;
     };
+};
+
+type Logout = {
+    kind: "logout";
 };
 
 type UpdateTheme = {
@@ -112,6 +118,12 @@ function externalMessage(ev: MessageEvent) {
                 case "update_theme":
                     setModifiedTheme(payload.base, payload.name, payload.overrides);
                     break;
+
+                case "logout":
+                    console.debug("XFRAME_TARGET: logging out");
+                    AuthClient.create().then((auth) => {
+                        return auth.logout().then(() => window.location.replace("/"));
+                    });
             }
         } catch (err) {
             console.debug(

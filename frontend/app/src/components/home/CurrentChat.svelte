@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import CurrentChatHeader from "./CurrentChatHeader.svelte";
     import CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Footer from "./Footer.svelte";
@@ -118,7 +117,7 @@
     function importToCommunity() {
         importToCommunities = $communities.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
-            toastStore.showFailureToast("communities.noOwned");
+            toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
             rightPanelHistory.set([]);
@@ -210,7 +209,7 @@
                 )
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("errorEditingMessage");
+                        toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {
@@ -244,7 +243,7 @@
 
             client.hideLinkPreview(messageContext, event, url).then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("errorRemovingLinkPreview");
+                    toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
                 }
             });
         }

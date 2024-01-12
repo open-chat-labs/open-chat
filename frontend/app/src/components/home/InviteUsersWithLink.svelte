@@ -21,19 +21,19 @@
     } from "openchat-client";
     import { canShare, shareLink } from "../../utils/share";
     import Markdown from "./Markdown.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let container: MultiUserChat | CommunitySummary;
 
     const client = getContext<OpenChat>("client");
-    const unauthorized = $_("permissions.notPermitted", {
-        values: { permission: $_("permissions.inviteUsers") },
+    const unauthorized = i18nKey("permissions.notPermitted", {
+        permission: $_("permissions.inviteUsers"),
     });
 
     let ready = false;
     let code: string | undefined = undefined;
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
     let checked = false;
     let loading = false;
     let confirmReset = false;
@@ -72,11 +72,11 @@
                     error = unauthorized;
                     client.logMessage("Unauthorized response calling getInviteCode");
                 } else {
-                    error = $_("invite.errorGettingLink");
+                    error = i18nKey("invite.errorGettingLink");
                 }
             })
             .catch((err) => {
-                error = $_("invite.errorGettingLink");
+                error = i18nKey("invite.errorGettingLink");
                 client.logError("Unable to get invite code: ", err);
             })
             .finally(() => {
@@ -108,7 +108,7 @@
                 })
                 .catch((err) => {
                     checked = false;
-                    error = $_("invite.errorEnablingLink");
+                    error = i18nKey("invite.errorEnablingLink");
                     client.logError("Unable to enable invite code: ", err);
                 })
                 .finally(() => {
@@ -120,7 +120,7 @@
                 .catch((err) => {
                     code = undefined;
                     checked = true;
-                    error = $_("invite.errorDisablingLink");
+                    error = i18nKey("invite.errorDisablingLink");
                     client.logError("Unable to disable invite code: ", err);
                 })
                 .finally(() => {
@@ -142,7 +142,7 @@
                 }
             })
             .catch((err) => {
-                error = $_("invite.errorResettingLink");
+                error = i18nKey("invite.errorResettingLink");
                 client.logError("Unable to reset invite code: ", err);
             });
     }
@@ -158,10 +158,10 @@
     function onCopy() {
         navigator.clipboard.writeText(link).then(
             () => {
-                toastStore.showSuccessToast("linkCopiedToClipboard");
+                toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
             },
             () => {
-                toastStore.showFailureToast("failedToCopyLinkToClipboard");
+                toastStore.showFailureToast(i18nKey("failedToCopyLinkToClipboard"));
             },
         );
     }
@@ -192,20 +192,22 @@
             <QRCode text={link} border fullWidthOnMobile />
             <div class="message">
                 <Markdown
-                    text={interpolateLevel("invite.shareMessage", container.level, true) +
-                        (container.public ? "" : $_("invite.shareMessageTrust"))} />
+                    text={interpolate(
+                        $_,
+                        i18nKey("invite.shareMessage", undefined, container.level, true),
+                    ) + (container.public ? "" : $_("invite.shareMessageTrust"))} />
             </div>
             <div class="action">
                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
                 <Link on:click={onCopy}>
-                    {$_("copy")}
+                    <Translatable resourceKey={i18nKey("copy")} />
                 </Link>
             </div>
             {#if canShare()}
                 <div class="action">
                     <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
                     <Link on:click={onShare}>
-                        {$_("share")}
+                        <Translatable resourceKey={i18nKey("share")} />
                     </Link>
                 </div>
             {/if}
@@ -216,7 +218,7 @@
                         on:click={() => {
                             confirmReset = true;
                         }}>
-                        {$_("invite.resetLink")}
+                        <Translatable resourceKey={i18nKey("invite.resetLink")} />
                     </Link>
                 </div>
             {/if}
@@ -226,7 +228,7 @@
 
 {#if confirmReset}
     <AreYouSure
-        message={interpolateLevel("invite.confirmReset", container.level, true)}
+        message={i18nKey("invite.confirmReset", undefined, container.level, true)}
         action={onConfirmReset} />
 {/if}
 
