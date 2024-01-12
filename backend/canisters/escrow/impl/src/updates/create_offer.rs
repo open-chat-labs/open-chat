@@ -23,12 +23,12 @@ fn create_offer_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn validate_offer(args: &Args, now: TimestampMillis) -> Result<(), String> {
-    if args.input_token.ledger == args.output_token.ledger {
-        Err("Input token must be different to output token".to_string())
-    } else if args.input_amount == 0 {
-        Err("Input amount cannot be 0".to_string())
-    } else if args.output_amount == 0 {
-        Err("Output amount cannot be 0".to_string())
+    if args.token0.ledger == args.token1.ledger {
+        Err("Token0 must be different to token1".to_string())
+    } else if args.token0_amount == 0 {
+        Err("Token0 amount cannot be 0".to_string())
+    } else if args.token1_amount == 0 {
+        Err("Token1 amount cannot be 0".to_string())
     } else if args.expires_at < now {
         Err("Expiry cannot be in the past".to_string())
     } else {

@@ -46,10 +46,10 @@ fn p2p_trade_succeeds() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PTrade(P2PTradeContentInitial {
-                input_token: Cryptocurrency::InternetComputer.try_into().unwrap(),
-                input_amount: 1_000_000_000,
-                output_token: Cryptocurrency::CHAT.try_into().unwrap(),
-                output_amount: 10_000_000_000,
+                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0_amount: 1_000_000_000,
+                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
@@ -80,7 +80,7 @@ fn p2p_trade_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        group_canister::accept_p2p_trade_offer::Response::Success
+        group_canister::accept_p2p_trade_offer::Response::Success(_)
     ));
 
     tick_many(env, 10);
@@ -103,7 +103,7 @@ fn p2p_trade_succeeds() {
 
     if let ChatEvent::Message(m) = event {
         if let MessageContent::P2PTrade(p) = m.content {
-            assert!(matches!(p.status, P2PTradeStatus::Completed(u, _, _) if u == user2.user_id));
+            assert!(matches!(p.status, P2PTradeStatus::Completed(c) if c.accepted_by == user2.user_id));
         }
     }
 }

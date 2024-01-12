@@ -2,11 +2,10 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ReserveP2PTradeResult;
 use group_canister::accept_p2p_trade_offer::{Response::*, *};
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{Chat, MessageId, MessageIndex, UserId};
+use types::{AcceptSwapSuccess, Chat, MessageId, MessageIndex, ReserveP2PTradeResult, UserId};
 
 #[update]
 #[trace]
@@ -15,19 +14,21 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
 
     let ReserveP2PTradeOfferResult { user_id, c2c_args } = match mutate_state(|state| reserve_p2p_trade_offer(&args, state)) {
         Ok(result) => result,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
 
     let result = match user_canister_c2c_client::c2c_accept_p2p_trade_offer(user_id.into(), &c2c_args).await {
-        Ok(user_canister::c2c_accept_p2p_trade_offer::Response::Success(transaction_index)) => {
+        Ok(user_canister::c2c_accept_p2p_trade_offer::Response::Success(transaction_id)) => {
             NotifyEscrowCanisterOfDepositJob::run(
                 user_id,
                 c2c_args.offer_id,
                 args.thread_root_message_index,
                 args.message_id,
-                transaction_index,
+                transaction_id,
             );
-            Success
+            Success(AcceptSwapSuccess {
+                token1_txn_in: transaction_id,
+            })
         }
         Ok(user_canister::c2c_accept_p2p_trade_offer::Response::TransferError(TransferError::InsufficientFunds { .. })) => {
             InsufficientFunds
@@ -36,7 +37,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
         Err(error) => InternalError(format!("{error:?}")),
     };
 
-    if !matches!(result, Success) {
+    if !matches!(result, Success(_)) {
         mutate_state(|state| rollback(user_id, args.thread_root_message_index, args.message_id, state));
     }
 
@@ -48,15 +49,15 @@ struct ReserveP2PTradeOfferResult {
     c2c_args: user_canister::c2c_accept_p2p_trade_offer::Args,
 }
 
-fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PTradeOfferResult, Response> {
+fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PTradeOfferResult, Box<Response>> {
     if state.data.is_frozen() {
-        return Err(ChatFrozen);
+        return Err(Box::new(ChatFrozen));
     }
 
     let caller = state.env.caller();
     if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
-            return Err(UserSuspended);
+            return Err(Box::new(UserSuspended));
         }
 
         let user_id = member.user_id;
@@ -70,34 +71,30 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
             min_visible_event_index,
             now,
         ) {
-            ReserveP2PTradeResult::Success(boxed) => {
-                let result = *boxed;
+            ReserveP2PTradeResult::Success(result) => {
                 handle_activity_notification(state);
 
                 Ok(ReserveP2PTradeOfferResult {
                     user_id,
                     c2c_args: user_canister::c2c_accept_p2p_trade_offer::Args {
-                        offer_id: result.offer_id,
+                        offer_id: result.content.offer_id,
                         chat: Chat::Group(state.env.canister_id().into()),
                         created: result.created,
                         created_by: result.created_by,
-                        input_token: result.input_token,
-                        input_amount: result.input_amount,
-                        input_transaction_index: result.input_transaction_index,
-                        output_token: result.output_token,
-                        output_amount: result.output_amount,
-                        expires_at: result.expires_at,
+                        input_token: result.content.token0,
+                        input_amount: result.content.token0_amount,
+                        input_transaction_id: result.content.token0_txn_in,
+                        output_token: result.content.token1,
+                        output_amount: result.content.token1_amount,
+                        expires_at: result.content.expires_at,
                     },
                 })
             }
-            ReserveP2PTradeResult::Cancelled => Err(OfferCancelled),
-            ReserveP2PTradeResult::Expired => Err(OfferExpired),
-            ReserveP2PTradeResult::AlreadyReserved(_) => Err(AlreadyAccepted),
-            ReserveP2PTradeResult::AlreadyCompleted(_) => Err(AlreadyCompleted),
-            ReserveP2PTradeResult::OfferNotFound => Err(OfferNotFound),
+            ReserveP2PTradeResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
+            ReserveP2PTradeResult::OfferNotFound => Err(Box::new(OfferNotFound)),
         }
     } else {
-        Err(UserNotInGroup)
+        Err(Box::new(UserNotInGroup))
     }
 }
 

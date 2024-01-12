@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::{CanisterId, TimestampMillis, UserId};
+use types::{CanisterId, TimestampMillis, TransactionId, UserId};
 use user_canister::c2c_accept_p2p_trade_offer::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
@@ -41,7 +41,11 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
     .await
     {
         Ok(Ok(index_nat)) => {
-            let index = index_nat.0.try_into().unwrap();
+            let token1_txn_in = TransactionId {
+                index: index_nat.0.try_into().unwrap(),
+                hash: None,
+            };
+
             mutate_state(|state| {
                 state.data.p2p_trades.add(P2PTradeOffer {
                     id: args.offer_id,
@@ -50,16 +54,16 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
                     created: args.created,
                     status: P2PTradeOfferStatus::Accepted,
                     last_updated: state.env.now(),
-                    input_token: args.input_token,
-                    input_amount: args.input_amount,
-                    input_transaction_index: Some(args.input_transaction_index),
-                    output_token: args.output_token,
-                    output_amount: args.output_amount,
-                    output_transaction_index: Some(index),
+                    token0: args.input_token,
+                    token0_amount: args.input_amount,
+                    token0_txn_in: Some(args.input_transaction_id),
+                    token1: args.output_token,
+                    token1_amount: args.output_amount,
+                    token1_txn_in: Some(token1_txn_in),
                     expires_at: args.expires_at,
                 });
             });
-            Success(index)
+            Success(token1_txn_in)
         }
         Ok(Err(error)) => TransferError(error),
         Err(error) => InternalError(format!("{error:?}")),
@@ -74,8 +78,8 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if let Some(offer) = state.data.p2p_trades.get(args.offer_id) {
-        if let Some(index) = offer.output_transaction_index {
-            return Err(Success(index));
+        if let Some(id) = offer.token1_txn_in {
+            return Err(Success(id));
         }
     }
     Ok(PrepareResult {
