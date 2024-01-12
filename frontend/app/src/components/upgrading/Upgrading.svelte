@@ -1,12 +1,13 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ModalPage from "../ModalPage.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 </script>
 
 <ModalPage bgClass="upgrade" minHeight="150px">
     <div>
-        <h1 class="title">{$_("performingUpgrade")}</h1>
-        <p class="blurb">{$_("pleaseWait")}</p>
+        <h1 class="title"><Translatable resourceKey={i18nKey("performingUpgrade")} /></h1>
+        <p class="blurb"><Translatable resourceKey={i18nKey("pleaseWait")} /></p>
     </div>
     <div class="spinner" />
 </ModalPage>
