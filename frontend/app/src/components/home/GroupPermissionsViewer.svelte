@@ -8,6 +8,7 @@
     } from "openchat-client";
     import GroupPermissionsPartitionViewer from "./GroupPermissionsPartitionViewer.svelte";
     import TabHeader from "../TabHeader.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
@@ -29,15 +30,15 @@
                 reactToMessages: permissions.reactToMessages,
                 mentionAllMembers: permissions.mentionAllMembers,
             },
-            ""
+            "",
         );
         messagePartition = partitionMessagePermissions(
             permissions.messagePermissions,
-            "messagePermissions."
+            "messagePermissions.",
         );
         threadPartition = partitionMessagePermissions(
             permissions.threadPermissions ?? permissions.messagePermissions,
-            "threadPermissions."
+            "threadPermissions.",
         );
     }
 
@@ -45,7 +46,7 @@
 
     function partitionMessagePermissions(
         mps: MessagePermissions,
-        translationExt: string
+        translationExt: string,
     ): PermissionsByRole {
         return partitionPermissions(
             {
@@ -60,7 +61,7 @@
                 prize: mps.prize ?? mps.default,
                 memeFighter: mps.memeFighter ?? mps.default,
             },
-            translationExt
+            translationExt,
         );
     }
 
@@ -73,13 +74,13 @@
 
     function partitionPermissions(
         permissions: Record<string, ChatPermissionRole>,
-        translationExt: string
+        translationExt: string,
     ): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 const text = $_(
                     `permissions.${translationExt}${String(key)}`,
-                    key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {}
+                    key === "mentionAllMembers" ? { values: { mention: "@everyone" } } : {},
                 );
 
                 dict[val].add(text);
@@ -91,14 +92,18 @@
                 member: new Set(),
                 owner: new Set(),
                 none: new Set(),
-            } as PermissionsByRole
+            } as PermissionsByRole,
         );
     }
 </script>
 
 <TabHeader
     bind:selected={selectedTab}
-    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
+    items={[
+        i18nKey("permissions.general"),
+        i18nKey("permissions.message"),
+        i18nKey("permissions.thread"),
+    ]} />
 
 {#if selectedTab === 0}
     <GroupPermissionsPartitionViewer partition={generalPartition} />

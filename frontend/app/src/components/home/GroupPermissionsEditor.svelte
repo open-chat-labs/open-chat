@@ -31,7 +31,11 @@
 
 <TabHeader
     bind:selected={selectedTab}
-    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
+    items={[
+        i18nKey("permissions.general"),
+        i18nKey("permissions.message"),
+        i18nKey("permissions.thread"),
+    ]} />
 
 <div class="permissions">
     {#if selectedTab === 0}

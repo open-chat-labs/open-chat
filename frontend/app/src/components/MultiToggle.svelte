@@ -6,8 +6,6 @@
 </script>
 
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-
     export let options: Option[];
     export let selected: string;
 
