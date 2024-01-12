@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let me: boolean;
 </script>
@@ -10,7 +11,7 @@
         <div class="spinner">
             <FancyLoader />
         </div>
-        <p>{$_("prizes.creatingYourPrizeMessage")}</p>
+        <p><Translatable resourceKey={i18nKey("prizes.creatingYourPrizeMessage")} /></p>
     </div>
 {/if}
 

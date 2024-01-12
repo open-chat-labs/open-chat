@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
     import { type ChatPermissions, chatRoles } from "openchat-client";
     import Toggle from "../Toggle.svelte";

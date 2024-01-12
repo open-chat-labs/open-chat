@@ -228,12 +228,12 @@
             <ChatListSectionButton
                 on:click={() => setView("chats")}
                 unread={unreadCounts.chats}
-                title={$_("chats")}
+                title={i18nKey("chats")}
                 selected={view === "chats"} />
             <ChatListSectionButton
                 unread={unreadCounts.threads}
                 on:click={() => setView("threads")}
-                title={$_("thread.previewTitle")}
+                title={i18nKey("thread.previewTitle")}
                 selected={view === "threads"} />
         </div>
     {/if}
@@ -244,7 +244,9 @@
         {:else}
             <div class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
-                    <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                    <h3 class="search-subtitle">
+                        <Translatable resourceKey={i18nKey("yourChats")} />
+                    </h3>
                 {/if}
                 {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
@@ -261,7 +263,9 @@
                     <div class="search-matches">
                         {#await userSearchResults then resp}
                             {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("users")}</h3>
+                                <h3 class="search-subtitle">
+                                    <Translatable resourceKey={i18nKey("users")} />
+                                </h3>
                                 {#each resp as user, i (user.userId)}
                                     <SearchResult
                                         index={i}
@@ -290,7 +294,9 @@
                     <div class="search-matches">
                         {#await groupSearchResults then resp}
                             {#if resp.kind === "success" && resp.matches.length > 0}
-                                <h3 class="search-subtitle">{$_("publicGroups")}</h3>
+                                <h3 class="search-subtitle">
+                                    <Translatable resourceKey={i18nKey("publicGroups")} />
+                                </h3>
                                 {#each resp.matches as group, i (group.chatId.groupId)}
                                     <SearchResult
                                         index={i}
@@ -333,12 +339,14 @@
             <div class="join">
                 <ButtonGroup align="center">
                     <Button secondary small on:click={cancelPreview}>
-                        {$_("leave")}
+                        <Translatable resourceKey={i18nKey("leave")} />
                     </Button>
                     <Button
                         loading={joiningCommunity}
                         disabled={joiningCommunity}
-                        on:click={joinCommunity}>{$_("communities.joinCommunity")}</Button>
+                        on:click={joinCommunity}
+                        ><Translatable
+                            resourceKey={i18nKey("communities.joinCommunity")} /></Button>
                 </ButtonGroup>
             </div>
         </PreviewWrapper>

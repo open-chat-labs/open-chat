@@ -25,6 +25,8 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import Diamond from "../icons/Diamond.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -181,7 +183,7 @@
         </div>
         <div class="chat-subtext">
             {#if blocked}
-                {$_("blocked")}
+                <Translatable resourceKey={i18nKey("blocked")} />
             {:else if readonly}
                 <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}

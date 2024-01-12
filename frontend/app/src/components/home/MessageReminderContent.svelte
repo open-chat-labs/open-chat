@@ -1,12 +1,13 @@
 <script lang="ts">
     import type { MessageReminderContent } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import ReminderNotes from "./ReminderNotes.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let content: MessageReminderContent;
 </script>
 
 <div class="msg">
-    ⏰ {$_("reminders.youAsked")}
+    ⏰ <Translatable resourceKey={i18nKey("reminders.youAsked")} />
 </div>
 <ReminderNotes notes={content.notes} />

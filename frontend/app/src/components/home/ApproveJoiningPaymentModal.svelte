@@ -9,7 +9,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import Markdown from "./Markdown.svelte";
-    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,7 +19,7 @@
     export let gate: PaymentGate;
 
     let joining = false;
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
     let refreshingBalance = false;
 
@@ -54,12 +55,12 @@
     }
 
     function onRefreshingBalanceSuccess() {
-        error = insufficientFunds ? "Insufficient funds" : undefined;
+        error = insufficientFunds ? i18nKey("Insufficient funds") : undefined;
         refreshingBalance = false;
     }
 
     function onRefreshingBalanceFailed() {
-        error = "Failed to refresh balance";
+        error = i18nKey("Failed to refresh balance");
         refreshingBalance = false;
     }
 
@@ -85,19 +86,19 @@
                         dispatch("joined");
                         break;
                     case "failure":
-                        error = $_("communities.errors.joinFailed");
+                        error = i18nKey("communities.errors.joinFailed");
                         break;
                     case "gate_check_failed":
-                        error = $_("access.paymentFailed");
+                        error = i18nKey("access.paymentFailed");
                         break;
                     case "blocked":
-                        error = $_("youreBlocked");
+                        error = i18nKey("youreBlocked");
                         break;
                 }
             })
             .catch((err) => {
                 client.logError(`Failed to join ${group.level}: `, err);
-                error = $_("communities.errors.joinFailed");
+                error = i18nKey("communities.errors.joinFailed");
             })
             .finally(() => (joining = false));
     }
@@ -107,7 +108,9 @@
     <div class="header" slot="header">
         <div class="title-and-icon">
             <div class="icon">🔒️</div>
-            <div class="title">{$_("access.approvePaymentTitle")}</div>
+            <div class="title">
+                <Translatable resourceKey={i18nKey("access.approvePaymentTitle")} />
+            </div>
         </div>
         <BalanceWithRefresh
             bind:this={balanceWithRefresh}
@@ -122,13 +125,13 @@
     <div slot="body">
         <Markdown text={approvalMessage + " " + distributionMessage} />
         {#if error !== undefined}
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
         {/if}
         {#if insufficientFunds}
             <AccountInfo ledger={gate.ledgerCanister} user={$user} />
-            <p>{$_("tokenTransfer.makeDeposit")}</p>
+            <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
             <a rel="noreferrer" class="how-to" href={token.howToBuyUrl} target="_blank">
-                {$_("howToBuyToken", { values: { token: token.symbol } })}
+                <Translatable resourceKey={i18nKey("howToBuyToken", { token: token.symbol })} />
             </a>
         {/if}
     </div>
@@ -139,7 +142,10 @@
                 loading={joining || refreshingBalance}
                 disabled={joining}
                 on:click={onClickPrimary}
-                >{insufficientFunds ? "Refresh" : $_("access.payAndJoin")}</Button>
+                ><Translatable
+                    resourceKey={i18nKey(
+                        insufficientFunds ? "Refresh" : "access.payAndJoin",
+                    )} /></Button>
         </ButtonGroup>
     </div>
 </ModalContent>

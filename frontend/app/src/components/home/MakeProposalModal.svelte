@@ -25,7 +25,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import { createAddTokenPayload } from "../../utils/sns";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -56,7 +57,7 @@
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
         | "add_token" = "motion";
-    let message = "";
+    let message: ResourceKey | undefined = undefined;
     let error = true;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
@@ -118,9 +119,9 @@
         }
     }
 
-    function defaultMessage(): string {
+    function defaultMessage(): ResourceKey {
         const cost = client.formatTokens(requiredFunds, tokenDetails.decimals);
-        return $_("proposal.maker.message", { values: { cost, token: symbol } });
+        return i18nKey("proposal.maker.message", { cost, token: symbol });
     }
 
     function onClose() {
@@ -157,7 +158,7 @@
                 if (success) {
                     dispatch("close");
                 } else {
-                    message = $_("proposal.maker.unexpectedError");
+                    message = i18nKey("proposal.maker.unexpectedError");
                 }
             });
     }
@@ -217,7 +218,7 @@
     }
 
     function onRefreshingBalanceFailed() {
-        message = "Failed to refresh balance";
+        message = i18nKey("Failed to refresh balance");
         error = true;
         refreshingBalance = false;
     }
@@ -255,9 +256,9 @@
         <div class="sections" style={`left: -${left}px`}>
             <div class="topup hidden" class:visible={step === 0}>
                 <AccountInfo {ledger} user={$user} />
-                <p>{$_("tokenTransfer.makeDeposit")}</p>
+                <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: symbol } })}
+                    <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                 </a>
             </div>
             <div class="common hidden" class:visible={step === 1}>
@@ -308,7 +309,11 @@
                             tabindex="1"
                             class="preview"
                             on:click={() => (summaryPreview = !summaryPreview)}>
-                            <span class="text">{$_(summaryPreview ? "edit" : "preview")}</span>
+                            <span class="text"
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        summaryPreview ? "edit" : "preview",
+                                    )} /></span>
                             <span class="icon">
                                 {#if summaryPreview}
                                     <PencilIcon size={$iconSize} viewBox="0 -3 24 24" />
@@ -458,7 +463,9 @@
         </div>
     </div>
     <span class="footer" slot="footer">
-        <p class="message" class:error>{message}</p>
+        {#if message !== undefined}
+            <p class="message" class:error><Translatable resourceKey={message} /></p>
+        {/if}
         <div class="group-buttons">
             <div class="back">
                 {#if step > 1 || (step == 1 && insufficientFunds)}
@@ -466,7 +473,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -483,7 +491,10 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={onClickPrimary}
-                    >{$_(step === 0 ? "refresh" : canSubmit ? "submit" : "group.next")}</Button>
+                    ><Translatable
+                        resourceKey={i18nKey(
+                            step === 0 ? "refresh" : canSubmit ? "submit" : "group.next",
+                        )} /></Button>
             </div>
         </div>
     </span>

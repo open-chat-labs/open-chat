@@ -16,6 +16,7 @@
         type ProposalActionCategory,
     } from "../../stores/proposalSections";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let selectedChat: ChatSummary;
 
@@ -82,7 +83,7 @@
 </script>
 
 <SectionHeader shadow flush={$mobileWidth}>
-    <h4>{$_("proposal.filter")}</h4>
+    <h4><Translatable resourceKey={i18nKey("proposal.filter")} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -93,10 +94,11 @@
 <div class="proposal-filters">
     <div class="controls">
         <LinkButton on:click={client.enableAllProposalFilters} underline={"hover"}
-            >{$_("proposal.enableAll")}</LinkButton>
+            ><Translatable resourceKey={i18nKey("proposal.enableAll")} /></LinkButton>
         <LinkButton
             on:click={() => client.disableAllProposalFilters(topics.map(([id]) => id))}
-            underline={"hover"}>{$_("proposal.disableAll")}</LinkButton>
+            underline={"hover"}
+            ><Translatable resourceKey={i18nKey("proposal.disableAll")} /></LinkButton>
     </div>
     {#each grouped as [category, topicsInCategory]}
         {#if groupTopics}

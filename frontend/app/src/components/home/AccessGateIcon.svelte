@@ -12,6 +12,8 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { Alignment, Position } from "../../utils/alignment";
     import Diamond from "../icons/Diamond.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -68,7 +70,7 @@
             </div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    {$_("access.diamondGateInfo")}
+                    <Translatable resourceKey={i18nKey("access.diamondGateInfo")} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -77,9 +79,11 @@
             <div slot="target" class="credential">🔒️</div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    {$_("access.credentialGateInfo", {
-                        values: { issuer: gate.issuerOrigin, credential: gate.credentialId },
-                    })}
+                    <Translatable
+                        resourceKey={i18nKey("access.credentialGateInfo", {
+                            issuer: gate.issuerOrigin,
+                            credential: gate.credentialId,
+                        })} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -89,9 +93,11 @@
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>
-                        {`${$_("access.neuronHolderInfo", {
-                            values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
-                        })}`}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "access.neuronHolderInfo",
+                                tokenDetails ? { token: tokenDetails.symbol } : undefined,
+                            )} />
                     </p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
@@ -103,9 +109,11 @@
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
                     <p>
-                        {`${$_("access.tokenPaymentInfo", {
-                            values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
-                        })}`}
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "access.tokenPaymentInfo",
+                                tokenDetails ? { token: tokenDetails.symbol } : undefined,
+                            )} />
                     </p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
