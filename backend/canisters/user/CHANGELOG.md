@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
 - Implement P2P trades in direct chats ([#5168](https://github.com/open-chat-labs/open-chat/pull/5168))
+- Add message queues for pushing updates between user canisters ([#5172](https://github.com/open-chat-labs/open-chat/pull/5172))
 
 ### Changed
 

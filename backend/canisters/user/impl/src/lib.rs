@@ -23,13 +23,15 @@ use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
     TimestampMillis, Timestamped, UserId,
 };
-use user_canister::NamedAccount;
+use user_canister::{NamedAccount, UserCanisterEvent};
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod governance_clients;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -180,6 +182,8 @@ struct Data {
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
     pub p2p_trades: P2PTrades,
+    #[serde(default)]
+    pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub rng_seed: [u8; 32],
 }
 
@@ -230,6 +234,7 @@ impl Data {
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
             p2p_trades: P2PTrades::default(),
+            user_canister_events_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],
         }
     }
