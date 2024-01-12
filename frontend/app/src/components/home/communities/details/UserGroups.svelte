@@ -100,7 +100,9 @@
             .deleteUserGroup(community.id, groupToDelete)
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast($_("communities.errors.deleteUserGroupFailed"));
+                    toastStore.showFailureToast(
+                        i18nKey("communities.errors.deleteUserGroupFailed"),
+                    );
                 }
             })
             .finally(() => (groupToDelete = undefined));
@@ -122,7 +124,7 @@
 </script>
 
 {#if confirmingDelete}
-    <AreYouSure message={$_("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
+    <AreYouSure message={i18nKey("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
 {/if}
 
 {#if selectedGroup !== undefined}

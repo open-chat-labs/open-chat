@@ -25,6 +25,8 @@
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
     import { round2 } from "../../../utils/math";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -110,12 +112,12 @@
                     showNeuronInfo = true;
                 } else {
                     const err = registerProposalVoteErrorMessage(resp);
-                    if (err) toastStore.showFailureToast("proposal." + err);
+                    if (err) toastStore.showFailureToast(i18nKey("proposal." + err));
                 }
             })
             .catch((err) => {
                 client.logError("Unable to vote on proposal", err);
-                toastStore.showFailureToast("proposal.voteFailed");
+                toastStore.showFailureToast(i18nKey("proposal.voteFailed"));
             })
             .finally(() => {
                 if (!success) {
@@ -196,7 +198,10 @@
             {#if !showFullSummary}
                 <div class="expand" on:click={toggleSummary}>
                     <div class="label">
-                        {summaryExpanded ? $_("proposal.readless") : $_("proposal.readmore")}
+                        <Translatable
+                            resourceKey={summaryExpanded
+                                ? i18nKey("proposal.readless")
+                                : i18nKey("proposal.readmore")} />
                     </div>
                     <div class="icon" class:open={summaryExpanded}>
                         <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt)" />
@@ -205,7 +210,7 @@
             {/if}
             {#if !payloadEmpty}
                 <div on:click={() => (showPayload = true)} class="payload">
-                    <span>{$_("proposal.details")}</span>
+                    <span><Translatable resourceKey={i18nKey("proposal.details")} /></span>
                     <OpenInNew color="var(--icon-txt)" />
                 </div>
             {/if}
@@ -245,7 +250,7 @@
         <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
         <div class="subtitle">
             {typeValue} |
-            {$_("proposal.proposedBy")}
+            <Translatable resourceKey={i18nKey("proposal.proposedBy")} />
             <a target="_blank" rel="noreferrer" href={proposerUrl}
                 >{renderNeuronId(proposal.proposer)}</a>
         </div>
@@ -255,7 +260,9 @@
 {#if showNeuronInfo}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showNeuronInfo = false)}>
-            <div slot="header">{$_("proposal.noEligibleNeurons")}</div>
+            <div slot="header">
+                <Translatable resourceKey={i18nKey("proposal.noEligibleNeurons")} />
+            </div>
             <div slot="body">
                 <Markdown
                     text={$_("proposal.noEligibleNeuronsMessage", {
@@ -269,7 +276,7 @@
 {#if showPayload && !payloadEmpty}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
-            <div slot="header">{$_("proposal.details")}</div>
+            <div slot="header"><Translatable resourceKey={i18nKey("proposal.details")} /></div>
             <div class="payload-body" slot="body">
                 <Markdown text={payload ?? ""} inline={false} />
             </div>

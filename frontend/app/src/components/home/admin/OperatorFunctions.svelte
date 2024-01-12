@@ -9,10 +9,11 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Select from "../../Select.svelte";
     import Toggle from "../../Toggle.svelte";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
     let groupUpgradeConcurrency = 10;
     let communityUpgradeConcurrency = 10;
     let userUpgradeConcurrency = 10;
@@ -85,10 +86,12 @@
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
-                        `Group upgrade concurrency set to ${groupUpgradeConcurrency}`,
+                        i18nKey(`Group upgrade concurrency set to ${groupUpgradeConcurrency}`),
                     );
                 } else {
-                    error = `Failed to set group upgrade concurrency to ${groupUpgradeConcurrency}`;
+                    error = i18nKey(
+                        `Failed to set group upgrade concurrency to ${groupUpgradeConcurrency}`,
+                    );
                     toastStore.showFailureToast(error);
                 }
             })
@@ -105,10 +108,14 @@
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
-                        `Community upgrade concurrency set to ${communityUpgradeConcurrency}`,
+                        i18nKey(
+                            `Community upgrade concurrency set to ${communityUpgradeConcurrency}`,
+                        ),
                     );
                 } else {
-                    error = `Failed to set community upgrade concurrency to ${communityUpgradeConcurrency}`;
+                    error = i18nKey(
+                        `Failed to set community upgrade concurrency to ${communityUpgradeConcurrency}`,
+                    );
                     toastStore.showFailureToast(error);
                 }
             })
@@ -125,10 +132,12 @@
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast(
-                        `User upgrade concurrency set to ${userUpgradeConcurrency}`,
+                        i18nKey(`User upgrade concurrency set to ${userUpgradeConcurrency}`),
                     );
                 } else {
-                    error = `Failed to set user upgrade concurrency to ${userUpgradeConcurrency}`;
+                    error = i18nKey(
+                        `Failed to set user upgrade concurrency to ${userUpgradeConcurrency}`,
+                    );
                     toastStore.showFailureToast(error);
                 }
             })
@@ -144,9 +153,11 @@
             .setDiamondMembershipFees([fees])
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast(`Diamond membership fees set ${fees}`);
+                    toastStore.showSuccessToast(i18nKey(`Diamond membership fees set ${fees}`));
                 } else {
-                    error = `Failed to set diamond membership fees ${userUpgradeConcurrency}`;
+                    error = i18nKey(
+                        `Failed to set diamond membership fees ${userUpgradeConcurrency}`,
+                    );
                     toastStore.showFailureToast(error);
                 }
             })
@@ -162,9 +173,9 @@
             .stakeNeuronForSubmittingProposals(governanceCanisterId, BigInt(stake))
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("Neuron staked successfully");
+                    toastStore.showSuccessToast(i18nKey("Neuron staked successfully"));
                 } else {
-                    error = "Failed to stake neuron";
+                    error = i18nKey("Failed to stake neuron");
                     toastStore.showFailureToast(error);
                 }
             })
@@ -180,9 +191,9 @@
             .updateMarketMakerConfig(markerMakerConfig)
             .then((resp) => {
                 if (resp === "success") {
-                    toastStore.showSuccessToast("Market maker config updated");
+                    toastStore.showSuccessToast(i18nKey("Market maker config updated"));
                 } else {
-                    error = `Failed to update market maker config: ${resp}`;
+                    error = i18nKey(`Failed to update market maker config: ${resp}`);
                     toastStore.showFailureToast(error);
                 }
             })

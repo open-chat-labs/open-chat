@@ -6,12 +6,13 @@
     import { _ } from "svelte-i18n";
     import Input from "./Input.svelte";
     import Markdown from "./home/Markdown.svelte";
-    import { i18nKey, type ResourceKey } from "../i18n/i18n";
+    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
     import Translatable from "./Translatable.svelte";
 
-    export let message: string | undefined = undefined;
+    export let message: ResourceKey | undefined = undefined;
     export let action: (yes: boolean) => Promise<void>;
-    export let doubleCheck: { challenge: string; response: string } | undefined = undefined;
+    export let doubleCheck: { challenge: ResourceKey; response: ResourceKey } | undefined =
+        undefined;
     export let title: ResourceKey | undefined = i18nKey("areYouSure");
     export let yesLabel: ResourceKey | undefined = i18nKey("yesPlease");
     export let noLabel: ResourceKey | undefined = i18nKey("noThanks");
@@ -19,7 +20,9 @@
     let inProgress = false;
     let response = "";
 
-    $: canConfirm = !inProgress && (doubleCheck === undefined || response === doubleCheck.response);
+    $: canConfirm =
+        !inProgress &&
+        (doubleCheck === undefined || response === interpolate($_, doubleCheck.response));
 
     function onClick(yes: boolean) {
         if (yes) {
@@ -41,11 +44,11 @@
         </span>
         <span slot="body">
             {#if message !== undefined}
-                <Markdown inline={false} text={message} />
+                <Markdown inline={false} text={interpolate($_, message)} />
 
                 {#if doubleCheck !== undefined}
                     <p class="challenge">
-                        <Markdown text={doubleCheck.challenge} />
+                        <Markdown text={interpolate($_, doubleCheck.challenge)} />
                     </p>
                     <Input
                         invalid={false}

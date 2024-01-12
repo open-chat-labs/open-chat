@@ -21,6 +21,8 @@
     import HoverIcon from "../HoverIcon.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -59,15 +61,13 @@
                     if (client.canSendMessage(chat.id, mode, permission)) {
                         dispatch("fileSelected", content);
                     } else {
-                        const errorMessage = $_("permissions.notPermitted", {
-                            values: {
-                                permission: $_(`permissions.threadPermissions.${permission}`),
-                            },
+                        const errorMessage = i18nKey("permissions.notPermitted", {
+                            permission: $_(`permissions.threadPermissions.${permission}`),
                         });
                         toastStore.showFailureToast(errorMessage);
                     }
                 })
-                .catch((err) => toastStore.showFailureToast(err));
+                .catch((err) => toastStore.showFailureToast(i18nKey(err)));
         }
     }
 
@@ -104,7 +104,7 @@
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
-                    <h4>{$_("pickEmoji")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
                     <span title={$_("close")} class="close-emoji">
                         <HoverIcon on:click={() => (messageAction = undefined)}>
                             <Close size={$iconSize} color={"var(--icon-txt)"} />

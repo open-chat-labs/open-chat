@@ -18,14 +18,15 @@
     import Button from "../../Button.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let ledger: string;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
     let amountToSend: bigint;
     let busy = false;
     let valid = false;
@@ -55,7 +56,7 @@
     $: {
         valid = capturingAccount ? validAccountName : validSend;
     }
-    $: title = $_("cryptoAccount.sendToken", { values: { symbol } });
+    $: title = i18nKey("cryptoAccount.sendToken", { symbol });
 
     $: remainingBalance =
         amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance;
@@ -72,9 +73,9 @@
                     if (resp.kind === "success") {
                         dispatch("close");
                     } else if (resp.kind === "name_taken") {
-                        error = $_("tokenTransfer.accountNameTaken");
+                        error = i18nKey("tokenTransfer.accountNameTaken");
                     } else {
-                        error = $_("tokenTransfer.failedToSaveAccount");
+                        error = i18nKey("tokenTransfer.failedToSaveAccount");
                     }
                 })
                 .finally(() => (busy = false));
@@ -109,9 +110,11 @@
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);
                     balanceWithRefresh.refresh();
-                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
-                        values: { symbol },
-                    });
+                    toastStore.showSuccessToast(
+                        i18nKey("cryptoAccount.sendSucceeded", {
+                            symbol,
+                        }),
+                    );
                     if (unknownAccount(targetAccount)) {
                         capturingAccount = true;
                     } else {
@@ -119,12 +122,12 @@
                         targetAccount = "";
                     }
                 } else {
-                    error = $_("cryptoAccount.sendFailed", { values: { symbol } });
+                    error = i18nKey("cryptoAccount.sendFailed", { symbol });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
                 }
             })
             .catch((err) => {
-                error = $_("cryptoAccount.sendFailed", { values: { symbol } });
+                error = i18nKey("cryptoAccount.sendFailed", { symbol });
                 client.logError(`Unable to withdraw ${symbol}`, err);
             })
             .finally(() => (busy = false));
@@ -135,7 +138,7 @@
     }
 
     function onBalanceRefreshError(ev: CustomEvent<string>) {
-        error = $_(ev.detail);
+        error = i18nKey(ev.detail);
     }
 
     function onPrimaryClick() {
@@ -205,15 +208,17 @@
     <span slot="footer">
         <ButtonGroup>
             <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                >{$_(capturingAccount ? "noThanks" : "cancel")}</Button>
+                ><Translatable
+                    resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
             <Button
                 disabled={busy || !valid}
                 loading={busy}
                 tiny={$mobileWidth}
                 on:click={onPrimaryClick}
-                >{$_(
-                    capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
-                )}</Button>
+                ><Translatable
+                    resourceKey={i18nKey(
+                        capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
+                    )} /></Button>
         </ButtonGroup>
     </span>
 </ModalContent>

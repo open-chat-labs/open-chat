@@ -23,9 +23,9 @@
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
     import { toastStore } from "../../../../stores/toast";
-    import { interpolateLevel } from "../../../../utils/i18n";
     import page from "page";
     import AreYouSure from "../../../AreYouSure.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     export let original: CommunitySummary = createCandidateCommunity("", 0);
     export let originalRules: Rules;
@@ -159,10 +159,10 @@
                 )
                 .then((success: boolean) => {
                     if (success) {
-                        toastStore.showSuccessToast("communities.saved");
+                        toastStore.showSuccessToast(i18nKey("communities.saved"));
                         dispatch("close");
                     } else {
-                        toastStore.showFailureToast("communities.errors.saveFailed");
+                        toastStore.showFailureToast(i18nKey("communities.errors.saveFailed"));
                     }
                 })
                 .finally(() => (busy = false));
@@ -177,16 +177,16 @@
                     if (response.kind === "success") {
                         return optionallyInviteUsers(response.id)
                             .then(() => {
-                                toastStore.showSuccessToast("communities.created");
+                                toastStore.showSuccessToast(i18nKey("communities.created"));
                                 dispatch("close");
                                 page(`/community/${response.id}`);
                             })
                             .catch((_err) => {
-                                toastStore.showFailureToast("inviteUsersFailed");
+                                toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                                 step = 0;
                             });
                     } else {
-                        toastStore.showFailureToast(`communities.errors.${response.kind}`);
+                        toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
                     }
                 })
                 .finally(() => (busy = false));
@@ -196,7 +196,7 @@
 
 {#if confirming}
     <AreYouSure
-        message={interpolateLevel("confirmMakeGroupPrivate", candidate.level, true)}
+        message={i18nKey("confirmMakeGroupPrivate", undefined, candidate.level, true)}
         action={save} />
 {/if}
 
@@ -275,7 +275,7 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{interpolateLevel("group.update", "community", true)}</Button>
+                        >{i18nKey("group.update", undefined, "community", true)}</Button>
                 {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
@@ -290,7 +290,7 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{interpolateLevel("group.create", "community", true)}</Button>
+                        >{i18nKey("group.create", undefined, "community", true)}</Button>
                 {/if}
             </div>
         </div>

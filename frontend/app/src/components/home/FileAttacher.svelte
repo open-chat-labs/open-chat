@@ -5,6 +5,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import Paperclip from "./Paperclip.svelte";
     import type { OpenChat } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,7 +28,7 @@
                         dispatch("fileSelected", content);
                     })
                     .catch((err) => {
-                        toastStore.showFailureToast(err);
+                        toastStore.showFailureToast(i18nKey(err));
                     });
 
                 e.currentTarget.value = "";

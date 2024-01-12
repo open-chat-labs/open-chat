@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import type {
@@ -27,6 +26,7 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -60,7 +60,7 @@
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftMessagesStore.get(messageContext), (set) =>
-        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {}))
+        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {})),
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -106,7 +106,7 @@
                 .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("errorEditingMessage");
+                        toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {

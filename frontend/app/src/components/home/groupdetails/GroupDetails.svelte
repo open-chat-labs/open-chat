@@ -2,7 +2,6 @@
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Avatar from "../../Avatar.svelte";
     import Stats from "../Stats.svelte";
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
@@ -22,9 +21,9 @@
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
-    import { interpolateLevel } from "../../../utils/i18n";
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -89,7 +88,7 @@
 
                 <h3 class="group-name">{chat.name}</h3>
                 <p class="members">
-                    {$_("memberCount", { values: { count: memberCount } })}
+                    <Translatable resourceKey={i18nKey("memberCount", { count: memberCount })} />
                 </p>
             </div>
 
@@ -107,23 +106,38 @@
             open={$groupVisibilityOpen}
             headerText={i18nKey("access.visibility")}>
             {#if chat.public}
-                <h4>{interpolateLevel("group.publicGroup", chat.level, true)}</h4>
+                <h4>
+                    <Translatable
+                        resourceKey={i18nKey("group.publicGroup", undefined, chat.level, true)} />
+                </h4>
             {:else}
-                <h4>{interpolateLevel("group.privateGroup", chat.level, true)}</h4>
+                <h4>
+                    <Translatable
+                        resourceKey={i18nKey("group.privateGroup", undefined, chat.level, true)} />
+                </h4>
             {/if}
             <div class="info">
                 {#if chat.public}
-                    {chat.level === "channel"
-                        ? $_("publicChannelInfo")
-                        : interpolateLevel("publicGroupInfo", chat.level, true)}
+                    <Translatable
+                        resourceKey={chat.level === "channel"
+                            ? i18nKey("publicChannelInfo")
+                            : i18nKey("publicGroupInfo", undefined, chat.level, true)} />
                 {:else}
-                    <p>{interpolateLevel("group.privateGroupInfo", chat.level, true)}</p>
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "group.privateGroupInfo",
+                                undefined,
+                                chat.level,
+                                true,
+                            )} />
+                    </p>
                 {/if}
                 {#if !chat.public}
                     {#if chat.historyVisible}
-                        <p>{$_("historyOnInfo")}</p>
+                        <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                     {:else}
-                        <p>{$_("historyOffInfo")}</p>
+                        <p><Translatable resourceKey={i18nKey("historyOffInfo")} /></p>
                     {/if}
                 {/if}
             </div>
