@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{icrc1::CompletedCryptoTransaction, TimestampMillis, TokenInfo, UserId};
+use types::{
+    icrc1::CompletedCryptoTransaction, CanisterId, OfferStatus, OfferStatusAccepted, OfferStatusCancelled,
+    OfferStatusCompleted, TimestampMillis, TokenInfo, UserId,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Offers {
@@ -12,6 +15,10 @@ impl Offers {
         let id = self.map.last_key_value().map(|(k, _)| *k).unwrap_or_default();
         self.map.insert(id, Offer::new(id, caller, args, now));
         id
+    }
+
+    pub fn get(&self, id: u32) -> Option<&Offer> {
+        self.map.get(&id)
     }
 
     pub fn get_mut(&mut self, id: u32) -> Option<&mut Offer> {
@@ -33,7 +40,10 @@ pub struct Offer {
     pub accepted_by: Option<(UserId, TimestampMillis)>,
     pub token0_received: bool,
     pub token1_received: bool,
-    pub transfers_out: Vec<CompletedCryptoTransaction>,
+    pub token0_transfer_out: Option<CompletedCryptoTransaction>,
+    pub token1_transfer_out: Option<CompletedCryptoTransaction>,
+    pub refunds: Vec<CompletedCryptoTransaction>,
+    pub canister_to_notify: Option<CanisterId>,
 }
 
 impl Offer {
@@ -51,7 +61,40 @@ impl Offer {
             accepted_by: None,
             token0_received: false,
             token1_received: false,
-            transfers_out: Vec::new(),
+            token0_transfer_out: None,
+            token1_transfer_out: None,
+            refunds: Vec::new(),
+            canister_to_notify: args.canister_to_notify,
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.token0_transfer_out.is_some() && self.token1_transfer_out.is_some()
+    }
+
+    pub fn status(&self, now: TimestampMillis) -> OfferStatus {
+        if let Some((accepted_by, accepted_at)) = self.accepted_by {
+            if let (Some(token0_transfer_out), Some(token1_transfer_out)) =
+                (self.token0_transfer_out.clone(), self.token1_transfer_out.clone())
+            {
+                OfferStatus::Completed(Box::new(OfferStatusCompleted {
+                    accepted_by,
+                    accepted_at,
+                    token0_transfer_out,
+                    token1_transfer_out,
+                }))
+            } else {
+                OfferStatus::Accepted(Box::new(OfferStatusAccepted {
+                    accepted_by,
+                    accepted_at,
+                }))
+            }
+        } else if let Some(cancelled_at) = self.cancelled_at {
+            OfferStatus::Cancelled(Box::new(OfferStatusCancelled { cancelled_at }))
+        } else if self.expires_at < now {
+            OfferStatus::Expired
+        } else {
+            OfferStatus::Open
         }
     }
 }

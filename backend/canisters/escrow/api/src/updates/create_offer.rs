@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{TimestampMillis, TokenInfo};
+use types::{CanisterId, TimestampMillis, TokenInfo};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,6 +9,7 @@ pub struct Args {
     pub output_token: TokenInfo,
     pub output_amount: u128,
     pub expires_at: TimestampMillis,
+    pub canister_to_notify: Option<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
