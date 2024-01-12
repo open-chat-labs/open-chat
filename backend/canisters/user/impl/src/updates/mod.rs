@@ -1,3 +1,4 @@
+pub mod accept_p2p_trade_offer;
 pub mod add_hot_group_exclusions;
 pub mod add_reaction;
 pub mod approve_transfer;

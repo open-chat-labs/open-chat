@@ -17,6 +17,7 @@ fn main() {
     generate_candid_method!(user, token_swap_status, query);
     generate_candid_method!(user, updates, query);
 
+    generate_candid_method!(user, accept_p2p_trade_offer, update);
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
     generate_candid_method!(user, approve_transfer, update);

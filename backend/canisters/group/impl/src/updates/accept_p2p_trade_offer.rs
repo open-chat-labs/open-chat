@@ -6,7 +6,7 @@ use chat_events::ReserveP2PTradeResult;
 use group_canister::accept_p2p_trade_offer::{Response::*, *};
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{MessageId, MessageIndex, UserId};
+use types::{Chat, MessageId, MessageIndex, UserId};
 
 #[update]
 #[trace]
@@ -70,13 +70,15 @@ fn reserve_p2p_trade_offer(args: &Args, state: &mut RuntimeState) -> Result<Rese
             min_visible_event_index,
             now,
         ) {
-            ReserveP2PTradeResult::Success(result) => {
+            ReserveP2PTradeResult::Success(boxed) => {
+                let result = *boxed;
                 handle_activity_notification(state);
 
                 Ok(ReserveP2PTradeOfferResult {
                     user_id,
                     c2c_args: user_canister::c2c_accept_p2p_trade_offer::Args {
                         offer_id: result.offer_id,
+                        chat: Chat::Group(state.env.canister_id().into()),
                         created: result.created,
                         created_by: result.created_by,
                         input_token: result.input_token,
