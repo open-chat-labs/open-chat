@@ -5,6 +5,7 @@ use types::MessageId;
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub message_ids: Vec<MessageId>,
+    #[serde(default)]
     pub correlation_id: u64,
 }
 
