@@ -244,8 +244,8 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::P2PTrade(p) => {
                 document.add_field("trade".to_string(), 1.0, false);
-                document.add_field(p.input_token.token.token_symbol().to_string(), 1.0, false);
-                document.add_field(p.output_token.token.token_symbol().to_string(), 1.0, false);
+                document.add_field(p.token0.token.token_symbol().to_string(), 1.0, false);
+                document.add_field(p.token1.token.token_symbol().to_string(), 1.0, false);
                 try_add_caption(&mut document, p.caption.as_ref())
             }
             MessageContentInternal::Custom(c) => {

@@ -287,12 +287,9 @@ type AcceptP2PTradeOfferArgs = record {
 };
 
 type AcceptP2PTradeOfferResponse = variant {
-    Success;
+    Success : AcceptSwapSuccess;
     InsufficientFunds;
-    AlreadyAccepted;
-    AlreadyCompleted;
-    OfferExpired;
-    OfferCancelled;
+    StatusError : AcceptSwapStatusError;
     OfferNotFound;
     ChannelNotFound;
     UserNotInCommunity;

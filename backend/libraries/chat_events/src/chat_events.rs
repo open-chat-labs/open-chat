@@ -16,8 +16,8 @@ use types::{
     CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
     Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PTradeError,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, TokenInfo, UserId, VoteOperation,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PTradeResult,
+    ReserveP2PTradeSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -714,33 +714,40 @@ impl ChatEvents {
         {
             if let Some(message) = event.event.as_message_mut() {
                 if let MessageContentInternal::P2PTrade(content) = &mut message.content {
-                    return match content.reserve(user_id, now) {
-                        Ok(_) => {
-                            let result = ReserveP2PTradeOfferSuccess {
-                                offer_id: content.offer_id,
-                                created: event.timestamp,
-                                created_by: message.sender,
-                                input_token: content.input_token.clone(),
-                                input_amount: content.input_amount,
-                                input_transaction_index: content.input_transaction_index,
-                                output_token: content.output_token.clone(),
-                                output_amount: content.output_amount,
-                                expires_at: content.expires_at,
-                            };
-
-                            let event_index = event.index;
-                            self.last_updated_timestamps.mark_updated(None, event_index, now);
-                            Success(Box::new(result))
-                        }
-                        Err(ReserveP2PTradeError::Expired) => Expired,
-                        Err(ReserveP2PTradeError::Cancelled) => Cancelled,
-                        Err(ReserveP2PTradeError::AlreadyReserved(u)) => AlreadyReserved(u),
-                        Err(ReserveP2PTradeError::AlreadyCompleted(u)) => AlreadyCompleted(u),
-                    };
+                    if content.reserve(user_id, now) {
+                        return Success(ReserveP2PTradeSuccess {
+                            content: content.clone(),
+                            created: event.timestamp,
+                            created_by: message.sender,
+                        });
+                    } else {
+                        return Failure(content.status.clone());
+                    }
                 }
             }
         }
         OfferNotFound
+    }
+
+    pub fn accept_p2p_trade(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        token1_txn_in: TransactionId,
+        now: TimestampMillis,
+    ) -> bool {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PTrade(content) = &mut message.content {
+                if content.accept(user_id, token1_txn_in) {
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    return true;
+                };
+            }
+        }
+        false
     }
 
     pub fn complete_p2p_trade(
@@ -748,14 +755,15 @@ impl ChatEvents {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        transaction_index: u64,
+        token0_txn_out: TransactionId,
+        token1_txn_out: TransactionId,
         now: TimestampMillis,
     ) -> bool {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PTrade(content) = &mut message.content {
-                if content.complete(user_id, transaction_index, now) {
+                if content.complete(user_id, token0_txn_out, token1_txn_out) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     return true;
                 };
@@ -1567,27 +1575,6 @@ pub enum UnreservePrizeResult {
     Success,
     MessageNotFound,
     ReservationNotFound,
-}
-
-pub enum ReserveP2PTradeResult {
-    Success(Box<ReserveP2PTradeOfferSuccess>),
-    Cancelled,
-    Expired,
-    AlreadyReserved(UserId),
-    AlreadyCompleted(UserId),
-    OfferNotFound,
-}
-
-pub struct ReserveP2PTradeOfferSuccess {
-    pub offer_id: u32,
-    pub created: TimestampMillis,
-    pub created_by: UserId,
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub input_transaction_index: u64,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
-    pub expires_at: TimestampMillis,
 }
 
 pub enum FollowThreadResult {

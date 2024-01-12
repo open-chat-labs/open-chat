@@ -81,10 +81,10 @@ async fn send_message_v2(mut args: Args) -> Response {
         MessageContentInitial::P2PTrade(p) => {
             let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
             let create_offer_args = escrow_canister::create_offer::Args {
-                input_token: p.input_token.clone(),
-                input_amount: p.input_amount,
-                output_token: p.output_token.clone(),
-                output_amount: p.output_amount,
+                token0: p.token0.clone(),
+                token0_amount: p.token0_amount,
+                token1: p.token1.clone(),
+                token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
                 canister_to_notify: Some(args.recipient.into()),
             };
