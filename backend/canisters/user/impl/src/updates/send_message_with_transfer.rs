@@ -8,7 +8,7 @@ use escrow_canister::deposit_subaccount;
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
 use types::{
-    icrc1, CanisterId, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, PendingCryptoTransaction,
+    icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, PendingCryptoTransaction,
     TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::send_message_with_transfer_to_channel;
@@ -32,19 +32,20 @@ async fn send_message_with_transfer_to_channel(
     }
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_offer_id) = match mutate_state(|state| prepare(&args.content, now, state)) {
-        PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PTrade(escrow_canister_id, args) => match set_up_p2p_trade(escrow_canister_id, args).await {
-            Ok((id, t)) => (t, Some(id)),
-            Err(error) => return error.into(),
-        },
-        PrepareResult::UserSuspended => return UserSuspended,
-        PrepareResult::TextTooLong(v) => return TextTooLong(v),
-        PrepareResult::RecipientBlocked => return RecipientBlocked,
-        PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
-        PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
-        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
-    };
+    let (pending_transaction, p2p_offer_id) =
+        match mutate_state(|state| prepare(Chat::Channel(args.community_id, args.channel_id), &args.content, now, state)) {
+            PrepareResult::Success(t) => (t, None),
+            PrepareResult::P2PTrade(escrow_canister_id, args) => match set_up_p2p_trade(escrow_canister_id, args).await {
+                Ok((id, t)) => (t, Some(id)),
+                Err(error) => return error.into(),
+            },
+            PrepareResult::UserSuspended => return UserSuspended,
+            PrepareResult::TextTooLong(v) => return TextTooLong(v),
+            PrepareResult::RecipientBlocked => return RecipientBlocked,
+            PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
+            PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
+            PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
+        };
 
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id, now).await
@@ -134,19 +135,20 @@ async fn send_message_with_transfer_to_group(
     }
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_offer_id) = match mutate_state(|state| prepare(&args.content, now, state)) {
-        PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PTrade(escrow_canister_id, args) => match set_up_p2p_trade(escrow_canister_id, args).await {
-            Ok((id, t)) => (t, Some(id)),
-            Err(error) => return error.into(),
-        },
-        PrepareResult::UserSuspended => return UserSuspended,
-        PrepareResult::TextTooLong(v) => return TextTooLong(v),
-        PrepareResult::RecipientBlocked => return RecipientBlocked,
-        PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
-        PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
-        PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
-    };
+    let (pending_transaction, p2p_offer_id) =
+        match mutate_state(|state| prepare(Chat::Group(args.group_id), &args.content, now, state)) {
+            PrepareResult::Success(t) => (t, None),
+            PrepareResult::P2PTrade(escrow_canister_id, args) => match set_up_p2p_trade(escrow_canister_id, args).await {
+                Ok((id, t)) => (t, Some(id)),
+                Err(error) => return error.into(),
+            },
+            PrepareResult::UserSuspended => return UserSuspended,
+            PrepareResult::TextTooLong(v) => return TextTooLong(v),
+            PrepareResult::RecipientBlocked => return RecipientBlocked,
+            PrepareResult::InvalidRequest(t) => return InvalidRequest(t),
+            PrepareResult::TransferCannotBeZero => return TransferCannotBeZero,
+            PrepareResult::TransferCannotBeToSelf => return TransferCannotBeToSelf,
+        };
 
     // Make the crypto transfer
     let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id, now).await
@@ -227,7 +229,7 @@ enum PrepareResult {
     TransferCannotBeToSelf,
 }
 
-fn prepare(content: &MessageContentInitial, now: TimestampMillis, state: &mut RuntimeState) -> PrepareResult {
+fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, state: &mut RuntimeState) -> PrepareResult {
     use PrepareResult::*;
 
     if state.data.suspended.value {
@@ -276,6 +278,7 @@ fn prepare(content: &MessageContentInitial, now: TimestampMillis, state: &mut Ru
                 output_token: p.output_token.clone(),
                 output_amount: p.output_amount,
                 expires_at: now + p.expires_in,
+                canister_to_notify: Some(chat.canister_id()),
             };
             return P2PTrade(state.data.escrow_canister_id, create_offer_args);
         }
