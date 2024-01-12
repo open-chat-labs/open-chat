@@ -116,7 +116,8 @@
                 <Legend label={i18nKey("reminders.menu")} />
                 <Select bind:value={selectedIntervalIndex}>
                     {#each intervals as interval}
-                        <option value={interval.index}>{interval.label}</option>
+                        <option value={interval.index}
+                            ><Translatable resourceKey={interval.label} /></option>
                     {/each}
                 </Select>
             </div>
