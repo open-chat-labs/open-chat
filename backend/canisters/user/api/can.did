@@ -36,6 +36,7 @@ type SendMessageResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PTradeSetUpFailed : text;
     UserSuspended;
     InternalError : text;
 };
@@ -202,6 +203,24 @@ type TokenSwapStatusResponse = variant {
         success : opt bool;
     };
     NotFound;
+};
+
+type AcceptP2PTradeOfferArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type AcceptP2PTradeOfferResponse = variant {
+    Success : nat64;
+    ChatNotFound;
+    InsufficientFunds;
+    AlreadyAccepted;
+    AlreadyCompleted;
+    OfferExpired;
+    OfferCancelled;
+    OfferNotFound;
+    UserSuspended;
+    InternalError : text;
 };
 
 type TipMessageArgs = record {
@@ -1029,6 +1048,7 @@ service : {
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
+    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

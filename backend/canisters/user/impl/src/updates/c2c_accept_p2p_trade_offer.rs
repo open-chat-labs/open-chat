@@ -45,6 +45,7 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
             mutate_state(|state| {
                 state.data.p2p_trades.add(P2PTradeOffer {
                     id: args.offer_id,
+                    chat: args.chat,
                     created_by: args.created_by,
                     created: args.created,
                     status: P2PTradeOfferStatus::Accepted,

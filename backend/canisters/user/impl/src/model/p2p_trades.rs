@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{TimestampMillis, TokenInfo, UserId};
+use types::{Chat, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PTrades {
@@ -34,6 +34,7 @@ impl P2PTrades {
 #[derive(Serialize, Deserialize)]
 pub struct P2PTradeOffer {
     pub id: u32,
+    pub chat: Chat,
     pub created_by: UserId,
     pub created: TimestampMillis,
     pub status: P2PTradeOfferStatus,
@@ -51,6 +52,7 @@ impl P2PTradeOffer {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: u32,
+        chat: Chat,
         created_by: UserId,
         input_token: TokenInfo,
         input_amount: u128,
@@ -61,6 +63,7 @@ impl P2PTradeOffer {
     ) -> P2PTradeOffer {
         P2PTradeOffer {
             id,
+            chat,
             created_by,
             created: now,
             status: P2PTradeOfferStatus::Pending,
