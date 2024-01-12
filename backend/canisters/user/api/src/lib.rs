@@ -3,6 +3,7 @@ use crate::c2c_edit_message::Args as EditMessageArgs;
 use crate::c2c_mark_read_v2::Args as MarkMessagesReadArgs;
 use crate::c2c_tip_message::Args as TipMessageArgs;
 use crate::c2c_toggle_reaction::Args as ToggleReactionArgs;
+use crate::c2c_undelete_messages::Args as UndeleteMessagesArgs;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -167,6 +168,7 @@ pub struct DiamondMembershipPaymentReceived {
 pub enum UserCanisterEvent {
     EditMessage(Box<EditMessageArgs>),
     DeleteMessages(Box<DeleteMessagesArgs>),
+    UndeleteMessages(Box<UndeleteMessagesArgs>),
     ToggleReaction(Box<ToggleReactionArgs>),
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),

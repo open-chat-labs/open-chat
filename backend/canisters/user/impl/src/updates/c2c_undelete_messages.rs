@@ -13,7 +13,7 @@ fn c2c_undelete_messages(args: Args) -> Response {
     mutate_state(|state| c2c_undelete_messages_impl(args, state))
 }
 
-fn c2c_undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller: UserId = state.env.caller().into();
 
     if state.data.blocked_users.contains(&caller) {

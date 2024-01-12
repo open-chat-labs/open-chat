@@ -3,6 +3,7 @@ use crate::updates::c2c_edit_message::c2c_edit_message_impl;
 use crate::updates::c2c_mark_read_v2::c2c_mark_read_impl;
 use crate::updates::c2c_tip_message::c2c_tip_message_impl;
 use crate::updates::c2c_toggle_reaction::c2c_toggle_reaction_impl;
+use crate::updates::c2c_undelete_messages::c2c_undelete_messages_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -31,6 +32,9 @@ fn process_event(event: UserCanisterEvent, state: &mut RuntimeState) {
         }
         UserCanisterEvent::DeleteMessages(args) => {
             c2c_delete_messages_impl(*args, state);
+        }
+        UserCanisterEvent::UndeleteMessages(args) => {
+            c2c_undelete_messages_impl(*args, state);
         }
         UserCanisterEvent::ToggleReaction(args) => {
             c2c_toggle_reaction_impl(*args, state);
