@@ -25,17 +25,17 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
     };
 
     match icrc_ledger_canister_c2c_client::icrc1_transfer(
-        args.output_token.ledger,
+        args.token1.ledger,
         &TransferArg {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
                 subaccount: Some(deposit_subaccount(my_user_id, args.offer_id)),
             },
-            fee: Some(args.output_token.fee.into()),
+            fee: Some(args.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
             memo: None,
-            amount: (args.output_amount + args.output_token.fee).into(),
+            amount: (args.token1_amount + args.token1.fee).into(),
         },
     )
     .await
@@ -54,11 +54,11 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
                     created: args.created,
                     status: P2PTradeOfferStatus::Accepted,
                     last_updated: state.env.now(),
-                    token0: args.input_token,
-                    token0_amount: args.input_amount,
-                    token0_txn_in: Some(args.input_transaction_id),
-                    token1: args.output_token,
-                    token1_amount: args.output_amount,
+                    token0: args.token0,
+                    token0_amount: args.token0_amount,
+                    token0_txn_in: Some(args.token0_txn_in),
+                    token1: args.token1,
+                    token1_amount: args.token1_amount,
                     token1_txn_in: Some(token1_txn_in),
                     expires_at: args.expires_at,
                 });

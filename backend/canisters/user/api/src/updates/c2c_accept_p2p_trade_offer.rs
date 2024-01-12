@@ -9,11 +9,11 @@ pub struct Args {
     pub chat: Chat,
     pub created: TimestampMillis,
     pub created_by: UserId,
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub input_transaction_id: TransactionId,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token0_txn_in: TransactionId,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
     pub expires_at: TimestampMillis,
 }
 
