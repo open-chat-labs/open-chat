@@ -124,7 +124,7 @@
 </script>
 
 {#if confirmingDelete}
-    <AreYouSure message={$_("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
+    <AreYouSure message={i18nKey("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
 {/if}
 
 {#if selectedGroup !== undefined}

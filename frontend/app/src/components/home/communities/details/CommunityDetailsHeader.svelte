@@ -13,7 +13,6 @@
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../../stores/iconSize";
     import type { CommunitySummary, Level } from "openchat-client";
-    import { interpolateLevel } from "../../../../utils/i18n";
     import { popRightPanelHistory, pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { i18nKey } from "../../../../i18n/i18n";
     import Translatable from "../../../Translatable.svelte";
@@ -80,7 +79,7 @@
             </Menu>
         </span>
     </MenuIcon>
-    <h4>{interpolateLevel("groupDetails", level)}</h4>
+    <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

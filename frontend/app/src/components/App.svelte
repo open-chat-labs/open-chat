@@ -3,7 +3,6 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
-    import "../utils/i18n";
     import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
