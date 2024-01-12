@@ -14,7 +14,7 @@ fn c2c_tip_message(args: Args) -> Response {
     mutate_state(|state| c2c_tip_message_impl(args, state))
 }
 
-fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     let user_id: UserId = state.env.caller().into();
     if let Some(chat) = state.data.direct_chats.get_mut(&user_id.into()) {
         let now = state.env.now();
