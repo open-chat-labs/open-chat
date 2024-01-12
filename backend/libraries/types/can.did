@@ -1547,21 +1547,21 @@ type MessageReport = record {
 };
 
 type P2PTradeContentInitial = record {
-    input_token : TokenInfo;
-    input_amount : nat;
-    output_token : TokenInfo;
-    output_amount : nat;
+    token0 : TokenInfo;
+    token0_amount : nat;
+    token1 : TokenInfo;
+    token1_amount : nat;
     expires_in : Milliseconds;
     caption : opt text;
 };
 
 type P2PTradeContent = record {
     offer_id : nat32;
-    input_token : TokenInfo;
-    input_amount : nat;
-    input_transaction_index : nat64;
-    output_token : TokenInfo;
-    output_amount : nat;
+    token0 : TokenInfo;
+    token0_amount : nat;
+    token0_txn_in : TransactionId;
+    token1 : TokenInfo;
+    token1_amount : nat;
     expires_at : TimestampMillis;
     status : P2PTradeStatus;
     caption : opt text;
@@ -1569,9 +1569,45 @@ type P2PTradeContent = record {
 
 type P2PTradeStatus = variant {
     Open;
-    Cancelled;
-    Reserved : record { UserId; TimestampMillis };
-    Completed : record { UserId; BlockIndex; TimestampMillis };
+    Cancelled : P2PTradeCancelled;
+    Expired : P2PTradeExpired;
+    Reserved : P2PTradeReserved;
+    Accepted : P2PTradeAccepted;
+    Completed : P2PTradeCompleted;
+};
+
+type ReserveP2PTradeResult = variant {
+    Success : ReserveP2PTradeSuccess;
+    Failure : P2PTradeStatus;
+    OfferNotFound;
+};
+
+type ReserveP2PTradeSuccess = record {
+    content : P2PTradeContent;
+    created : TimestampMillis;
+    created_by : UserId;
+};
+
+type P2PTradeCancelled = record {
+    token0_txn_out : opt TransactionId;
+};
+
+type P2PTradeExpired = P2PTradeCancelled;
+
+type P2PTradeReserved = record {
+    reserved_by : UserId;
+};
+
+type P2PTradeAccepted = record {
+    accepted_by : UserId;
+    token1_txn_in : TransactionId;
+};
+
+type P2PTradeCompleted = record {
+    accepted_by : UserId;
+    token1_txn_in : TransactionId;
+    token0_txn_out : TransactionId;
+    token1_txn_out : TransactionId;
 };
 
 type EmptyArgs = record {};
@@ -1640,4 +1676,45 @@ type TokenInfo = record {
     ledger : CanisterId;
     decimals : nat8;
     fee : nat;
+};
+
+type TransactionId = record {
+    index : nat64;
+    hash : opt vec nat8;
+};
+
+type AcceptSwapSuccess = record {
+    token1_txn_in : TransactionId;
+};
+
+type AcceptSwapStatusError = variant {
+    AlreadyReserved : AcceptSwapAlreadyReserved;
+    AlreadyAccepted : AcceptSwapAlreadyAccepted;
+    AlreadyCompleted : AcceptSwapAlreadyCompleted;
+    OfferExpired : AcceptSwapOfferExpired;
+    OfferCancelled : AcceptSwapOfferCancelled;
+};
+
+type AcceptSwapAlreadyReserved = record {
+    reserved_by : UserId;
+};
+
+type AcceptSwapAlreadyAccepted = record {
+    accepted_by : UserId;
+    token1_txn_in : TransactionId;
+};
+
+type AcceptSwapAlreadyCompleted = record {
+    accepted_by : UserId;
+    token1_txn_in : TransactionId;
+    token0_txn_out : TransactionId;
+    token1_txn_out : TransactionId;
+};
+
+type AcceptSwapOfferExpired = record {
+    token0_txn_out : opt TransactionId;
+};
+
+type AcceptSwapOfferCancelled = record {
+    token0_txn_out : opt TransactionId;
 };

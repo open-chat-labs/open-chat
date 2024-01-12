@@ -211,14 +211,11 @@ type AcceptP2PTradeOfferArgs = record {
 };
 
 type AcceptP2PTradeOfferResponse = variant {
-    Success : nat64;
-    ChatNotFound;
+    Success : AcceptSwapSuccess;
     InsufficientFunds;
-    AlreadyAccepted;
-    AlreadyCompleted;
-    OfferExpired;
-    OfferCancelled;
+    StatusError : AcceptSwapStatusError;
     OfferNotFound;
+    ChatNotFound;
     UserSuspended;
     InternalError : text;
 };

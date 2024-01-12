@@ -525,10 +525,10 @@ pub struct MessageReport {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PTradeContentInitial {
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
     pub expires_in: Milliseconds,
     pub caption: Option<String>,
 }
@@ -536,14 +536,14 @@ pub struct P2PTradeContentInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PTradeContent {
     pub offer_id: u32,
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub input_transaction_index: u64,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
     pub expires_at: TimestampMillis,
-    pub status: P2PTradeStatus,
     pub caption: Option<String>,
+    pub token0_txn_in: TransactionId,
+    pub status: P2PTradeStatus,
 }
 
 impl P2PTradeContent {
@@ -555,33 +555,33 @@ impl P2PTradeContent {
     ) -> P2PTradeContent {
         P2PTradeContent {
             offer_id,
-            input_token: content.input_token,
-            input_amount: transfer.units(),
-            input_transaction_index: transfer.index(),
-            output_token: content.output_token,
-            output_amount: content.output_amount,
+            token0: content.token0,
+            token0_amount: transfer.units(),
+            token1: content.token1,
+            token1_amount: content.token1_amount,
             expires_at: now + content.expires_in,
-            status: P2PTradeStatus::Open,
             caption: content.caption,
+            token0_txn_in: transfer.into(),
+            status: P2PTradeStatus::Open,
         }
     }
 
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> Result<(), ReserveP2PTradeError> {
-        match self.status {
-            P2PTradeStatus::Open if now < self.expires_at => {
-                self.status = P2PTradeStatus::Reserved(user_id, now);
-                Ok(())
+    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let P2PTradeStatus::Open = self.status {
+            if now < self.expires_at {
+                self.status = P2PTradeStatus::Reserved(P2PTradeReserved { reserved_by: user_id });
+                return true;
+            } else {
+                self.status = P2PTradeStatus::Expired(P2PTradeExpired { token0_txn_out: None });
             }
-            P2PTradeStatus::Open => Err(ReserveP2PTradeError::Expired),
-            P2PTradeStatus::Cancelled => Err(ReserveP2PTradeError::Cancelled),
-            P2PTradeStatus::Reserved(u, _) => Err(ReserveP2PTradeError::AlreadyReserved(u)),
-            P2PTradeStatus::Completed(u, _, _) => Err(ReserveP2PTradeError::AlreadyCompleted(u)),
         }
+
+        false
     }
 
     pub fn unreserve(&mut self, user_id: UserId) -> bool {
-        if let P2PTradeStatus::Reserved(u, _) = self.status {
-            if u == user_id {
+        if let P2PTradeStatus::Reserved(r) = &self.status {
+            if r.reserved_by == user_id {
                 self.status = P2PTradeStatus::Open;
                 return true;
             }
@@ -589,10 +589,28 @@ impl P2PTradeContent {
         false
     }
 
-    pub fn complete(&mut self, user_id: UserId, transaction_index: u64, now: TimestampMillis) -> bool {
-        if let P2PTradeStatus::Reserved(u, _) = self.status {
-            if u == user_id {
-                self.status = P2PTradeStatus::Completed(user_id, transaction_index, now);
+    pub fn accept(&mut self, user_id: UserId, token1_txn_in: TransactionId) -> bool {
+        if let P2PTradeStatus::Reserved(a) = &self.status {
+            if a.reserved_by == user_id {
+                self.status = P2PTradeStatus::Accepted(P2PTradeAccepted {
+                    accepted_by: user_id,
+                    token1_txn_in,
+                });
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn complete(&mut self, user_id: UserId, token0_txn_out: TransactionId, token1_txn_out: TransactionId) -> bool {
+        if let P2PTradeStatus::Accepted(a) = &self.status {
+            if a.accepted_by == user_id {
+                self.status = P2PTradeStatus::Completed(P2PTradeCompleted {
+                    accepted_by: user_id,
+                    token1_txn_in: a.token1_txn_in,
+                    token0_txn_out,
+                    token1_txn_out,
+                });
                 return true;
             }
         }
@@ -603,16 +621,71 @@ impl P2PTradeContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum P2PTradeStatus {
     Open,
-    Cancelled,
-    Reserved(UserId, TimestampMillis),
-    Completed(UserId, u64, TimestampMillis), // u64 is the transaction index
+    Cancelled(P2PTradeCancelled),
+    Expired(P2PTradeExpired),
+    Reserved(P2PTradeReserved),
+    Accepted(P2PTradeAccepted),
+    Completed(P2PTradeCompleted),
 }
 
-pub enum ReserveP2PTradeError {
-    Cancelled,
-    Expired,
-    AlreadyReserved(UserId),
-    AlreadyCompleted(UserId),
+#[allow(clippy::large_enum_variant)]
+pub enum ReserveP2PTradeResult {
+    Success(ReserveP2PTradeSuccess),
+    Failure(P2PTradeStatus),
+    OfferNotFound,
+}
+
+pub struct ReserveP2PTradeSuccess {
+    pub content: P2PTradeContent,
+    pub created: TimestampMillis,
+    pub created_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeCancelled {
+    pub token0_txn_out: Option<TransactionId>,
+}
+
+pub type P2PTradeExpired = P2PTradeCancelled;
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeReserved {
+    pub reserved_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeAccepted {
+    pub accepted_by: UserId,
+    pub token1_txn_in: TransactionId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct P2PTradeCompleted {
+    pub accepted_by: UserId,
+    pub token1_txn_in: TransactionId,
+    pub token0_txn_out: TransactionId,
+    pub token1_txn_out: TransactionId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
+pub struct TransactionId {
+    pub index: u64,
+    pub hash: Option<[u8; 32]>,
+}
+
+impl From<CompletedCryptoTransaction> for TransactionId {
+    fn from(value: CompletedCryptoTransaction) -> TransactionId {
+        match value {
+            CompletedCryptoTransaction::NNS(t) => TransactionId {
+                index: t.block_index,
+                hash: Some(t.transaction_hash),
+            },
+            CompletedCryptoTransaction::ICRC1(t) => TransactionId {
+                index: t.block_index,
+                hash: None,
+            },
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

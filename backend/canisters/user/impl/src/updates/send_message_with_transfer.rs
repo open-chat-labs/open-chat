@@ -275,10 +275,10 @@ fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, st
         }
         MessageContentInitial::P2PTrade(p) => {
             let create_offer_args = escrow_canister::create_offer::Args {
-                input_token: p.input_token.clone(),
-                input_amount: p.input_amount,
-                output_token: p.output_token.clone(),
-                output_amount: p.output_amount,
+                token0: p.token0.clone(),
+                token0_amount: p.token0_amount,
+                token1: p.token1.clone(),
+                token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
                 canister_to_notify: Some(chat.canister_id()),
             };
@@ -341,23 +341,23 @@ pub(crate) async fn set_up_p2p_trade(
             id,
             chat,
             my_user_id,
-            args.input_token.clone(),
-            args.input_amount,
-            args.output_token.clone(),
-            args.output_amount,
+            args.token0.clone(),
+            args.token0_amount,
+            args.token1.clone(),
+            args.token1_amount,
             args.expires_at,
             now,
         ));
 
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
-            ledger: args.input_token.ledger,
-            token: args.input_token.token.clone(),
-            amount: args.input_amount + args.input_token.fee,
+            ledger: args.token0.ledger,
+            token: args.token0.token.clone(),
+            amount: args.token0_amount + args.token0.fee,
             to: Account {
                 owner: state.data.escrow_canister_id,
                 subaccount: Some(deposit_subaccount(my_user_id, id)),
             },
-            fee: args.input_token.fee,
+            fee: args.token0.fee,
             memo: Some(MEMO_P2P_OFFER.to_vec().into()),
             created: now * NANOS_PER_MILLISECOND,
         });
