@@ -7,7 +7,6 @@
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { _ } from "svelte-i18n";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { currentTheme } from "../../theme/themes";

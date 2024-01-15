@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -11,14 +12,13 @@
 {#if ttl !== undefined}
     <div class="disappearing">
         <h4>
-            {$_("disappearingMessages.label")}
+            <Translatable resourceKey={i18nKey("disappearingMessages.label")} />
         </h4>
         <p>
-            {$_("disappearingMessages.summary", {
-                values: {
+            <Translatable
+                resourceKey={i18nKey("disappearingMessages.summary", {
                     duration: client.formatDuration(Number(ttl)),
-                },
-            })}
+                })} />
         </p>
     </div>
 {/if}

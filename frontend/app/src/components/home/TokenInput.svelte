@@ -3,9 +3,9 @@
     import { type OpenChat } from "openchat-client";
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -79,21 +79,22 @@
 
 <div class="label">
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
-    {#if maxAmount !== undefined}
-        <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
-    {/if}
+{#if maxAmount !== undefined}
+    <div on:click={max} class="max">
+        <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+    </div>
+{/if}
 </div>
 <div class="wrapper">
     {#if transferFees !== undefined}
         <div class="fee">
             <Alert size={$iconSize} color={"var(--warn)"} />
             <span>
-                {$_("tokenTransfer.fee", {
-                    values: {
+                <Translatable
+                    resourceKey={i18nKey("tokenTransfer.fee", {
                         fee: client.formatTokens(transferFees, tokenDecimals),
                         token: symbol,
-                    },
-                })}
+                    })} />
             </span>
         </div>
     {/if}

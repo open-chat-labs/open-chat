@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";

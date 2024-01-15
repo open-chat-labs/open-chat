@@ -29,6 +29,7 @@
     import { compareBigints } from "../utils/bigints";
     import Diamond from "./icons/Diamond.svelte";
     import { i18nKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -255,7 +256,7 @@
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <h4>{$_("sendTo")}</h4>
+        <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
         <span
             role="button"
             tabindex="0"
@@ -271,7 +272,7 @@
         <Search searching={false} bind:searchTerm placeholder={"search"} />
     </div>
     {#if noTargets}
-        <div class="no-chats">{$_("noChatsAvailable")}</div>
+        <div class="no-chats"><Translatable resourceKey={i18nKey("noChatsAvailable")} /></div>
     {:else}
         <div class="selectable-chats">
             {#if targets.directChats.length > 0}
@@ -286,7 +287,7 @@
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.directChats")}
+                                <Translatable resourceKey={i18nKey("communities.directChats")} />
                             </h4>
                         </div>
                     </div>
@@ -327,7 +328,7 @@
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.groupChats")}
+                                <Translatable resourceKey={i18nKey("communities.groupChats")} />
                             </h4>
                         </div>
                     </div>
@@ -360,7 +361,7 @@
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.favourites")}
+                                <Translatable resourceKey={i18nKey("communities.favourites")} />
                             </h4>
                         </div>
                     </div>

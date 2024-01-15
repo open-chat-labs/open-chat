@@ -18,6 +18,8 @@
     import Button from "../Button.svelte";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import page from "page";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -62,7 +64,10 @@
                     {group.name}
                 </h3>
                 <p class="user-count">
-                    {$_("groupWithN", { values: { number: group.memberCount.toLocaleString() } })}
+                    <Translatable
+                        resourceKey={i18nKey("groupWithN", {
+                            number: group.memberCount.toLocaleString(),
+                        })} />
                 </p>
             </div>
             <div title={$_("notInterested")} class="close" on:click={() => dismiss(group)}>
@@ -80,7 +85,8 @@
             <AccessGateIcon on:upgrade gate={group.gate} />
         </div>
         {#if member}
-            <Button tiny on:click={() => leaveGroup(group)}>{$_("leave")}</Button>
+            <Button tiny on:click={() => leaveGroup(group)}
+                ><Translatable resourceKey={i18nKey("leave")} /></Button>
         {:else}
             {#if !$suspendedUser}
                 <Button
@@ -88,10 +94,11 @@
                     loading={joining === group}
                     tiny
                     hollow
-                    on:click={() => joinGroup(group)}>{$_("join")}</Button>
+                    on:click={() => joinGroup(group)}
+                    ><Translatable resourceKey={i18nKey("join")} /></Button>
             {/if}
             <Button disabled={joining === group} tiny on:click={() => gotoGroup(group)}
-                >{$_("preview")}</Button>
+                ><Translatable resourceKey={i18nKey("preview")} /></Button>
         {/if}
     </Footer>
 </div>
@@ -101,8 +108,11 @@
         position: relative;
         display: flex;
         flex-direction: column;
-        transition: transform 200ms ease-in-out, box-shadow 200ms ease-in-out,
-            opacity 200ms ease-in-out, border-left 200ms ease-in-out;
+        transition:
+            transform 200ms ease-in-out,
+            box-shadow 200ms ease-in-out,
+            opacity 200ms ease-in-out,
+            border-left 200ms ease-in-out;
         @include box-shadow(1);
         border-radius: $sp3;
         background-color: var(--recommended-bg);

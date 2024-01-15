@@ -19,6 +19,8 @@
     import InvitedUser from "./InvitedUser.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -149,7 +151,7 @@
             on:click={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
-            {$_("communities.members")}
+            <Translatable resourceKey={i18nKey("communities.members")} />
         </div>
         <div
             tabindex="0"
@@ -157,7 +159,7 @@
             on:click={() => selectTab("groups")}
             class:selected={selectedTab === "groups"}
             class="tab">
-            {$_("communities.userGroups")}
+            <Translatable resourceKey={i18nKey("communities.userGroups")} />
         </div>
     </div>
 {/if}

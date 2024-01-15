@@ -23,6 +23,7 @@
     import { _ } from "svelte-i18n";
     import MessageContentInitial from "./MessageContentInitial.svelte";
     import P2PSwapContent from "./P2PSwapContent.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -62,9 +63,9 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <MessageContentInitial text={$_("prizes.creatingYourPrizeMessage")} {me} />
+    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {me} />
 {:else if content.kind === "p2p_swap_content_initial"}
-    <MessageContentInitial text={$_("p2pSwap.creatingYourMessage")} {me} />
+    <MessageContentInitial text={i18nKey("p2pSwap.creatingYourMessage")} {me} />
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
 {:else if content.kind === "p2p_swap_content"}

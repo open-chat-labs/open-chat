@@ -8,6 +8,7 @@
     } from "openchat-client";
     import GroupPermissionsPartitionViewer from "./GroupPermissionsPartitionViewer.svelte";
     import TabHeader from "../TabHeader.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
@@ -101,7 +102,11 @@
 
 <TabHeader
     bind:selected={selectedTab}
-    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
+    items={[
+        i18nKey("permissions.general"),
+        i18nKey("permissions.message"),
+        i18nKey("permissions.thread"),
+    ]} />
 
 {#if selectedTab === 0}
     <GroupPermissionsPartitionViewer partition={generalPartition} />

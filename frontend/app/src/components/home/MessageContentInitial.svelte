@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import FancyLoader from "../icons/FancyLoader.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { type ResourceKey } from "../../i18n/i18n";
 
-    export let text: string;
+    export let text: ResourceKey;
     export let me: boolean;
 </script>
 
@@ -11,7 +12,7 @@
         <div class="spinner">
             <FancyLoader />
         </div>
-        <p>{text}</p>
+        <p><Translatable resourceKey={text} /></p>
     </div>
 {/if}
 

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { ChatMap, type ChannelMatch, type OpenChat } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import { getContext } from "svelte";
     import ChannelCard from "./ChannelCard.svelte";

@@ -1,12 +1,13 @@
 <svelte:options immutable />
 
 <script lang="ts">
+    import { i18nKey } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { _ } from "svelte-i18n";
+    import Translatable from "../Translatable.svelte";
 </script>
 
 <div class="reply-wrapper" class:rtl={$rtlStore}>
-    {$_("unresolvedReply")}
+    <Translatable resourceKey={i18nKey("unresolvedReply")} />
 </div>
 
 <style lang="scss">

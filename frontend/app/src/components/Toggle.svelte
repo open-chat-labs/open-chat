@@ -1,7 +1,6 @@
 <script lang="ts">
     import type { ResourceKey } from "../i18n/i18n";
     import Checkbox from "./Checkbox.svelte";
-    import { _ } from "svelte-i18n";
     import Translatable from "./Translatable.svelte";
 
     export let checked: boolean = false;

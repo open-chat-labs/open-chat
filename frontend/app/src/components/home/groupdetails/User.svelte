@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import { _ } from "svelte-i18n";
+    // import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
@@ -10,6 +10,8 @@
     import type { UserSummary } from "openchat-shared";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import Diamond from "../../icons/Diamond.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -64,7 +66,7 @@
             </h4>
             {#if role !== undefined}
                 <span class="role">
-                    ({$_(role)})
+                    (<Translatable resourceKey={i18nKey(role)} />)
                 </span>
             {/if}
         </div>

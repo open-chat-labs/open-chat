@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import { type ChatPermissionRole, chatRoles, type PermissionsByRole } from "openchat-client";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let partition: PermissionsByRole;
 
@@ -18,7 +19,7 @@
     {#each chatRoles as role}
         {#if partition[role].size > 0}
             <li class="section">
-                <div class="who-can">{$_(roleLabels[role])}</div>
+                <div class="who-can"><Translatable resourceKey={i18nKey(roleLabels[role])} /></div>
                 <ul>
                     {#each [...partition[role]] as perm}
                         <li class="permission">

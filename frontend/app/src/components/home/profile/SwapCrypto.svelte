@@ -15,7 +15,8 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let ledgerIn: string;
 
@@ -54,9 +55,10 @@
 
     $: title =
         state === "quote"
-            ? $_("tokenSwap.swapToken", { values: { tokenIn: detailsIn.symbol } })
-            : $_("tokenSwap.swapTokenTo", {
-                  values: { tokenIn: detailsIn.symbol, tokenOut: detailsOut!.symbol },
+            ? i18nKey("tokenSwap.swapToken", { tokenIn: detailsIn.symbol })
+            : i18nKey("tokenSwap.swapTokenTo", {
+                  tokenIn: detailsIn.symbol,
+                  tokenOut: detailsOut!.symbol,
               });
 
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -68,7 +70,7 @@
 
     onMount(() => loadSwaps(ledgerIn));
 
-    function getPrimaryButtonText(state: State, result: Result): string {
+    function getPrimaryButtonText(state: State, result: Result): ResourceKey {
         let label;
 
         if (state === "finished") {
@@ -77,7 +79,7 @@
             label = state;
         }
 
-        return $_(`tokenSwap.${label}`);
+        return i18nKey(`tokenSwap.${label}`);
     }
 
     function quote() {
@@ -197,7 +199,7 @@
 
 <ModalContent>
     <span class="header" slot="header">
-        <div class="main-title">{title}</div>
+        <div class="main-title"><Translatable resourceKey={title} /></div>
         {#if state === "quote"}
             <BalanceWithRefresh
                 ledger={ledgerIn}
@@ -266,14 +268,15 @@
         <ButtonGroup>
             {#if !swapping}
                 <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
-                    >{$_("close")}</Button>
+                    ><Translatable resourceKey={i18nKey("close")} /></Button>
             {/if}
             {#if result !== "success" && result !== "error"}
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
                     tiny={$mobileWidth}
-                    on:click={onPrimaryClick}>{primaryButtonText}</Button>
+                    on:click={onPrimaryClick}
+                    ><Translatable resourceKey={primaryButtonText} /></Button>
             {/if}
         </ButtonGroup>
     </span>

@@ -6,7 +6,6 @@
         type OpenChat,
         chatIdentifiersEqual,
     } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
@@ -22,6 +21,8 @@
     import { type RemoteData, mapRemoteData } from "../../utils/remoteData";
     import page from "page";
     import { routeForScope } from "../../routes";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let joining: MultiUserChat | undefined;
 
@@ -38,7 +39,7 @@
 
     function dismissRecommendation(ev: CustomEvent<GroupChatIdentifier>) {
         hotGroups = mapRemoteData(hotGroups, (data) =>
-            data.filter((g) => !chatIdentifiersEqual(g.id, ev.detail))
+            data.filter((g) => !chatIdentifiersEqual(g.id, ev.detail)),
         );
         client.dismissRecommendation(ev.detail);
     }
@@ -73,8 +74,8 @@
                 </div>
             {/if}
             <div class="header">
-                <h3 class="title">{$_("hotGroups")}</h3>
-                <p class="subtitle">{$_("selectAGroup")}</p>
+                <h3 class="title"><Translatable resourceKey={i18nKey("hotGroups")} /></h3>
+                <p class="subtitle"><Translatable resourceKey={i18nKey("selectAGroup")} /></p>
             </div>
         </SectionHeader>
 
@@ -92,11 +93,13 @@
     </div>
 {:else}
     <div class="no-groups">
-        <h3 class="title">{$_("noGroupsFound")}</h3>
-        <p class="subtitle">{$_("checkBackLater")}</p>
+        <h3 class="title"><Translatable resourceKey={i18nKey("noGroupsFound")} /></h3>
+        <p class="subtitle"><Translatable resourceKey={i18nKey("checkBackLater")} /></p>
         <ButtonGroup align={"fill"}>
-            <Button small on:click={cancelRecommendations}>{$_("close")}</Button>
-            <Button secondary small on:click={loadData}>{$_("refresh")}</Button>
+            <Button small on:click={cancelRecommendations}
+                ><Translatable resourceKey={i18nKey("close")} /></Button>
+            <Button secondary small on:click={loadData}
+                ><Translatable resourceKey={i18nKey("refresh")} /></Button>
         </ButtonGroup>
     </div>
 {/if}

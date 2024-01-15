@@ -4,6 +4,8 @@
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
     import Button from "./Button.svelte";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const MIN_DISPLAY_NAME_LENGTH = 3;
     const MAX_DISPLAY_NAME_LENGTH = 25;
@@ -50,7 +52,8 @@
     </Input>
 {:else}
     <div class="upgrade">
-        <Button fill on:click={() => dispatch("upgrade")}>{$_("upgrade.forDisplayName")}</Button>
+        <Button fill on:click={() => dispatch("upgrade")}
+            ><Translatable resourceKey={i18nKey("upgrade.forDisplayName")} /></Button>
     </div>
 {/if}
 

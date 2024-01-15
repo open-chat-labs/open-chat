@@ -8,6 +8,8 @@
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,9 +29,14 @@
         <Avatar url={client.groupAvatarUrl(group)} size={AvatarSize.Large} />
     </div>
     <div>
-        {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {
-            values: { number: group.memberCount, level },
-        })}
+        <Translatable
+            resourceKey={i18nKey(
+                group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN",
+                {
+                    number: group.memberCount,
+                    level,
+                },
+            )} />
     </div>
     <!-- {#if !group.historyVisibleToNewJoiners}
         <div>{$_("group.historyPrivateMessage")}</div>

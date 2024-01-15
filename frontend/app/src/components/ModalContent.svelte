@@ -9,6 +9,8 @@
     import { mobileWidth } from "../stores/screenDimensions";
     import { menuStore } from "../stores/menu";
     import { currentTheme } from "../theme/themes";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -116,7 +118,7 @@
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                    {$_("close")}
+                    <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </slot>
         </div>

@@ -15,7 +15,8 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { PollContent, TotalPollVotes } from "openchat-client";
     import Legend from "../Legend.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
     const MAX_QUESTION_LENGTH = 250;
@@ -39,7 +40,7 @@
 
     let poll: CandidatePoll = emptyPoll();
     let nextAnswer: string = "";
-    let answerError: string | undefined = "";
+    let answerError: ResourceKey | undefined = undefined;
     let selectedDuration: Duration = "oneDay";
     let showSettings = false;
 
@@ -49,7 +50,7 @@
 
     export function resetPoll() {
         selectedDuration = "oneDay";
-        answerError = "";
+        answerError = undefined;
         nextAnswer = "";
         poll = emptyPoll();
         showSettings = false;
@@ -80,7 +81,7 @@
             nextAnswer = "";
             return true;
         } else {
-            answerError = "poll.invalidAnswer";
+            answerError = i18nKey("poll.invalidAnswer");
             return false;
         }
     }
@@ -149,7 +150,7 @@
 {#if open}
     <Overlay>
         <ModalContent>
-            <span slot="header">{$_("poll.create")}</span>
+            <span slot="header"><Translatable resourceKey={i18nKey("poll.create")} /></span>
             <span slot="body">
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
@@ -157,12 +158,14 @@
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             secondary={showSettings}
-                            on:click={() => (showSettings = false)}>{$_("poll.poll")}</Button>
+                            on:click={() => (showSettings = false)}
+                            ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
                             small={!$mobileWidth}
                             secondary={!showSettings}
                             tiny={$mobileWidth}
-                            on:click={() => (showSettings = true)}>{$_("poll.settings")}</Button>
+                            on:click={() => (showSettings = true)}
+                            ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
                 </div>
                 {#if !showSettings}
@@ -208,7 +211,9 @@
                                                     : "poll.answerText",
                                             )}>
                                             {#if answerError !== undefined}
-                                                <ErrorMessage>{$_(answerError)}</ErrorMessage>
+                                                <ErrorMessage
+                                                    ><Translatable
+                                                        resourceKey={answerError} /></ErrorMessage>
                                             {/if}
                                         </Input>
                                     </div>

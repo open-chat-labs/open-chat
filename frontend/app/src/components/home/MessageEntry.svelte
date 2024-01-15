@@ -32,6 +32,8 @@
     import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
     import { scream } from "../../utils/scream";
     import { snowing } from "../../stores/snow";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -527,7 +529,8 @@
         <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
     {:else if !canSendAny}
         <div class="disabled">
-            {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
+            <Translatable
+                resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
         </div>
     {:else}
         {#if recording}

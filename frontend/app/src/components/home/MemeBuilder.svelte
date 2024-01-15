@@ -4,13 +4,14 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import { mobileWidth } from "../../stores/screenDimensions";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, tick } from "svelte";
     import type { MemeFighterContent as MemeFighterContentType } from "openchat-client";
     import { currentTheme } from "../../theme/themes";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -91,10 +92,12 @@
             </div>
             <span class="footer" slot="footer">
                 <ButtonGroup align={$mobileWidth ? "center" : "end"}>
-                    <Button tiny secondary on:click={reset}>{$_("reset")}</Button>
-                    <Button tiny secondary on:click={close}>{$_("cancel")}</Button>
+                    <Button tiny secondary on:click={reset}
+                        ><Translatable resourceKey={i18nKey("reset")} /></Button>
+                    <Button tiny secondary on:click={close}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                     <Button tiny disabled={memeUrl === undefined} on:click={send}
-                        >{$_("send")}</Button>
+                        ><Translatable resourceKey={i18nKey("send")} /></Button>
                 </ButtonGroup>
             </span>
         </ModalContent>

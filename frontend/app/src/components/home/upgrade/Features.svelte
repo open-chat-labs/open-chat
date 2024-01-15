@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    // import { _ } from "svelte-i18n";
     import Button from "../../Button.svelte";
     import Footer from "./Footer.svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -102,8 +102,8 @@
 
     <Feature
         {landing}
-        diamondInfo={$_("upgrade.mediaLimits", { values: { image: "5mb", video: "50mb" } })}
-        freeInfo={$_("upgrade.mediaLimits", { values: { image: "1mb", video: "5mb" } })}>
+        diamondInfo={i18nKey("upgrade.mediaLimits", { image: "5mb", video: "50mb" })}
+        freeInfo={i18nKey("upgrade.mediaLimits", { image: "1mb", video: "5mb" })}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.mediaMessages")} /></div>
         <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeMediaMessages")} /></div>
         <div slot="diamond">
@@ -113,8 +113,8 @@
 
     <Feature
         {landing}
-        diamondInfo={$_("upgrade.diamondStorageLimit")}
-        freeInfo={$_("upgrade.freeStorageLimit")}>
+        diamondInfo={i18nKey("upgrade.diamondStorageLimit")}
+        freeInfo={i18nKey("upgrade.freeStorageLimit")}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.storage")} /></div>
         <div slot="free"><Translatable resourceKey={i18nKey("upgrade.freeStorage")} /></div>
         <div slot="diamond"><Translatable resourceKey={i18nKey("upgrade.diamondStorage")} /></div>
@@ -198,7 +198,7 @@
         </div>
     </Feature>
 
-    <Feature {landing} diamondInfo={$_("upgrade.airdropsInfo")}>
+    <Feature {landing} diamondInfo={i18nKey("upgrade.airdropsInfo")}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.airdrops")} /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />

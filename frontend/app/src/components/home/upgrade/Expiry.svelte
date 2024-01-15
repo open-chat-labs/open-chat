@@ -3,6 +3,8 @@
     import { getContext } from "svelte";
     import { now } from "../../../stores/time";
     import { _, locale } from "svelte-i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -42,7 +44,7 @@
 {#if $diamondStatus.kind !== "inactive"}
     <p class="expiry">
         <span class="msg">
-            {$_("upgrade.expiryMessage", { values: { relative: expiresIn } })}
+            <Translatable resourceKey={i18nKey("upgrade.expiryMessage", { relative: expiresIn })} />
         </span>
         <span class="date">
             ({expiresAt}).

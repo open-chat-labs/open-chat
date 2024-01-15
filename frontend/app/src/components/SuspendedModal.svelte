@@ -1,9 +1,10 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import ModalContent from "./ModalContent.svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
     import Markdown from "./home/Markdown.svelte";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     $: user = client.user;
@@ -24,7 +25,7 @@ You can appeal this suspension by sending a direct message to the @OpenChat Twit
 </script>
 
 <ModalContent on:close>
-    <div slot="header">{$_("accountSuspended")}</div>
+    <div slot="header"><Translatable resourceKey={i18nKey("accountSuspended")} /></div>
     <div slot="body">
         <Markdown text={buildNoticeText()} />
     </div>
