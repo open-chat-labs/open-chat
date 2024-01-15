@@ -19,6 +19,7 @@
     import Markdown from "../../Markdown.svelte";
     import Legend from "../../../Legend.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -178,7 +179,7 @@
     <div class="users">
         <div class="legend" class:readonly={!canManageUserGroups}>
             {#if canManageUserGroups}
-                {$_("communities.userGroupMembers")}
+                <Translatable resourceKey={i18nKey("communities.userGroupMembers")} />
             {:else}
                 <Markdown
                     text={$_("communities.namedUserGroupMembers", {
@@ -201,10 +202,11 @@
 
     <div class="buttons">
         <ButtonGroup align="fill">
-            <Button on:click={cancel} secondary>{$_("cancel")}</Button>
+            <Button on:click={cancel} secondary
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             {#if canManageUserGroups}
                 <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
-                    >{$_("save")}</Button>
+                    ><Translatable resourceKey={i18nKey("save")} /></Button>
             {/if}
         </ButtonGroup>
     </div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectPermissionRole from "../../SelectPermissionRole.svelte";
     import { type CommunityPermissions, communityRoles } from "openchat-client";
     import { i18nKey } from "../../../../i18n/i18n";

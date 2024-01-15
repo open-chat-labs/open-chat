@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import AreYouSure from "../../../AreYouSure.svelte";
@@ -21,6 +20,7 @@
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import User from "../../groupdetails/User.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -156,7 +156,7 @@
         <div class="groups">
             {#if matchingGroups.length === 0}
                 <div class="no-groups">
-                    {$_("communities.noUserGroups")}
+                    <Translatable resourceKey={i18nKey("communities.noUserGroups")} />
                 </div>
             {:else}
                 {#each matchingGroups as userGroup}
@@ -192,7 +192,7 @@
                                 <span class="members">
                                     <span class="num"
                                         >{userGroup.members.size.toLocaleString()}</span>
-                                    {$_("members")}
+                                    <Translatable resourceKey={i18nKey("members")} />
                                 </span>
                             </h4>
 

@@ -17,6 +17,8 @@
     import Congratulations from "../upgrade/Congratulations.svelte";
     import { getContext } from "svelte";
     import page from "page";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,7 +58,7 @@
 {#if group !== undefined}
     <Overlay dismissible on:close={close}>
         <ModalContent closeIcon on:close={close}>
-            <div slot="header">{$_("communities.convert")}</div>
+            <div slot="header"><Translatable resourceKey={i18nKey("communities.convert")} /></div>
             <div
                 class="body convert-to-community"
                 class:error={state === "error"}
@@ -66,27 +68,36 @@
                     <div class="spinner">
                         <FancyLoader />
                     </div>
-                    <p class="para">{$_("communities.pleaseWait")}</p>
+                    <p class="para">
+                        <Translatable resourceKey={i18nKey("communities.pleaseWait")} />
+                    </p>
                 {:else if state === "idle"}
                     <Markdown inline={false} text={$_("communities.convertInfo")} />
                 {:else if state === "converted"}
-                    <Congratulations para={$_("communities.converted")} />
+                    <Congratulations para={i18nKey("communities.converted")} />
                 {:else if state === "error"}
                     <div class="error-img" />
-                    <p class="para">{$_("communities.errors.convertFailed")}</p>
+                    <p class="para">
+                        <Translatable resourceKey={i18nKey("communities.errors.convertFailed")} />
+                    </p>
                 {/if}
             </div>
             <div slot="footer">
                 <ButtonGroup>
                     {#if state === "converted"}
-                        <Button secondary on:click={close}>{$_("close")}</Button>
-                        <Button on:click={go}>{$_("communities.goto")}</Button>
+                        <Button secondary on:click={close}
+                            ><Translatable resourceKey={i18nKey("close")} /></Button>
+                        <Button on:click={go}
+                            ><Translatable resourceKey={i18nKey("communities.goto")} /></Button>
                     {:else if state !== "error"}
-                        <Button secondary on:click={close}>{$_("cancel")}</Button>
+                        <Button secondary on:click={close}
+                            ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                         <Button
                             disabled={state === "converting"}
                             loading={state === "converting"}
-                            on:click={convert}>{$_("communities.convertButton")}</Button>
+                            on:click={convert}
+                            ><Translatable
+                                resourceKey={i18nKey("communities.convertButton")} /></Button>
                     {/if}
                 </ButtonGroup>
             </div>

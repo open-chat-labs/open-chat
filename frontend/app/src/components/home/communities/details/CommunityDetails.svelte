@@ -11,7 +11,6 @@
     import Markdown from "../../Markdown.svelte";
     import AccessGateSummary from "../../AccessGateSummary.svelte";
     import PermissionsViewer from "../PermissionsViewer.svelte";
-    import { _ } from "svelte-i18n";
     import AdvancedSection from "./AdvancedSection.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import Stats from "../../Stats.svelte";
