@@ -79,6 +79,7 @@ pub struct OptionalMessagePermissions {
     pub giphy: OptionUpdate<GroupPermissionRole>,
     pub prize: OptionUpdate<GroupPermissionRole>,
     pub p2p_swap: OptionUpdate<GroupPermissionRole>,
+    pub p2p_trade: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
 }
