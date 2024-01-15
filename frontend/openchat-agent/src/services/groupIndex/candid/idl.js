@@ -263,13 +263,32 @@ export const idlFactory = ({ IDL }) => {
     'config' : PollConfig,
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
-  const ImageContent = IDL.Record({
-    'height' : IDL.Nat32,
-    'mime_type' : IDL.Text,
-    'blob_reference' : IDL.Opt(BlobReference),
-    'thumbnail_data' : IDL.Text,
-    'caption' : IDL.Opt(IDL.Text),
-    'width' : IDL.Nat32,
+  const P2PSwapReserved = IDL.Record({ 'reserved_by' : UserId });
+  const TransactionId = IDL.Record({
+    'hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'index' : IDL.Nat64,
+  });
+  const P2PSwapAccepted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_in' : TransactionId,
+  });
+  const P2PSwapCancelled = IDL.Record({
+    'token0_txn_out' : IDL.Opt(TransactionId),
+  });
+  const P2PSwapCompleted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_out' : TransactionId,
+    'token0_txn_out' : TransactionId,
+    'token1_txn_in' : TransactionId,
+  });
+  const P2PSwapExpired = P2PSwapCancelled;
+  const P2PSwapStatus = IDL.Variant({
+    'Reserved' : P2PSwapReserved,
+    'Open' : IDL.Null,
+    'Accepted' : P2PSwapAccepted,
+    'Cancelled' : P2PSwapCancelled,
+    'Completed' : P2PSwapCompleted,
+    'Expired' : P2PSwapExpired,
   });
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
@@ -278,6 +297,31 @@ export const idlFactory = ({ IDL }) => {
     'KINIC' : IDL.Null,
     'CKBTC' : IDL.Null,
     'Other' : IDL.Text,
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PSwapContent = IDL.Record({
+    'status' : P2PSwapStatus,
+    'token0_txn_in' : TransactionId,
+    'token0_amount' : IDL.Nat,
+    'token0' : TokenInfo,
+    'token1' : TokenInfo,
+    'offer_id' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'token1_amount' : IDL.Nat,
+    'expires_at' : TimestampMillis,
+  });
+  const ImageContent = IDL.Record({
+    'height' : IDL.Nat32,
+    'mime_type' : IDL.Text,
+    'blob_reference' : IDL.Opt(BlobReference),
+    'thumbnail_data' : IDL.Text,
+    'caption' : IDL.Opt(IDL.Text),
+    'width' : IDL.Nat32,
   });
   const PrizeContent = IDL.Record({
     'token' : Cryptocurrency,
@@ -401,29 +445,6 @@ export const idlFactory = ({ IDL }) => {
     'winner' : UserId,
     'prize_message' : MessageIndex,
   });
-  const P2PTradeStatus = IDL.Variant({
-    'Reserved' : IDL.Tuple(UserId, TimestampMillis),
-    'Open' : IDL.Null,
-    'Cancelled' : IDL.Null,
-    'Completed' : IDL.Tuple(UserId, BlockIndex, TimestampMillis),
-  });
-  const TokenInfo = IDL.Record({
-    'fee' : IDL.Nat,
-    'decimals' : IDL.Nat8,
-    'token' : Cryptocurrency,
-    'ledger' : CanisterId,
-  });
-  const P2PTradeContent = IDL.Record({
-    'status' : P2PTradeStatus,
-    'input_amount' : IDL.Nat,
-    'output_amount' : IDL.Nat,
-    'offer_id' : IDL.Nat32,
-    'caption' : IDL.Opt(IDL.Text),
-    'input_token' : TokenInfo,
-    'input_transaction_index' : IDL.Nat64,
-    'expires_at' : TimestampMillis,
-    'output_token' : TokenInfo,
-  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -521,12 +542,12 @@ export const idlFactory = ({ IDL }) => {
     'File' : FileContent,
     'Poll' : PollContent,
     'Text' : TextContent,
+    'P2PSwap' : P2PSwapContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
     'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
-    'P2PTrade' : P2PTradeContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,

@@ -1,6 +1,31 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AcceptSwapAlreadyAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : TransactionId,
+}
+export interface AcceptSwapAlreadyCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : TransactionId,
+  'token0_txn_out' : TransactionId,
+  'token1_txn_in' : TransactionId,
+}
+export interface AcceptSwapAlreadyReserved { 'reserved_by' : UserId }
+export interface AcceptSwapOfferCancelled {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface AcceptSwapOfferExpired {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export type AcceptSwapStatusError = {
+    'AlreadyAccepted' : AcceptSwapAlreadyAccepted
+  } |
+  { 'OfferCancelled' : AcceptSwapOfferCancelled } |
+  { 'AlreadyCompleted' : AcceptSwapAlreadyCompleted } |
+  { 'AlreadyReserved' : AcceptSwapAlreadyReserved } |
+  { 'OfferExpired' : AcceptSwapOfferExpired };
+export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
@@ -853,12 +878,12 @@ export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
   { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
-  { 'P2PTrade' : P2PTradeContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -869,11 +894,11 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContentInitial } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
   { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
-  { 'P2PTrade' : P2PTradeContentInitial } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -912,6 +937,7 @@ export interface MessagePermissions {
   'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
+  'p2p_swap' : [] | [PermissionRole],
 }
 export interface MessagePinned {
   'pinned_by' : UserId,
@@ -1058,33 +1084,49 @@ export interface OptionalMessagePermissions {
   'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
+  'p2p_swap' : PermissionRoleUpdate,
 }
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
-export interface P2PTradeContent {
-  'status' : P2PTradeStatus,
-  'input_amount' : bigint,
-  'output_amount' : bigint,
+export interface P2PSwapAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : TransactionId,
+}
+export interface P2PSwapCancelled { 'token0_txn_out' : [] | [TransactionId] }
+export interface P2PSwapCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : TransactionId,
+  'token0_txn_out' : TransactionId,
+  'token1_txn_in' : TransactionId,
+}
+export interface P2PSwapContent {
+  'status' : P2PSwapStatus,
+  'token0_txn_in' : TransactionId,
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
   'offer_id' : number,
   'caption' : [] | [string],
-  'input_token' : TokenInfo,
-  'input_transaction_index' : bigint,
+  'token1_amount' : bigint,
   'expires_at' : TimestampMillis,
-  'output_token' : TokenInfo,
 }
-export interface P2PTradeContentInitial {
-  'input_amount' : bigint,
-  'output_amount' : bigint,
+export interface P2PSwapContentInitial {
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
   'caption' : [] | [string],
-  'input_token' : TokenInfo,
+  'token1_amount' : bigint,
   'expires_in' : Milliseconds,
-  'output_token' : TokenInfo,
 }
-export type P2PTradeStatus = { 'Reserved' : [UserId, TimestampMillis] } |
+export type P2PSwapExpired = P2PSwapCancelled;
+export interface P2PSwapReserved { 'reserved_by' : UserId }
+export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
   { 'Open' : null } |
-  { 'Cancelled' : null } |
-  { 'Completed' : [UserId, BlockIndex, TimestampMillis] };
+  { 'Accepted' : P2PSwapAccepted } |
+  { 'Cancelled' : P2PSwapCancelled } |
+  { 'Completed' : P2PSwapCompleted } |
+  { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1227,6 +1269,14 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
+export type ReserveP2PSwapResult = { 'OfferNotFound' : null } |
+  { 'Success' : ReserveP2PSwapSuccess } |
+  { 'Failure' : P2PSwapStatus };
+export interface ReserveP2PSwapSuccess {
+  'created' : TimestampMillis,
+  'content' : P2PSwapContent,
+  'created_by' : UserId,
+}
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1331,6 +1381,10 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface TransactionId {
+  'hash' : [] | [Uint8Array | number[]],
+  'index' : bigint,
+}
 export interface TransferArgs {
   'to' : Account,
   'fee' : [] | [bigint],
