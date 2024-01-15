@@ -181,6 +181,7 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
+    #[serde(default)]
     pub p2p_swaps: P2PSwaps,
     #[serde(default)]
     pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
