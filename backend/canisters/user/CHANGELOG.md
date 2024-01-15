@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Implement P2P trades in direct chats ([#5168](https://github.com/open-chat-labs/open-chat/pull/5168))
+- Add message queues for pushing updates between user canisters ([#5172](https://github.com/open-chat-labs/open-chat/pull/5172))
 
 ### Changed
 
@@ -16,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
 - Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
 - Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
 
 ### Removed
 

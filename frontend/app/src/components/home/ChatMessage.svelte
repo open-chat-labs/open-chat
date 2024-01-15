@@ -27,6 +27,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
+    import Translatable from "../Translatable.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
@@ -55,6 +56,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -222,9 +224,9 @@
             .cancelMessageReminder(msg.messageId, { ...ev.detail, hidden: true })
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("reminders.cancelSuccess");
+                    toastStore.showSuccessToast(i18nKey("reminders.cancelSuccess"));
                 } else {
-                    toastStore.showFailureToast("reminders.cancelFailure");
+                    toastStore.showFailureToast(i18nKey("reminders.cancelFailure"));
                 }
             });
     }
@@ -360,7 +362,7 @@
             )
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("poll.voteFailed");
+                    toastStore.showFailureToast(i18nKey("poll.voteFailed"));
                 }
             });
     }
@@ -375,7 +377,7 @@
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind !== "success") {
-                toastStore.showFailureToast("tip.failure");
+                toastStore.showFailureToast(i18nKey("tip.failure"));
             }
         });
     }
@@ -400,7 +402,7 @@
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
-                    <h4>{$_("chooseReaction")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
                     <span
                         title={$_("close")}
                         class="close-emoji"

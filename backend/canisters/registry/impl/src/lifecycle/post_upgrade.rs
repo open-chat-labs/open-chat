@@ -7,6 +7,7 @@ use ic_cdk_macros::post_upgrade;
 use registry_canister::post_upgrade::Args;
 use stable_memory::get_reader;
 use tracing::info;
+use types::CanisterId;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -25,5 +26,11 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    mutate_state(|state| state.data.tokens.rename_block_index_to_transaction_index());
+    mutate_state(|state| {
+        state.data.tokens.set_fee(
+            CanisterId::from_text("rh2pm-ryaaa-aaaan-qeniq-cai").unwrap(),
+            100_000,
+            state.env.now(),
+        )
+    });
 }

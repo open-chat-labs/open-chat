@@ -4,6 +4,7 @@
     import { getContext } from "svelte";
     import { toastStore } from "../../../stores/toast";
     import type { OpenChat, ThreadPreview } from "openchat-client";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -25,7 +26,7 @@
                 initialised = true;
             })
             .catch((err) => {
-                toastStore.showFailureToast("thread.previewFailure");
+                toastStore.showFailureToast(i18nKey("thread.previewFailure"));
                 client.logError("Unable to load thread previews: ", err);
             })
             .finally(() => (loading = false));

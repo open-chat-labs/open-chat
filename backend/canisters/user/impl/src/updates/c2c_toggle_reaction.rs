@@ -11,24 +11,20 @@ use user_canister::c2c_toggle_reaction::{Response::*, *};
 fn c2c_toggle_reaction(args: Args) -> Response {
     run_regular_jobs();
 
-    if args.reaction.is_valid() {
-        mutate_state(|state| c2c_toggle_reaction_impl(args, state))
-    } else {
-        InvalidReaction
-    }
+    mutate_state(|state| c2c_toggle_reaction_impl(args, state.env.caller().into(), state))
 }
 
-fn c2c_toggle_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let caller: UserId = state.env.caller().into();
-
-    if state.data.blocked_users.contains(&caller) {
+pub(crate) fn c2c_toggle_reaction_impl(args: Args, caller_user_id: UserId, state: &mut RuntimeState) -> Response {
+    if state.data.blocked_users.contains(&caller_user_id) {
         return UserBlocked;
+    } else if !args.reaction.is_valid() {
+        return InvalidReaction;
     }
 
-    if let Some(chat) = state.data.direct_chats.get_mut(&caller.into()) {
+    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let add_remove_reaction_args = AddRemoveReactionArgs {
-            user_id: caller,
+            user_id: caller_user_id,
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_id: args.message_id,

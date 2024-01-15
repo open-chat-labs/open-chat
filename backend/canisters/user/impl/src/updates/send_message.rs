@@ -1,6 +1,10 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob};
+use crate::model::p2p_swaps::P2PSwapOfferStatus;
+use crate::timer_job_types::{
+    DeleteFileReferencesJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob,
+};
+use crate::updates::send_message_with_transfer::{set_up_p2p_swap, update_p2p_swap_status};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_timer_jobs::TimerJobs;
@@ -10,8 +14,8 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use tracing::error;
 use types::{
-    BlobReference, CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper, Message,
-    MessageContentInitial, MessageIndex, TimestampMillis, UserId,
+    BlobReference, CanisterId, Chat, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper,
+    Message, MessageContentInitial, MessageIndex, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
@@ -46,33 +50,66 @@ async fn send_message_v2(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContentInitial::Crypto(c) = &mut args.content {
-        if user_type.is_self() {
-            return InvalidRequest("Cannot send crypto to yourself".to_string());
-        }
-        let mut pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
-            _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
-        };
-        if !pending_transaction.validate_recipient(args.recipient) {
-            return InvalidRequest("Transaction is not to the user's account".to_string());
-        }
-        // When transferring to bot users, each user transfers to their own subaccount, this way it
-        // is trivial for the bots to keep track of each user's funds
-        if user_type.is_bot() {
-            pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
-        }
-
-        // We have to use `process_transaction_without_caller_check` because we may be within a
-        // reply callback due to calling `c2c_lookup_user` earlier.
-        completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
-            Ok(completed) => {
-                c.transfer = CryptoTransaction::Completed(completed.clone());
-                Some(completed)
+    match &mut args.content {
+        MessageContentInitial::Crypto(c) => {
+            if user_type.is_self() {
+                return InvalidRequest("Cannot send crypto to yourself".to_string());
             }
-            Err(failed) => return TransferFailed(failed.error_message().to_string()),
-        };
-    }
+            let mut pending_transaction = match &c.transfer {
+                CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
+                _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+            };
+            if !pending_transaction.validate_recipient(args.recipient) {
+                return InvalidRequest("Transaction is not to the user's account".to_string());
+            }
+            // When transferring to bot users, each user transfers to their own subaccount, this way it
+            // is trivial for the bots to keep track of each user's funds
+            if user_type.is_bot() {
+                pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
+            }
+
+            // We have to use `process_transaction_without_caller_check` because we may be within a
+            // reply callback due to calling `c2c_lookup_user` earlier.
+            completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
+                Ok(completed) => {
+                    c.transfer = CryptoTransaction::Completed(completed.clone());
+                    Some(completed)
+                }
+                Err(failed) => return TransferFailed(failed.error_message().to_string()),
+            };
+        }
+        MessageContentInitial::P2PSwap(p) => {
+            let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
+            let create_offer_args = escrow_canister::create_offer::Args {
+                token0: p.token0.clone(),
+                token0_amount: p.token0_amount,
+                token1: p.token1.clone(),
+                token1_amount: p.token1_amount,
+                expires_at: now + p.expires_in,
+                canister_to_notify: Some(args.recipient.into()),
+            };
+            match set_up_p2p_swap(Chat::Direct(args.recipient.into()), escrow_canister_id, create_offer_args).await {
+                Ok((offer_id, pending_transaction)) => {
+                    completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
+                        Ok(completed) => {
+                            update_p2p_swap_status(offer_id, P2PSwapOfferStatus::FundsTransferred);
+                            NotifyEscrowCanisterOfDepositJob::run(offer_id);
+                            Some(completed)
+                        }
+                        Err(failed) => {
+                            update_p2p_swap_status(
+                                offer_id,
+                                P2PSwapOfferStatus::TransferError(failed.error_message().to_string()),
+                            );
+                            return TransferFailed(failed.error_message().to_string());
+                        }
+                    };
+                }
+                Err(error) => return error.into(),
+            }
+        }
+        _ => {}
+    };
 
     mutate_state(|state| send_message_impl(args, completed_transfer, user_type, state))
 }
@@ -133,7 +170,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     } else if args.recipient == my_user_id {
         if matches!(
             args.content,
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PTrade(_)
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
         ) {
             ValidateRequestResult::Invalid(TransferCannotBeToSelf)
         } else {
@@ -141,8 +178,8 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
         }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot {
-            if matches!(args.content, MessageContentInitial::P2PTrade(_)) {
-                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P trade with a bot".to_string()));
+            if matches!(args.content, MessageContentInitial::P2PSwap(_)) {
+                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P swap with a bot".to_string()));
             }
             UserType::Bot
         } else {

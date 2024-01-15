@@ -6,11 +6,12 @@
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
-    import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
     import type { OpenChat } from "openchat-client";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -39,11 +40,11 @@
                     size={$iconSize}
                     color={"var(--icon-inverted-txt)"}
                     slot="icon" />
-                <span slot="text">{$_("newGroup")}</span>
+                <span slot="text"><Translatable resourceKey={i18nKey("newGroup")} /></span>
             </MenuItem>
             <MenuItem on:click={() => page("/groups")}>
                 <Compass size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <span slot="text">{$_("exploreGroups")}</span>
+                <span slot="text"><Translatable resourceKey={i18nKey("exploreGroups")} /></span>
             </MenuItem>
         </Menu>
     </span>

@@ -1,3 +1,4 @@
+use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::offers::Offers;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use canister_state_macros::canister_state;
@@ -47,6 +48,8 @@ impl RuntimeState {
 struct Data {
     pub offers: Offers,
     pub pending_payments_queue: PendingPaymentsQueue,
+    #[serde(default)]
+    pub notify_status_change_queue: NotifyStatusChangeQueue,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
@@ -57,6 +60,7 @@ impl Data {
         Data {
             offers: Offers::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
+            notify_status_change_queue: NotifyStatusChangeQueue::default(),
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],
             test_mode,

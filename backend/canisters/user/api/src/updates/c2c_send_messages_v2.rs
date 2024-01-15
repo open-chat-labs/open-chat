@@ -19,6 +19,7 @@ pub struct SendMessageArgs {
     pub forwarding: bool,
     #[serde(default)]
     pub message_filter_failed: Option<u64>,
+    #[serde(default)]
     pub correlation_id: u64,
 }
 

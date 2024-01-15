@@ -19,6 +19,8 @@
     import { rightPanelHistory } from "../../../stores/rightPanel";
     import { toastStore } from "../../../stores/toast";
     import Diamond from "../../icons/Diamond.svelte";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -92,7 +94,7 @@
         }
     });
 
-    function afterBlock(result: boolean, success: string, failure: string) {
+    function afterBlock(result: boolean, success: ResourceKey, failure: ResourceKey) {
         if (!result) {
             toastStore.showFailureToast(failure);
         } else {
@@ -104,14 +106,14 @@
         if ($selectedChat !== undefined) {
             if ($selectedChat.kind === "direct_chat") {
                 client.blockUserFromDirectChat($selectedChat.them.userId).then((success) => {
-                    afterBlock(success, "blockUserSucceeded", "blockUserFailed");
+                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
                 });
                 onClose();
                 return;
             }
             if ($selectedChat.kind === "group_chat") {
                 client.blockUser($selectedChat.id, userId).then((success) => {
-                    afterBlock(success, "blockUserSucceeded", "blockUserFailed");
+                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed"));
                 });
                 onClose();
                 return;
@@ -120,7 +122,9 @@
         if ($selectedCommunity !== undefined) {
             client
                 .blockCommunityUser($selectedCommunity.id, userId)
-                .then((success) => afterBlock(success, "blockUserSucceeded", "blockUserFailed"));
+                .then((success) =>
+                    afterBlock(success, i18nKey("blockUserSucceeded"), i18nKey("blockUserFailed")),
+                );
             onClose();
             return;
         }
@@ -130,14 +134,22 @@
         if ($selectedChat !== undefined) {
             if ($selectedChat.kind === "direct_chat") {
                 client.unblockUserFromDirectChat($selectedChat.them.userId).then((success) => {
-                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed");
+                    afterBlock(
+                        success,
+                        i18nKey("unblockUserSucceeded"),
+                        i18nKey("unblockUserFailed"),
+                    );
                 });
                 onClose();
                 return;
             }
             if ($selectedChat.kind === "group_chat") {
                 client.unblockUser($selectedChat.id, userId).then((success) => {
-                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed");
+                    afterBlock(
+                        success,
+                        i18nKey("unblockUserSucceeded"),
+                        i18nKey("unblockUserFailed"),
+                    );
                 });
                 onClose();
                 return;
@@ -147,7 +159,11 @@
             client
                 .unblockCommunityUser($selectedCommunity.id, userId)
                 .then((success) =>
-                    afterBlock(success, "unblockUserSucceeded", "unblockUserFailed"),
+                    afterBlock(
+                        success,
+                        i18nKey("unblockUserSucceeded"),
+                        i18nKey("unblockUserFailed"),
+                    ),
                 );
             onClose();
             return;
@@ -223,10 +239,10 @@
     function unsuspendUser() {
         client.unsuspendUser(userId).then((success) => {
             if (success) {
-                toastStore.showSuccessToast("unsuspendedUser");
+                toastStore.showSuccessToast(i18nKey("unsuspendedUser"));
                 onClose();
             } else {
-                toastStore.showFailureToast("failedToUnsuspendUser");
+                toastStore.showFailureToast(i18nKey("failedToUnsuspendUser"));
             }
         });
     }
@@ -234,10 +250,10 @@
     function suspendUser() {
         client.suspendUser(userId, "").then((success) => {
             if (success) {
-                toastStore.showSuccessToast("suspendedUser");
+                toastStore.showSuccessToast(i18nKey("suspendedUser"));
                 onClose();
             } else {
-                toastStore.showFailureToast("failedToSuspendUser");
+                toastStore.showFailureToast(i18nKey("failedToSuspendUser"));
             }
         });
     }
@@ -278,7 +294,7 @@
                 <div class="meta">
                     <div class="left" class:suspended={isSuspended}>
                         {#if isSuspended}
-                            {$_("accountSuspended")}
+                            <Translatable resourceKey={i18nKey("accountSuspended")} />
                         {:else}
                             {status === "" ? "..." : status}
                         {/if}
@@ -299,16 +315,20 @@
             <div slot="footer" class="footer">
                 <ButtonGroup align={"fill"}>
                     {#if chatButton && !me}
-                        <Button on:click={handleOpenDirectChat} small>{$_("profile.chat")}</Button>
+                        <Button on:click={handleOpenDirectChat} small
+                            ><Translatable resourceKey={i18nKey("profile.chat")} /></Button>
                     {/if}
                     {#if me}
-                        <Button on:click={showUserProfile} small>{$_("profile.settings")}</Button>
+                        <Button on:click={showUserProfile} small
+                            ><Translatable resourceKey={i18nKey("profile.settings")} /></Button>
                     {/if}
                     {#if canBlock}
-                        <Button on:click={blockUser} small>{$_("profile.block")}</Button>
+                        <Button on:click={blockUser} small
+                            ><Translatable resourceKey={i18nKey("profile.block")} /></Button>
                     {/if}
                     {#if canUnblock}
-                        <Button on:click={unblockUser} small>{$_("profile.unblock")}</Button>
+                        <Button on:click={unblockUser} small
+                            ><Translatable resourceKey={i18nKey("profile.unblock")} /></Button>
                     {/if}
                 </ButtonGroup>
                 {#if $platformModerator}
@@ -316,9 +336,11 @@
                         <ButtonGroup align={"fill"}>
                             {#if isSuspended}
                                 <Button on:click={unsuspendUser} small
-                                    >{$_("unsuspendUser")}</Button>
+                                    ><Translatable
+                                        resourceKey={i18nKey("unsuspendUser")} /></Button>
                             {:else}
-                                <Button on:click={suspendUser} small>{$_("suspendUser")}</Button>
+                                <Button on:click={suspendUser} small
+                                    ><Translatable resourceKey={i18nKey("suspendUser")} /></Button>
                             {/if}
                         </ButtonGroup>
                     </div>

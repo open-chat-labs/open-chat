@@ -4,7 +4,6 @@
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import QRCode from "../../QRCode.svelte";
-    import { _ } from "svelte-i18n";
     import Link from "../../Link.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
@@ -14,6 +13,8 @@
     import { canShare, shareLink } from "../../../utils/share";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
     import Diamond from "../../icons/Diamond.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -24,10 +25,10 @@
     function onCopy() {
         navigator.clipboard.writeText(link).then(
             () => {
-                toastStore.showSuccessToast("linkCopiedToClipboard");
+                toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard"));
             },
             () => {
-                toastStore.showFailureToast("failedToCopyLinkToClipboard");
+                toastStore.showFailureToast(i18nKey("failedToCopyLinkToClipboard"));
             },
         );
     }
@@ -50,25 +51,25 @@
     <div class="link">{link}</div>
     <QRCode text={link} border fullWidthOnMobile />
     <div class="message">
-        {$_("userReferralMessage")}
+        <Translatable resourceKey={i18nKey("userReferralMessage")} />
     </div>
     <div class="action">
         <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
         <Link on:click={onCopy}>
-            {$_("copy")}
+            <Translatable resourceKey={i18nKey("copy")} />
         </Link>
     </div>
     {#if canShare()}
         <div class="action">
             <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
             <Link on:click={onShare}>
-                {$_("share")}
+                <Translatable resourceKey={i18nKey("share")} />
             </Link>
         </div>
     {/if}
     {#if $user.referrals.length > 0}
         <div class="referrals-section">
-            <h4>{$_("invitedUsers")}</h4>
+            <h4><Translatable resourceKey={i18nKey("invitedUsers")} /></h4>
             <div class="referrals">
                 {#each $user.referrals as userId}
                     <div class="referral" on:click={(ev) => showUserProfile(ev, userId)}>

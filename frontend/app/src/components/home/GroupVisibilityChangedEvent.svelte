@@ -5,8 +5,8 @@
     import type { Level, OpenChat, UserSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -20,10 +20,18 @@
     $: me = changedBy === user?.userId;
     $: changedByStr = buildDisplayName($userStore, changedBy, me);
     $: visibility = (nowPublic ? $_("public") : $_("private")).toLowerCase();
-    $: text = interpolateLevel("groupVisibilityChangedBy", level, true, {
-        changedBy: changedByStr,
-        visibility: visibility,
-    });
+    $: text = interpolate(
+        $_,
+        i18nKey(
+            "groupVisibilityChangedBy",
+            {
+                changedBy: changedByStr,
+                visibility: visibility,
+            },
+            level,
+            true,
+        ),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

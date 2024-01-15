@@ -33,6 +33,6 @@ pub struct PendingPayment {
 
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum PendingPaymentReason {
-    Trade(UserId),
+    Swap(UserId), // The other user in the swap
     Refund,
 }

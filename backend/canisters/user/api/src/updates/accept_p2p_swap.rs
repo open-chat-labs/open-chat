@@ -1,27 +1,20 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, MessageId, MessageIndex};
+use types::{AcceptSwapStatusError, AcceptSwapSuccess, MessageId, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub channel_id: ChannelId,
-    pub thread_root_message_index: Option<MessageIndex>,
+    pub user_id: UserId,
     pub message_id: MessageId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(AcceptSwapSuccess),
+    ChatNotFound,
     InsufficientFunds,
-    AlreadyAccepted,
-    AlreadyCompleted,
-    OfferExpired,
-    OfferCancelled,
+    StatusError(AcceptSwapStatusError),
     OfferNotFound,
-    ChannelNotFound,
-    UserNotInCommunity,
-    UserNotInChannel,
     UserSuspended,
-    ChatFrozen,
     InternalError(String),
 }

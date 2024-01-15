@@ -4,10 +4,10 @@
     import GroupGateIcon from "./AccessGateIcon.svelte";
     import type { MultiUserChat, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
-    import { _ } from "svelte-i18n";
-    import { interpolateLevel } from "../../utils/i18n";
     import page from "page";
     import { routeForScope } from "../../routes";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -46,7 +46,7 @@
         freezingInProgress = true;
         client.freezeGroup(chat.id, undefined).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("failedToFreezeGroup");
+                toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
             }
             freezingInProgress = false;
         });
@@ -57,7 +57,7 @@
         freezingInProgress = true;
         client.unfreezeGroup(chat.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("failedToUnfreezeGroup");
+                toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
             }
             freezingInProgress = false;
         });
@@ -71,23 +71,23 @@
     {#if $platformModerator}
         {#if isFrozen}
             <Button loading={freezingInProgress} secondary small on:click={unfreezeGroup}>
-                {$_("unfreezeGroup")}
+                <Translatable resourceKey={i18nKey("unfreezeGroup")} />
             </Button>
         {:else}
             <Button loading={freezingInProgress} secondary small on:click={freezeGroup}>
-                {$_("freezeGroup")}
+                <Translatable resourceKey={i18nKey("freezeGroup")} />
             </Button>
         {/if}
     {/if}
     <Button secondary small on:click={cancelPreview}>
-        {$_("leave")}
+        <Translatable resourceKey={i18nKey("leave")} />
     </Button>
     <Button
         loading={joining !== undefined}
         disabled={joining !== undefined}
         small
         on:click={joinGroup}>
-        {interpolateLevel("joinGroup", chat.level, true)}
+        <Translatable resourceKey={i18nKey("joinGroup", undefined, chat.level, true)} />
     </Button>
 </div>
 

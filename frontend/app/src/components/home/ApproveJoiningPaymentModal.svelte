@@ -5,12 +5,11 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Button from "../Button.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import ButtonGroup from "../ButtonGroup.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import Markdown from "./Markdown.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,14 +27,26 @@
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
     $: insufficientFunds = cryptoBalance < gate.amount;
-    $: approvalMessage = interpolateLevel("access.paymentApprovalMessage", group.level, true, {
-        amount: client.formatTokens(gate.amount, token.decimals),
-        token: token.symbol,
-    });
-    $: distributionMessage = interpolateLevel(
-        "access.paymentDistributionMessage",
-        group.kind === "group_chat" ? "group" : "community",
-        true,
+    $: approvalMessage = interpolate(
+        $_,
+        i18nKey(
+            "access.paymentApprovalMessage",
+            {
+                amount: client.formatTokens(gate.amount, token.decimals),
+                token: token.symbol,
+            },
+            group.level,
+            true,
+        ),
+    );
+    $: distributionMessage = interpolate(
+        $_,
+        i18nKey(
+            "access.paymentDistributionMessage",
+            undefined,
+            group.kind === "group_chat" ? "group" : "community",
+            true,
+        ),
     );
 
     function onStartRefreshingBalance() {
