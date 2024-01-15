@@ -1,7 +1,6 @@
 <svelte:options immutable />
 
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { currentTheme } from "../../theme/themes";
     import { createEventDispatcher, onMount } from "svelte";
     import { eventListScrolling } from "../../stores/scrollPos";

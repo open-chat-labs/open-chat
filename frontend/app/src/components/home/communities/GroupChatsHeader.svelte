@@ -1,6 +1,5 @@
 <script lang="ts">
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import { _ } from "svelte-i18n";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import GroupChatsMenu from "./GroupChatsMenu.svelte";

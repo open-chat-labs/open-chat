@@ -5,6 +5,8 @@
     import { now } from "../../stores/time";
     import VisibilityLabel from "./VisibilityLabel.svelte";
     import DisappearLabel from "./DisappearLabel.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,7 +50,7 @@
         <VisibilityLabel isPublic={chat.public} />
         <div class="members" class:clickable={clickableMembers} on:click={onMembersClick}>
             <span class="num">{chat.memberCount.toLocaleString()}</span>
-            {$_("members")}
+            <Translatable resourceKey={i18nKey("members")} />
         </div>
     </div>
 {/if}

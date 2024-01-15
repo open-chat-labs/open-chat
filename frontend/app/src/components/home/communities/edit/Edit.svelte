@@ -26,6 +26,7 @@
     import page from "page";
     import AreYouSure from "../../../AreYouSure.svelte";
     import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     export let original: CommunitySummary = createCandidateCommunity("", 0);
     export let originalRules: Rules;
@@ -202,7 +203,7 @@
 
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">
-        {editing ? $_("communities.edit") : $_("communities.create")}
+        <Translatable resourceKey={i18nKey(editing ? "communities.edit" : "communities.create")} />
     </div>
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
@@ -257,7 +258,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("communities.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -266,7 +268,7 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => dispatch("close")}
-                    secondary>{$_("cancel")}</Button>
+                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                 {#if editing}
                     <Button
@@ -281,7 +283,7 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => (step = step + 1)}>
-                        {$_("communities.next")}
+                        <Translatable resourceKey={i18nKey("communities.next")} />
                     </Button>
                 {:else}
                     <Button
@@ -290,7 +292,13 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{i18nKey("group.create", undefined, "community", true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.create",
+                                undefined,
+                                "community",
+                                true,
+                            )} /></Button>
                 {/if}
             </div>
         </div>

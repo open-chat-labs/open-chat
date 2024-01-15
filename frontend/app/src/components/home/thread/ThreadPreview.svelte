@@ -19,6 +19,7 @@
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -166,9 +167,10 @@
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
-                            {$_("thread.moreMessages", {
-                                values: { number: missingMessages.toString() },
-                            })}
+                            <Translatable
+                                resourceKey={i18nKey("thread.moreMessages", {
+                                    number: missingMessages.toString(),
+                                })} />
                         </div>
                     {/if}
                     {#each grouped as userGroup}
@@ -209,7 +211,8 @@
                         {/each}
                     {/each}
                     <LinkButton underline="hover" on:click={selectThread}
-                        >{$_("thread.openThread")}&#8594;</LinkButton>
+                        ><Translatable
+                            resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
                 </div>
             </IntersectionObserverComponent>
         </CollapsibleCard>

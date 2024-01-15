@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
     import { type ChatPermissions, chatRoles } from "openchat-client";
     import Toggle from "../Toggle.svelte";
@@ -31,7 +30,11 @@
 
 <TabHeader
     bind:selected={selectedTab}
-    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
+    items={[
+        i18nKey("permissions.general"),
+        i18nKey("permissions.message"),
+        i18nKey("permissions.thread"),
+    ]} />
 
 <div class="permissions">
     {#if selectedTab === 0}

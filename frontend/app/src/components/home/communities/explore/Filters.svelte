@@ -10,6 +10,7 @@
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -19,7 +20,7 @@
 </script>
 
 <SectionHeader shadow flush={$mobileWidth}>
-    <h4>{$_("communities.filters")}</h4>
+    <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

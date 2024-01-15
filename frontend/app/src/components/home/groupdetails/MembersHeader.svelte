@@ -9,6 +9,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import type { Level } from "openchat-client";
     import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let closeIcon: "close" | "back";
     export let canInvite: boolean;
@@ -35,7 +36,7 @@
             </HoverIcon>
         </span>
     {/if}
-    <h4>{interpolate($_, i18nKey("membersHeader", undefined, level))}</h4>
+    <h4><Translatable resourceKey={i18nKey("membersHeader", undefined, level)} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}

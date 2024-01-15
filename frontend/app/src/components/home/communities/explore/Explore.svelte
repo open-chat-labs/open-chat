@@ -21,6 +21,8 @@
     import Plus from "svelte-material-icons/Plus.svelte";
     import { derived } from "svelte/store";
     import CommunityCardLink from "./CommunityCardLink.svelte";
+    import Translatable from "../../../Translatable.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -45,7 +47,7 @@
                 languages: Array.from(communityFilters.languages),
                 flags,
             };
-        }
+        },
     );
 
     function calculatePageSize(width: ScreenWidth): number {
@@ -85,7 +87,7 @@
                 pageIndex,
                 pageSize,
                 $filters.flags ?? 0,
-                $filters.languages
+                $filters.languages,
             )
             .then((results) => {
                 if (results.kind === "success") {
@@ -116,9 +118,9 @@
         <div class="title-row">
             <div class="title">
                 {#if $mobileWidth}
-                    <h4>{$_("communities.exploreMobile")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("communities.exploreMobile")} /></h4>
                 {:else}
-                    <h4>{$_("communities.explore")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("communities.explore")} /></h4>
                 {/if}
             </div>
             {#if !$ipadWidth}
@@ -131,7 +133,8 @@
                         placeholder={$_("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button on:click={createCommunity} hollow>{$_("communities.create")}</Button>
+                    <Button on:click={createCommunity} hollow
+                        ><Translatable resourceKey={i18nKey("communities.create")} /></Button>
                 </div>
             {/if}
             <div class="buttons">
@@ -170,12 +173,18 @@
                 {#if $offlineStore}
                     <div class="no-match">
                         <CloudOffOutline size={"1.8em"} color={"var(--txt-light)"} />
-                        <p class="sub-header">{$_("offlineError")}</p>
+                        <p class="sub-header">
+                            <Translatable resourceKey={i18nKey("offlineError")} />
+                        </p>
                     </div>
                 {:else}
                     <div class="no-match">
-                        <h4 class="header">{$_("communities.noMatch")}</h4>
-                        <p class="sub-header">{$_("communities.refineSearch")}</p>
+                        <h4 class="header">
+                            <Translatable resourceKey={i18nKey("communities.noMatch")} />
+                        </h4>
+                        <p class="sub-header">
+                            <Translatable resourceKey={i18nKey("communities.refineSearch")} />
+                        </p>
                     </div>
                 {/if}
             {:else}
@@ -199,7 +208,7 @@
         {#if more}
             <div class="more">
                 <Button disabled={searching} loading={searching} on:click={() => search(false)}
-                    >{$_("communities.loadMore")}</Button>
+                    ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
             </div>
         {/if}
     </div>

@@ -20,7 +20,6 @@
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import type { ChatIdentifier, MessageContent } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import PrizeContentInitial from "./PrizeContentInitial.svelte";
 
     export let content: MessageContent;

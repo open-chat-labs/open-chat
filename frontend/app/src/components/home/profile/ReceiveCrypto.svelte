@@ -10,6 +10,7 @@
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
     import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let ledger: string;
 
@@ -23,7 +24,7 @@
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
-    $: title = $_(`cryptoAccount.receiveToken`, { values: { symbol } });
+    $: title = i18nKey(`cryptoAccount.receiveToken`, { symbol });
     $: cryptoBalance = client.cryptoBalance;
 
     function onBalanceRefreshed() {
@@ -37,7 +38,7 @@
 
 <ModalContent>
     <span class="header" slot="header">
-        <div class="main-title">{title}</div>
+        <div class="main-title"><Translatable resourceKey={title} /></div>
         <BalanceWithRefresh
             {ledger}
             value={$cryptoBalance[ledger]}
@@ -49,7 +50,7 @@
     <form class="body" slot="body">
         <AccountInfo qrSize={"larger"} centered {ledger} user={$user} />
         <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-            {$_("howToBuyToken", { values: { token: symbol } })}
+            <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
         </a>
         {#if error}
             <ErrorMessage>{error}</ErrorMessage>
@@ -57,7 +58,8 @@
     </form>
     <span slot="footer">
         <ButtonGroup>
-            <Button tiny={$mobileWidth} on:click={() => dispatch("close")}>{$_("close")}</Button>
+            <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
+                ><Translatable resourceKey={i18nKey("close")} /></Button>
         </ButtonGroup>
     </span>
 </ModalContent>

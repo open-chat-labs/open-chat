@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Spinner from "./icons/Spinner.svelte";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";

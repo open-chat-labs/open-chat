@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import Progress from "./Progress.svelte";

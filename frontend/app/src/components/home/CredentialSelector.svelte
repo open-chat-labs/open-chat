@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
     import Select from "../Select.svelte";
     import { credentialIssuers, type CredentialIssuer, type Credential } from "../../utils/access";

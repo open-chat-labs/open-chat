@@ -19,6 +19,7 @@
     import TextArea from "../TextArea.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -130,7 +131,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("tokenTransfer.send")}</div>
+                    <div><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></div>
                     <div>
                         <CryptoSelector bind:ledger />
                     </div>
@@ -153,11 +154,16 @@
                 {#if zero || toppingUp}
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: symbol,
+                                })} />
+                        </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol } })}
+                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                     </a>
                 {:else}
                     {#if multiUserChat}
@@ -187,7 +193,7 @@
                             bind:value={message} />
                     </div>
                     {#if error}
-                        <ErrorMessage>{$_(error)}</ErrorMessage>
+                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                     {/if}
                     {#if confirming}
                         <div class="confirming">
@@ -195,7 +201,10 @@
                                 <Alert size={$iconSize} color={"var(--warn"} />
                             </div>
                             <div class="alert-txt">
-                                {$_("tokenTransfer.warning", { values: { token: symbol } })}
+                                <Translatable
+                                    resourceKey={i18nKey("tokenTransfer.warning", {
+                                        token: symbol,
+                                    })} />
                             </div>
                         </div>
                     {/if}
@@ -205,23 +214,24 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
                         on:click={send}
-                        >{confirming
-                            ? $_("tokenTransfer.confirm")
-                            : $_("tokenTransfer.send")}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
+                            )} /></Button>
                 {/if}
             </ButtonGroup>
         </span>

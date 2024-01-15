@@ -17,7 +17,6 @@
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { communityListScrollTop } from "../../../stores/scrollPos";
-    import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
     import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";

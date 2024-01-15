@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { afterUpdate, createEventDispatcher } from "svelte";
     import { menuStore } from "../../stores/menu";
     import Translatable from "../Translatable.svelte";

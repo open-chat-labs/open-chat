@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectUsers from "./SelectUsers.svelte";
     import type { CandidateMember, UserSummary } from "openchat-client";
 

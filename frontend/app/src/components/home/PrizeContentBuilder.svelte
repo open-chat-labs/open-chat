@@ -26,6 +26,7 @@
     import TextArea from "../TextArea.svelte";
     import NumberInput from "../NumberInput.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -212,7 +213,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("prizes.title")}</div>
+                    <div><Translatable resourceKey={i18nKey("prizes.title")} /></div>
                     <div>
                         <CryptoSelector bind:ledger />
                     </div>
@@ -234,11 +235,16 @@
                 {#if zero || toppingUp}
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: symbol,
+                                })} />
+                        </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol } })}
+                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                     </a>
                 {:else}
                     <div class="transfer">
@@ -287,7 +293,9 @@
                             <div class:selected={distribution === "random"} class="dist-icon">
                                 <RandomDistribution size={"100%"} color={"var(--icon-txt)"} />
                             </div>
-                            <div class="dist-label">{$_("prizes.randomDistribution")}</div>
+                            <div class="dist-label">
+                                <Translatable resourceKey={i18nKey("prizes.randomDistribution")} />
+                            </div>
                         </div>
                         <div
                             role="button"
@@ -297,7 +305,9 @@
                             <div class:selected={distribution === "equal"} class="dist-icon">
                                 <EqualDistribution size={"100%"} color={"var(--icon-txt)"} />
                             </div>
-                            <div class="dist-label">{$_("prizes.equalDistribution")}</div>
+                            <div class="dist-label">
+                                <Translatable resourceKey={i18nKey("prizes.equalDistribution")} />
+                            </div>
                         </div>
                     </div>
                     <div class="config">
@@ -338,20 +348,21 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={send}>{$_("tokenTransfer.send")}</Button>
+                        on:click={send}
+                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
             </ButtonGroup>
         </span>

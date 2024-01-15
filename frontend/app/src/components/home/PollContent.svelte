@@ -1,11 +1,12 @@
 <!-- <svelte:options immutable /> -->
 <script lang="ts">
     import Poll from "svelte-material-icons/Poll.svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat, PollContent } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import PollAnswer from "./PollAnswer.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -75,7 +76,7 @@
         if (content.votes.total.kind === "visible_poll_votes") {
             return Object.values(content.votes.total.votes).reduce(
                 (total, n) => total + n.length,
-                0
+                0,
             );
         }
         return 0;
@@ -125,25 +126,25 @@
         {/each}
     </div>
     <p class="total-votes">
-        {$_("poll.totalVotes", { values: { total: numberOfVotes.toString() } })}
+        <Translatable
+            resourceKey={i18nKey("poll.totalVotes", { total: numberOfVotes.toString() })} />
     </p>
     <p class="timestamp">
         {#if content.config.anonymous}
-            {$_("poll.votersPrivate")}
+            <Translatable resourceKey={i18nKey("poll.votersPrivate")} />
         {:else}
-            {$_("poll.votersPublic")}
+            <Translatable resourceKey={i18nKey("poll.votersPublic")} />
         {/if}
     </p>
     {#if date !== undefined}
         <p class="timestamp">
             {#if content.ended}
-                {$_("poll.finished")}
+                <Translatable resourceKey={i18nKey("poll.finished")} />
             {:else}
-                {$_("poll.pollEnds", {
-                    values: {
+                <Translatable
+                    resourceKey={i18nKey("poll.pollEnds", {
                         end: `${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`,
-                    },
-                })}
+                    })} />
             {/if}
         </p>
     {/if}
