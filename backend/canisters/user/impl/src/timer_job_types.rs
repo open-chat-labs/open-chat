@@ -1,7 +1,7 @@
-use crate::model::p2p_trades::P2PTradeOfferStatus;
+use crate::model::p2p_swaps::P2PSwapOfferStatus;
 use crate::model::token_swaps::TokenSwap;
 use crate::updates::send_message::send_to_recipients_canister;
-use crate::updates::send_message_with_transfer::update_p2p_trade_status;
+use crate::updates::send_message_with_transfer::update_p2p_swap_status;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
@@ -242,7 +242,7 @@ impl Job for SendMessageToGroupJob {
             match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
                 Ok(group_canister::c2c_send_message::Response::Success(_)) => {
                     if let Some(id) = self.p2p_offer_id {
-                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
+                        update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
                     }
                 }
                 Err(_) if self.attempt < 20 => {
@@ -272,7 +272,7 @@ impl Job for SendMessageToChannelJob {
             match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
                 Ok(community_canister::c2c_send_message::Response::Success(_)) => {
                     if let Some(id) = self.p2p_offer_id {
-                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
+                        update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
                     }
                 }
                 Err(_) if self.attempt < 20 => {

@@ -1,5 +1,5 @@
 use crate::icrc1::CompletedCryptoTransaction;
-use crate::{P2PTradeStatus, TimestampMillis, TransactionId, UserId};
+use crate::{P2PSwapStatus, TimestampMillis, TransactionId, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -80,24 +80,24 @@ pub struct AcceptSwapOfferCancelled {
     pub token0_txn_out: Option<TransactionId>,
 }
 
-impl From<P2PTradeStatus> for AcceptSwapStatusError {
-    fn from(value: P2PTradeStatus) -> Self {
+impl From<P2PSwapStatus> for AcceptSwapStatusError {
+    fn from(value: P2PSwapStatus) -> Self {
         match value {
-            P2PTradeStatus::Open => unreachable!(),
-            P2PTradeStatus::Cancelled(s) => AcceptSwapStatusError::OfferCancelled(AcceptSwapOfferCancelled {
+            P2PSwapStatus::Open => unreachable!(),
+            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::OfferCancelled(AcceptSwapOfferCancelled {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PTradeStatus::Expired(s) => AcceptSwapStatusError::OfferExpired(AcceptSwapOfferExpired {
+            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::OfferExpired(AcceptSwapOfferExpired {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PTradeStatus::Reserved(s) => AcceptSwapStatusError::AlreadyReserved(AcceptSwapAlreadyReserved {
+            P2PSwapStatus::Reserved(s) => AcceptSwapStatusError::AlreadyReserved(AcceptSwapAlreadyReserved {
                 reserved_by: s.reserved_by,
             }),
-            P2PTradeStatus::Accepted(s) => AcceptSwapStatusError::AlreadyAccepted(AcceptSwapAlreadyAccepted {
+            P2PSwapStatus::Accepted(s) => AcceptSwapStatusError::AlreadyAccepted(AcceptSwapAlreadyAccepted {
                 accepted_by: s.accepted_by,
                 token1_txn_in: s.token1_txn_in,
             }),
-            P2PTradeStatus::Completed(s) => AcceptSwapStatusError::AlreadyCompleted(AcceptSwapAlreadyCompleted {
+            P2PSwapStatus::Completed(s) => AcceptSwapStatusError::AlreadyCompleted(AcceptSwapAlreadyCompleted {
                 accepted_by: s.accepted_by,
                 token1_txn_in: s.token1_txn_in,
                 token0_txn_out: s.token0_txn_out,

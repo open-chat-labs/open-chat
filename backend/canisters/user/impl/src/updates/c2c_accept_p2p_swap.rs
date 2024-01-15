@@ -1,5 +1,5 @@
 use crate::guards::caller_is_known_group_or_community_canister;
-use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
+use crate::model::p2p_swaps::{P2PSwapOffer, P2PSwapOfferStatus};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -7,12 +7,12 @@ use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{CanisterId, TimestampMillis, TransactionId, UserId};
-use user_canister::c2c_accept_p2p_trade_offer::{Response::*, *};
+use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[update_msgpack(guard = "caller_is_known_group_or_community_canister")]
 #[trace]
-async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
+async fn c2c_accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
 
     let PrepareResult {
@@ -47,12 +47,12 @@ async fn c2c_accept_p2p_trade_offer(args: Args) -> Response {
             };
 
             mutate_state(|state| {
-                state.data.p2p_trades.add(P2PTradeOffer {
+                state.data.p2p_swaps.add(P2PSwapOffer {
                     id: args.offer_id,
                     chat: args.chat,
                     created_by: args.created_by,
                     created: args.created,
-                    status: P2PTradeOfferStatus::Accepted,
+                    status: P2PSwapOfferStatus::Accepted,
                     last_updated: state.env.now(),
                     token0: args.token0,
                     token0_amount: args.token0_amount,
@@ -77,7 +77,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let Some(offer) = state.data.p2p_trades.get(args.offer_id) {
+    if let Some(offer) = state.data.p2p_swaps.get(args.offer_id) {
         if let Some(id) = offer.token1_txn_in {
             return Err(Success(id));
         }

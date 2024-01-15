@@ -18,7 +18,7 @@ fn main() {
     generate_candid_method!(group, summary, query);
     generate_candid_method!(group, summary_updates, query);
 
-    generate_candid_method!(group, accept_p2p_trade_offer, update);
+    generate_candid_method!(group, accept_p2p_swap, update);
     generate_candid_method!(group, add_reaction, update);
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);

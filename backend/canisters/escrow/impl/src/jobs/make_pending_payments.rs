@@ -38,7 +38,7 @@ pub fn run() {
 
 async fn process_payment(pending_payment: PendingPayment) {
     let from_user = match pending_payment.reason {
-        PendingPaymentReason::Trade(other_user_id) => other_user_id,
+        PendingPaymentReason::Swap(other_user_id) => other_user_id,
         PendingPaymentReason::Refund => pending_payment.user_id,
     };
     let created_at_time = pending_payment.timestamp * NANOS_PER_MILLISECOND;
@@ -72,7 +72,7 @@ async fn process_payment(pending_payment: PendingPayment) {
                         block_index,
                     };
                     match pending_payment.reason {
-                        PendingPaymentReason::Trade(_) => {
+                        PendingPaymentReason::Swap(_) => {
                             if pending_payment.token_info.ledger == offer.token0.ledger {
                                 offer.token0_transfer_out = Some(transfer);
                             } else {

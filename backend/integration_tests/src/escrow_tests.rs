@@ -8,7 +8,7 @@ use types::Cryptocurrency;
 use utils::time::DAY_IN_MS;
 
 #[test]
-fn trade_via_escrow_canister_succeeds() {
+fn swap_via_escrow_canister_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,

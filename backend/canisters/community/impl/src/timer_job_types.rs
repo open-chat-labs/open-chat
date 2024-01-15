@@ -294,7 +294,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
                         if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                            channel.chat.events.accept_p2p_trade(
+                            channel.chat.events.accept_p2p_swap(
                                 self.user_id,
                                 self.thread_root_message_index,
                                 self.message_id,
@@ -306,7 +306,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                 }
                 Ok(escrow_canister::notify_deposit::Response::OfferExpired) => mutate_state(|state| {
                     if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
-                        channel.chat.events.unreserve_p2p_trade(
+                        channel.chat.events.unreserve_p2p_swap(
                             self.user_id,
                             self.thread_root_message_index,
                             self.message_id,

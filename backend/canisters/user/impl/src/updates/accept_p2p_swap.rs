@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::model::p2p_trades::{P2PTradeOffer, P2PTradeOfferStatus};
+use crate::model::p2p_swaps::{P2PSwapOffer, P2PSwapOfferStatus};
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -8,15 +8,15 @@ use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
-    AcceptSwapSuccess, CanisterId, Chat, EventIndex, ReserveP2PTradeResult, ReserveP2PTradeSuccess, TimestampMillis,
+    AcceptSwapSuccess, CanisterId, Chat, EventIndex, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
     TransactionId, UserId,
 };
-use user_canister::accept_p2p_trade_offer::{Response::*, *};
+use user_canister::accept_p2p_swap::{Response::*, *};
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[update_msgpack(guard = "caller_is_owner")]
 #[trace]
-async fn accept_p2p_trade_offer(args: Args) -> Response {
+async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
 
     let PrepareResult {
@@ -64,12 +64,12 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
         Ok(index) => {
             let token1_txn_in = TransactionId { index, hash: None };
             mutate_state(|state| {
-                state.data.p2p_trades.add(P2PTradeOffer {
+                state.data.p2p_swaps.add(P2PSwapOffer {
                     id: content.offer_id,
                     chat: Chat::Direct(args.user_id.into()),
                     created_by: reserve_success.created_by,
                     created: reserve_success.created,
-                    status: P2PTradeOfferStatus::Accepted,
+                    status: P2PSwapOfferStatus::Accepted,
                     last_updated: state.env.now(),
                     token0: content.token0,
                     token0_amount: content.token0_amount,
@@ -87,7 +87,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
             mutate_state(|state| {
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
-                    chat.events.unreserve_p2p_trade(my_user_id, None, args.message_id, now);
+                    chat.events.unreserve_p2p_swap(my_user_id, None, args.message_id, now);
                 }
             });
             response
@@ -98,7 +98,7 @@ async fn accept_p2p_trade_offer(args: Args) -> Response {
 struct PrepareResult {
     my_user_id: UserId,
     escrow_canister_id: CanisterId,
-    reserve_success: ReserveP2PTradeSuccess,
+    reserve_success: ReserveP2PSwapSuccess,
     now: TimestampMillis,
 }
 
@@ -108,16 +108,16 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         let now = state.env.now();
         match chat
             .events
-            .reserve_p2p_trade(my_user_id, None, args.message_id, EventIndex::default(), now)
+            .reserve_p2p_swap(my_user_id, None, args.message_id, EventIndex::default(), now)
         {
-            ReserveP2PTradeResult::Success(reserve_success) => Ok(PrepareResult {
+            ReserveP2PSwapResult::Success(reserve_success) => Ok(PrepareResult {
                 my_user_id,
                 escrow_canister_id: state.data.escrow_canister_id,
                 reserve_success,
                 now,
             }),
-            ReserveP2PTradeResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-            ReserveP2PTradeResult::OfferNotFound => Err(Box::new(OfferNotFound)),
+            ReserveP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
+            ReserveP2PSwapResult::OfferNotFound => Err(Box::new(OfferNotFound)),
         }
     } else {
         Err(Box::new(ChatNotFound))
