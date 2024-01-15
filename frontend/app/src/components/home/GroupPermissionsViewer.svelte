@@ -54,7 +54,7 @@
             crypto: mps.crypto ?? mps.default,
             giphy: mps.giphy ?? mps.default,
             memeFighter: mps.memeFighter ?? mps.default,
-            p2pTrade: mps.p2pTrade ?? mps.default,
+            p2pSwap: mps.p2pSwap ?? mps.default,
         };
 
         if (!thread) {

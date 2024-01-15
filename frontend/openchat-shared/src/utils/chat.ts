@@ -126,7 +126,7 @@ export function getContentAsFormattedText(
         text = captionedContent("audio", content.caption);
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
-    } else if (content.kind === "p2p_trade_content" || content.kind === "p2p_trade_content_initial") {
+    } else if (content.kind === "p2p_swap_content" || content.kind === "p2p_swap_content_initial") {
         text = captionedContent("p2p trade", content.caption);
     } else if (content.kind === "crypto_content") {
         text = captionedContent(

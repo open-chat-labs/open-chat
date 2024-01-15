@@ -1208,7 +1208,7 @@
     "hours": "小时）",
     "minutes": "分钟）",
     "days": "天）",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "提出交换报价",
         "expiryTime": "到期时间",
         "creatingYourMessage": "我们正在创建您的掉期报价消息，请稍候",

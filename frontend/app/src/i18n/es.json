@@ -1209,7 +1209,7 @@
     "hours": "Horas)",
     "minutes": "Minutos)",
     "days": "Días)",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "hacer oferta de permuta",
         "expiryTime": "Tiempo de expiración",
         "creatingYourMessage": "Espere mientras creamos su mensaje de oferta de intercambio.",

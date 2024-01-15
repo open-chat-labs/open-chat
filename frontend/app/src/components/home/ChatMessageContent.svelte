@@ -22,7 +22,7 @@
     import type { MessageContent, MessageContext } from "openchat-client";
     import { _ } from "svelte-i18n";
     import MessageContentInitial from "./MessageContentInitial.svelte";
-    import P2PTradeContent from "./P2PTradeContent.svelte";
+    import P2PSwapContent from "./P2PSwapContent.svelte";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -63,12 +63,12 @@
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
     <MessageContentInitial text={$_("prizes.creatingYourPrizeMessage")} {me} />
-{:else if content.kind === "p2p_trade_content_initial"}
-    <MessageContentInitial text={$_("p2pTrade.creatingYourMessage")} {me} />
+{:else if content.kind === "p2p_swap_content_initial"}
+    <MessageContentInitial text={$_("p2pSwap.creatingYourMessage")} {me} />
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
-{:else if content.kind === "p2p_trade_content"}
-    <P2PTradeContent {messageContext} {messageIndex} {messageId} {content} {me} />
+{:else if content.kind === "p2p_swap_content"}
+    <P2PSwapContent {messageContext} {messageIndex} {messageId} {content} {me} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}

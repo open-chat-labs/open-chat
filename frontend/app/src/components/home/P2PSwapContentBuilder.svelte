@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import type { OpenChat, P2PTradeContentInitial } from "openchat-client";
+    import type { OpenChat, P2PSwapContentInitial } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -70,8 +70,8 @@
             return Promise.resolve();
         }
 
-        const content: P2PTradeContentInitial = {
-            kind: "p2p_trade_content_initial",
+        const content: P2PSwapContentInitial = {
+            kind: "p2p_swap_content_initial",
             inputToken: {
                 ledger: fromLedger,
                 symbol: fromDetails.symbol,
@@ -121,14 +121,14 @@
 </script>
 
 {#if confirming}
-    <AreYouSure message={$_("p2pTrade.confirmSend")} action={send} />
+    <AreYouSure message={i18nKey("p2pSwap.confirmSend")} action={send} />
 {/if}
 
 <Overlay dismissible>
     <ModalContent>
         <span class="header" slot="header">
             <div class="main-title">
-                {$_("p2pTrade.builderTitle")}
+                {$_("p2pSwap.builderTitle")}
             </div>
             <BalanceWithRefresh
                 ledger={fromLedger}
@@ -173,7 +173,7 @@
                 </div>
             </div>
             <div class="duration">
-                <Legend label={i18nKey("p2pTrade.expiryTime")} />
+                <Legend label={i18nKey("p2pSwap.expiryTime")} />
                 <DurationPicker bind:milliseconds={expiresIn} />
             </div>
             <div class="message">

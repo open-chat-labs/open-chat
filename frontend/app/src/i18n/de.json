@@ -1209,7 +1209,7 @@
     "hours": "Std)",
     "minutes": "Protokoll)",
     "days": "Tage)",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "Machen Sie ein Tauschangebot",
         "expiryTime": "Ablaufdatum",
         "creatingYourMessage": "Bitte warten Sie, während wir Ihre Tauschangebotsnachricht erstellen",

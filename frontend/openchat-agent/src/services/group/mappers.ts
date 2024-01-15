@@ -18,7 +18,7 @@ import type {
     ApiOptionalMessagePermissions,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
-    ApiAcceptP2PTradeOfferResponse,
+    ApiAcceptP2PSwapResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -47,7 +47,7 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     OptionalMessagePermissions,
-    AcceptP2PTradeOfferResponse,
+    AcceptP2PSwapResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -65,6 +65,8 @@ import {
     mention,
     expiredEventsRange,
     expiredMessagesRange,
+    statusError,
+    transactionId,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
@@ -246,6 +248,7 @@ function apiOptionalMessagePermissions(
         crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
         p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
@@ -687,18 +690,19 @@ export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
 }
 
-export function acceptP2PTradeOfferResponse(candid: ApiAcceptP2PTradeOfferResponse): AcceptP2PTradeOfferResponse {
-    if ("AlreadyAccepted" in candid) return "already_accepted";
-    if ("UserNotInGroup" in candid || "UserNotInChannel" in candid) return "user_not_in_group";
-    if ("OfferNotFound" in candid) return "offer_not_found";
-    if ("OfferCancelled" in candid) return "offer_cancelled";
-    if ("ChatFrozen" in candid) return "chat_frozen";
-    if ("Success" in candid) return "success";
-    if ("UserSuspended" in candid) return "user_suspended";
-    if ("AlreadyCompleted" in candid) return "already_completed";
-    if ("InternalError" in candid) return "internal_error";
-    if ("OfferExpired" in candid) return "offer_expired";
-    if ("InsufficientFunds" in candid) return "insufficient_funds";
+export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
+    if ("OfferNotFound" in candid) return { kind: "offer_not_found" };
+    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+    if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
-    throw new UnsupportedValueError("Unexpected ApiAcceptP2PTradeOfferResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
 }

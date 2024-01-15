@@ -1469,11 +1469,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.getTranslationCorrections());
                 break;
 
-            case "acceptP2PTradeOffer":
+            case "acceptP2PSwap":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.acceptP2PTradeOffer(
+                    agent.acceptP2PSwap(
                         payload.chatId,
                         payload.threadRootMessageIndex,
                         payload.messageId,

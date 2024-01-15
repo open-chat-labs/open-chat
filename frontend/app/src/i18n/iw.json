@@ -1205,7 +1205,7 @@
     "hours": "שעה (ות)",
     "minutes": "דקות)",
     "days": "ימים",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "תציעו הצעת החלפה",
         "expiryTime": "זמן תפוגה",
         "creatingYourMessage": "אנא המתן בזמן שאנו יוצרים את הודעת הצעת ההחלפה שלך",

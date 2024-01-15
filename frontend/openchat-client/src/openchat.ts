@@ -362,7 +362,7 @@ import type {
     DiamondMembershipStatus,
     TranslationCorrections,
     TranslationCorrection,
-    AcceptP2PTradeOfferResponse,
+    AcceptP2PSwapResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5087,22 +5087,22 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    acceptP2PTradeOffer(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PTradeOfferResponse> {
-        localMessageUpdates.setP2PTradeOfferStatus(messageId, {
-            kind: "p2p_trade_reserved",
-            userId: this._liveState.user.userId,
-            timestamp: BigInt(Date.now()),
-        });
-        return this.sendRequest({ kind: "acceptP2PTradeOffer", chatId, threadRootMessageIndex, messageId })
+    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        // localMessageUpdates.setP2PSwapOfferStatus(messageId, {
+        //     kind: "p2p_swap_reserved",
+        //     userId: this._liveState.user.userId,
+        //     timestamp: BigInt(Date.now()),
+        // });
+        return this.sendRequest({ kind: "acceptP2PSwap", chatId, threadRootMessageIndex, messageId })
             // .then((resp) => {
             //     if (resp !== "success") {
-            //         localMessageUpdates.setP2PTradeOfferStatus(messageId, { kind: "p2p_trade_cancelled"});
+            //         localMessageUpdates.setP2PSwapOfferStatus(messageId, { kind: "p2p_swap_cancelled"});
             //     }
             //     return resp;
             // })
             .catch((err) => {
                 this._logger.error("Accepting p2p trade failed", err);
-                return "internal_error";
+                return { kind: "internal_error", text: err.toString() };
             });
     }
 

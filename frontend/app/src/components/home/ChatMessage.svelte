@@ -105,7 +105,7 @@
     let crypto =
         msg.content.kind === "crypto_content" ||
         msg.content.kind === "prize_content" ||
-        msg.content.kind === "p2p_trade_content";
+        msg.content.kind === "p2p_swap_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;

@@ -1207,7 +1207,7 @@
     "hours": "Ore)",
     "minutes": "Minuti)",
     "days": "Giorno(i)",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "Fai un'offerta di scambio",
         "expiryTime": "Tempo di scadenza",
         "creatingYourMessage": "Per favore attendi mentre creiamo il tuo messaggio di offerta di scambio",

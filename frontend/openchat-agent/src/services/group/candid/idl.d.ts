@@ -68,7 +68,7 @@ import {
     FollowThreadResponse,
     UnfollowThreadResponse,
     OptionalMessagePermissions,
-    AcceptP2PTradeOfferResponse
+    AcceptP2PSwapResponse
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -139,7 +139,7 @@ export {
     FollowThreadResponse as ApiFollowThreadResponse,
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
     OptionalMessagePermissions as ApiOptionalMessagePermissions,
-    AcceptP2PTradeOfferResponse as ApiAcceptP2PTradeOfferResponse,
+    AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

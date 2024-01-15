@@ -1,6 +1,6 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import type { MessageContext, OpenChat, P2PTradeContent } from "openchat-client";
+    import type { MessageContext, OpenChat, P2PSwapContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -11,10 +11,11 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import AreYouSure from "../AreYouSure.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
-    export let content: P2PTradeContent;
+    export let content: P2PSwapContent;
     export let messageContext: MessageContext;
     export let messageIndex: number;
     export let messageId: bigint;
@@ -30,63 +31,78 @@
     $: cryptoLookup = client.cryptoLookup;
     $: fromLogo =
         Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.inputToken.symbol.toLowerCase(),
+            (t) => t.symbol.toLowerCase() === content.token0.symbol.toLowerCase(),
         )?.logo ?? "";
     $: toLogo =
         Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.outputToken.symbol.toLowerCase(),
+            (t) => t.symbol.toLowerCase() === content.token1.symbol.toLowerCase(),
         )?.logo ?? "";
-    $: fromDetails = $cryptoLookup[content.inputToken.decimals];
-    $: toDetails = $cryptoLookup[content.outputToken.decimals];
+    $: fromDetails = $cryptoLookup[content.token0.decimals];
+    $: toDetails = $cryptoLookup[content.token1.decimals];
     $: finished = $now500 >= Number(content.expiresAt);
     $: timeRemaining = finished
-        ? $_("p2pTrade.expired")
+        ? $_("p2pSwap.expired")
         : client.formatTimeRemaining($now500, Number(content.expiresAt));
     $: acceptedByYou =
-        (content.status.kind === "p2p_trade_reserved" ||
-            content.status.kind === "p2p_trade_completed") &&
-        content.status.userId === $user.userId;
+        (content.status.kind === "p2p_swap_reserved" &&
+            content.status.reservedBy === $user.userId) ||
+        ((content.status.kind === "p2p_swap_accepted" ||
+            content.status.kind === "p2p_swap_completed") &&
+            content.status.acceptedBy === $user.userId);
 
-    $: fromAmount = client.formatTokens(content.inputAmount, fromDetails.decimals);
-    $: toAmount = client.formatTokens(content.outputAmount, toDetails.decimals);
+    $: fromAmount = client.formatTokens(content.token0Amount, fromDetails.decimals);
+    $: toAmount = client.formatTokens(content.token1Amount, toDetails.decimals);
 
     $: {
-        if (content.status.kind === "p2p_trade_open") {
+        if (content.status.kind === "p2p_swap_open") {
             if (me) {
-                instructionText = $_("p2pTrade.clickToCancel");
-                buttonText = $_("p2pTrade.cancel");
+                instructionText = $_("p2pSwap.clickToCancel");
+                buttonText = $_("p2pSwap.cancel");
             } else {
-                instructionText = $_("p2pTrade.clickToAccept");
-                buttonText = $_("p2pTrade.accept");
+                instructionText = $_("p2pSwap.clickToAccept");
+                buttonText = $_("p2pSwap.accept");
             }
-        } else if (content.status.kind === "p2p_trade_cancelled") {
+        } else if (content.status.kind === "p2p_swap_cancelled") {
             if (me) {
-                instructionText = $_("p2pTrade.youCancelled");
+                instructionText = $_("p2pSwap.youCancelled");
             } else {
-                instructionText = $_("p2pTrade.offerCancelled");
+                instructionText = $_("p2pSwap.offerCancelled");
             }
-            buttonText = $_("p2pTrade.cancelled");
-        } else if (content.status.kind === "p2p_trade_reserved") {
+            buttonText = $_("p2pSwap.cancelled");
+        } else if (content.status.kind === "p2p_swap_expired") {
+            instructionText = $_("p2pSwap.offerExpired");
+            buttonText = $_("p2pSwap.expired");
+        } else if (content.status.kind === "p2p_swap_reserved") {
             if (acceptedByYou) {
-                instructionText = $_("p2pTrade.youReserved");
+                instructionText = $_("p2pSwap.youReserved");
             } else {
-                instructionText = $_("p2pTrade.reservedBy", {
-                    values: { user: `@UserId(${content.status.userId})` },
+                instructionText = $_("p2pSwap.reservedBy", {
+                    values: { user: `@UserId(${content.status.reservedBy})` },
                 });
             }
-            buttonText = $_("p2pTrade.reserved");
+            buttonText = $_("p2pSwap.reserved");
+        } else if (content.status.kind === "p2p_swap_accepted") {
+            // TODO:
+            // if (acceptedByYou) {
+            //     instructionText = $_("p2pSwap.youReserved");
+            // } else {
+            //     instructionText = $_("p2pSwap.reservedBy", {
+            //         values: { user: `@UserId(${content.status.reservedBy})` },
+            //     });
+            // }
+            // buttonText = $_("p2pSwap.reserved");
         } else {
             if (acceptedByYou) {
-                instructionText = $_("p2pTrade.youAccepted");
+                instructionText = $_("p2pSwap.youAccepted");
             } else {
-                instructionText = $_("p2pTrade.acceptedBy", {
-                    values: { user: `@UserId(${content.status.userId})` },
+                instructionText = $_("p2pSwap.acceptedBy", {
+                    values: { user: `@UserId(${content.status.acceptedBy})` },
                 });
             }
-            buttonText = $_("p2pTrade.accepted");
+            buttonText = $_("p2pSwap.accepted");
         }
 
-        summaryText = $_("p2pTrade.summary", {
+        summaryText = $_("p2pSwap.summary", {
             values: {
                 fromAmount,
                 toAmount,
@@ -110,14 +126,14 @@
                 // TODO: cancel??
             } else {
                 client
-                    .acceptP2PTradeOffer(
+                    .acceptP2PSwap(
                         messageContext.chatId,
                         messageContext.threadRootMessageIndex,
                         messageId,
                     )
                     .then((resp) => {
-                        if (resp !== "success") {
-                            toastStore.showFailureToast(resp);
+                        if (resp.kind !== "success") {
+                            toastStore.showFailureToast(i18nKey(resp.kind));
                         }
                     });
             }
@@ -129,7 +145,7 @@
 
 {#if confirming}
     <AreYouSure
-        message={me ? $_("p2pTrade.confirmCancel") : $_("p2pTrade.conmfirmAccept")}
+        message={me ? i18nKey("p2pSwap.confirmCancel") : i18nKey("p2pSwap.conmfirmAccept")}
         action={acceptOrCancel} />
 {/if}
 
@@ -139,7 +155,7 @@
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if !finished}
-                    {$_("p2pTrade.accepted")}
+                    {$_("p2pSwap.accepted")}
                 {:else}
                     {timeRemaining}
                 {/if}
@@ -170,7 +186,7 @@
         <div class="accept">
             <ButtonGroup align="fill">
                 <Button
-                    loading={content.status.kind === "p2p_trade_reserved"}
+                    loading={content.status.kind === "p2p_swap_reserved"}
                     disabled={buttonDisabled}
                     hollow
                     on:click={onAcceptOrCancel}>{buttonText}</Button>

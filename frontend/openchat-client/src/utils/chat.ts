@@ -1481,7 +1481,7 @@ function mergeLocalUpdates(
         }
     }
 
-    if (localUpdates?.p2pTradeOfferStatus !== undefined && message.content.kind === "p2p_trade_content") {
+    if (localUpdates?.p2pTradeOfferStatus !== undefined && message.content.kind === "p2p_swap_content") {
         message.content.status = localUpdates.p2pTradeOfferStatus;
     }
 
@@ -1909,7 +1909,7 @@ function diffMessagePermissions(
     diff.giphy = updateFromOptions(original.giphy, updated.giphy);
     diff.prize = updateFromOptions(original.prize, updated.prize);
     diff.memeFighter = updateFromOptions(original.memeFighter, updated.memeFighter);
-    diff.p2pTrade = updateFromOptions(original.p2pTrade, updated.p2pTrade);
+    diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
 }

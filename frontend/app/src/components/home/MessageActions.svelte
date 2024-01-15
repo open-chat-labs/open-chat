@@ -52,8 +52,8 @@
         drawOpen = false;
     }
 
-    function createP2PTradeMessage() {
-        dispatch("createP2PTradeMessage");
+    function createP2PSwapMessage() {
+        dispatch("createP2PSwapMessage");
         drawOpen = false;
     }
 
@@ -122,7 +122,7 @@
         if (permissions.get("prize")) {
             actions.set("prize", cssValues(++index));
         }
-        if (permissions.get("p2pTrade")) {
+        if (permissions.get("p2pSwap")) {
             actions.set("swap", cssValues(++index));
         }
         return actions;
@@ -249,7 +249,7 @@
             <div
                 style={`${supportedActions.get("swap")}`}
                 class="swap"
-                on:click|stopPropagation={createP2PTradeMessage}>
+                on:click|stopPropagation={createP2PSwapMessage}>
                 <HoverIcon title={"Create p2p trade"}>
                     <SwapIcon size={$iconSize} color={iconColour} />
                 </HoverIcon>

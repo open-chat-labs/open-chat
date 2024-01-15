@@ -1199,7 +1199,7 @@
     "hours": "Hour(s)",
     "minutes": "Minute(s)",
     "days": "Day(s)",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "Make swap offer",
         "expiryTime": "Expiry time",
         "creatingYourMessage": "Please wait while we create your swap offer message",
@@ -1216,6 +1216,7 @@
         "youAccepted": "You have accepted this offer.",
         "youCancelled": "You have cancelled this offer.",
         "offerCancelled": "This offer has been cancelled.",
+        "offerExpired": "This offer has expired.",
         "reservedBy": "This offer has been reserved by {user}.",
         "acceptedBy": "This offer has been accepted by {user}.",
         "confirmSend": "When you create this offer, {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",

@@ -12,7 +12,7 @@ export type CommunityPermissionRole = CommunityRolesType[number];
 
 export type MemberRole = "admin" | "moderator" | "member" | "owner" | "none";
 
-export const messagePermissionsList = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter", "p2pTrade"] as const;
+export const messagePermissionsList = ["text", "image", "video", "audio", "file", "poll", "crypto", "giphy", "prize", "memeFighter", "p2pSwap"] as const;
 type MessagePermissionsType = typeof messagePermissionsList;
 export type MessagePermission = MessagePermissionsType[number];
 
@@ -51,7 +51,7 @@ export type MessagePermissions = {
     giphy?: ChatPermissionRole;
     prize?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
-    p2pTrade?: ChatPermissionRole;
+    p2pSwap?: ChatPermissionRole;
 };
 
 export type OptionalChatPermissions = {
@@ -79,7 +79,7 @@ export type OptionalMessagePermissions = {
     giphy: OptionUpdate<ChatPermissionRole>;
     prize: OptionUpdate<ChatPermissionRole>;
     memeFighter: OptionUpdate<ChatPermissionRole>;
-    p2pTrade: OptionUpdate<ChatPermissionRole>;
+    p2pSwap: OptionUpdate<ChatPermissionRole>;
 };
 
 export type CommunityPermissions = {
@@ -112,7 +112,7 @@ export function defaultOptionalMessagePermissions(): OptionalMessagePermissions 
         giphy: undefined,
         prize: undefined,
         memeFighter: undefined,
-        p2pTrade: undefined,
+        p2pSwap: undefined,
     };
 }
 

@@ -56,8 +56,8 @@ export type MessageContent =
     | ProposalContent
     | PrizeContent
     | PrizeContentInitial
-    | P2PTradeContent
-    | P2PTradeContentInitial
+    | P2PSwapContent
+    | P2PSwapContentInitial
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
@@ -74,8 +74,8 @@ export interface PrizeContentInitial {
     prizes: bigint[];
 }
 
-export interface P2PTradeContentInitial {
-    kind: "p2p_trade_content_initial";
+export interface P2PSwapContentInitial {
+    kind: "p2p_swap_content_initial";
     inputToken: TokenInfo;
     outputToken: TokenInfo;
     inputAmount: bigint;
@@ -292,40 +292,57 @@ export interface PrizeContent {
     caption?: string;
 }
 
-export interface P2PTradeContent {
-    kind: "p2p_trade_content";
-    inputToken: TokenInfo;
-    outputToken: TokenInfo;
-    inputAmount: bigint;
-    outputAmount: bigint;
+export interface P2PSwapContent {
+    kind: "p2p_swap_content";
+    token0: TokenInfo;
+    token1: TokenInfo;
+    token0Amount: bigint;
+    token1Amount: bigint;
     caption?: string;
     expiresAt: bigint;
-    status: P2PTradeStatus;
+    status: P2PSwapStatus;
     offerId: number;
-    inputTransactionIndex: bigint;    
+    token0TxnIn: TransactionId;    
 }
 
-export type P2PTradeStatus = P2PTradeReserved | P2PTradeOpen | P2PTradeCancelled | P2PTradeCompleted;
-
-export interface P2PTradeReserved {
-    kind: "p2p_trade_reserved";
-    userId: string;
-    timestamp: bigint;
+export interface TransactionId {
+    index: bigint;
+    hash?: string;
 }
 
-export interface P2PTradeOpen {
-    kind: "p2p_trade_open";
+export type P2PSwapStatus = P2PSwapOpen | P2PSwapReserved | P2PSwapAccepted | P2PSwapCancelled | P2PSwapExpired | P2PSwapCompleted;
+
+export interface P2PSwapOpen {
+    kind: "p2p_swap_open";
 }
 
-export interface P2PTradeCancelled {
-    kind: "p2p_trade_cancelled";
+export interface P2PSwapReserved {
+    kind: "p2p_swap_reserved";
+    reservedBy: string;
 }
 
-export interface P2PTradeCompleted {
-    kind: "p2p_trade_completed";
-    userId: string;
-    timestamp: bigint;
-    blockIndex: bigint;
+export interface P2PSwapAccepted {
+    kind: "p2p_swap_accepted";
+    acceptedBy: string;
+    token1TxnIn: TransactionId,
+}
+
+export interface P2PSwapCancelled {
+    kind: "p2p_swap_cancelled";
+    token0TxnOut?: TransactionId,
+}
+
+export interface P2PSwapExpired {
+    kind: "p2p_swap_expired";
+    token0TxnOut?: TransactionId,
+}
+
+export interface P2PSwapCompleted {
+    kind: "p2p_swap_completed";
+    acceptedBy: string;
+    token1TxnIn: TransactionId,
+    token0TxnOut: TransactionId,
+    token1TxnOut: TransactionId,
 }
 
 export interface ProposalContent {
@@ -635,7 +652,7 @@ export type LocalMessageUpdates = {
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
-    p2pTradeOfferStatus?: P2PTradeStatus;
+    p2pTradeOfferStatus?: P2PSwapStatus;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
@@ -1551,7 +1568,8 @@ export type SendMessageResponse =
     | ChatFrozen
     | RulesNotAccepted
     | Offline
-    | CommunityRulesNotAccepted;
+    | CommunityRulesNotAccepted
+    | P2PSwapSetUpFailed;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1645,6 +1663,11 @@ export type RulesNotAccepted = {
 export type CommunityRulesNotAccepted = {
     kind: "community_rules_not_accepted";
 };
+
+export type P2PSwapSetUpFailed = {
+    kind: "p2p_swap_setup_failed";
+    text: string;
+}
 
 export type GateUpdatedEvent = {
     kind: "gate_updated";
@@ -2023,18 +2046,28 @@ export type GroupAndCommunitySummaryUpdatesResponse =
       }
     | { kind: "error"; error: string };
 
-export type AcceptP2PTradeOfferResponse = 
-    "already_accepted" | 
-    "channel_not_found" |
-    "user_not_in_group" | 
-    "user_not_in_community" |
-    "user_not_in_channel" |    
-    "offer_not_found" | 
-    "offer_cancelled" | 
-    "chat_frozen" | 
-    "success" | 
-    "user_suspended" | 
-    "already_completed" | 
-    "internal_error" | 
-    "offer_expired" | 
-    "insufficient_funds";
+export type AcceptP2PSwapResponse = 
+    | { kind: "success", token1TxnIn : TransactionId }
+    | { kind: "already_reserved", reservedBy: string }
+    | { 
+        kind: "already_accepted", 
+        acceptedBy: string, 
+        token1TxnIn: TransactionId 
+    }
+    | { kind: "already_completed",
+        acceptedBy: string, 
+        token1TxnIn: TransactionId,
+        token0TxnOut: TransactionId,
+        token1TxnOut: TransactionId,
+    }
+    | { kind: "offer_cancelled", token0TxnOut?: TransactionId }
+    | { kind: "offer_expired", token0TxnOut?: TransactionId }
+    | { kind: "offer_not_found" }
+    | { kind: "channel_not_found" }
+    | { kind: "user_suspended" }
+    | { kind: "user_not_in_group" }
+    | { kind: "user_not_in_community" }
+    | { kind: "user_not_in_channel" }
+    | { kind: "chat_frozen" }
+    | { kind: "insufficient_funds" }
+    | { kind: "internal_error", text: string };

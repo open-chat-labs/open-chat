@@ -1199,7 +1199,7 @@
     "hours": "घंटे)",
     "minutes": "मिनट)",
     "days": "दिन",
-    "p2pTrade": {
+    "p2pSwap": {
         "builderTitle": "अदला-बदली की पेशकश करें",
         "expiryTime": "समाप्ति समय",
         "creatingYourMessage": "कृपया प्रतीक्षा करें जब तक हम आपका स्वैप ऑफ़र संदेश बनाते हैं",

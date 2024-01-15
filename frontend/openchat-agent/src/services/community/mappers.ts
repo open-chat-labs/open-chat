@@ -1,5 +1,5 @@
 import type {
-    AcceptP2PTradeOfferResponse,
+    AcceptP2PSwapResponse,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
@@ -76,7 +76,7 @@ import type {
     ApiSetMemberDisplayNameResponse,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
-    ApiAcceptP2PTradeOfferResponse,
+    ApiAcceptP2PSwapResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -92,7 +92,9 @@ import {
     mention,
     messageContent,
     messageEvent,
+    statusError,
     threadDetails,
+    transactionId,
     userGroup,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
@@ -749,20 +751,21 @@ export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
 }
 
-export function acceptP2PTradeOfferResponse(candid: ApiAcceptP2PTradeOfferResponse): AcceptP2PTradeOfferResponse {
-    if ("AlreadyAccepted" in candid) return "already_accepted";
-    if ("UserNotInCommunity" in candid) return "user_not_in_community";
-    if ("UserNotInChannel" in candid) return "user_not_in_channel";
-    if ("ChannelNotFound" in candid) return "channel_not_found";
-    if ("OfferNotFound" in candid) return "offer_not_found";
-    if ("OfferCancelled" in candid) return "offer_cancelled";
-    if ("ChatFrozen" in candid) return "chat_frozen";
-    if ("Success" in candid) return "success";
-    if ("UserSuspended" in candid) return "user_suspended";
-    if ("AlreadyCompleted" in candid) return "already_completed";
-    if ("InternalError" in candid) return "internal_error";
-    if ("OfferExpired" in candid) return "offer_expired";
-    if ("InsufficientFunds" in candid) return "insufficient_funds";
+export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
+    if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
+    if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
+    if ("OfferNotFound" in candid) return { kind: "offer_not_found" };
+    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+    if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
-    throw new UnsupportedValueError("Unexpected ApiAcceptP2PTradeOfferResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
 }

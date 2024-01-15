@@ -64,7 +64,7 @@ import type {
     MessageContext,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
-    AcceptP2PTradeOfferResponse,
+    AcceptP2PSwapResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -316,7 +316,7 @@ export type WorkerRequest =
     | RejectTranslationCorrection
     | GetTranslationCorrections
     | GetExchangeRates
-    | AcceptP2PTradeOffer;
+    | AcceptP2PSwapOffer;
 
 type GetTranslationCorrections = {
     kind: "getTranslationCorrections";
@@ -1208,7 +1208,7 @@ export type WorkerResponseInner =
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
-    | AcceptP2PTradeOfferResponse
+    | AcceptP2PSwapResponse
     | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1472,11 +1472,11 @@ type GetExchangeRates = {
     kind: "exchangeRates";
 };
 
-type AcceptP2PTradeOffer = {
+type AcceptP2PSwapOffer = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
-    kind: "acceptP2PTradeOffer";
+    kind: "acceptP2PSwap";
 };
 
 // prettier-ignore
@@ -1794,6 +1794,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? TranslationCorrections
     : T extends GetTranslationCorrections
     ? TranslationCorrections
-    : T extends AcceptP2PTradeOffer
-    ? AcceptP2PTradeOfferResponse
+    : T extends AcceptP2PSwapOffer
+    ? AcceptP2PSwapResponse
     : never;

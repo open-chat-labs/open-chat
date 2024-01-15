@@ -462,6 +462,12 @@ export function sendMessageResponse(
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("P2PSwapSetUpFailed" in candid) {
+        return { kind: "p2p_swap_setup_failed", text: candid.P2PSwapSetUpFailed };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
     }

@@ -63,10 +63,11 @@ import type {
     ApiChat,
     ApiPrizeCotentInitial,
     ApiMessagePermissions,
-    ApiP2PTradeContentInitial,
+    ApiP2PSwapContentInitial,
     ApiTokenInfo,
-    ApiP2PTradeContent,
-    ApiP2PTradeStatus,
+    ApiP2PSwapContent,
+    ApiP2PSwapStatus,
+    ApiTransactionId,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -156,9 +157,9 @@ import type {
     MessagePermissions,
     ExpiredEventsRange,
     ExpiredMessagesRange,
-    P2PTradeContentInitial,
-    P2PTradeContent,
-    P2PTradeStatus,
+    P2PSwapContentInitial,
+    P2PSwapContent,
+    P2PSwapStatus,
     TokenInfo,
 } from "openchat-shared";
 import {
@@ -176,7 +177,7 @@ import {
     SNS1_SYMBOL,
     isAccountIdentifierValid,
 } from "openchat-shared";
-import type { WithdrawCryptoArgs } from "../user/candid/types";
+import type { AcceptSwapStatusError, WithdrawCryptoArgs } from "../user/candid/types";
 import type {
     ApiGroupCanisterGroupChatSummary,
     ApiAddReactionResponse as ApiAddGroupReactionResponse,
@@ -242,6 +243,8 @@ import type {
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
+import type { TransactionId } from "openchat-shared";
+import type { AcceptP2PSwapResponse } from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -345,8 +348,8 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("ReportedMessage" in candid) {
         return reportedMessage(candid.ReportedMessage);
     }
-    if ("P2PTrade" in candid) {
-        return p2pTradeContent(candid.P2PTrade);
+    if ("P2PSwap" in candid) {
+        return p2pTradeContent(candid.P2PSwap);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
@@ -427,18 +430,18 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
     };
 }
 
-function p2pTradeContent(candid: ApiP2PTradeContent): P2PTradeContent {
+function p2pTradeContent(candid: ApiP2PSwapContent): P2PSwapContent {
     return {
-        kind: "p2p_trade_content",
-        inputToken: tokenInfo(candid.input_token),
-        outputToken: tokenInfo(candid.output_token),
-        inputAmount: candid.input_amount,
-        outputAmount: candid.output_amount,
+        kind: "p2p_swap_content",
+        token0: tokenInfo(candid.token0),
+        token1: tokenInfo(candid.token1),
+        token0Amount: candid.token0_amount,
+        token1Amount: candid.token1_amount,
         caption: optional(candid.caption, identity),
         expiresAt: candid.expires_at,
         status: p2pTradeStatus(candid.status),
         offerId: candid.offer_id,
-        inputTransactionIndex: candid.input_transaction_index,
+        token0TxnIn: transactionId(candid.token0_txn_in),
     };
 }
 
@@ -451,33 +454,56 @@ function tokenInfo(candid: ApiTokenInfo): TokenInfo {
     };
 }
 
-function p2pTradeStatus(candid: ApiP2PTradeStatus): P2PTradeStatus {
+export function transactionId(candid: ApiTransactionId): TransactionId {
+    return {
+        index: candid.index,
+        hash: optional(candid.hash, bytesToHexString)
+    };
+}
+
+function p2pTradeStatus(candid: ApiP2PSwapStatus): P2PSwapStatus {
+    if ("Open" in candid) {
+        return { kind: "p2p_swap_open" };
+    }
     if ("Reserved" in candid) {
-        const [userId, timestamp] = candid.Reserved;
         return { 
-            kind: "p2p_trade_reserved",
-            userId: userId.toString(),
-            timestamp,
+            kind: "p2p_swap_reserved",
+            reservedBy: candid.Reserved.reserved_by.toString(),
         };
     }
-    if ("Open" in candid) {
-        return { kind: "p2p_trade_open" };
+    if ("Accepted" in candid) {
+        return { 
+            kind: "p2p_swap_accepted",
+            acceptedBy: candid.Accepted.accepted_by.toString(),
+            token1TxnIn: transactionId(candid.Accepted.token1_txn_in),
+        };
     }
     if ("Cancelled" in candid) {
-        return { kind: "p2p_trade_cancelled" };
+        return { 
+            kind: "p2p_swap_cancelled",
+            token0TxnOut: optional(candid.Cancelled.token0_txn_out, transactionId),
+        };
+
+    }
+    if ("Expired" in candid) {
+        return { 
+            kind: "p2p_swap_expired",
+            token0TxnOut: optional(candid.Expired.token0_txn_out, transactionId),
+        };
 
     }
     if ("Completed" in candid) {
-        const [userId, blockIndex, timestamp] = candid.Completed;
+        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.Completed;
         return { 
-            kind: "p2p_trade_completed", 
-            userId: userId.toString(),
-            blockIndex,
-            timestamp,
+            kind: "p2p_swap_completed", 
+            acceptedBy: accepted_by.toString(),
+            token1TxnIn: transactionId(token1_txn_in),
+            token0TxnOut: transactionId(token0_txn_out),
+            token1TxnOut: transactionId(token1_txn_out),        
         };
     }
     
-    throw new UnsupportedValueError("Unexpected ApiP2PTradeStatus type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiP2PSwapStatus type received", candid);
 }
 
 export function apiUser(domain: User): ApiUser {
@@ -1019,7 +1045,8 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         crypto: apiOptional(apiPermissionRole, permissions.crypto),
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
-        p2p_trade: apiOptional(apiPermissionRole, permissions.p2pTrade),
+        p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
+        p2p_trade: [],
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1167,8 +1194,8 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "prize_content_initial":
             return { Prize: apiPrizeContentInitial(domain) };
 
-        case "p2p_trade_content_initial":
-            return { P2PTrade: apiP2PTradeContentInitial(domain) };
+        case "p2p_swap_content_initial":
+            return { P2PSwap: apiP2PSwapContentInitial(domain) };
 
         case "meme_fighter_content":
             // eslint-disable-next-line no-case-declarations
@@ -1202,7 +1229,7 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContentInit
         case "message_reminder_content":
         case "message_reminder_created_content":
         case "reported_message_content":
-        case "p2p_trade_content":
+        case "p2p_swap_content":
             throw new Error(`Incorrectly attempting to send {domain.kind} content to the server`);
     }
 }
@@ -1443,12 +1470,12 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
     };
 }
 
-export function apiP2PTradeContentInitial(domain: P2PTradeContentInitial): ApiP2PTradeContentInitial {
+export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): ApiP2PSwapContentInitial {
     return {
-        input_token: apiTokenInfo(domain.inputToken),
-        output_token: apiTokenInfo(domain.outputToken),
-        input_amount: domain.inputAmount,
-        output_amount: domain.outputAmount,
+        token0: apiTokenInfo(domain.inputToken),
+        token1: apiTokenInfo(domain.outputToken),
+        token0_amount: domain.inputAmount,
+        token1_amount: domain.outputAmount,
         caption: apiOptional(identity, domain.caption),
         expires_in: domain.expiresIn,
     };
@@ -2405,4 +2432,44 @@ export function claimPrizeResponse(
         console.warn("ClaimPrize failed with ", candid);
         return CommonResponses.failure();
     }
+}
+
+export function statusError(candid: AcceptSwapStatusError): AcceptP2PSwapResponse {
+    if ("AlreadyReserved" in candid) {
+        return {
+            kind: "already_reserved",
+            reservedBy: candid.AlreadyReserved.reserved_by.toString(),
+        }
+    }
+    if ("AlreadyAccepted" in candid) {
+        return {
+            kind: "already_accepted",
+            acceptedBy: candid.AlreadyAccepted.accepted_by.toString(),
+            token1TxnIn: transactionId(candid.AlreadyAccepted.token1_txn_in),
+        }
+    }
+    if ("AlreadyCompleted" in candid) {
+        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.AlreadyCompleted;
+        return {
+            kind: "already_completed",
+            acceptedBy: accepted_by.toString(),
+            token1TxnIn: transactionId(token1_txn_in),
+            token0TxnOut: transactionId(token0_txn_out),
+            token1TxnOut: transactionId(token1_txn_out),
+        }
+    }
+    if ("OfferCancelled" in candid) {
+        return {
+            kind: "offer_cancelled",
+            token0TxnOut: optional(candid.OfferCancelled.token0_txn_out, transactionId),
+        }
+    }
+    if ("OfferExpired" in candid) {
+        return {
+            kind: "offer_expired",
+            token0TxnOut: optional(candid.OfferExpired.token0_txn_out, transactionId),
+        }
+    }
+
+    throw new UnsupportedValueError("Unexpected AcceptSwapStatusError type received", candid);
 }
