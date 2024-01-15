@@ -14,7 +14,6 @@
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Login from "svelte-material-icons/Login.svelte";
-    import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
