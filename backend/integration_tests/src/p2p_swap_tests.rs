@@ -5,11 +5,11 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{ChatEvent, ChatId, Cryptocurrency, MessageContent, MessageContentInitial, P2PTradeContentInitial, P2PTradeStatus};
+use types::{ChatEvent, ChatId, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
 use utils::time::DAY_IN_MS;
 
 #[test]
-fn p2p_trade_succeeds() {
+fn p2p_swap_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -45,11 +45,11 @@ fn p2p_trade_succeeds() {
             group_id,
             thread_root_message_index: None,
             message_id,
-            content: MessageContentInitial::P2PTrade(P2PTradeContentInitial {
-                input_token: Cryptocurrency::InternetComputer.try_into().unwrap(),
-                input_amount: 1_000_000_000,
-                output_token: Cryptocurrency::CHAT.try_into().unwrap(),
-                output_amount: 10_000_000_000,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0_amount: 1_000_000_000,
+                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1_amount: 10_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
@@ -68,11 +68,11 @@ fn p2p_trade_succeeds() {
         user_canister::send_message_with_transfer_to_group::Response::Success(_)
     ));
 
-    let accept_offer_response = client::group::accept_p2p_trade_offer(
+    let accept_offer_response = client::group::accept_p2p_swap(
         env,
         user2.principal,
         group_id.into(),
-        &group_canister::accept_p2p_trade_offer::Args {
+        &group_canister::accept_p2p_swap::Args {
             thread_root_message_index: None,
             message_id,
         },
@@ -80,7 +80,7 @@ fn p2p_trade_succeeds() {
 
     assert!(matches!(
         accept_offer_response,
-        group_canister::accept_p2p_trade_offer::Response::Success
+        group_canister::accept_p2p_swap::Response::Success(_)
     ));
 
     tick_many(env, 10);
@@ -102,8 +102,8 @@ fn p2p_trade_succeeds() {
         .event;
 
     if let ChatEvent::Message(m) = event {
-        if let MessageContent::P2PTrade(p) = m.content {
-            assert!(matches!(p.status, P2PTradeStatus::Completed(u, _, _) if u == user2.user_id));
+        if let MessageContent::P2PSwap(p) = m.content {
+            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
         }
     }
 }

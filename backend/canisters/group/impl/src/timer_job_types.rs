@@ -4,7 +4,7 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
+use types::{BlobReference, CanisterId, MessageId, MessageIndex, PendingCryptoTransaction, TransactionId, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -17,7 +17,7 @@ pub enum TimerJob {
     MakeTransfer(MakeTransferJob),
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
-    // NotifyUserOfP2PTradeCompleted(NotifyUserOfP2PTradeCompletedJob),
+    // NotifyUserOfP2PSwapCompleted(NotifyUserOfP2PSwapCompletedJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -57,7 +57,7 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub offer_id: u32,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub transaction_index: u64,
+    pub transaction_id: TransactionId,
     pub attempt: u32,
 }
 
@@ -67,14 +67,14 @@ impl NotifyEscrowCanisterOfDepositJob {
         offer_id: u32,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        transaction_index: u64,
+        transaction_id: TransactionId,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
             user_id,
             offer_id,
             thread_root_message_index,
             message_id,
-            transaction_index,
+            transaction_id,
             attempt: 0,
         };
         job.execute();
@@ -237,17 +237,17 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             {
                 Ok(escrow_canister::notify_deposit::Response::Success(_)) => {
                     mutate_state(|state| {
-                        state.data.chat.events.complete_p2p_trade(
+                        state.data.chat.events.accept_p2p_swap(
                             self.user_id,
                             self.thread_root_message_index,
                             self.message_id,
-                            self.transaction_index,
+                            self.transaction_id,
                             state.env.now(),
                         );
                     });
                 }
                 Ok(escrow_canister::notify_deposit::Response::OfferExpired) => mutate_state(|state| {
-                    state.data.chat.events.unreserve_p2p_trade(
+                    state.data.chat.events.unreserve_p2p_swap(
                         self.user_id,
                         self.thread_root_message_index,
                         self.message_id,
@@ -263,7 +263,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 user_id: self.user_id,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,
-                                transaction_index: self.transaction_index,
+                                transaction_id: self.transaction_id,
                                 attempt: self.attempt + 1,
                             }),
                             now + 10 * SECOND_IN_MS,

@@ -48,7 +48,7 @@ async fn notify_deposit(args: Args) -> Response {
                         token_info: offer.token1.clone(),
                         amount: offer.amount1,
                         offer_id: offer.id,
-                        reason: PendingPaymentReason::Trade(accepted_by),
+                        reason: PendingPaymentReason::Swap(accepted_by),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
                         user_id: accepted_by,
@@ -56,7 +56,7 @@ async fn notify_deposit(args: Args) -> Response {
                         token_info: offer.token0.clone(),
                         amount: offer.amount0,
                         offer_id: offer.id,
-                        reason: PendingPaymentReason::Trade(offer.created_by),
+                        reason: PendingPaymentReason::Swap(offer.created_by),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }

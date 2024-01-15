@@ -1,10 +1,10 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::model::p2p_trades::P2PTradeOfferStatus;
+use crate::model::p2p_swaps::P2PSwapOfferStatus;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob,
 };
-use crate::updates::send_message_with_transfer::{set_up_p2p_trade, update_p2p_trade_status};
+use crate::updates::send_message_with_transfer::{set_up_p2p_swap, update_p2p_swap_status};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_timer_jobs::TimerJobs;
@@ -78,28 +78,28 @@ async fn send_message_v2(mut args: Args) -> Response {
                 Err(failed) => return TransferFailed(failed.error_message().to_string()),
             };
         }
-        MessageContentInitial::P2PTrade(p) => {
+        MessageContentInitial::P2PSwap(p) => {
             let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
             let create_offer_args = escrow_canister::create_offer::Args {
-                input_token: p.input_token.clone(),
-                input_amount: p.input_amount,
-                output_token: p.output_token.clone(),
-                output_amount: p.output_amount,
+                token0: p.token0.clone(),
+                token0_amount: p.token0_amount,
+                token1: p.token1.clone(),
+                token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
                 canister_to_notify: Some(args.recipient.into()),
             };
-            match set_up_p2p_trade(Chat::Direct(args.recipient.into()), escrow_canister_id, create_offer_args).await {
+            match set_up_p2p_swap(Chat::Direct(args.recipient.into()), escrow_canister_id, create_offer_args).await {
                 Ok((offer_id, pending_transaction)) => {
                     completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
                         Ok(completed) => {
-                            update_p2p_trade_status(offer_id, P2PTradeOfferStatus::FundsTransferred);
+                            update_p2p_swap_status(offer_id, P2PSwapOfferStatus::FundsTransferred);
                             NotifyEscrowCanisterOfDepositJob::run(offer_id);
                             Some(completed)
                         }
                         Err(failed) => {
-                            update_p2p_trade_status(
+                            update_p2p_swap_status(
                                 offer_id,
-                                P2PTradeOfferStatus::TransferError(failed.error_message().to_string()),
+                                P2PSwapOfferStatus::TransferError(failed.error_message().to_string()),
                             );
                             return TransferFailed(failed.error_message().to_string());
                         }
@@ -170,7 +170,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     } else if args.recipient == my_user_id {
         if matches!(
             args.content,
-            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PTrade(_)
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
         ) {
             ValidateRequestResult::Invalid(TransferCannotBeToSelf)
         } else {
@@ -178,8 +178,8 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
         }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot {
-            if matches!(args.content, MessageContentInitial::P2PTrade(_)) {
-                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P trade with a bot".to_string()));
+            if matches!(args.content, MessageContentInitial::P2PSwap(_)) {
+                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P swap with a bot".to_string()));
             }
             UserType::Bot
         } else {

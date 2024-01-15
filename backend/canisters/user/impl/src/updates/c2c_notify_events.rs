@@ -3,7 +3,7 @@ use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use types::{MessageContentInitial, Timestamped};
-use user_canister::c2c_notify_user_events::{Response::*, *};
+use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
 

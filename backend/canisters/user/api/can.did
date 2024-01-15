@@ -36,7 +36,7 @@ type SendMessageResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
-    P2PTradeSetUpFailed : text;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     InternalError : text;
 };
@@ -205,20 +205,17 @@ type TokenSwapStatusResponse = variant {
     NotFound;
 };
 
-type AcceptP2PTradeOfferArgs = record {
+type AcceptP2PSwapArgs = record {
     user_id : UserId;
     message_id : MessageId;
 };
 
-type AcceptP2PTradeOfferResponse = variant {
-    Success : nat64;
-    ChatNotFound;
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
     InsufficientFunds;
-    AlreadyAccepted;
-    AlreadyCompleted;
-    OfferExpired;
-    OfferCancelled;
+    StatusError : AcceptSwapStatusError;
     OfferNotFound;
+    ChatNotFound;
     UserSuspended;
     InternalError : text;
 };
@@ -567,7 +564,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
-    P2PTradeSetUpFailed : text;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
@@ -605,7 +602,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
-    P2PTradeSetUpFailed : text;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
@@ -1048,7 +1045,7 @@ service : {
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
-    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

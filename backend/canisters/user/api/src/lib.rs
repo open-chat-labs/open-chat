@@ -1,9 +1,16 @@
+use crate::c2c_delete_messages::Args as DeleteMessagesArgs;
+use crate::c2c_edit_message::Args as EditMessageArgs;
+use crate::c2c_mark_read_v2::Args as MarkMessagesReadArgs;
+use crate::c2c_send_messages_v2::Args as SendMessagesArgs;
+use crate::c2c_tip_message::Args as TipMessageArgs;
+use crate::c2c_toggle_reaction::Args as ToggleReactionArgs;
+use crate::c2c_undelete_messages::Args as UndeleteMessagesArgs;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    MessageContent, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
+    MessageContent, MessageIndex, P2PSwapStatus, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -158,12 +165,30 @@ pub struct DiamondMembershipPaymentReceived {
     pub send_bot_message: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UserCanisterEvent {
+    SendMessages(Box<SendMessagesArgs>),
+    EditMessage(Box<EditMessageArgs>),
+    DeleteMessages(Box<DeleteMessagesArgs>),
+    UndeleteMessages(Box<UndeleteMessagesArgs>),
+    ToggleReaction(Box<ToggleReactionArgs>),
+    TipMessage(Box<TipMessageArgs>),
+    MarkMessagesRead(MarkMessagesReadArgs),
+    P2POfferStatusChange(Box<P2POfferStatusChange>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct P2POfferStatusChange {
+    pub offer_id: u32,
+    pub status: P2PSwapStatus,
+}
+
 pub fn map_chats_to_chat_ids(chats: Vec<Chat>) -> Vec<ChatId> {
     chats
-        .iter()
+        .into_iter()
         .filter_map(|c| match c {
-            Chat::Direct(c) => Some(*c),
-            Chat::Group(c) => Some(*c),
+            Chat::Direct(c) => Some(c),
+            Chat::Group(c) => Some(c),
             Chat::Channel(_, _) => None,
         })
         .collect()

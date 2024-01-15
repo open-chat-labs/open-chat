@@ -11,17 +11,16 @@ use user_canister::c2c_tip_message::{Response::*, *};
 fn c2c_tip_message(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_tip_message_impl(args, state))
+    mutate_state(|state| c2c_tip_message_impl(args, state.env.caller().into(), state))
 }
 
-fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let user_id: UserId = state.env.caller().into();
-    if let Some(chat) = state.data.direct_chats.get_mut(&user_id.into()) {
+pub(crate) fn c2c_tip_message_impl(args: Args, caller_user_id: UserId, state: &mut RuntimeState) -> Response {
+    if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
         let now = state.env.now();
         let my_user_id = state.env.canister_id().into();
 
         let tip_message_args = TipMessageArgs {
-            user_id,
+            user_id: caller_user_id,
             recipient: my_user_id,
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
@@ -41,7 +40,7 @@ fn c2c_tip_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .message_event_internal(args.message_id.into())
             {
                 let notification = Notification::DirectMessageTipped(DirectMessageTipped {
-                    them: user_id,
+                    them: caller_user_id,
                     thread_root_message_index: args.thread_root_message_index,
                     message_index: event.event.message_index,
                     message_event_index: event.index,
