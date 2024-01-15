@@ -41,6 +41,7 @@ pub struct MessagePermissions {
     #[serde(default)]
     pub p2p_swap: Option<GroupPermissionRole>,
     // Keep old permission until FE out too
+    #[serde(default)]
     pub p2p_trade: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
