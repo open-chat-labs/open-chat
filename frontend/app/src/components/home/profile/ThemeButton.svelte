@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Legend from "../../Legend.svelte";
     import MenuIcon from "../../MenuIcon.svelte";

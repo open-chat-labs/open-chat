@@ -2,7 +2,6 @@
     import type { OpenChat } from "openchat-client";
     import { Poller } from "openchat-client";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { _ } from "svelte-i18n";
     import ProgressSteps from "../../ProgressSteps.svelte";
 
     export let swapId: bigint;

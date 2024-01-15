@@ -20,6 +20,8 @@
     import ReceiveCrypto from "./ReceiveCrypto.svelte";
     import MultiToggle from "../../MultiToggle.svelte";
     import { sum } from "../../../utils/math";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -119,7 +121,7 @@
 
 <table>
     <tr>
-        <th class="token-header">{$_("cryptoAccount.token")}</th>
+        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
         <th class="balance-header" colspan="2">
             <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
         </th>
@@ -158,14 +160,19 @@
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.send")}</div>
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+                                    </div>
                                 </MenuItem>
                                 <MenuItem on:click={() => showReceive(token.ledger)}>
                                     <ArrowLeftBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.receive")}</div>
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.receive")} />
+                                    </div>
                                 </MenuItem>
                                 {#await client.getTokenSwaps(token.ledger) then swaps}
                                     {#if Object.keys(swaps).length > 0}
@@ -174,7 +181,10 @@
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("cryptoAccount.swap")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
                                         </MenuItem>
                                     {/if}
                                 {/await}
@@ -184,7 +194,12 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("cryptoAccount.transactions")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "cryptoAccount.transactions",
+                                                )} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                             </Menu>
@@ -199,7 +214,7 @@
             <td>
                 <div class="token">
                     <div class="icon"></div>
-                    {$_("cryptoAccount.total")}
+                    <Translatable resourceKey={i18nKey("cryptoAccount.total")} />
                 </div>
             </td>
             <td class="total">{total}</td>
