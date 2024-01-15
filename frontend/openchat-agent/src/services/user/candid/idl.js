@@ -1110,7 +1110,6 @@ export const idlFactory = ({ IDL }) => {
       'avatar_id' : IDL.Opt(IDL.Nat),
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
-      'local_user_index_canister_id' : CanisterId,
       'suspended' : IDL.Bool,
     }),
   });

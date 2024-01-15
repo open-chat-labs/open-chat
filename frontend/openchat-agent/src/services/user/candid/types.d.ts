@@ -1109,7 +1109,6 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
-      'local_user_index_canister_id' : CanisterId,
       'suspended' : boolean,
     }
   };
