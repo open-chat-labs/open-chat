@@ -1686,7 +1686,7 @@ impl GroupChatCore {
             crypto: new.crypto.apply_to(old.crypto),
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
-            p2p_trade: p2p_swap.clone(),
+            p2p_trade: p2p_swap,
             p2p_swap,
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
