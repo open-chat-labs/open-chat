@@ -82,15 +82,14 @@
             }
             buttonText = $_("p2pSwap.reserved");
         } else if (content.status.kind === "p2p_swap_accepted") {
-            // TODO:
-            // if (acceptedByYou) {
-            //     instructionText = $_("p2pSwap.youReserved");
-            // } else {
-            //     instructionText = $_("p2pSwap.reservedBy", {
-            //         values: { user: `@UserId(${content.status.reservedBy})` },
-            //     });
-            // }
-            // buttonText = $_("p2pSwap.reserved");
+            if (acceptedByYou) {
+                instructionText = $_("p2pSwap.youAccepted");
+            } else {
+                instructionText = $_("p2pSwap.acceptedBy", {
+                    values: { user: `@UserId(${content.status.acceptedBy})` },
+                });
+            }
+            buttonText = $_("p2pSwap.accepted");
         } else {
             if (acceptedByYou) {
                 instructionText = $_("p2pSwap.youAccepted");
