@@ -68,8 +68,8 @@ pub enum AcceptSwapStatusError {
     AlreadyReserved(AcceptSwapAlreadyReserved),
     AlreadyAccepted(AcceptSwapAlreadyAccepted),
     AlreadyCompleted(AcceptSwapAlreadyCompleted),
-    OfferExpired(AcceptSwapOfferExpired),
-    OfferCancelled(AcceptSwapOfferCancelled),
+    SwapExpired(AcceptSwapSwapExpired),
+    SwapCancelled(AcceptSwapSwapCancelled),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -92,12 +92,12 @@ pub struct AcceptSwapAlreadyCompleted {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapOfferExpired {
+pub struct AcceptSwapSwapExpired {
     pub token0_txn_out: Option<TransactionId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapOfferCancelled {
+pub struct AcceptSwapSwapCancelled {
     pub token0_txn_out: Option<TransactionId>,
 }
 
@@ -105,10 +105,10 @@ impl From<P2PSwapStatus> for AcceptSwapStatusError {
     fn from(value: P2PSwapStatus) -> Self {
         match value {
             P2PSwapStatus::Open => unreachable!(),
-            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::OfferCancelled(AcceptSwapOfferCancelled {
+            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::SwapCancelled(AcceptSwapSwapCancelled {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::OfferExpired(AcceptSwapOfferExpired {
+            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::SwapExpired(AcceptSwapSwapExpired {
                 token0_txn_out: s.token0_txn_out,
             }),
             P2PSwapStatus::Reserved(s) => AcceptSwapStatusError::AlreadyReserved(AcceptSwapAlreadyReserved {
