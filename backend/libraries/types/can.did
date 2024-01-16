@@ -1693,8 +1693,8 @@ type AcceptSwapStatusError = variant {
     AlreadyReserved : AcceptSwapAlreadyReserved;
     AlreadyAccepted : AcceptSwapAlreadyAccepted;
     AlreadyCompleted : AcceptSwapAlreadyCompleted;
-    SwapExpired : AcceptSwapSwapExpired;
-    SwapCancelled : AcceptSwapSwapCancelled;
+    SwapExpired : AcceptSwapExpired;
+    SwapCancelled : AcceptSwapCancelled;
 };
 
 type AcceptSwapAlreadyReserved = record {
@@ -1713,10 +1713,10 @@ type AcceptSwapAlreadyCompleted = record {
     token1_txn_out : TransactionId;
 };
 
-type AcceptSwapSwapExpired = record {
+type AcceptSwapExpired = record {
     token0_txn_out : opt TransactionId;
 };
 
-type AcceptSwapSwapCancelled = record {
+type AcceptSwapCancelled = record {
     token0_txn_out : opt TransactionId;
 };

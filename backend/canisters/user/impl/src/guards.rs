@@ -40,6 +40,14 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_escrow_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_escrow_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the escrow canister".to_owned())
+    }
+}
+
 pub fn caller_is_known_group_or_community_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_known_group_canister() || state.is_caller_known_community_canister()) {
         Ok(())

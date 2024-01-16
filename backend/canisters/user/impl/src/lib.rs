@@ -79,6 +79,10 @@ impl RuntimeState {
         self.env.caller() == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_chats.exists(&caller.into())

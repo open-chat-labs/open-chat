@@ -603,19 +603,25 @@ impl P2PSwapContent {
         false
     }
 
-    pub fn complete(&mut self, user_id: UserId, token0_txn_out: TransactionId, token1_txn_out: TransactionId) -> bool {
+    pub fn complete(
+        &mut self,
+        user_id: UserId,
+        token0_txn_out: TransactionId,
+        token1_txn_out: TransactionId,
+    ) -> Result<P2PSwapCompleted, ()> {
         if let P2PSwapStatus::Accepted(a) = &self.status {
             if a.accepted_by == user_id {
-                self.status = P2PSwapStatus::Completed(P2PSwapCompleted {
+                let status = P2PSwapCompleted {
                     accepted_by: user_id,
                     token1_txn_in: a.token1_txn_in,
                     token0_txn_out,
                     token1_txn_out,
-                });
-                return true;
+                };
+                self.status = P2PSwapStatus::Completed(status.clone());
+                return Ok(status);
             }
         }
-        false
+        Err(())
     }
 }
 

@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use community_canister::accept_p2p_swap::{Response::*, *};
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use types::{AcceptSwapSuccess, ChannelId, Chat, MessageId, MessageIndex, UserId};
+use types::{AcceptSwapSuccess, ChannelId, Chat, MessageId, MessageIndex, P2PSwapLocation, UserId};
 
 #[update]
 #[trace]
@@ -91,7 +91,11 @@ fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PS
                         user_id,
                         c2c_args: user_canister::c2c_accept_p2p_swap::Args {
                             swap_id: result.content.swap_id,
-                            chat: Chat::Channel(caller.into(), args.channel_id),
+                            location: P2PSwapLocation::from_message(
+                                Chat::Channel(caller.into(), args.channel_id),
+                                args.thread_root_message_index,
+                                args.message_id,
+                            ),
                             created: result.created,
                             created_by: result.created_by,
                             token0: result.content.token0,

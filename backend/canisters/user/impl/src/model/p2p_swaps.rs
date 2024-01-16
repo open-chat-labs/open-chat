@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
-use types::{Chat, TimestampMillis, TokenInfo, UserId};
+use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PSwaps {
@@ -21,7 +21,7 @@ impl P2PSwaps {
 #[derive(Serialize, Deserialize)]
 pub struct P2PSwap {
     pub id: u32,
-    pub chat: Chat,
+    pub location: P2PSwapLocation,
     pub created_by: UserId,
     pub created: TimestampMillis,
     pub token0: TokenInfo,

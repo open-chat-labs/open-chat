@@ -8,7 +8,7 @@ use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
-    AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapStatus, ReserveP2PSwapResult,
+    AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapResult,
     ReserveP2PSwapSuccess, TimestampMillis, TransactionId, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
@@ -68,7 +68,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
                     id: content.swap_id,
-                    chat: Chat::Direct(args.user_id.into()),
+                    location: P2PSwapLocation::from_message(Chat::Direct(args.user_id.into()), None, args.message_id),
                     created_by: reserve_success.created_by,
                     created: reserve_success.created,
                     token0: content.token0,

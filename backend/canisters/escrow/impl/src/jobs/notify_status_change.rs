@@ -1,6 +1,6 @@
 use crate::{mutate_state, RuntimeState};
 use canister_client::make_c2c_call;
-use escrow_canister::{SwapStatus, SwapStatusChange};
+use escrow_canister::SwapStatusChange;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -23,33 +23,41 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    if let Some((canister_id, swap_id, status)) = mutate_state(get_next) {
-        ic_cdk::spawn(notify_swap_status(canister_id, swap_id, status));
+    if let Some((canister_id, notification)) = mutate_state(get_next) {
+        ic_cdk::spawn(notify_swap_status(canister_id, notification));
     } else if let Some(timer_id) = TIMER_ID.take() {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'notify_status_change' job stopped");
     }
 }
 
-fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, u32, SwapStatus)> {
+fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, SwapStatusChange)> {
     while let Some(id) = state.data.notify_status_change_queue.pop() {
-        if let Some((canister_id, swap_id, status)) = state
-            .data
-            .swaps
-            .get(id)
-            .and_then(|o| o.canister_to_notify.map(|c| (c, o.id, o.status(state.env.now()))))
-        {
-            return Some((canister_id, swap_id, status));
+        if let Some(notification) = state.data.swaps.get(id).and_then(|swap| {
+            swap.canister_to_notify.map(|canister_id| {
+                (
+                    canister_id,
+                    SwapStatusChange {
+                        swap_id: swap.id,
+                        location: swap.location.clone(),
+                        status: swap.status(state.env.now()),
+                    },
+                )
+            })
+        }) {
+            return Some(notification);
         }
     }
     None
 }
 
-async fn notify_swap_status(canister_id: CanisterId, swap_id: u32, status: SwapStatus) {
+async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusChange) {
+    let swap_id = notification.swap_id;
+
     if make_c2c_call(
         canister_id,
         "c2c_notify_p2p_swap_status_change_msgpack",
-        SwapStatusChange { swap_id, status },
+        notification,
         msgpack::serialize,
         |r| msgpack::deserialize::<()>(r),
     )
