@@ -3,14 +3,14 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub offer_id: u32,
+    pub swap_id: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    OfferAlreadyAccepted,
-    OfferExpired,
-    OfferNotFound,
+    SwapAlreadyAccepted,
+    SwapExpired,
+    SwapNotFound,
     NotAuthorized,
 }

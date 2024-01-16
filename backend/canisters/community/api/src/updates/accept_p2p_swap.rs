@@ -14,7 +14,7 @@ pub enum Response {
     Success(AcceptSwapSuccess),
     InsufficientFunds,
     StatusError(AcceptSwapStatusError),
-    OfferNotFound,
+    SwapNotFound,
     ChannelNotFound,
     UserNotInCommunity,
     UserNotInChannel,

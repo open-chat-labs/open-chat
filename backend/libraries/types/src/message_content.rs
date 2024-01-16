@@ -1,7 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    Milliseconds, ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, ProposalContent,
+    TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -535,7 +536,7 @@ pub struct P2PSwapContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContent {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub token0: TokenInfo,
     pub token0_amount: u128,
     pub token1: TokenInfo,
@@ -548,13 +549,13 @@ pub struct P2PSwapContent {
 
 impl P2PSwapContent {
     pub fn new(
-        offer_id: u32,
+        swap_id: u32,
         content: P2PSwapContentInitial,
         transfer: CompletedCryptoTransaction,
         now: TimestampMillis,
     ) -> P2PSwapContent {
         P2PSwapContent {
-            offer_id,
+            swap_id,
             token0: content.token0,
             token0_amount: transfer.units(),
             token1: content.token1,
@@ -616,55 +617,6 @@ impl P2PSwapContent {
         }
         false
     }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum P2PSwapStatus {
-    Open,
-    Cancelled(P2PSwapCancelled),
-    Expired(P2PSwapExpired),
-    Reserved(P2PSwapReserved),
-    Accepted(P2PSwapAccepted),
-    Completed(P2PSwapCompleted),
-}
-
-#[allow(clippy::large_enum_variant)]
-pub enum ReserveP2PSwapResult {
-    Success(ReserveP2PSwapSuccess),
-    Failure(P2PSwapStatus),
-    OfferNotFound,
-}
-
-pub struct ReserveP2PSwapSuccess {
-    pub content: P2PSwapContent,
-    pub created: TimestampMillis,
-    pub created_by: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PSwapCancelled {
-    pub token0_txn_out: Option<TransactionId>,
-}
-
-pub type P2PSwapExpired = P2PSwapCancelled;
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PSwapReserved {
-    pub reserved_by: UserId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PSwapAccepted {
-    pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PSwapCompleted {
-    pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
-    pub token0_txn_out: TransactionId,
-    pub token1_txn_out: TransactionId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]

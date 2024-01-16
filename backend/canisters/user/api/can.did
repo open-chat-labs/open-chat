@@ -214,7 +214,7 @@ type AcceptP2PSwapResponse = variant {
     Success : AcceptSwapSuccess;
     InsufficientFunds;
     StatusError : AcceptSwapStatusError;
-    OfferNotFound;
+    SwapNotFound;
     ChatNotFound;
     UserSuspended;
     InternalError : text;

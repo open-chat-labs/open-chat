@@ -25,7 +25,7 @@ async fn notify_deposit(args: Args) -> Response {
         .map(|b| u128::try_from(b.0).unwrap())
     {
         Ok(balance) => mutate_state(|state| {
-            let offer = state.data.offers.get_mut(args.offer_id).unwrap();
+            let swap = state.data.swaps.get_mut(args.swap_id).unwrap();
             if balance < balance_required {
                 BalanceTooLow(BalanceTooLowResult {
                     balance,
@@ -33,30 +33,30 @@ async fn notify_deposit(args: Args) -> Response {
                 })
             } else {
                 let now = state.env.now();
-                if user_id == offer.created_by {
-                    offer.token0_received = true;
+                if user_id == swap.created_by {
+                    swap.token0_received = true;
                 } else {
-                    offer.accepted_by = Some((user_id, now));
-                    offer.token1_received = true;
+                    swap.accepted_by = Some((user_id, now));
+                    swap.token1_received = true;
                 }
-                let complete = offer.token0_received && offer.token1_received;
+                let complete = swap.token0_received && swap.token1_received;
                 if complete {
-                    let accepted_by = offer.accepted_by.unwrap().0;
+                    let accepted_by = swap.accepted_by.unwrap().0;
                     state.data.pending_payments_queue.push(PendingPayment {
-                        user_id: offer.created_by,
+                        user_id: swap.created_by,
                         timestamp: now,
-                        token_info: offer.token1.clone(),
-                        amount: offer.amount1,
-                        offer_id: offer.id,
+                        token_info: swap.token1.clone(),
+                        amount: swap.amount1,
+                        swap_id: swap.id,
                         reason: PendingPaymentReason::Swap(accepted_by),
                     });
                     state.data.pending_payments_queue.push(PendingPayment {
                         user_id: accepted_by,
                         timestamp: now,
-                        token_info: offer.token0.clone(),
-                        amount: offer.amount0,
-                        offer_id: offer.id,
-                        reason: PendingPaymentReason::Swap(offer.created_by),
+                        token_info: swap.token0.clone(),
+                        amount: swap.amount0,
+                        swap_id: swap.id,
+                        reason: PendingPaymentReason::Swap(swap.created_by),
                     });
                     crate::jobs::make_pending_payments::start_job_if_required(state);
                 }
@@ -76,51 +76,51 @@ struct PrepareResult {
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = state.env.now();
-    if let Some(offer) = state.data.offers.get_mut(args.offer_id) {
-        if offer.cancelled_at.is_some() {
-            Err(OfferCancelled)
-        } else if offer.expires_at < now {
-            Err(OfferExpired)
+    if let Some(swap) = state.data.swaps.get_mut(args.swap_id) {
+        if swap.cancelled_at.is_some() {
+            Err(SwapCancelled)
+        } else if swap.expires_at < now {
+            Err(SwapExpired)
         } else {
             let user_id = args.user_id.unwrap_or_else(|| state.env.caller().into());
 
-            if offer.created_by == user_id {
-                if offer.token0_received {
+            if swap.created_by == user_id {
+                if swap.token0_received {
                     Err(Success(SuccessResult {
-                        complete: offer.token1_received,
+                        complete: swap.token1_received,
                     }))
                 } else {
                     Ok(PrepareResult {
                         user_id,
-                        ledger: offer.token0.ledger,
+                        ledger: swap.token0.ledger,
                         account: Account {
                             owner: state.env.canister_id(),
-                            subaccount: Some(deposit_subaccount(user_id, offer.id)),
+                            subaccount: Some(deposit_subaccount(user_id, swap.id)),
                         },
-                        balance_required: offer.amount0 + offer.token0.fee,
+                        balance_required: swap.amount0 + swap.token0.fee,
                     })
                 }
-            } else if let Some((accepted_by, _)) = offer.accepted_by {
+            } else if let Some((accepted_by, _)) = swap.accepted_by {
                 if accepted_by == user_id {
                     Err(Success(SuccessResult {
-                        complete: offer.token0_received,
+                        complete: swap.token0_received,
                     }))
                 } else {
-                    Err(OfferAlreadyAccepted)
+                    Err(SwapAlreadyAccepted)
                 }
             } else {
                 Ok(PrepareResult {
                     user_id,
-                    ledger: offer.token1.ledger,
+                    ledger: swap.token1.ledger,
                     account: Account {
                         owner: state.env.canister_id(),
-                        subaccount: Some(deposit_subaccount(user_id, offer.id)),
+                        subaccount: Some(deposit_subaccount(user_id, swap.id)),
                     },
-                    balance_required: offer.amount1 + offer.token1.fee,
+                    balance_required: swap.amount1 + swap.token1.fee,
                 })
             }
         }
     } else {
-        Err(OfferNotFound)
+        Err(SwapNotFound)
     }
 }
