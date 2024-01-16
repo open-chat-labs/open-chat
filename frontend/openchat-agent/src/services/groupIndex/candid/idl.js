@@ -307,10 +307,10 @@ export const idlFactory = ({ IDL }) => {
   const P2PSwapContent = IDL.Record({
     'status' : P2PSwapStatus,
     'token0_txn_in' : TransactionId,
+    'swap_id' : IDL.Nat32,
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
     'token1' : TokenInfo,
-    'offer_id' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
     'token1_amount' : IDL.Nat,
     'expires_at' : TimestampMillis,

@@ -10,14 +10,14 @@ export const idlFactory = ({ IDL }) => {
     'index' : IDL.Nat64,
   });
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : TransactionId });
+  const AcceptSwapSwapExpired = IDL.Record({
+    'token0_txn_out' : IDL.Opt(TransactionId),
+  });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
   const AcceptSwapAlreadyAccepted = IDL.Record({
     'accepted_by' : UserId,
     'token1_txn_in' : TransactionId,
-  });
-  const AcceptSwapOfferCancelled = IDL.Record({
-    'token0_txn_out' : IDL.Opt(TransactionId),
   });
   const AcceptSwapAlreadyCompleted = IDL.Record({
     'accepted_by' : UserId,
@@ -26,23 +26,23 @@ export const idlFactory = ({ IDL }) => {
     'token1_txn_in' : TransactionId,
   });
   const AcceptSwapAlreadyReserved = IDL.Record({ 'reserved_by' : UserId });
-  const AcceptSwapOfferExpired = IDL.Record({
+  const AcceptSwapSwapCancelled = IDL.Record({
     'token0_txn_out' : IDL.Opt(TransactionId),
   });
   const AcceptSwapStatusError = IDL.Variant({
+    'SwapExpired' : AcceptSwapSwapExpired,
     'AlreadyAccepted' : AcceptSwapAlreadyAccepted,
-    'OfferCancelled' : AcceptSwapOfferCancelled,
     'AlreadyCompleted' : AcceptSwapAlreadyCompleted,
     'AlreadyReserved' : AcceptSwapAlreadyReserved,
-    'OfferExpired' : AcceptSwapOfferExpired,
+    'SwapCancelled' : AcceptSwapSwapCancelled,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInGroup' : IDL.Null,
-    'OfferNotFound' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : AcceptSwapSuccess,
     'UserSuspended' : IDL.Null,
     'StatusError' : AcceptSwapStatusError,
+    'SwapNotFound' : IDL.Null,
     'InternalError' : IDL.Text,
     'InsufficientFunds' : IDL.Null,
   });
@@ -346,10 +346,10 @@ export const idlFactory = ({ IDL }) => {
   const P2PSwapContent = IDL.Record({
     'status' : P2PSwapStatus,
     'token0_txn_in' : TransactionId,
+    'swap_id' : IDL.Nat32,
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
     'token1' : TokenInfo,
-    'offer_id' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
     'token1_amount' : IDL.Nat,
     'expires_at' : TimestampMillis,

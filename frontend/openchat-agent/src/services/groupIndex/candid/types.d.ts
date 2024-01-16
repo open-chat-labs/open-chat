@@ -12,20 +12,18 @@ export interface AcceptSwapAlreadyCompleted {
   'token1_txn_in' : TransactionId,
 }
 export interface AcceptSwapAlreadyReserved { 'reserved_by' : UserId }
-export interface AcceptSwapOfferCancelled {
-  'token0_txn_out' : [] | [TransactionId],
-}
-export interface AcceptSwapOfferExpired {
-  'token0_txn_out' : [] | [TransactionId],
-}
-export type AcceptSwapStatusError = {
-    'AlreadyAccepted' : AcceptSwapAlreadyAccepted
-  } |
-  { 'OfferCancelled' : AcceptSwapOfferCancelled } |
+export type AcceptSwapStatusError = { 'SwapExpired' : AcceptSwapSwapExpired } |
+  { 'AlreadyAccepted' : AcceptSwapAlreadyAccepted } |
   { 'AlreadyCompleted' : AcceptSwapAlreadyCompleted } |
   { 'AlreadyReserved' : AcceptSwapAlreadyReserved } |
-  { 'OfferExpired' : AcceptSwapOfferExpired };
+  { 'SwapCancelled' : AcceptSwapSwapCancelled };
 export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
+export interface AcceptSwapSwapCancelled {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface AcceptSwapSwapExpired {
+  'token0_txn_out' : [] | [TransactionId],
+}
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
@@ -1216,10 +1214,10 @@ export interface P2PSwapCompleted {
 export interface P2PSwapContent {
   'status' : P2PSwapStatus,
   'token0_txn_in' : TransactionId,
+  'swap_id' : number,
   'token0_amount' : bigint,
   'token0' : TokenInfo,
   'token1' : TokenInfo,
-  'offer_id' : number,
   'caption' : [] | [string],
   'token1_amount' : bigint,
   'expires_at' : TimestampMillis,
@@ -1388,8 +1386,8 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
-export type ReserveP2PSwapResult = { 'OfferNotFound' : null } |
-  { 'Success' : ReserveP2PSwapSuccess } |
+export type ReserveP2PSwapResult = { 'Success' : ReserveP2PSwapSuccess } |
+  { 'SwapNotFound' : null } |
   { 'Failure' : P2PSwapStatus };
 export interface ReserveP2PSwapSuccess {
   'created' : TimestampMillis,
