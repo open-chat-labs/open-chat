@@ -8,6 +8,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{CanisterId, TimestampMillis, TransactionId, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
+use utils::consts::MEMO_P2P_SWAP_ACCEPT;
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[update_msgpack(guard = "caller_is_known_group_or_community_canister")]
@@ -31,7 +32,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             },
             fee: Some(args.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
-            memo: None,
+            memo: Some(MEMO_P2P_SWAP_ACCEPT.to_vec().into()),
             amount: (args.token1_amount + args.token1.fee).into(),
         },
     )

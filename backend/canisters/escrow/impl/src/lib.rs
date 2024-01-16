@@ -1,6 +1,6 @@
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
-use crate::model::offers::Offers;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
+use crate::model::swaps::Swaps;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -46,7 +46,8 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub offers: Offers,
+    #[serde(default)]
+    pub swaps: Swaps,
     pub pending_payments_queue: PendingPaymentsQueue,
     #[serde(default)]
     pub notify_status_change_queue: NotifyStatusChangeQueue,
@@ -58,7 +59,7 @@ struct Data {
 impl Data {
     pub fn new(cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
         Data {
-            offers: Offers::default(),
+            swaps: Swaps::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             notify_status_change_queue: NotifyStatusChangeQueue::default(),
             cycles_dispenser_canister_id,

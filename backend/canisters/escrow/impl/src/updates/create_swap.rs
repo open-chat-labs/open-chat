@@ -1,28 +1,28 @@
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use escrow_canister::create_offer::{Response::*, *};
+use escrow_canister::create_swap::{Response::*, *};
 use types::TimestampMillis;
 
 #[update_candid_and_msgpack]
 #[trace]
-fn create_offer(args: Args) -> Response {
-    mutate_state(|state| create_offer_impl(args, state))
+fn create_swap(args: Args) -> Response {
+    mutate_state(|state| create_swap_impl(args, state))
 }
 
-fn create_offer_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
-    if let Err(error) = validate_offer(&args, now) {
-        InvalidOffer(error)
+    if let Err(error) = validate_swap(&args, now) {
+        InvalidSwap(error)
     } else {
         let caller = state.env.caller().into();
-        let id = state.data.offers.push(caller, args, now);
+        let id = state.data.swaps.push(caller, args, now);
 
         Success(SuccessResult { id })
     }
 }
 
-fn validate_offer(args: &Args, now: TimestampMillis) -> Result<(), String> {
+fn validate_swap(args: &Args, now: TimestampMillis) -> Result<(), String> {
     if args.token0.ledger == args.token1.ledger {
         Err("Token0 must be different to token1".to_string())
     } else if args.token0_amount == 0 {

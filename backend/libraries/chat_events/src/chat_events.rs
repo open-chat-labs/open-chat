@@ -727,7 +727,7 @@ impl ChatEvents {
                 }
             }
         }
-        OfferNotFound
+        SwapNotFound
     }
 
     pub fn accept_p2p_swap(
@@ -755,7 +755,7 @@ impl ChatEvents {
                 };
             }
         }
-        OfferNotFound
+        SwapNotFound
     }
 
     pub fn complete_p2p_swap(

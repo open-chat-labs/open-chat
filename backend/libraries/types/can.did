@@ -1581,7 +1581,7 @@ type P2PSwapStatus = variant {
 type ReserveP2PSwapResult = variant {
     Success : ReserveP2PSwapSuccess;
     Failure : P2PSwapStatus;
-    OfferNotFound;
+    SwapNotFound;
 };
 
 type ReserveP2PSwapSuccess = record {

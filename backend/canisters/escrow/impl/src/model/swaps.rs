@@ -1,33 +1,31 @@
+use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{
-    icrc1::CompletedCryptoTransaction, CanisterId, OfferStatus, OfferStatusAccepted, OfferStatusCancelled,
-    OfferStatusCompleted, TimestampMillis, TokenInfo, UserId,
-};
+use types::{icrc1::CompletedCryptoTransaction, CanisterId, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct Offers {
-    map: BTreeMap<u32, Offer>,
+pub struct Swaps {
+    map: BTreeMap<u32, Swap>,
 }
 
-impl Offers {
-    pub fn push(&mut self, caller: UserId, args: escrow_canister::create_offer::Args, now: TimestampMillis) -> u32 {
+impl Swaps {
+    pub fn push(&mut self, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> u32 {
         let id = self.map.last_key_value().map(|(k, _)| *k).unwrap_or_default();
-        self.map.insert(id, Offer::new(id, caller, args, now));
+        self.map.insert(id, Swap::new(id, caller, args, now));
         id
     }
 
-    pub fn get(&self, id: u32) -> Option<&Offer> {
+    pub fn get(&self, id: u32) -> Option<&Swap> {
         self.map.get(&id)
     }
 
-    pub fn get_mut(&mut self, id: u32) -> Option<&mut Offer> {
+    pub fn get_mut(&mut self, id: u32) -> Option<&mut Swap> {
         self.map.get_mut(&id)
     }
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Offer {
+pub struct Swap {
     pub id: u32,
     pub created_at: TimestampMillis,
     pub created_by: UserId,
@@ -46,9 +44,9 @@ pub struct Offer {
     pub canister_to_notify: Option<CanisterId>,
 }
 
-impl Offer {
-    pub fn new(id: u32, caller: UserId, args: escrow_canister::create_offer::Args, now: TimestampMillis) -> Offer {
-        Offer {
+impl Swap {
+    pub fn new(id: u32, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> Swap {
+        Swap {
             id,
             created_at: now,
             created_by: caller,
@@ -72,29 +70,29 @@ impl Offer {
         self.token0_transfer_out.is_some() && self.token1_transfer_out.is_some()
     }
 
-    pub fn status(&self, now: TimestampMillis) -> OfferStatus {
+    pub fn status(&self, now: TimestampMillis) -> SwapStatus {
         if let Some((accepted_by, accepted_at)) = self.accepted_by {
             if let (Some(token0_transfer_out), Some(token1_transfer_out)) =
                 (self.token0_transfer_out.clone(), self.token1_transfer_out.clone())
             {
-                OfferStatus::Completed(Box::new(OfferStatusCompleted {
+                SwapStatus::Completed(Box::new(SwapStatusCompleted {
                     accepted_by,
                     accepted_at,
                     token0_transfer_out,
                     token1_transfer_out,
                 }))
             } else {
-                OfferStatus::Accepted(Box::new(OfferStatusAccepted {
+                SwapStatus::Accepted(Box::new(SwapStatusAccepted {
                     accepted_by,
                     accepted_at,
                 }))
             }
         } else if let Some(cancelled_at) = self.cancelled_at {
-            OfferStatus::Cancelled(Box::new(OfferStatusCancelled { cancelled_at }))
+            SwapStatus::Cancelled(Box::new(SwapStatusCancelled { cancelled_at }))
         } else if self.expires_at < now {
-            OfferStatus::Expired
+            SwapStatus::Expired
         } else {
-            OfferStatus::Open
+            SwapStatus::Open
         }
     }
 }

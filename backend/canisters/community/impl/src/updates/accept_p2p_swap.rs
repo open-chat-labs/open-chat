@@ -90,7 +90,7 @@ fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PS
                     Ok(ReserveP2PSwapResult {
                         user_id,
                         c2c_args: user_canister::c2c_accept_p2p_swap::Args {
-                            offer_id: result.content.offer_id,
+                            offer_id: result.content.swap_id,
                             chat: Chat::Channel(caller.into(), args.channel_id),
                             created: result.created,
                             created_by: result.created_by,
@@ -104,7 +104,7 @@ fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PS
                     })
                 }
                 types::ReserveP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-                types::ReserveP2PSwapResult::OfferNotFound => Err(Box::new(OfferNotFound)),
+                types::ReserveP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
             }
         } else {
             Err(Box::new(UserNotInChannel))

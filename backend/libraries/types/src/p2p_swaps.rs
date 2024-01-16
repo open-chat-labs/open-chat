@@ -1,4 +1,3 @@
-use crate::icrc1::CompletedCryptoTransaction;
 use crate::{P2PSwapContent, TimestampMillis, TransactionId, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -17,7 +16,7 @@ pub enum P2PSwapStatus {
 pub enum ReserveP2PSwapResult {
     Success(ReserveP2PSwapSuccess),
     Failure(P2PSwapStatus),
-    OfferNotFound,
+    SwapNotFound,
 }
 
 pub struct ReserveP2PSwapSuccess {
@@ -30,7 +29,7 @@ pub struct ReserveP2PSwapSuccess {
 pub enum AcceptP2PSwapResult {
     Success(P2PSwapAccepted),
     Failure(P2PSwapStatus),
-    OfferNotFound,
+    SwapNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -57,40 +56,6 @@ pub struct P2PSwapCompleted {
     pub token1_txn_in: TransactionId,
     pub token0_txn_out: TransactionId,
     pub token1_txn_out: TransactionId,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum OfferStatus {
-    Open,
-    Cancelled(Box<OfferStatusCancelled>),
-    Expired,
-    Accepted(Box<OfferStatusAccepted>),
-    Completed(Box<OfferStatusCompleted>),
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OfferStatusCancelled {
-    pub cancelled_at: TimestampMillis,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OfferStatusAccepted {
-    pub accepted_by: UserId,
-    pub accepted_at: TimestampMillis,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OfferStatusCompleted {
-    pub accepted_by: UserId,
-    pub accepted_at: TimestampMillis,
-    pub token0_transfer_out: CompletedCryptoTransaction,
-    pub token1_transfer_out: CompletedCryptoTransaction,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct OfferStatusChange {
-    pub offer_id: u32,
-    pub status: OfferStatus,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

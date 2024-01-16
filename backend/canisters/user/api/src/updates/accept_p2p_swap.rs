@@ -14,7 +14,7 @@ pub enum Response {
     ChatNotFound,
     InsufficientFunds,
     StatusError(AcceptSwapStatusError),
-    OfferNotFound,
+    SwapNotFound,
     UserSuspended,
     InternalError(String),
 }

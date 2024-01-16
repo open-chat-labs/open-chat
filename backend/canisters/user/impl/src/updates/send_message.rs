@@ -80,7 +80,7 @@ async fn send_message_v2(mut args: Args) -> Response {
         }
         MessageContentInitial::P2PSwap(p) => {
             let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
-            let create_offer_args = escrow_canister::create_offer::Args {
+            let create_offer_args = escrow_canister::create_swap::Args {
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
                 token1: p.token1.clone(),

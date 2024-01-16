@@ -13,7 +13,7 @@ pub enum Response {
     Success(AcceptSwapSuccess),
     InsufficientFunds,
     StatusError(AcceptSwapStatusError),
-    OfferNotFound,
+    SwapNotFound,
     UserNotInGroup,
     UserSuspended,
     ChatFrozen,

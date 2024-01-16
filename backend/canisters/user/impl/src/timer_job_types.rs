@@ -64,13 +64,13 @@ pub struct ProcessTokenSwapJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
-    pub fn run(offer_id: u32) {
-        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+    pub fn run(swap_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { swap_id, attempt: 0 };
         job.execute();
     }
 }
@@ -79,7 +79,7 @@ impl NotifyEscrowCanisterOfDepositJob {
 pub struct SendMessageToGroupJob {
     pub chat_id: ChatId,
     pub args: group_canister::c2c_send_message::Args,
-    pub p2p_offer_id: Option<u32>,
+    pub p2p_swap_id: Option<u32>,
     pub attempt: u32,
 }
 
@@ -87,7 +87,7 @@ pub struct SendMessageToGroupJob {
 pub struct SendMessageToChannelJob {
     pub community_id: CommunityId,
     pub args: community_canister::c2c_send_message::Args,
-    pub p2p_offer_id: Option<u32>,
+    pub p2p_swap_id: Option<u32>,
     pub attempt: u32,
 }
 
@@ -208,7 +208,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
-                    offer_id: self.offer_id,
+                    swap_id: self.swap_id,
                     user_id: None,
                 },
             )
@@ -220,7 +220,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         let now = state.env.now();
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
-                                offer_id: self.offer_id,
+                                swap_id: self.swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,
@@ -246,7 +246,7 @@ impl Job for SendMessageToGroupJob {
                             TimerJob::SendMessageToGroup(Box::new(SendMessageToGroupJob {
                                 chat_id: self.chat_id,
                                 args: self.args,
-                                p2p_offer_id: self.p2p_offer_id,
+                                p2p_swap_id: self.p2p_swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,
@@ -272,7 +272,7 @@ impl Job for SendMessageToChannelJob {
                             TimerJob::SendMessageToChannel(Box::new(SendMessageToChannelJob {
                                 community_id: self.community_id,
                                 args: self.args,
-                                p2p_offer_id: self.p2p_offer_id,
+                                p2p_swap_id: self.p2p_swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,

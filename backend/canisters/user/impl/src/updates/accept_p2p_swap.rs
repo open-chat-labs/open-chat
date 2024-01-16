@@ -13,6 +13,7 @@ use types::{
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
+use utils::consts::MEMO_P2P_SWAP_ACCEPT;
 use utils::time::NANOS_PER_MILLISECOND;
 
 #[update(guard = "caller_is_owner")]
@@ -37,11 +38,11 @@ async fn accept_p2p_swap(args: Args) -> Response {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id, content.offer_id)),
+                subaccount: Some(deposit_subaccount(my_user_id, content.swap_id)),
             },
             fee: Some(content.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
-            memo: None,
+            memo: Some(MEMO_P2P_SWAP_ACCEPT.to_vec().into()),
             amount: (content.token1_amount + content.token1.fee).into(),
         },
     )
@@ -66,7 +67,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
             let token1_txn_in = TransactionId { index, hash: None };
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
-                    id: content.offer_id,
+                    id: content.swap_id,
                     chat: Chat::Direct(args.user_id.into()),
                     created_by: reserve_success.created_by,
                     created: reserve_success.created,
@@ -93,7 +94,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                     }
                 }
             });
-            NotifyEscrowCanisterOfDepositJob::run(content.offer_id);
+            NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
             Success(AcceptSwapSuccess { token1_txn_in })
         }
         Err(response) => {
@@ -130,7 +131,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
                 now,
             }),
             ReserveP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
-            ReserveP2PSwapResult::OfferNotFound => Err(Box::new(OfferNotFound)),
+            ReserveP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
         }
     } else {
         Err(Box::new(ChatNotFound))

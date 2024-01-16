@@ -206,7 +206,7 @@ fn p2p_swap_in_group_succeeds() {
         1_000_000_000
     );
 
-    let event = client::group::happy_path::events_by_index(env, &user1, group_id, vec![1.into()])
+    let event = client::group::happy_path::events_by_index(env, &user1, group_id, vec![2.into()])
         .events
         .pop()
         .unwrap()
@@ -215,7 +215,11 @@ fn p2p_swap_in_group_succeeds() {
     if let ChatEvent::Message(m) = event {
         if let MessageContent::P2PSwap(p) = m.content {
             assert!(matches!(p.status, P2PSwapStatus::Accepted(c) if c.accepted_by == user2.user_id));
+        } else {
+            panic!();
         }
+    } else {
+        panic!()
     }
 }
 

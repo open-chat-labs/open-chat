@@ -4,7 +4,7 @@ use escrow_canister::*;
 // Queries
 
 // Updates
-generate_update_call!(create_offer);
+generate_update_call!(create_swap);
 generate_update_call!(notify_deposit);
 
 pub mod happy_path {
@@ -27,7 +27,7 @@ pub mod happy_path {
             env,
             sender,
             escrow_canister_id,
-            &escrow_canister::create_offer::Args {
+            &escrow_canister::create_swap::Args {
                 token0: input_token.try_into().unwrap(),
                 token0_amount: input_amount,
                 token1: output_token.try_into().unwrap(),
@@ -38,7 +38,7 @@ pub mod happy_path {
         );
 
         match response {
-            escrow_canister::create_offer::Response::Success(result) => result.id,
+            escrow_canister::create_swap::Response::Success(result) => result.id,
             response => panic!("'create_offer' error: {response:?}"),
         }
     }

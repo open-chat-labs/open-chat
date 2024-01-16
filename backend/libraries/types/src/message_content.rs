@@ -536,7 +536,7 @@ pub struct P2PSwapContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapContent {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub token0: TokenInfo,
     pub token0_amount: u128,
     pub token1: TokenInfo,
@@ -549,13 +549,13 @@ pub struct P2PSwapContent {
 
 impl P2PSwapContent {
     pub fn new(
-        offer_id: u32,
+        swap_id: u32,
         content: P2PSwapContentInitial,
         transfer: CompletedCryptoTransaction,
         now: TimestampMillis,
     ) -> P2PSwapContent {
         P2PSwapContent {
-            offer_id,
+            swap_id,
             token0: content.token0,
             token0_amount: transfer.units(),
             token1: content.token1,

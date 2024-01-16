@@ -5,13 +5,13 @@ use types::{Chat, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PSwaps {
-    offers: HashMap<u32, P2PSwap>,
+    swaps: HashMap<u32, P2PSwap>,
 }
 
 impl P2PSwaps {
-    pub fn add(&mut self, swap_offer: P2PSwap) {
-        if let Vacant(e) = self.offers.entry(swap_offer.id) {
-            e.insert(swap_offer);
+    pub fn add(&mut self, swap: P2PSwap) {
+        if let Vacant(e) = self.swaps.entry(swap.id) {
+            e.insert(swap);
         } else {
             unreachable!()
         }

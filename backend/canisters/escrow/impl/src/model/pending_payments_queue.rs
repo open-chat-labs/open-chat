@@ -27,7 +27,7 @@ pub struct PendingPayment {
     pub timestamp: TimestampMillis,
     pub token_info: TokenInfo,
     pub amount: u128,
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub reason: PendingPaymentReason,
 }
 
