@@ -5,7 +5,7 @@
     import Toggle from "../Toggle.svelte";
     import type { UpdatedRules, Level } from "openchat-client";
     import { afterUpdate } from "svelte";
-    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
 
     const MAX_RULES_LENGTH = 1024;

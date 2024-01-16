@@ -5,7 +5,7 @@
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import Legend from "../../Legend.svelte";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
