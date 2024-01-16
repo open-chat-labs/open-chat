@@ -7,6 +7,7 @@
         OpenChat,
         UserSummary,
     } from "openchat-client";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -33,18 +34,18 @@
         }
     }
 
-    function getPlaceholder(scope: ChatListScope["kind"]): string {
+    function getPlaceholder(scope: ChatListScope["kind"]): ResourceKey {
         switch (scope) {
             case "community":
-                return "searchChannelsPlaceholder";
+                return i18nKey("searchChannelsPlaceholder");
             case "group_chat":
-                return "searchGroupsPlaceholder";
+                return i18nKey("searchGroupsPlaceholder");
             case "direct_chat":
-                return "searchUsersPlaceholder";
+                return i18nKey("searchUsersPlaceholder");
             case "favourite":
-                return "searchFavouritesPlaceholder";
+                return i18nKey("searchFavouritesPlaceholder");
             case "none":
-                return "searchPlaceholder";
+                return i18nKey("searchPlaceholder");
         }
     }
 

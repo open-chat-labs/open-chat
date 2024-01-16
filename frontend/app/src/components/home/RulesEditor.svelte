@@ -63,7 +63,7 @@
         minlength={0}
         maxlength={MAX_RULES_LENGTH}
         rows={8}
-        placeholder={interpolate($_, i18nKey("rules.placeholder", undefined, level, true))} />
+        placeholder={i18nKey("rules.placeholder", undefined, level, true)} />
     {#if editing && rules.enabled}
         <Toggle
             id="new-version"

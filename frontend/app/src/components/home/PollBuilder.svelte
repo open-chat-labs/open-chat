@@ -178,7 +178,7 @@
                                 minlength={0}
                                 maxlength={MAX_QUESTION_LENGTH}
                                 countdown
-                                placeholder={$_("poll.optionalQuestion")} />
+                                placeholder={i18nKey("poll.optionalQuestion")} />
                         </div>
 
                         <div class="section">
@@ -205,7 +205,7 @@
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
                                             on:enter={addAnswer}
-                                            placeholder={$_(
+                                            placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
                                                     : "poll.answerText",

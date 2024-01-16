@@ -214,7 +214,7 @@
                         type={"text"}
                         autofocus
                         countdown
-                        placeholder={$_("search")}
+                        placeholder={i18nKey("search")}
                         on:change={onChange}
                         value={searchTerm} />
                 </div>
@@ -252,7 +252,7 @@
                         type={"text"}
                         autofocus={false}
                         countdown
-                        placeholder={$_("tokenTransfer.messagePlaceholder")}
+                        placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                         bind:value={message} />
                 </div>
             </form>

@@ -43,7 +43,7 @@
                 autofocus
                 minlength={3}
                 maxlength={512}
-                placeholder={$_("reasonForSuspension")}>
+                placeholder={i18nKey("reasonForSuspension")}>
                 {#if showError}
                     <ErrorMessage
                         ><Translatable

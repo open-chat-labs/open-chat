@@ -215,14 +215,14 @@
             <Legend label={i18nKey("access.minDissolveDelay")} />
             <Input
                 maxlength={100}
-                placeholder={$_("access.optional")}
+                placeholder={i18nKey("access.optional")}
                 invalid={invalidDissolveDelay}
                 bind:value={minDissolveDelay} />
 
             <Legend label={i18nKey("access.minStake")} />
             <Input
                 maxlength={100}
-                placeholder={$_("access.optional")}
+                placeholder={i18nKey("access.optional")}
                 invalid={invalidMinStake}
                 bind:value={minStake} />
         {:else if selectedGateKey === "payment_gate_folder"}

@@ -47,7 +47,7 @@
         minlength={MIN_DISPLAY_NAME_LENGTH}
         maxlength={MAX_DISPLAY_NAME_LENGTH}
         countdown
-        placeholder={$_("register.enterDisplayName")}>
+        placeholder={i18nKey("register.enterDisplayName")}>
         <slot />
     </Input>
 {:else}

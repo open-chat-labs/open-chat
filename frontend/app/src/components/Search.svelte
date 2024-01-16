@@ -4,11 +4,13 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { iconSize } from "../stores/iconSize";
+    import { translatable } from "../actions/translatable";
+    import { i18nKey, interpolate, type ResourceKey } from "../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     export let searchTerm = "";
     export let searching: boolean;
-    export let placeholder: string = "searchPlaceholder";
+    export let placeholder: ResourceKey = i18nKey("searchPlaceholder");
     export let fill = false;
 
     let timer: number | undefined;
@@ -44,7 +46,8 @@
         spellcheck="false"
         bind:value={searchTerm}
         type="text"
-        placeholder={$_(placeholder)} />
+        use:translatable={{ key: placeholder }}
+        placeholder={interpolate($_, placeholder)} />
     {#if searchTerm !== ""}
         <span on:click={clearSearch} class="icon close"
             ><Close size={$iconSize} color={"var(--icon-txt)"} /></span>

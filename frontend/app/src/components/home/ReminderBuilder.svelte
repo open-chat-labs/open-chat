@@ -126,7 +126,7 @@
                 <TextArea
                     maxlength={1000}
                     rows={4}
-                    placeholder={$_("reminders.notePlaceholder")}
+                    placeholder={i18nKey("reminders.notePlaceholder")}
                     bind:value={note} />
             </div>
 
