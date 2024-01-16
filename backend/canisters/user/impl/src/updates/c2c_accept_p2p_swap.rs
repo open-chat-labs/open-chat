@@ -28,7 +28,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             from_subaccount: None,
             to: Account {
                 owner: escrow_canister_id,
-                subaccount: Some(deposit_subaccount(my_user_id, args.offer_id)),
+                subaccount: Some(deposit_subaccount(my_user_id, args.swap_id)),
             },
             fee: Some(args.token1.fee.into()),
             created_at_time: Some(now * NANOS_PER_MILLISECOND),
@@ -46,7 +46,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
 
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
-                    id: args.offer_id,
+                    id: args.swap_id,
                     chat: args.chat,
                     created_by: args.created_by,
                     created: args.created,

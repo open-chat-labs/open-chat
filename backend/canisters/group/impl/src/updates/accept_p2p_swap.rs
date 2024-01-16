@@ -21,7 +21,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
         Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_id)) => {
             NotifyEscrowCanisterOfDepositJob::run(
                 user_id,
-                c2c_args.offer_id,
+                c2c_args.swap_id,
                 args.thread_root_message_index,
                 args.message_id,
                 transaction_id,
@@ -77,7 +77,7 @@ fn reserve_p2p_swap(args: &Args, state: &mut RuntimeState) -> Result<ReserveP2PS
                 Ok(ReserveP2PSwapResult {
                     user_id,
                     c2c_args: user_canister::c2c_accept_p2p_swap::Args {
-                        offer_id: result.content.swap_id,
+                        swap_id: result.content.swap_id,
                         chat: Chat::Group(state.env.canister_id().into()),
                         created: result.created,
                         created_by: result.created_by,

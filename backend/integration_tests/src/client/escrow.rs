@@ -13,7 +13,7 @@ pub mod happy_path {
     use types::{CanisterId, Cryptocurrency, TimestampMillis, UserId};
 
     #[allow(clippy::too_many_arguments)]
-    pub fn create_offer(
+    pub fn create_swap(
         env: &mut PocketIc,
         sender: Principal,
         escrow_canister_id: CanisterId,
@@ -23,7 +23,7 @@ pub mod happy_path {
         output_amount: u128,
         expires_at: TimestampMillis,
     ) -> u32 {
-        let response = super::create_offer(
+        let response = super::create_swap(
             env,
             sender,
             escrow_canister_id,
@@ -39,7 +39,7 @@ pub mod happy_path {
 
         match response {
             escrow_canister::create_swap::Response::Success(result) => result.id,
-            response => panic!("'create_offer' error: {response:?}"),
+            response => panic!("'create_swap' error: {response:?}"),
         }
     }
 
@@ -47,13 +47,13 @@ pub mod happy_path {
         env: &mut PocketIc,
         user_id: UserId,
         escrow_canister_id: CanisterId,
-        offer_id: u32,
+        swap_id: u32,
     ) -> escrow_canister::notify_deposit::SuccessResult {
         let response = super::notify_deposit(
             env,
             user_id.into(),
             escrow_canister_id,
-            &escrow_canister::notify_deposit::Args { offer_id, user_id: None },
+            &escrow_canister::notify_deposit::Args { swap_id, user_id: None },
         );
 
         match response {

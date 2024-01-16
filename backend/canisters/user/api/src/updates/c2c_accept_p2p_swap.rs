@@ -5,7 +5,7 @@ use types::{Chat, TimestampMillis, TokenInfo, TransactionId, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub chat: Chat,
     pub created: TimestampMillis,
     pub created_by: UserId,
