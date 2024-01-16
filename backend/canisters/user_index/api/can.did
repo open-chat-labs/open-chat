@@ -204,6 +204,16 @@ type SuspectedBotsResponse = variant {
     };
 };
 
+type ReportedMessagesArgs = record {
+    user_id : opt UserId;
+};
+
+type ReportedMessagesResponse = variant {
+    Success : record {
+        json : text;
+    };
+};
+
 type SuspendUserArgs = record {
     user_id : UserId;
     duration : opt Milliseconds;
@@ -398,6 +408,7 @@ service : {
     suspend_user : (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user : (UnsuspendUserArgs) -> (UnsuspendUserResponse);
     suspected_bots : (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+    reported_messages : (ReportedMessagesArgs) -> (ReportedMessagesResponse) query;
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency : (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
