@@ -38,7 +38,7 @@
     autofocus
     countdown={false}
     maxlength={100}
-    placeholder={$_("tokenTransfer.enterAccountName")} />
+    placeholder={i18nKey("tokenTransfer.enterAccountName")} />
 
 <style lang="scss">
     .account {

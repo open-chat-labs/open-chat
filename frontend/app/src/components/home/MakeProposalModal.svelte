@@ -284,7 +284,7 @@
                         minlength={MIN_TITLE_LENGTH}
                         maxlength={MAX_TITLE_LENGTH}
                         countdown
-                        placeholder={$_("proposal.maker.enterTitle")} />
+                        placeholder={i18nKey("proposal.maker.enterTitle")} />
                 </section>
                 <section>
                     <Legend
@@ -296,7 +296,7 @@
                         bind:value={url}
                         maxlength={MAX_URL_LENGTH}
                         countdown
-                        placeholder={$_("proposal.maker.enterUrl")} />
+                        placeholder={i18nKey("proposal.maker.enterUrl")} />
                 </section>
                 <section>
                     <div class="summary-heading">
@@ -340,7 +340,7 @@
                                 scroll
                                 minlength={MIN_SUMMARY_LENGTH}
                                 maxlength={MAX_SUMMARY_LENGTH}
-                                placeholder={$_("proposal.maker.enterSummary")} />
+                                placeholder={i18nKey("proposal.maker.enterSummary")} />
                         {/if}
                     </div>
                 </section>
@@ -374,7 +374,7 @@
                                 invalid={recipientOwner.length > 0 && !recipientOwnerValid}
                                 maxlength={63}
                                 bind:value={recipientOwner}
-                                placeholder={$_("proposal.maker.enterRecipientOwner")} />
+                                placeholder={i18nKey("proposal.maker.enterRecipientOwner")} />
                         </section>
                         <section>
                             <Legend
@@ -385,7 +385,7 @@
                                 invalid={!recipientSubaccountValid}
                                 maxlength={64}
                                 bind:value={recipientSubaccount}
-                                placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
+                                placeholder={i18nKey("proposal.maker.enterRecipientSubaccount")} />
                         </section>
                         <section>
                             <Legend
@@ -398,8 +398,8 @@
                                 minlength={1}
                                 maxlength={20}
                                 bind:value={amountText}
-                                placeholder={$_("proposal.maker.enterAmount", {
-                                    values: { token },
+                                placeholder={i18nKey("proposal.maker.enterAmount", {
+                                    token,
                                 })} />
                         </section>
                     </div>
@@ -416,7 +416,7 @@
                                 minlength={CANISTER_ID_LENGTH}
                                 maxlength={CANISTER_ID_LENGTH}
                                 countdown
-                                placeholder="2ouva-viaaa-aaaaq-aaamq-cai" />
+                                placeholder={i18nKey("2ouva-viaaa-aaaaq-aaamq-cai")} />
                         </section>
                         <section>
                             <Legend label={i18nKey("proposal.maker.tokenInfoUrl")} required />
@@ -425,7 +425,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenInfoUrl}
-                                placeholder="https://token.com/info" />
+                                placeholder={i18nKey("https://token.com/info")} />
                         </section>
                         <section>
                             <Legend label={i18nKey("proposal.maker.howToBuyUrl")} required />
@@ -434,7 +434,7 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenHowToBuyUrl}
-                                placeholder="https://token.com/how-to-buy" />
+                                placeholder={i18nKey("https://token.com/how-to-buy")} />
                         </section>
                         <section>
                             <Legend
@@ -445,7 +445,9 @@
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenTransactionUrlFormat}
-                                placeholder={`https://token.com/transactions/{transaction_index}`} />
+                                placeholder={i18nKey(
+                                    `https://token.com/transactions/{transaction_index}`,
+                                )} />
                         </section>
                         <section>
                             <Legend label={i18nKey("proposal.maker.tokenLogo")} />
@@ -455,7 +457,7 @@
                                 minlength={0}
                                 maxlength={10000}
                                 bind:value={addTokenLogo}
-                                placeholder="data:image/svg+xml;base64,PHN2ZyB3aW..." />
+                                placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
                     </div>
                 {/if}

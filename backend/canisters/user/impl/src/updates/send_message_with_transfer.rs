@@ -8,8 +8,8 @@ use escrow_canister::deposit_subaccount;
 use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
 use types::{
-    icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, PendingCryptoTransaction,
-    TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
+    icrc1, CanisterId, Chat, CompletedCryptoTransaction, CryptoTransaction, MessageContentInitial, MessageId, MessageIndex,
+    P2PSwapLocation, PendingCryptoTransaction, TimestampMillis, UserId, MAX_TEXT_LENGTH, MAX_TEXT_LENGTH_USIZE,
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
@@ -34,12 +34,23 @@ async fn send_message_with_transfer_to_channel(
     let chat = Chat::Channel(args.community_id, args.channel_id);
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
+    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| {
+        prepare(
+            chat,
+            args.thread_root_message_index,
+            args.message_id,
+            &args.content,
+            now,
+            state,
+        )
+    }) {
         PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PSwap(escrow_canister_id, args) => match set_up_p2p_swap(chat, escrow_canister_id, args).await {
-            Ok((id, t)) => (t, Some(id)),
-            Err(error) => return error.into(),
-        },
+        PrepareResult::P2PSwap(escrow_canister_id, create_swap_args) => {
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+                Ok((id, t)) => (t, Some(id)),
+                Err(error) => return error.into(),
+            }
+        }
         PrepareResult::UserSuspended => return UserSuspended,
         PrepareResult::TextTooLong(v) => return TextTooLong(v),
         PrepareResult::RecipientBlocked => return RecipientBlocked,
@@ -133,12 +144,23 @@ async fn send_message_with_transfer_to_group(
     let chat = Chat::Group(args.group_id);
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
+    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| {
+        prepare(
+            chat,
+            args.thread_root_message_index,
+            args.message_id,
+            &args.content,
+            now,
+            state,
+        )
+    }) {
         PrepareResult::Success(t) => (t, None),
-        PrepareResult::P2PSwap(escrow_canister_id, args) => match set_up_p2p_swap(chat, escrow_canister_id, args).await {
-            Ok((id, t)) => (t, Some(id)),
-            Err(error) => return error.into(),
-        },
+        PrepareResult::P2PSwap(escrow_canister_id, create_swap_args) => {
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+                Ok((id, t)) => (t, Some(id)),
+                Err(error) => return error.into(),
+            }
+        }
         PrepareResult::UserSuspended => return UserSuspended,
         PrepareResult::TextTooLong(v) => return TextTooLong(v),
         PrepareResult::RecipientBlocked => return RecipientBlocked,
@@ -221,7 +243,14 @@ enum PrepareResult {
     TransferCannotBeToSelf,
 }
 
-fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, state: &mut RuntimeState) -> PrepareResult {
+fn prepare(
+    chat: Chat,
+    thread_root_message_index: Option<MessageIndex>,
+    message_id: MessageId,
+    content: &MessageContentInitial,
+    now: TimestampMillis,
+    state: &mut RuntimeState,
+) -> PrepareResult {
     use PrepareResult::*;
 
     if state.data.suspended.value {
@@ -265,6 +294,7 @@ fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, st
         }
         MessageContentInitial::P2PSwap(p) => {
             let create_swap_args = escrow_canister::create_swap::Args {
+                location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
                 token1: p.token1.clone(),
@@ -305,7 +335,6 @@ async fn process_transaction(
 }
 
 pub(crate) async fn set_up_p2p_swap(
-    chat: Chat,
     escrow_canister_id: CanisterId,
     args: escrow_canister::create_swap::Args,
 ) -> Result<(u32, PendingCryptoTransaction), SetUpP2PSwapError> {
@@ -323,7 +352,7 @@ pub(crate) async fn set_up_p2p_swap(
 
         state.data.p2p_swaps.add(P2PSwap {
             id,
-            chat,
+            location: args.location,
             created_by: my_user_id,
             created: now,
             token0: args.token0.clone(),

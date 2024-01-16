@@ -269,7 +269,7 @@
         </span>
     </SectionHeader>
     <div class="search">
-        <Search searching={false} bind:searchTerm placeholder={"search"} />
+        <Search searching={false} bind:searchTerm placeholder={i18nKey("search")} />
     </div>
     {#if noTargets}
         <div class="no-chats"><Translatable resourceKey={i18nKey("noChatsAvailable")} /></div>

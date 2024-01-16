@@ -1,4 +1,4 @@
-use crate::{P2PSwapContent, TimestampMillis, TransactionId, UserId};
+use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, TransactionId, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -12,24 +12,20 @@ pub enum P2PSwapStatus {
     Completed(P2PSwapCompleted),
 }
 
-#[allow(clippy::large_enum_variant)]
-pub enum ReserveP2PSwapResult {
-    Success(ReserveP2PSwapSuccess),
+pub enum UpdateP2PSwapResult<T> {
+    Success(T),
     Failure(P2PSwapStatus),
     SwapNotFound,
 }
+
+pub type ReserveP2PSwapResult = UpdateP2PSwapResult<ReserveP2PSwapSuccess>;
+pub type AcceptP2PSwapResult = UpdateP2PSwapResult<P2PSwapAccepted>;
+pub type CompleteP2PSwapResult = UpdateP2PSwapResult<P2PSwapCompleted>;
 
 pub struct ReserveP2PSwapSuccess {
     pub content: P2PSwapContent,
     pub created: TimestampMillis,
     pub created_by: UserId,
-}
-
-#[allow(clippy::large_enum_variant)]
-pub enum AcceptP2PSwapResult {
-    Success(P2PSwapAccepted),
-    Failure(P2PSwapStatus),
-    SwapNotFound,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -68,8 +64,8 @@ pub enum AcceptSwapStatusError {
     AlreadyReserved(AcceptSwapAlreadyReserved),
     AlreadyAccepted(AcceptSwapAlreadyAccepted),
     AlreadyCompleted(AcceptSwapAlreadyCompleted),
-    SwapExpired(AcceptSwapSwapExpired),
-    SwapCancelled(AcceptSwapSwapCancelled),
+    SwapExpired(AcceptSwapExpired),
+    SwapCancelled(AcceptSwapCancelled),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -92,23 +88,49 @@ pub struct AcceptSwapAlreadyCompleted {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapSwapExpired {
+pub struct AcceptSwapExpired {
     pub token0_txn_out: Option<TransactionId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapSwapCancelled {
+pub struct AcceptSwapCancelled {
     pub token0_txn_out: Option<TransactionId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum P2PSwapLocation {
+    Message(swap_location::Message),
+}
+
+impl P2PSwapLocation {
+    pub fn from_message(chat: Chat, thread_root_message_index: Option<MessageIndex>, message_id: MessageId) -> P2PSwapLocation {
+        P2PSwapLocation::Message(swap_location::Message {
+            chat,
+            thread_root_message_index,
+            message_id,
+        })
+    }
+}
+
+pub mod swap_location {
+    use super::*;
+
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    pub struct Message {
+        pub chat: Chat,
+        pub thread_root_message_index: Option<MessageIndex>,
+        pub message_id: MessageId,
+    }
 }
 
 impl From<P2PSwapStatus> for AcceptSwapStatusError {
     fn from(value: P2PSwapStatus) -> Self {
         match value {
             P2PSwapStatus::Open => unreachable!(),
-            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::SwapCancelled(AcceptSwapSwapCancelled {
+            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::SwapCancelled(AcceptSwapCancelled {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::SwapExpired(AcceptSwapSwapExpired {
+            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::SwapExpired(AcceptSwapExpired {
                 token0_txn_out: s.token0_txn_out,
             }),
             P2PSwapStatus::Reserved(s) => AcceptSwapStatusError::AlreadyReserved(AcceptSwapAlreadyReserved {

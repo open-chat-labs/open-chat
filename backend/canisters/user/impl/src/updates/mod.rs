@@ -15,6 +15,7 @@ pub mod c2c_mark_read_v2;
 pub mod c2c_notify_community_deleted;
 pub mod c2c_notify_events;
 pub mod c2c_notify_group_deleted;
+mod c2c_notify_p2p_swap_status_change;
 pub mod c2c_notify_user_canister_events;
 pub mod c2c_remove_from_community;
 pub mod c2c_remove_from_group;
