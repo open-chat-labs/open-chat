@@ -87,6 +87,7 @@ impl Tokens {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_fee(&mut self, ledger_canister_id: CanisterId, fee: u128, now: TimestampMillis) {
         if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
             if token.fee != fee {
