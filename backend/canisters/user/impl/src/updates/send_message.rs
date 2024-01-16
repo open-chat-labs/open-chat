@@ -14,7 +14,7 @@ use rand::Rng;
 use tracing::error;
 use types::{
     BlobReference, CanisterId, Chat, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper,
-    Message, MessageContentInitial, MessageIndex, TimestampMillis, UserId,
+    Message, MessageContentInitial, MessageIndex, P2PSwapLocation, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
@@ -81,6 +81,7 @@ async fn send_message_v2(mut args: Args) -> Response {
         MessageContentInitial::P2PSwap(p) => {
             let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
             let create_swap_args = escrow_canister::create_swap::Args {
+                location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
                 token1: p.token1.clone(),
@@ -88,7 +89,7 @@ async fn send_message_v2(mut args: Args) -> Response {
                 expires_at: now + p.expires_in,
                 canister_to_notify: Some(args.recipient.into()),
             };
-            match set_up_p2p_swap(Chat::Direct(args.recipient.into()), escrow_canister_id, create_swap_args).await {
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
                 Ok((swap_id, pending_transaction)) => {
                     (completed_transfer, p2p_swap_id) =
                         match process_transaction_without_caller_check(pending_transaction).await {

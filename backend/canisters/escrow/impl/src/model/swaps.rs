@@ -1,7 +1,7 @@
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use types::{icrc1::CompletedCryptoTransaction, CanisterId, TimestampMillis, TokenInfo, UserId};
+use types::{icrc1::CompletedCryptoTransaction, CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Swaps {
@@ -27,6 +27,7 @@ impl Swaps {
 #[derive(Serialize, Deserialize)]
 pub struct Swap {
     pub id: u32,
+    pub location: P2PSwapLocation,
     pub created_at: TimestampMillis,
     pub created_by: UserId,
     pub token0: TokenInfo,
@@ -48,6 +49,7 @@ impl Swap {
     pub fn new(id: u32, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> Swap {
         Swap {
             id,
+            location: args.location,
             created_at: now,
             created_by: caller,
             token0: args.token0,

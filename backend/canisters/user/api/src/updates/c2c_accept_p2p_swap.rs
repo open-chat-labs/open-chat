@@ -1,12 +1,12 @@
 use candid::CandidType;
 use icrc_ledger_types::icrc1::transfer::TransferError;
 use serde::{Deserialize, Serialize};
-use types::{Chat, TimestampMillis, TokenInfo, TransactionId, UserId};
+use types::{P2PSwapLocation, TimestampMillis, TokenInfo, TransactionId, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub swap_id: u32,
-    pub chat: Chat,
+    pub location: P2PSwapLocation,
     pub created: TimestampMillis,
     pub created_by: UserId,
     pub token0: TokenInfo,

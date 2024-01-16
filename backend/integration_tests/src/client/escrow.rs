@@ -10,13 +10,14 @@ generate_update_call!(notify_deposit);
 pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, Cryptocurrency, TimestampMillis, UserId};
+    use types::{CanisterId, Cryptocurrency, P2PSwapLocation, TimestampMillis, UserId};
 
     #[allow(clippy::too_many_arguments)]
     pub fn create_swap(
         env: &mut PocketIc,
         sender: Principal,
         escrow_canister_id: CanisterId,
+        location: P2PSwapLocation,
         input_token: Cryptocurrency,
         input_amount: u128,
         output_token: Cryptocurrency,
@@ -28,6 +29,7 @@ pub mod happy_path {
             sender,
             escrow_canister_id,
             &escrow_canister::create_swap::Args {
+                location,
                 token0: input_token.try_into().unwrap(),
                 token0_amount: input_amount,
                 token1: output_token.try_into().unwrap(),
