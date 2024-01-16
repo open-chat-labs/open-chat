@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::{P2PSwapOffer, P2PSwapOfferStatus};
+use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -13,7 +13,7 @@ use types::{
 };
 use user_canister::send_message_with_transfer_to_group;
 use user_canister::{send_message_v2, send_message_with_transfer_to_channel};
-use utils::consts::{MEMO_MESSAGE, MEMO_P2P_OFFER, MEMO_PRIZE};
+use utils::consts::{MEMO_MESSAGE, MEMO_P2P_SWAP_CREATE, MEMO_PRIZE};
 use utils::time::{NANOS_PER_MILLISECOND, SECOND_IN_MS};
 
 #[update(guard = "caller_is_owner")]
@@ -34,7 +34,7 @@ async fn send_message_with_transfer_to_channel(
     let chat = Chat::Channel(args.community_id, args.channel_id);
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_offer_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
+    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
         PrepareResult::Success(t) => (t, None),
         PrepareResult::P2PSwap(escrow_canister_id, args) => match set_up_p2p_swap(chat, escrow_canister_id, args).await {
             Ok((id, t)) => (t, Some(id)),
@@ -49,7 +49,7 @@ async fn send_message_with_transfer_to_channel(
     };
 
     // Make the crypto transfer
-    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id, now).await
+    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok((c, t)) => (c, t),
         Err(error) => return TransferFailed(error),
@@ -75,18 +75,13 @@ async fn send_message_with_transfer_to_channel(
     use community_canister::c2c_send_message::Response;
     match community_canister_c2c_client::c2c_send_message(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => {
-                if let Some(id) = p2p_offer_id {
-                    update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
-                }
-                Success(send_message_with_transfer_to_channel::SuccessResult {
-                    event_index: r.event_index,
-                    message_index: r.message_index,
-                    timestamp: r.timestamp,
-                    expires_at: r.expires_at,
-                    transfer: completed_transaction,
-                })
-            }
+            Response::Success(r) => Success(send_message_with_transfer_to_channel::SuccessResult {
+                event_index: r.event_index,
+                message_index: r.message_index,
+                timestamp: r.timestamp,
+                expires_at: r.expires_at,
+                transfer: completed_transaction,
+            }),
             Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
@@ -108,7 +103,7 @@ async fn send_message_with_transfer_to_channel(
                     TimerJob::SendMessageToChannel(Box::new(SendMessageToChannelJob {
                         community_id: args.community_id,
                         args: c2c_args,
-                        p2p_offer_id,
+                        p2p_swap_id,
                         attempt: 0,
                     })),
                     now + 10 * SECOND_IN_MS,
@@ -138,7 +133,7 @@ async fn send_message_with_transfer_to_group(
     let chat = Chat::Group(args.group_id);
 
     // Validate the content and extract the PendingCryptoTransaction
-    let (pending_transaction, p2p_offer_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
+    let (pending_transaction, p2p_swap_id) = match mutate_state(|state| prepare(chat, &args.content, now, state)) {
         PrepareResult::Success(t) => (t, None),
         PrepareResult::P2PSwap(escrow_canister_id, args) => match set_up_p2p_swap(chat, escrow_canister_id, args).await {
             Ok((id, t)) => (t, Some(id)),
@@ -153,7 +148,7 @@ async fn send_message_with_transfer_to_group(
     };
 
     // Make the crypto transfer
-    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_offer_id, now).await
+    let (content, completed_transaction) = match process_transaction(args.content, pending_transaction, p2p_swap_id, now).await
     {
         Ok((c, t)) => (c, t),
         Err(error) => return TransferFailed(error),
@@ -178,18 +173,13 @@ async fn send_message_with_transfer_to_group(
     use group_canister::c2c_send_message::Response;
     match group_canister_c2c_client::c2c_send_message(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => {
-                if let Some(id) = p2p_offer_id {
-                    update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
-                }
-                Success(send_message_with_transfer_to_group::SuccessResult {
-                    event_index: r.event_index,
-                    message_index: r.message_index,
-                    timestamp: r.timestamp,
-                    expires_at: r.expires_at,
-                    transfer: completed_transaction,
-                })
-            }
+            Response::Success(r) => Success(send_message_with_transfer_to_group::SuccessResult {
+                event_index: r.event_index,
+                message_index: r.message_index,
+                timestamp: r.timestamp,
+                expires_at: r.expires_at,
+                transfer: completed_transaction,
+            }),
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::UserSuspended => UserSuspended,
             Response::ChatFrozen => ChatFrozen,
@@ -208,7 +198,7 @@ async fn send_message_with_transfer_to_group(
                     TimerJob::SendMessageToGroup(Box::new(SendMessageToGroupJob {
                         chat_id: args.group_id,
                         args: c2c_args,
-                        p2p_offer_id,
+                        p2p_swap_id,
                         attempt: 0,
                     })),
                     now + 10 * SECOND_IN_MS,
@@ -222,7 +212,7 @@ async fn send_message_with_transfer_to_group(
 
 enum PrepareResult {
     Success(PendingCryptoTransaction),
-    P2PSwap(CanisterId, escrow_canister::create_offer::Args),
+    P2PSwap(CanisterId, escrow_canister::create_swap::Args),
     UserSuspended,
     TextTooLong(u32),
     RecipientBlocked,
@@ -274,7 +264,7 @@ fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, st
             }
         }
         MessageContentInitial::P2PSwap(p) => {
-            let create_offer_args = escrow_canister::create_offer::Args {
+            let create_swap_args = escrow_canister::create_swap::Args {
                 token0: p.token0.clone(),
                 token0_amount: p.token0_amount,
                 token1: p.token1.clone(),
@@ -282,7 +272,7 @@ fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, st
                 expires_at: now + p.expires_in,
                 canister_to_notify: Some(chat.canister_id()),
             };
-            return P2PSwap(state.data.escrow_canister_id, create_offer_args);
+            return P2PSwap(state.data.escrow_canister_id, create_swap_args);
         }
         _ => return InvalidRequest("Message must include a crypto transfer".to_string()),
     };
@@ -297,39 +287,33 @@ fn prepare(chat: Chat, content: &MessageContentInitial, now: TimestampMillis, st
 async fn process_transaction(
     content: MessageContentInitial,
     pending_transaction: PendingCryptoTransaction,
-    p2p_offer_id: Option<u32>,
+    p2p_swap_id: Option<u32>,
     now: TimestampMillis,
 ) -> Result<(MessageContentInternal, CompletedCryptoTransaction), String> {
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(completed) => {
-            if let Some(id) = p2p_offer_id {
-                update_p2p_swap_status(id, P2PSwapOfferStatus::FundsTransferred);
+            if let Some(id) = p2p_swap_id {
                 NotifyEscrowCanisterOfDepositJob::run(id);
             }
             Ok((
-                MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_offer_id, now),
+                MessageContentInternal::new_with_transfer(content, completed.clone(), p2p_swap_id, now),
                 completed,
             ))
         }
-        Err(failed) => {
-            if let Some(id) = p2p_offer_id {
-                update_p2p_swap_status(id, P2PSwapOfferStatus::TransferError(failed.error_message().to_string()));
-            }
-            Err(failed.error_message().to_string())
-        }
+        Err(failed) => Err(failed.error_message().to_string()),
     }
 }
 
 pub(crate) async fn set_up_p2p_swap(
     chat: Chat,
     escrow_canister_id: CanisterId,
-    args: escrow_canister::create_offer::Args,
+    args: escrow_canister::create_swap::Args,
 ) -> Result<(u32, PendingCryptoTransaction), SetUpP2PSwapError> {
     use SetUpP2PSwapError::*;
 
-    let id = match escrow_canister_c2c_client::create_offer(escrow_canister_id, &args).await {
-        Ok(escrow_canister::create_offer::Response::Success(result)) => result.id,
-        Ok(escrow_canister::create_offer::Response::InvalidOffer(message)) => return Err(InvalidOffer(message)),
+    let id = match escrow_canister_c2c_client::create_swap(escrow_canister_id, &args).await {
+        Ok(escrow_canister::create_swap::Response::Success(result)) => result.id,
+        Ok(escrow_canister::create_swap::Response::InvalidSwap(message)) => return Err(InvalidSwap(message)),
         Err(error) => return Err(InternalError(format!("{error:?}"))),
     };
 
@@ -337,17 +321,17 @@ pub(crate) async fn set_up_p2p_swap(
         let my_user_id = UserId::from(state.env.canister_id());
         let now = state.env.now();
 
-        state.data.p2p_swaps.add(P2PSwapOffer::new(
+        state.data.p2p_swaps.add(P2PSwap {
             id,
             chat,
-            my_user_id,
-            args.token0.clone(),
-            args.token0_amount,
-            args.token1.clone(),
-            args.token1_amount,
-            args.expires_at,
-            now,
-        ));
+            created_by: my_user_id,
+            created: now,
+            token0: args.token0.clone(),
+            token0_amount: args.token0_amount,
+            token1: args.token1.clone(),
+            token1_amount: args.token1_amount,
+            expires_at: args.expires_at,
+        });
 
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: args.token0.ledger,
@@ -358,7 +342,7 @@ pub(crate) async fn set_up_p2p_swap(
                 subaccount: Some(deposit_subaccount(my_user_id, id)),
             },
             fee: args.token0.fee,
-            memo: Some(MEMO_P2P_OFFER.to_vec().into()),
+            memo: Some(MEMO_P2P_SWAP_CREATE.to_vec().into()),
             created: now * NANOS_PER_MILLISECOND,
         });
 
@@ -366,12 +350,8 @@ pub(crate) async fn set_up_p2p_swap(
     })
 }
 
-pub(crate) fn update_p2p_swap_status(id: u32, status: P2PSwapOfferStatus) {
-    mutate_state(|state| state.data.p2p_swaps.set_offer_status(id, status, state.env.now()));
-}
-
 pub(crate) enum SetUpP2PSwapError {
-    InvalidOffer(String),
+    InvalidSwap(String),
     InternalError(String),
 }
 
@@ -379,7 +359,7 @@ impl From<SetUpP2PSwapError> for send_message_with_transfer_to_channel::Response
     fn from(value: SetUpP2PSwapError) -> Self {
         use send_message_with_transfer_to_channel::Response::*;
         match value {
-            SetUpP2PSwapError::InvalidOffer(message) => InvalidRequest(message),
+            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
         }
     }
@@ -389,7 +369,7 @@ impl From<SetUpP2PSwapError> for send_message_with_transfer_to_group::Response {
     fn from(value: SetUpP2PSwapError) -> Self {
         use send_message_with_transfer_to_group::Response::*;
         match value {
-            SetUpP2PSwapError::InvalidOffer(message) => InvalidRequest(message),
+            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
         }
     }
@@ -399,7 +379,7 @@ impl From<SetUpP2PSwapError> for send_message_v2::Response {
     fn from(value: SetUpP2PSwapError) -> Self {
         use send_message_v2::Response::*;
         match value {
-            SetUpP2PSwapError::InvalidOffer(message) => InvalidRequest(message),
+            SetUpP2PSwapError::InvalidSwap(message) => InvalidRequest(message),
             SetUpP2PSwapError::InternalError(error) => P2PSwapSetUpFailed(error),
         }
     }

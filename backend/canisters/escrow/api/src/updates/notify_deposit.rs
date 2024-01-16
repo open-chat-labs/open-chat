@@ -4,7 +4,7 @@ use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub user_id: Option<UserId>,
 }
 
@@ -12,10 +12,10 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     BalanceTooLow(BalanceTooLowResult),
-    OfferAlreadyAccepted,
-    OfferCancelled,
-    OfferExpired,
-    OfferNotFound,
+    SwapAlreadyAccepted,
+    SwapCancelled,
+    SwapExpired,
+    SwapNotFound,
     InternalError(String),
 }
 

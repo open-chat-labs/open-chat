@@ -3,19 +3,19 @@ use std::collections::VecDeque;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NotifyStatusChangeQueue {
-    offers: VecDeque<u32>,
+    swaps: VecDeque<u32>,
 }
 
 impl NotifyStatusChangeQueue {
-    pub fn push(&mut self, offer_id: u32) {
-        self.offers.push_back(offer_id);
+    pub fn push(&mut self, swap_id: u32) {
+        self.swaps.push_back(swap_id);
     }
 
     pub fn pop(&mut self) -> Option<u32> {
-        self.offers.pop_front()
+        self.swaps.pop_front()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.offers.is_empty()
+        self.swaps.is_empty()
     }
 }

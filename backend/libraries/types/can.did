@@ -1558,7 +1558,7 @@ type P2PSwapContentInitial = record {
 };
 
 type P2PSwapContent = record {
-    offer_id : nat32;
+    swap_id : nat32;
     token0 : TokenInfo;
     token0_amount : nat;
     token0_txn_in : TransactionId;
@@ -1581,7 +1581,7 @@ type P2PSwapStatus = variant {
 type ReserveP2PSwapResult = variant {
     Success : ReserveP2PSwapSuccess;
     Failure : P2PSwapStatus;
-    OfferNotFound;
+    SwapNotFound;
 };
 
 type ReserveP2PSwapSuccess = record {
@@ -1693,8 +1693,8 @@ type AcceptSwapStatusError = variant {
     AlreadyReserved : AcceptSwapAlreadyReserved;
     AlreadyAccepted : AcceptSwapAlreadyAccepted;
     AlreadyCompleted : AcceptSwapAlreadyCompleted;
-    OfferExpired : AcceptSwapOfferExpired;
-    OfferCancelled : AcceptSwapOfferCancelled;
+    SwapExpired : AcceptSwapSwapExpired;
+    SwapCancelled : AcceptSwapSwapCancelled;
 };
 
 type AcceptSwapAlreadyReserved = record {
@@ -1713,10 +1713,10 @@ type AcceptSwapAlreadyCompleted = record {
     token1_txn_out : TransactionId;
 };
 
-type AcceptSwapOfferExpired = record {
+type AcceptSwapSwapExpired = record {
     token0_txn_out : opt TransactionId;
 };
 
-type AcceptSwapOfferCancelled = record {
+type AcceptSwapSwapCancelled = record {
     token0_txn_out : opt TransactionId;
 };

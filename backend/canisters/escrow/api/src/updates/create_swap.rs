@@ -15,7 +15,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    InvalidOffer(String),
+    InvalidSwap(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

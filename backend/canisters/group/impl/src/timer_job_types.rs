@@ -54,7 +54,7 @@ pub struct RemoveExpiredEventsJob;
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
     pub user_id: UserId,
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub transaction_id: TransactionId,
@@ -64,14 +64,14 @@ pub struct NotifyEscrowCanisterOfDepositJob {
 impl NotifyEscrowCanisterOfDepositJob {
     pub fn run(
         user_id: UserId,
-        offer_id: u32,
+        swap_id: u32,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         transaction_id: TransactionId,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
             user_id,
-            offer_id,
+            swap_id,
             thread_root_message_index,
             message_id,
             transaction_id,
@@ -229,7 +229,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
-                    offer_id: self.offer_id,
+                    swap_id: self.swap_id,
                     user_id: Some(self.user_id),
                 },
             )
@@ -246,7 +246,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         );
                     });
                 }
-                Ok(escrow_canister::notify_deposit::Response::OfferExpired) => mutate_state(|state| {
+                Ok(escrow_canister::notify_deposit::Response::SwapExpired) => mutate_state(|state| {
                     state.data.chat.events.unreserve_p2p_swap(
                         self.user_id,
                         self.thread_root_message_index,
@@ -259,7 +259,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         let now = state.env.now();
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob {
-                                offer_id: self.offer_id,
+                                swap_id: self.swap_id,
                                 user_id: self.user_id,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,

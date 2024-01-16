@@ -61,8 +61,10 @@ fn process_event(event: UserCanisterEvent, caller_user_id: UserId, state: &mut R
         UserCanisterEvent::MarkMessagesRead(args) => {
             c2c_mark_read_impl(args, caller_user_id, state);
         }
-        UserCanisterEvent::P2POfferStatusChange(_c) => {
-            // TODO
+        UserCanisterEvent::P2PSwapStatusChange(c) => {
+            if let Some(chat) = state.data.direct_chats.get_mut(&caller_user_id.into()) {
+                chat.events.set_p2p_swap_status(None, c.message_id, c.status, state.env.now());
+            }
         }
     }
 }

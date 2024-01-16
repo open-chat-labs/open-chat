@@ -55,7 +55,7 @@ impl MessageContentInternal {
     pub fn new_with_transfer(
         content: MessageContentInitial,
         transfer: CompletedCryptoTransaction,
-        p2p_swap_offer_id: Option<u32>,
+        p2p_swap_id: Option<u32>,
         now: TimestampMillis,
     ) -> MessageContentInternal {
         match content {
@@ -66,7 +66,7 @@ impl MessageContentInternal {
             }),
             MessageContentInitial::Prize(c) => MessageContentInternal::Prize(PrizeContentInternal::new(c, transfer)),
             MessageContentInitial::P2PSwap(c) => {
-                MessageContentInternal::P2PSwap(P2PSwapContent::new(p2p_swap_offer_id.unwrap(), c, transfer, now))
+                MessageContentInternal::P2PSwap(P2PSwapContent::new(p2p_swap_id.unwrap(), c, transfer, now))
             }
             _ => unreachable!("Message must include a crypto transfer"),
         }

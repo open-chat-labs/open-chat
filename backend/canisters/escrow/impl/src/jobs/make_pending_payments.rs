@@ -44,7 +44,7 @@ async fn process_payment(pending_payment: PendingPayment) {
     let created_at_time = pending_payment.timestamp * NANOS_PER_MILLISECOND;
 
     let args = TransferArg {
-        from_subaccount: Some(deposit_subaccount(from_user, pending_payment.offer_id)),
+        from_subaccount: Some(deposit_subaccount(from_user, pending_payment.swap_id)),
         to: Principal::from(pending_payment.user_id).into(),
         fee: Some(pending_payment.token_info.fee.into()),
         created_at_time: Some(created_at_time),
@@ -55,7 +55,7 @@ async fn process_payment(pending_payment: PendingPayment) {
     match make_payment(pending_payment.token_info.ledger, &args).await {
         Ok(block_index) => {
             mutate_state(|state| {
-                if let Some(offer) = state.data.offers.get_mut(pending_payment.offer_id) {
+                if let Some(swap) = state.data.swaps.get_mut(pending_payment.swap_id) {
                     let transfer = CompletedCryptoTransaction {
                         ledger: pending_payment.token_info.ledger,
                         token: pending_payment.token_info.token,
@@ -73,17 +73,17 @@ async fn process_payment(pending_payment: PendingPayment) {
                     };
                     match pending_payment.reason {
                         PendingPaymentReason::Swap(_) => {
-                            if pending_payment.token_info.ledger == offer.token0.ledger {
-                                offer.token0_transfer_out = Some(transfer);
+                            if pending_payment.token_info.ledger == swap.token0.ledger {
+                                swap.token0_transfer_out = Some(transfer);
                             } else {
-                                offer.token1_transfer_out = Some(transfer);
+                                swap.token1_transfer_out = Some(transfer);
                             }
-                            if offer.is_complete() {
-                                state.data.notify_status_change_queue.push(offer.id);
+                            if swap.is_complete() {
+                                state.data.notify_status_change_queue.push(swap.id);
                                 crate::jobs::notify_status_change::start_job_if_required(state);
                             }
                         }
-                        PendingPaymentReason::Refund => offer.refunds.push(transfer),
+                        PendingPaymentReason::Refund => swap.refunds.push(transfer),
                     };
                 }
             });
