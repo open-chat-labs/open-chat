@@ -7266,7 +7266,6 @@ dependencies = [
  "time",
  "tracing",
  "types",
- "url",
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",

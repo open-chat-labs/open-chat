@@ -40,10 +40,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_json_response(&grouped)
     }
 
-    fn get_mod_reports(url: &String, state: &RuntimeState) -> HttpResponse {
-        let parsed_url = url::Url::parse(url).unwrap();
-        let hash_query: HashMap<_, _> = parsed_url.query_pairs().into_owned().collect();
-        let user_id = hash_query.get("userid");
+    fn get_mod_reports(parameters: HashMap<String, String>, state: &RuntimeState) -> HttpResponse {
+        let user_id = parameters.get("userid");
         let reported_messages: Vec<_> = state
             .data
             .reported_messages
@@ -60,7 +58,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(path, _) if path == "bots" => read_state(get_bot_users),
         Route::Other(path, _) if path == "new_users_per_day" => read_state(get_new_users_per_day),
-        Route::Other(path, _) if path == "mod_reports" => read_state(|state| get_mod_reports(&request.url, state)),
+        Route::Other(path, parameters) if path == "mod_reports" => read_state(|state| get_mod_reports(parameters, state)),
         _ => HttpResponse::not_found(),
     }
 }
