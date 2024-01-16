@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompleteP2PSwapResult, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
-    MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
-    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
+    Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, ProposalContent,
+    TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
