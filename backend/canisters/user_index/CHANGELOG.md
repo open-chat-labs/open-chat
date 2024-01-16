@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Add http endpoint for viewing moderation reports ([#5186](https://github.com/open-chat-labs/open-chat/pull/5186))
+- Add endpoint for viewing moderation reports ([#5188](https://github.com/open-chat-labs/open-chat/pull/5188))
 
 ### Changed
 
