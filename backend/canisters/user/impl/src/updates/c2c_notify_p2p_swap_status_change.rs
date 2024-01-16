@@ -17,8 +17,8 @@ fn c2c_notify_p2p_swap_status_change(args: Args) {
 fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) {
     let P2PSwapLocation::Message(m) = args.location;
 
-    if let Chat::Direct(user_id) = m.chat {
-        if let Some(chat) = state.data.direct_chats.get_mut(&user_id.into()) {
+    if let Chat::Direct(chat_id) = m.chat {
+        if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
             if let SwapStatus::Completed(c) = args.status {
                 if let CompleteP2PSwapResult::Success(status) = chat.events.complete_p2p_swap(
                     c.accepted_by,
@@ -35,7 +35,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     state.env.now(),
                 ) {
                     state.data.user_canister_events_queue.push(
-                        user_id.into(),
+                        chat_id.into(),
                         UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
                             message_id: m.message_id,
                             status: P2PSwapStatus::Completed(status),

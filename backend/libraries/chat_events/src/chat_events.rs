@@ -767,7 +767,7 @@ impl ChatEvents {
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
-                return if let Ok(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
+                return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                     CompleteP2PSwapResult::Success(status)
                 } else {

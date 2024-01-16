@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, ProposalContent,
-    TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    CanisterId, CompleteP2PSwapResult, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency,
+    MessageIndex, Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -608,7 +608,7 @@ impl P2PSwapContent {
         user_id: UserId,
         token0_txn_out: TransactionId,
         token1_txn_out: TransactionId,
-    ) -> Result<P2PSwapCompleted, ()> {
+    ) -> Option<P2PSwapCompleted> {
         if let P2PSwapStatus::Accepted(a) = &self.status {
             if a.accepted_by == user_id {
                 let status = P2PSwapCompleted {
@@ -618,10 +618,10 @@ impl P2PSwapContent {
                     token1_txn_out,
                 };
                 self.status = P2PSwapStatus::Completed(status.clone());
-                return Ok(status);
+                return Some(status);
             }
         }
-        Err(())
+        None
     }
 }
 
