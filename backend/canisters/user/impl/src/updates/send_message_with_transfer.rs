@@ -1,5 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::{P2PSwapOffer, P2PSwapOfferStatus};
+use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::{NotifyEscrowCanisterOfDepositJob, SendMessageToChannelJob, SendMessageToGroupJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
@@ -75,18 +75,13 @@ async fn send_message_with_transfer_to_channel(
     use community_canister::c2c_send_message::Response;
     match community_canister_c2c_client::c2c_send_message(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => {
-                if let Some(id) = p2p_offer_id {
-                    update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
-                }
-                Success(send_message_with_transfer_to_channel::SuccessResult {
-                    event_index: r.event_index,
-                    message_index: r.message_index,
-                    timestamp: r.timestamp,
-                    expires_at: r.expires_at,
-                    transfer: completed_transaction,
-                })
-            }
+            Response::Success(r) => Success(send_message_with_transfer_to_channel::SuccessResult {
+                event_index: r.event_index,
+                message_index: r.message_index,
+                timestamp: r.timestamp,
+                expires_at: r.expires_at,
+                transfer: completed_transaction,
+            }),
             Response::UserNotInCommunity => UserNotInCommunity(Some(completed_transaction)),
             Response::UserNotInChannel => UserNotInChannel(completed_transaction),
             Response::ChannelNotFound => ChannelNotFound(completed_transaction),
@@ -178,18 +173,13 @@ async fn send_message_with_transfer_to_group(
     use group_canister::c2c_send_message::Response;
     match group_canister_c2c_client::c2c_send_message(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            Response::Success(r) => {
-                if let Some(id) = p2p_offer_id {
-                    update_p2p_swap_status(id, P2PSwapOfferStatus::Open);
-                }
-                Success(send_message_with_transfer_to_group::SuccessResult {
-                    event_index: r.event_index,
-                    message_index: r.message_index,
-                    timestamp: r.timestamp,
-                    expires_at: r.expires_at,
-                    transfer: completed_transaction,
-                })
-            }
+            Response::Success(r) => Success(send_message_with_transfer_to_group::SuccessResult {
+                event_index: r.event_index,
+                message_index: r.message_index,
+                timestamp: r.timestamp,
+                expires_at: r.expires_at,
+                transfer: completed_transaction,
+            }),
             Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
             Response::UserSuspended => UserSuspended,
             Response::ChatFrozen => ChatFrozen,
@@ -303,7 +293,6 @@ async fn process_transaction(
     match crate::crypto::process_transaction(pending_transaction).await {
         Ok(completed) => {
             if let Some(id) = p2p_offer_id {
-                update_p2p_swap_status(id, P2PSwapOfferStatus::FundsTransferred);
                 NotifyEscrowCanisterOfDepositJob::run(id);
             }
             Ok((
@@ -311,12 +300,7 @@ async fn process_transaction(
                 completed,
             ))
         }
-        Err(failed) => {
-            if let Some(id) = p2p_offer_id {
-                update_p2p_swap_status(id, P2PSwapOfferStatus::TransferError(failed.error_message().to_string()));
-            }
-            Err(failed.error_message().to_string())
-        }
+        Err(failed) => Err(failed.error_message().to_string()),
     }
 }
 
@@ -337,17 +321,17 @@ pub(crate) async fn set_up_p2p_swap(
         let my_user_id = UserId::from(state.env.canister_id());
         let now = state.env.now();
 
-        state.data.p2p_swaps.add(P2PSwapOffer::new(
+        state.data.p2p_swaps.add(P2PSwap {
             id,
             chat,
-            my_user_id,
-            args.token0.clone(),
-            args.token0_amount,
-            args.token1.clone(),
-            args.token1_amount,
-            args.expires_at,
-            now,
-        ));
+            created_by: my_user_id,
+            created: now,
+            token0: args.token0.clone(),
+            token0_amount: args.token0_amount,
+            token1: args.token1.clone(),
+            token1_amount: args.token1_amount,
+            expires_at: args.expires_at,
+        });
 
         let pending_transfer = PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
             ledger: args.token0.ledger,
@@ -364,10 +348,6 @@ pub(crate) async fn set_up_p2p_swap(
 
         Ok((id, pending_transfer))
     })
-}
-
-pub(crate) fn update_p2p_swap_status(id: u32, status: P2PSwapOfferStatus) {
-    mutate_state(|state| state.data.p2p_swaps.set_offer_status(id, status, state.env.now()));
 }
 
 pub(crate) enum SetUpP2PSwapError {

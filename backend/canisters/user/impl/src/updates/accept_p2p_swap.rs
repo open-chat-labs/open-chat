@@ -1,20 +1,21 @@
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::{P2PSwapOffer, P2PSwapOfferStatus};
+use crate::model::p2p_swaps::P2PSwap;
 use crate::timer_job_types::NotifyEscrowCanisterOfDepositJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
+use ic_cdk_macros::update;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
-    AcceptSwapSuccess, CanisterId, Chat, EventIndex, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
-    TransactionId, UserId,
+    AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapStatus, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TransactionId, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
+use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 use utils::time::NANOS_PER_MILLISECOND;
 
-#[update_msgpack(guard = "caller_is_owner")]
+#[update(guard = "caller_is_owner")]
 #[trace]
 async fn accept_p2p_swap(args: Args) -> Response {
     run_regular_jobs();
@@ -64,21 +65,33 @@ async fn accept_p2p_swap(args: Args) -> Response {
         Ok(index) => {
             let token1_txn_in = TransactionId { index, hash: None };
             mutate_state(|state| {
-                state.data.p2p_swaps.add(P2PSwapOffer {
+                state.data.p2p_swaps.add(P2PSwap {
                     id: content.offer_id,
                     chat: Chat::Direct(args.user_id.into()),
                     created_by: reserve_success.created_by,
                     created: reserve_success.created,
-                    status: P2PSwapOfferStatus::Accepted,
-                    last_updated: state.env.now(),
                     token0: content.token0,
                     token0_amount: content.token0_amount,
-                    token0_txn_in: Some(content.token0_txn_in),
                     token1: content.token1,
                     token1_amount: content.token1_amount,
-                    token1_txn_in: Some(token1_txn_in),
                     expires_at: content.expires_at,
                 });
+                if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+                    let now = state.env.now();
+                    if let AcceptP2PSwapResult::Success(status) =
+                        chat.events
+                            .accept_p2p_swap(my_user_id, None, args.message_id, token1_txn_in, now)
+                    {
+                        state.data.user_canister_events_queue.push(
+                            args.user_id.into(),
+                            UserCanisterEvent::P2PSwapStatusChange(Box::new(P2PSwapStatusChange {
+                                message_id: args.message_id,
+                                status: P2PSwapStatus::Accepted(status),
+                            })),
+                        );
+                        crate::jobs::push_user_canister_events::start_job_if_required(state);
+                    }
+                }
             });
             NotifyEscrowCanisterOfDepositJob::run(content.offer_id);
             Success(AcceptSwapSuccess { token1_txn_in })

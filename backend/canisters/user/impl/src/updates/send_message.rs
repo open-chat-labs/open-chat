@@ -1,10 +1,9 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::model::p2p_swaps::P2PSwapOfferStatus;
 use crate::timer_job_types::{
     DeleteFileReferencesJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob,
 };
-use crate::updates::send_message_with_transfer::{set_up_p2p_swap, update_p2p_swap_status};
+use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_timer_jobs::TimerJobs;
@@ -48,6 +47,7 @@ async fn send_message_v2(mut args: Args) -> Response {
     };
 
     let mut completed_transfer = None;
+    let mut p2p_swap_id = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
     match &mut args.content {
@@ -89,21 +89,17 @@ async fn send_message_v2(mut args: Args) -> Response {
                 canister_to_notify: Some(args.recipient.into()),
             };
             match set_up_p2p_swap(Chat::Direct(args.recipient.into()), escrow_canister_id, create_offer_args).await {
-                Ok((offer_id, pending_transaction)) => {
-                    completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
-                        Ok(completed) => {
-                            update_p2p_swap_status(offer_id, P2PSwapOfferStatus::FundsTransferred);
-                            NotifyEscrowCanisterOfDepositJob::run(offer_id);
-                            Some(completed)
-                        }
-                        Err(failed) => {
-                            update_p2p_swap_status(
-                                offer_id,
-                                P2PSwapOfferStatus::TransferError(failed.error_message().to_string()),
-                            );
-                            return TransferFailed(failed.error_message().to_string());
-                        }
-                    };
+                Ok((swap_id, pending_transaction)) => {
+                    (completed_transfer, p2p_swap_id) =
+                        match process_transaction_without_caller_check(pending_transaction).await {
+                            Ok(completed) => {
+                                NotifyEscrowCanisterOfDepositJob::run(swap_id);
+                                (Some(completed), Some(swap_id))
+                            }
+                            Err(failed) => {
+                                return TransferFailed(failed.error_message().to_string());
+                            }
+                        };
                 }
                 Err(error) => return error.into(),
             }
@@ -111,7 +107,7 @@ async fn send_message_v2(mut args: Args) -> Response {
         _ => {}
     };
 
-    mutate_state(|state| send_message_impl(args, completed_transfer, user_type, state))
+    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, user_type, state))
 }
 
 enum UserType {
@@ -194,6 +190,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
 fn send_message_impl(
     args: Args,
     completed_transfer: Option<CompletedCryptoTransaction>,
+    p2p_swap_id: Option<u32>,
     user_type: UserType,
     state: &mut RuntimeState,
 ) -> Response {
@@ -201,7 +198,7 @@ fn send_message_impl(
     let my_user_id = state.env.canister_id().into();
     let recipient = args.recipient;
     let content = if let Some(transfer) = completed_transfer.clone() {
-        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, None, now)
+        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
     } else {
         args.content.clone().try_into().unwrap()
     };

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
     CanisterId, ChannelId, ChannelLatestMessageIndex, Chat, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration,
-    MessageContent, MessageIndex, P2PSwapStatus, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
+    MessageContent, MessageId, MessageIndex, P2PSwapStatus, PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -174,12 +174,12 @@ pub enum UserCanisterEvent {
     ToggleReaction(Box<ToggleReactionArgs>),
     TipMessage(Box<TipMessageArgs>),
     MarkMessagesRead(MarkMessagesReadArgs),
-    P2POfferStatusChange(Box<P2POfferStatusChange>),
+    P2PSwapStatusChange(Box<P2PSwapStatusChange>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct P2POfferStatusChange {
-    pub offer_id: u32,
+pub struct P2PSwapStatusChange {
+    pub message_id: MessageId,
     pub status: P2PSwapStatus,
 }
 
