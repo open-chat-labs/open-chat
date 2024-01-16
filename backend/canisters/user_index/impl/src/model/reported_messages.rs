@@ -90,6 +90,10 @@ impl ReportedMessages {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &ReportedMessage> {
+        self.messages.iter()
+    }
+
     fn index_from_rule_id(&self, rule_id: String) -> usize {
         self.rules.iter().position(|r| r.id == rule_id).unwrap()
     }
