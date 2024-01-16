@@ -187,7 +187,7 @@
                     countdown={false}
                     maxlength={100}
                     invalid={targetAccount.length > 0 && !targetAccountValid}
-                    placeholder={$_("cryptoAccount.sendTarget")} />
+                    placeholder={i18nKey("cryptoAccount.sendTarget")} />
 
                 <div class="qr" on:click={scan}>
                     <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />

@@ -325,7 +325,7 @@
                         invalid={false}
                         disabled={readonly}
                         maxlength={MAX_BIO_LENGTH}
-                        placeholder={$_("enterBio")}>
+                        placeholder={i18nKey("enterBio")}>
                         {#if bioError !== undefined}
                             <ErrorMessage
                                 ><Translatable resourceKey={i18nKey(bioError)} /></ErrorMessage>

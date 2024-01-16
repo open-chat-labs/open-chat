@@ -664,6 +664,11 @@
             left: -1000px;
             @include z-index("dollar");
         }
+
+        .is-translatable {
+            position: relative;
+            top: 4px;
+        }
     }
 
     .burst-wrapper {

@@ -3,6 +3,7 @@
     import Input from "./Input.svelte";
     import { onMount } from "svelte";
     import { _ } from "svelte-i18n";
+    import { i18nKey } from "../i18n/i18n";
 
     const MIN_EXTANT_USERNAME_LENGTH = 3;
     const MAX_USERNAME_LENGTH = 15;
@@ -80,6 +81,6 @@
     minlength={MIN_EXTANT_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}
     countdown
-    placeholder={$_("register.enterUsername")}>
+    placeholder={i18nKey("register.enterUsername")}>
     <slot />
 </Input>

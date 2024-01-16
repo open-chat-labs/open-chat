@@ -148,7 +148,7 @@
                 countdown
                 invalid={nameDirty && !nameValid}
                 on:blur={autoCorrect}
-                placeholder={$_("communities.enterUserGroupName")} />
+                placeholder={i18nKey("communities.enterUserGroupName")} />
         </div>
         <div class="search">
             <Search
@@ -156,7 +156,7 @@
                 fill
                 searching={false}
                 bind:searchTerm
-                placeholder={"searchUsersPlaceholder"} />
+                placeholder={i18nKey("searchUsersPlaceholder")} />
         </div>
         {#if matchedUsers.length > 0}
             <div style={`height: ${matchedUsers.length * 80}px`} class="searched-users">

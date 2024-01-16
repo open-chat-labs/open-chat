@@ -5,7 +5,7 @@
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import Legend from "../../Legend.svelte";
-    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -46,10 +46,7 @@
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
-        placeholder={interpolate(
-            $_,
-            i18nKey("newGroupName", undefined, candidateGroup.level, true),
-        )} />
+        placeholder={i18nKey("newGroupName", undefined, candidateGroup.level, true)} />
 </section>
 
 <section>
@@ -59,10 +56,7 @@
         disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
-        placeholder={interpolate(
-            $_,
-            i18nKey("newGroupDesc", undefined, candidateGroup.level, true),
-        )} />
+        placeholder={i18nKey("newGroupDesc", undefined, candidateGroup.level, true)} />
 </section>
 
 <style lang="scss">

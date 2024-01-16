@@ -67,7 +67,7 @@
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
-        placeholder={$_("communities.namePlaceholder")} />
+        placeholder={i18nKey("communities.namePlaceholder")} />
 </section>
 <section>
     <Legend label={i18nKey("communities.primaryLanguage")} />
@@ -87,7 +87,7 @@
         disabled={busy}
         bind:value={candidate.description}
         maxlength={MAX_DESC_LENGTH}
-        placeholder={$_("communities.descriptionPlaceholder")} />
+        placeholder={i18nKey("communities.descriptionPlaceholder")} />
 </section>
 
 <style lang="scss">

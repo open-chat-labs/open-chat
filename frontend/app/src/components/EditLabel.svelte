@@ -71,7 +71,7 @@
                     maxlength={1000}
                     disabled={busy}
                     bind:value={suggestion}
-                    placeholder={"Enter your suggestion"} />
+                    placeholder={i18nKey("Enter your suggestion")} />
             </div>
             <div slot="footer">
                 <ButtonGroup>

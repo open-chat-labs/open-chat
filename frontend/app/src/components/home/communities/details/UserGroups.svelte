@@ -143,7 +143,7 @@
                     fill
                     searching={false}
                     bind:searchTerm
-                    placeholder={"communities.searchUserGroups"} />
+                    placeholder={i18nKey("communities.searchUserGroups")} />
             </div>
             {#if canManageUserGroups}
                 <div class="add">
