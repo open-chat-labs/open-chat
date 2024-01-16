@@ -1220,8 +1220,8 @@
         "reservedBy": "This offer has been reserved by {user} and is pending completion.",
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
         "completed": "This offer has been accepted by {user}.",
-        "confirmSend": "When you create this offer, {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
-        "confirmAccept": "When you accept this offer, {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister which will then perform the swap. Do you wish to proceed?",
-        "confirmCancel": "When you cancel this offer, {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. There is a small chance someone still accepts the offer before it is cancelled. Do you wish to proceed?"
+        "confirmSend": "When you create this offer {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
+        "confirmAccept": "When you accept this offer {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister which will then perform the swap. Do you wish to proceed?",
+        "confirmCancel": "When you cancel this offer {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. There is a small chance someone still accepts the offer before it is cancelled. Do you wish to proceed?"
     }
 }

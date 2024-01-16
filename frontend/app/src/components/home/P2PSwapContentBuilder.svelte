@@ -72,20 +72,20 @@
 
         const content: P2PSwapContentInitial = {
             kind: "p2p_swap_content_initial",
-            inputToken: {
+            token0: {
                 ledger: fromLedger,
                 symbol: fromDetails.symbol,
                 fee: fromDetails.transferFee,
                 decimals: fromDetails.decimals,
             },
-            outputToken: {
+            token1: {
                 ledger: toLedger,
                 symbol: toDetails.symbol,
                 fee: toDetails.transferFee,
                 decimals: toDetails.decimals,
             },
-            inputAmount: fromAmount,
-            outputAmount: toAmount,
+            token0Amount: fromAmount,
+            token1Amount: toAmount,
             caption: message === "" ? undefined : message,
             expiresIn,
         };
@@ -121,7 +121,12 @@
 </script>
 
 {#if confirming}
-    <AreYouSure message={i18nKey("p2pSwap.confirmSend")} action={send} />
+    <AreYouSure
+        message={i18nKey("p2pSwap.confirmSend", {
+            amount: client.formatTokens(fromAmount, fromDetails.decimals),
+            token: fromDetails.symbol,
+        })}
+        action={send} />
 {/if}
 
 <Overlay dismissible>

@@ -11,26 +11,24 @@
     const client = getContext<OpenChat>("client");
 
     export let valid = true;
-    export let milliseconds: bigint | undefined;
+    export let milliseconds: bigint = BigInt(ONE_HOUR);
     export let disabled = false;
 
     let initialised = false;
-    let amount = "1";
-    let unit: "minutes" | "hours" | "days" = "hours";
+    let amount: string;
+    let unit: "minutes" | "hours" | "days";
 
     onMount(() => {
-        if (milliseconds !== undefined) {
-            const { days, hours, minutes } = client.durationFromMilliseconds(Number(milliseconds));
-            if (days > 0) {
-                amount = days.toString();
-                unit = "days";
-            } else if (hours > 0) {
-                amount = hours.toString();
-                unit = "hours";
-            } else if (minutes > 0) {
-                amount = minutes.toString();
-                unit = "minutes";
-            }
+        const { days, hours, minutes } = client.durationFromMilliseconds(Number(milliseconds));
+        if (days > 0) {
+            amount = days.toString();
+            unit = "days";
+        } else if (hours > 0) {
+            amount = hours.toString();
+            unit = "hours";
+        } else if (minutes > 0) {
+            amount = minutes.toString();
+            unit = "minutes";
         }
         initialised = true;
     });

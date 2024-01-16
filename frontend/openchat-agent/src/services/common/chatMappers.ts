@@ -1472,10 +1472,10 @@ export function apiPrizeContentInitial(domain: PrizeContentInitial): ApiPrizeCot
 
 export function apiP2PSwapContentInitial(domain: P2PSwapContentInitial): ApiP2PSwapContentInitial {
     return {
-        token0: apiTokenInfo(domain.inputToken),
-        token1: apiTokenInfo(domain.outputToken),
-        token0_amount: domain.inputAmount,
-        token1_amount: domain.outputAmount,
+        token0: apiTokenInfo(domain.token0),
+        token1: apiTokenInfo(domain.token1),
+        token0_amount: domain.token0Amount,
+        token1_amount: domain.token1Amount,
         caption: apiOptional(identity, domain.caption),
         expires_in: domain.expiresIn,
     };

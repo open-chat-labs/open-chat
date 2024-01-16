@@ -76,10 +76,10 @@ export interface PrizeContentInitial {
 
 export interface P2PSwapContentInitial {
     kind: "p2p_swap_content_initial";
-    inputToken: TokenInfo;
-    outputToken: TokenInfo;
-    inputAmount: bigint;
-    outputAmount: bigint;
+    token0: TokenInfo;
+    token1: TokenInfo;
+    token0Amount: bigint;
+    token1Amount: bigint;
     caption?: string;
     expiresIn: bigint;
 }
