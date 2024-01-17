@@ -16,9 +16,9 @@ use types::{
     AcceptP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency,
     DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
     GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex,
-    MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapStatus, PendingCryptoTransaction,
-    PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
-    TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
+    MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -699,6 +699,16 @@ impl ChatEvents {
         UnreservePrizeResult::MessageNotFound
     }
 
+    pub fn get_p2p_swap(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+    ) -> Option<&P2PSwapContent> {
+        self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
+            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = &m.content { Some(p) } else { None })
+    }
+
     pub fn reserve_p2p_swap(
         &mut self,
         user_id: UserId,
@@ -790,6 +800,23 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.unreserve(user_id) {
+                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                };
+            }
+        }
+    }
+
+    pub fn mark_p2p_swap_expired(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                if content.mark_expired() {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
                 };
             }

@@ -1,4 +1,4 @@
-use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted};
+use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use types::{icrc1::CompletedCryptoTransaction, CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
@@ -82,6 +82,7 @@ impl Swap {
                     accepted_at,
                     token0_transfer_out,
                     token1_transfer_out,
+                    refunds: self.refunds.clone(),
                 }))
             } else {
                 SwapStatus::Accepted(Box::new(SwapStatusAccepted {
@@ -90,9 +91,14 @@ impl Swap {
                 }))
             }
         } else if let Some(cancelled_at) = self.cancelled_at {
-            SwapStatus::Cancelled(Box::new(SwapStatusCancelled { cancelled_at }))
-        } else if self.expires_at < now {
-            SwapStatus::Expired
+            SwapStatus::Cancelled(Box::new(SwapStatusCancelled {
+                cancelled_at,
+                refunds: self.refunds.clone(),
+            }))
+        } else if self.expires_at <= now {
+            SwapStatus::Expired(Box::new(SwapStatusExpired {
+                refunds: self.refunds.clone(),
+            }))
         } else {
             SwapStatus::Open
         }

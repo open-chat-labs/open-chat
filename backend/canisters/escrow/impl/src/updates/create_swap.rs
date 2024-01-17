@@ -1,3 +1,4 @@
+use crate::timer_job_types::{ExpireSwapJob, TimerJob};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
@@ -16,7 +17,12 @@ fn create_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
         InvalidSwap(error)
     } else {
         let caller = state.env.caller().into();
+        let expires_at = args.expires_at;
         let id = state.data.swaps.push(caller, args, now);
+        state
+            .data
+            .timer_jobs
+            .enqueue_job(TimerJob::ExpireSwap(Box::new(ExpireSwapJob { swap_id: id })), expires_at, now);
 
         Success(SuccessResult { id })
     }
