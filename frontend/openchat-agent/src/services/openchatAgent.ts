@@ -194,6 +194,7 @@ import type {
     TranslationCorrections,
     TranslationCorrection,
     AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -3132,8 +3133,15 @@ export class OpenChatAgent extends EventTarget {
                 messageId,
             );
         } else {
+            return this.userClient.acceptP2PSwap(chatId.userId, messageId);
+        }
+    }    
+
+    cancelP2PSwap(chatId: ChatIdentifier, _threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        if (chatId.kind === "direct_chat") {
+            return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+        } else {
             throw new Error("Not implemented yet");
-            //return this.userClient.acceptP2PSwap(chatId, messageIndex);
         }
     }    
 }

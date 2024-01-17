@@ -161,6 +161,7 @@ import type {
     P2PSwapContent,
     P2PSwapStatus,
     TokenInfo,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -2434,7 +2435,7 @@ export function claimPrizeResponse(
     }
 }
 
-export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse {
+export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & CancelP2PSwapResponse {
     if ("Reserved" in candid) {
         return {
             kind: "already_reserved",

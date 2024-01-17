@@ -2064,6 +2064,7 @@ export type AcceptP2PSwapResponse =
     | { kind: "swap_expired", token0TxnOut?: TransactionId }
     | { kind: "swap_not_found" }
     | { kind: "channel_not_found" }
+    | { kind: "chat_not_found" }
     | { kind: "user_suspended" }
     | { kind: "user_not_in_group" }
     | { kind: "user_not_in_community" }
@@ -2071,3 +2072,28 @@ export type AcceptP2PSwapResponse =
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
     | { kind: "internal_error", text: string };
+
+export type CancelP2PSwapResponse = 
+    | { kind: "success" }
+    | { kind: "already_reserved", reservedBy: string }
+    | { 
+        kind: "already_accepted", 
+        acceptedBy: string, 
+        token1TxnIn: TransactionId 
+    }
+    | { kind: "already_completed",
+        acceptedBy: string, 
+        token1TxnIn: TransactionId,
+        token0TxnOut: TransactionId,
+        token1TxnOut: TransactionId,
+    }
+    | { kind: "swap_cancelled", token0TxnOut?: TransactionId }
+    | { kind: "swap_expired", token0TxnOut?: TransactionId }
+    | { kind: "swap_not_found" }
+    | { kind: "chat_not_found" }
+    | { kind: "channel_not_found" }
+    | { kind: "user_suspended" }
+    | { kind: "user_not_in_group" }
+    | { kind: "user_not_in_community" }
+    | { kind: "user_not_in_channel" }
+    | { kind: "chat_frozen" };

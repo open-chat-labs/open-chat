@@ -149,6 +149,8 @@ import {
     P2PSwapContent,
     P2PSwapStatus,
     TransactionId,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -300,6 +302,8 @@ export {
     P2PSwapContent as ApiP2PSwapContent,
     P2PSwapStatus as ApiP2PSwapStatus,
     TransactionId as ApiTransactionId,
+    AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
+    CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

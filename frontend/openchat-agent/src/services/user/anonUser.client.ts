@@ -1,3 +1,5 @@
+import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
     InitialStateResponse,
     UpdatesResponse,
@@ -403,6 +405,14 @@ export class AnonUserClient {
     }
 
     deleteDirectChat(_userId: string, _blockUser: boolean): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 }

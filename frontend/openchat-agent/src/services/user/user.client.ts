@@ -73,6 +73,8 @@ import type {
     ApproveTransferResponse,
     MessageContext,
     PendingCryptocurrencyTransfer,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -111,6 +113,8 @@ import {
     swapTokensResponse,
     tokenSwapStatusResponse,
     approveTransferResponse,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "./mappers";
 import {
     type Database,
@@ -1252,6 +1256,26 @@ export class UserClient extends CandidService {
                 block_user: blockUser,
             }),
             (resp) => "Success" in resp,
+        );
+    }
+
+    acceptP2PSwap(userId: string, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.accept_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            acceptP2PSwapResponse,
+        );
+    }
+
+    cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.cancel_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            cancelP2PSwapResponse,
         );
     }
 }

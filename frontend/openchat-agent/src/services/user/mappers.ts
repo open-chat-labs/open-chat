@@ -64,6 +64,8 @@ import type {
     ApiSwapTokensResponse,
     ApiTokenSwapStatusResponse,
     ApiApproveTransferResponse,
+    ApiAcceptP2PSwapResponse,
+    ApiCancelP2PSwapResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
@@ -129,6 +131,8 @@ import type {
     TokenSwapStatusResponse,
     Result,
     ApproveTransferResponse,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -151,6 +155,8 @@ import {
     messageEvent,
     expiredEventsRange,
     expiredMessagesRange,
+    statusError,
+    transactionId,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -1248,4 +1254,34 @@ export function approveTransferResponse(
         return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
     }
     throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
+}
+
+export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+    if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
+
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
+}
+
+export function cancelP2PSwapResponse(candid: ApiCancelP2PSwapResponse): CancelP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
 }
