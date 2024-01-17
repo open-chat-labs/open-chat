@@ -12,7 +12,7 @@ export const idlFactory = ({ IDL }) => {
     'index' : IDL.Nat64,
   });
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : TransactionId });
-  const AcceptSwapSwapExpired = IDL.Record({
+  const AcceptSwapExpired = IDL.Record({
     'token0_txn_out' : IDL.Opt(TransactionId),
   });
   const CanisterId = IDL.Principal;
@@ -28,15 +28,15 @@ export const idlFactory = ({ IDL }) => {
     'token1_txn_in' : TransactionId,
   });
   const AcceptSwapAlreadyReserved = IDL.Record({ 'reserved_by' : UserId });
-  const AcceptSwapSwapCancelled = IDL.Record({
+  const AcceptSwapCancelled = IDL.Record({
     'token0_txn_out' : IDL.Opt(TransactionId),
   });
   const AcceptSwapStatusError = IDL.Variant({
-    'SwapExpired' : AcceptSwapSwapExpired,
+    'SwapExpired' : AcceptSwapExpired,
     'AlreadyAccepted' : AcceptSwapAlreadyAccepted,
     'AlreadyCompleted' : AcceptSwapAlreadyCompleted,
     'AlreadyReserved' : AcceptSwapAlreadyReserved,
-    'SwapCancelled' : AcceptSwapSwapCancelled,
+    'SwapCancelled' : AcceptSwapCancelled,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'UserNotInChannel' : IDL.Null,

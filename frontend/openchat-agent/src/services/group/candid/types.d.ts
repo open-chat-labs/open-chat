@@ -24,18 +24,14 @@ export interface AcceptSwapAlreadyCompleted {
   'token1_txn_in' : TransactionId,
 }
 export interface AcceptSwapAlreadyReserved { 'reserved_by' : UserId }
-export type AcceptSwapStatusError = { 'SwapExpired' : AcceptSwapSwapExpired } |
+export interface AcceptSwapCancelled { 'token0_txn_out' : [] | [TransactionId] }
+export interface AcceptSwapExpired { 'token0_txn_out' : [] | [TransactionId] }
+export type AcceptSwapStatusError = { 'SwapExpired' : AcceptSwapExpired } |
   { 'AlreadyAccepted' : AcceptSwapAlreadyAccepted } |
   { 'AlreadyCompleted' : AcceptSwapAlreadyCompleted } |
   { 'AlreadyReserved' : AcceptSwapAlreadyReserved } |
-  { 'SwapCancelled' : AcceptSwapSwapCancelled };
+  { 'SwapCancelled' : AcceptSwapCancelled };
 export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
-export interface AcceptSwapSwapCancelled {
-  'token0_txn_out' : [] | [TransactionId],
-}
-export interface AcceptSwapSwapExpired {
-  'token0_txn_out' : [] | [TransactionId],
-}
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
