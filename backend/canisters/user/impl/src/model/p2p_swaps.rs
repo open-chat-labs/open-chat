@@ -5,6 +5,7 @@ use types::{P2PSwapLocation, TimestampMillis, TokenInfo, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct P2PSwaps {
+    #[serde(default)]
     swaps: HashMap<u32, P2PSwap>,
 }
 
