@@ -41,7 +41,6 @@ pub(crate) fn c2c_delete_messages_impl(args: Args, caller_user_id: UserId, state
                         chat_id,
                         thread_root_message_index: None,
                         message_id,
-                        delete_files: false,
                     })),
                     remove_deleted_message_content_at,
                     now,

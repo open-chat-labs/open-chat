@@ -5,8 +5,9 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{ChatEvent, ChatId, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 #[test]
 fn p2p_swap_in_direct_chat_succeeds() {
@@ -235,14 +236,14 @@ fn cancel_p2p_swap_in_direct_chat_succeeds() {
 
     let TestData { user1, user2, .. } = init_test_data(env, canister_ids, *controller, true);
 
-    let original_icp_balance = 1_100_000_000;
+    let original_chat_balance = 11_000_000_000;
 
     client::icrc1::happy_path::transfer(
         env,
         *controller,
-        canister_ids.icp_ledger,
+        canister_ids.chat_ledger,
         Principal::from(user1.user_id),
-        original_icp_balance,
+        original_chat_balance,
     );
 
     let message_id = random_message_id();
@@ -256,10 +257,10 @@ fn cancel_p2p_swap_in_direct_chat_succeeds() {
             thread_root_message_index: None,
             message_id,
             content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
-                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
-                token0_amount: 1_000_000_000,
-                token1: Cryptocurrency::CHAT.try_into().unwrap(),
-                token1_amount: 10_000_000_000,
+                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0_amount: 10_000_000_000,
+                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1_amount: 1_000_000_000,
                 expires_in: DAY_IN_MS,
                 caption: None,
             }),
@@ -275,14 +276,12 @@ fn cancel_p2p_swap_in_direct_chat_succeeds() {
         user_canister::send_message_v2::Response::TransferSuccessV2(_)
     ));
 
-    env.tick();
-
     let delete_message_response = client::user::delete_messages(
         env,
-        user2.principal,
-        user2.canister(),
+        user1.principal,
+        user1.canister(),
         &user_canister::delete_messages::Args {
-            user_id: user1.user_id,
+            user_id: user2.user_id,
             thread_root_message_index: None,
             message_ids: vec![message_id],
             correlation_id: 0,
@@ -294,11 +293,12 @@ fn cancel_p2p_swap_in_direct_chat_succeeds() {
         user_canister::delete_messages::Response::Success
     ));
 
-    tick_many(env, 10);
+    env.advance_time(Duration::from_millis(10 * MINUTE_IN_MS));
+    tick_many(env, 5);
 
     assert_eq!(
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(user1.user_id)),
-        original_icp_balance - (2 * Cryptocurrency::InternetComputer.fee().unwrap())
+        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
     );
 }
 

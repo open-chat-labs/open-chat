@@ -36,7 +36,6 @@ pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub delete_files: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -160,19 +159,17 @@ impl Job for HardDeleteMessageContentJob {
             }) {
                 let my_user_id = state.env.canister_id().into();
                 if sender == my_user_id {
-                    if self.delete_files {
-                        let files_to_delete = content.blob_references();
-                        if !files_to_delete.is_empty() {
-                            // If there was already a job queued up to delete these files, cancel it
-                            state.data.timer_jobs.cancel_jobs(|job| {
-                                if let TimerJob::DeleteFileReferences(j) = job {
-                                    j.files.iter().all(|f| files_to_delete.contains(f))
-                                } else {
-                                    false
-                                }
-                            });
-                            ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
-                        }
+                    let files_to_delete = content.blob_references();
+                    if !files_to_delete.is_empty() {
+                        // If there was already a job queued up to delete these files, cancel it
+                        state.data.timer_jobs.cancel_jobs(|job| {
+                            if let TimerJob::DeleteFileReferences(j) = job {
+                                j.files.iter().all(|f| files_to_delete.contains(f))
+                            } else {
+                                false
+                            }
+                        });
+                        ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                     }
                     if let MessageContentInternal::P2PSwap(s) = content {
                         if matches!(s.status, P2PSwapStatus::Open) {
@@ -273,7 +270,9 @@ impl Job for CancelP2PSwapJob {
             )
             .await
             {
-                Ok(escrow_canister::cancel_swap::Response::Success) => {}
+                Ok(escrow_canister::cancel_swap::Response::Success) => {
+                    panic!("Cancel swap success")
+                }
                 Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted) => {}
                 Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
                 Err(_) if self.attempt < 20 => {
