@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add message queues for pushing updates between user canisters ([#5172](https://github.com/open-chat-labs/open-chat/pull/5172))
 - Push p2p swap status changes between user canisters ([#5187](https://github.com/open-chat-labs/open-chat/pull/5187))
 - Notify user canisters when p2p swaps complete ([#5191](https://github.com/open-chat-labs/open-chat/pull/5191))
+- Cancel p2p swap if message is deleted ([#5192](https://github.com/open-chat-labs/open-chat/pull/5192))
 
 ### Changed
 
