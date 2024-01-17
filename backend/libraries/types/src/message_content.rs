@@ -1,8 +1,8 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
-    Milliseconds, P2PSwapAccepted, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus, ProposalContent,
-    TimestampMillis, TokenInfo, TotalVotes, User, UserId,
+    Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
+    ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -622,6 +622,24 @@ impl P2PSwapContent {
             }
         }
         None
+    }
+
+    pub fn cancel(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn mark_expired(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
     }
 }
 

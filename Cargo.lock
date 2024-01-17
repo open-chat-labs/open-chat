@@ -2072,6 +2072,7 @@ dependencies = [
  "canister_client",
  "canister_logger",
  "canister_state_macros",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "escrow_canister",
  "http_request",

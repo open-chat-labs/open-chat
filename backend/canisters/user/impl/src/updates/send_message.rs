@@ -1,7 +1,8 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{
-    DeleteFileReferencesJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob,
+    DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
+    RetrySendingFailedMessagesJob,
 };
 use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
@@ -13,8 +14,9 @@ use ic_cdk_macros::update;
 use rand::Rng;
 use tracing::error;
 use types::{
-    BlobReference, CanisterId, Chat, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper,
-    Message, MessageContentInitial, MessageIndex, P2PSwapLocation, TimestampMillis, UserId,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId,
 };
 use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
@@ -230,6 +232,8 @@ fn send_message_impl(
     }
 
     register_timer_jobs(
+        args.recipient.into(),
+        args.message_id,
         &message_event,
         Vec::new(),
         is_next_event_to_expire,
@@ -389,6 +393,8 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
 }
 
 pub(crate) fn register_timer_jobs(
+    chat_id: ChatId,
+    message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
     is_next_event_to_expire: bool,
@@ -408,5 +414,17 @@ pub(crate) fn register_timer_jobs(
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    }
+
+    if let MessageContent::P2PSwap(c) = &message_event.event.content {
+        timer_jobs.enqueue_job(
+            TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
+                chat_id,
+                thread_root_message_index: None,
+                message_id,
+            })),
+            c.expires_at,
+            now,
+        );
     }
 }

@@ -213,11 +213,23 @@ type AcceptP2PSwapArgs = record {
 type AcceptP2PSwapResponse = variant {
     Success : AcceptSwapSuccess;
     InsufficientFunds;
-    StatusError : AcceptSwapStatusError;
+    StatusError : SwapStatusError;
     SwapNotFound;
     ChatNotFound;
     UserSuspended;
     InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChatNotFound;
 };
 
 type TipMessageArgs = record {
@@ -1046,6 +1058,7 @@ service : {
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
 
     init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
     migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);

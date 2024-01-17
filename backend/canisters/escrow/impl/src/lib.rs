@@ -1,7 +1,9 @@
 use crate::model::notify_status_change_queue::NotifyStatusChangeQueue;
 use crate::model::pending_payments_queue::PendingPaymentsQueue;
 use crate::model::swaps::Swaps;
+use crate::timer_job_types::TimerJob;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -12,6 +14,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -51,6 +54,8 @@ struct Data {
     pub pending_payments_queue: PendingPaymentsQueue,
     #[serde(default)]
     pub notify_status_change_queue: NotifyStatusChangeQueue,
+    #[serde(default)]
+    timer_jobs: TimerJobs<TimerJob>,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
@@ -62,6 +67,7 @@ impl Data {
             swaps: Swaps::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             notify_status_change_queue: NotifyStatusChangeQueue::default(),
+            timer_jobs: TimerJobs::default(),
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],
             test_mode,

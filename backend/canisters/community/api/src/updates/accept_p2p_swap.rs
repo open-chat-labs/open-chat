@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AcceptSwapStatusError, AcceptSwapSuccess, ChannelId, MessageId, MessageIndex};
+use types::{AcceptSwapSuccess, ChannelId, MessageId, MessageIndex, SwapStatusError};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -13,7 +13,7 @@ pub struct Args {
 pub enum Response {
     Success(AcceptSwapSuccess),
     InsufficientFunds,
-    StatusError(AcceptSwapStatusError),
+    StatusError(SwapStatusError),
     SwapNotFound,
     ChannelNotFound,
     UserNotInCommunity,

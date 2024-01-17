@@ -159,7 +159,7 @@
                         class:selected={selectedOption?.index === option.index}
                         on:click={() => (selectedOption = option)}>
                         <div class="option-details">
-                            <p class="duration">{option.duration}</p>
+                            <p class="duration"><Translatable resourceKey={option.duration} /></p>
                             <p class="price">
                                 {`${amount(
                                     amountInE8s(tokenDetails.symbol, diamondFees, option),

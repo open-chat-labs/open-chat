@@ -190,6 +190,8 @@ pub(crate) fn handle_message_impl(
         now: args.now,
     };
 
+    let message_id = push_message_args.message_id;
+
     let message_event =
         state
             .data
@@ -205,6 +207,8 @@ pub(crate) fn handle_message_impl(
     }
 
     register_timer_jobs(
+        sender.into(),
+        message_id,
         &message_event,
         files,
         is_next_event_to_expire,

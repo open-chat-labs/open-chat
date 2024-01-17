@@ -21,6 +21,7 @@ pub enum UpdateP2PSwapResult<T> {
 pub type ReserveP2PSwapResult = UpdateP2PSwapResult<ReserveP2PSwapSuccess>;
 pub type AcceptP2PSwapResult = UpdateP2PSwapResult<P2PSwapAccepted>;
 pub type CompleteP2PSwapResult = UpdateP2PSwapResult<P2PSwapCompleted>;
+pub type CancelP2PSwapResult = UpdateP2PSwapResult<u32>;
 
 pub struct ReserveP2PSwapSuccess {
     pub content: P2PSwapContent,
@@ -60,27 +61,27 @@ pub struct AcceptSwapSuccess {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum AcceptSwapStatusError {
-    AlreadyReserved(AcceptSwapAlreadyReserved),
-    AlreadyAccepted(AcceptSwapAlreadyAccepted),
-    AlreadyCompleted(AcceptSwapAlreadyCompleted),
-    SwapExpired(AcceptSwapExpired),
-    SwapCancelled(AcceptSwapCancelled),
+pub enum SwapStatusError {
+    Reserved(SwapStatusErrorReserved),
+    Accepted(SwapStatusErrorAccepted),
+    Completed(SwapStatusErrorCompleted),
+    Expired(SwapStatusErrorExpired),
+    Cancelled(SwapStatusErrorCancelled),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapAlreadyReserved {
+pub struct SwapStatusErrorReserved {
     pub reserved_by: UserId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapAlreadyAccepted {
+pub struct SwapStatusErrorAccepted {
     pub accepted_by: UserId,
     pub token1_txn_in: TransactionId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapAlreadyCompleted {
+pub struct SwapStatusErrorCompleted {
     pub accepted_by: UserId,
     pub token1_txn_in: TransactionId,
     pub token0_txn_out: TransactionId,
@@ -88,12 +89,12 @@ pub struct AcceptSwapAlreadyCompleted {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapExpired {
+pub struct SwapStatusErrorExpired {
     pub token0_txn_out: Option<TransactionId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct AcceptSwapCancelled {
+pub struct SwapStatusErrorCancelled {
     pub token0_txn_out: Option<TransactionId>,
 }
 
@@ -123,24 +124,24 @@ pub mod swap_location {
     }
 }
 
-impl From<P2PSwapStatus> for AcceptSwapStatusError {
+impl From<P2PSwapStatus> for SwapStatusError {
     fn from(value: P2PSwapStatus) -> Self {
         match value {
             P2PSwapStatus::Open => unreachable!(),
-            P2PSwapStatus::Cancelled(s) => AcceptSwapStatusError::SwapCancelled(AcceptSwapCancelled {
+            P2PSwapStatus::Cancelled(s) => SwapStatusError::Cancelled(SwapStatusErrorCancelled {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PSwapStatus::Expired(s) => AcceptSwapStatusError::SwapExpired(AcceptSwapExpired {
+            P2PSwapStatus::Expired(s) => SwapStatusError::Expired(SwapStatusErrorExpired {
                 token0_txn_out: s.token0_txn_out,
             }),
-            P2PSwapStatus::Reserved(s) => AcceptSwapStatusError::AlreadyReserved(AcceptSwapAlreadyReserved {
+            P2PSwapStatus::Reserved(s) => SwapStatusError::Reserved(SwapStatusErrorReserved {
                 reserved_by: s.reserved_by,
             }),
-            P2PSwapStatus::Accepted(s) => AcceptSwapStatusError::AlreadyAccepted(AcceptSwapAlreadyAccepted {
+            P2PSwapStatus::Accepted(s) => SwapStatusError::Accepted(SwapStatusErrorAccepted {
                 accepted_by: s.accepted_by,
                 token1_txn_in: s.token1_txn_in,
             }),
-            P2PSwapStatus::Completed(s) => AcceptSwapStatusError::AlreadyCompleted(AcceptSwapAlreadyCompleted {
+            P2PSwapStatus::Completed(s) => SwapStatusError::Completed(SwapStatusErrorCompleted {
                 accepted_by: s.accepted_by,
                 token1_txn_in: s.token1_txn_in,
                 token0_txn_out: s.token0_txn_out,

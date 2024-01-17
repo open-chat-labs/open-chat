@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push p2p swap status changes between user canisters ([#5187](https://github.com/open-chat-labs/open-chat/pull/5187))
 - Notify user canisters when p2p swaps complete ([#5191](https://github.com/open-chat-labs/open-chat/pull/5191))
 - Cancel p2p swap if message is deleted ([#5192](https://github.com/open-chat-labs/open-chat/pull/5192))
+- Add timer job to set p2p swap status to `Expired` ([#5195](https://github.com/open-chat-labs/open-chat/pull/5195))
+- Implement `cancel_p2p_swap` ([#5197](https://github.com/open-chat-labs/open-chat/pull/5197))
 
 ### Changed
 

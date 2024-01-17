@@ -1689,34 +1689,34 @@ type AcceptSwapSuccess = record {
     token1_txn_in : TransactionId;
 };
 
-type AcceptSwapStatusError = variant {
-    AlreadyReserved : AcceptSwapAlreadyReserved;
-    AlreadyAccepted : AcceptSwapAlreadyAccepted;
-    AlreadyCompleted : AcceptSwapAlreadyCompleted;
-    SwapExpired : AcceptSwapExpired;
-    SwapCancelled : AcceptSwapCancelled;
+type SwapStatusError = variant {
+    Reserved : SwapStatusErrorReserved;
+    Accepted : SwapStatusErrorAccepted;
+    Completed : SwapStatusErrorCompleted;
+    Expired : SwapStatusErrorExpired;
+    Cancelled : SwapStatusErrorCancelled;
 };
 
-type AcceptSwapAlreadyReserved = record {
+type SwapStatusErrorReserved = record {
     reserved_by : UserId;
 };
 
-type AcceptSwapAlreadyAccepted = record {
+type SwapStatusErrorAccepted = record {
     accepted_by : UserId;
     token1_txn_in : TransactionId;
 };
 
-type AcceptSwapAlreadyCompleted = record {
+type SwapStatusErrorCompleted = record {
     accepted_by : UserId;
     token1_txn_in : TransactionId;
     token0_txn_out : TransactionId;
     token1_txn_out : TransactionId;
 };
 
-type AcceptSwapExpired = record {
+type SwapStatusErrorExpired = record {
     token0_txn_out : opt TransactionId;
 };
 
-type AcceptSwapCancelled = record {
+type SwapStatusErrorCancelled = record {
     token0_txn_out : opt TransactionId;
 };
