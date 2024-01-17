@@ -20,7 +20,7 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
-    CancelP2PSwap(Box<CancelP2PSwapJob>),
+    CancelP2PSwapInEscrowCanister(Box<CancelP2PSwapInEscrowCanisterJob>),
     MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
@@ -77,14 +77,14 @@ impl NotifyEscrowCanisterOfDepositJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct CancelP2PSwapJob {
+pub struct CancelP2PSwapInEscrowCanisterJob {
     pub swap_id: u32,
     pub attempt: u32,
 }
 
-impl CancelP2PSwapJob {
+impl CancelP2PSwapInEscrowCanisterJob {
     pub fn run(swap_id: u32) {
-        let job = CancelP2PSwapJob { swap_id, attempt: 0 };
+        let job = CancelP2PSwapInEscrowCanisterJob { swap_id, attempt: 0 };
         job.execute();
     }
 }
@@ -122,7 +122,7 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::ProcessTokenSwap(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
-            TimerJob::CancelP2PSwap(job) => job.execute(),
+            TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
             TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
@@ -190,7 +190,7 @@ impl Job for HardDeleteMessageContentJob {
         });
 
         if let Some(swap_id) = p2p_swap_to_cancel {
-            CancelP2PSwapJob::run(swap_id);
+            CancelP2PSwapInEscrowCanisterJob::run(swap_id);
         }
     }
 }
@@ -268,7 +268,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     }
 }
 
-impl Job for CancelP2PSwapJob {
+impl Job for CancelP2PSwapInEscrowCanisterJob {
     fn execute(self) {
         let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
 
@@ -286,7 +286,7 @@ impl Job for CancelP2PSwapJob {
                     mutate_state(|state| {
                         let now = state.env.now();
                         state.data.timer_jobs.enqueue_job(
-                            TimerJob::CancelP2PSwap(Box::new(CancelP2PSwapJob {
+                            TimerJob::CancelP2PSwapInEscrowCanister(Box::new(CancelP2PSwapInEscrowCanisterJob {
                                 swap_id: self.swap_id,
                                 attempt: self.attempt + 1,
                             })),

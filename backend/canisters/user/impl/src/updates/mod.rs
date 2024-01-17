@@ -27,6 +27,7 @@ pub mod c2c_toggle_reaction;
 pub mod c2c_undelete_messages;
 pub mod c2c_vote_on_proposal;
 pub mod cancel_message_reminder;
+pub mod cancel_p2p_swap;
 pub mod create_community;
 pub mod create_group;
 pub mod delete_community;
