@@ -1224,7 +1224,7 @@
         "youReserved": "Bạn đã đặt trước ưu đãi này.",
         "youAccepted": "Bạn đã chấp nhận lời đề nghị này.",
         "youCancelled": "Bạn đã hủy ưu đãi này.",
-        "offerCancelled": "Ưu đãi này đã bị hủy.",
+        "swapCancelled": "Ưu đãi này đã bị hủy.",
         "reservedBy": "Ưu đãi này đã được đặt trước bởi {user}.",
         "acceptedBy": "Ưu đãi này đã được {user} chấp nhận.",
         "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ai đó chấp nhận ưu đãi. Bạn có muốn tiếp tục?",

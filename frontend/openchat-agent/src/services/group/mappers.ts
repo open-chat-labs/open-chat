@@ -698,7 +698,7 @@ export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP
         return statusError(candid.StatusError);
     }
     if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
-    if ("OfferNotFound" in candid) return { kind: "offer_not_found" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
     if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
     if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };

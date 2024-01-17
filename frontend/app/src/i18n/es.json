@@ -1225,7 +1225,7 @@
         "youReserved": "Has reservado esta oferta.",
         "youAccepted": "Has aceptado esta oferta.",
         "youCancelled": "Has cancelado esta oferta.",
-        "offerCancelled": "Esta oferta ha sido cancelada.",
+        "swapCancelled": "Esta oferta ha sido cancelada.",
         "reservedBy": "Esta oferta ha sido reservada por {user}.",
         "acceptedBy": "Esta oferta ha sido aceptada por {user}.",
         "confirmSend": "Cuando cree esta oferta, {amount} {token} se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Permanecerá allí hasta que la oferta caduque, usted la cancele o alguien la acepte. ¿Desea continuar?",

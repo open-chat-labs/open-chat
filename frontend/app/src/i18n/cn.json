@@ -1224,7 +1224,7 @@
         "youReserved": "您已预订此优惠。",
         "youAccepted": "您已接受此优惠。",
         "youCancelled": "您已取消此优惠。",
-        "offerCancelled": "此优惠已取消。",
+        "swapCancelled": "此优惠已取消。",
         "reservedBy": "此优惠已由 {user} 预订。",
         "acceptedBy": "此报价已被 {user} 接受。",
         "confirmSend": "当您创建此优惠时，{amount} {token} 将从您的钱包转移到 OpenChat 托管罐。它将一直保留在那里，直到要约过期、您取消要约或有人接受要约。你想继续吗？",

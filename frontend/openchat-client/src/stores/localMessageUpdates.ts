@@ -87,8 +87,8 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
     markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
     }
-    setP2PSwapOfferStatus(messageId: bigint, status: P2PSwapStatus): void {
-        this.applyUpdate(messageId, (_) => ({ p2pTradeOfferStatus: status }));
+    setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus): void {
+        this.applyUpdate(messageId, (_) => ({ p2pSwapStatus: status }));
     }
     markPollVote(messageId: bigint, vote: LocalPollVote): void {
         this.applyUpdate(messageId, (updates) => ({

@@ -317,7 +317,7 @@ export type WorkerRequest =
     | RejectTranslationCorrection
     | GetTranslationCorrections
     | GetExchangeRates
-    | AcceptP2PSwapOffer;
+    | AcceptP2PSwap;
 
 type GetTranslationCorrections = {
     kind: "getTranslationCorrections";
@@ -1478,7 +1478,7 @@ type GetReportedMessages = {
     userId: string | undefined;
 };
 
-type AcceptP2PSwapOffer = {
+type AcceptP2PSwap = {
     chatId: ChatIdentifier;
     threadRootMessageIndex: number | undefined;
     messageId: bigint;
@@ -1802,6 +1802,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? TranslationCorrections
     : T extends GetTranslationCorrections
     ? TranslationCorrections
-    : T extends AcceptP2PSwapOffer
+    : T extends AcceptP2PSwap
     ? AcceptP2PSwapResponse
     : never;

@@ -1225,7 +1225,7 @@
         "youReserved": "Sie haben dieses Angebot reserviert.",
         "youAccepted": "Sie haben dieses Angebot angenommen.",
         "youCancelled": "Sie haben dieses Angebot storniert.",
-        "offerCancelled": "Dieses Angebot wurde storniert.",
+        "swapCancelled": "Dieses Angebot wurde storniert.",
         "reservedBy": "Dieses Angebot wurde von {user} reserviert.",
         "acceptedBy": "Dieses Angebot wurde von {user} angenommen.",
         "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} von Ihrem Wallet in den OpenChat Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder jemand das Angebot annimmt. Möchten Sie fortfahren?",

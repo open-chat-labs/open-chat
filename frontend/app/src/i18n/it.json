@@ -1223,7 +1223,7 @@
         "youReserved": "Hai prenotato questa offerta.",
         "youAccepted": "Hai accettato questa offerta.",
         "youCancelled": "Hai annullato questa offerta.",
-        "offerCancelled": "Questa offerta è stata annullata.",
+        "swapCancelled": "Questa offerta è stata annullata.",
         "reservedBy": "Questa offerta è stata prenotata da {user}.",
         "acceptedBy": "Questa offerta è stata accettata da {user}.",
         "confirmSend": "Quando crei questa offerta, {amount} {token} verrà trasferito dal tuo portafoglio al contenitore di deposito a garanzia di OpenChat. Rimarrà lì fino alla scadenza dell'offerta, fino all'annullamento dell'offerta o fino all'accettazione dell'offerta da parte di qualcuno. Desideri procedere?",

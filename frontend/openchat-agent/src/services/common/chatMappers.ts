@@ -440,7 +440,7 @@ function p2pTradeContent(candid: ApiP2PSwapContent): P2PSwapContent {
         caption: optional(candid.caption, identity),
         expiresAt: candid.expires_at,
         status: p2pTradeStatus(candid.status),
-        offerId: candid.offer_id,
+        swapId: candid.swap_id,
         token0TxnIn: transactionId(candid.token0_txn_in),
     };
 }
@@ -2458,16 +2458,16 @@ export function statusError(candid: AcceptSwapStatusError): AcceptP2PSwapRespons
             token1TxnOut: transactionId(token1_txn_out),
         }
     }
-    if ("OfferCancelled" in candid) {
+    if ("SwapCancelled" in candid) {
         return {
-            kind: "offer_cancelled",
-            token0TxnOut: optional(candid.OfferCancelled.token0_txn_out, transactionId),
+            kind: "swap_cancelled",
+            token0TxnOut: optional(candid.SwapCancelled.token0_txn_out, transactionId),
         }
     }
-    if ("OfferExpired" in candid) {
+    if ("SwapExpired" in candid) {
         return {
-            kind: "offer_expired",
-            token0TxnOut: optional(candid.OfferExpired.token0_txn_out, transactionId),
+            kind: "swap_expired",
+            token0TxnOut: optional(candid.SwapExpired.token0_txn_out, transactionId),
         }
     }
 

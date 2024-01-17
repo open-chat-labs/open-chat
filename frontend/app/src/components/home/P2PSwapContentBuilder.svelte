@@ -187,7 +187,7 @@
                     maxlength={200}
                     rows={3}
                     autofocus={false}
-                    placeholder={$_("tokenTransfer.messagePlaceholder")}
+                    placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                     bind:value={message} />
             </div>
             {#if error !== undefined}

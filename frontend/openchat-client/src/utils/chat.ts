@@ -1481,8 +1481,8 @@ function mergeLocalUpdates(
         }
     }
 
-    if (localUpdates?.p2pTradeOfferStatus !== undefined && message.content.kind === "p2p_swap_content") {
-        message.content.status = localUpdates.p2pTradeOfferStatus;
+    if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
+        message.content.status = localUpdates.p2pSwapStatus;
     }
 
     if (localUpdates?.reactions !== undefined) {

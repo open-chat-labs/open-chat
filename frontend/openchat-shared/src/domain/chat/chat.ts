@@ -301,7 +301,7 @@ export interface P2PSwapContent {
     caption?: string;
     expiresAt: bigint;
     status: P2PSwapStatus;
-    offerId: number;
+    swapId: number;
     token0TxnIn: TransactionId;    
 }
 
@@ -652,7 +652,7 @@ export type LocalMessageUpdates = {
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
-    p2pTradeOfferStatus?: P2PSwapStatus;
+    p2pSwapStatus?: P2PSwapStatus;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
@@ -2060,9 +2060,9 @@ export type AcceptP2PSwapResponse =
         token0TxnOut: TransactionId,
         token1TxnOut: TransactionId,
     }
-    | { kind: "offer_cancelled", token0TxnOut?: TransactionId }
-    | { kind: "offer_expired", token0TxnOut?: TransactionId }
-    | { kind: "offer_not_found" }
+    | { kind: "swap_cancelled", token0TxnOut?: TransactionId }
+    | { kind: "swap_expired", token0TxnOut?: TransactionId }
+    | { kind: "swap_not_found" }
     | { kind: "channel_not_found" }
     | { kind: "user_suspended" }
     | { kind: "user_not_in_group" }

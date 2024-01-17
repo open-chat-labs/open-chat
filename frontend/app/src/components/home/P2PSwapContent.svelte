@@ -66,11 +66,11 @@
             if (me) {
                 instructionText = $_("p2pSwap.youCancelled");
             } else {
-                instructionText = $_("p2pSwap.offerCancelled");
+                instructionText = $_("p2pSwap.swapCancelled");
             }
             buttonText = $_("p2pSwap.cancelled");
         } else if (content.status.kind === "p2p_swap_expired") {
-            instructionText = $_("p2pSwap.offerExpired");
+            instructionText = $_("p2pSwap.swapExpired");
             buttonText = $_("p2pSwap.expired");
         } else if (content.status.kind === "p2p_swap_reserved") {
             if (acceptedByYou) {

@@ -5088,7 +5088,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
-        // localMessageUpdates.setP2PSwapOfferStatus(messageId, {
+        // localMessageUpdates.setP2PSwapStatus(messageId, {
         //     kind: "p2p_swap_reserved",
         //     userId: this._liveState.user.userId,
         //     timestamp: BigInt(Date.now()),
@@ -5096,7 +5096,7 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "acceptP2PSwap", chatId, threadRootMessageIndex, messageId })
             // .then((resp) => {
             //     if (resp !== "success") {
-            //         localMessageUpdates.setP2PSwapOfferStatus(messageId, { kind: "p2p_swap_cancelled"});
+            //         localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_cancelled"});
             //     }
             //     return resp;
             // })
