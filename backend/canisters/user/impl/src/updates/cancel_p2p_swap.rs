@@ -16,20 +16,20 @@ fn cancel_p2p_swap(args: Args) -> Response {
             CancelP2PSwapInEscrowCanisterJob::run(swap_id);
             Success
         }
-        Err(response) => response,
+        Err(response) => *response,
     }
 }
 
-fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> Result<u32, Response> {
+fn cancel_p2p_swap_impl(args: Args, state: &mut RuntimeState) -> Result<u32, Box<Response>> {
     if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
         let my_user_id = state.env.canister_id().into();
         let now = state.env.now();
         match chat.events.cancel_p2p_swap(my_user_id, None, args.message_id, now) {
             CancelP2PSwapResult::Success(swap_id) => Ok(swap_id),
-            CancelP2PSwapResult::Failure(status) => Err(StatusError(status.into())),
-            CancelP2PSwapResult::SwapNotFound => Err(SwapNotFound),
+            CancelP2PSwapResult::Failure(status) => Err(Box::new(StatusError(status.into()))),
+            CancelP2PSwapResult::SwapNotFound => Err(Box::new(SwapNotFound)),
         }
     } else {
-        Err(ChatNotFound)
+        Err(Box::new(ChatNotFound))
     }
 }
