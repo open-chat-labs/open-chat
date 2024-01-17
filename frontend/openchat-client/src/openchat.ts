@@ -5139,6 +5139,13 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    reportedMessages(userId: string | undefined): Promise<string> {
+        return this.sendRequest({
+            kind: "reportedMessages",
+            userId,
+        });
+    }
+
     payForDiamondMembership(
         token: string,
         duration: DiamondMembershipDuration,

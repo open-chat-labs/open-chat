@@ -1437,6 +1437,10 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.diamondMembershipFees());
                 break;
 
+            case "reportedMessages":
+                executeThenReply(payload, correlationId, agent.reportedMessages(payload.userId));
+                break;
+
             case "exchangeRates":
                 executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
