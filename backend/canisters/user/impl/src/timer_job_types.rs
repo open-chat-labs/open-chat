@@ -6,7 +6,7 @@ use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, UserId};
+use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::c2c_send_messages_v2::C2CReplyContext;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
@@ -20,6 +20,7 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
+    CancelP2PSwap(Box<CancelP2PSwapJob>),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
 }
@@ -76,6 +77,19 @@ impl NotifyEscrowCanisterOfDepositJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct CancelP2PSwapJob {
+    pub swap_id: u32,
+    pub attempt: u32,
+}
+
+impl CancelP2PSwapJob {
+    pub fn run(swap_id: u32) {
+        let job = CancelP2PSwapJob { swap_id, attempt: 0 };
+        job.execute();
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct SendMessageToGroupJob {
     pub chat_id: ChatId,
     pub args: group_canister::c2c_send_message::Args,
@@ -101,6 +115,7 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::ProcessTokenSwap(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
+            TimerJob::CancelP2PSwap(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
         }
@@ -137,27 +152,40 @@ impl Job for RetrySendingFailedMessagesJob {
 
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
+        let mut p2p_swap_to_cancel = None;
         mutate_state(|state| {
-            if let Some((content, _)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+            if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             }) {
-                if self.delete_files {
-                    let files_to_delete = content.blob_references();
-                    if !files_to_delete.is_empty() {
-                        // If there was already a job queued up to delete these files, cancel it
-                        state.data.timer_jobs.cancel_jobs(|job| {
-                            if let TimerJob::DeleteFileReferences(j) = job {
-                                j.files.iter().all(|f| files_to_delete.contains(f))
-                            } else {
-                                false
-                            }
-                        });
-                        ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                let my_user_id = state.env.canister_id().into();
+                if sender == my_user_id {
+                    if self.delete_files {
+                        let files_to_delete = content.blob_references();
+                        if !files_to_delete.is_empty() {
+                            // If there was already a job queued up to delete these files, cancel it
+                            state.data.timer_jobs.cancel_jobs(|job| {
+                                if let TimerJob::DeleteFileReferences(j) = job {
+                                    j.files.iter().all(|f| files_to_delete.contains(f))
+                                } else {
+                                    false
+                                }
+                            });
+                            ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
+                        }
+                    }
+                    if let MessageContentInternal::P2PSwap(s) = content {
+                        if matches!(s.status, P2PSwapStatus::Open) {
+                            p2p_swap_to_cancel = Some(s.swap_id);
+                        }
                     }
                 }
             }
         });
+
+        if let Some(swap_id) = p2p_swap_to_cancel {
+            CancelP2PSwapJob::run(swap_id);
+        }
     }
 }
 
@@ -229,6 +257,39 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                     });
                 }
                 response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
+    }
+}
+
+impl Job for CancelP2PSwapJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::cancel_swap(
+                escrow_canister_id,
+                &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
+            )
+            .await
+            {
+                Ok(escrow_canister::cancel_swap::Response::Success) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::CancelP2PSwap(Box::new(CancelP2PSwapJob {
+                                swap_id: self.swap_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to cancel p2p swap"),
             };
         })
     }
