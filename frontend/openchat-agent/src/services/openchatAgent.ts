@@ -3111,4 +3111,8 @@ export class OpenChatAgent extends EventTarget {
         // TODO - this will just come from indexeddb for the time being
         return getTranslationCorrections();
     }
+
+    reportedMessages(userId: string | undefined): Promise<string> {
+        return this._userIndexClient.reportedMessages(userId);
+    }
 }

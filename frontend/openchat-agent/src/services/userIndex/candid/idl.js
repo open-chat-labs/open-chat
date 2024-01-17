@@ -187,6 +187,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemovePlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const ReportedMessagesArgs = IDL.Record({ 'user_id' : IDL.Opt(UserId) });
+  const ReportedMessagesResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'json' : IDL.Text }),
+  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -392,6 +396,11 @@ export const idlFactory = ({ IDL }) => {
         [RemovePlatformOperatorArgs],
         [RemovePlatformOperatorResponse],
         [],
+      ),
+    'reported_messages' : IDL.Func(
+        [ReportedMessagesArgs],
+        [ReportedMessagesResponse],
+        ['query'],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_diamond_membership_fees' : IDL.Func(
