@@ -33,7 +33,8 @@
     import { scream } from "../../utils/scream";
     import { snowing } from "../../stores/snow";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { translatable } from "../../actions/translatable";
 
     const client = getContext<OpenChat>("client");
 
@@ -148,12 +149,12 @@
     }
 
     $: placeholder = !canEnterText
-        ? $_("sendTextDisabled")
+        ? i18nKey("sendTextDisabled")
         : attachment !== undefined
-          ? $_("enterCaption")
+          ? i18nKey("enterCaption")
           : dragging
-            ? $_("dropFile")
-            : $_("enterMessage");
+            ? i18nKey("dropFile")
+            : i18nKey("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -556,7 +557,13 @@
                         class:dragging
                         contenteditable
                         on:paste
-                        {placeholder}
+                        placeholder={interpolate($_, placeholder)}
+                        use:translatable={{
+                            key: placeholder,
+                            position: "absolute",
+                            right: 12,
+                            top: 12,
+                        }}
                         spellcheck
                         on:dragover={() => (dragging = true)}
                         on:dragenter={() => (dragging = true)}
@@ -650,6 +657,7 @@
     .container {
         margin: 0 $sp3;
         flex: 1;
+        position: relative;
     }
 
     .textbox {

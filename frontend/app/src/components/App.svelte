@@ -100,6 +100,7 @@
             unfreezeGroup,
             addMessageFilter,
             removeMessageFilter,
+            reportedMessages,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
@@ -188,6 +189,10 @@
 
     function removeMessageFilter(id: bigint): void {
         client.removeMessageFilter(id);
+    }
+
+    function reportedMessages(userId?: string): void {
+        console.log(client.reportedMessages(userId));
     }
 
     function deleteChannelMessage(
@@ -663,6 +668,11 @@
             top: -1000px;
             left: -1000px;
             @include z-index("dollar");
+        }
+
+        .is-translatable {
+            position: relative;
+            top: 4px;
         }
     }
 

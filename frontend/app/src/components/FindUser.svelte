@@ -13,6 +13,7 @@
     import FilteredUsername from "./FilteredUsername.svelte";
     import Diamond from "./icons/Diamond.svelte";
     import { i18nKey } from "../i18n/i18n";
+    import { translatable } from "../actions/translatable";
 
     const client = getContext<OpenChat>("client");
 
@@ -80,6 +81,7 @@
         disabled={!enabled}
         type="text"
         on:input={onInput}
+        use:translatable={{ key: i18nKey("searchForUsername") }}
         placeholder={$_("searchForUsername")} />
     {#if searching}
         <span class="loading" />

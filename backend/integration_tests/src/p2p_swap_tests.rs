@@ -5,8 +5,9 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
+use std::time::Duration;
 use types::{ChatEvent, ChatId, Cryptocurrency, MessageContent, MessageContentInitial, P2PSwapContentInitial, P2PSwapStatus};
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 #[test]
 fn p2p_swap_in_direct_chat_succeeds() {
@@ -102,7 +103,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     if let ChatEvent::Message(m) = user1_event {
         if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Accepted(c) if c.accepted_by == user2.user_id));
+            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
         }
     }
 
@@ -114,7 +115,7 @@ fn p2p_swap_in_direct_chat_succeeds() {
 
     if let ChatEvent::Message(m) = user2_event {
         if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Accepted(c) if c.accepted_by == user2.user_id));
+            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
         }
     }
 }
@@ -221,6 +222,84 @@ fn p2p_swap_in_group_succeeds() {
     } else {
         panic!()
     }
+}
+
+#[test]
+fn cancel_p2p_swap_in_direct_chat_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData { user1, user2, .. } = init_test_data(env, canister_ids, *controller, true);
+
+    let original_chat_balance = 11_000_000_000;
+
+    client::icrc1::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.chat_ledger,
+        Principal::from(user1.user_id),
+        original_chat_balance,
+    );
+
+    let message_id = random_message_id();
+
+    let send_message_response = client::user::send_message_v2(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_v2::Args {
+            recipient: user2.user_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: Cryptocurrency::CHAT.try_into().unwrap(),
+                token0_amount: 10_000_000_000,
+                token1: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token1_amount: 1_000_000_000,
+                expires_in: DAY_IN_MS,
+                caption: None,
+            }),
+            replies_to: None,
+            forwarding: false,
+            message_filter_failed: None,
+            correlation_id: 0,
+        },
+    );
+
+    assert!(matches!(
+        send_message_response,
+        user_canister::send_message_v2::Response::TransferSuccessV2(_)
+    ));
+
+    let delete_message_response = client::user::delete_messages(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::delete_messages::Args {
+            user_id: user2.user_id,
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+            correlation_id: 0,
+        },
+    );
+
+    assert!(matches!(
+        delete_message_response,
+        user_canister::delete_messages::Response::Success
+    ));
+
+    env.advance_time(Duration::from_millis(10 * MINUTE_IN_MS));
+    tick_many(env, 5);
+
+    assert_eq!(
+        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+    );
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {

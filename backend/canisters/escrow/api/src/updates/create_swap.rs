@@ -1,9 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, TimestampMillis, TokenInfo};
+use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub location: P2PSwapLocation,
     pub token0: TokenInfo,
     pub token0_amount: u128,
     pub token1: TokenInfo,

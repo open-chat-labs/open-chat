@@ -59,7 +59,6 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
                         message_id,
-                        delete_files: true,
                     })),
                     remove_deleted_message_content_at,
                     now,

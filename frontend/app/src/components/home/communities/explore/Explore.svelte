@@ -130,7 +130,7 @@
                         bind:searchTerm
                         searching={false}
                         on:searchEntered={() => search(true)}
-                        placeholder={$_("communities.search")} />
+                        placeholder={i18nKey("communities.search")} />
                 </div>
                 <div class="create">
                     <Button on:click={createCommunity} hollow
@@ -157,7 +157,7 @@
                         fill
                         bind:searchTerm
                         on:searchEntered={() => search(true)}
-                        placeholder={$_("communities.search")} />
+                        placeholder={i18nKey("communities.search")} />
                 </div>
             {/if}
         </div>

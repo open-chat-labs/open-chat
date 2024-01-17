@@ -3,7 +3,7 @@ use icrc_ledger_types::icrc1::account::Subaccount;
 use serde::Serialize;
 use sha256::sha256;
 use types::icrc1::CompletedCryptoTransaction;
-use types::{TimestampMillis, UserId};
+use types::{P2PSwapLocation, TimestampMillis, UserId};
 
 mod lifecycle;
 mod updates;
@@ -42,6 +42,7 @@ pub struct SwapStatusCompleted {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SwapStatusChange {
     pub swap_id: u32,
+    pub location: P2PSwapLocation,
     pub status: SwapStatus,
 }
 

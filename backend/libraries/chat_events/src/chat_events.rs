@@ -13,12 +13,12 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex,
-    EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash,
-    HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport,
-    Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapStatus, PendingCryptoTransaction, PollVotes, ProposalUpdate,
-    PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
+    AcceptP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency,
+    DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
+    GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex,
+    MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapStatus, PendingCryptoTransaction,
+    PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult, ReserveP2PSwapSuccess,
+    TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -707,8 +707,6 @@ impl ChatEvents {
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
     ) -> ReserveP2PSwapResult {
-        use ReserveP2PSwapResult::*;
-
         if let Some(event) = self
             .events_list_mut(min_visible_event_index, thread_root_message_index)
             .and_then(|l| l.get_event_mut(message_id.into(), min_visible_event_index))
@@ -716,18 +714,18 @@ impl ChatEvents {
             if let Some(message) = event.event.as_message_mut() {
                 if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                     return if content.reserve(user_id, now) {
-                        Success(ReserveP2PSwapSuccess {
+                        ReserveP2PSwapResult::Success(ReserveP2PSwapSuccess {
                             content: content.clone(),
                             created: event.timestamp,
                             created_by: message.sender,
                         })
                     } else {
-                        Failure(content.status.clone())
+                        ReserveP2PSwapResult::Failure(content.status.clone())
                     };
                 }
             }
         }
-        SwapNotFound
+        ReserveP2PSwapResult::SwapNotFound
     }
 
     pub fn accept_p2p_swap(
@@ -738,24 +736,22 @@ impl ChatEvents {
         token1_txn_in: TransactionId,
         now: TimestampMillis,
     ) -> AcceptP2PSwapResult {
-        use AcceptP2PSwapResult::*;
-
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if content.accept(user_id, token1_txn_in) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    Success(P2PSwapAccepted {
+                    AcceptP2PSwapResult::Success(P2PSwapAccepted {
                         accepted_by: user_id,
                         token1_txn_in,
                     })
                 } else {
-                    Failure(content.status.clone())
+                    AcceptP2PSwapResult::Failure(content.status.clone())
                 };
             }
         }
-        SwapNotFound
+        AcceptP2PSwapResult::SwapNotFound
     }
 
     pub fn complete_p2p_swap(
@@ -766,18 +762,20 @@ impl ChatEvents {
         token0_txn_out: TransactionId,
         token1_txn_out: TransactionId,
         now: TimestampMillis,
-    ) -> bool {
+    ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
             self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
-                if content.complete(user_id, token0_txn_out, token1_txn_out) {
+                return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
                     self.last_updated_timestamps.mark_updated(None, event_index, now);
-                    return true;
+                    CompleteP2PSwapResult::Success(status)
+                } else {
+                    CompleteP2PSwapResult::Failure(content.status.clone())
                 };
             }
         }
-        false
+        CompleteP2PSwapResult::SwapNotFound
     }
 
     pub fn unreserve_p2p_swap(

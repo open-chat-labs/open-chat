@@ -4,7 +4,7 @@ use crate::{client, TestEnv};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
-use types::Cryptocurrency;
+use types::{Chat, Cryptocurrency, P2PSwapLocation};
 use utils::time::DAY_IN_MS;
 
 #[test]
@@ -27,6 +27,7 @@ fn swap_via_escrow_canister_succeeds() {
         env,
         user1.user_id.into(),
         canister_ids.escrow,
+        P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0.into()),
         Cryptocurrency::InternetComputer,
         icp_amount,
         Cryptocurrency::CHAT,

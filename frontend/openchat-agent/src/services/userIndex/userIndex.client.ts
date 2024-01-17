@@ -279,9 +279,7 @@ export class UserIndexClient extends CandidService {
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
-            this.userIndexService.set_username({
-                username: username,
-            }),
+            this.userIndexService.set_username({ username }),
             setUsernameResponse,
         ).then((res) => {
             if (res === "success") {
@@ -418,6 +416,15 @@ export class UserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.userIndexService.set_diamond_membership_fees(args),
             (res) => "Success" in res,
+        );
+    }
+
+    reportedMessages(userId: string | undefined): Promise<string> {
+        return this.handleQueryResponse(
+            () => this.userIndexService.reported_messages({
+                user_id: userId !== undefined ? [Principal.fromText(userId)] : []
+            }),
+            (res) => res.Success.json,
         );
     }
 }

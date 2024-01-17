@@ -3115,6 +3115,10 @@ export class OpenChatAgent extends EventTarget {
         return getTranslationCorrections();
     }
 
+    reportedMessages(userId: string | undefined): Promise<string> {
+        return this._userIndexClient.reportedMessages(userId);
+    }
+
     acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(

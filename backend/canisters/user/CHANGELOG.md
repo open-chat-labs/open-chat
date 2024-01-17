@@ -8,8 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
-- Implement P2P trades in direct chats ([#5168](https://github.com/open-chat-labs/open-chat/pull/5168))
+- Implement p2p trades in direct chats ([#5168](https://github.com/open-chat-labs/open-chat/pull/5168))
 - Add message queues for pushing updates between user canisters ([#5172](https://github.com/open-chat-labs/open-chat/pull/5172))
+- Push p2p swap status changes between user canisters ([#5187](https://github.com/open-chat-labs/open-chat/pull/5187))
+- Notify user canisters when p2p swaps complete ([#5191](https://github.com/open-chat-labs/open-chat/pull/5191))
+- Cancel p2p swap if message is deleted ([#5192](https://github.com/open-chat-labs/open-chat/pull/5192))
 
 ### Changed
 
@@ -20,7 +23,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
 - Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
 - Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
-- Push P2P swap status changes between user canisters ([#5187](https://github.com/open-chat-labs/open-chat/pull/5187))
 
 ### Removed
 

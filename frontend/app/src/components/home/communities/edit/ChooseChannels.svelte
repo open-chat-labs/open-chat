@@ -85,7 +85,7 @@
             maxlength={MAX_CHANNEL_LENGTH}
             countdown
             on:enter={addChannel}
-            placeholder={$_("communities.channelPlaceholder")} />
+            placeholder={i18nKey("communities.channelPlaceholder")} />
     </div>
     <div class="add-btn" on:click={addChannel}>
         <PlusCircleOutline size={$iconSize} color={"var(--icon-txt)"} />

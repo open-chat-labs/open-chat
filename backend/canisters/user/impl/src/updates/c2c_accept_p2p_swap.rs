@@ -47,7 +47,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
                     id: args.swap_id,
-                    chat: args.chat,
+                    location: args.location,
                     created_by: args.created_by,
                     created: args.created,
                     token0: args.token0,

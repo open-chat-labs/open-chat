@@ -170,7 +170,7 @@
             on:searchEntered={() => membersList.reset()}
             searching={false}
             bind:searchTerm
-            placeholder={"search"} />
+            placeholder={i18nKey("search")} />
     </div>
 
     {#if showBlocked || showInvited}
