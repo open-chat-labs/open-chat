@@ -1319,6 +1319,8 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
+export interface ReportedMessagesArgs { 'user_id' : [] | [UserId] }
+export type ReportedMessagesResponse = { 'Success' : { 'json' : string } };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1638,6 +1640,10 @@ export interface _SERVICE {
   'remove_platform_operator' : ActorMethod<
     [RemovePlatformOperatorArgs],
     RemovePlatformOperatorResponse
+  >,
+  'reported_messages' : ActorMethod<
+    [ReportedMessagesArgs],
+    ReportedMessagesResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_diamond_membership_fees' : ActorMethod<

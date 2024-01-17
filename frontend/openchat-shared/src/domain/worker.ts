@@ -310,6 +310,7 @@ export type WorkerRequest =
     | ApproveTransfer
     | DeleteDirectChat
     | GetDiamondMembershipFees
+    | GetReportedMessages
     | SetTranslationCorrection
     | ApproveTranslationCorrection
     | RejectTranslationCorrection
@@ -1469,6 +1470,12 @@ type GetExchangeRates = {
     kind: "exchangeRates";
 };
 
+type GetReportedMessages = {
+    kind: "reportedMessages";
+    userId: string | undefined;
+};
+
+
 // prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
@@ -1774,6 +1781,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? boolean
     : T extends GetDiamondMembershipFees
     ? DiamondMembershipFees[]
+    : T extends GetReportedMessages
+    ? string
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
     : T extends SetTranslationCorrection
