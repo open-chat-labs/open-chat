@@ -13,10 +13,10 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    AcceptP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction, Cryptocurrency,
-    DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated,
-    GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId, MessageIndex,
-    MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
+    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
+    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
+    MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
     ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
 };
@@ -804,6 +804,31 @@ impl ChatEvents {
                 };
             }
         }
+    }
+
+    pub fn cancel_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> CancelP2PSwapResult {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if message.sender == user_id {
+                if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                    return if content.cancel() {
+                        let swap_id = content.swap_id;
+                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+                        CancelP2PSwapResult::Success(swap_id)
+                    } else {
+                        CancelP2PSwapResult::Failure(content.status.clone())
+                    };
+                }
+            }
+        }
+        CancelP2PSwapResult::SwapNotFound
     }
 
     pub fn mark_p2p_swap_expired(
