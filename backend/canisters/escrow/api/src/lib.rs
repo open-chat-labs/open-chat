@@ -15,7 +15,7 @@ pub use updates::*;
 pub enum SwapStatus {
     Open,
     Cancelled(Box<SwapStatusCancelled>),
-    Expired,
+    Expired(Box<SwapStatusExpired>),
     Accepted(Box<SwapStatusAccepted>),
     Completed(Box<SwapStatusCompleted>),
 }
@@ -23,6 +23,12 @@ pub enum SwapStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SwapStatusCancelled {
     pub cancelled_at: TimestampMillis,
+    pub refunds: Vec<CompletedCryptoTransaction>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SwapStatusExpired {
+    pub refunds: Vec<CompletedCryptoTransaction>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,6 +43,7 @@ pub struct SwapStatusCompleted {
     pub accepted_at: TimestampMillis,
     pub token0_transfer_out: CompletedCryptoTransaction,
     pub token1_transfer_out: CompletedCryptoTransaction,
+    pub refunds: Vec<CompletedCryptoTransaction>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -623,6 +623,15 @@ impl P2PSwapContent {
         }
         None
     }
+
+    pub fn mark_expired(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]

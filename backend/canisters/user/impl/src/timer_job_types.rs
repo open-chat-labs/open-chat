@@ -21,6 +21,7 @@ pub enum TimerJob {
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
     CancelP2PSwap(Box<CancelP2PSwapJob>),
+    MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
 }
@@ -89,6 +90,13 @@ impl CancelP2PSwapJob {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct MarkP2PSwapExpiredJob {
+    pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct SendMessageToGroupJob {
     pub chat_id: ChatId,
     pub args: group_canister::c2c_send_message::Args,
@@ -115,6 +123,7 @@ impl Job for TimerJob {
             TimerJob::ProcessTokenSwap(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwap(job) => job.execute(),
+            TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
         }
@@ -270,9 +279,7 @@ impl Job for CancelP2PSwapJob {
             )
             .await
             {
-                Ok(escrow_canister::cancel_swap::Response::Success) => {
-                    panic!("Cancel swap success")
-                }
+                Ok(escrow_canister::cancel_swap::Response::Success) => {}
                 Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted) => {}
                 Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
                 Err(_) if self.attempt < 20 => {
@@ -291,6 +298,17 @@ impl Job for CancelP2PSwapJob {
                 response => error!(?response, "Failed to cancel p2p swap"),
             };
         })
+    }
+}
+
+impl Job for MarkP2PSwapExpiredJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            if let Some(chat) = state.data.direct_chats.get_mut(&self.chat_id) {
+                chat.events
+                    .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
+            }
+        });
     }
 }
 

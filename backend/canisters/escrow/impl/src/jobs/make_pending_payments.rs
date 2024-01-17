@@ -1,7 +1,7 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use escrow_canister::deposit_subaccount;
+use escrow_canister::{deposit_subaccount, SwapStatus};
 use ic_cdk_timers::TimerId;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
@@ -71,20 +71,28 @@ async fn process_payment(pending_payment: PendingPayment) {
                         created: created_at_time,
                         block_index,
                     };
-                    match pending_payment.reason {
+                    let notify_status_change = match pending_payment.reason {
                         PendingPaymentReason::Swap(_) => {
                             if pending_payment.token_info.ledger == swap.token0.ledger {
                                 swap.token0_transfer_out = Some(transfer);
                             } else {
                                 swap.token1_transfer_out = Some(transfer);
                             }
-                            if swap.is_complete() {
-                                state.data.notify_status_change_queue.push(swap.id);
-                                crate::jobs::notify_status_change::start_job_if_required(state);
-                            }
+                            swap.is_complete()
                         }
-                        PendingPaymentReason::Refund => swap.refunds.push(transfer),
+                        PendingPaymentReason::Refund => {
+                            swap.refunds.push(transfer);
+                            matches!(
+                                swap.status(state.env.now()),
+                                SwapStatus::Expired(_) | SwapStatus::Cancelled(_)
+                            )
+                        }
                     };
+
+                    if notify_status_change {
+                        state.data.notify_status_change_queue.push(swap.id);
+                        crate::jobs::notify_status_change::start_job_if_required(state);
+                    }
                 }
             });
         }
