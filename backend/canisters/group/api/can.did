@@ -108,7 +108,7 @@ type AcceptP2PSwapArgs = record {
 type AcceptP2PSwapResponse = variant {
     Success : AcceptSwapSuccess;
     InsufficientFunds;
-    StatusError : AcceptSwapStatusError;
+    StatusError : SwapStatusError;
     SwapNotFound;
     UserNotInGroup;
     UserSuspended;

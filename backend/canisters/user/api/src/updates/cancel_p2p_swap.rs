@@ -1,21 +1,17 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{AcceptSwapSuccess, MessageId, MessageIndex, SwapStatusError};
+use types::{MessageId, SwapStatusError, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub thread_root_message_index: Option<MessageIndex>,
+    pub user_id: UserId,
     pub message_id: MessageId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(AcceptSwapSuccess),
-    InsufficientFunds,
+    Success,
+    ChatNotFound,
     StatusError(SwapStatusError),
     SwapNotFound,
-    UserNotInGroup,
-    UserSuspended,
-    ChatFrozen,
-    InternalError(String),
 }
