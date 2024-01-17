@@ -8,28 +8,10 @@ export interface AcceptP2PSwapArgs {
 export type AcceptP2PSwapResponse = { 'ChatNotFound' : null } |
   { 'Success' : AcceptSwapSuccess } |
   { 'UserSuspended' : null } |
-  { 'StatusError' : AcceptSwapStatusError } |
+  { 'StatusError' : SwapStatusError } |
   { 'SwapNotFound' : null } |
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
-export interface AcceptSwapAlreadyAccepted {
-  'accepted_by' : UserId,
-  'token1_txn_in' : TransactionId,
-}
-export interface AcceptSwapAlreadyCompleted {
-  'accepted_by' : UserId,
-  'token1_txn_out' : TransactionId,
-  'token0_txn_out' : TransactionId,
-  'token1_txn_in' : TransactionId,
-}
-export interface AcceptSwapAlreadyReserved { 'reserved_by' : UserId }
-export interface AcceptSwapCancelled { 'token0_txn_out' : [] | [TransactionId] }
-export interface AcceptSwapExpired { 'token0_txn_out' : [] | [TransactionId] }
-export type AcceptSwapStatusError = { 'SwapExpired' : AcceptSwapExpired } |
-  { 'AlreadyAccepted' : AcceptSwapAlreadyAccepted } |
-  { 'AlreadyCompleted' : AcceptSwapAlreadyCompleted } |
-  { 'AlreadyReserved' : AcceptSwapAlreadyReserved } |
-  { 'SwapCancelled' : AcceptSwapCancelled };
 export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
@@ -151,6 +133,14 @@ export interface CachedGroupChatSummaries {
 }
 export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
 export type CancelMessageReminderResponse = { 'Success' : null };
+export interface CancelP2PSwapArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type CancelP2PSwapResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -1887,6 +1877,28 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
+  { 'Accepted' : SwapStatusErrorAccepted } |
+  { 'Cancelled' : SwapStatusErrorCancelled } |
+  { 'Completed' : SwapStatusErrorCompleted } |
+  { 'Expired' : SwapStatusErrorExpired };
+export interface SwapStatusErrorAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : TransactionId,
+}
+export interface SwapStatusErrorCancelled {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface SwapStatusErrorCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : TransactionId,
+  'token0_txn_out' : TransactionId,
+  'token1_txn_in' : TransactionId,
+}
+export interface SwapStatusErrorExpired {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface SwapTokensArgs {
   'input_amount' : bigint,
   'min_output_amount' : bigint,
@@ -2198,6 +2210,7 @@ export interface _SERVICE {
     [CancelMessageReminderArgs],
     CancelMessageReminderResponse
   >,
+  'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],

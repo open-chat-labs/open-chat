@@ -11,35 +11,35 @@ export const idlFactory = ({ IDL }) => {
     'index' : IDL.Nat64,
   });
   const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : TransactionId });
-  const AcceptSwapExpired = IDL.Record({
-    'token0_txn_out' : IDL.Opt(TransactionId),
-  });
-  const AcceptSwapAlreadyAccepted = IDL.Record({
+  const SwapStatusErrorReserved = IDL.Record({ 'reserved_by' : UserId });
+  const SwapStatusErrorAccepted = IDL.Record({
     'accepted_by' : UserId,
     'token1_txn_in' : TransactionId,
   });
-  const AcceptSwapAlreadyCompleted = IDL.Record({
+  const SwapStatusErrorCancelled = IDL.Record({
+    'token0_txn_out' : IDL.Opt(TransactionId),
+  });
+  const SwapStatusErrorCompleted = IDL.Record({
     'accepted_by' : UserId,
     'token1_txn_out' : TransactionId,
     'token0_txn_out' : TransactionId,
     'token1_txn_in' : TransactionId,
   });
-  const AcceptSwapAlreadyReserved = IDL.Record({ 'reserved_by' : UserId });
-  const AcceptSwapCancelled = IDL.Record({
+  const SwapStatusErrorExpired = IDL.Record({
     'token0_txn_out' : IDL.Opt(TransactionId),
   });
-  const AcceptSwapStatusError = IDL.Variant({
-    'SwapExpired' : AcceptSwapExpired,
-    'AlreadyAccepted' : AcceptSwapAlreadyAccepted,
-    'AlreadyCompleted' : AcceptSwapAlreadyCompleted,
-    'AlreadyReserved' : AcceptSwapAlreadyReserved,
-    'SwapCancelled' : AcceptSwapCancelled,
+  const SwapStatusError = IDL.Variant({
+    'Reserved' : SwapStatusErrorReserved,
+    'Accepted' : SwapStatusErrorAccepted,
+    'Cancelled' : SwapStatusErrorCancelled,
+    'Completed' : SwapStatusErrorCompleted,
+    'Expired' : SwapStatusErrorExpired,
   });
   const AcceptP2PSwapResponse = IDL.Variant({
     'ChatNotFound' : IDL.Null,
     'Success' : AcceptSwapSuccess,
     'UserSuspended' : IDL.Null,
-    'StatusError' : AcceptSwapStatusError,
+    'StatusError' : SwapStatusError,
     'SwapNotFound' : IDL.Null,
     'InternalError' : IDL.Text,
     'InsufficientFunds' : IDL.Null,
@@ -131,6 +131,16 @@ export const idlFactory = ({ IDL }) => {
   });
   const CancelMessageReminderArgs = IDL.Record({ 'reminder_id' : IDL.Nat64 });
   const CancelMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const CancelP2PSwapArgs = IDL.Record({
+    'user_id' : UserId,
+    'message_id' : MessageId,
+  });
+  const CancelP2PSwapResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'Success' : IDL.Null,
+    'StatusError' : SwapStatusError,
+    'SwapNotFound' : IDL.Null,
+  });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -1712,6 +1722,11 @@ export const idlFactory = ({ IDL }) => {
     'cancel_message_reminder' : IDL.Func(
         [CancelMessageReminderArgs],
         [CancelMessageReminderResponse],
+        [],
+      ),
+    'cancel_p2p_swap' : IDL.Func(
+        [CancelP2PSwapArgs],
+        [CancelP2PSwapResponse],
         [],
       ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),

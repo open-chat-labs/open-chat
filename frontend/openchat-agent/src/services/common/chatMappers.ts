@@ -177,7 +177,7 @@ import {
     SNS1_SYMBOL,
     isAccountIdentifierValid,
 } from "openchat-shared";
-import type { AcceptSwapStatusError, WithdrawCryptoArgs } from "../user/candid/types";
+import type { SwapStatusError, WithdrawCryptoArgs } from "../user/candid/types";
 import type {
     ApiGroupCanisterGroupChatSummary,
     ApiAddReactionResponse as ApiAddGroupReactionResponse,
@@ -2434,22 +2434,22 @@ export function claimPrizeResponse(
     }
 }
 
-export function statusError(candid: AcceptSwapStatusError): AcceptP2PSwapResponse {
-    if ("AlreadyReserved" in candid) {
+export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse {
+    if ("Reserved" in candid) {
         return {
             kind: "already_reserved",
-            reservedBy: candid.AlreadyReserved.reserved_by.toString(),
+            reservedBy: candid.Reserved.reserved_by.toString(),
         }
     }
-    if ("AlreadyAccepted" in candid) {
+    if ("Accepted" in candid) {
         return {
             kind: "already_accepted",
-            acceptedBy: candid.AlreadyAccepted.accepted_by.toString(),
-            token1TxnIn: transactionId(candid.AlreadyAccepted.token1_txn_in),
+            acceptedBy: candid.Accepted.accepted_by.toString(),
+            token1TxnIn: transactionId(candid.Accepted.token1_txn_in),
         }
     }
-    if ("AlreadyCompleted" in candid) {
-        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.AlreadyCompleted;
+    if ("Completed" in candid) {
+        const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.Completed;
         return {
             kind: "already_completed",
             acceptedBy: accepted_by.toString(),
@@ -2458,18 +2458,18 @@ export function statusError(candid: AcceptSwapStatusError): AcceptP2PSwapRespons
             token1TxnOut: transactionId(token1_txn_out),
         }
     }
-    if ("SwapCancelled" in candid) {
+    if ("Cancelled" in candid) {
         return {
             kind: "swap_cancelled",
-            token0TxnOut: optional(candid.SwapCancelled.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Cancelled.token0_txn_out, transactionId),
         }
     }
-    if ("SwapExpired" in candid) {
+    if ("Expired" in candid) {
         return {
             kind: "swap_expired",
-            token0TxnOut: optional(candid.SwapExpired.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Expired.token0_txn_out, transactionId),
         }
     }
 
-    throw new UnsupportedValueError("Unexpected AcceptSwapStatusError type received", candid);
+    throw new UnsupportedValueError("Unexpected SwapStatusError type received", candid);
 }

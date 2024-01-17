@@ -9,28 +9,10 @@ export type AcceptP2PSwapResponse = { 'UserNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : AcceptSwapSuccess } |
   { 'UserSuspended' : null } |
-  { 'StatusError' : AcceptSwapStatusError } |
+  { 'StatusError' : SwapStatusError } |
   { 'SwapNotFound' : null } |
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
-export interface AcceptSwapAlreadyAccepted {
-  'accepted_by' : UserId,
-  'token1_txn_in' : TransactionId,
-}
-export interface AcceptSwapAlreadyCompleted {
-  'accepted_by' : UserId,
-  'token1_txn_out' : TransactionId,
-  'token0_txn_out' : TransactionId,
-  'token1_txn_in' : TransactionId,
-}
-export interface AcceptSwapAlreadyReserved { 'reserved_by' : UserId }
-export interface AcceptSwapCancelled { 'token0_txn_out' : [] | [TransactionId] }
-export interface AcceptSwapExpired { 'token0_txn_out' : [] | [TransactionId] }
-export type AcceptSwapStatusError = { 'SwapExpired' : AcceptSwapExpired } |
-  { 'AlreadyAccepted' : AcceptSwapAlreadyAccepted } |
-  { 'AlreadyCompleted' : AcceptSwapAlreadyCompleted } |
-  { 'AlreadyReserved' : AcceptSwapAlreadyReserved } |
-  { 'SwapCancelled' : AcceptSwapCancelled };
 export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
@@ -1655,6 +1637,28 @@ export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
 export type SummaryUpdatesResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : { 'updates' : GroupCanisterGroupChatSummaryUpdates } } |
   { 'SuccessNoUpdates' : null };
+export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
+  { 'Accepted' : SwapStatusErrorAccepted } |
+  { 'Cancelled' : SwapStatusErrorCancelled } |
+  { 'Completed' : SwapStatusErrorCompleted } |
+  { 'Expired' : SwapStatusErrorExpired };
+export interface SwapStatusErrorAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : TransactionId,
+}
+export interface SwapStatusErrorCancelled {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface SwapStatusErrorCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : TransactionId,
+  'token0_txn_out' : TransactionId,
+  'token1_txn_in' : TransactionId,
+}
+export interface SwapStatusErrorExpired {
+  'token0_txn_out' : [] | [TransactionId],
+}
+export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
