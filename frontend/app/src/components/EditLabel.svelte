@@ -15,6 +15,7 @@
 
     let busy = false;
     let suggestion = "";
+    let saved = false;
 
     $: yourLanguage = supportedLanguages.find((l) => l.code === $locale)?.name ?? "English";
     $: corrections = client.translationCorrectionsStore;
@@ -51,6 +52,8 @@
 
     function close() {
         editingLabel.set(undefined);
+        saved = false;
+        suggestion = "";
     }
 
     function save() {
@@ -58,9 +61,7 @@
             busy = true;
             client
                 .setTranslationCorrection($locale, $editingLabel.key, suggestion)
-                .then(() => {
-                    editingLabel.set(undefined);
-                })
+                .then(() => (saved = true))
                 .finally(() => (busy = false));
         }
     }
@@ -71,39 +72,64 @@
         <ModalContent on:close>
             <div class="header" slot="header">Suggest a translation correction</div>
             <div slot="body">
-                <p>
-                    The language you wish to submit a correction for is <span class="value"
-                        >{yourLanguage}</span>
-                </p>
-                <p>
-                    The English value is <span class="value">{englishValue}</span>
-                </p>
-                <p>The current translation is <span class="value">{$_($editingLabel.key)}</span></p>
-                {#if existingCorrection !== undefined}
+                {#if !saved}
                     <p>
-                        The current translation was provided by <span class="value"
-                            >{correctedBy}</span>
+                        The language you wish to submit a correction for is <span class="value"
+                            >{yourLanguage}</span>
                     </p>
-                {/if}
-                <Legend label={i18nKey("Your proposed translation is")}></Legend>
-                <TextArea
-                    minlength={1}
-                    maxlength={1000}
-                    disabled={busy}
-                    bind:value={suggestion}
-                    placeholder={i18nKey("Enter your suggestion")} />
+                    <p>
+                        The English value is <span class="value">{englishValue}</span>
+                    </p>
+                    <p>
+                        The current translation is <span class="value"
+                            >{$_($editingLabel.key)}</span>
+                    </p>
+                    {#if existingCorrection !== undefined}
+                        <p>
+                            The current translation was provided by <span class="value"
+                                >{correctedBy}</span>
+                        </p>
+                    {/if}
+                    <Legend label={i18nKey("Your proposed translation is")}></Legend>
+                    <TextArea
+                        minlength={1}
+                        maxlength={1000}
+                        disabled={busy}
+                        bind:value={suggestion}
+                        placeholder={i18nKey("Enter your suggestion")} />
 
-                {#if suggestion !== "" && tokenMismatch}
-                    <ErrorMessage>
-                        Your suggested correction must contain the same &lbrace;tokens&rbrace; as
-                        the original English text
-                    </ErrorMessage>
+                    {#if suggestion !== "" && tokenMismatch}
+                        <ErrorMessage>
+                            Your suggested correction must contain the same &lbrace;tokens&rbrace;
+                            as the original English text
+                        </ErrorMessage>
+                    {/if}
+                {:else}
+                    <div class="saved">
+                        <p>
+                            Thank you for your suggestion. Please review the UI with your new
+                            suggestion in place. If you would like to make further changes just
+                            repeat this process until you are happy.
+                        </p>
+                        <p>
+                            Your suggestion will be reviewed by a platform operator and applied soon
+                            if it is approved.
+                        </p>
+                        <p>
+                            In the meantime it will appear locally for you unless / until you
+                            refresh the page.
+                        </p>
+                    </div>
                 {/if}
             </div>
             <div slot="footer">
                 <ButtonGroup>
-                    <Button secondary on:click={close}>{"Cancel"}</Button>
-                    <Button disabled={!valid} on:click={save}>{"Save"}</Button>
+                    {#if saved}
+                        <Button on:click={close}>{"Close"}</Button>
+                    {:else}
+                        <Button secondary on:click={close}>{"Cancel"}</Button>
+                        <Button disabled={!valid} on:click={save}>{"Save"}</Button>
+                    {/if}
                 </ButtonGroup>
             </div>
         </ModalContent>
