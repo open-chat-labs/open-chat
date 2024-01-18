@@ -18,7 +18,7 @@
     export let showTopUp = false;
     export let showRefresh = true;
     export let refreshing = false;
-    export let conversion: "none" | "icp" | "usd" = "none";
+    export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -26,9 +26,7 @@
     $: formattedValue =
         conversion === "none"
             ? client.formatTokens(value, tokenDetails.decimals)
-            : conversion === "icp"
-              ? tokenDetails.icpBalance.toFixed(3)
-              : tokenDetails.dollarBalance.toFixed(2);
+            : convertValue(conversion, tokenDetails);
 
     $: {
         if (ledger) {
@@ -57,6 +55,15 @@
 
     function topUp() {
         toppingUp = !toppingUp;
+    }
+
+    function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
+        switch (c) {
+            case "usd": return t.dollarBalance.toFixed(2);
+            case "icp": return t.icpBalance.toFixed(3);
+            case "btc": return t.btcBalance.toFixed(6);
+            case "eth": return t.ethBalance.toFixed(6);
+        }
     }
 </script>
 

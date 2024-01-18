@@ -11,7 +11,7 @@ pub struct Swaps {
 
 impl Swaps {
     pub fn push(&mut self, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> u32 {
-        let id = self.map.last_key_value().map(|(k, _)| *k).unwrap_or_default();
+        let id = self.map.last_key_value().map(|(k, _)| *k + 1).unwrap_or_default();
         self.map.insert(id, Swap::new(id, caller, args, now));
         id
     }

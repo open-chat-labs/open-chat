@@ -36,8 +36,10 @@
         { id: "none", label: $_("cryptoAccount.tokens") },
         { id: "usd", label: "USD" },
         { id: "icp", label: "ICP" },
+        { id: "btc", label: "BTC" },
+        { id: "eth", label: "ETH" },
     ];
-    let selectedConversion: "none" | "icp" | "usd" = "none";
+    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
     $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -50,20 +52,19 @@
     $: total =
         selectedConversion === "none"
             ? ""
-            : selectedConversion === "usd"
-              ? calculateTotalUSD($cryptoLookup)
-              : calculateTotalICP($cryptoLookup);
+            : calculateTotal($cryptoLookup, selectedConversion)
 
     $: {
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
     }
 
-    function calculateTotalUSD(lookup: Record<string, EnhancedTokenDetails>): string {
-        return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
-    }
-
-    function calculateTotalICP(lookup: Record<string, EnhancedTokenDetails>): string {
-        return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+    function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
+        switch (conversion) {
+            case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+            case "icp": return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+            case "btc": return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+            case "eth": return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+        }
     }
 
     function onBalanceRefreshed() {
