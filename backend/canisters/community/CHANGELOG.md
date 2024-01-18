@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
 - Expose details of timer jobs for public Communities ([#5154](https://github.com/open-chat-labs/open-chat/pull/5154))
+- Notify group or community when p2p swap status changes ([#5201](https://github.com/open-chat-labs/open-chat/pull/5201))
 
 ### Changed
 
