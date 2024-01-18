@@ -3,9 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{
-    Chat, CompleteP2PSwapResult, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, TransactionId,
-};
+use types::{Chat, CompleteP2PSwapResult, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
 
 #[update_msgpack(guard = "caller_is_escrow_canister")]
@@ -29,14 +27,11 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         chat.events
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
-                        let token0_txn_out =
-                            e.refunds
-                                .into_iter()
-                                .find(|t| t.ledger == content.token0.ledger)
-                                .map(|t| TransactionId {
-                                    index: t.block_index,
-                                    hash: None,
-                                });
+                        let token0_txn_out = e
+                            .refunds
+                            .into_iter()
+                            .find(|t| t.ledger == content.token0.ledger)
+                            .map(|t| t.block_index);
 
                         let status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out });
 
@@ -55,14 +50,11 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         chat.events
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
-                        let token0_txn_out =
-                            c.refunds
-                                .into_iter()
-                                .find(|t| t.ledger == content.token0.ledger)
-                                .map(|t| TransactionId {
-                                    index: t.block_index,
-                                    hash: None,
-                                });
+                        let token0_txn_out = c
+                            .refunds
+                            .into_iter()
+                            .find(|t| t.ledger == content.token0.ledger)
+                            .map(|t| t.block_index);
 
                         let status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out });
 
@@ -81,14 +73,8 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,
-                        TransactionId {
-                            index: c.token0_transfer_out.block_index,
-                            hash: None,
-                        },
-                        TransactionId {
-                            index: c.token1_transfer_out.block_index,
-                            hash: None,
-                        },
+                        c.token0_transfer_out.block_index,
+                        c.token1_transfer_out.block_index,
                         state.env.now(),
                     ) {
                         status_to_push_c2c = Some(P2PSwapStatus::Completed(status));

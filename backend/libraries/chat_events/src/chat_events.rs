@@ -18,7 +18,7 @@ use types::{
     GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
     MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -743,7 +743,7 @@ impl ChatEvents {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        token1_txn_in: TransactionId,
+        token1_txn_in: u64,
         now: TimestampMillis,
     ) -> AcceptP2PSwapResult {
         if let Some((message, event_index)) =
@@ -769,8 +769,8 @@ impl ChatEvents {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        token0_txn_out: TransactionId,
-        token1_txn_out: TransactionId,
+        token0_txn_out: u64,
+        token1_txn_out: u64,
         now: TimestampMillis,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =

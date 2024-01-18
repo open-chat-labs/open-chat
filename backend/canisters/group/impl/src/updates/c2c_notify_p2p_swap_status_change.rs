@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, TransactionId};
+use types::{EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
 
 #[update_msgpack(guard = "caller_is_escrow_canister")]
 #[trace]
@@ -29,10 +29,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .refunds
                     .into_iter()
                     .find(|t| t.ledger == content.token0.ledger)
-                    .map(|t| TransactionId {
-                        index: t.block_index,
-                        hash: None,
-                    });
+                    .map(|t| t.block_index);
 
                 state.data.chat.events.set_p2p_swap_status(
                     m.thread_root_message_index,
@@ -54,10 +51,7 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                     .refunds
                     .into_iter()
                     .find(|t| t.ledger == content.token0.ledger)
-                    .map(|t| TransactionId {
-                        index: t.block_index,
-                        hash: None,
-                    });
+                    .map(|t| t.block_index);
 
                 state.data.chat.events.set_p2p_swap_status(
                     m.thread_root_message_index,
@@ -72,14 +66,8 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                 c.accepted_by,
                 m.thread_root_message_index,
                 m.message_id,
-                TransactionId {
-                    index: c.token0_transfer_out.block_index,
-                    hash: None,
-                },
-                TransactionId {
-                    index: c.token1_transfer_out.block_index,
-                    hash: None,
-                },
+                c.token0_transfer_out.block_index,
+                c.token1_transfer_out.block_index,
                 state.env.now(),
             );
         }
