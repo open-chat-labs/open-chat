@@ -250,6 +250,7 @@ function apiOptionalMessagePermissions(
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
         p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
+        p2p_swap: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
     };

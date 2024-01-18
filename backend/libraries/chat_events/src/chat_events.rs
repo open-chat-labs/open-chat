@@ -18,7 +18,7 @@ use types::{
     GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
     MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
     PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, TransactionId, UserId, VoteOperation,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -743,7 +743,7 @@ impl ChatEvents {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        token1_txn_in: TransactionId,
+        token1_txn_in: u64,
         now: TimestampMillis,
     ) -> AcceptP2PSwapResult {
         if let Some((message, event_index)) =
@@ -769,8 +769,8 @@ impl ChatEvents {
         user_id: UserId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        token0_txn_out: TransactionId,
-        token1_txn_out: TransactionId,
+        token0_txn_out: u64,
+        token1_txn_out: u64,
         now: TimestampMillis,
     ) -> CompleteP2PSwapResult {
         if let Some((message, event_index)) =
@@ -1276,6 +1276,12 @@ impl ChatEvents {
     ) -> Option<(EventIndex, MessageIndex, MessageId)> {
         self.message_internal(EventIndex::default(), thread_root_message_index, event_key)
             .map(|(m, e)| (e, m.message_index, m.message_id))
+    }
+
+    pub fn contains_message_id(&self, thread_root_message_index: Option<MessageIndex>, message_id: MessageId) -> bool {
+        self.events_list(EventIndex::default(), thread_root_message_index)
+            .map(|e| e.contains_message_id(message_id))
+            .unwrap_or_default()
     }
 
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {

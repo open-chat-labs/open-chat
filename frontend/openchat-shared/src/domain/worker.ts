@@ -1805,7 +1805,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
     : T extends SetTranslationCorrection
-    ? TranslationCorrections
+    ? boolean
     : T extends ApproveTranslationCorrection
     ? TranslationCorrections
     : T extends RejectTranslationCorrection

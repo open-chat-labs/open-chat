@@ -44,6 +44,12 @@ export const lastCryptoSent = {
 export const enhancedCryptoLookup = derived(
     [cryptoLookup, cryptoBalance, exchangeRatesLookupStore],
     ([$lookup, $balance, $exchangeRatesLookup]) => {
+        const xrBTCtoDollar = $exchangeRatesLookup["btc"]?.toUSD;
+        const xrETHtoDollar = $exchangeRatesLookup["eth"]?.toUSD;
+
+        const xrDollarToBTC = xrBTCtoDollar === undefined ? 0 : 1 / xrBTCtoDollar;
+        const xrDollarToETH = xrETHtoDollar === undefined ? 0 : 1 / xrETHtoDollar;
+
         const accounts = Object.values($lookup).map((t) => {
             const balance = $balance[t.ledger] ?? BigInt(0);
             const symbolLower = t.symbol.toLowerCase();
@@ -53,12 +59,16 @@ export const enhancedCryptoLookup = derived(
             const dollarBalance = xrUSD * balanceWholeUnits;
             const xrICP = rates?.toICP ?? 0;
             const icpBalance = xrICP * balanceWholeUnits;
+            const btcBalance = dollarBalance * xrDollarToBTC;
+            const ethBalance = dollarBalance * xrDollarToETH;
             const zero = balance === BigInt(0) && !DEFAULT_TOKENS.includes(t.symbol);
             return {
                 ...t,
                 balance,
                 dollarBalance,
                 icpBalance,
+                btcBalance,
+                ethBalance,
                 zero,
                 urlFormat: t.transactionUrlFormat,
             };

@@ -1561,7 +1561,7 @@ type P2PSwapContent = record {
     swap_id : nat32;
     token0 : TokenInfo;
     token0_amount : nat;
-    token0_txn_in : TransactionId;
+    token0_txn_in : nat64;
     token1 : TokenInfo;
     token1_amount : nat;
     expires_at : TimestampMillis;
@@ -1591,7 +1591,7 @@ type ReserveP2PSwapSuccess = record {
 };
 
 type P2PSwapCancelled = record {
-    token0_txn_out : opt TransactionId;
+    token0_txn_out : opt nat64;
 };
 
 type P2PSwapExpired = P2PSwapCancelled;
@@ -1602,14 +1602,14 @@ type P2PSwapReserved = record {
 
 type P2PSwapAccepted = record {
     accepted_by : UserId;
-    token1_txn_in : TransactionId;
+    token1_txn_in : nat64;
 };
 
 type P2PSwapCompleted = record {
     accepted_by : UserId;
-    token1_txn_in : TransactionId;
-    token0_txn_out : TransactionId;
-    token1_txn_out : TransactionId;
+    token1_txn_in : nat64;
+    token0_txn_out : nat64;
+    token1_txn_out : nat64;
 };
 
 type EmptyArgs = record {};
@@ -1680,13 +1680,8 @@ type TokenInfo = record {
     fee : nat;
 };
 
-type TransactionId = record {
-    index : nat64;
-    hash : opt vec nat8;
-};
-
 type AcceptSwapSuccess = record {
-    token1_txn_in : TransactionId;
+    token1_txn_in : nat64;
 };
 
 type SwapStatusError = variant {
@@ -1703,20 +1698,20 @@ type SwapStatusErrorReserved = record {
 
 type SwapStatusErrorAccepted = record {
     accepted_by : UserId;
-    token1_txn_in : TransactionId;
+    token1_txn_in : nat64;
 };
 
 type SwapStatusErrorCompleted = record {
     accepted_by : UserId;
-    token1_txn_in : TransactionId;
-    token0_txn_out : TransactionId;
-    token1_txn_out : TransactionId;
+    token1_txn_in : nat64;
+    token0_txn_out : nat64;
+    token1_txn_out : nat64;
 };
 
 type SwapStatusErrorExpired = record {
-    token0_txn_out : opt TransactionId;
+    token0_txn_out : opt nat64;
 };
 
 type SwapStatusErrorCancelled = record {
-    token0_txn_out : opt TransactionId;
+    token0_txn_out : opt nat64;
 };

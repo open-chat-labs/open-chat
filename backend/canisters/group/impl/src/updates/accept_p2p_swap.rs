@@ -18,16 +18,16 @@ async fn accept_p2p_swap(args: Args) -> Response {
     };
 
     let result = match user_canister_c2c_client::c2c_accept_p2p_swap(user_id.into(), &c2c_args).await {
-        Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_id)) => {
+        Ok(user_canister::c2c_accept_p2p_swap::Response::Success(transaction_index)) => {
             NotifyEscrowCanisterOfDepositJob::run(
                 user_id,
                 c2c_args.swap_id,
                 args.thread_root_message_index,
                 args.message_id,
-                transaction_id,
+                transaction_index,
             );
             Success(AcceptSwapSuccess {
-                token1_txn_in: transaction_id,
+                token1_txn_in: transaction_index,
             })
         }
         Ok(user_canister::c2c_accept_p2p_swap::Response::TransferError(TransferError::InsufficientFunds { .. })) => {

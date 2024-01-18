@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Notify user canisters when p2p swaps complete ([#5191](https://github.com/open-chat-labs/open-chat/pull/5191))
 - Refund deposits if swap gets cancelled ([#5192](https://github.com/open-chat-labs/open-chat/pull/5192))
 - Refund deposits if swap expires ([#5195](https://github.com/open-chat-labs/open-chat/pull/5195))
+- Support `additional_admins` for p2p swaps ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
+- Expose count of swaps in metrics ([#5210](https://github.com/open-chat-labs/open-chat/pull/5210))
 
 ### Changed
 

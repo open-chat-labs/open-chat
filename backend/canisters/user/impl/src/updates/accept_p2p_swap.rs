@@ -9,7 +9,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use types::{
     AcceptP2PSwapResult, AcceptSwapSuccess, CanisterId, Chat, EventIndex, P2PSwapLocation, P2PSwapStatus, ReserveP2PSwapResult,
-    ReserveP2PSwapSuccess, TimestampMillis, TransactionId, UserId,
+    ReserveP2PSwapSuccess, TimestampMillis, UserId,
 };
 use user_canister::accept_p2p_swap::{Response::*, *};
 use user_canister::{P2PSwapStatusChange, UserCanisterEvent};
@@ -64,7 +64,6 @@ async fn accept_p2p_swap(args: Args) -> Response {
 
     match transfer_result {
         Ok(index) => {
-            let token1_txn_in = TransactionId { index, hash: None };
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
                     id: content.swap_id,
@@ -80,8 +79,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
                     let now = state.env.now();
                     if let AcceptP2PSwapResult::Success(status) =
-                        chat.events
-                            .accept_p2p_swap(my_user_id, None, args.message_id, token1_txn_in, now)
+                        chat.events.accept_p2p_swap(my_user_id, None, args.message_id, index, now)
                     {
                         state.data.user_canister_events_queue.push(
                             args.user_id.into(),
@@ -95,7 +93,7 @@ async fn accept_p2p_swap(args: Args) -> Response {
                 }
             });
             NotifyEscrowCanisterOfDepositJob::run(content.swap_id);
-            Success(AcceptSwapSuccess { token1_txn_in })
+            Success(AcceptSwapSuccess { token1_txn_in: index })
         }
         Err(response) => {
             mutate_state(|state| {

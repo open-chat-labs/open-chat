@@ -6,9 +6,7 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{
-    BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, TransactionId, UserId,
-};
+use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -24,6 +22,7 @@ pub enum TimerJob {
     RefundPrize(RefundPrizeJob),
     MakeTransfer(MakeTransferJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
+    CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -85,7 +84,7 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub transaction_id: TransactionId,
+    pub transaction_index: u64,
     pub attempt: u32,
 }
 
@@ -96,7 +95,7 @@ impl NotifyEscrowCanisterOfDepositJob {
         channel_id: ChannelId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        transaction_id: TransactionId,
+        transaction_index: u64,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
             user_id,
@@ -104,9 +103,22 @@ impl NotifyEscrowCanisterOfDepositJob {
             channel_id,
             thread_root_message_index,
             message_id,
-            transaction_id,
+            transaction_index,
             attempt: 0,
         };
+        job.execute();
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CancelP2PSwapInEscrowCanisterJob {
+    pub swap_id: u32,
+    pub attempt: u32,
+}
+
+impl CancelP2PSwapInEscrowCanisterJob {
+    pub fn run(swap_id: u32) {
+        let job = CancelP2PSwapInEscrowCanisterJob { swap_id, attempt: 0 };
         job.execute();
     }
 }
@@ -124,6 +136,7 @@ impl Job for TimerJob {
             TimerJob::RefundPrize(job) => job.execute(),
             TimerJob::MakeTransfer(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
+            TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
         }
     }
 }
@@ -298,7 +311,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 self.user_id,
                                 self.thread_root_message_index,
                                 self.message_id,
-                                self.transaction_id,
+                                self.transaction_index,
                                 state.env.now(),
                             );
                         }
@@ -324,7 +337,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 channel_id: self.channel_id,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,
-                                transaction_id: self.transaction_id,
+                                transaction_index: self.transaction_index,
                                 attempt: self.attempt + 1,
                             }),
                             now + 10 * SECOND_IN_MS,
@@ -333,6 +346,39 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                     });
                 }
                 response => error!(?response, "Failed to notify escrow canister of deposit"),
+            };
+        })
+    }
+}
+
+impl Job for CancelP2PSwapInEscrowCanisterJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::cancel_swap(
+                escrow_canister_id,
+                &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
+            )
+            .await
+            {
+                Ok(escrow_canister::cancel_swap::Response::Success) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob {
+                                swap_id: self.swap_id,
+                                attempt: self.attempt + 1,
+                            }),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to cancel p2p swap"),
             };
         })
     }

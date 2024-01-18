@@ -1,3 +1,5 @@
+use crate::SwapMetrics;
+use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -10,7 +12,7 @@ pub struct Swaps {
 
 impl Swaps {
     pub fn push(&mut self, caller: UserId, args: escrow_canister::create_swap::Args, now: TimestampMillis) -> u32 {
-        let id = self.map.last_key_value().map(|(k, _)| *k).unwrap_or_default();
+        let id = self.map.last_key_value().map(|(k, _)| *k + 1).unwrap_or_default();
         self.map.insert(id, Swap::new(id, caller, args, now));
         id
     }
@@ -21,6 +23,25 @@ impl Swaps {
 
     pub fn get_mut(&mut self, id: u32) -> Option<&mut Swap> {
         self.map.get_mut(&id)
+    }
+
+    pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
+        let mut metrics = SwapMetrics {
+            total: self.map.len() as u32,
+            ..Default::default()
+        };
+
+        for swap in self.map.values() {
+            match swap.status(now) {
+                SwapStatus::Open => metrics.open += 1,
+                SwapStatus::Cancelled(_) => metrics.cancelled += 1,
+                SwapStatus::Expired(_) => metrics.expired += 1,
+                SwapStatus::Accepted(_) => metrics.accepted += 1,
+                SwapStatus::Completed(_) => metrics.completed += 1,
+            }
+        }
+
+        metrics
     }
 }
 
@@ -42,6 +63,8 @@ pub struct Swap {
     pub token0_transfer_out: Option<CompletedCryptoTransaction>,
     pub token1_transfer_out: Option<CompletedCryptoTransaction>,
     pub refunds: Vec<CompletedCryptoTransaction>,
+    #[serde(default)]
+    pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
 }
 
@@ -64,8 +87,13 @@ impl Swap {
             token0_transfer_out: None,
             token1_transfer_out: None,
             refunds: Vec::new(),
+            additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
         }
+    }
+
+    pub fn is_admin(&self, principal: Principal) -> bool {
+        self.created_by == principal.into() || self.additional_admins.contains(&principal)
     }
 
     pub fn is_complete(&self) -> bool {

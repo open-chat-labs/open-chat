@@ -89,6 +89,7 @@ async fn send_message_v2(mut args: Args) -> Response {
                 token1: p.token1.clone(),
                 token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
+                additional_admins: Vec::new(),
                 canister_to_notify: Some(args.recipient.into()),
             };
             match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
@@ -147,6 +148,14 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
         return ValidateRequestResult::Invalid(InvalidRequest(
             "Messaging the OpenChat Bot is not currently supported".to_string(),
         ));
+    }
+    if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
+        if chat
+            .events
+            .contains_message_id(args.thread_root_message_index, args.message_id)
+        {
+            return ValidateRequestResult::Invalid(DuplicateMessageId);
+        }
     }
 
     let now = state.env.now();

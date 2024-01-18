@@ -50,6 +50,7 @@ export type MessagePermissions = {
     crypto?: ChatPermissionRole;
     giphy?: ChatPermissionRole;
     prize?: ChatPermissionRole;
+    p2pSwap?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
     p2pSwap?: ChatPermissionRole;
 };
@@ -95,7 +96,7 @@ export type CommunityPermissions = {
 export function defaultOptionalChatPermissions(): OptionalChatPermissions {
     return {
         messagePermissions: undefined,
-        threadPermissions: undefined
+        threadPermissions: undefined,
     };
 }
 

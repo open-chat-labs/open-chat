@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
 - Expose details of timer jobs for public Groups ([#5154](https://github.com/open-chat-labs/open-chat/pull/5154))
+- Notify group when p2p swap status changes ([#5201](https://github.com/open-chat-labs/open-chat/pull/5201))
+- Implement `cancel_p2p_swap` for groups ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
 
 ### Changed
 
@@ -20,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use `message_id` in `accept_p2p_trade_offer` args ([#5162](https://github.com/open-chat-labs/open-chat/pull/5162))
 - Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
 - Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+- Only use transaction index for p2p swaps and drop usage of hash ([#5203](https://github.com/open-chat-labs/open-chat/pull/5203))
 
 ### Fixed
 

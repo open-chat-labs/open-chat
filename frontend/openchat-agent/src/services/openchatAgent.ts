@@ -11,10 +11,6 @@ import {
     setCachedMessageIfNotExists,
     setCachePrimerTimestamp,
     recordFailedMessage,
-    setTranslationCorrection,
-    getTranslationCorrections,
-    rejectTranslationCorrection,
-    approveTranslationCorrection,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
 import { getCachedRegistry, setCachedRegistry } from "../utils/registryCache";
@@ -3086,11 +3082,11 @@ export class OpenChatAgent extends EventTarget {
         return this._icpcoinsClient.exchangeRates();
     }
 
-    setTranslationCorrection(correction: TranslationCorrection): Promise<TranslationCorrections> {
+    setTranslationCorrection(correction: TranslationCorrection): Promise<boolean> {
         console.log("Setting translation correction: ", correction);
         // TODO - for now I'm just going to record these corrections in indexed db
         // eventually we will want an api, but let's get the shape right first
-        return setTranslationCorrection(correction);
+        return Promise.resolve(true);
     }
 
     rejectTranslationCorrection(
@@ -3099,21 +3095,18 @@ export class OpenChatAgent extends EventTarget {
         console.log("Rejecting translation correction: ", correction);
         // TODO - for now I'm just going to record these corrections in indexed db
         // eventually we will want an api, but let's get the shape right first
-        return rejectTranslationCorrection(correction);
+        return this.getTranslationCorrections();
     }
 
     approveTranslationCorrection(
         correction: TranslationCorrection,
     ): Promise<TranslationCorrections> {
         console.log("Approving translation correction: ", correction);
-        // TODO - for now I'm just going to record these corrections in indexed db
-        // eventually we will want an api, but let's get the shape right first
-        return approveTranslationCorrection(correction);
+        return this.getTranslationCorrections();
     }
 
     getTranslationCorrections(): Promise<TranslationCorrections> {
-        // TODO - this will just come from indexeddb for the time being
-        return getTranslationCorrections();
+        return Promise.resolve({});
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {

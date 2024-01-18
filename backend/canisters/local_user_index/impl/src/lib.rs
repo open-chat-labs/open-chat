@@ -180,6 +180,7 @@ impl RuntimeState {
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                escrow: self.data.escrow_canister_id,
             },
         }
     }
@@ -292,4 +293,5 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub escrow: CanisterId,
 }
