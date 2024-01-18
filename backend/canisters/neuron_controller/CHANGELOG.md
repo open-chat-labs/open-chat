@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Add `spawning_neurons` to metrics ([#5206](https://github.com/open-chat-labs/open-chat/pull/5206))
+
 ## [[2.0.1004](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1004-neuron_controller)] - 2024-01-11
 
 ### Changed

@@ -87,6 +87,13 @@ impl RuntimeState {
                 .iter()
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
+            spawning_neurons: self
+                .data
+                .neurons
+                .spawning_neurons
+                .iter()
+                .filter_map(|n| n.id.as_ref().map(|i| i.id))
+                .collect(),
             disbursed_neurons: self.data.neurons.disbursed_neurons.clone(),
             canister_ids: CanisterIds {
                 nns_governance_canister: self.data.nns_governance_canister_id,
@@ -158,6 +165,7 @@ pub struct Metrics {
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
     pub active_neurons: Vec<u64>,
+    pub spawning_neurons: Vec<u64>,
     pub disbursed_neurons: Vec<u64>,
     pub canister_ids: CanisterIds,
 }
