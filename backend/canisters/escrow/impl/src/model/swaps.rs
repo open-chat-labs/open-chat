@@ -1,3 +1,4 @@
+use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -42,6 +43,7 @@ pub struct Swap {
     pub token0_transfer_out: Option<CompletedCryptoTransaction>,
     pub token1_transfer_out: Option<CompletedCryptoTransaction>,
     pub refunds: Vec<CompletedCryptoTransaction>,
+    pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
 }
 
@@ -64,8 +66,13 @@ impl Swap {
             token0_transfer_out: None,
             token1_transfer_out: None,
             refunds: Vec::new(),
+            additional_admins: args.additional_admins,
             canister_to_notify: args.canister_to_notify,
         }
+    }
+
+    pub fn is_admin(&self, principal: Principal) -> bool {
+        self.created_by == principal.into() || self.additional_admins.contains(&principal)
     }
 
     pub fn is_complete(&self) -> bool {

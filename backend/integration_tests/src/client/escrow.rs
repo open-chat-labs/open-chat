@@ -35,6 +35,7 @@ pub mod happy_path {
                 token1: output_token.try_into().unwrap(),
                 token1_amount: output_amount,
                 expires_at,
+                additional_admins: Vec::new(),
                 canister_to_notify: None,
             },
         );

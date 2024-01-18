@@ -293,6 +293,7 @@ fn prepare(
             }
         }
         MessageContentInitial::P2PSwap(p) => {
+            let chat_canister_id = chat.canister_id();
             let create_swap_args = escrow_canister::create_swap::Args {
                 location: P2PSwapLocation::from_message(chat, thread_root_message_index, message_id),
                 token0: p.token0.clone(),
@@ -300,7 +301,8 @@ fn prepare(
                 token1: p.token1.clone(),
                 token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
-                canister_to_notify: Some(chat.canister_id()),
+                additional_admins: vec![chat_canister_id],
+                canister_to_notify: Some(chat_canister_id),
             };
             return P2PSwap(state.data.escrow_canister_id, create_swap_args);
         }
