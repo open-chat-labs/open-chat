@@ -1,3 +1,4 @@
+use crate::SwapMetrics;
 use candid::Principal;
 use escrow_canister::{SwapStatus, SwapStatusAccepted, SwapStatusCancelled, SwapStatusCompleted, SwapStatusExpired};
 use serde::{Deserialize, Serialize};
@@ -23,6 +24,25 @@ impl Swaps {
     pub fn get_mut(&mut self, id: u32) -> Option<&mut Swap> {
         self.map.get_mut(&id)
     }
+
+    pub fn metrics(&self, now: TimestampMillis) -> SwapMetrics {
+        let mut metrics = SwapMetrics {
+            total: self.map.len() as u32,
+            ..Default::default()
+        };
+
+        for swap in self.map.values() {
+            match swap.status(now) {
+                SwapStatus::Open => metrics.open += 1,
+                SwapStatus::Cancelled(_) => metrics.cancelled += 1,
+                SwapStatus::Expired(_) => metrics.expired += 1,
+                SwapStatus::Accepted(_) => metrics.accepted += 1,
+                SwapStatus::Completed(_) => metrics.completed += 1,
+            }
+        }
+
+        metrics
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -43,6 +63,7 @@ pub struct Swap {
     pub token0_transfer_out: Option<CompletedCryptoTransaction>,
     pub token1_transfer_out: Option<CompletedCryptoTransaction>,
     pub refunds: Vec<CompletedCryptoTransaction>,
+    #[serde(default)]
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
 }
