@@ -152,7 +152,7 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
     if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         if chat
             .events
-            .contains_message_id(args.thread_root_message_index, args.message_id.into())
+            .contains_message_id(args.thread_root_message_index, args.message_id)
         {
             return ValidateRequestResult::Invalid(DuplicateMessageId);
         }
