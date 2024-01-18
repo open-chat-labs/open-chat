@@ -353,6 +353,124 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
     }
 }
 
+#[test_case(true)]
+#[test_case(false)]
+fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+
+    let original_chat_balance = 11_000_000_000;
+
+    client::icrc1::happy_path::transfer(
+        env,
+        *controller,
+        canister_ids.chat_ledger,
+        Principal::from(user1.user_id),
+        original_chat_balance,
+    );
+
+    let message_id = random_message_id();
+
+    let send_message_response = client::user::send_message_with_transfer_to_group(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::P2PSwap(P2PSwapContentInitial {
+                token0: Cryptocurrency::InternetComputer.try_into().unwrap(),
+                token0_amount: 1_000_000_000,
+                token1: Cryptocurrency::CHAT.try_into().unwrap(),
+                token1_amount: 10_000_000_000,
+                expires_in: DAY_IN_MS,
+                caption: None,
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            correlation_id: 0,
+            rules_accepted: None,
+            message_filter_failed: None,
+        },
+    );
+
+    assert!(matches!(
+        send_message_response,
+        user_canister::send_message_with_transfer_to_group::Response::Success(_)
+    ));
+
+    if delete_message {
+        let delete_message_response = client::group::delete_messages(
+            env,
+            user1.principal,
+            group_id.into(),
+            &group_canister::delete_messages::Args {
+                thread_root_message_index: None,
+                message_ids: vec![message_id],
+                as_platform_moderator: None,
+                correlation_id: 0,
+            },
+        );
+
+        assert!(matches!(
+            delete_message_response,
+            group_canister::delete_messages::Response::Success
+        ));
+
+        env.advance_time(Duration::from_millis(5 * MINUTE_IN_MS));
+    } else {
+        let cancel_swap_response = client::group::cancel_p2p_swap(
+            env,
+            user1.principal,
+            group_id.into(),
+            &group_canister::cancel_p2p_swap::Args {
+                thread_root_message_index: None,
+                message_id,
+            },
+        );
+
+        assert!(matches!(
+            cancel_swap_response,
+            group_canister::cancel_p2p_swap::Response::Success
+        ));
+    }
+
+    tick_many(env, 5);
+
+    assert_eq!(
+        client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
+        original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
+    );
+
+    if !delete_message {
+        let event = client::group::happy_path::events_by_index(env, &user1, group_id.into(), vec![2.into()])
+            .events
+            .pop()
+            .unwrap()
+            .event;
+
+        if let ChatEvent::Message(m) = event {
+            if let MessageContent::P2PSwap(p) = m.content {
+                assert!(matches!(p.status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()));
+            }
+        }
+    }
+}
+
 #[test]
 fn deposit_refunded_if_swap_expires() {
     let mut wrapper = ENV.deref().get();
