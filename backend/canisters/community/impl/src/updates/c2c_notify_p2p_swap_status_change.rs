@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use escrow_canister::{SwapStatus, SwapStatusChange as Args};
-use types::{Chat, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus};
+use types::{Chat, EventIndex, P2PSwapCancelled, P2PSwapExpired, P2PSwapLocation, P2PSwapStatus, TransactionId};
 
 #[update_msgpack(guard = "caller_is_escrow_canister")]
 #[trace]
@@ -26,11 +26,14 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                             .events
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
-                        let token0_txn_out = e
-                            .refunds
-                            .into_iter()
-                            .find(|t| t.ledger == content.token0.ledger)
-                            .map(|t| t.block_index);
+                        let token0_txn_out =
+                            e.refunds
+                                .into_iter()
+                                .find(|t| t.ledger == content.token0.ledger)
+                                .map(|t| TransactionId {
+                                    index: t.block_index,
+                                    hash: None,
+                                });
 
                         channel.chat.events.set_p2p_swap_status(
                             m.thread_root_message_index,
@@ -47,11 +50,14 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                             .events
                             .get_p2p_swap(m.thread_root_message_index, m.message_id, EventIndex::default())
                     {
-                        let token0_txn_out = c
-                            .refunds
-                            .into_iter()
-                            .find(|t| t.ledger == content.token0.ledger)
-                            .map(|t| t.block_index);
+                        let token0_txn_out =
+                            c.refunds
+                                .into_iter()
+                                .find(|t| t.ledger == content.token0.ledger)
+                                .map(|t| TransactionId {
+                                    index: t.block_index,
+                                    hash: None,
+                                });
 
                         channel.chat.events.set_p2p_swap_status(
                             m.thread_root_message_index,
@@ -66,8 +72,14 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
                         c.accepted_by,
                         m.thread_root_message_index,
                         m.message_id,
-                        c.token0_transfer_out.block_index,
-                        c.token1_transfer_out.block_index,
+                        TransactionId {
+                            index: c.token0_transfer_out.block_index,
+                            hash: None,
+                        },
+                        TransactionId {
+                            index: c.token1_transfer_out.block_index,
+                            hash: None,
+                        },
                         state.env.now(),
                     );
                 }

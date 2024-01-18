@@ -77,7 +77,7 @@ impl RuntimeState {
     }
 
     pub fn is_caller_escrow_canister(&self) -> bool {
-        self.env.caller() == self.data.escrow_canister_id.into()
+        self.env.caller() == self.data.escrow_canister_id
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
