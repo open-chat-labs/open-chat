@@ -955,6 +955,7 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         crypto: apiOptional(apiPermissionRole, permissions.crypto),
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
