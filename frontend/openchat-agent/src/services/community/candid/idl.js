@@ -199,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
     'default' : PermissionRole,
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
+    'p2p_swap' : IDL.Opt(PermissionRole),
   });
   const GroupPermissions = IDL.Record({
     'mention_all_members' : PermissionRole,
@@ -1658,6 +1659,7 @@ export const idlFactory = ({ IDL }) => {
     'p2p_trade' : PermissionRoleUpdate,
     'image' : PermissionRoleUpdate,
     'prize' : PermissionRoleUpdate,
+    'p2p_swap' : PermissionRoleUpdate,
   });
   const OptionalMessagePermissionsUpdate = IDL.Variant({
     'NoChange' : IDL.Null,

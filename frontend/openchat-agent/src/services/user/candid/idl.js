@@ -203,6 +203,7 @@ export const idlFactory = ({ IDL }) => {
     'default' : PermissionRole,
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
+    'p2p_swap' : IDL.Opt(PermissionRole),
   });
   const GroupPermissions = IDL.Record({
     'mention_all_members' : PermissionRole,
