@@ -42,6 +42,7 @@
     export let collapsed = false;
     export let undeleting: boolean = false;
     export let intersecting: boolean;
+    export let failed: boolean;
 </script>
 
 {#if content.kind === "text_content"}
@@ -63,13 +64,16 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {me} />
+    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {me} {failed} />
 {:else if content.kind === "p2p_swap_content_initial"}
-    <MessageContentInitial text={i18nKey("p2pSwap.creatingYourMessage")} {me} />
+    <MessageContentInitial
+        text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
+        {failed}
+        {me} />
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
 {:else if content.kind === "p2p_swap_content"}
-    <P2PSwapContent {messageContext} {messageIndex} {messageId} {content} {me} />
+    <P2PSwapContent {messageContext} {messageId} {content} {me} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}

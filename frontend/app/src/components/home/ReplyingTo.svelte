@@ -44,6 +44,7 @@
         {readonly}
         messageContext={replyingTo.sourceContext}
         fill={false}
+        failed={false}
         {me}
         intersecting={true}
         messageId={replyingTo.messageId}

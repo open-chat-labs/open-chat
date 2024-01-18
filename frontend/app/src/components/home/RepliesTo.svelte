@@ -82,6 +82,7 @@
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}
+                failed={false}
                 truncate
                 reply
                 myUserId={$currentUser.userId}

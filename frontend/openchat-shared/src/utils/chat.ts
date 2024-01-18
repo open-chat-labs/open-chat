@@ -14,6 +14,9 @@ import type {
     AccountTransaction,
     AttachmentContent,
     MessagePermission,
+    P2PSwapStatus,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
@@ -319,5 +322,77 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
             return "file";
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
+    }
+}
+
+export function mapAcceptP2PSwapResponseToStatus(response: AcceptP2PSwapResponse, userId: string): P2PSwapStatus {
+    switch (response.kind) {
+        case "success": return { 
+            kind: "p2p_swap_accepted", 
+            acceptedBy: userId, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_reserved": return { 
+            kind: "p2p_swap_reserved", 
+            reservedBy: response.reservedBy 
+        };
+        case "already_accepted": return { 
+            kind: "p2p_swap_accepted",
+            acceptedBy: response.acceptedBy, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_completed": return { 
+            kind: "p2p_swap_completed",
+            acceptedBy: response.acceptedBy,
+            token1TxnIn: response.token1TxnIn,
+            token0TxnOut: response.token0TxnOut,
+            token1TxnOut: response.token1TxnOut,
+        };
+        case "swap_cancelled": return { 
+            kind: "p2p_swap_cancelled",
+            token0TxnOut: response.token0TxnOut,
+        };
+        case "swap_expired": return { 
+            kind: "p2p_swap_expired",
+            token0TxnOut: response.token0TxnOut,
+        };
+        default: return { 
+            kind: "p2p_swap_open" 
+        };
+    }
+}
+
+export function mapCancelP2PSwapResponseToStatus(response: CancelP2PSwapResponse): P2PSwapStatus {
+    switch (response.kind) {
+        case "success": return { 
+            kind: "p2p_swap_cancelled"
+        };
+        case "already_reserved": return { 
+            kind: "p2p_swap_reserved", 
+            reservedBy: response.reservedBy 
+        };
+        case "already_accepted": return { 
+            kind: "p2p_swap_accepted",
+            acceptedBy: response.acceptedBy, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_completed": return { 
+            kind: "p2p_swap_completed",
+            acceptedBy: response.acceptedBy,
+            token1TxnIn: response.token1TxnIn,
+            token0TxnOut: response.token0TxnOut,
+            token1TxnOut: response.token1TxnOut,
+        };
+        case "swap_cancelled": return { 
+            kind: "p2p_swap_cancelled",
+            token0TxnOut: response.token0TxnOut,
+        };
+        case "swap_expired": return { 
+            kind: "p2p_swap_expired",
+            token0TxnOut: response.token0TxnOut,
+        };
+        default: return { 
+            kind: "p2p_swap_open" 
+        };
     }
 }

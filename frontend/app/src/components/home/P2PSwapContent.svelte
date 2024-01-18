@@ -17,28 +17,18 @@
 
     export let content: P2PSwapContent;
     export let messageContext: MessageContext;
-    export let messageIndex: number;
     export let messageId: bigint;
     export let me: boolean;
 
-    let buttonDisabled = false;
     let buttonText = "";
-    let instructionText = "";
+    let instructionText: string | undefined = undefined;
     let summaryText = "";
     let confirming = false;
 
     $: user = client.user;
     $: cryptoLookup = client.cryptoLookup;
-    $: fromLogo =
-        Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.token0.symbol.toLowerCase(),
-        )?.logo ?? "";
-    $: toLogo =
-        Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.token1.symbol.toLowerCase(),
-        )?.logo ?? "";
-    $: fromDetails = $cryptoLookup[content.token0.decimals];
-    $: toDetails = $cryptoLookup[content.token1.decimals];
+    $: fromDetails = $cryptoLookup[content.token0.ledger];
+    $: toDetails = $cryptoLookup[content.token1.ledger];
     $: finished = $now500 >= Number(content.expiresAt);
     $: timeRemaining = finished
         ? $_("p2pSwap.expired")
@@ -50,16 +40,17 @@
             content.status.kind === "p2p_swap_completed") &&
             content.status.acceptedBy === $user.userId);
 
-    $: fromAmount = client.formatTokens(content.token0Amount, fromDetails.decimals);
-    $: toAmount = client.formatTokens(content.token1Amount, toDetails.decimals);
+    $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
+    $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
+    $: buttonDisabled = content.status.kind !== "p2p_swap_open";
 
     $: {
         if (content.status.kind === "p2p_swap_open") {
             if (me) {
-                instructionText = $_("p2pSwap.clickToCancel");
+                instructionText = undefined;
                 buttonText = $_("p2pSwap.cancel");
             } else {
-                instructionText = $_("p2pSwap.clickToAccept");
+                instructionText = undefined;
                 buttonText = $_("p2pSwap.accept");
             }
         } else if (content.status.kind === "p2p_swap_cancelled") {
@@ -70,7 +61,7 @@
             }
             buttonText = $_("p2pSwap.cancelled");
         } else if (content.status.kind === "p2p_swap_expired") {
-            instructionText = $_("p2pSwap.swapExpired");
+            instructionText = undefined;
             buttonText = $_("p2pSwap.expired");
         } else if (content.status.kind === "p2p_swap_reserved") {
             if (acceptedByYou) {
@@ -105,14 +96,14 @@
             values: {
                 fromAmount,
                 toAmount,
-                fromToken: fromDetails.symbol,
-                toToken: toDetails.symbol,
+                fromToken: content.token0.symbol,
+                toToken: content.token1.symbol,
             },
         });
     }
 
     function onAcceptOrCancel(e: MouseEvent) {
-        if (e.isTrusted) {
+        if (e.isTrusted && !buttonDisabled) {
             confirming = true;
         }
     }
@@ -122,7 +113,18 @@
 
         if (yes) {
             if (me) {
-                // TODO: cancel??
+                client
+                    .cancelP2PSwap(
+                        messageContext.chatId,
+                        messageContext.threadRootMessageIndex,
+                        messageId,
+                    )
+                    .then((resp) => {
+                        if (resp.kind !== "success") {
+                            // TODO: This is not going to work for all error types
+                            toastStore.showFailureToast(i18nKey(resp.kind));
+                        }
+                    });
             } else {
                 client
                     .acceptP2PSwap(
@@ -132,6 +134,7 @@
                     )
                     .then((resp) => {
                         if (resp.kind !== "success") {
+                            // TODO: This is not going to work for all error types
                             toastStore.showFailureToast(i18nKey(resp.kind));
                         }
                     });
@@ -152,25 +155,19 @@
     <div class="top">
         <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
-            <span>
-                {#if !finished}
-                    {$_("p2pSwap.accepted")}
-                {:else}
-                    {timeRemaining}
-                {/if}
-            </span>
+            <span>{timeRemaining}</span>
         </div>
         <div class="coins">
             <div class="coin">
-                <SpinningToken logo={fromLogo} spin={false} />
-                <div class="amount">{fromAmount}</div>
+                <SpinningToken logo={fromDetails.logo} spin={false} />
+                <div class="amount">{fromAmount} {content.token0.symbol}</div>
             </div>
 
-            <div><SwapIcon size={"3em"} /></div>
+            <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
 
             <div class="coin">
-                <SpinningToken logo={toLogo} spin={false} />
-                <div class="amount">{toAmount}</div>
+                <SpinningToken logo={toDetails.logo} spin={false} />
+                <div class="amount">{toAmount} {content.token1.symbol}</div>
             </div>
         </div>
     </div>
@@ -181,7 +178,9 @@
             </div>
         {/if}
         <div class="summary">{summaryText}</div>
-        <div class="instructions">{instructionText}</div>
+        {#if instructionText !== undefined}
+            <div class="instructions">{instructionText}</div>
+        {/if}
         <div class="accept">
             <ButtonGroup align="fill">
                 <Button
@@ -213,29 +212,26 @@
 
     .swap {
         max-width: 400px;
+        padding: 0 $sp3 $sp3 $sp3;
     }
 
     .top {
         position: relative;
-        padding: 30px 0 30px 0;
+        margin-bottom: $sp4;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        background: radial-gradient(circle, rgba(238, 31, 122, 1) 0%, rgba(59, 12, 190, 1) 80%);
     }
 
     .countdown {
         @include font-size(fs-60);
         font-weight: 700;
-        position: absolute;
         display: flex;
         gap: $sp2;
         align-items: center;
         border-radius: var(--rd);
         color: white;
-        top: 10px;
-        left: 10px;
         background-color: rgba(0, 0, 0, 0.3);
         padding: $sp2 $sp3;
         text-transform: lowercase;
@@ -253,21 +249,29 @@
         margin-bottom: $sp4;
     }
 
-    .bottom {
-        padding: $sp4;
-    }
-
     .coins {
         display: flex;
         flex-direction: row;
-        gap: 40px;
         justify-content: space-between;
+        align-items: center;
+        margin-top: $sp3;
+        width: 100%;
+    }
+
+    .amount {
+        @include font(bold, normal, fs-80);
+    }
+
+    .swap-icon {
+        height: 2.5em;
+        position: relative;
+        top: -10px;
     }
 
     .coin {
         display: flex;
         flex-direction: column;
-        gap: 30px;
-        justify-content: space-between;
+        gap: $sp2;
+        align-items: center;
     }
 </style>

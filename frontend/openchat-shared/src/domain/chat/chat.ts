@@ -2096,4 +2096,5 @@ export type CancelP2PSwapResponse =
     | { kind: "user_not_in_group" }
     | { kind: "user_not_in_community" }
     | { kind: "user_not_in_channel" }
-    | { kind: "chat_frozen" };
+    | { kind: "chat_frozen" }
+    | { kind: "internal_error", text: string };

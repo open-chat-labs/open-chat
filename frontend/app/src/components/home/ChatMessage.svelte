@@ -535,6 +535,7 @@
                         {collapsed}
                         {undeleting}
                         {intersecting}
+                        {failed}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}

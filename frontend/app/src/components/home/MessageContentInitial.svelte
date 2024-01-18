@@ -5,13 +5,16 @@
 
     export let text: ResourceKey;
     export let me: boolean;
+    export let failed: boolean;
 </script>
 
 {#if me}
     <div class={"prize"}>
-        <div class="spinner">
-            <FancyLoader />
-        </div>
+        {#if !failed}
+            <div class="spinner">
+                <FancyLoader />
+            </div>
+        {/if}
         <p><Translatable resourceKey={text} /></p>
     </div>
 {/if}
