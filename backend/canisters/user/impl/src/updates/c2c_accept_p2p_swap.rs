@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
-use types::{CanisterId, TimestampMillis, TransactionId, UserId};
+use types::{CanisterId, TimestampMillis, UserId};
 use user_canister::c2c_accept_p2p_swap::{Response::*, *};
 use utils::consts::MEMO_P2P_SWAP_ACCEPT;
 use utils::time::NANOS_PER_MILLISECOND;
@@ -39,11 +39,6 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
     .await
     {
         Ok(Ok(index_nat)) => {
-            let token1_txn_in = TransactionId {
-                index: index_nat.0.try_into().unwrap(),
-                hash: None,
-            };
-
             mutate_state(|state| {
                 state.data.p2p_swaps.add(P2PSwap {
                     id: args.swap_id,
@@ -57,7 +52,7 @@ async fn c2c_accept_p2p_swap(args: Args) -> Response {
                     expires_at: args.expires_at,
                 });
             });
-            Success(token1_txn_in)
+            Success(index_nat.0.try_into().unwrap())
         }
         Ok(Err(error)) => TransferError(error),
         Err(error) => InternalError(format!("{error:?}")),

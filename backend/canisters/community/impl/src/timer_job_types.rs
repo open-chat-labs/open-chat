@@ -6,9 +6,7 @@ use chat_events::MessageContentInternal;
 use ledger_utils::process_transaction;
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{
-    BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, TransactionId, UserId,
-};
+use types::{BlobReference, CanisterId, ChannelId, ChatId, MessageId, MessageIndex, PendingCryptoTransaction, UserId};
 use utils::consts::MEMO_PRIZE_REFUND;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -85,7 +83,7 @@ pub struct NotifyEscrowCanisterOfDepositJob {
     pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub transaction_id: TransactionId,
+    pub transaction_index: u64,
     pub attempt: u32,
 }
 
@@ -96,7 +94,7 @@ impl NotifyEscrowCanisterOfDepositJob {
         channel_id: ChannelId,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
-        transaction_id: TransactionId,
+        transaction_index: u64,
     ) {
         let job = NotifyEscrowCanisterOfDepositJob {
             user_id,
@@ -104,7 +102,7 @@ impl NotifyEscrowCanisterOfDepositJob {
             channel_id,
             thread_root_message_index,
             message_id,
-            transaction_id,
+            transaction_index,
             attempt: 0,
         };
         job.execute();
@@ -298,7 +296,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 self.user_id,
                                 self.thread_root_message_index,
                                 self.message_id,
-                                self.transaction_id,
+                                self.transaction_index,
                                 state.env.now(),
                             );
                         }
@@ -324,7 +322,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                                 channel_id: self.channel_id,
                                 thread_root_message_index: self.thread_root_message_index,
                                 message_id: self.message_id,
-                                transaction_id: self.transaction_id,
+                                transaction_index: self.transaction_index,
                                 attempt: self.attempt + 1,
                             }),
                             now + 10 * SECOND_IN_MS,
