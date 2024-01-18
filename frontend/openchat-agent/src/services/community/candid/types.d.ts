@@ -16,7 +16,7 @@ export type AcceptP2PSwapResponse = { 'UserNotInChannel' : null } |
   { 'SwapNotFound' : null } |
   { 'InternalError' : string } |
   { 'InsufficientFunds' : null };
-export interface AcceptSwapSuccess { 'token1_txn_in' : TransactionId }
+export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
   { 'TokenBalance' : TokenBalanceGate } |
@@ -1400,18 +1400,18 @@ export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
 export interface P2PSwapAccepted {
   'accepted_by' : UserId,
-  'token1_txn_in' : TransactionId,
+  'token1_txn_in' : bigint,
 }
-export interface P2PSwapCancelled { 'token0_txn_out' : [] | [TransactionId] }
+export interface P2PSwapCancelled { 'token0_txn_out' : [] | [bigint] }
 export interface P2PSwapCompleted {
   'accepted_by' : UserId,
-  'token1_txn_out' : TransactionId,
-  'token0_txn_out' : TransactionId,
-  'token1_txn_in' : TransactionId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
 }
 export interface P2PSwapContent {
   'status' : P2PSwapStatus,
-  'token0_txn_in' : TransactionId,
+  'token0_txn_in' : bigint,
   'swap_id' : number,
   'token0_amount' : bigint,
   'token0' : TokenInfo,
@@ -1884,20 +1884,16 @@ export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
   { 'Expired' : SwapStatusErrorExpired };
 export interface SwapStatusErrorAccepted {
   'accepted_by' : UserId,
-  'token1_txn_in' : TransactionId,
+  'token1_txn_in' : bigint,
 }
-export interface SwapStatusErrorCancelled {
-  'token0_txn_out' : [] | [TransactionId],
-}
+export interface SwapStatusErrorCancelled { 'token0_txn_out' : [] | [bigint] }
 export interface SwapStatusErrorCompleted {
   'accepted_by' : UserId,
-  'token1_txn_out' : TransactionId,
-  'token0_txn_out' : TransactionId,
-  'token1_txn_in' : TransactionId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
 }
-export interface SwapStatusErrorExpired {
-  'token0_txn_out' : [] | [TransactionId],
-}
+export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
 export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface Tally {
   'no' : bigint,
@@ -1974,10 +1970,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface TransactionId {
-  'hash' : [] | [Uint8Array | number[]],
-  'index' : bigint,
-}
 export interface TransferArgs {
   'to' : Account,
   'fee' : [] | [bigint],

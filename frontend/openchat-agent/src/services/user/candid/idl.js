@@ -6,27 +6,23 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'message_id' : MessageId,
   });
-  const TransactionId = IDL.Record({
-    'hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'index' : IDL.Nat64,
-  });
-  const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : TransactionId });
+  const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
   const SwapStatusErrorReserved = IDL.Record({ 'reserved_by' : UserId });
   const SwapStatusErrorAccepted = IDL.Record({
     'accepted_by' : UserId,
-    'token1_txn_in' : TransactionId,
+    'token1_txn_in' : IDL.Nat64,
   });
   const SwapStatusErrorCancelled = IDL.Record({
-    'token0_txn_out' : IDL.Opt(TransactionId),
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
   });
   const SwapStatusErrorCompleted = IDL.Record({
     'accepted_by' : UserId,
-    'token1_txn_out' : TransactionId,
-    'token0_txn_out' : TransactionId,
-    'token1_txn_in' : TransactionId,
+    'token1_txn_out' : IDL.Nat64,
+    'token0_txn_out' : IDL.Nat64,
+    'token1_txn_in' : IDL.Nat64,
   });
   const SwapStatusErrorExpired = IDL.Record({
-    'token0_txn_out' : IDL.Opt(TransactionId),
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
   });
   const SwapStatusError = IDL.Variant({
     'Reserved' : SwapStatusErrorReserved,
@@ -403,16 +399,16 @@ export const idlFactory = ({ IDL }) => {
   const P2PSwapReserved = IDL.Record({ 'reserved_by' : UserId });
   const P2PSwapAccepted = IDL.Record({
     'accepted_by' : UserId,
-    'token1_txn_in' : TransactionId,
+    'token1_txn_in' : IDL.Nat64,
   });
   const P2PSwapCancelled = IDL.Record({
-    'token0_txn_out' : IDL.Opt(TransactionId),
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
   });
   const P2PSwapCompleted = IDL.Record({
     'accepted_by' : UserId,
-    'token1_txn_out' : TransactionId,
-    'token0_txn_out' : TransactionId,
-    'token1_txn_in' : TransactionId,
+    'token1_txn_out' : IDL.Nat64,
+    'token0_txn_out' : IDL.Nat64,
+    'token1_txn_in' : IDL.Nat64,
   });
   const P2PSwapExpired = P2PSwapCancelled;
   const P2PSwapStatus = IDL.Variant({
@@ -439,7 +435,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const P2PSwapContent = IDL.Record({
     'status' : P2PSwapStatus,
-    'token0_txn_in' : TransactionId,
+    'token0_txn_in' : IDL.Nat64,
     'swap_id' : IDL.Nat32,
     'token0_amount' : IDL.Nat,
     'token0' : TokenInfo,
@@ -1323,6 +1319,7 @@ export const idlFactory = ({ IDL }) => {
       'message_index' : MessageIndex,
     }),
     'TransferCannotBeZero' : IDL.Null,
+    'DuplicateMessageId' : IDL.Null,
     'Success' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
