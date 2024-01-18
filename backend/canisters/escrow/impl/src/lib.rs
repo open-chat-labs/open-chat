@@ -34,12 +34,15 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
+
         Metrics {
             memory_used: utils::memory::used(),
-            now: self.env.now(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            swaps: self.data.swaps.metrics(now),
             canister_ids: CanisterIds {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
@@ -82,7 +85,18 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: BuildVersion,
     pub git_commit_id: String,
+    pub swaps: SwapMetrics,
     pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct SwapMetrics {
+    pub total: u32,
+    pub open: u32,
+    pub cancelled: u32,
+    pub expired: u32,
+    pub accepted: u32,
+    pub completed: u32,
 }
 
 #[derive(Serialize, Debug)]
