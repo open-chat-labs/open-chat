@@ -1,4 +1,4 @@
-use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, TransactionId, UserId};
+use crate::{Chat, MessageId, MessageIndex, P2PSwapContent, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -31,7 +31,7 @@ pub struct ReserveP2PSwapSuccess {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapCancelled {
-    pub token0_txn_out: Option<TransactionId>,
+    pub token0_txn_out: Option<u64>,
 }
 
 pub type P2PSwapExpired = P2PSwapCancelled;
@@ -44,20 +44,20 @@ pub struct P2PSwapReserved {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapAccepted {
     pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
+    pub token1_txn_in: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct P2PSwapCompleted {
     pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
-    pub token0_txn_out: TransactionId,
-    pub token1_txn_out: TransactionId,
+    pub token1_txn_in: u64,
+    pub token0_txn_out: u64,
+    pub token1_txn_out: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct AcceptSwapSuccess {
-    pub token1_txn_in: TransactionId,
+    pub token1_txn_in: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -77,25 +77,25 @@ pub struct SwapStatusErrorReserved {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusErrorAccepted {
     pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
+    pub token1_txn_in: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusErrorCompleted {
     pub accepted_by: UserId,
-    pub token1_txn_in: TransactionId,
-    pub token0_txn_out: TransactionId,
-    pub token1_txn_out: TransactionId,
+    pub token1_txn_in: u64,
+    pub token0_txn_out: u64,
+    pub token1_txn_out: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusErrorExpired {
-    pub token0_txn_out: Option<TransactionId>,
+    pub token0_txn_out: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SwapStatusErrorCancelled {
-    pub token0_txn_out: Option<TransactionId>,
+    pub token0_txn_out: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
