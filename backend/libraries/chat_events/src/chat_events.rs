@@ -1278,6 +1278,12 @@ impl ChatEvents {
             .map(|(m, e)| (e, m.message_index, m.message_id))
     }
 
+    pub fn contains_message_id(&self, thread_root_message_index: Option<MessageIndex>, message_id: MessageId) -> bool {
+        self.events_list(EventIndex::default(), thread_root_message_index)
+            .map(|e| e.contains_message_id(message_id))
+            .unwrap_or_default()
+    }
+
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
