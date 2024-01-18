@@ -10,6 +10,7 @@
     import { getContext } from "svelte";
     import { OpenChat } from "openchat-client";
     import ErrorMessage from "./ErrorMessage.svelte";
+    import { toastStore } from "../stores/toast";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,18 +19,10 @@
     let saved = false;
 
     $: yourLanguage = supportedLanguages.find((l) => l.code === $locale)?.name ?? "English";
-    $: corrections = client.translationCorrectionsStore;
-    $: userStore = client.userStore;
     $: englishValue = $editingLabel && $_($editingLabel.key, { locale: "en" });
     $: englishTokens = extractTokens(englishValue);
     $: tokenMismatch = !tokensMatch(suggestion, englishTokens);
     $: valid = suggestion !== "" && !tokenMismatch;
-    $: existingCorrection =
-        $locale && $editingLabel && $corrections[$locale]
-            ? $corrections[$locale][$editingLabel.key]
-            : undefined;
-    $: correctedBy =
-        existingCorrection !== undefined ? $userStore[existingCorrection?.proposedBy].username : "";
 
     function tokensMatch(suggestion: string, originalTokens: Set<string>): boolean {
         return setsAreEqual(extractTokens(suggestion), originalTokens);
@@ -61,7 +54,15 @@
             busy = true;
             client
                 .setTranslationCorrection($locale, $editingLabel.key, suggestion)
-                .then(() => (saved = true))
+                .then((success) => {
+                    if (success) {
+                        saved = true;
+                    } else {
+                        toastStore.showFailureToast(
+                            i18nKey("Sorry we were unable to save your suggestion"),
+                        );
+                    }
+                })
                 .finally(() => (busy = false));
         }
     }
@@ -84,12 +85,6 @@
                         The current translation is <span class="value"
                             >{$_($editingLabel.key)}</span>
                     </p>
-                    {#if existingCorrection !== undefined}
-                        <p>
-                            The current translation was provided by <span class="value"
-                                >{correctedBy}</span>
-                        </p>
-                    {/if}
                     <Legend label={i18nKey("Your proposed translation is")}></Legend>
                     <TextArea
                         minlength={1}
