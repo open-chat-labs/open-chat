@@ -1018,6 +1018,7 @@ export interface MessagePermissions {
   'default' : PermissionRole,
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
+  'p2p_swap' : [] | [PermissionRole],
 }
 export interface MessagePinned {
   'pinned_by' : UserId,
@@ -1164,6 +1165,7 @@ export interface OptionalMessagePermissions {
   'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
+  'p2p_swap' : PermissionRoleUpdate,
 }
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
