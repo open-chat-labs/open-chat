@@ -543,7 +543,7 @@ pub struct P2PSwapContent {
     pub token1_amount: u128,
     pub expires_at: TimestampMillis,
     pub caption: Option<String>,
-    pub token0_txn_in: TransactionId,
+    pub token0_txn_in: u64,
     pub status: P2PSwapStatus,
 }
 
@@ -562,7 +562,7 @@ impl P2PSwapContent {
             token1_amount: content.token1_amount,
             expires_at: now + content.expires_in,
             caption: content.caption,
-            token0_txn_in: transfer.into(),
+            token0_txn_in: transfer.index(),
             status: P2PSwapStatus::Open,
         }
     }
@@ -590,7 +590,7 @@ impl P2PSwapContent {
         false
     }
 
-    pub fn accept(&mut self, user_id: UserId, token1_txn_in: TransactionId) -> bool {
+    pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
         if let P2PSwapStatus::Reserved(a) = &self.status {
             if a.reserved_by == user_id {
                 self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
@@ -603,12 +603,7 @@ impl P2PSwapContent {
         false
     }
 
-    pub fn complete(
-        &mut self,
-        user_id: UserId,
-        token0_txn_out: TransactionId,
-        token1_txn_out: TransactionId,
-    ) -> Option<P2PSwapCompleted> {
+    pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
         if let P2PSwapStatus::Accepted(a) = &self.status {
             if a.accepted_by == user_id {
                 let status = P2PSwapCompleted {
@@ -639,27 +634,6 @@ impl P2PSwapContent {
             true
         } else {
             false
-        }
-    }
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Copy)]
-pub struct TransactionId {
-    pub index: u64,
-    pub hash: Option<[u8; 32]>,
-}
-
-impl From<CompletedCryptoTransaction> for TransactionId {
-    fn from(value: CompletedCryptoTransaction) -> TransactionId {
-        match value {
-            CompletedCryptoTransaction::NNS(t) => TransactionId {
-                index: t.block_index,
-                hash: Some(t.transaction_hash),
-            },
-            CompletedCryptoTransaction::ICRC1(t) => TransactionId {
-                index: t.block_index,
-                hash: None,
-            },
         }
     }
 }
