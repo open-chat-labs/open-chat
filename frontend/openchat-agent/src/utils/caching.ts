@@ -31,8 +31,6 @@ import type {
     CreatedUser,
     DiamondMembershipStatus,
     TransferSuccess,
-    TranslationCorrections,
-    TranslationCorrection,
 } from "openchat-shared";
 import {
     chatIdentifiersEqual,
@@ -112,11 +110,6 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: CreatedUser;
     };
-
-    translationCorrections: {
-        key: string; // locale_i18nkey
-        value: TranslationCorrection;
-    };
 }
 
 function padMessageIndex(i: number): string {
@@ -175,9 +168,6 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("currentUser")) {
                 db.deleteObjectStore("currentUser");
             }
-            if (db.objectStoreNames.contains("translationCorrections")) {
-                db.deleteObjectStore("translationCorrections");
-            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             chatEvents.createIndex("expiresAt", "expiresAt");
@@ -190,7 +180,6 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("failed_thread_messages");
             db.createObjectStore("cachePrimer");
             db.createObjectStore("currentUser");
-            db.createObjectStore("translationCorrections");
         },
     });
 }
@@ -1163,43 +1152,4 @@ export async function setCurrentUserDiamondStatusInCache(
         },
         principal,
     );
-}
-
-export async function setTranslationCorrection(
-    correction: TranslationCorrection,
-): Promise<TranslationCorrections> {
-    if (db === undefined) return {};
-    (await db).put("translationCorrections", correction, `${correction.locale}_${correction.key}`);
-    return getTranslationCorrections();
-}
-
-export async function approveTranslationCorrection(
-    correction: TranslationCorrection,
-): Promise<TranslationCorrections> {
-    if (db === undefined) return {};
-    (await db).put(
-        "translationCorrections",
-        { ...correction, approved: true },
-        `${correction.locale}_${correction.key}`,
-    );
-    return getTranslationCorrections();
-}
-
-export async function rejectTranslationCorrection(
-    correction: TranslationCorrection,
-): Promise<TranslationCorrections> {
-    if (db === undefined) return {};
-    (await db).delete("translationCorrections", `${correction.locale}_${correction.key}`);
-    return getTranslationCorrections();
-}
-
-export async function getTranslationCorrections(): Promise<TranslationCorrections> {
-    if (db === undefined) return Promise.resolve({});
-    const corrections = await (await db).getAll("translationCorrections");
-    return corrections.reduce<TranslationCorrections>((res, correction) => {
-        const byLocale = res[correction.locale] ?? {};
-        byLocale[correction.key] = correction;
-        res[correction.locale] = byLocale;
-        return res;
-    }, {});
 }

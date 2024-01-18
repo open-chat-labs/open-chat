@@ -89,6 +89,7 @@ async fn send_message_v2(mut args: Args) -> Response {
                 token1: p.token1.clone(),
                 token1_amount: p.token1_amount,
                 expires_at: now + p.expires_in,
+                additional_admins: Vec::new(),
                 canister_to_notify: Some(args.recipient.into()),
             };
             match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
