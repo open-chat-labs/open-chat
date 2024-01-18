@@ -457,7 +457,7 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
     );
 
     if !delete_message {
-        let event = client::group::happy_path::events_by_index(env, &user1, group_id.into(), vec![2.into()])
+        let event = client::group::happy_path::events_by_index(env, &user1, group_id, vec![2.into()])
             .events
             .pop()
             .unwrap()
