@@ -37,6 +37,7 @@ type SendMessageResponse = variant {
     TransferCannotBeZero;
     TransferCannotBeToSelf;
     P2PSwapSetUpFailed : text;
+    DuplicateMessageId;
     UserSuspended;
     InternalError : text;
 };
