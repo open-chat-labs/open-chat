@@ -9,9 +9,11 @@ use tracing::info;
 use types::Milliseconds;
 use utils::canister_timers::run_now_then_interval;
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
-use utils::time::DAY_IN_MS;
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
-const REFRESH_NEURONS_INTERVAL: Milliseconds = DAY_IN_MS;
+// We add a minute because spawning takes 7 days, and if we wait exactly 7 days, there may still be a few seconds left
+// before the neuron can be spawned
+const REFRESH_NEURONS_INTERVAL: Milliseconds = DAY_IN_MS + MINUTE_IN_MS;
 const E8S_PER_ICP: u64 = 100_000_000;
 
 pub fn start_job() {

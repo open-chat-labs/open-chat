@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, P2PSwapLocation, TimestampMillis, TokenInfo};
 
@@ -10,6 +10,7 @@ pub struct Args {
     pub token1: TokenInfo,
     pub token1_amount: u128,
     pub expires_at: TimestampMillis,
+    pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
 }
 

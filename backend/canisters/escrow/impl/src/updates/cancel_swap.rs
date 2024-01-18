@@ -11,9 +11,10 @@ fn cancel_swap(args: Args) -> Response {
 
 fn cancel_swap_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(swap) = state.data.swaps.get_mut(args.swap_id) {
-        let user_id = state.env.caller().into();
+        let caller = state.env.caller();
         let now = state.env.now();
-        if swap.created_by != user_id {
+
+        if !swap.is_admin(caller) {
             NotAuthorized
         } else if swap.accepted_by.is_some() {
             SwapAlreadyAccepted

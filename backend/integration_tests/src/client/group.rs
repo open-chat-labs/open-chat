@@ -15,6 +15,7 @@ generate_query_call!(summary_updates);
 generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
+generate_update_call!(cancel_p2p_swap);
 generate_update_call!(change_role);
 generate_update_call!(claim_prize);
 generate_update_call!(convert_into_community);
