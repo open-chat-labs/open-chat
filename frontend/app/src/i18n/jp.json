@@ -1207,5 +1207,7 @@
     "messageBlocked": "メッセージが隠されています",
     "removePreviewQuestion": "プレビューを削除しますか?",
     "showPreview": "ショープレビュー",
-    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。"
+    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。",
+    "enableEditMode": "編集モードを有効にする",
+    "disableEditMode": "編集モードを無効にする"
 }

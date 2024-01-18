@@ -146,9 +146,7 @@ export function interpolate(
     }
 }
 
-//TODO - not sure how this will be triggered yet
-export const editmode = createLsBoolStore("openchat_label_edit_mode", false);
-
+export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
 
 export type ResourceKey = {

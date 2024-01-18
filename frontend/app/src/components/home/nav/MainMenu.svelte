@@ -4,6 +4,7 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
     import CogOutline from "svelte-material-icons/CogOutline.svelte";
+    import Translate from "svelte-material-icons/Translate.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
@@ -19,7 +20,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Translatable from "../../Translatable.svelte";
-    import { i18nKey } from "../../../i18n/i18n";
+    import { editmode, i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -84,6 +85,19 @@
         <Security size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Guidelines</span>
     </MenuItem>
+    <MenuItem on:click={() => editmode.set(!$editmode)}>
+        <Translate size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+        <span slot="text"
+            ><Translatable
+                resourceKey={i18nKey($editmode ? "disableEditMode" : "enableEditMode")} /></span>
+    </MenuItem>
+    {#if admin}
+        <MenuItem separator />
+        <MenuItem on:click={() => page("/admin")}>
+            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{"Admin"}</span>
+        </MenuItem>
+    {/if}
     <MenuItem separator />
     {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
@@ -94,14 +108,6 @@
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
-        </MenuItem>
-    {/if}
-
-    {#if admin}
-        <MenuItem separator />
-        <MenuItem on:click={() => page("/admin")}>
-            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{"Admin"}</span>
         </MenuItem>
     {/if}
 </Menu>

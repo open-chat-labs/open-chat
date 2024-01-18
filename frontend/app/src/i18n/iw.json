@@ -1204,5 +1204,7 @@
     "messageBlocked": "הודעה מוסתרת",
     "removePreviewQuestion": "להסיר את התצוגה המקדימה?",
     "showPreview": "הצג תצוגה מקדימה",
-    "excessiveLinksNote": "תצוגות מקדימות של קישורים מוסתרות עבור הודעות עם יותר מ-5 קישורים."
+    "excessiveLinksNote": "תצוגות מקדימות של קישורים מוסתרות עבור הודעות עם יותר מ-5 קישורים.",
+    "enableEditMode": "הפעל מצב עריכה",
+    "disableEditMode": "השבת את מצב העריכה"
 }
