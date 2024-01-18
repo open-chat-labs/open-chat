@@ -220,7 +220,7 @@ fn p2p_swap_in_group_succeeds() {
 
     if let ChatEvent::Message(m) = event {
         if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Accepted(a) if a.accepted_by == user2.user_id));
+            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
         } else {
             panic!();
         }

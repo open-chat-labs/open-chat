@@ -40,6 +40,14 @@ pub fn caller_is_local_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_escrow_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_escrow_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the escrow canister".to_string())
+    }
+}
+
 pub fn caller_is_community_being_imported_into() -> Result<(), String> {
     if read_state(|state| state.is_caller_community_being_imported_into()) {
         Ok(())
