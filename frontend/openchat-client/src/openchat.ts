@@ -450,7 +450,7 @@ import {
     extractEnabledLinks,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
-import { applyTranslationCorrections, translationCorrectionsStore } from "./stores/i18n";
+import { applyTranslationCorrection } from "./stores/i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -700,11 +700,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.identityState.set({ kind: "registering" });
                         break;
                     case "created_user":
-                        console.log("About to get translation corrections");
-                        this.getTranslationCorrections().then((res) => {
-                            console.log("Corrections: ", res);
-                            applyTranslationCorrections(user.userId, res);
-                        });
                         this.onCreatedUser(user);
                         break;
                 }
@@ -5609,24 +5604,23 @@ export class OpenChat extends OpenChatAgentWorker {
         return community.localUserIndex;
     }
 
-    setTranslationCorrection(
-        locale: string,
-        key: string,
-        value: string,
-    ): Promise<TranslationCorrections> {
+    setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
+        const correction = {
+            locale,
+            key,
+            value,
+            proposedBy: this._liveState.user.userId,
+            proposedAt: Date.now(),
+            approved: false,
+        };
         return this.sendRequest({
             kind: "setTranslationCorrection",
-            correction: {
-                locale,
-                key,
-                value,
-                proposedBy: this._liveState.user.userId,
-                proposedAt: Date.now(),
-                approved: false,
-            },
-        }).then((updated) => {
-            applyTranslationCorrections(this._liveState.user.userId, updated);
-            return updated;
+            correction,
+        }).then((success) => {
+            if (success) {
+                applyTranslationCorrection(correction);
+            }
+            return success;
         });
     }
 
@@ -5642,9 +5636,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "rejectTranslationCorrection",
             correction,
-        }).then((updated) => {
-            applyTranslationCorrections(this._liveState.user.userId, updated);
-            return updated;
         });
     }
 
@@ -5654,9 +5645,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "approveTranslationCorrection",
             correction,
-        }).then((updated) => {
-            applyTranslationCorrections(this._liveState.user.userId, updated);
-            return updated;
         });
     }
 
@@ -6170,7 +6158,6 @@ export class OpenChat extends OpenChatAgentWorker {
     selectedMessageContext = selectedMessageContext;
     userGroupSummaries = userGroupSummaries;
     offlineStore = offlineStore;
-    translationCorrectionsStore = translationCorrectionsStore;
 
     // current community stores
     chatListScope = chatListScopeStore;

@@ -1475,7 +1475,6 @@ type GetReportedMessages = {
     userId: string | undefined;
 };
 
-
 // prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
@@ -1786,7 +1785,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
     : T extends SetTranslationCorrection
-    ? TranslationCorrections
+    ? boolean
     : T extends ApproveTranslationCorrection
     ? TranslationCorrections
     : T extends RejectTranslationCorrection
