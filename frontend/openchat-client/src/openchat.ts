@@ -700,11 +700,6 @@ export class OpenChat extends OpenChatAgentWorker {
                         this.identityState.set({ kind: "registering" });
                         break;
                     case "created_user":
-                        console.log("About to get translation corrections");
-                        this.getTranslationCorrections().then((res) => {
-                            console.log("Corrections: ", res);
-                            applyTranslationCorrection(user.userId, res);
-                        });
                         this.onCreatedUser(user);
                         break;
                 }
