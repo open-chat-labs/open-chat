@@ -1209,6 +1209,5 @@
     "removePreviewQuestion": "Vorschau entfernen?",
     "showPreview": "Vorschau zeigen",
     "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet.",
-    "enableEditMode": "Bearbeitungsmodus aktivieren",
-    "disableEditMode": "Bearbeitungsmodus deaktivieren"
+    "toggleTranslationEditMode": "Übersetzungskorrekturen umschalten"
 }

@@ -1199,6 +1199,5 @@
     "removePreviewQuestion": "पूर्वावलोकन हटाएँ?",
     "showPreview": "पूर्वावलोकन दिखाएं",
     "excessiveLinksNote": "5 से अधिक लिंक वाले संदेशों के लिए लिंक पूर्वावलोकन छिपे हुए हैं।",
-    "enableEditMode": "संपादन मोड सक्षम करें",
-    "disableEditMode": "संपादन मोड अक्षम करें"
+    "toggleTranslationEditMode": "अनुवाद सुधार टॉगल करें"
 }

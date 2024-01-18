@@ -1207,6 +1207,5 @@
     "removePreviewQuestion": "Supprimer l'aperçu ?",
     "showPreview": "Afficher l'aperçu",
     "excessiveLinksNote": "Les aperçus des liens sont masqués pour les messages contenant plus de 5 liens.",
-    "enableEditMode": "Activer le mode édition",
-    "disableEditMode": "Désactiver le mode édition"
+    "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction"
 }

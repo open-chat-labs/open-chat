@@ -1,6 +1,7 @@
 <script lang="ts">
     import { locale, _ } from "svelte-i18n";
     import { editingLabel, i18nKey, supportedLanguages } from "../i18n/i18n";
+    import Translate from "svelte-material-icons/Translate.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -71,7 +72,10 @@
 {#if $editingLabel !== undefined}
     <Overlay dismissible on:close={close}>
         <ModalContent on:close>
-            <div class="header" slot="header">Suggest a translation correction</div>
+            <div class="header" slot="header">
+                <Translate color={"var(--icon-txt)"} size="1em" />
+                <span>Suggest a translation correction</span>
+            </div>
             <div slot="body">
                 {#if !saved}
                     <p>
@@ -133,11 +137,16 @@
 
 <style lang="scss">
     p {
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
     }
 
     .value {
         color: var(--accent);
         font-weight: 500;
+    }
+
+    .header {
+        display: flex;
+        gap: $sp3;
     }
 </style>

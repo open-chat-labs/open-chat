@@ -1208,6 +1208,5 @@
     "removePreviewQuestion": "プレビューを削除しますか?",
     "showPreview": "ショープレビュー",
     "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。",
-    "enableEditMode": "編集モードを有効にする",
-    "disableEditMode": "編集モードを無効にする"
+    "toggleTranslationEditMode": "翻訳修正の切り替え"
 }

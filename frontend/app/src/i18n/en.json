@@ -1199,6 +1199,5 @@
     "removePreviewQuestion": "Remove preview?",
     "showPreview": "Show preview",
     "excessiveLinksNote": "Link previews are hidden for messages with more than 5 links.",
-    "enableEditMode": "Enable edit mode",
-    "disableEditMode": "Disable edit mode"
+    "toggleTranslationEditMode": "Toggle translation corrections"
 }

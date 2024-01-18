@@ -1207,6 +1207,5 @@
     "removePreviewQuestion": "Rimuovere l'anteprima?",
     "showPreview": "Anteprima dello spettacolo",
     "excessiveLinksNote": "Le anteprime dei collegamenti sono nascoste per i messaggi con più di 5 collegamenti.",
-    "enableEditMode": "Abilita la modalità di modifica",
-    "disableEditMode": "Disabilita la modalità di modifica"
+    "toggleTranslationEditMode": "Attiva/disattiva le correzioni di traduzione"
 }

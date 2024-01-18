@@ -1208,6 +1208,5 @@
     "removePreviewQuestion": "Xóa bản xem trước?",
     "showPreview": "Hiển thị bản xem trước",
     "excessiveLinksNote": "Bản xem trước liên kết bị ẩn đối với các thư có hơn 5 liên kết.",
-    "enableEditMode": "Bật chế độ chỉnh sửa",
-    "disableEditMode": "Tắt chế độ chỉnh sửa"
+    "toggleTranslationEditMode": "Chuyển đổi sửa bản dịch"
 }

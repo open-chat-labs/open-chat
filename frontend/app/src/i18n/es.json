@@ -1209,6 +1209,5 @@
     "removePreviewQuestion": "¿Eliminar vista previa?",
     "showPreview": "Mostrar vista previa",
     "excessiveLinksNote": "Las vistas previas de enlaces están ocultas para mensajes con más de 5 enlaces.",
-    "enableEditMode": "Habilitar el modo de edición",
-    "disableEditMode": "Desactivar el modo de edición"
+    "toggleTranslationEditMode": "Alternar correcciones de traducción"
 }
