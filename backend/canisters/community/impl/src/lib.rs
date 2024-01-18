@@ -76,6 +76,10 @@ impl RuntimeState {
         self.env.caller() == self.data.proposals_bot_user_id.into()
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id.into()
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             let args = c2c_push_notification::Args {

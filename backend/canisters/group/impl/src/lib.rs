@@ -77,6 +77,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn is_caller_community_being_imported_into(&self) -> bool {
         if let Some(community_id) = self
             .data
