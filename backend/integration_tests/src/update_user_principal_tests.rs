@@ -25,11 +25,11 @@ fn principal_update_propagates_to_all_relevant_canisters() {
 
     let (new_principal, _) = random_user_principal();
 
-    client::user_index::c2c_update_user_principal(
+    client::identity::update_user_principal(
         env,
         *controller,
-        canister_ids.user_index,
-        &user_index_canister::c2c_update_user_principal::Args {
+        canister_ids.identity,
+        &identity_canister::update_user_principal::Args {
             old_principal: user.principal,
             new_principal,
         },

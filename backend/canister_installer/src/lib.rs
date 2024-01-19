@@ -62,6 +62,7 @@ async fn install_service_canisters_impl(
         local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
+        identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
@@ -100,6 +101,7 @@ async fn install_service_canisters_impl(
 
     let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
     let identity_init_args = identity_canister::init::Args {
+        governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,

@@ -3372,6 +3372,8 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 

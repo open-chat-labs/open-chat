@@ -4,7 +4,6 @@ use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use pocket_ic::{PocketIc, UserError, WasmResult};
 use serde::de::DeserializeOwned;
-use serde::Serialize;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
@@ -15,6 +14,7 @@ pub mod escrow;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
+pub mod identity;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -90,16 +90,6 @@ pub fn execute_update_no_response<P: CandidType>(
         .unwrap();
 }
 
-pub fn execute_update_msgpack<P: Serialize, R: DeserializeOwned>(
-    env: &mut PocketIc,
-    sender: Principal,
-    canister_id: CanisterId,
-    method_name: &str,
-    payload: &P,
-) -> R {
-    unwrap_msgpack_response(env.update_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
-}
-
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
@@ -124,23 +114,5 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
         WasmResult::Reject(error) => panic!("{error}"),
-    }
-}
-
-fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
-    match response.unwrap() {
-        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
-        WasmResult::Reject(error) => panic!("{error}"),
-    }
-}
-
-#[derive(CandidType)]
-struct StartStopArgs {
-    canister_id: CanisterId,
-}
-
-impl StartStopArgs {
-    fn new(canister_id: CanisterId) -> StartStopArgs {
-        StartStopArgs { canister_id }
     }
 }
