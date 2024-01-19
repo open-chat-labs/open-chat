@@ -1,7 +1,7 @@
 /** For various reasons, we need to (attempt to) figure out roughly where the user is
  */
 
-export function getUsersCountryCode(): Promise<string> {
+export function getUserCountryCode(): Promise<string> {
     const BASE_URL = "https://api.iplocation.net";
 
     return fetch(`${BASE_URL}/?cmd=get-ip`)
