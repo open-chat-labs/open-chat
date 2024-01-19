@@ -9,6 +9,7 @@ cd $SCRIPT_DIR/..
 ./scripts/generate-wasm.sh escrow
 ./scripts/generate-wasm.sh group
 ./scripts/generate-wasm.sh group_index
+./scripts/generate-wasm.sh identity
 ./scripts/generate-wasm.sh local_group_index
 ./scripts/generate-wasm.sh local_user_index
 ./scripts/generate-wasm.sh market_maker

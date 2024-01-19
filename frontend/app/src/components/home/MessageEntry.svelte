@@ -575,7 +575,7 @@
             {/key}
         {:else}
             <div class="textbox light">
-                {placeholder}
+                <Translatable resourceKey={placeholder} />
             </div>
         {/if}
 

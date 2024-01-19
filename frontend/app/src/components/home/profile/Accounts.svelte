@@ -40,6 +40,7 @@
         { id: "eth", label: "ETH" },
     ];
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    let swappableTokensPromise = client.swappableTokens();
 
     $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -175,8 +176,8 @@
                                             resourceKey={i18nKey("cryptoAccount.receive")} />
                                     </div>
                                 </MenuItem>
-                                {#await client.getTokenSwaps(token.ledger) then swaps}
-                                    {#if Object.keys(swaps).length > 0}
+                                {#await swappableTokensPromise then swappableTokens}
+                                    {#if swappableTokens.has(token.ledger)}
                                         <MenuItem on:click={() => showSwap(token.ledger)}>
                                             <SwapIcon
                                                 size={$iconSize}

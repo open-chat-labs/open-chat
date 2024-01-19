@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix input amount display in p2p swaps ([#5223](https://github.com/open-chat-labs/open-chat/pull/5223))
+
+## [[2.0.1013](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1013-user)] - 2024-01-18
+
 ### Added
 
 - Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
@@ -27,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
 - Only use transaction index for p2p swaps and drop usage of hash ([#5203](https://github.com/open-chat-labs/open-chat/pull/5203))
 - Set group/community canister as an additional admin on p2p swaps ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
+- Validate against duplicate messageId before making transfer ([#5212](https://github.com/open-chat-labs/open-chat/pull/5212))
 
 ### Removed
 
