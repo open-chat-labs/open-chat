@@ -58,6 +58,11 @@
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
     }
 
+    $: swappableTokens = new Set<string>();
+    $: {
+        client.swappableTokens().then((resp) => swappableTokens = resp);
+    }
+
     function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
         switch (conversion) {
             case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
@@ -175,20 +180,18 @@
                                             resourceKey={i18nKey("cryptoAccount.receive")} />
                                     </div>
                                 </MenuItem>
-                                {#await client.getTokenSwaps(token.ledger) then swaps}
-                                    {#if Object.keys(swaps).length > 0}
-                                        <MenuItem on:click={() => showSwap(token.ledger)}>
-                                            <SwapIcon
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <div slot="text">
-                                                <Translatable
-                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
-                                            </div>
-                                        </MenuItem>
-                                    {/if}
-                                {/await}
+                                {#if swappableTokens.has(token.ledger)}
+                                    <MenuItem on:click={() => showSwap(token.ledger)}>
+                                        <SwapIcon
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("cryptoAccount.swap")} />
+                                        </div>
+                                    </MenuItem>
+                                {/if}
                                 {#if snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
