@@ -9,6 +9,12 @@ fn inspect_message() {
 fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
+    // TODO remove this
+    if method_name == "c2c_update_user_principal" && state.is_caller_governance_principal() {
+        ic_cdk::api::call::accept_message();
+        return;
+    }
+
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
     if is_c2c_method {
