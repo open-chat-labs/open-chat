@@ -3447,6 +3447,7 @@ dependencies = [
  "ic-ledger-types",
  "icrc-ledger-types",
  "icrc_ledger_canister",
+ "identity_canister",
  "itertools 0.11.0",
  "lazy_static",
  "ledger_utils",
