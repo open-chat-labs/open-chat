@@ -332,9 +332,7 @@ pub struct CachedMetrics {
     pub deleted_private_communities: u64,
     pub frozen_groups: Vec<ChatId>,
     pub frozen_communities: Vec<CommunityId>,
-    #[serde(default)]
     pub public_group_gates: AccessGateMetrics,
-    #[serde(default)]
     pub public_community_gates: AccessGateMetrics,
 }
 
