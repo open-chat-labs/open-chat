@@ -1279,15 +1279,15 @@ export function mergeSendMessageResponse(
                 content = {
                     kind: "p2p_swap_content",
                     token0: msg.content.token0,
-                    token0_amount: msg.content.token0_amount,
+                    token0Amount: msg.content.token0Amount,
                     token1: msg.content.token1,
-                    token1_amount: msg.content.token1_amount,
-                    caption: msg.content.text,
-                    expiresAt: Date.now() + msg.content.expiresIn,  
+                    token1Amount: msg.content.token1Amount,
+                    caption: msg.content.caption,
+                    expiresAt: BigInt(Date.now()) + msg.content.expiresIn,  
                     status: { kind: "p2p_swap_open" },
-                    token0_txn_in: resp.transfer.blockIndex,
+                    token0TxnIn: resp.transfer.blockIndex,
                     // Note: we don't have this in the response but actually we don't use it on the FE
-                    swap_id: 0,
+                    swapId: 0,
                 } as P2PSwapContent;
                 break;
         }

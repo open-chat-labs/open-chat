@@ -1285,5 +1285,5 @@ export function cancelP2PSwapResponse(candid: ApiCancelP2PSwapResponse): CancelP
     if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
     if ("UserSuspended" in candid) return { kind: "user_suspended" };
 
-    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
+    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
 }

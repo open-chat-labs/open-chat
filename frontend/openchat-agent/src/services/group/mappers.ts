@@ -19,6 +19,7 @@ import type {
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiAcceptP2PSwapResponse,
+    ApiCancelP2PSwapResponse,
 } from "./candid/idl";
 import type {
     ApiEventsResponse as ApiCommunityEventsResponse,
@@ -71,6 +72,7 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions, ReportMessageResponse } from "./candid/types";
+import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -704,4 +706,18 @@ export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP
     if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
 
     throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
+}
+
+export function cancelP2PSwapResponse(candid: ApiCancelP2PSwapResponse): CancelP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
+    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
+
+    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
 }

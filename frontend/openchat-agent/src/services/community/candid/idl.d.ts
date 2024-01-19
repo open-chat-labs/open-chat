@@ -75,6 +75,7 @@ import {
     UnfollowThreadResponse,
     ClaimPrizeResponse,
     AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -151,6 +152,7 @@ export {
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
     ClaimPrizeResponse as ApiClaimPrizeResponse,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
+    CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

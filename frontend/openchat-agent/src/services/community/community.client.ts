@@ -32,6 +32,7 @@ import {
     followThreadResponse,
     reportMessageResponse,
     acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -164,6 +165,7 @@ import {
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import { muteNotificationsResponse } from "../notifications/mappers";
+import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -1278,6 +1280,17 @@ export class CommunityClient extends CandidService {
                 message_id: messageId
             }),
             acceptP2PSwapResponse,
+        );        
+    }
+
+    cancelP2PSwap(channelId: string, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.service.cancel_p2p_swap({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId
+            }),
+            cancelP2PSwapResponse,
         );        
     }
 }

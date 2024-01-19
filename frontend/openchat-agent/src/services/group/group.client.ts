@@ -74,6 +74,7 @@ import {
     followThreadResponse,
     reportMessageResponse,
     acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "./mappers";
 import {
     type Database,
@@ -930,7 +931,7 @@ export class GroupClient extends CandidService {
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId
             }),
-            acceptP2PSwapResponse,
+            cancelP2PSwapResponse,
         );        
     }
 }
