@@ -76,6 +76,17 @@ export const idlFactory = ({ IDL }) => {
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
   });
+  const CancelP2PSwapArgs = IDL.Record({
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const CancelP2PSwapResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : IDL.Null,
+    'StatusError' : SwapStatusError,
+    'SwapNotFound' : IDL.Null,
+  });
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
@@ -1491,6 +1502,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'cancel_p2p_swap' : IDL.Func(
+        [CancelP2PSwapArgs],
+        [CancelP2PSwapResponse],
+        [],
+      ),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'claim_prize' : IDL.Func([ClaimPrizeArgs], [ClaimPrizeResponse], []),
     'convert_into_community' : IDL.Func(

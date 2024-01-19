@@ -112,6 +112,15 @@ export interface BuildVersion {
   'minor' : number,
   'patch' : number,
 }
+export interface CancelP2PSwapArgs {
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type CancelP2PSwapResponse = { 'UserNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
+  { 'Success' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -1889,6 +1898,7 @@ export interface _SERVICE {
   'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'convert_into_community' : ActorMethod<
