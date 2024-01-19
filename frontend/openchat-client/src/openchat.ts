@@ -483,7 +483,6 @@ export class OpenChat extends OpenChatAgentWorker {
     private _exchangeRatePoller: Poller | undefined = undefined;
     private _recentlyActiveUsersTracker: RecentlyActiveUsersTracker =
         new RecentlyActiveUsersTracker();
-    private _countryCode: string | undefined;
 
     user = currentUser;
     anonUser = anonUser;
@@ -514,7 +513,6 @@ export class OpenChat extends OpenChatAgentWorker {
         getUserCountryCode()
             .then((country) => {
                 console.debug("GEO: User's country location is: ", country);
-                this._countryCode = country;
             })
             .catch((err) => {
                 console.warn("GEO: Unable to determine user's country location", err);
