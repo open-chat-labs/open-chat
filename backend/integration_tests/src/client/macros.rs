@@ -42,9 +42,9 @@ macro_rules! generate_update_call_msgpack {
             canister_id: candid::Principal,
             args: &$method_name::Args,
         ) -> $method_name::Response {
-            let method_name = stringify!($method_name) + "_msgpack";
+            let method_name = stringify!($method_name).to_string() + "_msgpack";
 
-            $crate::client::execute_update(env, sender, canister_id, method_name, args)
+            $crate::client::execute_update(env, sender, canister_id, &method_name, args)
         }
     };
 }

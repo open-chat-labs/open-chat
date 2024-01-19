@@ -97,12 +97,7 @@ pub fn execute_update_msgpack<P: Serialize, R: DeserializeOwned>(
     method_name: &str,
     payload: &P,
 ) -> R {
-    unwrap_response(env.update_call(
-        canister_id,
-        sender,
-        method_name,
-        msgpack::serialize_then_unwrap(payload).unwrap(),
-    ))
+    unwrap_msgpack_response(env.update_call(canister_id, sender, method_name, msgpack::serialize_then_unwrap(payload)))
 }
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
@@ -134,7 +129,7 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
 
 fn unwrap_msgpack_response<R: DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
-        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes).unwrap(),
+        WasmResult::Reply(bytes) => msgpack::deserialize_then_unwrap(&bytes),
         WasmResult::Reject(error) => panic!("{error}"),
     }
 }
