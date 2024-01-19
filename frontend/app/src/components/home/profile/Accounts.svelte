@@ -40,6 +40,7 @@
         { id: "eth", label: "ETH" },
     ];
     let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    let swappableTokensPromise = client.swappableTokens();
 
     $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -56,11 +57,6 @@
 
     $: {
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
-    }
-
-    $: swappableTokens = new Set<string>();
-    $: {
-        client.swappableTokens().then((resp) => swappableTokens = resp);
     }
 
     function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
@@ -180,18 +176,20 @@
                                             resourceKey={i18nKey("cryptoAccount.receive")} />
                                     </div>
                                 </MenuItem>
-                                {#if swappableTokens.has(token.ledger)}
-                                    <MenuItem on:click={() => showSwap(token.ledger)}>
-                                        <SwapIcon
-                                            size={$iconSize}
-                                            color={"var(--icon-inverted-txt)"}
-                                            slot="icon" />
-                                        <div slot="text">
-                                            <Translatable
-                                                resourceKey={i18nKey("cryptoAccount.swap")} />
-                                        </div>
-                                    </MenuItem>
-                                {/if}
+                                {#await swappableTokensPromise then swappableTokens}
+                                    {#if swappableTokens.has(token.ledger)}
+                                        <MenuItem on:click={() => showSwap(token.ledger)}>
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                {/await}
                                 {#if snsLedgers.has(token.ledger)}
                                     <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
