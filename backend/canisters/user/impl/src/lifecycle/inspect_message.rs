@@ -15,11 +15,7 @@ fn accept_if_valid(state: &RuntimeState) {
         return;
     }
 
-    if state.is_caller_owner() || is_public(&method_name) {
+    if state.is_caller_owner() {
         ic_cdk::api::call::accept_message();
     }
-}
-
-fn is_public(method_name: &str) -> bool {
-    method_name == "bio" || method_name == "migrate_user_principal"
 }

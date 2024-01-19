@@ -1,7 +1,7 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_principal_updates_queue::UserPrincipalUpdatesQueue;
 use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -85,6 +85,11 @@ impl RuntimeState {
     pub fn is_caller_group_index_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.group_index_canister_id
+    }
+
+    pub fn is_caller_identity_canister(&self) -> bool {
+        // TODO
+        self.is_caller_governance_principal()
     }
 
     pub fn is_caller_platform_moderator(&self) -> bool {
@@ -209,7 +214,8 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub user_principal_migration_queue: UserPrincipalMigrationQueue,
+    #[serde(default)]
+    pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -263,7 +269,7 @@ impl Data {
             escrow_canister_id,
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -345,7 +351,7 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),

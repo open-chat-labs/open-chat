@@ -10,7 +10,7 @@ generate_c2c_call!(user);
 
 // Updates
 generate_c2c_call!(c2c_report_message);
-generate_c2c_call!(c2c_migrate_user_principal);
+generate_c2c_call!(c2c_update_user_principal);
 generate_c2c_call!(c2c_notify_events);
 generate_candid_c2c_call_with_payment!(c2c_register_bot);
 generate_c2c_call!(c2c_set_avatar);

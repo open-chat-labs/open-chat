@@ -22,7 +22,6 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
-    ApiMigrateUserPrincipalResponse,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
@@ -91,7 +90,6 @@ import type {
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     SearchDirectChatResponse,
     SetBioResponse,
@@ -988,20 +986,6 @@ export function withdrawCryptoResponse(
         }
     }
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-}
-
-export function migrateUserPrincipal(
-    candid: ApiMigrateUserPrincipalResponse,
-): MigrateUserPrincipalResponse {
-    if ("Success" in candid) return "success";
-    if ("MigrationNotInitialized" in candid) return "migration_not_initialized";
-    if ("MigrationAlreadyInProgress" in candid) return "migration_already_in_progress";
-    if ("PrincipalAlreadyInUse" in candid) return "principal_already_in_use";
-    if ("InternalError" in candid) return "internal_error";
-    throw new UnsupportedValueError(
-        "Unexpected ApiMigrateUserPrincipalResponse type received",
-        candid,
-    );
 }
 
 function formatIcrc1Account(candid: ApiIcrc1Account): string {

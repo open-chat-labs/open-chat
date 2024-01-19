@@ -73,7 +73,6 @@ import type {
     CheckUsernameResponse,
     CreatedUser,
     CurrentUserResponse,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     RegisterUserResponse,
@@ -195,8 +194,6 @@ export type WorkerRequest =
     | ToggleMuteNotifications
     | GetPublicGroupSummary
     | GetUserStorageLimits
-    | InitUserPrincipalMigration
-    | MigrateUserPrincipal
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
@@ -843,16 +840,6 @@ type GetUserStorageLimits = {
     kind: "getUserStorageLimits";
 };
 
-type InitUserPrincipalMigration = {
-    newPrincipal: string;
-    kind: "initUserPrincipalMigration";
-};
-
-type MigrateUserPrincipal = {
-    userId: string;
-    kind: "migrateUserPrincipal";
-};
-
 type CheckUsername = {
     username: string;
     kind: "checkUsername";
@@ -1134,7 +1121,6 @@ export type WorkerResponseInner =
     | ToggleMuteNotificationResponse
     | GroupChatSummary
     | StorageStatus
-    | MigrateUserPrincipalResponse
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
@@ -1522,10 +1508,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CheckUsernameResponse
     : T extends SearchUsers
     ? UserSummary[]
-    : T extends MigrateUserPrincipal
-    ? MigrateUserPrincipalResponse
-    : T extends InitUserPrincipalMigration
-    ? void
     : T extends GetUserStorageLimits
     ? StorageStatus
     : T extends GetPublicGroupSummary

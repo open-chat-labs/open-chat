@@ -23,7 +23,6 @@ import type {
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
@@ -326,14 +325,6 @@ export class AnonUserClient {
     }
 
     unarchiveChat(_chatId: ChatIdentifier): Promise<ArchiveChatResponse> {
-        throw new AnonymousOperationError();
-    }
-
-    initUserPrincipalMigration(_newPrincipal: string): Promise<void> {
-        throw new AnonymousOperationError();
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
         throw new AnonymousOperationError();
     }
 

@@ -301,22 +301,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "migrateUserPrincipal":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.migrateUserPrincipal(payload.userId),
-                );
-                break;
-
-            case "initUserPrincipalMigration":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.initUserPrincipalMigration(payload.newPrincipal).then(() => undefined),
-                );
-                break;
-
             case "getUserStorageLimits":
                 executeThenReply(payload, correlationId, agent.getUserStorageLimits());
                 break;
