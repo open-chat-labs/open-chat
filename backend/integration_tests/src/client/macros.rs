@@ -31,3 +31,20 @@ macro_rules! generate_update_call {
         }
     };
 }
+
+#[macro_export]
+macro_rules! generate_update_call_msgpack {
+    ($method_name:ident) => {
+        #[allow(dead_code)]
+        pub fn $method_name(
+            env: &mut pocket_ic::PocketIc,
+            sender: candid::Principal,
+            canister_id: candid::Principal,
+            args: &$method_name::Args,
+        ) -> $method_name::Response {
+            let method_name = stringify!($method_name) + "_msgpack";
+
+            $crate::client::execute_update(env, sender, canister_id, method_name, args)
+        }
+    };
+}

@@ -1,4 +1,4 @@
-use crate::{generate_query_call, generate_update_call};
+use crate::{generate_query_call, generate_update_call, generate_update_call_msgpack};
 use user_index_canister::*;
 
 // Queries
@@ -15,6 +15,7 @@ generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
 generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
+generate_update_call_msgpack!(c2c_update_user_principal);
 generate_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
 generate_update_call!(set_display_name);
