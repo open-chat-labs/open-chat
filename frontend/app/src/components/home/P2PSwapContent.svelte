@@ -20,6 +20,10 @@
     export let messageId: bigint;
     export let me: boolean;
 
+    $: {
+        console.log("P2PSwapContent", content);
+    }
+
     let buttonText = "";
     let instructionText: string | undefined = undefined;
     let summaryText = "";
@@ -54,11 +58,7 @@
                 buttonText = $_("p2pSwap.accept");
             }
         } else if (content.status.kind === "p2p_swap_cancelled") {
-            if (me) {
-                instructionText = $_("p2pSwap.youCancelled");
-            } else {
-                instructionText = $_("p2pSwap.swapCancelled");
-            }
+            instructionText = undefined;
             buttonText = $_("p2pSwap.cancelled");
         } else if (content.status.kind === "p2p_swap_expired") {
             instructionText = undefined;
@@ -147,16 +147,20 @@
 
 {#if confirming}
     <AreYouSure
-        message={me ? i18nKey("p2pSwap.confirmCancel") : i18nKey("p2pSwap.conmfirmAccept")}
+        message={me
+            ? i18nKey("p2pSwap.confirmCancel", { amount: fromAmount, token: content.token0.symbol })
+            : i18nKey("p2pSwap.conmfirmAccept", { amount: toAmount, token: content.token1.symbol })}
         action={acceptOrCancel} />
 {/if}
 
 <div class="swap">
     <div class="top">
-        <div class="countdown" class:rtl={$rtlStore}>
-            <Clock size={"1em"} color={"#ffffff"} />
-            <span>{timeRemaining}</span>
-        </div>
+        {#if content.status.kind === "p2p_swap_open"}
+            <div class="countdown" class:rtl={$rtlStore}>
+                <Clock size={"1em"} color={"#ffffff"} />
+                <span>{timeRemaining}</span>
+            </div>
+        {/if}
         <div class="coins">
             <div class="coin">
                 <SpinningToken logo={fromDetails.logo} spin={false} />

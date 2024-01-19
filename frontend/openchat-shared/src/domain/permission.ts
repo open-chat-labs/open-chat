@@ -50,7 +50,6 @@ export type MessagePermissions = {
     crypto?: ChatPermissionRole;
     giphy?: ChatPermissionRole;
     prize?: ChatPermissionRole;
-    p2pSwap?: ChatPermissionRole;
     memeFighter?: ChatPermissionRole;
     p2pSwap?: ChatPermissionRole;
 };

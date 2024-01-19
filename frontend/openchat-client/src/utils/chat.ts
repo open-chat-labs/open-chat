@@ -77,6 +77,7 @@ import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
 import { bigIntMax, messagePermissionsList } from "openchat-shared";
 import type { MessageFilter } from "../stores/messageFilters";
+import type { P2PSwapContent } from "openchat-shared";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1274,6 +1275,21 @@ export function mergeSendMessageResponse(
                     diamondOnly: msg.content.diamondOnly,
                 } as PrizeContent;
                 break;
+            case "p2p_swap_content_initial":
+                content = {
+                    kind: "p2p_swap_content",
+                    token0: msg.content.token0,
+                    token0_amount: msg.content.token0_amount,
+                    token1: msg.content.token1,
+                    token1_amount: msg.content.token1_amount,
+                    caption: msg.content.text,
+                    expiresAt: Date.now() + msg.content.expiresIn,  
+                    status: { kind: "p2p_swap_open" },
+                    token0_txn_in: resp.transfer.blockIndex,
+                    // Note: we don't have this in the response but actually we don't use it on the FE
+                    swap_id: 0,
+                } as P2PSwapContent;
+                break;
         }
     }
     return {
@@ -1474,6 +1490,7 @@ function mergeLocalUpdates(
     if (localUpdates?.prizeClaimed !== undefined) {
         if (message.content.kind === "prize_content") {
             if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
+                message.content = { ...message.content };
                 message.content.winners.push(localUpdates.prizeClaimed);
                 message.content.prizesRemaining -= 1;
                 message.content.prizesPending += 1;
@@ -1482,7 +1499,10 @@ function mergeLocalUpdates(
     }
 
     if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
-        message.content.status = localUpdates.p2pSwapStatus;
+        message.content = {
+            ...message.content,
+            status: localUpdates.p2pSwapStatus,
+        };
     }
 
     if (localUpdates?.reactions !== undefined) {

@@ -67,7 +67,6 @@ import type {
     ApiTokenInfo,
     ApiP2PSwapContent,
     ApiP2PSwapStatus,
-    ApiTransactionId,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -244,7 +243,6 @@ import type {
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
-import type { TransactionId } from "openchat-shared";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -350,7 +348,7 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return reportedMessage(candid.ReportedMessage);
     }
     if ("P2PSwap" in candid) {
-        return p2pTradeContent(candid.P2PSwap);
+        return p2pSwapContent(candid.P2PSwap);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
@@ -431,7 +429,7 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
     };
 }
 
-function p2pTradeContent(candid: ApiP2PSwapContent): P2PSwapContent {
+function p2pSwapContent(candid: ApiP2PSwapContent): P2PSwapContent {
     return {
         kind: "p2p_swap_content",
         token0: tokenInfo(candid.token0),
@@ -442,7 +440,7 @@ function p2pTradeContent(candid: ApiP2PSwapContent): P2PSwapContent {
         expiresAt: candid.expires_at,
         status: p2pTradeStatus(candid.status),
         swapId: candid.swap_id,
-        token0TxnIn: transactionId(candid.token0_txn_in),
+        token0TxnIn: candid.token0_txn_in,
     };
 }
 
@@ -452,13 +450,6 @@ function tokenInfo(candid: ApiTokenInfo): TokenInfo {
         decimals: candid.decimals,
         symbol: token(candid.token),
         ledger: candid.ledger.toString(),
-    };
-}
-
-export function transactionId(candid: ApiTransactionId): TransactionId {
-    return {
-        index: candid.index,
-        hash: optional(candid.hash, bytesToHexString)
     };
 }
 
@@ -476,20 +467,20 @@ function p2pTradeStatus(candid: ApiP2PSwapStatus): P2PSwapStatus {
         return { 
             kind: "p2p_swap_accepted",
             acceptedBy: candid.Accepted.accepted_by.toString(),
-            token1TxnIn: transactionId(candid.Accepted.token1_txn_in),
+            token1TxnIn: candid.Accepted.token1_txn_in,
         };
     }
     if ("Cancelled" in candid) {
         return { 
             kind: "p2p_swap_cancelled",
-            token0TxnOut: optional(candid.Cancelled.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Cancelled.token0_txn_out, identity),
         };
 
     }
     if ("Expired" in candid) {
         return { 
             kind: "p2p_swap_expired",
-            token0TxnOut: optional(candid.Expired.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Expired.token0_txn_out, identity),
         };
 
     }
@@ -498,9 +489,9 @@ function p2pTradeStatus(candid: ApiP2PSwapStatus): P2PSwapStatus {
         return { 
             kind: "p2p_swap_completed", 
             acceptedBy: accepted_by.toString(),
-            token1TxnIn: transactionId(token1_txn_in),
-            token0TxnOut: transactionId(token0_txn_out),
-            token1TxnOut: transactionId(token1_txn_out),        
+            token1TxnIn: token1_txn_in,
+            token0TxnOut: token0_txn_out,
+            token1TxnOut: token1_txn_out,
         };
     }
     
@@ -2446,7 +2437,7 @@ export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & Ca
         return {
             kind: "already_accepted",
             acceptedBy: candid.Accepted.accepted_by.toString(),
-            token1TxnIn: transactionId(candid.Accepted.token1_txn_in),
+            token1TxnIn: candid.Accepted.token1_txn_in,
         }
     }
     if ("Completed" in candid) {
@@ -2454,21 +2445,21 @@ export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & Ca
         return {
             kind: "already_completed",
             acceptedBy: accepted_by.toString(),
-            token1TxnIn: transactionId(token1_txn_in),
-            token0TxnOut: transactionId(token0_txn_out),
-            token1TxnOut: transactionId(token1_txn_out),
+            token1TxnIn: token1_txn_in,
+            token0TxnOut: token0_txn_out,
+            token1TxnOut: token1_txn_out,
         }
     }
     if ("Cancelled" in candid) {
         return {
             kind: "swap_cancelled",
-            token0TxnOut: optional(candid.Cancelled.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Cancelled.token0_txn_out, identity),
         }
     }
     if ("Expired" in candid) {
         return {
             kind: "swap_expired",
-            token0TxnOut: optional(candid.Expired.token0_txn_out, transactionId),
+            token0TxnOut: optional(candid.Expired.token0_txn_out, identity),
         }
     }
 

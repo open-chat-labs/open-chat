@@ -148,7 +148,6 @@ import {
     ApproveTransferResponse,
     P2PSwapContent,
     P2PSwapStatus,
-    TransactionId,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
 } from "./types";
@@ -301,7 +300,6 @@ export {
     ApproveTransferResponse as ApiApproveTransferResponse,
     P2PSwapContent as ApiP2PSwapContent,
     P2PSwapStatus as ApiP2PSwapStatus,
-    TransactionId as ApiTransactionId,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
     CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };

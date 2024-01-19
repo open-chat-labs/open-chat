@@ -124,6 +124,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import { muteNotificationsResponse } from "../notifications/mappers";
+import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -916,6 +917,16 @@ export class GroupClient extends CandidService {
     acceptP2PSwap(threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
         return this.handleResponse(
             this.groupService.accept_p2p_swap({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId
+            }),
+            acceptP2PSwapResponse,
+        );        
+    }
+
+    cancelP2PSwap(threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.groupService.cancel_p2p_swap({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_id: messageId
             }),

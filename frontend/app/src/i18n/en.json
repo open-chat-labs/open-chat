@@ -1213,8 +1213,6 @@
         "summary": "This is an offer to swap {fromAmount} {fromToken} for {toAmount} {toToken}.",
         "youReserved": "You have reserved this offer.",
         "youAccepted": "You have accepted this offer.",
-        "youCancelled": "You have cancelled this offer.",
-        "swapCancelled": "This offer has been cancelled.",
         "reservedBy": "This offer has been reserved by {user} and is pending completion.",
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
         "completed": "This offer has been accepted by {user}.",

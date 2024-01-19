@@ -3130,11 +3130,20 @@ export class OpenChatAgent extends EventTarget {
         }
     }    
 
-    cancelP2PSwap(chatId: ChatIdentifier, _threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
-        if (chatId.kind === "direct_chat") {
-            return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).cancelP2PSwap(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).cancelP2PSwap(
+                threadRootMessageIndex,
+                messageId,
+            );
         } else {
-            throw new Error("Not implemented yet");
+            return this.userClient.cancelP2PSwap(chatId.userId, messageId);
         }
     }    
 }

@@ -120,6 +120,7 @@ export function isCaptionedContent(content: MessageContent): content is Captione
         case "crypto_content":
         case "giphy_content":
         case "prize_content":
+        case "p2p_swap_content":
             return true;
         default:
             return false;
@@ -305,10 +306,7 @@ export interface P2PSwapContent {
     token0TxnIn: TransactionId;    
 }
 
-export interface TransactionId {
-    index: bigint;
-    hash?: string;
-}
+export type TransactionId = bigint;
 
 export type P2PSwapStatus = P2PSwapOpen | P2PSwapReserved | P2PSwapAccepted | P2PSwapCancelled | P2PSwapExpired | P2PSwapCompleted;
 
@@ -1569,7 +1567,8 @@ export type SendMessageResponse =
     | RulesNotAccepted
     | Offline
     | CommunityRulesNotAccepted
-    | P2PSwapSetUpFailed;
+    | P2PSwapSetUpFailed
+    | DuplicateMessageId;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1667,6 +1666,10 @@ export type CommunityRulesNotAccepted = {
 export type P2PSwapSetUpFailed = {
     kind: "p2p_swap_setup_failed";
     text: string;
+}
+
+export type DuplicateMessageId = {
+    kind: "duplicate_message_id";
 }
 
 export type GateUpdatedEvent = {

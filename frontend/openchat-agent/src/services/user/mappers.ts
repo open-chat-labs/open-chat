@@ -156,7 +156,6 @@ import {
     expiredEventsRange,
     expiredMessagesRange,
     statusError,
-    transactionId,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -476,6 +475,9 @@ export function sendMessageResponse(
     }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
+    }
+    if ("DuplicateMessageId" in candid) {
+        return { kind: "duplicate_message_id"};
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -1258,7 +1260,7 @@ export function approveTransferResponse(
 
 export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
     if ("Success" in candid) {
-        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+        return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
     }
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);

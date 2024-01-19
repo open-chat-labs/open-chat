@@ -129,8 +129,6 @@ export function getContentAsFormattedText(
         text = captionedContent("audio", content.caption);
     } else if (content.kind === "file_content") {
         text = captionedContent(content.name, content.caption);
-    } else if (content.kind === "p2p_swap_content" || content.kind === "p2p_swap_content_initial") {
-        text = captionedContent("p2p trade", content.caption);
     } else if (content.kind === "crypto_content") {
         text = captionedContent(
             formatter("tokenTransfer.transfer", {
@@ -148,6 +146,8 @@ export function getContentAsFormattedText(
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(formatter("giphyMessage"), content.caption);
+    } else if (content.kind === "p2p_swap_content" || content.kind === "p2p_swap_content_initial") {
+        text = captionedContent("p2p swap", content.caption);
     } else if (content.kind === "prize_content" || content.kind === "prize_content_initial") {
         text = captionedContent(formatter("prizeMessage"), content.caption);
     } else if (content.kind === "prize_winner_content") {

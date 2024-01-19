@@ -454,8 +454,8 @@ import {
     extractEnabledLinks,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
-import { applyTranslationCorrections, translationCorrectionsStore } from "./stores/i18n";
 import type { SendMessageResponse } from "openchat-shared";
+import { applyTranslationCorrection } from "./stores/i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3273,7 +3273,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return (
             content.kind !== "poll_content" &&
             content.kind !== "crypto_content" &&
-            content.kind !== "prize_content_initial"
+            content.kind !== "prize_content_initial" &&
+            content.kind !== "p2p_swap_content_initial"
         );
     }
 
@@ -5063,7 +5064,7 @@ export class OpenChat extends OpenChatAgentWorker {
             })
             .catch((err) => {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
-                this._logger.error("Accepting p2p trade failed", err);
+                this._logger.error("Accepting p2p swap failed", err);
                 return { kind: "internal_error", text: err.toString() };
             });
     }
@@ -5079,7 +5080,7 @@ export class OpenChat extends OpenChatAgentWorker {
             })
             .catch((err) => {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
-                this._logger.error("Cancelling p2p trade failed", err);
+                this._logger.error("Cancelling p2p swap failed", err);
                 return { kind: "internal_error", text: err.toString() };
             });
     }

@@ -66,7 +66,6 @@ import {
     expiredEventsRange,
     expiredMessagesRange,
     statusError,
-    transactionId,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
@@ -250,7 +249,6 @@ function apiOptionalMessagePermissions(
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
         p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
-        p2p_swap: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
     };
@@ -693,7 +691,7 @@ export function reportMessageResponse(candid: ReportMessageResponse): boolean {
 
 export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
     if ("Success" in candid) {
-        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+        return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
     }
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);

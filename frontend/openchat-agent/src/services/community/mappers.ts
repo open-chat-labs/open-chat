@@ -94,7 +94,6 @@ import {
     messageEvent,
     statusError,
     threadDetails,
-    transactionId,
     userGroup,
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
@@ -753,7 +752,7 @@ export function reportMessageResponse(candid: ReportMessageResponse): boolean {
 
 export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
     if ("Success" in candid) {
-        return { kind: "success", token1TxnIn: transactionId(candid.Success.token1_txn_in) };
+        return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
     }
     if ("StatusError" in candid) {
         return statusError(candid.StatusError);
