@@ -13,6 +13,12 @@
       "wasm": "wasms/group_index.wasm.gz",
       "build": "./scripts/generate-wasm.sh group_index"
     },
+    "identity": {
+      "type": "custom",
+      "candid": "backend/canisters/identity/api/can.did",
+      "wasm": "wasms/identity.wasm.gz",
+      "build": "./scripts/generate-wasm.sh identity"
+    },
     "local_user_index": {
       "type": "custom",
       "candid": "backend/canisters/local_user_index/api/can.did",

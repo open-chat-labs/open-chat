@@ -73,6 +73,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
     let notifications_index_canister_id = create_canister(env, controller);
+    let identity_canister_id = create_canister(env, controller);
     let online_users_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
@@ -91,6 +92,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
+    let identity_canister_wasm = wasms::IDENTITY.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
@@ -163,6 +165,20 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         notifications_index_canister_id,
         notifications_index_canister_wasm,
         notifications_index_init_args,
+    );
+
+    let identity_init_args = identity_canister::init::Args {
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        identity_canister_id,
+        identity_canister_wasm,
+        identity_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -383,6 +399,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_user_index: local_user_index_canister_id,
         local_group_index: local_group_index_canister_id,
         notifications: notifications_canister_id,
+        identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         storage_index: storage_index_canister_id,
