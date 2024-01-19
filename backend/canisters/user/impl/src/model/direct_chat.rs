@@ -3,10 +3,10 @@ use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, TimestampMillis, Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    Timestamped, UserId,
 };
-use user_canister::c2c_send_messages_v2::{C2CReplyContext, SendMessageArgs};
+use user_canister::c2c_send_messages_v2::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
