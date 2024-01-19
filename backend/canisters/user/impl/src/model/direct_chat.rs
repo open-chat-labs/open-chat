@@ -3,13 +3,12 @@ use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
 use std::cmp::min;
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, MessageContent, MessageContentInitial, MessageId, MessageIndex, Milliseconds,
-    OptionUpdate, TimestampMillis, Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    Timestamped, UserId,
 };
-use user_canister::c2c_send_messages_v2::{C2CReplyContext, SendMessageArgs};
+use user_canister::c2c_send_messages_v2::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "DirectChatCombined")]
 pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
@@ -21,75 +20,6 @@ pub struct DirectChat {
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
     pub unconfirmed: Vec<SendMessageArgs>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct DirectChatCombined {
-    pub them: UserId,
-    pub date_created: TimestampMillis,
-    pub events: ChatEvents,
-    pub unread_message_index_map: UnreadMessageIndexMap,
-    pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
-    pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
-    pub notifications_muted: Timestamped<bool>,
-    pub archived: Timestamped<bool>,
-    pub is_bot: bool,
-    #[serde(default)]
-    pub unconfirmed: Vec<SendMessageArgs>,
-    #[serde(default)]
-    pub unconfirmed_v2: Vec<SendMessageArgsPrevious>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SendMessageArgsPrevious {
-    pub message_id: MessageId,
-    pub sender_message_index: MessageIndex,
-    pub content: MessageContent,
-    pub replies_to: Option<C2CReplyContext>,
-    pub forwarding: bool,
-    #[serde(default)]
-    pub message_filter_failed: Option<u64>,
-    pub correlation_id: u64,
-}
-
-impl TryFrom<SendMessageArgsPrevious> for SendMessageArgs {
-    type Error = ();
-
-    fn try_from(value: SendMessageArgsPrevious) -> Result<Self, Self::Error> {
-        let content = MessageContentInitial::from(value.content).try_into()?;
-        Ok(SendMessageArgs {
-            message_id: value.message_id,
-            sender_message_index: value.sender_message_index,
-            content,
-            replies_to: value.replies_to,
-            forwarding: value.forwarding,
-            message_filter_failed: value.message_filter_failed,
-            correlation_id: value.correlation_id,
-        })
-    }
-}
-
-impl From<DirectChatCombined> for DirectChat {
-    fn from(value: DirectChatCombined) -> Self {
-        let unconfirmed = if value.unconfirmed.is_empty() {
-            value.unconfirmed_v2.into_iter().filter_map(|a| a.try_into().ok()).collect()
-        } else {
-            value.unconfirmed
-        };
-
-        DirectChat {
-            them: value.them,
-            date_created: value.date_created,
-            events: value.events,
-            unread_message_index_map: value.unread_message_index_map,
-            read_by_me_up_to: value.read_by_me_up_to,
-            read_by_them_up_to: value.read_by_them_up_to,
-            notifications_muted: value.notifications_muted,
-            archived: value.archived,
-            is_bot: value.is_bot,
-            unconfirmed,
-        }
-    }
 }
 
 impl DirectChat {

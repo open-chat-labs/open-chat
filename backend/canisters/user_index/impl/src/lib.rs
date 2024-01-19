@@ -206,7 +206,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
-    #[serde(default = "escrow_canister_id")]
     pub escrow_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
@@ -230,10 +229,6 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
-}
-
-fn escrow_canister_id() -> CanisterId {
-    CanisterId::from_text("s4yi7-yiaaa-aaaar-qacpq-cai").unwrap()
 }
 
 impl Data {
