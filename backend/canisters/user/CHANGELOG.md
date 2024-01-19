@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
 
+### Fixed
+
+- Fix input amount display in p2p swaps ([#5223](https://github.com/open-chat-labs/open-chat/pull/5223))
+
 ## [[2.0.1013](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1013-user)] - 2024-01-18
 
 ### Added
