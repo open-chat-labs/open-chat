@@ -1028,6 +1028,7 @@ dependencies = [
  "group_index_canister_client",
  "ic-agent",
  "ic-utils",
+ "identity_canister",
  "market_maker_canister",
  "neuron_controller_canister",
  "notifications_index_canister",
@@ -1107,6 +1108,7 @@ dependencies = [
  "group_index_canister_client",
  "ic-agent",
  "ic-utils",
+ "identity_canister",
  "market_maker_canister",
  "neuron_controller_canister",
  "notifications_index_canister",
@@ -3341,6 +3343,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "identity_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "identity_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "http_request",
+ "ic-cdk 0.11.3",
+ "ic-cdk-macros 0.7.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "identity_canister",
+ "rand",
+ "serde",
+ "serializer",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils",
+]
+
+[[package]]
 name = "idna"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3412,6 +3447,7 @@ dependencies = [
  "ic-ledger-types",
  "icrc-ledger-types",
  "icrc_ledger_canister",
+ "identity_canister",
  "itertools 0.11.0",
  "lazy_static",
  "ledger_utils",

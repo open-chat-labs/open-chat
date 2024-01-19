@@ -13,6 +13,7 @@ lazy_static! {
     pub static ref GROUP_INDEX: CanisterWasm = get_canister_wasm("group_index");
     pub static ref ICP_LEDGER: CanisterWasm = get_canister_wasm("icp_ledger");
     pub static ref ICRC_LEDGER: CanisterWasm = get_canister_wasm("icrc_ledger");
+    pub static ref IDENTITY: CanisterWasm = get_canister_wasm("identity");
     pub static ref LOCAL_GROUP_INDEX: CanisterWasm = get_canister_wasm("local_group_index");
     pub static ref LOCAL_USER_INDEX: CanisterWasm = get_canister_wasm("local_user_index");
     pub static ref NOTIFICATIONS: CanisterWasm = get_canister_wasm("notifications");
