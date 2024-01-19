@@ -36,7 +36,6 @@ import type {
     TimelineItem,
     TipsReceived,
     ThreadSummary,
-    PrizeContent,
     MessagePermission,
     ChatPermissions,
     OptionalChatPermissions,
@@ -77,7 +76,6 @@ import { hasOwnerRights, isPermitted } from "./permissions";
 import { cryptoLookup } from "../stores/crypto";
 import { bigIntMax, messagePermissionsList } from "openchat-shared";
 import type { MessageFilter } from "../stores/messageFilters";
-import type { P2PSwapContent } from "openchat-shared";
 
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
@@ -1257,41 +1255,41 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
-    let content = msg.content;
-    if (resp.kind === "transfer_success") {
-        switch (msg.content.kind) {
-            case "crypto_content":
-                content = { ...msg.content, transfer: resp.transfer } as CryptocurrencyContent;
-                break;
-            case "prize_content_initial":
-                content = {
-                    kind: "prize_content",
-                    prizesRemaining: msg.content.prizes.length,
-                    prizesPending: 0,
-                    winners: [],
-                    token: msg.content.transfer.token,
-                    endDate: msg.content.endDate,
-                    caption: msg.content.caption,
-                    diamondOnly: msg.content.diamondOnly,
-                } as PrizeContent;
-                break;
-            case "p2p_swap_content_initial":
-                content = {
-                    kind: "p2p_swap_content",
-                    token0: msg.content.token0,
-                    token0Amount: msg.content.token0Amount,
-                    token1: msg.content.token1,
-                    token1Amount: msg.content.token1Amount,
-                    caption: msg.content.caption,
-                    expiresAt: BigInt(Date.now()) + msg.content.expiresIn,  
-                    status: { kind: "p2p_swap_open" },
-                    token0TxnIn: resp.transfer.blockIndex,
-                    // Note: we don't have this in the response but actually we don't use it on the FE
-                    swapId: 0,
-                } as P2PSwapContent;
-                break;
-        }
-    }
+    // let content = msg.content;
+    // if (resp.kind === "transfer_success") {
+    //     switch (msg.content.kind) {
+    //         case "crypto_content":
+    //             content = { ...msg.content, transfer: resp.transfer } as CryptocurrencyContent;
+    //             break;
+    //         case "prize_content_initial":
+    //             content = {
+    //                 kind: "prize_content",
+    //                 prizesRemaining: msg.content.prizes.length,
+    //                 prizesPending: 0,
+    //                 winners: [],
+    //                 token: msg.content.transfer.token,
+    //                 endDate: msg.content.endDate,
+    //                 caption: msg.content.caption,
+    //                 diamondOnly: msg.content.diamondOnly,
+    //             } as PrizeContent;
+    //             break;
+    //         case "p2p_swap_content_initial":
+    //             content = {
+    //                 kind: "p2p_swap_content",
+    //                 token0: msg.content.token0,
+    //                 token0Amount: msg.content.token0Amount,
+    //                 token1: msg.content.token1,
+    //                 token1Amount: msg.content.token1Amount,
+    //                 caption: msg.content.caption,
+    //                 expiresAt: BigInt(Date.now()) + msg.content.expiresIn,  
+    //                 status: { kind: "p2p_swap_open" },
+    //                 token0TxnIn: resp.transfer.blockIndex,
+    //                 // Note: we don't have this in the response but actually we don't use it on the FE
+    //                 swapId: 0,
+    //             } as P2PSwapContent;
+    //             break;
+    //     }
+    // }
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
@@ -1299,7 +1297,7 @@ export function mergeSendMessageResponse(
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
-            content,
+            //content,
         },
     };
 }

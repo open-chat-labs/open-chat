@@ -353,24 +353,14 @@ export function sendMessageWithTransferToChannelResponse(
     recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
-        if (recipient !== undefined) {
-            return {
-                kind: "transfer_success",
-                timestamp: candid.Success.timestamp,
-                messageIndex: candid.Success.message_index,
-                eventIndex: candid.Success.event_index,
-                expiresAt: optional(candid.Success.expires_at, Number),
-                transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            };
-        } else {
-            return {
-                kind: "success",
-                timestamp: candid.Success.timestamp,
-                messageIndex: candid.Success.message_index,
-                eventIndex: candid.Success.event_index,
-                expiresAt: optional(candid.Success.expires_at, Number),
-            };
-        }
+        return {
+            kind: "transfer_success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
+        };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
         return CommonResponses.failure();
@@ -383,24 +373,14 @@ export function sendMessageWithTransferToGroupResponse(
     recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
-        if (recipient !== undefined) {
-            return {
-                kind: "transfer_success",
-                timestamp: candid.Success.timestamp,
-                messageIndex: candid.Success.message_index,
-                eventIndex: candid.Success.event_index,
-                expiresAt: optional(candid.Success.expires_at, Number),
-                transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
-            };
-        } else {
-            return {
-                kind: "success",
-                timestamp: candid.Success.timestamp,
-                messageIndex: candid.Success.message_index,
-                eventIndex: candid.Success.event_index,
-                expiresAt: optional(candid.Success.expires_at, Number),
-            };
-        }
+        return {
+            kind: "transfer_success",
+            timestamp: candid.Success.timestamp,
+            messageIndex: candid.Success.message_index,
+            eventIndex: candid.Success.event_index,
+            expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
+        };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
         return CommonResponses.failure();

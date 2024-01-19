@@ -12,6 +12,8 @@
     import { toastStore } from "../../stores/toast";
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Markdown from "./Markdown.svelte";
+    import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,10 +21,6 @@
     export let messageContext: MessageContext;
     export let messageId: bigint;
     export let me: boolean;
-
-    $: {
-        console.log("P2PSwapContent", content);
-    }
 
     let buttonText = "";
     let instructionText: string | undefined = undefined;
@@ -81,11 +79,11 @@
                 });
             }
             buttonText = $_("p2pSwap.accepted");
-        } else {
+        } else if (content.status.kind === "p2p_swap_completed") {
             if (acceptedByYou) {
-                instructionText = $_("p2pSwap.youAccepted");
+                instructionText = $_("p2pSwap.youCompleted");
             } else {
-                instructionText = $_("p2pSwap.acceptedBy", {
+                instructionText = $_("p2pSwap.completed", {
                     values: { user: `@UserId(${content.status.acceptedBy})` },
                 });
             }
@@ -108,49 +106,58 @@
         }
     }
 
-    function acceptOrCancel(yes: boolean): Promise<void> {
+    function cancel(yes: boolean): Promise<void> {
         confirming = false;
 
-        if (yes) {
-            if (me) {
-                client
-                    .cancelP2PSwap(
-                        messageContext.chatId,
-                        messageContext.threadRootMessageIndex,
-                        messageId,
-                    )
-                    .then((resp) => {
-                        if (resp.kind !== "success") {
-                            // TODO: This is not going to work for all error types
-                            toastStore.showFailureToast(i18nKey(resp.kind));
-                        }
-                    });
-            } else {
-                client
-                    .acceptP2PSwap(
-                        messageContext.chatId,
-                        messageContext.threadRootMessageIndex,
-                        messageId,
-                    )
-                    .then((resp) => {
-                        if (resp.kind !== "success") {
-                            // TODO: This is not going to work for all error types
-                            toastStore.showFailureToast(i18nKey(resp.kind));
-                        }
-                    });
-            }
+        if (yes && me) {
+            client
+                .cancelP2PSwap(
+                    messageContext.chatId,
+                    messageContext.threadRootMessageIndex,
+                    messageId,
+                )
+                .then((resp) => {
+                    if (resp.kind !== "success") {
+                        // TODO: This is not going to work for all error types
+                        toastStore.showFailureToast(i18nKey(resp.kind));
+                    }
+                });
         }
 
         return Promise.resolve();
     }
+
+    function accept() {
+        if (me) {
+            return;
+        }
+        confirming = false;
+        client
+            .acceptP2PSwap(messageContext.chatId, messageContext.threadRootMessageIndex, messageId)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    // TODO: This is not going to work for all error types
+                    toastStore.showFailureToast(i18nKey(resp.kind));
+                }
+            });
+    }
 </script>
 
 {#if confirming}
-    <AreYouSure
-        message={me
-            ? i18nKey("p2pSwap.confirmCancel", { amount: fromAmount, token: content.token0.symbol })
-            : i18nKey("p2pSwap.conmfirmAccept", { amount: toAmount, token: content.token1.symbol })}
-        action={acceptOrCancel} />
+    {#if me}
+        <AreYouSure
+            message={i18nKey("p2pSwap.confirmCancel", {
+                amount: fromAmount,
+                token: content.token0.symbol,
+            })}
+            action={cancel} />
+    {:else}
+        <AcceptP2PSwapModal
+            ledger={content.token1.ledger}
+            amount={content.token1Amount}
+            on:accept={accept}
+            on:close={() => (confirming = false)} />
+    {/if}
 {/if}
 
 <div class="swap">
@@ -183,12 +190,15 @@
         {/if}
         <div class="summary">{summaryText}</div>
         {#if instructionText !== undefined}
-            <div class="instructions">{instructionText}</div>
+            <div class="instructions">
+                <Markdown text={instructionText} />
+            </div>
         {/if}
         <div class="accept">
             <ButtonGroup align="fill">
                 <Button
-                    loading={content.status.kind === "p2p_swap_reserved"}
+                    loading={content.status.kind === "p2p_swap_reserved" ||
+                        content.status.kind === "p2p_swap_accepted"}
                     disabled={buttonDisabled}
                     hollow
                     on:click={onAcceptOrCancel}>{buttonText}</Button>

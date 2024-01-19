@@ -22,7 +22,6 @@
 
     export let fromLedger: string;
 
-    $: cryptoLookup = client.enhancedCryptoLookup;
     let fromAmount: bigint;
     let fromAmountValid: boolean;
     let toLedger: string;
@@ -34,6 +33,8 @@
     let tokenInputState: "ok" | "zero" | "too_low" | "too_high";
     let confirming = false;
 
+    $: cryptoLookup = client.enhancedCryptoLookup;
+    $: lastCryptoSent = client.lastCryptoSent;
     $: fromDetails = $cryptoLookup[fromLedger];
     $: toDetails = $cryptoLookup[toLedger];
     $: totalFees = fromDetails.transferFee * BigInt(2);
@@ -91,6 +92,7 @@
         };
 
         dispatch("sendMessageWithContent", { content });
+        lastCryptoSent.set(fromLedger);
         dispatch("close");
         return Promise.resolve();
     }
@@ -116,6 +118,15 @@
             if (fromAmount < 0) {
                 fromAmount = BigInt(0);
             }
+        }
+    }
+
+    function onSelectFromToken(ev: CustomEvent<{ ledger: string; urlFormat: string }>) {
+        if (ev.detail.ledger === toLedger) {
+            toLedger =
+                Object.values($cryptoLookup)
+                    .map((t) => t.ledger)
+                    .find((l) => l !== toLedger) ?? toLedger;
         }
     }
 </script>
@@ -148,7 +159,10 @@
                 <div class="select-from">
                     <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
                     <div class="inner">
-                        <CryptoSelector filter={(t) => t.balance > 0} bind:ledger={fromLedger} />
+                        <CryptoSelector
+                            filter={(t) => t.balance > 0}
+                            bind:ledger={fromLedger}
+                            on:select={onSelectFromToken} />
                     </div>
                 </div>
                 <div class="amount">
