@@ -3793,6 +3793,7 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "itertools 0.11.0",
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
