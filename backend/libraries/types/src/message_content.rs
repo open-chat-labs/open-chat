@@ -554,10 +554,12 @@ impl P2PSwapContent {
         transfer: CompletedCryptoTransaction,
         now: TimestampMillis,
     ) -> P2PSwapContent {
+        let token0_fee = content.token0.fee;
+
         P2PSwapContent {
             swap_id,
             token0: content.token0,
-            token0_amount: transfer.units().saturating_sub(content.token0.fee),
+            token0_amount: transfer.units().saturating_sub(token0_fee),
             token1: content.token1,
             token1_amount: content.token1_amount,
             expires_at: now + content.expires_in,
