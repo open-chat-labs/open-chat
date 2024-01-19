@@ -10,7 +10,7 @@ fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     // TODO remove this
-    if method_name == "c2c_update_user_principal" && state.is_caller_governance_principal() {
+    if method_name == "c2c_update_user_principal_msgpack" && state.is_caller_governance_principal() {
         ic_cdk::api::call::accept_message();
         return;
     }
