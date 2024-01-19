@@ -64,6 +64,25 @@ pub async fn upgrade_notifications_index_canister(
     println!("Notifications index canister upgraded");
 }
 
+pub async fn upgrade_identity_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    identity_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        identity_canister_id,
+        version,
+        identity_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::Identity,
+    )
+    .await;
+
+    println!("Identity canister upgraded");
+}
+
 pub async fn upgrade_online_users_canister(
     identity: Box<dyn Identity>,
     url: String,
