@@ -2,9 +2,9 @@
   "community": "d000cb13d031463e1c2938cf725e7102c98171b7",
   "cycles_dispenser": "2914f73daa7a4d7b76cfbaf5b89b0df740443ffa",
   "group": "d000cb13d031463e1c2938cf725e7102c98171b7",
-  "group_index": "2914f73daa7a4d7b76cfbaf5b89b0df740443ffa",
-  "local_group_index": "2914f73daa7a4d7b76cfbaf5b89b0df740443ffa",
-  "local_user_index": "2914f73daa7a4d7b76cfbaf5b89b0df740443ffa",
+  "group_index": "8969ceb69426bf7fac16a2842497b17a992b4487",
+  "local_group_index": "8969ceb69426bf7fac16a2842497b17a992b4487",
+  "local_user_index": "8969ceb69426bf7fac16a2842497b17a992b4487",
   "market_maker": "21db444718df7850e3007053162dce2ec055090d",
   "neuron_controller": "443fca74a4940f0ed603353a10c3fa6836aececd",
   "notifications": "91512f09ac773c85622fa84a7ea602d4273dcc8b",
@@ -15,6 +15,7 @@
   "registry": "88db8072b57cce348771eacb1cf53ad2a7dec9b6",
   "storage_bucket": "d000cb13d031463e1c2938cf725e7102c98171b7",
   "storage_index": "d000cb13d031463e1c2938cf725e7102c98171b7",
-  "user": "5118c7f4214b96006b9a06af4c3bcb2f84a0dfea",
-  "user_index": "76ba849c06bee24dc5853afe50b2760aa6a5db24"
+  "user": "8969ceb69426bf7fac16a2842497b17a992b4487",
+  "user_index": "76ba849c06bee24dc5853afe50b2760aa6a5db24",
+  "escrow": "ad184220bc10a10c16f62f0465e79e937098615c"
 }
