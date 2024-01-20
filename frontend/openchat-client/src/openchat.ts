@@ -451,6 +451,7 @@ import {
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
 import { applyTranslationCorrection } from "./stores/i18n";
+import { getUserCountryCode } from "./utils/location";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -508,6 +509,14 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
+
+        getUserCountryCode()
+            .then((country) => {
+                console.debug("GEO: User's country location is: ", country);
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+            });
 
         this._authClient = AuthClient.create({
             idleOptions: {
