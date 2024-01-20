@@ -1233,7 +1233,6 @@ type MessagePermissions = record {
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
     p2p_swap : opt PermissionRole;
-    p2p_trade : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
