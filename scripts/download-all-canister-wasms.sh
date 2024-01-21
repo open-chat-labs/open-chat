@@ -18,6 +18,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh escrow $WASM_SRC || exit 1
 ./download-canister-wasm.sh group $WASM_SRC || exit 1
 ./download-canister-wasm.sh group_index $WASM_SRC || exit 1
+./download-canister-wasm.sh identity $WASM_SRC || exit 1
 ./download-canister-wasm.sh local_group_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh local_user_index $WASM_SRC || exit 1
 ./download-canister-wasm.sh market_maker $WASM_SRC || exit 1

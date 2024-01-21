@@ -26,6 +26,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
@@ -93,6 +94,14 @@ async fn install_service_canisters_impl(
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         notifications_canister_wasm: CanisterWasm::default(),
+        wasm_version: version,
+        test_mode,
+    };
+
+    let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
+    let identity_init_args = identity_canister::init::Args {
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
     };
@@ -219,20 +228,26 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
+            &canister_ids.identity,
+            &identity_canister_wasm.module,
+            identity_init_args,
+        ),
+        install_wasm(
+            management_canister,
             &canister_ids.online_users,
             &online_users_canister_wasm.module,
             online_users_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
             proposals_bot_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.storage_index,
@@ -257,20 +272,22 @@ async fn install_service_canisters_impl(
             &market_maker_canister_wasm.module,
             market_maker_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
             &neuron_controller_canister_wasm.module,
             neuron_controller_init_args,
         ),
-    )
-    .await;
-
-    install_wasm(
-        management_canister,
-        &canister_ids.escrow,
-        &escrow_canister_wasm.module,
-        escrow_init_args,
+        install_wasm(
+            management_canister,
+            &canister_ids.escrow,
+            &escrow_canister_wasm.module,
+            escrow_init_args,
+        ),
     )
     .await;
 

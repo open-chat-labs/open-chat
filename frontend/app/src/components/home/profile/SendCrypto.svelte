@@ -153,7 +153,7 @@
 
 <ModalContent>
     <span class="header" slot="header">
-        <div class="main-title">{title}</div>
+        <div class="main-title"><Translatable resourceKey={title} /></div>
         <BalanceWithRefresh
             bind:this={balanceWithRefresh}
             {ledger}

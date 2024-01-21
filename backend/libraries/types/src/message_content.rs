@@ -557,7 +557,7 @@ impl P2PSwapContent {
         P2PSwapContent {
             swap_id,
             token0: content.token0,
-            token0_amount: transfer.units(),
+            token0_amount: content.token0_amount,
             token1: content.token1,
             token1_amount: content.token1_amount,
             expires_at: now + content.expires_in,

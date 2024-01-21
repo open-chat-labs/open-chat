@@ -20,6 +20,7 @@ async fn main() {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
         }
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::Identity => upgrade_identity_canister(identity, opts.url, opts.identity, opts.version).await,
         CanisterName::MarketMaker => upgrade_market_maker_canister(identity, opts.url, opts.market_maker, opts.version).await,
         CanisterName::NeuronController => {
             upgrade_neuron_controller_canister(identity, opts.url, opts.neuron_controller, opts.version).await
@@ -65,6 +66,9 @@ struct Opts {
 
     #[arg(long)]
     notifications_index: CanisterId,
+
+    #[arg(long)]
+    identity: CanisterId,
 
     #[arg(long)]
     online_users: CanisterId,
