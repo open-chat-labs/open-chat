@@ -88,8 +88,8 @@ impl RuntimeState {
     }
 
     pub fn is_caller_identity_canister(&self) -> bool {
-        // TODO
-        self.is_caller_governance_principal()
+        let caller = self.env.caller();
+        caller == self.data.identity_canister_id
     }
 
     pub fn is_caller_platform_moderator(&self) -> bool {
@@ -206,6 +206,7 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
+    #[serde(default = "identity_canister_id")]
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -236,6 +237,10 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
+}
+
+fn identity_canister_id() -> CanisterId {
+    CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap()
 }
 
 impl Data {
