@@ -39,12 +39,7 @@ pub(crate) fn c2c_send_messages_impl(args: Args, sender_user_id: UserId, state: 
         // Messages sent c2c can be retried so the same messageId may be received multiple
         // times, so here we skip any messages whose messageId already exists.
         if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
-            if chat
-                .events
-                .main_events_reader()
-                .message_internal(message.message_id.into())
-                .is_some()
-            {
+            if chat.events.contains_message_id(None, message.message_id) {
                 continue;
             }
         }
