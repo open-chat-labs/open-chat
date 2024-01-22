@@ -307,7 +307,7 @@ fn suspended_users_returned_from_user_index_users() {
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
