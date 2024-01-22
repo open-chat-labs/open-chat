@@ -1196,9 +1196,9 @@
     "removePreviewQuestion": "Remove preview?",
     "showPreview": "Show preview",
     "excessiveLinksNote": "Link previews are hidden for messages with more than 5 links.",
-    "hours": "Hour(s)",
-    "minutes": "Minute(s)",
-    "days": "Day(s)",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "days": "Days",
     "p2pSwap": {
         "builderTitle": "Make swap offer",
         "expiryTime": "Expiry time",
