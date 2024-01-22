@@ -43,9 +43,25 @@
         {/if}
         <div class="info">
             {#if community.public}
-                <p>{i18nKey("publicGroupInfo", undefined, community.level, true)}</p>
+                <p>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "publicGroupInfo",
+                            undefined,
+                            community.level,
+                            true,
+                        )} />
+                </p>
             {:else}
-                <p>{i18nKey("group.privateGroupInfo", undefined, community.level, true)}</p>
+                <p>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "group.privateGroupInfo",
+                            undefined,
+                            community.level,
+                            true,
+                        )} />
+                </p>
             {/if}
             {#if !community.public}
                 {#if community.historyVisible}
