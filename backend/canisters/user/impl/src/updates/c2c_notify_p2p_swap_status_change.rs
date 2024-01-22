@@ -18,6 +18,9 @@ fn c2c_notify_p2p_swap_status_change_impl(args: Args, state: &mut RuntimeState) 
     let P2PSwapLocation::Message(m) = args.location;
 
     if let Chat::Direct(chat_id) = m.chat {
+        let my_user_id = state.env.canister_id().into();
+        let chat_id = if args.created_by == my_user_id { chat_id } else { args.created_by.into() };
+
         if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
             let mut status_to_push_c2c = None;
 
