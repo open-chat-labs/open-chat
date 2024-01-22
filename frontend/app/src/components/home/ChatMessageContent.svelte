@@ -64,12 +64,11 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {me} {failed} />
+    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {failed} />
 {:else if content.kind === "p2p_swap_content_initial"}
     <MessageContentInitial
         text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
-        {failed}
-        {me} />
+        {failed} />
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
 {:else if content.kind === "p2p_swap_content"}

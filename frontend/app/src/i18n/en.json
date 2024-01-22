@@ -1202,8 +1202,8 @@
     "p2pSwap": {
         "builderTitle": "Make swap offer",
         "expiryTime": "Expiry time",
-        "creatingYourMessage": "Please wait while we create your swap offer message",
-        "failedToCreateMessage": "Failed to create your swap offer message",
+        "creatingYourMessage": "Please wait while a swap offer is created",
+        "failedToCreateMessage": "Failed to create the swap offer",
         "expired": "Expired",
         "accepted": "Accepted",
         "accept": "Accept",
@@ -1217,8 +1217,18 @@
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
         "youCompleted": "You have accepted this offer.",
         "completed": "This offer has been accepted by {user}.",
-        "confirmSend": "When you create this offer {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
-        "confirmAccept": "When you accept this offer {amount} {token} will be transferred from your wallet to the OpenChat Escrow canister which will then perform the swap. Do you wish to proceed?",
-        "confirmCancel": "When you cancel this offer {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. Do you wish to proceed?"
+        "confirmSend": "When you create this offer {amount} {token} (includes 2 transaction fees) will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
+        "confirmAccept": "When you accept this offer {amount} {token} (includes 2 transaction fees) will be transferred from your wallet to the OpenChat Escrow canister. You will receive {amountOther} {tokenOther} in exchange. Do you wish to proceed?",
+        "confirmCancel": "When you cancel this offer {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. Do you wish to proceed?",
+        "insufficientBalanceMessage": "You need at least {amount} {token} (includes 2 transaction fees) to accept this swap.",
+        "insufficientBalance": "Insufficient balance",
+        "tokenBalance": "{token} balance",
+        "already_reserved": "This swap offer has already been reserved",
+        "already_accepted": "This swap offer has already been accepted",
+        "already_completed": "This swap offer has already been accepted",
+        "swap_cancelled": "This swap offer has been cancelled",
+        "swap_expired": "This swap offer has expired",
+        "swap_not_found": "This swap offer could not be found",
+        "insufficient_funds": "You have insufficient funds remaining to accept this swap offer"
     }
 }

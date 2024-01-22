@@ -4,20 +4,17 @@
     import { type ResourceKey } from "../../i18n/i18n";
 
     export let text: ResourceKey;
-    export let me: boolean;
     export let failed: boolean;
 </script>
 
-{#if me}
-    <div class={"prize"}>
-        {#if !failed}
-            <div class="spinner">
-                <FancyLoader />
-            </div>
-        {/if}
-        <p><Translatable resourceKey={text} /></p>
-    </div>
-{/if}
+<div class={"prize"}>
+    {#if !failed}
+        <div class="spinner">
+            <FancyLoader />
+        </div>
+    {/if}
+    <p><Translatable resourceKey={text} /></p>
+</div>
 
 <style lang="scss">
     .prize {

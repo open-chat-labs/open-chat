@@ -118,8 +118,7 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        // TODO: This is not going to work for all error types
-                        toastStore.showFailureToast(i18nKey(resp.kind));
+                        toastStore.showFailureToast(i18nKey("p2pSwap." + resp.kind));
                     }
                 });
         }
@@ -128,18 +127,21 @@
     }
 
     function accept() {
-        if (me) {
-            return;
-        }
         confirming = false;
-        client
-            .acceptP2PSwap(messageContext.chatId, messageContext.threadRootMessageIndex, messageId)
-            .then((resp) => {
-                if (resp.kind !== "success") {
-                    // TODO: This is not going to work for all error types
-                    toastStore.showFailureToast(i18nKey(resp.kind));
-                }
-            });
+
+        if (me) {
+            client
+                .acceptP2PSwap(
+                    messageContext.chatId,
+                    messageContext.threadRootMessageIndex,
+                    messageId,
+                )
+                .then((resp) => {
+                    if (resp.kind !== "success") {
+                        toastStore.showFailureToast(i18nKey("p2pSwap." + resp.kind));
+                    }
+                });
+        }
     }
 </script>
 
@@ -153,8 +155,10 @@
             action={cancel} />
     {:else}
         <AcceptP2PSwapModal
-            ledger={content.token1.ledger}
-            amount={content.token1Amount}
+            ledger0={content.token0.ledger}
+            ledger1={content.token1.ledger}
+            amount0={content.token0Amount}
+            amount1={content.token1Amount}
             on:accept={accept}
             on:close={() => (confirming = false)} />
     {/if}

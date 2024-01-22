@@ -250,7 +250,7 @@
                 style={`${supportedActions.get("swap")}`}
                 class="swap"
                 on:click|stopPropagation={createP2PSwapMessage}>
-                <HoverIcon title={"Create p2p swap"}>
+                <HoverIcon title={$_("p2pSwap.builderTitle")}>
                     <SwapIcon size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>

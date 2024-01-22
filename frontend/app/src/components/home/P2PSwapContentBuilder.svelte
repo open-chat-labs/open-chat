@@ -16,6 +16,7 @@
     import TextArea from "../TextArea.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -114,10 +115,7 @@
     function onBalanceRefreshFinished() {
         if (remainingBalance < 0) {
             remainingBalance = BigInt(0);
-            fromAmount = fromDetails.balance - fromDetails.transferFee;
-            if (fromAmount < 0) {
-                fromAmount = BigInt(0);
-            }
+            fromAmount = fromDetails.balance - totalFees;
         }
     }
 
@@ -134,7 +132,7 @@
 {#if confirming}
     <AreYouSure
         message={i18nKey("p2pSwap.confirmSend", {
-            amount: client.formatTokens(fromAmount, fromDetails.decimals),
+            amount: client.formatTokens(fromAmount + totalFees, fromDetails.decimals),
             token: fromDetails.symbol,
         })}
         action={send} />
@@ -144,7 +142,7 @@
     <ModalContent>
         <span class="header" slot="header">
             <div class="main-title">
-                {$_("p2pSwap.builderTitle")}
+                <Translatable resourceKey={i18nKey("p2pSwap.builderTitle")} />
             </div>
             <BalanceWithRefresh
                 ledger={fromLedger}
@@ -211,12 +209,13 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     small={!$mobileWidth}
                     disabled={!valid}
                     tiny={$mobileWidth}
-                    on:click={onSend}>{$_("tokenTransfer.send")}</Button>
+                    on:click={onSend}
+                    ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
             </ButtonGroup>
         </span>
     </ModalContent>
