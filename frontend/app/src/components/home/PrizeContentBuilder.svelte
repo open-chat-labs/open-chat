@@ -47,6 +47,7 @@
     let diamondOnly = true;
 
     $: user = client.user;
+    $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     let refreshing = false;
@@ -130,6 +131,7 @@
             prizes,
         };
         dispatch("sendMessageWithContent", { content });
+        lastCryptoSent.set(ledger);
         dispatch("close");
     }
 
