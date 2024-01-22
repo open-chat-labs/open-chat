@@ -1,5 +1,5 @@
 use crate::model::nervous_systems::ProposalToPush;
-use crate::{generate_message_id, mutate_state, RuntimeState};
+use crate::{generate_message_id, mutate_state, read_state, RuntimeState};
 use chat_events::{MessageContentInternal, ProposalContentInternal};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
@@ -15,9 +15,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.nervous_systems.any_proposals_to_push() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'push_proposals' job started");
         true
     } else {
         false
@@ -25,12 +24,13 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'push_proposals' job started");
+    TIMER_ID.set(None);
+
     if let Some(proposal) = mutate_state(|state| state.data.nervous_systems.dequeue_next_proposal_to_push()) {
         ic_cdk::spawn(push_proposal(proposal));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'push_proposals' job stopped");
     }
+    read_state(start_job_if_required);
 }
 
 async fn push_proposal(
