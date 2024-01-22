@@ -20,7 +20,7 @@ pub(crate) async fn unsuspend_user_impl(user_id: UserId) -> Response {
     let c2c_args = user_canister::c2c_set_user_suspended::Args { suspended: false };
     match user_canister_c2c_client::c2c_set_user_suspended(user_id.into(), &c2c_args).await {
         Ok(user_canister::c2c_set_user_suspended::Response::Success(result)) => {
-            mutate_state(|state| commit(user_id, result.groups, state));
+            mutate_state(|state| commit(user_id, result.groups, result.communities, state));
             Success
         }
         Err(error) => InternalError(format!("{error:?}")),
