@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+
 ## [[2.0.1015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1015-community)] - 2024-01-19
 
 ### Added
