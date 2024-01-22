@@ -49,6 +49,7 @@ pub struct SwapStatusCompleted {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SwapStatusChange {
     pub swap_id: u32,
+    pub created_by: UserId,
     pub location: P2PSwapLocation,
     pub status: SwapStatus,
 }
