@@ -38,11 +38,7 @@ pub struct MessagePermissions {
     pub crypto: Option<GroupPermissionRole>,
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
-    #[serde(default)]
     pub p2p_swap: Option<GroupPermissionRole>,
-    // Keep old permission until FE out too
-    #[serde(default)]
-    pub p2p_trade: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
 
@@ -116,7 +112,6 @@ impl Default for MessagePermissions {
             giphy: None,
             prize: None,
             p2p_swap: None,
-            p2p_trade: None,
             custom: Vec::new(),
         }
     }
