@@ -5,7 +5,6 @@ use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
 use user_canister::UserCanisterEvent;
-use utils::canister_timers::run_now_then_interval;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -13,9 +12,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.user_canister_events_queue.is_empty() {
-        let timer_id = run_now_then_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'push_user_canister_events' job started");
         true
     } else {
         false
@@ -23,32 +21,15 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    match mutate_state(next_batch) {
-        NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch)),
-        NextBatchResult::Continue => {}
-        NextBatchResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'push_user_canister_events' job stopped");
-            }
-        }
+    trace!("'push_user_canister_events' running");
+    TIMER_ID.set(None);
+    if let Some(batch) = mutate_state(next_batch) {
+        ic_cdk::spawn(process_batch(batch));
     }
 }
 
-enum NextBatchResult {
-    Success(Vec<(CanisterId, Vec<UserCanisterEvent>)>),
-    Continue,
-    QueueEmpty,
-}
-
-fn next_batch(state: &mut RuntimeState) -> NextBatchResult {
-    if let Some(batch) = state.data.user_canister_events_queue.try_start_batch() {
-        NextBatchResult::Success(batch)
-    } else if !state.data.user_canister_events_queue.is_empty() || state.data.user_canister_events_queue.sync_in_progress() {
-        NextBatchResult::Continue
-    } else {
-        NextBatchResult::QueueEmpty
-    }
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<UserCanisterEvent>)>> {
+    state.data.user_canister_events_queue.try_start_batch()
 }
 
 async fn process_batch(batch: Vec<(CanisterId, Vec<UserCanisterEvent>)>) {
