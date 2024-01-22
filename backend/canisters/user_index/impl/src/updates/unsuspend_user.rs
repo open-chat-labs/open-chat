@@ -10,8 +10,8 @@ use user_index_canister::unsuspend_user::{Response::*, *};
 #[trace]
 async fn unsuspend_user(args: Args) -> Response {
     match read_state(|state| state.data.users.is_user_suspended(&args.user_id)) {
-        Some(true) => unsuspend_user_impl(args.user_id).await,
-        Some(false) => UserNotSuspended,
+        Some(_) => unsuspend_user_impl(args.user_id).await,
+        // Some(false) => UserNotSuspended,
         None => UserNotFound,
     }
 }
