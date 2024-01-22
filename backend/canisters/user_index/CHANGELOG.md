@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Temporarily continue if already unsuspended so that we can fix broken users ([#5231](https://github.com/open-chat-labs/open-chat/pull/5231))
+
 ### Fixed
 
 - Notify community canisters when a user is unsuspended ([#5227](https://github.com/open-chat-labs/open-chat/pull/5227))
