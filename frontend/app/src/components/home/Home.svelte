@@ -92,6 +92,7 @@
     import RightPanel from "./RightPanelWrapper.svelte";
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import NotFound from "../NotFound.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -154,6 +155,7 @@
         MakeProposal,
         Registering,
         LoggingIn,
+        NotFound,
     }
 
     let modal = ModalType.None;
@@ -215,8 +217,6 @@
             routeChange($chatsInitialised, $pathParams);
         });
     }
-
-    $: console.log("PathParams: ", $pathParams);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -324,9 +324,7 @@
                         page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
-                    console.log("Failed to find or preview chat so we should show anot found page");
-                    // we should show a group not found modal here or something
-                    page.replace(routeForScope(client.getDefaultScope()));
+                    modal = ModalType.NotFound;
                     return;
                 }
             }
@@ -993,6 +991,7 @@
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
+            modal = ModalType.NotFound;
             return false;
         }
 
@@ -1153,6 +1152,7 @@
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
+            modal !== ModalType.NotFound &&
             modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
@@ -1162,6 +1162,8 @@
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NoAccess}
             <NoAccess on:close={closeNoAccess} />
+        {:else if modal === ModalType.NotFound}
+            <NotFound on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}

@@ -4423,12 +4423,14 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.sendRequest({ kind: "getUser", userId, allowStale }).then((resp) => {
-            if (resp !== undefined) {
-                userStore.add(resp);
-            }
-            return resp;
-        });
+        return this.sendRequest({ kind: "getUser", userId, allowStale })
+            .then((resp) => {
+                if (resp !== undefined) {
+                    userStore.add(resp);
+                }
+                return resp;
+            })
+            .catch(() => undefined);
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {
