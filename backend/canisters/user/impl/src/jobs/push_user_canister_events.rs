@@ -5,16 +5,15 @@ use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
 use user_canister::UserCanisterEvent;
+use utils::canister_timers::run_now_then_interval;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none()
-        && (!state.data.user_canister_events_queue.is_empty() || state.data.user_canister_events_queue.sync_in_progress())
-    {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_secs(10), run);
+    if TIMER_ID.get().is_none() && !state.data.user_canister_events_queue.is_empty() {
+        let timer_id = run_now_then_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
         trace!("'push_user_canister_events' job started");
         true
@@ -60,7 +59,10 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserCanisterEvent>)>) {
 
     futures::future::join_all(futures).await;
 
-    mutate_state(|state| state.data.user_canister_events_queue.mark_batch_completed());
+    mutate_state(|state| {
+        state.data.user_canister_events_queue.mark_batch_completed();
+        start_job_if_required(state);
+    });
 }
 
 async fn push_events(canister_id: CanisterId, events: Vec<UserCanisterEvent>) {
@@ -74,8 +76,6 @@ async fn push_events(canister_id: CanisterId, events: Vec<UserCanisterEvent>) {
                 .data
                 .user_canister_events_queue
                 .mark_sync_failed_for_canister(canister_id, events);
-
-            start_job_if_required(state);
         });
     }
 }
