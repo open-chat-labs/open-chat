@@ -128,7 +128,7 @@ impl RuntimeState {
 
     pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
         self.data.user_canister_events_queue.push(canister_id, event);
-        jobs::push_user_canister_events::start_job_if_required(self);
+        jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
     }
 
     pub fn metrics(&self) -> Metrics {
