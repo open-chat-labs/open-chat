@@ -126,6 +126,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
+        self.data.user_canister_events_queue.push(canister_id, event);
+        jobs::push_user_canister_events::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
