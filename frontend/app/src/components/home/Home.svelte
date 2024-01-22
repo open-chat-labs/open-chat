@@ -216,6 +216,8 @@
         });
     }
 
+    $: console.log("PathParams: ", $pathParams);
+
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
         client.addEventListener("openchat_event", clientEvent);
@@ -322,6 +324,8 @@
                         page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
+                    console.log("Failed to find or preview chat so we should show anot found page");
+                    // we should show a group not found modal here or something
                     page.replace(routeForScope(client.getDefaultScope()));
                     return;
                 }
