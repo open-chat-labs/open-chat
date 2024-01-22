@@ -11,9 +11,10 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import AreYouSure from "../AreYouSure.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import Markdown from "./Markdown.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,9 +23,9 @@
     export let messageId: bigint;
     export let me: boolean;
 
-    let buttonText = "";
+    let buttonText: ResourceKey;
     let instructionText: string | undefined = undefined;
-    let summaryText = "";
+    let summaryText: ResourceKey | undefined = undefined;
     let confirming = false;
 
     $: user = client.user;
@@ -50,17 +51,17 @@
         if (content.status.kind === "p2p_swap_open") {
             if (me) {
                 instructionText = undefined;
-                buttonText = $_("p2pSwap.cancel");
+                buttonText = i18nKey("p2pSwap.cancel");
             } else {
                 instructionText = undefined;
-                buttonText = $_("p2pSwap.accept");
+                buttonText = i18nKey("p2pSwap.accept");
             }
         } else if (content.status.kind === "p2p_swap_cancelled") {
             instructionText = undefined;
-            buttonText = $_("p2pSwap.cancelled");
+            buttonText = i18nKey("p2pSwap.cancelled");
         } else if (content.status.kind === "p2p_swap_expired") {
             instructionText = undefined;
-            buttonText = $_("p2pSwap.expired");
+            buttonText = i18nKey("p2pSwap.expired");
         } else if (content.status.kind === "p2p_swap_reserved") {
             if (acceptedByYou) {
                 instructionText = $_("p2pSwap.youReserved");
@@ -69,7 +70,7 @@
                     values: { user: `@UserId(${content.status.reservedBy})` },
                 });
             }
-            buttonText = $_("p2pSwap.reserved");
+            buttonText = i18nKey("p2pSwap.reserved");
         } else if (content.status.kind === "p2p_swap_accepted") {
             if (acceptedByYou) {
                 instructionText = $_("p2pSwap.youAccepted");
@@ -78,7 +79,7 @@
                     values: { user: `@UserId(${content.status.acceptedBy})` },
                 });
             }
-            buttonText = $_("p2pSwap.accepted");
+            buttonText = i18nKey("p2pSwap.accepted");
         } else if (content.status.kind === "p2p_swap_completed") {
             if (acceptedByYou) {
                 instructionText = $_("p2pSwap.youCompleted");
@@ -87,16 +88,14 @@
                     values: { user: `@UserId(${content.status.acceptedBy})` },
                 });
             }
-            buttonText = $_("p2pSwap.accepted");
+            buttonText = i18nKey("p2pSwap.accepted");
         }
 
-        summaryText = $_("p2pSwap.summary", {
-            values: {
-                fromAmount,
-                toAmount,
-                fromToken: content.token0.symbol,
-                toToken: content.token1.symbol,
-            },
+        summaryText = i18nKey("p2pSwap.summary", {
+            fromAmount,
+            toAmount,
+            fromToken: content.token0.symbol,
+            toToken: content.token1.symbol,
         });
     }
 
@@ -129,7 +128,7 @@
     function accept() {
         confirming = false;
 
-        if (me) {
+        if (!me) {
             client
                 .acceptP2PSwap(
                     messageContext.chatId,
@@ -192,7 +191,9 @@
                 {content.caption}
             </div>
         {/if}
-        <div class="summary">{summaryText}</div>
+        {#if summaryText !== undefined}
+            <div class="summary"><Translatable resourceKey={summaryText} /></div>
+        {/if}
         {#if instructionText !== undefined}
             <div class="instructions">
                 <Markdown text={instructionText} />
@@ -205,7 +206,9 @@
                         content.status.kind === "p2p_swap_accepted"}
                     disabled={buttonDisabled}
                     hollow
-                    on:click={onAcceptOrCancel}>{buttonText}</Button>
+                    on:click={onAcceptOrCancel}>
+                    <Translatable resourceKey={buttonText} />
+                </Button>
             </ButtonGroup>
         </div>
     </div>
@@ -214,7 +217,7 @@
 <style lang="scss">
     $accent: var(--prize);
 
-    :global(.accept button) {
+    :global(.swap .bottom .accept button) {
         &:not(.disabled) {
             border: 1px solid $accent !important;
         }

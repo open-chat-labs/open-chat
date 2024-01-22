@@ -152,7 +152,7 @@
                 on:refreshed={onBalanceRefreshed}
                 on:error={onBalanceRefreshError} />
         </span>
-        <form slot="body" class="body">
+        <form slot="body" class="body swap-builder">
             <div class="row">
                 <div class="select-from">
                     <Legend label={i18nKey("cryptoAccount.transactionHeaders.from")} />
@@ -222,7 +222,7 @@
 </Overlay>
 
 <style lang="scss">
-    :global(.body .row input.amount-val) {
+    :global(.swap-builder .row input.amount-val) {
         border: var(--bw) solid var(--bd) !important;
         border-radius: 0 var(--rd) var(--rd) 0 !important;
         height: 47px;
