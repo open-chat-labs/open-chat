@@ -277,7 +277,13 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{i18nKey("group.update", undefined, "community", true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.update",
+                                undefined,
+                                "community",
+                                true,
+                            )} /></Button>
                 {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
