@@ -1,5 +1,4 @@
 use crate::model::token_swaps::TokenSwap;
-use crate::updates::send_message::send_to_recipients_canister;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
@@ -8,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use tracing::error;
 use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::c2c_send_messages_v2::C2CReplyContext;
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
 
@@ -153,7 +153,14 @@ impl Job for RetrySendingFailedMessagesJob {
                 sender_display_name,
                 sender_avatar_id,
             };
-            ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
+            mutate_state(|state| {
+                if let Some(chat) = state.data.direct_chats.get_mut(&self.recipient.into()) {
+                    for message_id in args.messages.iter().map(|a| a.message_id) {
+                        chat.mark_message_confirmed(message_id);
+                    }
+                }
+                state.push_user_canister_event(self.recipient.into(), UserCanisterEvent::SendMessages(Box::new(args)));
+            });
         }
     }
 }
