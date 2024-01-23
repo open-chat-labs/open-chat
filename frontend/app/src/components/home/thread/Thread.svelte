@@ -27,6 +27,7 @@
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
     import { i18nKey } from "../../../i18n/i18n";
+    import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -45,6 +46,7 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
+    let creatingP2PSwapMessage = false;
 
     $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -209,9 +211,20 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
+
+    function createP2PSwapMessage() {
+        creatingP2PSwapMessage = true;
+    }
 </script>
 
 <PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+
+{#if creatingP2PSwapMessage}
+    <P2PSwapContentBuilder
+        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:sendMessageWithContent
+        on:close={() => (creatingP2PSwapMessage = false)} />
+{/if}
 
 <GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
 
@@ -340,5 +353,6 @@
         on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}
         on:createTestMessages={createTestMessages}
+        on:createP2PSwapMessage={createP2PSwapMessage}
         on:createPoll={createPoll} />
 {/if}

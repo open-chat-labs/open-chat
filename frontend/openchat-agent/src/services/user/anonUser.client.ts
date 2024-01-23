@@ -1,3 +1,5 @@
+import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
     InitialStateResponse,
     UpdatesResponse,
@@ -184,7 +186,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToGroup(
         _groupId: GroupChatIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -203,7 +205,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToChannel(
         _id: ChannelIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -394,6 +396,14 @@ export class AnonUserClient {
     }
 
     deleteDirectChat(_userId: string, _blockUser: boolean): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 }

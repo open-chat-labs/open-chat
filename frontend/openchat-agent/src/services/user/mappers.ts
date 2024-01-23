@@ -343,7 +343,7 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -351,8 +351,8 @@ export function sendMessageWithTransferToChannelResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -363,7 +363,7 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -371,8 +371,8 @@ export function sendMessageWithTransferToGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -440,8 +440,17 @@ export function sendMessageResponse(
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("P2PSwapSetUpFailed" in candid) {
+        return { kind: "p2p_swap_setup_failed", text: candid.P2PSwapSetUpFailed };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
+    }
+    if ("DuplicateMessageId" in candid) {
+        return { kind: "duplicate_message_id"};
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }

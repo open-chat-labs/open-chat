@@ -4,9 +4,9 @@
     import {
         type RehydratedReplyContext,
         OpenChat,
-        type ChatIdentifier,
         routeForChatIdentifier,
         chatIdentifiersEqual,
+        type ChatIdentifier,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
@@ -71,13 +71,14 @@
             <ChatMessageContent
                 {me}
                 {readonly}
-                {chatId}
+                messageContext={repliesTo.sourceContext}
                 {intersecting}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}
+                failed={false}
                 truncate
                 reply
                 myUserId={$currentUser.userId}

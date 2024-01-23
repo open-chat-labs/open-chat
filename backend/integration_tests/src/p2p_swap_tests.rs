@@ -96,29 +96,27 @@ fn p2p_swap_in_direct_chat_succeeds() {
         1_000_000_000
     );
 
-    let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![0.into()])
+    let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
         .events
         .pop()
         .unwrap()
         .event;
 
-    if let ChatEvent::Message(m) = user1_event {
-        if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
-        }
-    }
+    verify_swap_status(
+        user1_event,
+        |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
+    );
 
-    let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![0.into()])
+    let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![1.into()])
         .events
         .pop()
         .unwrap()
         .event;
 
-    if let ChatEvent::Message(m) = user2_event {
-        if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
-        }
-    }
+    verify_swap_status(
+        user2_event,
+        |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
+    );
 }
 
 #[test]
@@ -218,15 +216,10 @@ fn p2p_swap_in_group_succeeds() {
         .unwrap()
         .event;
 
-    if let ChatEvent::Message(m) = event {
-        if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id));
-        } else {
-            panic!();
-        }
-    } else {
-        panic!()
-    }
+    verify_swap_status(
+        event,
+        |status| matches!(status, P2PSwapStatus::Completed(c) if c.accepted_by == user2.user_id),
+    );
 }
 
 #[test_case(true)]
@@ -327,29 +320,27 @@ fn cancel_p2p_swap_in_direct_chat_succeeds(delete_message: bool) {
     );
 
     if !delete_message {
-        let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![0.into()])
+        let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
             .events
             .pop()
             .unwrap()
             .event;
 
-        if let ChatEvent::Message(m) = user1_event {
-            if let MessageContent::P2PSwap(p) = m.content {
-                assert!(matches!(p.status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()));
-            }
-        }
+        verify_swap_status(
+            user1_event,
+            |status| matches!(status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()),
+        );
 
-        let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![0.into()])
+        let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![1.into()])
             .events
             .pop()
             .unwrap()
             .event;
 
-        if let ChatEvent::Message(m) = user2_event {
-            if let MessageContent::P2PSwap(p) = m.content {
-                assert!(matches!(p.status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()));
-            }
-        }
+        verify_swap_status(
+            user2_event,
+            |status| matches!(status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()),
+        );
     }
 }
 
@@ -463,11 +454,10 @@ fn cancel_p2p_swap_in_group_chat_succeeds(delete_message: bool) {
             .unwrap()
             .event;
 
-        if let ChatEvent::Message(m) = event {
-            if let MessageContent::P2PSwap(p) = m.content {
-                assert!(matches!(p.status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()));
-            }
-        }
+        verify_swap_status(
+            event,
+            |status| matches!(status, P2PSwapStatus::Cancelled(c) if c.token0_txn_out.is_some()),
+        );
     }
 }
 
@@ -525,34 +515,44 @@ fn deposit_refunded_if_swap_expires() {
     ));
 
     env.advance_time(Duration::from_millis(DAY_IN_MS));
-    tick_many(env, 5);
+    tick_many(env, 10);
 
     assert_eq!(
         client::icrc1::happy_path::balance_of(env, canister_ids.chat_ledger, Principal::from(user1.user_id)),
         original_chat_balance - (2 * Cryptocurrency::CHAT.fee().unwrap())
     );
 
-    let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![0.into()])
+    let user1_event = client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![1.into()])
         .events
         .pop()
         .unwrap()
         .event;
 
-    if let ChatEvent::Message(m) = user1_event {
-        if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()));
-        }
-    }
+    verify_swap_status(
+        user1_event,
+        |status| matches!(status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()),
+    );
 
-    let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![0.into()])
+    let user2_event = client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![1.into()])
         .events
         .pop()
         .unwrap()
         .event;
 
-    if let ChatEvent::Message(m) = user2_event {
-        if let MessageContent::P2PSwap(p) = m.content {
-            assert!(matches!(p.status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()));
-        }
-    }
+    verify_swap_status(
+        user2_event,
+        |status| matches!(status, P2PSwapStatus::Expired(e) if e.token0_txn_out.is_some()),
+    );
+}
+
+fn verify_swap_status<F: FnOnce(&P2PSwapStatus) -> bool>(event: ChatEvent, predicate: F) {
+    let ChatEvent::Message(m) = event else {
+        panic!("Event is not a message. Event: {event:?}")
+    };
+
+    let MessageContent::P2PSwap(p) = m.content else {
+        panic!("Message is not a P2PSwap. Message: {:?}", m.content)
+    };
+
+    assert!(predicate(&p.status), "{:?}", p.status);
 }

@@ -1,5 +1,5 @@
 use crate::model::pending_modclub_submissions_queue::PendingModclubSubmission;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -12,9 +12,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none()) && !state.data.pending_modclub_submissions_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
-        trace!("'submit_message_to_modclub' job started");
         true
     } else {
         false
@@ -22,6 +21,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'submit_message_to_modclub' job running");
+    TIMER_ID.set(None);
+
     let (pending_submission, modclub_canister_id) = mutate_state(|state| {
         (
             state.data.pending_modclub_submissions_queue.pop(),
@@ -31,19 +33,20 @@ pub fn run() {
 
     if let Some(pending_submission) = pending_submission {
         ic_cdk::spawn(process_submission(modclub_canister_id, pending_submission));
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'submit_message_to_modclub' job stopped");
     }
+
+    read_state(start_job_if_required);
 }
 
 async fn process_submission(modclub_canister_id: CanisterId, pending_submission: PendingModclubSubmission) {
-    if !submit_message(modclub_canister_id, &pending_submission).await {
-        mutate_state(|state| {
+    let success = submit_message(modclub_canister_id, &pending_submission).await;
+
+    mutate_state(|state| {
+        if !success {
             state.data.pending_modclub_submissions_queue.push(pending_submission);
-            start_job_if_required(state);
-        });
-    }
+        }
+        start_job_if_required(state);
+    });
 }
 
 async fn submit_message(modclub_canister_id: CanisterId, pending_submission: &PendingModclubSubmission) -> bool {

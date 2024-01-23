@@ -1457,6 +1457,30 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.getTranslationCorrections());
                 break;
 
+            case "acceptP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.acceptP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
+                );
+                break;
+
+            case "cancelP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
+                );
+                break;
+
             default:
                 logger?.debug("WORKER: unknown message kind received: ", kind);
         }

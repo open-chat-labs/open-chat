@@ -1,6 +1,7 @@
 use candid::Principal;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use std::fmt::Debug;
+use tracing::Level;
 
 pub use canister_client_macros::*;
 
@@ -49,7 +50,11 @@ pub async fn make_c2c_call_raw(
     payload_bytes: &[u8],
     cycles: u128,
 ) -> CallResult<Vec<u8>> {
-    tracing::trace!(method_name, %canister_id, "Starting c2c call");
+    let tracing_enabled = tracing::enabled!(Level::TRACE);
+    if tracing_enabled {
+        tracing::trace!(method_name, %canister_id, "Starting c2c call");
+        ic_cdk::print(format!("Making call to {canister_id} \"{method_name}\""));
+    }
 
     let response = ic_cdk::api::call::call_raw128(canister_id, method_name, payload_bytes, cycles).await;
 

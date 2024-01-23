@@ -5,6 +5,7 @@ import {
     type LocalReaction,
     type MessageContent,
     type ThreadSummary,
+    type P2PSwapStatus,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
@@ -85,6 +86,9 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
     }
     markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
+    }
+    setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus): void {
+        this.applyUpdate(messageId, (_) => ({ p2pSwapStatus: status }));
     }
     markPollVote(messageId: bigint, vote: LocalPollVote): void {
         this.applyUpdate(messageId, (updates) => ({

@@ -362,6 +362,10 @@ import type {
     DiamondMembershipStatus,
     TranslationCorrections,
     TranslationCorrection,
+    Success,
+    Failure,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -393,6 +397,8 @@ import {
     isMessageNotification,
     userIdsFromTransactions,
     contentTypeToPermission,
+    mapAcceptP2PSwapResponseToStatus,
+    mapCancelP2PSwapResponseToStatus,
     anonymousUser,
     ANON_USER_ID,
     isPaymentGate,
@@ -450,7 +456,9 @@ import {
     extractEnabledLinks,
     stripLinkDisabledMarker,
 } from "./utils/linkPreviews";
+import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
+import { getUserCountryCode } from "./utils/location";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -508,6 +516,14 @@ export class OpenChat extends OpenChatAgentWorker {
         localStorage.removeItem("ic-delegation");
         localStorage.removeItem("ic-identity");
         initialiseTracking(config);
+
+        getUserCountryCode()
+            .then((country) => {
+                console.debug("GEO: User's country location is: ", country);
+            })
+            .catch((err) => {
+                console.warn("GEO: Unable to determine user's country location", err);
+            });
 
         this._authClient = AuthClient.create({
             idleOptions: {
@@ -913,28 +929,32 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    previewChat(
-        chatId: MultiUserChatIdentifier,
-    ): Promise<{ kind: "success" } | { kind: "failure" } | GroupMoved> {
+    previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((resp) => {
-                    if (resp.kind === "success" && !resp.group.frozen) {
-                        addGroupPreview(resp.group);
-                        return { kind: "success" };
-                    } else if (resp.kind === "group_moved") {
-                        return resp;
-                    }
-                    return { kind: "failure" };
-                });
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId })
+                    .then((resp) => {
+                        if (resp.kind === "success" && !resp.group.frozen) {
+                            addGroupPreview(resp.group);
+                            return CommonResponses.success();
+                        } else if (resp.kind === "group_moved") {
+                            return resp;
+                        }
+                        return CommonResponses.failure();
+                    })
+                    .catch(() => {
+                        return CommonResponses.failure();
+                    });
             case "channel":
-                return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
-                    if (resp.kind === "channel") {
-                        addGroupPreview(resp);
-                        return { kind: "success" };
-                    }
-                    return { kind: "failure" };
-                });
+                return this.sendRequest({ kind: "getChannelSummary", chatId })
+                    .then((resp) => {
+                        if (resp.kind === "channel") {
+                            addGroupPreview(resp);
+                            return CommonResponses.success();
+                        }
+                        return CommonResponses.failure();
+                    })
+                    .catch(() => CommonResponses.failure());
         }
     }
 
@@ -3146,83 +3166,105 @@ export class OpenChat extends OpenChatAgentWorker {
             },
         };
 
-        const canRetry = this.canRetryMessage(retryEvent.event.content);
-
-        const messageFilterFailed = doesMessageFailFilter(event.event, get(messageFiltersStore));
-
         // add the *new* event to unconfirmed
         unconfirmed.add(messageContext, retryEvent);
 
         // TODO - what about mentions?
+        this.sendMessageCommon(
+            chat, 
+            messageContext,
+            retryEvent,
+            [],
+            rulesAccepted,
+            communityRulesAccepted);
+    }
+
+    private async sendMessageCommon(
+        chat: ChatSummary,
+        messageContext: MessageContext, 
+        eventWrapper: EventWrapper<Message>, 
+        mentioned: User[] = [],
+        rulesAccepted: number | undefined = undefined,
+        communityRulesAccepted: number | undefined = undefined): Promise<void> {
+
+        const {chatId, threadRootMessageIndex} = messageContext;
+
+        const canRetry = this.canRetryMessage(eventWrapper.event.content);
+
+        const messageFilterFailed = doesMessageFailFilter(eventWrapper.event, get(messageFiltersStore));
+
         this.sendRequest({
             kind: "sendMessage",
             chatType: chat.kind,
             messageContext,
             user: this._liveState.user,
-            mentioned: [],
-            event: retryEvent,
+            mentioned,
+            event: eventWrapper,
             rulesAccepted,
             communityRulesAccepted,
             messageFilterFailed,
         })
-            .then(([resp, msg]) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(msg.content.transfer.ledger);
-                    }
-                    if (threadRootMessageIndex !== undefined) {
-                        trackEvent("sent_threaded_message");
+        .then(([resp, msg]) => {
+            if (resp.kind === "success" || resp.kind === "transfer_success") {
+                this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                    this.refreshAccountBalance(msg.content.transfer.ledger);
+                }
+                if (threadRootMessageIndex !== undefined) {
+                    trackEvent("sent_threaded_message");
+                } else {
+                    if (chat.kind === "direct_chat") {
+                        trackEvent("sent_direct_message");
                     } else {
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
+                        if (chat.public) {
+                            trackEvent("sent_public_group_message");
                         } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
+                            trackEvent("sent_private_group_message");
                         }
                     }
-                    if (msg.repliesTo !== undefined) {
-                        // double counting here which I think is OK since we are limited to string events
-                        trackEvent("replied_to_message");
-                    }
-                } else {
-                    if (resp.kind == "rules_not_accepted") {
-                        this.markChatRulesAcceptedLocally(false);
-                    }
-
-                    if (resp.kind == "community_rules_not_accepted") {
-                        this.markCommunityRulesAcceptedLocally(false);
-                    }
-
-                    this.onSendMessageFailure(
-                        chatId,
-                        msg.messageId,
-                        threadRootMessageIndex,
-                        event,
-                        canRetry,
-                    );
                 }
-            })
-            .catch((err) => {
+                if (msg.repliesTo !== undefined) {
+                    // double counting here which I think is OK since we are limited to string events
+                    trackEvent("replied_to_message");
+                }
+            } else {
+                if (resp.kind == "rules_not_accepted") {
+                    this.markChatRulesAcceptedLocally(false);
+                }
+
+                if (resp.kind == "community_rules_not_accepted") {
+                    this.markCommunityRulesAcceptedLocally(false);
+                }
+
                 this.onSendMessageFailure(
                     chatId,
-                    event.event.messageId,
+                    msg.messageId,
                     threadRootMessageIndex,
-                    event,
+                    eventWrapper,
                     canRetry,
-                    err,
+                    resp,
                 );
-            });
+            }
+        })
+        .catch((err) => {
+            this.onSendMessageFailure(
+                chatId,
+                eventWrapper.event.messageId,
+                threadRootMessageIndex,
+                eventWrapper,
+                canRetry,
+                undefined,
+                err,
+            );
+        });
     }
 
     private canRetryMessage(content: MessageContent): boolean {
         return (
             content.kind !== "poll_content" &&
             content.kind !== "crypto_content" &&
-            content.kind !== "prize_content_initial"
+            content.kind !== "prize_content_initial" &&
+            content.kind !== "p2p_swap_content_initial"
         );
     }
 
@@ -3328,72 +3370,13 @@ export class OpenChat extends OpenChatAgentWorker {
             expiresAt: threadRootMessageIndex ? undefined : this.eventExpiry(chat, timestamp),
         };
 
-        const canRetry = this.canRetryMessage(msg.content);
-
-        const messageFilterFailed = doesMessageFailFilter(msg, get(messageFiltersStore));
-
-        this.sendRequest({
-            kind: "sendMessage",
-            chatType: chat.kind,
+        this.sendMessageCommon(
+            chat, 
             messageContext,
-            user: this._liveState.user,
-            mentioned,
             event,
+            mentioned,
             rulesAccepted,
-            communityRulesAccepted,
-            messageFilterFailed,
-        })
-            .then(([resp, msg]) => {
-                if (resp.kind === "success" || resp.kind === "transfer_success") {
-                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                        this.refreshAccountBalance(msg.content.transfer.ledger);
-                    }
-                    if (threadRootMessageIndex !== undefined) {
-                        trackEvent("sent_threaded_message");
-                    } else {
-                        if (chat.kind === "direct_chat") {
-                            trackEvent("sent_direct_message");
-                        } else {
-                            if (chat.public) {
-                                trackEvent("sent_public_group_message");
-                            } else {
-                                trackEvent("sent_private_group_message");
-                            }
-                        }
-                    }
-                    if (msg.repliesTo !== undefined) {
-                        // double counting here which I think is OK since we are limited to string events
-                        trackEvent("replied_to_message");
-                    }
-                } else {
-                    if (resp.kind == "rules_not_accepted") {
-                        this.markChatRulesAcceptedLocally(false);
-                    }
-
-                    if (resp.kind == "community_rules_not_accepted") {
-                        this.markCommunityRulesAcceptedLocally(false);
-                    }
-
-                    this.onSendMessageFailure(
-                        chatId,
-                        msg.messageId,
-                        threadRootMessageIndex,
-                        event,
-                        canRetry,
-                    );
-                }
-            })
-            .catch((err) => {
-                this.onSendMessageFailure(
-                    chatId,
-                    event.event.messageId,
-                    threadRootMessageIndex,
-                    event,
-                    canRetry,
-                    err,
-                );
-            });
+            communityRulesAccepted);
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
     }
@@ -3434,6 +3417,7 @@ export class OpenChat extends OpenChatAgentWorker {
         threadRootMessageIndex: number | undefined,
         event: EventWrapper<Message>,
         canRetry: boolean,
+        response?: SendMessageResponse,
         err?: unknown,
     ) {
         this.removeMessage(chatId, messageId, this._liveState.user.userId, threadRootMessageIndex);
@@ -3444,6 +3428,8 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (err !== undefined) {
             this._logger.error("Exception sending message", err);
+        } else if (response !== undefined) {
+            this._logger.error("Error sending message", JSON.stringify(response));
         }
 
         this.dispatchEvent(new SendMessageFailed(!canRetry));
@@ -4383,12 +4369,14 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.sendRequest({ kind: "getUser", userId, allowStale }).then((resp) => {
-            if (resp !== undefined) {
-                userStore.add(resp);
-            }
-            return resp;
-        });
+        return this.sendRequest({ kind: "getUser", userId, allowStale })
+            .then((resp) => {
+                if (resp !== undefined) {
+                    userStore.add(resp);
+                }
+                return resp;
+            })
+            .catch(() => undefined);
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {
@@ -5053,6 +5041,39 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch((err) => {
                 this._logger.error("Claiming prize failed", err);
                 return false;
+            });
+    }
+
+    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        localMessageUpdates.setP2PSwapStatus(messageId, {
+            kind: "p2p_swap_reserved",
+            reservedBy: this._liveState.user.userId,
+        });
+        return this.sendRequest({ kind: "acceptP2PSwap", chatId, threadRootMessageIndex, messageId })
+            .then((resp) => {
+                localMessageUpdates.setP2PSwapStatus(messageId, mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId));
+                return resp;
+            })
+            .catch((err) => {
+                localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                this._logger.error("Accepting p2p swap failed", err);
+                return { kind: "internal_error", text: err.toString() };
+            });
+    }
+
+    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        localMessageUpdates.setP2PSwapStatus(messageId, {
+            kind: "p2p_swap_cancelled",
+        });
+        return this.sendRequest({ kind: "cancelP2PSwap", chatId, threadRootMessageIndex, messageId })
+            .then((resp) => {
+                localMessageUpdates.setP2PSwapStatus(messageId, mapCancelP2PSwapResponseToStatus(resp));
+                return resp;
+            })
+            .catch((err) => {
+                localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
+                this._logger.error("Cancelling p2p swap failed", err);
+                return { kind: "internal_error", text: err.toString() };
             });
     }
 

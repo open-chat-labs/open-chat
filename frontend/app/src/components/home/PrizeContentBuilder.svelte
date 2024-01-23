@@ -47,6 +47,7 @@
     let diamondOnly = true;
 
     $: user = client.user;
+    $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     let refreshing = false;
@@ -111,7 +112,6 @@
     }
 
     function send() {
-        // const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
         const prizes = generatePrizes();
         const prizeFees = transferFees * BigInt(numberOfWinners ?? 0);
         const content: PrizeContentInitial = {
@@ -131,6 +131,7 @@
             prizes,
         };
         dispatch("sendMessageWithContent", { content });
+        lastCryptoSent.set(ledger);
         dispatch("close");
     }
 

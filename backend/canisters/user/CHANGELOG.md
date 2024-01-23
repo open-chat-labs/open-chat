@@ -9,9 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
 
+### Changed
+
+- Use message queue to send events between user canisters ([#5234](https://github.com/open-chat-labs/open-chat/pull/5234))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+
 ### Fixed
 
 - Fix input amount display in p2p swaps ([#5223](https://github.com/open-chat-labs/open-chat/pull/5223))
+- Fix syncing of P2P swap status updates between user canisters ([#5230](https://github.com/open-chat-labs/open-chat/pull/5230))
 
 ## [[2.0.1013](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1013-user)] - 2024-01-18
 

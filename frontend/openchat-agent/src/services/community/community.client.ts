@@ -63,6 +63,8 @@ import {
     enableInviteCodeResponse,
     registerProposalVoteResponse,
     claimPrizeResponse,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,
@@ -128,6 +130,7 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     OptionalChatPermissions,
+    AcceptP2PSwapResponse,
 } from "openchat-shared";
 import {
     textToCode,
@@ -162,6 +165,7 @@ import {
 } from "../../utils/caching";
 import { mergeCommunityDetails, mergeGroupChatDetails } from "../../utils/chat";
 import { muteNotificationsResponse } from "../notifications/mappers";
+import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -1266,5 +1270,27 @@ export class CommunityClient extends CandidService {
             }),
             reportMessageResponse,
         );
+    }
+
+    acceptP2PSwap(channelId: string, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.service.accept_p2p_swap({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId
+            }),
+            acceptP2PSwapResponse,
+        );        
+    }
+
+    cancelP2PSwap(channelId: string, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.service.cancel_p2p_swap({
+                channel_id: BigInt(channelId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId
+            }),
+            cancelP2PSwapResponse,
+        );        
     }
 }

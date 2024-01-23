@@ -30,7 +30,6 @@ pub enum Event {
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
-    DiamondMembershipExpiryDate(UserId, TimestampMillis), // Temp event type to populate expiry dates
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
 }
 
