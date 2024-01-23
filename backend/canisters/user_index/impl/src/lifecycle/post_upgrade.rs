@@ -9,6 +9,7 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::get_reader;
 use std::time::Duration;
 use tracing::info;
+use types::UserId;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -28,11 +29,21 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    // Unsuspend user @Hugh_Mungus who wasn't unsuspended from communities due to a bug
+    let users_to_unsuspend: Vec<UserId> = [
+        "qyzts-uiaaa-aaaar-aw4ca-cai",
+        "zjayq-ryaaa-aaaar-axhrq-cai",
+        "o6334-oyaaa-aaaar-awgxa-cai",
+        "s4i57-nqaaa-aaaar-abzcq-cai",
+        "vecg6-eqaaa-aaaar-a23rq-cai",
+        "ne6gg-dqaaa-aaaaf-agzwa-cai",
+    ]
+    .iter()
+    .map(|str| Principal::from_text(str).unwrap().into())
+    .collect();
+
     ic_cdk_timers::set_timer(Duration::ZERO, || {
-        let hugh_mungus_user_id = Principal::from_text("ne6gg-dqaaa-aaaaf-agzwa-cai").unwrap().into();
         ic_cdk::spawn(async move {
-            unsuspend_user_impl(hugh_mungus_user_id).await;
+            futures::future::join_all(users_to_unsuspend.into_iter().map(unsuspend_user_impl)).await;
         })
     });
 }
