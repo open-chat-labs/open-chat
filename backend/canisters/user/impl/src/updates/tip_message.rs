@@ -8,6 +8,7 @@ use ic_cdk_macros::update;
 use serde::Serialize;
 use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};
+use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
 
 #[update(guard = "caller_is_owner")]
@@ -149,18 +150,20 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
         match chat.events.tip_message(args.clone(), EventIndex::default()) {
             TipMessageResult::Success => {
-                let c2c_args = user_canister::c2c_tip_message::Args {
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
-                    ledger: args.ledger,
-                    token: args.token,
-                    amount: args.amount,
-                    decimals,
-                    username: state.data.username.value.clone(),
-                    display_name: state.data.display_name.value.clone(),
-                    user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
-                };
-                fire_and_forget_c2c_tip_message(args.recipient.into(), &c2c_args, state);
+                state.push_user_canister_event(
+                    args.recipient.into(),
+                    UserCanisterEvent::TipMessage(Box::new(user_canister::c2c_tip_message::Args {
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id: args.message_id,
+                        ledger: args.ledger,
+                        token: args.token,
+                        amount: args.amount,
+                        decimals,
+                        username: state.data.username.value.clone(),
+                        display_name: state.data.display_name.value.clone(),
+                        user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
+                    })),
+                );
                 Success
             }
             TipMessageResult::MessageNotFound => MessageNotFound,
