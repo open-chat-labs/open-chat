@@ -30,7 +30,7 @@ impl<I: IndexStore> Reader<I> {
     pub async fn run(self) {
         info!(%self.notifications_canister_id, "Notifications reader started");
 
-        let mut interval = time::interval(time::Duration::from_secs(2));
+        let mut interval = time::interval(time::Duration::from_secs(1));
         loop {
             if self.sender.is_full() {
                 error!("Notifications queue is full");
