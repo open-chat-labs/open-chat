@@ -1,6 +1,5 @@
 use crate::Notification;
 use async_channel::{Receiver, Sender};
-use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -120,19 +119,19 @@ fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
 
     let mut iter = map.iter();
     for (subscription, timestamp) in iter.by_ref().take(1000) {
-        heap.push(Reverse((*timestamp, subscription.clone())));
+        heap.push((*timestamp, subscription.clone()));
     }
 
     for (subscription, timestamp) in iter {
-        if let Some(Reverse((greatest_timestamp, _))) = heap.peek() {
+        if let Some((greatest_timestamp, _)) = heap.peek() {
             if *timestamp < *greatest_timestamp {
                 heap.pop();
-                heap.push(Reverse((*timestamp, subscription.clone())));
+                heap.push((*timestamp, subscription.clone()));
             }
         }
     }
 
-    for Reverse((_, subscription)) in heap {
+    for (_, subscription) in heap {
         map.remove(&subscription);
     }
 }
@@ -152,5 +151,21 @@ impl<'a> From<&'a SubscriptionInfo> for SubscriptionInfoDebug<'a> {
             p256dh_len: s.keys.p256dh.len(),
             auth_len: s.keys.auth.len(),
         }
+    }
+}
+
+#[test]
+fn oldest_subscriptions_are_pruned() {
+    let mut map = HashMap::new();
+    for i in 0..10000 {
+        map.insert(i.to_string(), i);
+    }
+
+    prune_invalid_subscriptions(&mut map);
+
+    assert_eq!(map.len(), 9000);
+
+    for i in 0..10000 {
+        assert_eq!(map.contains_key(i.to_string().as_str()), i >= 1000, "{i}");
     }
 }
