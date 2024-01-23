@@ -1237,6 +1237,8 @@
         "swap_cancelled": "Esta oferta de intercambio ha sido cancelada.",
         "swap_expired": "Esta oferta de intercambio ha caducado",
         "swap_not_found": "Esta oferta de intercambio no se pudo encontrar",
-        "insufficient_funds": "No le quedan fondos suficientes para aceptar esta oferta de intercambio"
+        "insufficient_funds": "No le quedan fondos suficientes para aceptar esta oferta de intercambio",
+        "unknown_accept_error": "Error al aceptar la oferta de intercambio",
+        "unknown_cancel_error": "Error al cancelar la oferta de intercambio"
     }
 }

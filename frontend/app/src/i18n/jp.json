@@ -1236,6 +1236,8 @@
         "swap_cancelled": "このスワップオファーはキャンセルされました",
         "swap_expired": "このスワップオファーは期限切れです",
         "swap_not_found": "このスワップ オファーが見つかりませんでした",
-        "insufficient_funds": "このスワップオファーを受け入れるには資金が不足しています"
+        "insufficient_funds": "このスワップオファーを受け入れるには資金が不足しています",
+        "unknown_accept_error": "スワップオファーの受け入れエラー",
+        "unknown_cancel_error": "スワップオファーのキャンセル中にエラーが発生しました"
     }
 }

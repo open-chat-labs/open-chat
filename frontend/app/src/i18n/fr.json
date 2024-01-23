@@ -1235,6 +1235,8 @@
         "swap_cancelled": "Cette offre d'échange a été annulée",
         "swap_expired": "Cette offre d'échange est expirée",
         "swap_not_found": "Cette offre d'échange est introuvable",
-        "insufficient_funds": "Il ne vous reste pas suffisamment de fonds pour accepter cette offre d'échange"
+        "insufficient_funds": "Il ne vous reste pas suffisamment de fonds pour accepter cette offre d'échange",
+        "unknown_accept_error": "Erreur lors de l'acceptation de l'offre d'échange",
+        "unknown_cancel_error": "Erreur lors de l'annulation de l'offre d'échange"
     }
 }

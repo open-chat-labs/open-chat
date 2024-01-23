@@ -1237,6 +1237,8 @@
         "swap_cancelled": "Dieses Tauschangebot wurde storniert",
         "swap_expired": "Dieses Tauschangebot ist abgelaufen",
         "swap_not_found": "Dieses Tauschangebot konnte nicht gefunden werden",
-        "insufficient_funds": "Ihr Guthaben reicht nicht aus, um dieses Tauschangebot anzunehmen"
+        "insufficient_funds": "Ihr Guthaben reicht nicht aus, um dieses Tauschangebot anzunehmen",
+        "unknown_accept_error": "Fehler beim Annehmen des Tauschangebots",
+        "unknown_cancel_error": "Fehler beim Stornieren des Tauschangebots"
     }
 }

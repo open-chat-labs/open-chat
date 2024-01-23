@@ -1236,6 +1236,8 @@
         "swap_cancelled": "Ưu đãi hoán đổi này đã bị hủy",
         "swap_expired": "Ưu đãi hoán đổi này đã hết hạn",
         "swap_not_found": "Không thể tìm thấy ưu đãi trao đổi này",
-        "insufficient_funds": "Bạn không còn đủ tiền để chấp nhận đề nghị hoán đổi này"
+        "insufficient_funds": "Bạn không còn đủ tiền để chấp nhận đề nghị hoán đổi này",
+        "unknown_accept_error": "Lỗi chấp nhận đề nghị trao đổi",
+        "unknown_cancel_error": "Lỗi hủy ưu đãi trao đổi"
     }
 }

@@ -125,7 +125,7 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        showFailureToast(resp);
+                        showFailureToast(resp, false);
                     }
                 });
         }
@@ -145,17 +145,34 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        showFailureToast(resp);
+                        showFailureToast(resp, true);
                     }
                 });
         }
     }
 
-    function showFailureToast(response: AcceptP2PSwapResponse | CancelP2PSwapResponse) {
+    function showFailureToast(
+        response: AcceptP2PSwapResponse | CancelP2PSwapResponse,
+        accepting: boolean,
+    ) {
         let key: string = response.kind;
 
-        if (key === "already_reserved" || "already_completed") {
-            key = "already_accepted";
+        switch (key) {
+            case "already_reserved":
+            case "already_completed":
+                key = "already_accepted";
+                break;
+            case "channel_not_found":
+            case "chat_not_found":
+            case "user_suspended":
+            case "user_not_in_group":
+            case "user_not_in_community":
+            case "user_not_in_channel":
+            case "chat_frozen":
+            case "insufficient_funds":
+            case "internal_error":
+                key = accepting ? "unknown_accept_error" : "unknown_cancel_error";
+                break;
         }
 
         toastStore.showFailureToast(i18nKey("p2pSwap." + key));

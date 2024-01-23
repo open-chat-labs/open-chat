@@ -1227,6 +1227,8 @@
         "swap_cancelled": "This swap offer has been cancelled",
         "swap_expired": "This swap offer has expired",
         "swap_not_found": "This swap offer could not be found",
-        "insufficient_funds": "You have insufficient funds remaining to accept this swap offer"
+        "insufficient_funds": "You have insufficient funds remaining to accept this swap offer",
+        "unknown_accept_error": "Error accepting swap offer",
+        "unknown_cancel_error": "Error cancelling swap offer"
     }
 }

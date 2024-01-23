@@ -1236,6 +1236,8 @@
         "swap_cancelled": "此交换优惠已取消",
         "swap_expired": "此交换优惠已过期",
         "swap_not_found": "找不到此交换报价",
-        "insufficient_funds": "您的剩余资金不足以接受此掉期优惠"
+        "insufficient_funds": "您的剩余资金不足以接受此掉期优惠",
+        "unknown_accept_error": "接受交换报价时出错",
+        "unknown_cancel_error": "取消掉期优惠时出错"
     }
 }
