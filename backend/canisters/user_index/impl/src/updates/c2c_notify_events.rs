@@ -140,7 +140,7 @@ You can change your username at any time by clicking \"Profile settings\" from t
         byte_limit: 100 * ONE_MB,
     });
 
-    crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
+    crate::jobs::sync_users_to_storage_index::try_run_now(state);
 
     if let Some(referrer) = referred_by {
         state.data.user_referral_leaderboards.add_referral(referrer, now);
