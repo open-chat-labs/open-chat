@@ -49,8 +49,4 @@ impl OpenStorageUserSyncQueue {
     pub fn is_empty(&self) -> bool {
         self.users.is_empty()
     }
-
-    pub fn sync_in_progress(&self) -> bool {
-        self.sync_in_progress
-    }
 }
