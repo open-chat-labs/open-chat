@@ -751,7 +751,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if content.accept(user_id, token1_txn_in) {
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
                     AcceptP2PSwapResult::Success(P2PSwapAccepted {
                         accepted_by: user_id,
                         token1_txn_in,
@@ -778,7 +779,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
                     CompleteP2PSwapResult::Success(status)
                 } else {
                     CompleteP2PSwapResult::Failure(content.status.clone())
@@ -800,7 +802,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.unreserve(user_id) {
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
                 };
             }
         }
@@ -820,7 +823,8 @@ impl ChatEvents {
                 if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                     return if content.cancel() {
                         let swap_id = content.swap_id;
-                        self.last_updated_timestamps.mark_updated(None, event_index, now);
+                        self.last_updated_timestamps
+                            .mark_updated(thread_root_message_index, event_index, now);
                         CancelP2PSwapResult::Success(swap_id)
                     } else {
                         CancelP2PSwapResult::Failure(content.status.clone())
@@ -842,7 +846,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 if content.mark_expired() {
-                    self.last_updated_timestamps.mark_updated(None, event_index, now);
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
                 };
             }
         }
@@ -860,7 +865,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::P2PSwap(content) = &mut message.content {
                 content.status = status;
-                self.last_updated_timestamps.mark_updated(None, event_index, now);
+                self.last_updated_timestamps
+                    .mark_updated(thread_root_message_index, event_index, now);
             }
         }
     }
