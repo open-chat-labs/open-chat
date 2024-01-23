@@ -23,6 +23,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 fn run() {
     trace!("'push_user_canister_events' running");
     TIMER_ID.set(None);
+
     if let Some(batch) = mutate_state(next_batch) {
         ic_cdk::spawn(process_batch(batch));
     }
