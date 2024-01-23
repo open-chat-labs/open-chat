@@ -6,7 +6,8 @@ export type AccessGate =
     | PaymentGate
     | DiamondGate
     | NftGate
-    | CredentialGate;
+    | CredentialGate
+    | TokenBalanceGate;
 
 export type NoGate = { kind: "no_gate" };
 
@@ -31,6 +32,12 @@ export type PaymentGate = {
     ledgerCanister: string;
     amount: bigint;
     fee: bigint;
+};
+
+export type TokenBalanceGate = {
+    kind: "token_balance_gate";
+    ledgerCanister: string;
+    minBalance: bigint;
 };
 
 export function isNeuronGate(gate: AccessGate): gate is NeuronGate {

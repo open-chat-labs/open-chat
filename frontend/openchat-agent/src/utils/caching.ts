@@ -41,6 +41,9 @@ import {
     MAX_MESSAGES,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
+import type { CryptocurrencyContent } from "openchat-shared";
+import type { PrizeContent } from "openchat-shared";
+import type { P2PSwapContent } from "openchat-shared";
 
 const CACHE_VERSION = 95;
 const MAX_INDEX = 9999999999;
@@ -697,7 +700,7 @@ export function setCachedMessageFromSendResponse(
 
         setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
 
-        return [resp, message];
+        return [resp, event.event];
     };
 }
 
@@ -738,10 +741,48 @@ function messageToEvent(
     message: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
+    let content = message.content;
+
+    if (resp.kind === "transfer_success") {
+        switch (message.content.kind) {
+            case "crypto_content":
+                content = { ...message.content, transfer: resp.transfer } as CryptocurrencyContent;
+                break;
+            case "prize_content_initial":
+                content = {
+                    kind: "prize_content",
+                    prizesRemaining: message.content.prizes.length,
+                    prizesPending: 0,
+                    winners: [],
+                    token: message.content.transfer.token,
+                    endDate: message.content.endDate,
+                    caption: message.content.caption,
+                    diamondOnly: message.content.diamondOnly,
+                } as PrizeContent;
+                break;
+            case "p2p_swap_content_initial":
+                content = {
+                    kind: "p2p_swap_content",
+                    token0: message.content.token0,
+                    token0Amount: message.content.token0Amount,
+                    token1: message.content.token1,
+                    token1Amount: message.content.token1Amount,
+                    caption: message.content.caption,
+                    expiresAt: BigInt(Date.now()) + message.content.expiresIn,  
+                    status: { kind: "p2p_swap_open" },
+                    token0TxnIn: resp.transfer.blockIndex,
+                    // Note: we don't have this in the response but actually we don't use it on the FE
+                    swapId: 0,
+                } as P2PSwapContent;
+                break;
+        }
+    }
+
     return {
         event: {
             ...message,
             messageIndex: resp.messageIndex,
+            content,
         },
         index: resp.eventIndex,
         timestamp: resp.timestamp,

@@ -102,7 +102,10 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
+    let crypto =
+        msg.content.kind === "crypto_content" ||
+        msg.content.kind === "prize_content" ||
+        msg.content.kind === "p2p_swap_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
@@ -202,7 +205,7 @@
             messageIndex: msg.messageIndex,
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
-            sourceContext: { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex },
+            sourceContext: messageContext,
         };
     }
 
@@ -528,10 +531,11 @@
                         {readonly}
                         {fill}
                         {me}
-                        {chatId}
+                        {messageContext}
                         {collapsed}
                         {undeleting}
                         {intersecting}
+                        {failed}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}

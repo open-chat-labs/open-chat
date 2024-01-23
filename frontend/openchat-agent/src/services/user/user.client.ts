@@ -73,6 +73,8 @@ import type {
     ApproveTransferResponse,
     MessageContext,
     PendingCryptocurrencyTransfer,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -138,6 +140,8 @@ import {
     deleteGroupResponse,
     apiChatIdentifier,
     apiToken,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -588,7 +592,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToGroup(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -614,7 +618,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -664,7 +668,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToChannel(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -692,7 +696,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToChannelToBackend(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -1252,6 +1256,26 @@ export class UserClient extends CandidService {
                 block_user: blockUser,
             }),
             (resp) => "Success" in resp,
+        );
+    }
+
+    acceptP2PSwap(userId: string, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.accept_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            acceptP2PSwapResponse,
+        );
+    }
+
+    cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.cancel_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            cancelP2PSwapResponse,
         );
     }
 }

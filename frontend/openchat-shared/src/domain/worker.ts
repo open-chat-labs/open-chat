@@ -64,6 +64,8 @@ import type {
     MessageContext,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -315,7 +317,9 @@ export type WorkerRequest =
     | ApproveTranslationCorrection
     | RejectTranslationCorrection
     | GetTranslationCorrections
-    | GetExchangeRates;
+    | GetExchangeRates
+    | AcceptP2PSwap
+    | CancelP2PSwap;
 
 type GetTranslationCorrections = {
     kind: "getTranslationCorrections";
@@ -1207,6 +1211,8 @@ export type WorkerResponseInner =
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
     | TranslationCorrections
+    | AcceptP2PSwapResponse
+    | CancelP2PSwapResponse
     | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1473,6 +1479,20 @@ type GetExchangeRates = {
 type GetReportedMessages = {
     kind: "reportedMessages";
     userId: string | undefined;
+};
+
+type AcceptP2PSwap = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    kind: "acceptP2PSwap";
+};
+
+type CancelP2PSwap = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    kind: "cancelP2PSwap";
 };
 
 // prettier-ignore
@@ -1792,4 +1812,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? TranslationCorrections
     : T extends GetTranslationCorrections
     ? TranslationCorrections
+    : T extends AcceptP2PSwap
+    ? AcceptP2PSwapResponse
+    : T extends CancelP2PSwap
+    ? CancelP2PSwapResponse
     : never;

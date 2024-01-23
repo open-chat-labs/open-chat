@@ -29,6 +29,8 @@ import {
     PrizeContent,
     PrizeWinnerContent,
     PrizeContentInitial,
+    P2PSwapContentInitial,
+    TokenInfo,
     MessageReminderCreated,
     MessageReminder,
     Proposal,
@@ -144,6 +146,10 @@ import {
     SwapTokensResponse,
     TokenSwapStatusResponse,
     ApproveTransferResponse,
+    P2PSwapContent,
+    P2PSwapStatus,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -215,6 +221,8 @@ export {
     PrizeContent as ApiPrizeContent,
     PrizeWinnerContent as ApiPrizeWinnerContent,
     PrizeContentInitial as ApiPrizeCotentInitial,
+    P2PSwapContentInitial as ApiP2PSwapContentInitial,
+    TokenInfo as ApiTokenInfo,
     GiphyContent as ApiGiphyContent,
     GiphyImageVariant as ApiGiphyImageVariant,
     ChatMetrics as ApiChatMetrics,
@@ -290,6 +298,10 @@ export {
     SwapTokensResponse as ApiSwapTokensResponse,
     TokenSwapStatusResponse as ApiTokenSwapStatusResponse,
     ApproveTransferResponse as ApiApproveTransferResponse,
+    P2PSwapContent as ApiP2PSwapContent,
+    P2PSwapStatus as ApiP2PSwapStatus,
+    AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
+    CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
