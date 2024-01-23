@@ -1,19 +1,20 @@
 <script lang="ts">
     import FancyLoader from "../icons/FancyLoader.svelte";
     import Translatable from "../Translatable.svelte";
-    import { i18nKey } from "../../i18n/i18n";
+    import { type ResourceKey } from "../../i18n/i18n";
 
-    export let me: boolean;
+    export let text: ResourceKey;
+    export let failed: boolean;
 </script>
 
-{#if me}
-    <div class={"prize"}>
+<div class={"prize"}>
+    {#if !failed}
         <div class="spinner">
             <FancyLoader />
         </div>
-        <p><Translatable resourceKey={i18nKey("prizes.creatingYourPrizeMessage")} /></p>
-    </div>
-{/if}
+    {/if}
+    <p><Translatable resourceKey={text} /></p>
+</div>
 
 <style lang="scss">
     .prize {

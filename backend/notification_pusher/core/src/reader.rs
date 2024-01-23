@@ -30,18 +30,23 @@ impl<I: IndexStore> Reader<I> {
     pub async fn run(self) {
         info!(%self.notifications_canister_id, "Notifications reader started");
 
-        let mut interval = time::interval(time::Duration::from_secs(2));
+        let mut interval = time::interval(time::Duration::from_secs(1));
         loop {
-            for _ in 0..30 {
-                if let Err(error) = self.read_notifications().await {
-                    error!(?error, "Read notifications failed");
+            if self.sender.is_full() {
+                error!("Notifications queue is full");
+                interval.tick().await;
+            } else {
+                for _ in 0..30 {
+                    if let Err(error) = self.read_notifications().await {
+                        error!(?error, "Read notifications failed");
+                    }
+
+                    interval.tick().await;
                 }
 
-                interval.tick().await;
-            }
-
-            if let Err(error) = self.prune_notifications().await {
-                error!(?error, "Prune notifications failed");
+                if let Err(error) = self.prune_notifications().await {
+                    error!(?error, "Prune notifications failed");
+                }
             }
         }
     }

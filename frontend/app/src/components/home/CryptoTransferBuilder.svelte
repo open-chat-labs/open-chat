@@ -43,7 +43,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: UserSummary | undefined = undefined;
     let validAmount: boolean = false;
-    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;

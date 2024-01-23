@@ -73,10 +73,6 @@ impl DirectChat {
         self.unconfirmed.clone()
     }
 
-    pub fn mark_message_pending(&mut self, args: SendMessageArgs) {
-        self.unconfirmed.push(args);
-    }
-
     pub fn mark_message_confirmed(&mut self, message_id: MessageId) {
         self.unconfirmed.retain(|m| m.message_id != message_id);
     }
