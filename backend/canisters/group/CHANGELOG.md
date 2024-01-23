@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
 - Avoid sending prize winner notifications ([#5236](https://github.com/open-chat-labs/open-chat/pull/5236))
+- Add timer job to mark P2P swaps as expired ([#5246](https://github.com/open-chat-labs/open-chat/pull/5246))
 
 ### Fixed
 
