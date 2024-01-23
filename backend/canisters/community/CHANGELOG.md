@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
 
+### Fixed
+
+- Fix p2p swaps in threads which weren't being marked as updated ([#5235](https://github.com/open-chat-labs/open-chat/pull/5235))
+
 ## [[2.0.1015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1015-community)] - 2024-01-19
 
 ### Added
