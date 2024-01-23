@@ -32,6 +32,7 @@ pub(crate) fn try_run_now_for_canister(state: &mut RuntimeState, canister_id: Ca
 fn run() {
     trace!("'push_user_canister_events' running");
     TIMER_ID.set(None);
+
     if let Some(batch) = mutate_state(next_batch) {
         ic_cdk::spawn(process_batch(batch));
     }

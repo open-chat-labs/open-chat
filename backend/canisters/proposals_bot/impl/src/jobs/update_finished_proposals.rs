@@ -15,9 +15,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.finished_proposals_to_process.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'update_finished_proposals' job started");
         true
     } else {
         false
@@ -25,6 +24,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
+    trace!("'update_finished_proposals' job started");
+    TIMER_ID.set(None);
+
     mutate_state(run_impl);
 }
 
@@ -35,10 +37,8 @@ fn run_impl(state: &mut RuntimeState) {
 
             ic_cdk::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
         }
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'update_finished_proposals' job stopped");
     }
+    start_job_if_required(state);
 }
 
 async fn process_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, is_nns: bool) {
