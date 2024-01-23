@@ -33,6 +33,7 @@ impl<I: IndexStore> Reader<I> {
         let mut interval = time::interval(time::Duration::from_secs(2));
         loop {
             if self.sender.is_full() {
+                error!("Notifications queue is full");
                 interval.tick().await;
             } else {
                 for _ in 0..30 {
