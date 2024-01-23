@@ -22,7 +22,7 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 
 pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
     if let Some((canister_id, events)) = next_batch(state) {
-        if let Some(timer_id) = TIMER_ID.get() {
+        if let Some(timer_id) = TIMER_ID.take() {
             ic_cdk_timers::clear_timer(timer_id);
         }
         ic_cdk::spawn(sync_events(canister_id, events));
