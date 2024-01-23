@@ -1,7 +1,7 @@
 use crate::Notification;
 use async_channel::{Receiver, Sender};
 use std::collections::{BinaryHeap, HashMap};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{error, info};
 use types::{Error, TimestampMillis, UserId};
@@ -17,7 +17,7 @@ pub struct Pusher {
     web_push_client: HyperWebPushClient,
     sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
-    invalid_subscriptions: Arc<Mutex<HashMap<String, TimestampMillis>>>,
+    invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
 }
 
 impl Pusher {
@@ -25,7 +25,7 @@ impl Pusher {
         receiver: Receiver<Notification>,
         vapid_private_pem: &str,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
-        invalid_subscriptions: Arc<Mutex<HashMap<String, TimestampMillis>>>,
+        invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     ) -> Self {
         Self {
             receiver,
@@ -38,7 +38,7 @@ impl Pusher {
 
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
-            if let Ok(map) = self.invalid_subscriptions.lock() {
+            if let Ok(map) = self.invalid_subscriptions.read() {
                 if map.contains_key(&notification.subscription_info.endpoint) {
                     continue;
                 }
@@ -70,7 +70,7 @@ impl Pusher {
 
                         let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
 
-                        if let Ok(mut map) = self.invalid_subscriptions.lock() {
+                        if let Ok(mut map) = self.invalid_subscriptions.write() {
                             if map.len() > 10000 {
                                 prune_invalid_subscriptions(&mut map);
                             }
