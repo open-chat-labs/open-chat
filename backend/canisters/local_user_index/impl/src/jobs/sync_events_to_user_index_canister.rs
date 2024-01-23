@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -20,13 +20,24 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
+pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
+    if let Some((canister_id, events)) = next_batch(state) {
+        if let Some(timer_id) = TIMER_ID.take() {
+            ic_cdk_timers::clear_timer(timer_id);
+        }
+        ic_cdk::spawn(sync_events(canister_id, events));
+        true
+    } else {
+        false
+    }
+}
+
 fn run() {
     trace!("'sync_events_to_user_index_canister' job running");
     TIMER_ID.set(None);
 
     if let Some((canister_id, events)) = mutate_state(next_batch) {
         ic_cdk::spawn(sync_events(canister_id, events));
-        read_state(start_job_if_required);
     }
 }
 

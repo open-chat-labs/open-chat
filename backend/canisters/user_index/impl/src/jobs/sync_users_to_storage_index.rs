@@ -20,19 +20,33 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
+pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
+    if let Some((canister_id, users)) = next_batch(state) {
+        if let Some(timer_id) = TIMER_ID.take() {
+            ic_cdk_timers::clear_timer(timer_id);
+        }
+        ic_cdk::spawn(sync_users(canister_id, users));
+        true
+    } else {
+        false
+    }
+}
+
 fn run() {
     trace!("'sync_users_to_storage_index' job running");
     TIMER_ID.set(None);
 
-    if let Some((canister_id, users)) = mutate_state(|state| {
-        state
-            .data
-            .storage_index_user_sync_queue
-            .try_start_sync()
-            .map(|u| (state.data.storage_index_canister_id, u))
-    }) {
+    if let Some((canister_id, users)) = mutate_state(next_batch) {
         ic_cdk::spawn(sync_users(canister_id, users));
     }
+}
+
+fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserConfig>)> {
+    state
+        .data
+        .storage_index_user_sync_queue
+        .try_start_sync()
+        .map(|u| (state.data.storage_index_canister_id, u))
 }
 
 async fn sync_users(storage_index_canister_id: CanisterId, users: Vec<UserConfig>) {

@@ -80,7 +80,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 }),
             )
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
+        crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
 
         Success
     } else {
