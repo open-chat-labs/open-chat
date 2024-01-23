@@ -1,5 +1,7 @@
 use crate::Notification;
 use async_channel::{Receiver, Sender};
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex};
 use tracing::{error, info};
 use types::{Error, UserId};
 use web_push::{
@@ -14,6 +16,7 @@ pub struct Pusher {
     web_push_client: HyperWebPushClient,
     sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
+    invalid_subscriptions: Arc<Mutex<HashSet<String>>>,
 }
 
 impl Pusher {
@@ -21,17 +24,24 @@ impl Pusher {
         receiver: Receiver<Notification>,
         vapid_private_pem: &str,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
+        invalid_subscriptions: Arc<Mutex<HashSet<String>>>,
     ) -> Self {
         Self {
             receiver,
             web_push_client: HyperWebPushClient::new(),
             sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
             subscriptions_to_remove_sender,
+            invalid_subscriptions,
         }
     }
 
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
+            if let Ok(set) = self.invalid_subscriptions.lock() {
+                if set.contains(&notification.subscription_info.endpoint) {
+                    continue;
+                }
+            }
             if let Err(error) = self.push_notification(&notification).await {
                 let bytes = notification.payload.len();
                 error!(
@@ -56,6 +66,14 @@ impl Pusher {
                         let _ = self
                             .subscriptions_to_remove_sender
                             .try_send((notification.recipient, subscription.keys.p256dh.clone()));
+
+                        if let Ok(mut set) = self.invalid_subscriptions.lock() {
+                            if set.len() > 10000 {
+                                set.clear();
+                                info!("InvalidSubscriptions reached size limit and was cleared");
+                            }
+                            set.insert(subscription.endpoint.clone());
+                        }
 
                         info!(
                             ?error,
