@@ -113,8 +113,6 @@ import {
     swapTokensResponse,
     tokenSwapStatusResponse,
     approveTransferResponse,
-    acceptP2PSwapResponse,
-    cancelP2PSwapResponse,
 } from "./mappers";
 import {
     type Database,
@@ -142,6 +140,8 @@ import {
     deleteGroupResponse,
     apiChatIdentifier,
     apiToken,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";

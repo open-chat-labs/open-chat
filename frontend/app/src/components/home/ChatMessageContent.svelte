@@ -72,7 +72,7 @@
 {:else if content.kind === "prize_content"}
     <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
 {:else if content.kind === "p2p_swap_content"}
-    <P2PSwapContent {messageContext} {messageId} {content} {me} />
+    <P2PSwapContent {messageContext} {messageId} {content} {me} {reply} {pinned} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}

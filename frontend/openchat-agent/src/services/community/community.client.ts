@@ -31,8 +31,6 @@ import {
     setMemberDisplayNameResponse,
     followThreadResponse,
     reportMessageResponse,
-    acceptP2PSwapResponse,
-    cancelP2PSwapResponse,
 } from "./mappers";
 import { Principal } from "@dfinity/principal";
 import {
@@ -65,6 +63,8 @@ import {
     enableInviteCodeResponse,
     registerProposalVoteResponse,
     claimPrizeResponse,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import type {
     AccessGate,

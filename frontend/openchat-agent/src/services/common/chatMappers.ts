@@ -67,6 +67,8 @@ import type {
     ApiTokenInfo,
     ApiP2PSwapContent,
     ApiP2PSwapStatus,
+    ApiCancelP2PSwapResponse as ApiUserCancelP2PSwapResponse,
+    ApiAcceptP2PSwapResponse as ApiUserAcceptP2PSwapResponse,
 } from "../user/candid/idl";
 import type {
     Message,
@@ -206,6 +208,8 @@ import type {
     ApiResetInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiGroupRegisterProposalVoteResponse,
     ApiClaimPrizeResponse as ApiClaimGroupPrizeResponse,
+    ApiAcceptP2PSwapResponse as ApiGroupAcceptP2PSwapResponse,
+    ApiCancelP2PSwapResponse as ApiGroupCancelP2PSwapResponse,
 } from "../group/candid/idl";
 import type {
     ApiGateCheckFailedReason,
@@ -240,6 +244,8 @@ import type {
     ApiEnableInviteCodeResponse as ApiCommunityEnableInviteCodeResponse,
     ApiRegisterProposalVoteResponse as ApiCommunityRegisterProposalVoteResponse,
     ApiClaimPrizeResponse as ApiClaimChannelPrizeResponse,
+    ApiAcceptP2PSwapResponse as ApiCommunityAcceptP2PSwapResponse,
+    ApiCancelP2PSwapResponse as ApiCommunityCancelP2PSwapResponse,
 } from "../community/candid/idl";
 import { ReplicaNotUpToDateError } from "../error";
 import { messageMatch } from "../user/mappers";
@@ -2464,4 +2470,48 @@ export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & Ca
     }
 
     throw new UnsupportedValueError("Unexpected SwapStatusError type received", candid);
+}
+
+export function acceptP2PSwapResponse(
+    candid: ApiCommunityAcceptP2PSwapResponse | ApiGroupAcceptP2PSwapResponse | ApiUserAcceptP2PSwapResponse)
+: AcceptP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
+    if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
+    if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
+    if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
+    if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
+    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+    if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
+    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
+
+    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
+}
+
+export function cancelP2PSwapResponse(
+    candid: ApiCommunityCancelP2PSwapResponse | ApiGroupCancelP2PSwapResponse | ApiUserCancelP2PSwapResponse)
+: CancelP2PSwapResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("StatusError" in candid) {
+        return statusError(candid.StatusError);
+    }
+    if ("ChatNotFound" in candid) return { kind: "chat_not_found" };
+    if ("UserNotInGroup" in candid) return { kind: "user_not_in_group" };
+    if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
+    if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
+    if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
+    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
+    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
+    if ("UserSuspended" in candid) return { kind: "user_suspended" };
+
+    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
 }

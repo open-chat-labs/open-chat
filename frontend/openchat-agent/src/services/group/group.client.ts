@@ -73,8 +73,6 @@ import {
     apiUpdatedRules,
     followThreadResponse,
     reportMessageResponse,
-    acceptP2PSwapResponse,
-    cancelP2PSwapResponse,
 } from "./mappers";
 import {
     type Database,
@@ -116,6 +114,8 @@ import {
     groupDetailsUpdatesResponse,
     registerProposalVoteResponse,
     claimPrizeResponse,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";

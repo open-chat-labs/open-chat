@@ -1,5 +1,4 @@
 import type {
-    AcceptP2PSwapResponse,
     AddMembersToChannelResponse,
     BlockCommunityUserResponse,
     ChangeCommunityRoleResponse,
@@ -76,8 +75,6 @@ import type {
     ApiSetMemberDisplayNameResponse,
     ApiFollowThreadResponse,
     ApiUnfollowThreadResponse,
-    ApiAcceptP2PSwapResponse,
-    ApiCancelP2PSwapResponse,
 } from "./candid/idl";
 import {
     accessGate,
@@ -93,7 +90,6 @@ import {
     mention,
     messageContent,
     messageEvent,
-    statusError,
     threadDetails,
     userGroup,
 } from "../common/chatMappers";
@@ -103,7 +99,6 @@ import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import type { Principal } from "@dfinity/principal";
 import { ReplicaNotUpToDateError } from "../error";
 import type { ReportMessageResponse } from "./candid/types";
-import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse,
@@ -750,39 +745,4 @@ export function followThreadResponse(
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
-}
-
-export function acceptP2PSwapResponse(candid: ApiAcceptP2PSwapResponse): AcceptP2PSwapResponse {
-    if ("Success" in candid) {
-        return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
-    }
-    if ("StatusError" in candid) {
-        return statusError(candid.StatusError);
-    }
-    if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
-    if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
-    if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
-    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
-    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
-    if ("UserSuspended" in candid) return { kind: "user_suspended" };
-    if ("InternalError" in candid) return { kind: "internal_error", text: candid.InternalError };
-    if ("InsufficientFunds" in candid) return { kind: "insufficient_funds" };
-
-    throw new UnsupportedValueError("Unexpected ApiAcceptP2PSwapResponse type received", candid);
-}
-
-export function cancelP2PSwapResponse(candid: ApiCancelP2PSwapResponse): CancelP2PSwapResponse {
-    if ("Success" in candid) {
-        return { kind: "success" };
-    }
-    if ("StatusError" in candid) {
-        return statusError(candid.StatusError);
-    }
-    if ("UserNotInCommunity" in candid) return { kind: "user_not_in_community" };
-    if ("UserNotInChannel" in candid) return { kind: "user_not_in_channel" };
-    if ("ChannelNotFound" in candid) return { kind: "channel_not_found" };
-    if ("ChatFrozen" in candid) return { kind: "chat_frozen" };
-    if ("SwapNotFound" in candid) return { kind: "swap_not_found" };
-
-    throw new UnsupportedValueError("Unexpected ApiCancelP2PSwapResponse type received", candid);
 }

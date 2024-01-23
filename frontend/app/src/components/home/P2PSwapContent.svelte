@@ -1,6 +1,12 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import type { MessageContext, OpenChat, P2PSwapContent } from "openchat-client";
+    import type {
+        AcceptP2PSwapResponse,
+        CancelP2PSwapResponse,
+        MessageContext,
+        OpenChat,
+        P2PSwapContent,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
@@ -22,6 +28,8 @@
     export let messageContext: MessageContext;
     export let messageId: bigint;
     export let me: boolean;
+    export let reply: boolean;
+    export let pinned: boolean;
 
     let buttonText: ResourceKey;
     let instructionText: string | undefined = undefined;
@@ -45,7 +53,7 @@
 
     $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
     $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
-    $: buttonDisabled = content.status.kind !== "p2p_swap_open";
+    $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
 
     $: {
         if (content.status.kind === "p2p_swap_open") {
@@ -117,7 +125,7 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        toastStore.showFailureToast(i18nKey("p2pSwap." + resp.kind));
+                        showFailureToast(resp);
                     }
                 });
         }
@@ -137,10 +145,20 @@
                 )
                 .then((resp) => {
                     if (resp.kind !== "success") {
-                        toastStore.showFailureToast(i18nKey("p2pSwap." + resp.kind));
+                        showFailureToast(resp);
                     }
                 });
         }
+    }
+
+    function showFailureToast(response: AcceptP2PSwapResponse | CancelP2PSwapResponse) {
+        let key: string = response.kind;
+
+        if (key === "already_reserved" || "already_completed") {
+            key = "already_accepted";
+        }
+
+        toastStore.showFailureToast(i18nKey("p2pSwap." + key));
     }
 </script>
 

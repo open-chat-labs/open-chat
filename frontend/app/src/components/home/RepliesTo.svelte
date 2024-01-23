@@ -4,9 +4,9 @@
     import {
         type RehydratedReplyContext,
         OpenChat,
-        type ChatIdentifier,
         routeForChatIdentifier,
         chatIdentifiersEqual,
+        type ChatIdentifier,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
@@ -34,17 +34,13 @@
     $: displayName = me
         ? client.toTitleCase($_("you"))
         : client.getDisplayNameById(repliesTo.senderId, $communityMembers);
-    $: messageContext = {
-        chatId,
-        threadRootMessageIndex: repliesTo.sourceContext.threadRootMessageIndex,
-    };
 
     function getUrl() {
         const path = [
             routeForChatIdentifier($chatListScope.kind, repliesTo.sourceContext.chatId),
-            messageContext.threadRootMessageIndex ?? repliesTo.messageIndex,
+            repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
-        if (messageContext.threadRootMessageIndex !== undefined) {
+        if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
             path.push(repliesTo.messageIndex);
         }
         return path.join("/");
@@ -75,7 +71,7 @@
             <ChatMessageContent
                 {me}
                 {readonly}
-                {messageContext}
+                messageContext={repliesTo.sourceContext}
                 {intersecting}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}
