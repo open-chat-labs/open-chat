@@ -3,7 +3,7 @@ use crate::pusher::Pusher;
 use crate::reader::Reader;
 use crate::subscription_remover::SubscriptionRemover;
 use index_store::IndexStore;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 use tracing::info;
 use types::{CanisterId, UserId};
 use web_push::SubscriptionInfo;
@@ -36,7 +36,7 @@ pub async fn run_notifications_pusher<I: IndexStore + 'static>(
         tokio::spawn(reader.run());
     }
 
-    let invalid_subscriptions = Arc::new(Mutex::default());
+    let invalid_subscriptions = Arc::new(RwLock::default());
     for _ in 0..pusher_count {
         let pusher = Pusher::new(
             receiver.clone(),
