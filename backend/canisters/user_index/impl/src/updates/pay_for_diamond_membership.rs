@@ -131,14 +131,14 @@ fn process_charge(
                 send_bot_message: true,
             }),
         );
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
+        crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
 
         if let Some(user) = state.data.users.get_by_user_id(&user_id) {
             state.data.storage_index_user_sync_queue.push(UserConfig {
                 user_id: user.principal,
                 byte_limit: ONE_GB,
             });
-            crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
+            crate::jobs::sync_users_to_storage_index::try_run_now(state);
         }
 
         if recurring {

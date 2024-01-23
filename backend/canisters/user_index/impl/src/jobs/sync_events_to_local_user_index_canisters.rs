@@ -20,13 +20,29 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     }
 }
 
-pub fn run() {
+pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
+    if let Some(batch) = next_batch(state) {
+        if let Some(timer_id) = TIMER_ID.get() {
+            ic_cdk_timers::clear_timer(timer_id);
+        }
+        ic_cdk::spawn(process_batch(batch));
+        true
+    } else {
+        false
+    }
+}
+
+fn run() {
     trace!("'sync_events_to_local_user_index_canisters' job running");
     TIMER_ID.set(None);
 
-    if let Some(batch) = mutate_state(|state| state.data.user_index_event_sync_queue.try_start_batch()) {
+    if let Some(batch) = mutate_state(next_batch) {
         ic_cdk::spawn(process_batch(batch));
     }
+}
+
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<LocalUserIndexEvent>)>> {
+    state.data.user_index_event_sync_queue.try_start_batch()
 }
 
 async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {
