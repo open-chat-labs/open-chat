@@ -36,7 +36,6 @@ import type {
     TimelineItem,
     TipsReceived,
     ThreadSummary,
-    PrizeContent,
     MessagePermission,
     ChatPermissions,
     OptionalChatPermissions,
@@ -1091,6 +1090,10 @@ export function canSendGroupMessage(
             ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
             : chat.permissions.messagePermissions;
 
+    if (permission === "prize" && mode === "thread") {
+        return false;
+    }
+
     return (
         !chat.frozen &&
         isPermitted(
@@ -1252,26 +1255,6 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
-    let content = msg.content;
-    if (resp.kind === "transfer_success") {
-        switch (msg.content.kind) {
-            case "crypto_content":
-                content = { ...msg.content, transfer: resp.transfer } as CryptocurrencyContent;
-                break;
-            case "prize_content_initial":
-                content = {
-                    kind: "prize_content",
-                    prizesRemaining: msg.content.prizes.length,
-                    prizesPending: 0,
-                    winners: [],
-                    token: msg.content.transfer.token,
-                    endDate: msg.content.endDate,
-                    caption: msg.content.caption,
-                    diamondOnly: msg.content.diamondOnly,
-                } as PrizeContent;
-                break;
-        }
-    }
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
@@ -1279,7 +1262,6 @@ export function mergeSendMessageResponse(
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
-            content,
         },
     };
 }
@@ -1470,11 +1452,19 @@ function mergeLocalUpdates(
     if (localUpdates?.prizeClaimed !== undefined) {
         if (message.content.kind === "prize_content") {
             if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
+                message.content = { ...message.content };
                 message.content.winners.push(localUpdates.prizeClaimed);
                 message.content.prizesRemaining -= 1;
                 message.content.prizesPending += 1;
             }
         }
+    }
+
+    if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
+        message.content = {
+            ...message.content,
+            status: localUpdates.p2pSwapStatus,
+        };
     }
 
     if (localUpdates?.reactions !== undefined) {
@@ -1901,6 +1891,7 @@ function diffMessagePermissions(
     diff.giphy = updateFromOptions(original.giphy, updated.giphy);
     diff.prize = updateFromOptions(original.prize, updated.prize);
     diff.memeFighter = updateFromOptions(original.memeFighter, updated.memeFighter);
+    diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
 }

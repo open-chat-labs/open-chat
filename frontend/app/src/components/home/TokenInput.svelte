@@ -12,7 +12,7 @@
     export let amount: bigint = BigInt(0);
     export let autofocus: boolean = false;
     export let minAmount: bigint = BigInt(0);
-    export let maxAmount: bigint;
+    export let maxAmount: bigint | undefined = undefined;
     export let ledger: string;
     export let valid: boolean = false;
     export let state: "ok" | "zero" | "too_low" | "too_high" = "zero";
@@ -57,7 +57,9 @@
     }
 
     function max() {
-        amount = maxAmount;
+        if (maxAmount !== undefined) {
+            amount = maxAmount;
+        }
         validate();
     }
 
@@ -66,7 +68,7 @@
             state = "zero";
         } else if (amount < minAmount) {
             state = "too_low";
-        } else if (amount > maxAmount) {
+        } else if (maxAmount !== undefined && amount > maxAmount) {
             state = "too_high";
         } else {
             state = "ok";
@@ -77,9 +79,11 @@
 
 <div class="label">
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
+{#if maxAmount !== undefined}
     <div on:click={max} class="max">
         <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
     </div>
+{/if}
 </div>
 <div class="wrapper">
     {#if transferFees !== undefined}
@@ -97,8 +101,8 @@
     <input
         {autofocus}
         class="amount-val"
-        min={Number(maxAmount) / Math.pow(10, tokenDecimals)}
-        max={Number(maxAmount) / Math.pow(10, tokenDecimals)}
+        min={Number(minAmount) / Math.pow(10, tokenDecimals)}
+        max={maxAmount !== undefined ? Number(maxAmount) / Math.pow(10, tokenDecimals) : undefined}
         type="number"
         step="0.00000001"
         bind:this={inputElement}

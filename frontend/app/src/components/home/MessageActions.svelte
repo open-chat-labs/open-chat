@@ -5,6 +5,7 @@
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -48,6 +49,11 @@
 
     function createPrizeMessage() {
         dispatch("createPrizeMessage");
+        drawOpen = false;
+    }
+
+    function createP2PSwapMessage() {
+        dispatch("createP2PSwapMessage");
         drawOpen = false;
     }
 
@@ -115,6 +121,9 @@
         }
         if (permissions.get("prize")) {
             actions.set("prize", cssValues(++index));
+        }
+        if (permissions.get("p2pSwap")) {
+            actions.set("swap", cssValues(++index));
         }
         return actions;
     }
@@ -236,6 +245,16 @@
                 </HoverIcon>
             </div>
         {/if}
+        {#if supportedActions.has("swap")}
+            <div
+                style={`${supportedActions.get("swap")}`}
+                class="swap"
+                on:click|stopPropagation={createP2PSwapMessage}>
+                <HoverIcon title={$_("p2pSwap.builderTitle")}>
+                    <SwapIcon size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
     {/if}
 </div>
 
@@ -264,6 +283,7 @@
     .meme,
     .poll,
     .prize,
+    .swap,
     .send-icp {
         flex: 0 0 15px;
     }
@@ -290,6 +310,7 @@
             .meme,
             .send-icp,
             .prize,
+            .swap,
             .poll {
                 top: -18px;
                 left: toRem(-44);
@@ -308,6 +329,7 @@
                 .meme,
                 .send-icp,
                 .prize,
+                .swap,
                 .poll {
                     left: unset;
                     right: toRem(-44);
@@ -324,6 +346,7 @@
                 .gif,
                 .meme,
                 .poll,
+                .swap,
                 .prize {
                     top: var(--top);
                     transition-delay: var(--transition-delay);

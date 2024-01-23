@@ -32,13 +32,10 @@
             },
             "",
         );
-        messagePartition = partitionMessagePermissions(
-            permissions.messagePermissions,
-            "messagePermissions.",
-        );
+        messagePartition = partitionMessagePermissions(permissions.messagePermissions, false);
         threadPartition = partitionMessagePermissions(
             permissions.threadPermissions ?? permissions.messagePermissions,
-            "threadPermissions.",
+            true,
         );
     }
 
@@ -46,22 +43,28 @@
 
     function partitionMessagePermissions(
         mps: MessagePermissions,
-        translationExt: string,
+        thread: boolean,
     ): PermissionsByRole {
+        let permissions: Record<string, ChatPermissionRole> = {
+            text: mps.text ?? mps.default,
+            image: mps.image ?? mps.default,
+            video: mps.video ?? mps.default,
+            audio: mps.audio ?? mps.default,
+            file: mps.file ?? mps.default,
+            poll: mps.poll ?? mps.default,
+            crypto: mps.crypto ?? mps.default,
+            giphy: mps.giphy ?? mps.default,
+            memeFighter: mps.memeFighter ?? mps.default,
+            p2pSwap: mps.p2pSwap ?? mps.default,
+        };
+
+        if (!thread) {
+            permissions = { ...permissions, prize: mps.prize ?? mps.default };
+        }
+
         return partitionPermissions(
-            {
-                text: mps.text ?? mps.default,
-                image: mps.image ?? mps.default,
-                video: mps.video ?? mps.default,
-                audio: mps.audio ?? mps.default,
-                file: mps.file ?? mps.default,
-                poll: mps.poll ?? mps.default,
-                crypto: mps.crypto ?? mps.default,
-                giphy: mps.giphy ?? mps.default,
-                prize: mps.prize ?? mps.default,
-                memeFighter: mps.memeFighter ?? mps.default,
-            },
-            translationExt,
+            permissions,
+            thread ? "threadPermissions." : "messagePermissions.",
         );
     }
 

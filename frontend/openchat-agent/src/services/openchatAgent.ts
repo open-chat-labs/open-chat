@@ -189,6 +189,8 @@ import type {
     CommunityCanisterCommunitySummaryUpdates,
     TranslationCorrections,
     TranslationCorrection,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -402,11 +404,12 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "channel") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_swap_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -430,11 +433,12 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "group_chat") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_swap_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -3108,4 +3112,38 @@ export class OpenChatAgent extends EventTarget {
     reportedMessages(userId: string | undefined): Promise<string> {
         return this._userIndexClient.reportedMessages(userId);
     }
+
+    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).acceptP2PSwap(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).acceptP2PSwap(
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else {
+            return this.userClient.acceptP2PSwap(chatId.userId, messageId);
+        }
+    }    
+
+    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).cancelP2PSwap(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).cancelP2PSwap(
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else {
+            return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+        }
+    }    
 }

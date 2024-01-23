@@ -28,6 +28,7 @@ import type {
     ChatNotFound,
     CommunityFrozen,
     Failure,
+    InternalError,
     NotAuthorised,
     Offline,
     Success,
@@ -125,6 +126,7 @@ export type AddMembersToChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
+    | InternalError
     | Offline;
 
 export type BlockCommunityUserResponse = Success | Failure | Offline;

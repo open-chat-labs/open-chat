@@ -123,7 +123,7 @@
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo chatId={chat.id} readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />
@@ -154,6 +154,7 @@
         on:searchChat
         on:tokenTransfer
         on:createPrizeMessage
+        on:createP2PSwapMessage
         on:attachGif
         on:makeMeme
         on:clearAttachment
