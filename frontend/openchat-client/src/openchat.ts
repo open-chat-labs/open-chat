@@ -459,6 +459,7 @@ import {
 import type { SendMessageResponse } from "openchat-shared";
 import { applyTranslationCorrection } from "./stores/i18n";
 import { getUserCountryCode } from "./utils/location";
+import type { TranslationRejectionReason } from "openchat-shared";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3196,27 +3197,31 @@ export class OpenChat extends OpenChatAgentWorker {
 
         // TODO - what about mentions?
         this.sendMessageCommon(
-            chat, 
+            chat,
             messageContext,
             retryEvent,
             [],
             rulesAccepted,
-            communityRulesAccepted);
+            communityRulesAccepted,
+        );
     }
 
     private async sendMessageCommon(
         chat: ChatSummary,
-        messageContext: MessageContext, 
-        eventWrapper: EventWrapper<Message>, 
+        messageContext: MessageContext,
+        eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined): Promise<void> {
-
-        const {chatId, threadRootMessageIndex} = messageContext;
+        communityRulesAccepted: number | undefined = undefined,
+    ): Promise<void> {
+        const { chatId, threadRootMessageIndex } = messageContext;
 
         const canRetry = this.canRetryMessage(eventWrapper.event.content);
 
-        const messageFilterFailed = doesMessageFailFilter(eventWrapper.event, get(messageFiltersStore));
+        const messageFilterFailed = doesMessageFailFilter(
+            eventWrapper.event,
+            get(messageFiltersStore),
+        );
 
         this.sendRequest({
             kind: "sendMessage",
@@ -3229,59 +3234,59 @@ export class OpenChat extends OpenChatAgentWorker {
             communityRulesAccepted,
             messageFilterFailed,
         })
-        .then(([resp, msg]) => {
-            if (resp.kind === "success" || resp.kind === "transfer_success") {
-                this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                    this.refreshAccountBalance(msg.content.transfer.ledger);
-                }
-                if (threadRootMessageIndex !== undefined) {
-                    trackEvent("sent_threaded_message");
-                } else {
-                    if (chat.kind === "direct_chat") {
-                        trackEvent("sent_direct_message");
+            .then(([resp, msg]) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                        this.refreshAccountBalance(msg.content.transfer.ledger);
+                    }
+                    if (threadRootMessageIndex !== undefined) {
+                        trackEvent("sent_threaded_message");
                     } else {
-                        if (chat.public) {
-                            trackEvent("sent_public_group_message");
+                        if (chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
                         } else {
-                            trackEvent("sent_private_group_message");
+                            if (chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
                         }
                     }
-                }
-                if (msg.repliesTo !== undefined) {
-                    // double counting here which I think is OK since we are limited to string events
-                    trackEvent("replied_to_message");
-                }
-            } else {
-                if (resp.kind == "rules_not_accepted") {
-                    this.markChatRulesAcceptedLocally(false);
-                }
+                    if (msg.repliesTo !== undefined) {
+                        // double counting here which I think is OK since we are limited to string events
+                        trackEvent("replied_to_message");
+                    }
+                } else {
+                    if (resp.kind == "rules_not_accepted") {
+                        this.markChatRulesAcceptedLocally(false);
+                    }
 
-                if (resp.kind == "community_rules_not_accepted") {
-                    this.markCommunityRulesAcceptedLocally(false);
-                }
+                    if (resp.kind == "community_rules_not_accepted") {
+                        this.markCommunityRulesAcceptedLocally(false);
+                    }
 
+                    this.onSendMessageFailure(
+                        chatId,
+                        msg.messageId,
+                        threadRootMessageIndex,
+                        eventWrapper,
+                        canRetry,
+                        resp,
+                    );
+                }
+            })
+            .catch((err) => {
                 this.onSendMessageFailure(
                     chatId,
-                    msg.messageId,
+                    eventWrapper.event.messageId,
                     threadRootMessageIndex,
                     eventWrapper,
                     canRetry,
-                    resp,
+                    undefined,
+                    err,
                 );
-            }
-        })
-        .catch((err) => {
-            this.onSendMessageFailure(
-                chatId,
-                eventWrapper.event.messageId,
-                threadRootMessageIndex,
-                eventWrapper,
-                canRetry,
-                undefined,
-                err,
-            );
-        });
+            });
     }
 
     private canRetryMessage(content: MessageContent): boolean {
@@ -3396,12 +3401,13 @@ export class OpenChat extends OpenChatAgentWorker {
         };
 
         this.sendMessageCommon(
-            chat, 
+            chat,
             messageContext,
             event,
             mentioned,
             rulesAccepted,
-            communityRulesAccepted);
+            communityRulesAccepted,
+        );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
     }
@@ -5069,14 +5075,26 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: this._liveState.user.userId,
         });
-        return this.sendRequest({ kind: "acceptP2PSwap", chatId, threadRootMessageIndex, messageId })
+        return this.sendRequest({
+            kind: "acceptP2PSwap",
+            chatId,
+            threadRootMessageIndex,
+            messageId,
+        })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId));
+                localMessageUpdates.setP2PSwapStatus(
+                    messageId,
+                    mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
+                );
                 return resp;
             })
             .catch((err) => {
@@ -5086,13 +5104,25 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+    cancelP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_cancelled",
         });
-        return this.sendRequest({ kind: "cancelP2PSwap", chatId, threadRootMessageIndex, messageId })
+        return this.sendRequest({
+            kind: "cancelP2PSwap",
+            chatId,
+            threadRootMessageIndex,
+            messageId,
+        })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, mapCancelP2PSwapResponseToStatus(resp));
+                localMessageUpdates.setP2PSwapStatus(
+                    messageId,
+                    mapCancelP2PSwapResponseToStatus(resp),
+                );
                 return resp;
             })
             .catch((err) => {
@@ -5625,14 +5655,18 @@ export class OpenChat extends OpenChatAgentWorker {
         return community.localUserIndex;
     }
 
+    previewTranslationCorrection(correction: TranslationCorrection): void {
+        applyTranslationCorrection(correction);
+    }
+
     setTranslationCorrection(locale: string, key: string, value: string): Promise<boolean> {
-        const correction = {
+        const correction: TranslationCorrection = {
             locale,
             key,
             value,
             proposedBy: this._liveState.user.userId,
             proposedAt: Date.now(),
-            approved: false,
+            status: "pending",
         };
         return this.sendRequest({
             kind: "setTranslationCorrection",
@@ -5653,10 +5687,12 @@ export class OpenChat extends OpenChatAgentWorker {
 
     rejectTranslationCorrection(
         correction: TranslationCorrection,
+        reason: TranslationRejectionReason
     ): Promise<TranslationCorrections> {
         return this.sendRequest({
             kind: "rejectTranslationCorrection",
             correction,
+            reason
         });
     }
 

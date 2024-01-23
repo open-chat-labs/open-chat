@@ -1465,7 +1465,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.rejectTranslationCorrection(payload.correction),
+                    agent.rejectTranslationCorrection(payload.correction, payload.reason),
                 );
                 break;
 

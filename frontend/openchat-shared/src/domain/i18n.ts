@@ -6,8 +6,10 @@ export type TranslationCorrection = {
     value: string;
     proposedBy: string;
     proposedAt: number;
-    approved: boolean;
+    status: "pending" | "approved" | "rejected" | "deployed";
 };
+
+export type TranslationRejectionReason = "bad_translation" | "layout_problem";
 
 /**
  * This is a flattened version of what gets stored in the i18n translation dictionaries. These corrections

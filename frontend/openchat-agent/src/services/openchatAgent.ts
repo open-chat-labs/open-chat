@@ -216,6 +216,7 @@ import {
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
+import type { TranslationRejectionReason } from "openchat-shared";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -409,7 +410,9 @@ export class OpenChatAgent extends EventTarget {
             ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -438,7 +441,9 @@ export class OpenChatAgent extends EventTarget {
             ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -3091,8 +3096,9 @@ export class OpenChatAgent extends EventTarget {
 
     rejectTranslationCorrection(
         correction: TranslationCorrection,
+        reason: TranslationRejectionReason,
     ): Promise<TranslationCorrections> {
-        console.log("Rejecting translation correction: ", correction);
+        console.log("Rejecting translation correction: ", correction, reason);
         // TODO - for now I'm just going to record these corrections in indexed db
         // eventually we will want an api, but let's get the shape right first
         return this.getTranslationCorrections();
@@ -3113,7 +3119,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.reportedMessages(userId);
     }
 
-    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
                 chatId.channelId,
@@ -3128,9 +3138,13 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.acceptP2PSwap(chatId.userId, messageId);
         }
-    }    
+    }
 
-    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+    cancelP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).cancelP2PSwap(
                 chatId.channelId,
@@ -3145,5 +3159,5 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.cancelP2PSwap(chatId.userId, messageId);
         }
-    }    
+    }
 }

@@ -147,7 +147,11 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
-import type { TranslationCorrection, TranslationCorrections } from "./i18n";
+import type {
+    TranslationCorrection,
+    TranslationCorrections,
+    TranslationRejectionReason,
+} from "./i18n";
 /**
  * Worker request types
  */
@@ -338,6 +342,7 @@ type ApproveTranslationCorrection = {
 type RejectTranslationCorrection = {
     kind: "rejectTranslationCorrection";
     correction: TranslationCorrection;
+    reason: TranslationRejectionReason;
 };
 
 type LoadSavedCryptoAccounts = {
