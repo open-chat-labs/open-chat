@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid sending prize winner notifications ([#5236](https://github.com/open-chat-labs/open-chat/pull/5236))
+
 ### Fixed
 
 - Fix p2p swaps in threads which weren't being marked as updated ([#5235](https://github.com/open-chat-labs/open-chat/pull/5235))
