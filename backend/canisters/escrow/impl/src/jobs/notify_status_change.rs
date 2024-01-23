@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use canister_client::make_c2c_call;
 use escrow_canister::SwapStatusChange;
 use ic_cdk_timers::TimerId;
@@ -13,9 +13,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.notify_status_change_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'notify_status_change' job started");
         true
     } else {
         false
@@ -23,11 +22,12 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'notify_status_change' job running");
+    TIMER_ID.set(None);
+
     if let Some((canister_id, notification)) = mutate_state(get_next) {
         ic_cdk::spawn(notify_swap_status(canister_id, notification));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'notify_status_change' job stopped");
+        read_state(start_job_if_required);
     }
 }
 
