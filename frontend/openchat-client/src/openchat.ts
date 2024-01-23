@@ -362,6 +362,8 @@ import type {
     DiamondMembershipStatus,
     TranslationCorrections,
     TranslationCorrection,
+    Success,
+    Failure,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -947,28 +949,32 @@ export class OpenChat extends OpenChatAgentWorker {
             });
     }
 
-    previewChat(
-        chatId: MultiUserChatIdentifier,
-    ): Promise<{ kind: "success" } | { kind: "failure" } | GroupMoved> {
+    previewChat(chatId: MultiUserChatIdentifier): Promise<Success | Failure | GroupMoved> {
         switch (chatId.kind) {
             case "group_chat":
-                return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((resp) => {
-                    if (resp.kind === "success" && !resp.group.frozen) {
-                        addGroupPreview(resp.group);
-                        return { kind: "success" };
-                    } else if (resp.kind === "group_moved") {
-                        return resp;
-                    }
-                    return { kind: "failure" };
-                });
+                return this.sendRequest({ kind: "getPublicGroupSummary", chatId })
+                    .then((resp) => {
+                        if (resp.kind === "success" && !resp.group.frozen) {
+                            addGroupPreview(resp.group);
+                            return CommonResponses.success();
+                        } else if (resp.kind === "group_moved") {
+                            return resp;
+                        }
+                        return CommonResponses.failure();
+                    })
+                    .catch(() => {
+                        return CommonResponses.failure();
+                    });
             case "channel":
-                return this.sendRequest({ kind: "getChannelSummary", chatId }).then((resp) => {
-                    if (resp.kind === "channel") {
-                        addGroupPreview(resp);
-                        return { kind: "success" };
-                    }
-                    return { kind: "failure" };
-                });
+                return this.sendRequest({ kind: "getChannelSummary", chatId })
+                    .then((resp) => {
+                        if (resp.kind === "channel") {
+                            addGroupPreview(resp);
+                            return CommonResponses.success();
+                        }
+                        return CommonResponses.failure();
+                    })
+                    .catch(() => CommonResponses.failure());
         }
     }
 
@@ -4417,12 +4423,14 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
-        return this.sendRequest({ kind: "getUser", userId, allowStale }).then((resp) => {
-            if (resp !== undefined) {
-                userStore.add(resp);
-            }
-            return resp;
-        });
+        return this.sendRequest({ kind: "getUser", userId, allowStale })
+            .then((resp) => {
+                if (resp !== undefined) {
+                    userStore.add(resp);
+                }
+                return resp;
+            })
+            .catch(() => undefined);
     }
 
     getUserStatus(userId: string, now: number): Promise<UserStatus> {

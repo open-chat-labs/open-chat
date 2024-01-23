@@ -196,11 +196,14 @@ impl Data {
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
         let deleted_group_metrics = self.deleted_groups.metrics();
+        let deleted_community_metrics = self.deleted_communities.metrics();
 
         let mut cached_metrics = CachedMetrics {
             last_run: now,
             deleted_public_groups: deleted_group_metrics.public,
             deleted_private_groups: deleted_group_metrics.private,
+            deleted_public_communities: deleted_community_metrics.public,
+            deleted_private_communities: deleted_community_metrics.private,
             ..Default::default()
         };
 

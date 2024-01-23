@@ -1,5 +1,5 @@
 use crate::model::user_principal_migration_queue::CanisterToNotifyOfUserPrincipalMigration;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -14,9 +14,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.user_principal_migration_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'notify_user_principal_migrations' job started");
         true
     } else {
         false
@@ -24,13 +23,14 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'notify_user_principal_migrations' job running");
+    TIMER_ID.set(None);
+
     let next_batch = mutate_state(next_batch);
     if !next_batch.is_empty() {
         ic_cdk::spawn(notify_many(next_batch));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'notify_user_principal_migrations' job stopped");
     }
+    read_state(start_job_if_required);
 }
 
 fn next_batch(state: &mut RuntimeState) -> Vec<(UserId, CanisterToNotifyOfUserPrincipalMigration)> {
@@ -46,6 +46,8 @@ async fn notify_many(canisters: Vec<(UserId, CanisterToNotifyOfUserPrincipalMigr
         .collect();
 
     futures::future::join_all(futures).await;
+
+    read_state(start_job_if_required);
 }
 
 async fn notify(user_id: UserId, canister: CanisterToNotifyOfUserPrincipalMigration) {
@@ -71,7 +73,6 @@ async fn notify(user_id: UserId, canister: CanisterToNotifyOfUserPrincipalMigrat
         Ok(_) => state.data.user_principal_migration_queue.mark_success(user_id),
         Err(_) => {
             state.data.user_principal_migration_queue.mark_failure(user_id, canister);
-            start_job_if_required(state);
         }
     });
 }
