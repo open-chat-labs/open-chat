@@ -141,9 +141,18 @@
     </p>
 
     <p>Approved translation corrections will be rewarded with a tip in CHAT to the translator.</p>
+</section>
+
+<section>
+    <h2>Can I still review translations the old way?</h2>
 
     <p>
-        We hope you like this feature and that as many of you as possible make use of it to help us
-        improve OpenChat together.
+        We are incredibly grateful to those of you who have helped us correct translations in the
+        past whether it is via a github pull request which directly updates [the language
+        files](https://github.com/open-chat-labs/open-chat/tree/master/frontend/app/src/i18n) or by
+        just reaching out to us in whatever way you choose with individual corrections. You can of
+        course continue to do this as well if you prefer. We just hope that this new mechanism will
+        make things a little bit easier and allow as many of you as possible to help us continuously
+        improve OpenChat.
     </p>
 </section>
