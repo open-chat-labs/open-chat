@@ -26,7 +26,7 @@ fn add_referral_codes(args: Args) -> Response {
                 }),
             );
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
+        crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
     });
 
     Success

@@ -18,6 +18,7 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     NotifyEscrowCanisterOfDeposit(NotifyEscrowCanisterOfDepositJob),
     CancelP2PSwapInEscrowCanister(CancelP2PSwapInEscrowCanisterJob),
+    MarkP2PSwapExpired(MarkP2PSwapExpiredJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -94,6 +95,12 @@ impl CancelP2PSwapInEscrowCanisterJob {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkP2PSwapExpiredJob {
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+}
+
 impl Job for TimerJob {
     fn execute(self) {
         match self {
@@ -105,6 +112,7 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
             TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
+            TimerJob::MarkP2PSwapExpired(job) => job.execute(),
         }
     }
 }
@@ -332,5 +340,17 @@ impl Job for CancelP2PSwapInEscrowCanisterJob {
                 response => error!(?response, "Failed to cancel p2p swap"),
             };
         })
+    }
+}
+
+impl Job for MarkP2PSwapExpiredJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            state
+                .data
+                .chat
+                .events
+                .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now())
+        });
     }
 }

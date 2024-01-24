@@ -125,7 +125,7 @@ impl RuntimeState {
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
-            jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+            jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
         }
     }
 
@@ -135,7 +135,7 @@ impl RuntimeState {
                 self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
-        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
