@@ -23,6 +23,19 @@ fn principal_update_propagates_to_all_relevant_canisters() {
         community_id,
     } = init_test_data(env, canister_ids, *controller);
 
+    let file_bytes = random_string().into_bytes();
+    let allocated_bucket_response =
+        client::storage_index::happy_path::allocated_bucket(env, user.principal, canister_ids.storage_index, &file_bytes);
+
+    client::storage_bucket::happy_path::upload_file(
+        env,
+        user.principal,
+        allocated_bucket_response.canister_id,
+        allocated_bucket_response.file_id,
+        file_bytes,
+        None,
+    );
+
     let (new_principal, _) = random_user_principal();
 
     client::identity::update_user_principal(
@@ -50,6 +63,15 @@ fn principal_update_propagates_to_all_relevant_canisters() {
         "p256dh",
     );
     client::storage_index::happy_path::user(env, new_principal, canister_ids.storage_index);
+    assert!(
+        client::storage_bucket::happy_path::file_info(
+            env,
+            new_principal,
+            allocated_bucket_response.canister_id,
+            allocated_bucket_response.file_id
+        )
+        .is_owner
+    );
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
