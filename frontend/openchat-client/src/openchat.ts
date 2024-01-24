@@ -5781,9 +5781,9 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).catch(() => {
-            kind: "failure";
-        });
+        }).catch(() => ({
+            kind: "failure",
+        }));
     }
 
     private addToFavouritesLocally(chatId: ChatIdentifier): void {
