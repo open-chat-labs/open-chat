@@ -136,7 +136,7 @@ fn should_suspend_sender(sender: UserId, outcome: &ReportOutcome, state: &Runtim
             .filter_map(|i| state.data.reported_messages.get(*i))
             .filter(|r| r.rejected())
             .count()
-            >= 2
+            > 2
         {
             (
                 SuspensionDuration::Indefinitely,
