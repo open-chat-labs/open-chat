@@ -52,12 +52,9 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(default)]
     pub swaps: Swaps,
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub notify_status_change_queue: NotifyStatusChangeQueue,
-    #[serde(default)]
     timer_jobs: TimerJobs<TimerJob>,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],

@@ -13,8 +13,3 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
 ./upgrade-canister.sh ic https://ic0.app/ $IDENTITY $CANISTER_NAME $VERSION $WASM_SRC
-
-cd ..
-SCRIPT=$(echo "jq '.$CANISTER_NAME = \"$COMMIT_ID\"' canister_commit_ids.json")
-eval $SCRIPT > canister_commit_ids_new.json
-mv canister_commit_ids_new.json canister_commit_ids.json
