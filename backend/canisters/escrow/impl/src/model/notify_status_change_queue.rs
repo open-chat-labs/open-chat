@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct NotifyStatusChangeQueue {
-    #[serde(default)]
     swaps: VecDeque<u32>,
 }
 
