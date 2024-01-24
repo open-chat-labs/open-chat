@@ -35,6 +35,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
         set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
         set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -103,6 +104,13 @@ async fn install_service_canisters_impl(
     let identity_init_args = identity_canister::init::Args {
         governance_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
+    let translations_init_args = translations_canister::init::Args {
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -277,7 +285,7 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join(
+    futures::future::join3(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
@@ -289,6 +297,12 @@ async fn install_service_canisters_impl(
             &canister_ids.escrow,
             &escrow_canister_wasm.module,
             escrow_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.translations,
+            &translations_canister_wasm.module,
+            translations_init_args,
         ),
     )
     .await;

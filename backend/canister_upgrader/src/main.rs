@@ -36,6 +36,7 @@ async fn main() {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
         CanisterName::Registry => upgrade_registry_canister(identity, opts.url, opts.registry, opts.version).await,
+        CanisterName::Translations => upgrade_registry_canister(identity, opts.url, opts.translations, opts.version).await,
         CanisterName::StorageBucket => {
             upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
@@ -84,6 +85,9 @@ struct Opts {
 
     #[arg(long)]
     registry: CanisterId,
+
+    #[arg(long)]
+    translations: CanisterId,
 
     #[arg(long)]
     market_maker: CanisterId,

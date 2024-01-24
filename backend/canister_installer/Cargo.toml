@@ -26,6 +26,7 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 registry_canister = { path = "../canisters/registry/api" }
 storage_index_canister = { path = "../canisters/storage_index/api" }
 tokio = { workspace = true, features = ["full"] }
+translations_canister = { path = "../canisters/translations/api" }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }

@@ -80,6 +80,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let cycles_dispenser_canister_id = create_canister(env, controller);
     let registry_canister_id = create_canister(env, controller);
     let escrow_canister_id = create_canister(env, controller);
+    let translations_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -100,6 +101,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
+    let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
@@ -181,6 +183,19 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         identity_canister_id,
         identity_canister_wasm,
         identity_init_args,
+    );
+
+    let translations_init_args = translations_canister::init::Args {
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        translations_canister_id,
+        translations_canister_wasm,
+        translations_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -411,6 +426,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         icp_ledger: nns_ledger_canister_id,
         chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
+        translations: translations_canister_id,
     }
 }
 
