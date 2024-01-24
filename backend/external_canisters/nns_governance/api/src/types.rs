@@ -350,6 +350,7 @@ pub struct ProposalInfo {
     pub reject_cost_e8s: u64,
     pub proposal: Option<Proposal>,
     pub proposal_timestamp_seconds: u64,
+    pub ballots: HashMap<u64, Ballot>,
     pub latest_tally: Option<Tally>,
     pub decided_timestamp_seconds: u64,
     pub executed_timestamp_seconds: u64,
@@ -369,6 +370,12 @@ pub struct Proposal {
     pub url: String,
     #[serde(deserialize_with = "ok_or_default")]
     pub action: Option<proposal::Action>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Ballot {
+    pub vote: i32,
+    pub voting_power: u64,
 }
 
 fn ok_or_default<'de, T, D>(deserializer: D) -> Result<T, D::Error>
@@ -622,9 +629,21 @@ pub struct NeuronId {
     pub id: u64,
 }
 
+impl From<u64> for NeuronId {
+    fn from(value: u64) -> Self {
+        NeuronId { id: value }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalId {
     pub id: u64,
+}
+
+impl From<u64> for ProposalId {
+    fn from(value: u64) -> Self {
+        ProposalId { id: value }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
