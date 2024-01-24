@@ -5,14 +5,17 @@
     import BlockedUser from "./BlockedUser.svelte";
     import MembersHeader from "./MembersHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
-    import type {
-        FullMember,
-        Member as MemberType,
-        OpenChat,
-        UserSummary,
-        UserLookup,
-        CommunitySummary,
-        MultiUserChat,
+    import {
+        type FullMember,
+        type Member as MemberType,
+        type OpenChat,
+        type UserSummary,
+        type UserLookup,
+        type CommunitySummary,
+        type MultiUserChat,
+        type CommunityIdentifier,
+        type MultiUserChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import SelectionButton from "../SelectionButton.svelte";
@@ -62,7 +65,7 @@
     $: searchTermLower = searchTerm.toLowerCase();
 
     $: {
-        if (collection.id !== id) {
+        if (!idsMatch(collection.id, id)) {
             id = collection.id;
             memberView = "members";
         }
@@ -80,6 +83,18 @@
     }
 
     const dispatch = createEventDispatcher();
+
+    function idsMatch(
+        previous: CommunityIdentifier | MultiUserChatIdentifier,
+        next: CommunityIdentifier | MultiUserChatIdentifier,
+    ): boolean {
+        if (previous === next) return true;
+        if (previous.kind === "community" && next.kind === "community")
+            return previous.communityId === next.communityId;
+        if (previous.kind !== "community" && next.kind !== "community")
+            return chatIdentifiersEqual(previous, next);
+        return false;
+    }
 
     function close() {
         dispatch("close");
