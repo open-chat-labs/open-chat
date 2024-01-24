@@ -21,6 +21,7 @@ async fn c2c_vote_on_proposal(args: Args) -> Response {
 
 mod nns {
     use super::*;
+    use nns_governance_canister::types::GovernanceError;
 
     pub async fn vote_on_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, adopt: bool) -> Response {
         let ballots = match crate::governance_clients::nns::get_ballots(governance_canister_id, proposal_id).await {
@@ -51,7 +52,7 @@ mod nns {
         neuron_id: NnsNeuronId,
         proposal_id: ProposalId,
         adopt: bool,
-    ) -> CallResult<Result<(), crate::governance_clients::nns::GovernanceError>> {
+    ) -> CallResult<Result<(), GovernanceError>> {
         crate::governance_clients::nns::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await
     }
 }

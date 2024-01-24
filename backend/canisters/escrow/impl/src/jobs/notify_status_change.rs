@@ -1,5 +1,4 @@
 use crate::{mutate_state, read_state, RuntimeState};
-use canister_client::make_c2c_call;
 use escrow_canister::SwapStatusChange;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
@@ -55,19 +54,19 @@ fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, SwapStatusChange)> 
 async fn notify_swap_status(canister_id: CanisterId, notification: SwapStatusChange) {
     let swap_id = notification.swap_id;
 
-    if make_c2c_call(
-        canister_id,
-        "c2c_notify_p2p_swap_status_change_msgpack",
-        notification,
-        msgpack::serialize,
-        |r| msgpack::deserialize::<()>(r),
-    )
-    .await
-    .is_err()
-    {
+    if c2c_notify_p2p_swap_status_change(canister_id, &notification).await.is_err() {
         mutate_state(|state| {
             state.data.notify_status_change_queue.push(swap_id);
             start_job_if_required(state);
         });
     }
+}
+
+canister_client::generate_c2c_call!(c2c_notify_p2p_swap_status_change);
+
+mod c2c_notify_p2p_swap_status_change {
+    use super::*;
+
+    pub type Args = SwapStatusChange;
+    pub type Response = ();
 }
