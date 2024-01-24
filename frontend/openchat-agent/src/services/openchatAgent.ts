@@ -409,7 +409,9 @@ export class OpenChatAgent extends EventTarget {
             ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -438,7 +440,9 @@ export class OpenChatAgent extends EventTarget {
             ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
-                    event.event.content.kind !== "p2p_swap_content_initial" ? event.event.content.transfer.recipient : undefined,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -2797,33 +2801,38 @@ export class OpenChatAgent extends EventTarget {
             }
 
             if (!isOffline) {
-                const updates = await this._registryClient.updates(current?.lastUpdated);
-                if (updates.kind === "success") {
-                    const updated = {
-                        lastUpdated: updates.lastUpdated,
-                        tokenDetails: distinctBy(
-                            [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
-                            (t) => t.ledger,
-                        ),
-                        nervousSystemSummary: distinctBy(
-                            [
-                                ...updates.nervousSystemSummary,
-                                ...(current?.nervousSystemSummary ?? []),
-                            ],
-                            (ns) => ns.governanceCanisterId,
-                        ),
-                        messageFilters: [
-                            ...(current?.messageFilters ?? []),
-                            ...updates.messageFiltersAdded,
-                        ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
-                    };
-                    setCachedRegistry(updated);
-                    resolve([updated, true], true);
-                } else if (updates.kind === "success_no_updates" && current !== undefined) {
-                    resolve([current, false], true);
-                } else {
-                    // this is a fallback for is we had nothing in the cache and nothing from the api
-                    reject("Registry is empty... this should never happen!");
+                try {
+                    const updates = await this._registryClient.updates(current?.lastUpdated);
+                    if (updates.kind === "success") {
+                        const updated = {
+                            lastUpdated: updates.lastUpdated,
+                            tokenDetails: distinctBy(
+                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                (t) => t.ledger,
+                            ),
+                            nervousSystemSummary: distinctBy(
+                                [
+                                    ...updates.nervousSystemSummary,
+                                    ...(current?.nervousSystemSummary ?? []),
+                                ],
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                            messageFilters: [
+                                ...(current?.messageFilters ?? []),
+                                ...updates.messageFiltersAdded,
+                            ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                        };
+                        setCachedRegistry(updated);
+                        resolve([updated, true], true);
+                    } else if (updates.kind === "success_no_updates" && current !== undefined) {
+                        resolve([current, false], true);
+                    } else {
+                        // this is a fallback for is we had nothing in the cache and nothing from the api
+                        reject("Registry is empty... this should never happen!");
+                    }
+                } catch (err) {
+                    console.warn("Getting registry updates failed: ", err);
+                    reject(err);
                 }
             }
         });
@@ -3113,7 +3122,11 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.reportedMessages(userId);
     }
 
-    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).acceptP2PSwap(
                 chatId.channelId,
@@ -3128,9 +3141,13 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.acceptP2PSwap(chatId.userId, messageId);
         }
-    }    
+    }
 
-    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+    cancelP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
         if (chatId.kind === "channel") {
             return this.communityClient(chatId.communityId).cancelP2PSwap(
                 chatId.channelId,
@@ -3145,5 +3162,5 @@ export class OpenChatAgent extends EventTarget {
         } else {
             return this.userClient.cancelP2PSwap(chatId.userId, messageId);
         }
-    }    
+    }
 }
