@@ -366,6 +366,8 @@ import type {
     Failure,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    CommunityDetailsResponse,
+    GroupChatDetailsResponse,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -766,7 +768,11 @@ export class OpenChat extends OpenChatAgentWorker {
             this.startChatsPoller();
             this.startUserUpdatePoller();
             initNotificationStores();
-            this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
+            this.sendRequest({ kind: "getUserStorageLimits" })
+                .then(storageStore.set)
+                .catch((err) => {
+                    console.warn("Unable to retrieve user storage limits", err);
+                });
             if (!this._liveState.anonUser) {
                 this.identityState.set({ kind: "logged_in" });
                 this.initWebRtc();
@@ -1121,15 +1127,17 @@ export class OpenChat extends OpenChatAgentWorker {
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
         const chatId: ChatIdentifier = { kind: "direct_chat", userId };
         localChatSummaryUpdates.markRemoved(chatId);
-        return this.sendRequest({ kind: "deleteDirectChat", userId, blockUser }).then((success) => {
-            if (!success) {
-                const chat = this._liveState.chatSummaries.get(chatId);
-                if (chat !== undefined) {
-                    localChatSummaryUpdates.markAdded(chat);
+        return this.sendRequest({ kind: "deleteDirectChat", userId, blockUser })
+            .then((success) => {
+                if (!success) {
+                    const chat = this._liveState.chatSummaries.get(chatId);
+                    if (chat !== undefined) {
+                        localChatSummaryUpdates.markAdded(chat);
+                    }
                 }
-            }
-            return success;
-        });
+                return success;
+            })
+            .catch(() => false);
     }
 
     leaveGroup(
@@ -1208,20 +1216,22 @@ export class OpenChat extends OpenChatAgentWorker {
             return false;
         }
 
-        const response = await this.sendRequest({
+        return this.sendRequest({
             kind: "approveTransfer",
             spender,
             ledger: group.gate.ledgerCanister,
             amount: group.gate.amount - token.transferFee, // The user should pay only the amount not amount+fee so it is a round number
             expiresIn: BigInt(5 * 60 * 1000), // Allow 5 mins for the join_group call before the approval expires
-        });
+        })
+            .then((response) => {
+                if (response?.kind !== "success") {
+                    this._logger.error("Unable to approve transfer", response?.error);
+                    return false;
+                }
 
-        if (response?.kind !== "success") {
-            this._logger.error("Unable to approve transfer", response?.error);
-            return false;
-        }
-
-        return true;
+                return true;
+            })
+            .catch(() => false);
     }
 
     async joinGroup(
@@ -1341,19 +1351,21 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId,
             threadRootMessageIndex,
             follow,
-        }).then((resp) => {
-            if (resp === "failed") {
-                localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
-                    followedByMe: !follow,
-                });
-                return false;
-            }
-            if (message.thread !== undefined && message.thread.numberOfReplies > 0) {
-                const readUpTo = message.thread.numberOfReplies - 1;
-                this.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
-            }
-            return true;
-        });
+        })
+            .then((resp) => {
+                if (resp === "failed") {
+                    localMessageUpdates.markThreadSummaryUpdated(message.messageId, {
+                        followedByMe: !follow,
+                    });
+                    return false;
+                }
+                if (message.thread !== undefined && message.thread.numberOfReplies > 0) {
+                    const readUpTo = message.thread.numberOfReplies - 1;
+                    this.markThreadRead(chatId, threadRootMessageIndex, readUpTo);
+                }
+                return true;
+            })
+            .catch(() => false);
     }
 
     getContentAsText(formatter: MessageFormatter, content: MessageContent): string {
@@ -1936,14 +1948,14 @@ export class OpenChat extends OpenChatAgentWorker {
         const chatId = chat.id;
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
-        const eventsResponse = await this.sendRequest({
+        const eventsResponse: EventsResponse<ChatEvent> = await this.sendRequest({
             kind: "chatEventsWindow",
             eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
             messageIndex,
             threadRootMessageIndex: threadRootEvent.event.messageIndex,
             latestKnownUpdate: chat.lastUpdated,
-        });
+        }).catch(() => "events_failed");
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
             return undefined;
@@ -1992,14 +2004,14 @@ export class OpenChat extends OpenChatAgentWorker {
             }
 
             const range = indexRangeForChat(clientChat);
-            const eventsResponse = await this.sendRequest({
+            const eventsResponse: EventsResponse<ChatEvent> = await this.sendRequest({
                 kind: "chatEventsWindow",
                 eventIndexRange: range,
                 chatId,
                 messageIndex,
                 threadRootMessageIndex: undefined,
                 latestKnownUpdate: serverChat?.lastUpdated,
-            });
+            }).catch(() => "events_failed");
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
                 return undefined;
@@ -2357,7 +2369,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) return;
 
-        const eventsResponse = await this.sendRequest({
+        const eventsResponse: EventsResponse<ChatEvent> = await this.sendRequest({
             kind: "chatEvents",
             chatType: chat.kind,
             chatId,
@@ -2366,7 +2378,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ascending,
             threadRootMessageIndex,
             latestKnownUpdate: chat.lastUpdated,
-        });
+        }).catch(() => "events_failed");
 
         if (!messageContextsEqual(context, this._liveState.selectedMessageContext)) {
             // the selected thread has changed while we were loading the messages
@@ -2576,7 +2588,7 @@ export class OpenChat extends OpenChatAgentWorker {
             ascending,
             threadRootMessageIndex: undefined,
             latestKnownUpdate: serverChat.lastUpdated,
-        });
+        }).catch(() => "events_failed");
     }
 
     private previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -2697,11 +2709,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadCommunityDetails(community: CommunitySummary): Promise<void> {
-        const resp = await this.sendRequest({
+        const resp: CommunityDetailsResponse = await this.sendRequest({
             kind: "getCommunityDetails",
             id: community.id,
             communityLastUpdated: community.lastUpdated,
-        });
+        }).catch(() => "failure");
         if (resp !== "failure") {
             communityStateStore.setProp(
                 community.id,
@@ -2719,11 +2731,11 @@ export class OpenChat extends OpenChatAgentWorker {
     private async loadChatDetails(serverChat: ChatSummary): Promise<void> {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (serverChat.kind === "group_chat" || serverChat.kind === "channel") {
-            const resp = await this.sendRequest({
+            const resp: GroupChatDetailsResponse = await this.sendRequest({
                 kind: "getGroupDetails",
                 chatId: serverChat.id,
                 chatLastUpdated: serverChat.lastUpdated,
-            });
+            }).catch(() => "failure");
             if (resp !== "failure") {
                 chatStateStore.setProp(serverChat.id, "members", resp.members);
                 chatStateStore.setProp(serverChat.id, "blockedUsers", resp.blockedUsers);
@@ -2797,14 +2809,14 @@ export class OpenChat extends OpenChatAgentWorker {
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
-                        })
+                        }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
                       : this.sendRequest({
                             kind: "chatEventsByEventIndex",
                             chatId: serverChat.id,
                             eventIndexes: currentChatEvents,
                             threadRootMessageIndex: undefined,
                             latestKnownUpdate: serverChat.lastUpdated,
-                        })
+                        }).catch(() => "events_failed" as EventsResponse<ChatEvent>)
                   ).then((resp) => this.handleEventsResponse(serverChat, resp));
 
         const threadEventPromise =
@@ -2816,14 +2828,16 @@ export class OpenChat extends OpenChatAgentWorker {
                       eventIndexes: currentThreadEvents,
                       threadRootMessageIndex: selectedThreadRootMessageIndex,
                       latestKnownUpdate: serverChat.lastUpdated,
-                  }).then((resp) =>
-                      this.handleThreadEventsResponse(
-                          serverChat.id,
-                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                          selectedThreadRootMessageIndex!,
-                          resp,
-                      ),
-                  );
+                  })
+                      .catch(() => "events_failed" as EventsResponse<ChatEvent>)
+                      .then((resp) =>
+                          this.handleThreadEventsResponse(
+                              serverChat.id,
+                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              selectedThreadRootMessageIndex!,
+                              resp,
+                          ),
+                      );
 
         await Promise.all([chatEventsPromise, threadEventPromise]);
         return;
@@ -3212,7 +3226,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     );
                 }
             })
-            .catch((err) => {
+            .catch(() => {
                 this.onSendMessageFailure(
                     chatId,
                     eventWrapper.event.messageId,
@@ -3220,7 +3234,6 @@ export class OpenChat extends OpenChatAgentWorker {
                     eventWrapper,
                     canRetry,
                     undefined,
-                    err,
                 );
             });
     }
@@ -3385,7 +3398,6 @@ export class OpenChat extends OpenChatAgentWorker {
         event: EventWrapper<Message>,
         canRetry: boolean,
         response?: SendMessageResponse,
-        err?: unknown,
     ) {
         this.removeMessage(chatId, messageId, this._liveState.user.userId, threadRootMessageIndex);
 
@@ -3393,10 +3405,8 @@ export class OpenChat extends OpenChatAgentWorker {
             failedMessagesStore.add({ chatId, threadRootMessageIndex }, event);
         }
 
-        if (err !== undefined) {
-            this._logger.error("Exception sending message", err);
-        } else if (response !== undefined) {
-            this._logger.error("Error sending message", JSON.stringify(response));
+        if (response !== undefined) {
+            console.error("Error sending message", JSON.stringify(response));
         }
 
         this.dispatchEvent(new SendMessageFailed(!canRetry));
@@ -3608,6 +3618,8 @@ export class OpenChat extends OpenChatAgentWorker {
             ascending: false,
             threadRootMessageIndex,
             latestKnownUpdate: serverChat.lastUpdated,
+        }).catch(() => {
+            console.warn("Failed to load event from notification");
         });
     }
 
@@ -3784,10 +3796,12 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.sendRequest({ kind: "searchUsers", searchTerm, maxResults }).then((resp) => {
-            userStore.addMany(resp);
-            return resp;
-        });
+        return this.sendRequest({ kind: "searchUsers", searchTerm, maxResults })
+            .then((resp) => {
+                userStore.addMany(resp);
+                return resp;
+            })
+            .catch(() => []);
     }
 
     searchUsersForInvite(
@@ -3912,13 +3926,15 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "registerUser",
             username,
             referralCode: this._referralCode,
-        }).then((res) => {
-            console.log("register user response: ", res);
-            if (res.kind === "success") {
-                this.clearReferralCode();
-            }
-            return res;
-        });
+        })
+            .then((res) => {
+                console.log("register user response: ", res);
+                if (res.kind === "success") {
+                    this.clearReferralCode();
+                }
+                return res;
+            })
+            .catch(() => ({ kind: "internal_error" }));
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
@@ -3964,7 +3980,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this.sendRequest({ kind: "subscriptionExists", p256dh_key });
+        return this.sendRequest({ kind: "subscriptionExists", p256dh_key }).catch(() => false);
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
@@ -4035,12 +4051,14 @@ export class OpenChat extends OpenChatAgentWorker {
             ms.delete(userId);
             return new Map(ms);
         });
-        return this.sendRequest({ kind: "removeCommunityMember", id, userId });
+        return this.sendRequest({ kind: "removeCommunityMember", id, userId }).catch(
+            () => "failure",
+        );
     }
 
     removeMember(chatId: MultiUserChatIdentifier, userId: string): Promise<RemoveMemberResponse> {
         chatStateStore.updateProp(chatId, "members", (ps) => ps.filter((p) => p.userId !== userId));
-        return this.sendRequest({ kind: "removeMember", chatId, userId });
+        return this.sendRequest({ kind: "removeMember", chatId, userId }).catch(() => "failure");
     }
 
     changeCommunityRole(
@@ -4115,7 +4133,12 @@ export class OpenChat extends OpenChatAgentWorker {
         messageIndex: number,
         adopt: boolean,
     ): Promise<RegisterProposalVoteResponse> {
-        return this.sendRequest({ kind: "registerProposalVote", chatId, messageIndex, adopt });
+        return this.sendRequest({
+            kind: "registerProposalVote",
+            chatId,
+            messageIndex,
+            adopt,
+        }).catch(() => "internal_error");
     }
 
     getProposalVoteDetails(
@@ -4145,7 +4168,10 @@ export class OpenChat extends OpenChatAgentWorker {
 
         recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
 
-        return this.sendRequest({ kind: "getRecommendedGroups", exclusions: [...exclusions] });
+        return this.sendRequest({
+            kind: "getRecommendedGroups",
+            exclusions: [...exclusions],
+        }).catch(() => []);
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
@@ -4175,7 +4201,13 @@ export class OpenChat extends OpenChatAgentWorker {
         pageIndex: number,
         pageSize: number,
     ): Promise<ExploreChannelsResponse> {
-        return this.sendRequest({ kind: "exploreChannels", id, searchTerm, pageIndex, pageSize });
+        return this.sendRequest({
+            kind: "exploreChannels",
+            id,
+            searchTerm,
+            pageIndex,
+            pageSize,
+        }).catch(() => ({ kind: "failure" }));
     }
 
     dismissRecommendation(chatId: GroupChatIdentifier): Promise<void> {
@@ -4233,10 +4265,12 @@ export class OpenChat extends OpenChatAgentWorker {
             kind: "refreshAccountBalance",
             ledger,
             principal: user.userId,
-        }).then((val) => {
-            cryptoBalance.set(ledger, val);
-            return val;
-        });
+        })
+            .then((val) => {
+                cryptoBalance.set(ledger, val);
+                return val;
+            })
+            .catch(() => 0n);
     }
 
     async getAccountTransactions(
@@ -4248,13 +4282,15 @@ export class OpenChat extends OpenChatAgentWorker {
             ledgerIndex: ledgerIndex,
             fromId,
             principal: this._liveState.user.userId,
-        }).then(async (resp) => {
-            if (resp.kind === "success") {
-                const userIds = userIdsFromTransactions(resp.transactions);
-                await this.getMissingUsers(userIds);
-            }
-            return resp;
-        });
+        })
+            .then(async (resp) => {
+                if (resp.kind === "success") {
+                    const userIds = userIdsFromTransactions(resp.transactions);
+                    await this.getMissingUsers(userIds);
+                }
+                return resp;
+            })
+            .catch(() => ({ kind: "failure" }));
     }
 
     async threadPreviews(
@@ -4275,12 +4311,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "threadPreviews",
             threadsByChat: request.toMap(),
-        }).then((threads) => {
-            const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
-            const userIds = this.userIdsFromEvents(events);
-            this.getMissingUsers(userIds);
-            return threads;
-        });
+        })
+            .then((threads) => {
+                const events = threads.flatMap((t) => [t.rootMessage, ...t.latestReplies]);
+                const userIds = this.userIdsFromEvents(events);
+                this.getMissingUsers(userIds);
+                return threads;
+            })
+            .catch(() => []);
     }
 
     getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {
@@ -4414,29 +4452,31 @@ export class OpenChat extends OpenChatAgentWorker {
             chatId,
             messageIndexes,
             latestKnownUpdate: serverChat?.lastUpdated,
-        });
+        }).catch(() => "events_failed");
     }
 
     getInviteCode(id: GroupChatIdentifier | CommunityIdentifier): Promise<InviteCodeResponse> {
-        return this.sendRequest({ kind: "getInviteCode", id });
+        return this.sendRequest({ kind: "getInviteCode", id }).catch(() => ({ kind: "failure" }));
     }
 
     enableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<EnableInviteCodeResponse> {
-        return this.sendRequest({ kind: "enableInviteCode", id });
+        return this.sendRequest({ kind: "enableInviteCode", id }).catch(() => ({
+            kind: "failure",
+        }));
     }
 
     disableInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<DisableInviteCodeResponse> {
-        return this.sendRequest({ kind: "disableInviteCode", id });
+        return this.sendRequest({ kind: "disableInviteCode", id }).catch(() => "failure");
     }
 
     resetInviteCode(
         id: GroupChatIdentifier | CommunityIdentifier,
     ): Promise<ResetInviteCodeResponse> {
-        return this.sendRequest({ kind: "resetInviteCode", id });
+        return this.sendRequest({ kind: "resetInviteCode", id }).catch(() => ({ kind: "failure" }));
     }
 
     updateGroup(
@@ -4461,29 +4501,31 @@ export class OpenChat extends OpenChatAgentWorker {
             eventsTimeToLive,
             gate,
             isPublic,
-        }).then((resp) => {
-            if (resp.kind === "success") {
-                localChatSummaryUpdates.markUpdated(chatId, {
-                    kind: "group_chat",
-                    name,
-                    description: desc,
-                    permissions,
-                    gate,
-                    eventsTTL: eventsTimeToLive,
-                });
-
-                if (rules !== undefined && resp.rulesVersion !== undefined) {
-                    chatStateStore.setProp(chatId, "rules", {
-                        text: rules.text,
-                        enabled: rules.enabled,
-                        version: resp.rulesVersion,
+        })
+            .then((resp) => {
+                if (resp.kind === "success") {
+                    localChatSummaryUpdates.markUpdated(chatId, {
+                        kind: "group_chat",
+                        name,
+                        description: desc,
+                        permissions,
+                        gate,
+                        eventsTTL: eventsTimeToLive,
                     });
+
+                    if (rules !== undefined && resp.rulesVersion !== undefined) {
+                        chatStateStore.setProp(chatId, "rules", {
+                            text: rules.text,
+                            enabled: rules.enabled,
+                            version: resp.rulesVersion,
+                        });
+                    }
+                } else {
+                    this._logger.error("Update group rules failed: ", resp.kind);
                 }
-            } else {
-                this._logger.error("Update group rules failed: ", resp.kind);
-            }
-            return resp;
-        });
+                return resp;
+            })
+            .catch(() => ({ kind: "failure" }));
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
@@ -4554,7 +4596,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     removeMessageFilter(id: bigint): Promise<boolean> {
-        return this.sendRequest({ kind: "removeMessageFilter", id });
+        return this.sendRequest({ kind: "removeMessageFilter", id }).catch(() => false);
     }
 
     suspendUser(userId: string, reason: string): Promise<boolean> {
@@ -4853,7 +4895,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const updateRegistryTask = initialLoad ? this.updateRegistry() : undefined;
 
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>((resolve) => {
             this.sendStreamRequest({
                 kind: "getUpdates",
                 initialLoad,
@@ -4867,7 +4909,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     chatsLoading.set(!this._liveState.chatsInitialised);
                 })
                 .catch((err) => {
-                    reject(err);
+                    console.warn("getUpdates threw an error: ", err);
+                    resolve();
                 })
                 .finally(() => {
                     resolve();
@@ -5063,7 +5106,7 @@ export class OpenChat extends OpenChatAgentWorker {
     diamondMembershipFees(): Promise<DiamondMembershipFees[]> {
         return this.sendRequest({
             kind: "diamondMembershipFees",
-        });
+        }).catch(() => []);
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {
@@ -5244,18 +5287,18 @@ export class OpenChat extends OpenChatAgentWorker {
     loadSavedCryptoAccounts(): Promise<NamedAccount[]> {
         return this.sendRequest({
             kind: "loadSavedCryptoAccounts",
-        });
+        }).catch(() => []);
     }
 
     saveCryptoAccount(namedAccount: NamedAccount): Promise<SaveCryptoAccountResponse> {
         return this.sendRequest({
             kind: "saveCryptoAccount",
             namedAccount,
-        });
+        }).catch(() => ({ kind: "failure" }));
     }
 
     private async updateRegistry(): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.sendStreamRequest({
                 kind: "updateRegistry",
             })
@@ -5297,7 +5340,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 })
                 .catch((err) => {
-                    reject(`Failed to update the registry: ${err}`);
+                    console.warn(`Failed to update the registry: ${err}`);
+                    resolve();
                 });
         });
     }
@@ -5398,7 +5442,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     getCachePrimerTimestamps(): Promise<Record<string, bigint>> {
-        return this.sendRequest({ kind: "getCachePrimerTimestamps" });
+        return this.sendRequest({ kind: "getCachePrimerTimestamps" }).catch(() => ({}));
     }
 
     setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
@@ -5533,12 +5577,14 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "setTranslationCorrection",
             correction,
-        }).then((success) => {
-            if (success) {
-                applyTranslationCorrection(correction);
-            }
-            return success;
-        });
+        })
+            .then((success) => {
+                if (success) {
+                    applyTranslationCorrection(correction);
+                }
+                return success;
+            })
+            .catch(() => false);
     }
 
     getTranslationCorrections(): Promise<TranslationCorrections> {
