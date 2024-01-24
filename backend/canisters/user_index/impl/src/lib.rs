@@ -19,7 +19,7 @@ use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId,
@@ -219,6 +219,8 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     #[serde(default)]
     pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
+    #[serde(default)]
+    pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -279,6 +281,7 @@ impl Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -362,6 +365,7 @@ impl Default for Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),

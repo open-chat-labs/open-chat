@@ -1,1 +1,10 @@
-service : {}
+type CheckPrincipalResponse = variant {
+    User;
+    Authenticated;
+    Legacy;
+    NotFound;
+};
+
+service : {
+    check_principal : (record {}) -> (CheckPrincipalResponse) query;
+}
