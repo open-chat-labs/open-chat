@@ -52,6 +52,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 wasm_version: state.data.local_user_index_canister_wasm_for_new_canisters.version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
+                identity_canister_id: state.data.identity_canister_id,
                 notifications_canister_id: args.notifications_canister_id,
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,

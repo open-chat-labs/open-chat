@@ -9,6 +9,7 @@ pub struct Args {
     pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,

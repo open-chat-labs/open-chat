@@ -11,7 +11,6 @@ fn main() {
     generate_candid_method!(storage_index, remove_accessor, update);
     generate_candid_method!(storage_index, remove_user, update);
     generate_candid_method!(storage_index, set_bucket_full, update);
-    generate_candid_method!(storage_index, update_user_id, update);
 
     candid::export_service!();
     std::print!("{}", __export_service());

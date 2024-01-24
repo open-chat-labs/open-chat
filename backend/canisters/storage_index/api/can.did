@@ -48,17 +48,6 @@ type SetBucketFullResponse = variant {
     Success;
 };
 
-type UpdateUserIdArgs = record {
-    old_user_id : UserId;
-    new_user_id : UserId;
-};
-
-type UpdateUserIdResponse = variant {
-    Success;
-    UserNotFound;
-    UserIdAlreadyExists;
-};
-
 type AllocatedBucketArgs = record {
     file_hash : Hash;
     file_size : nat64;
@@ -118,7 +107,6 @@ service : {
     remove_user : (RemoveUserArgs) -> (RemoveUserResponse);
     remove_accessor : (RemoveAccessorArgs) -> (RemoveAccessorResponse);
     set_bucket_full : (SetBucketFullArgs) -> (SetBucketFullResponse);
-    update_user_id : (UpdateUserIdArgs) -> (UpdateUserIdResponse);
 
     allocated_bucket_v2 : (AllocatedBucketArgs) -> (AllocatedBucketResponse) query;
     can_forward : (CanForwardArgs) -> (CanForwardResponse) query;

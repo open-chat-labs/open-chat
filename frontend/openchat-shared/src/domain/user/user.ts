@@ -234,14 +234,6 @@ export type ArchiveChatResponse = "failure" | "success" | "offline";
 
 export type ManageFavouritesResponse = "success" | "failure" | "offline";
 
-export type MigrateUserPrincipalResponse =
-    | "success"
-    | "principal_already_in_use"
-    | "migration_already_in_progress"
-    | "internal_error"
-    | "migration_not_initialized"
-    | "offline";
-
 export type SuspendUserResponse =
     | "success"
     | "user_not_found"

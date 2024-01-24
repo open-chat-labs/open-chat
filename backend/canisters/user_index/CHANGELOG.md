@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
 ### Changed
 
 - Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))

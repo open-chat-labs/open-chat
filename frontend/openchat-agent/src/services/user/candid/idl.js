@@ -942,12 +942,6 @@ export const idlFactory = ({ IDL }) => {
   const HotGroupExclusionsResponse = IDL.Variant({
     'Success' : IDL.Vec(ChatId),
   });
-  const InitUserPrincipalMigrationArgs = IDL.Record({
-    'new_principal' : IDL.Principal,
-  });
-  const InitUserPrincipalMigrationResponse = IDL.Variant({
-    'Success' : IDL.Null,
-  });
   const EmptyArgs = IDL.Record({});
   const UserCanisterChannelSummary = IDL.Record({
     'channel_id' : ChannelId,
@@ -1193,14 +1187,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : MessagesSuccessResult,
     'ReplicaNotUpToDateV2' : TimestampMillis,
-  });
-  const MigrateUserPrincipalArgs = IDL.Record({});
-  const MigrateUserPrincipalResponse = IDL.Variant({
-    'PrincipalAlreadyInUse' : IDL.Null,
-    'MigrationAlreadyInProgress' : IDL.Null,
-    'Success' : IDL.Null,
-    'InternalError' : IDL.Text,
-    'MigrationNotInitialized' : IDL.Null,
   });
   const MuteNotificationsArgs = IDL.Record({ 'chat_id' : ChatId });
   const MuteNotificationsResponse = IDL.Variant({
@@ -1771,11 +1757,6 @@ export const idlFactory = ({ IDL }) => {
         [HotGroupExclusionsResponse],
         ['query'],
       ),
-    'init_user_principal_migration' : IDL.Func(
-        [InitUserPrincipalMigrationArgs],
-        [InitUserPrincipalMigrationResponse],
-        [],
-      ),
     'initial_state' : IDL.Func([EmptyArgs], [InitialStateResponse], ['query']),
     'leave_community' : IDL.Func(
         [LeaveCommunityArgs],
@@ -1793,11 +1774,6 @@ export const idlFactory = ({ IDL }) => {
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
         ['query'],
-      ),
-    'migrate_user_principal' : IDL.Func(
-        [MigrateUserPrincipalArgs],
-        [MigrateUserPrincipalResponse],
-        [],
       ),
     'mute_notifications' : IDL.Func(
         [MuteNotificationsArgs],
