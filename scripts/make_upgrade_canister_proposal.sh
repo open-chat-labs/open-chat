@@ -54,10 +54,5 @@ else
     ./sns/scripts/utils/submit_upgrade_proposal.sh $CANISTER_NAME $VERSION "$TITLE" "$URL" "$SUMMARY"
 fi
 
-# Update the canister_commit_ids.json locally
-SCRIPT=$(echo "jq '.$CANISTER_NAME = \"$COMMIT_ID\"' canister_commit_ids.json")
-eval $SCRIPT > canister_commit_ids_new.json
-mv canister_commit_ids_new.json canister_commit_ids.json
-
 # Cleanup
 ./sns/scripts/utils/cleanup_env.sh

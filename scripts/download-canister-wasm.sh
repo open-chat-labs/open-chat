@@ -10,12 +10,14 @@ WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the re
 if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
-elif [[ $WASM_SRC == "prod" ]]
+elif [[ $WASM_SRC == "prod" ]] || [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
 then
-  COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
-elif [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
-then
-  CANISTER_TAG_ID=$(./scripts/get-canister-version.sh $CANISTER_NAME $WASM_SRC)
+  if [[ $WASM_SRC == "prod" ]]
+  then
+    CANISTER_TAG_ID=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME" | head -n 1)
+  else
+    CANISTER_TAG_ID=$(./scripts/get-canister-version.sh $CANISTER_NAME $WASM_SRC)
+  fi
 
   if [[ -z $CANISTER_TAG_ID ]]
   then
