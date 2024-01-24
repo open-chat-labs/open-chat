@@ -5,7 +5,6 @@ use candid::Principal;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{SubscriptionInfo, SubscriptionKeys};
 
 #[test]
 fn direct_message_notification_succeeds() {
@@ -170,19 +169,13 @@ fn only_store_up_to_10_subscriptions_per_user() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     for i in 0..20 {
-        client::notifications_index::push_subscription(
+        client::notifications_index::happy_path::push_subscription(
             env,
             user2.principal,
             canister_ids.notifications_index,
-            &notifications_index_canister::push_subscription::Args {
-                subscription: SubscriptionInfo {
-                    keys: SubscriptionKeys {
-                        auth: i.to_string(),
-                        p256dh: i.to_string(),
-                    },
-                    endpoint: "https://xyz.com/".to_string(),
-                },
-            },
+            i.to_string(),
+            i.to_string(),
+            "https://xyz.com/",
         );
     }
 
@@ -226,19 +219,13 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds) -> TestData {
     let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
-    client::notifications_index::push_subscription(
+    client::notifications_index::happy_path::push_subscription(
         env,
         user2.principal,
         canister_ids.notifications_index,
-        &notifications_index_canister::push_subscription::Args {
-            subscription: SubscriptionInfo {
-                keys: SubscriptionKeys {
-                    auth: "123".to_string(),
-                    p256dh: "456".to_string(),
-                },
-                endpoint: "https://xyz.com/".to_string(),
-            },
-        },
+        "123",
+        "456",
+        "https://xyz.com/",
     );
 
     TestData { user1, user2 }

@@ -37,7 +37,6 @@ import type {
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
@@ -96,7 +95,6 @@ import {
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
-    migrateUserPrincipal,
     archiveChatResponse,
     deletedMessageResponse,
     setMessageReminderResponse,
@@ -1078,22 +1076,6 @@ export class UserClient extends CandidService {
                 to_archive: [],
             }),
             archiveChatResponse,
-        );
-    }
-
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.handleResponse(
-            this.userService.init_user_principal_migration({
-                new_principal: Principal.fromText(newPrincipal),
-            }),
-            toVoid,
-        );
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
-        return this.handleResponse(
-            this.userService.migrate_user_principal({}),
-            migrateUserPrincipal,
         );
     }
 

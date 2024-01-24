@@ -1513,6 +1513,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cycles_dispenser_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "cycles_dispenser_canister",
+ "ic-cdk 0.11.3",
+ "msgpack",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "cycles_dispenser_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -1523,6 +1536,8 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "cycles_dispenser_canister",
+ "cycles_minting_canister",
+ "cycles_minting_canister_c2c_client",
  "human_readable",
  "ic-cdk 0.11.3",
  "ic-cdk-macros 0.7.0",
@@ -1549,6 +1564,7 @@ dependencies = [
  "candid",
  "canister_client",
  "cycles_dispenser_canister",
+ "cycles_dispenser_canister_c2c_client",
  "ic-cdk 0.11.3",
  "ic-cdk-timers",
  "tracing",
@@ -3372,6 +3388,8 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -3452,6 +3470,7 @@ dependencies = [
  "lazy_static",
  "ledger_utils",
  "local_user_index_canister",
+ "msgpack",
  "notifications_canister",
  "notifications_index_canister",
  "online_users_canister",
@@ -7191,6 +7210,8 @@ dependencies = [
  "local_user_index_canister",
  "local_user_index_canister_c2c_client",
  "msgpack",
+ "nns_governance_canister",
+ "nns_governance_canister_c2c_client",
  "notifications_canister",
  "notifications_canister_c2c_client",
  "num-traits",

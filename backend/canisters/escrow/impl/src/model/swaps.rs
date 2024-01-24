@@ -63,7 +63,6 @@ pub struct Swap {
     pub token0_transfer_out: Option<CompletedCryptoTransaction>,
     pub token1_transfer_out: Option<CompletedCryptoTransaction>,
     pub refunds: Vec<CompletedCryptoTransaction>,
-    #[serde(default)]
     pub additional_admins: Vec<Principal>,
     pub canister_to_notify: Option<CanisterId>,
 }

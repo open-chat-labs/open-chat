@@ -84,7 +84,6 @@ import type {
     MemberRole,
     Message,
     MessageContent,
-    MigrateUserPrincipalResponse,
     OptionUpdate,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
@@ -2443,17 +2442,6 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.userClient.initUserPrincipalMigration(newPrincipal);
-    }
-
-    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        const userClient = UserClient.create(userId, this.identity, this.config, this.db);
-        return userClient.migrateUserPrincipal();
-    }
-
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -2802,33 +2790,38 @@ export class OpenChatAgent extends EventTarget {
             }
 
             if (!isOffline) {
-                const updates = await this._registryClient.updates(current?.lastUpdated);
-                if (updates.kind === "success") {
-                    const updated = {
-                        lastUpdated: updates.lastUpdated,
-                        tokenDetails: distinctBy(
-                            [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
-                            (t) => t.ledger,
-                        ),
-                        nervousSystemSummary: distinctBy(
-                            [
-                                ...updates.nervousSystemSummary,
-                                ...(current?.nervousSystemSummary ?? []),
-                            ],
-                            (ns) => ns.governanceCanisterId,
-                        ),
-                        messageFilters: [
-                            ...(current?.messageFilters ?? []),
-                            ...updates.messageFiltersAdded,
-                        ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
-                    };
-                    setCachedRegistry(updated);
-                    resolve([updated, true], true);
-                } else if (updates.kind === "success_no_updates" && current !== undefined) {
-                    resolve([current, false], true);
-                } else {
-                    // this is a fallback for is we had nothing in the cache and nothing from the api
-                    reject("Registry is empty... this should never happen!");
+                try {
+                    const updates = await this._registryClient.updates(current?.lastUpdated);
+                    if (updates.kind === "success") {
+                        const updated = {
+                            lastUpdated: updates.lastUpdated,
+                            tokenDetails: distinctBy(
+                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                (t) => t.ledger,
+                            ),
+                            nervousSystemSummary: distinctBy(
+                                [
+                                    ...updates.nervousSystemSummary,
+                                    ...(current?.nervousSystemSummary ?? []),
+                                ],
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                            messageFilters: [
+                                ...(current?.messageFilters ?? []),
+                                ...updates.messageFiltersAdded,
+                            ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                        };
+                        setCachedRegistry(updated);
+                        resolve([updated, true], true);
+                    } else if (updates.kind === "success_no_updates" && current !== undefined) {
+                        resolve([current, false], true);
+                    } else {
+                        // this is a fallback for is we had nothing in the cache and nothing from the api
+                        reject("Registry is empty... this should never happen!");
+                    }
+                } catch (err) {
+                    console.warn("Getting registry updates failed: ", err);
+                    reject(err);
                 }
             }
         });

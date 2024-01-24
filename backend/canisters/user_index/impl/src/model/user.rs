@@ -25,6 +25,8 @@ pub struct User {
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
     pub moderation_flags_enabled: u32,
     pub reported_messages: Vec<u64>,
+    #[serde(default)]
+    pub principal_migrated: bool,
 }
 
 impl User {
@@ -75,6 +77,7 @@ impl User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
+            principal_migrated: false,
         }
     }
 
@@ -147,6 +150,7 @@ impl Default for User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
             moderation_flags_enabled: 0,
             reported_messages: Vec::new(),
+            principal_migrated: false,
         }
     }
 }
