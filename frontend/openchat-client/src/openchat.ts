@@ -992,8 +992,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error toggling mute notifications", err);
+            .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
                 return false;
             });
@@ -1005,8 +1004,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error archiving chat", err);
+            .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
                 return false;
             });
@@ -1016,8 +1014,7 @@ export class OpenChat extends OpenChatAgentWorker {
         localChatSummaryUpdates.markUpdated(chatId, { archived: false });
         return this.sendRequest({ kind: "unarchiveChat", chatId })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Error un-archiving chat", err);
+            .catch(() => {
                 localChatSummaryUpdates.markUpdated(chatId, { archived: undefined });
                 return false;
             });
@@ -1072,8 +1069,7 @@ export class OpenChat extends OpenChatAgentWorker {
             favourite: scope === "favourite",
         })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Error pinning chat", err);
+            .catch(() => {
                 this.unpinLocally(chatId, scope);
                 return false;
             });
@@ -1088,8 +1084,7 @@ export class OpenChat extends OpenChatAgentWorker {
             favourite: scope === "favourite",
         })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Error unpinning chat", err);
+            .catch(() => {
                 this.pinLocally(chatId, scope);
                 return false;
             });
@@ -1101,8 +1096,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error blocking user", err);
+            .catch(() => {
                 blockedUsers.delete(userId);
                 return false;
             });
@@ -1114,8 +1108,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error unblocking user", err);
+            .catch(() => {
                 blockedUsers.add(userId);
                 return false;
             });
@@ -1133,10 +1126,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         return this.sendRequest({ kind: "setUserAvatar", data })
             .then((_resp) => true)
-            .catch((err) => {
-                this._logger.error("Failed to update user's avatar", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     deleteGroup(chatId: MultiUserChatIdentifier): Promise<boolean> {
@@ -1150,10 +1140,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return false;
                 }
             })
-            .catch((err) => {
-                this._logger.error("Unable to delete group", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
@@ -1190,10 +1177,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                 }
             })
-            .catch((err) => {
-                this._logger.error("Unable to leave group", err);
-                return "failure";
-            });
+            .catch(() => "failure");
     }
 
     private addCommunityLocally(community: CommunitySummary): void {
@@ -1331,20 +1315,14 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch((err) => {
-                this._logger.error("Unable to join group", err);
-                return "failure";
-            });
+            .catch(() => "failure");
     }
 
     setCommunityIndexes(indexes: Record<string, number>): Promise<boolean> {
         Object.entries(indexes).forEach(([k, v]) =>
             localCommunitySummaryUpdates.updateIndex({ kind: "community", communityId: k }, v),
         );
-        return this.sendRequest({ kind: "setCommunityIndexes", indexes }).catch((err) => {
-            this._logger.error("Failed to set community indexes: ", err);
-            return false;
-        });
+        return this.sendRequest({ kind: "setCommunityIndexes", indexes }).catch(() => false);
     }
 
     setMemberDisplayName(
@@ -1765,10 +1743,7 @@ export class OpenChat extends OpenChatAgentWorker {
             threadRootMessageIndex,
         })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Poll vote failed: ", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     deleteMessage(
@@ -1821,9 +1796,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return success;
             })
-            .catch((err) => {
+            .catch(() => {
                 _undelete();
-                this._logger.error("Delete message failed: ", err);
                 return false;
             });
     }
@@ -1855,10 +1829,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return success;
             })
-            .catch((err) => {
-                this._logger.error("Undelete message failed: ", err);
-                return false;
-            })
+            .catch(() => false)
             .finally(() => {
                 undeletingMessagesStore.delete(msg.messageId);
             });
@@ -1897,10 +1868,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return success;
             })
-            .catch((err) => {
-                this._logger.error("Get deleted message failed: ", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     revealBlockedMessage(messageId: bigint) {
@@ -2214,8 +2182,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Error blocking community user", err);
+            .catch(() => {
                 this.unblockCommunityUserLocally(id, userId, true);
                 return false;
             });
@@ -2231,8 +2198,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Error blocking community user", err);
+            .catch(() => {
                 this.blockCommunityUserLocally(id, userId);
                 return false;
             });
@@ -2249,8 +2215,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Error blocking user", err);
+            .catch(() => {
                 this.unblockUserLocally(chatId, userId, true);
                 return false;
             });
@@ -2266,8 +2231,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Error blocking user", err);
+            .catch(() => {
                 this.blockUserLocally(chatId, userId);
                 return false;
             });
@@ -2955,8 +2919,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Unpin message failed: ", err);
+            .catch(() => {
                 this.addPinnedMessage(chatId, messageIndex);
                 return false;
             });
@@ -2979,8 +2942,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Pin message failed: ", err);
+            .catch(() => {
                 this.removePinnedMessage(chatId, messageIndex);
                 return false;
             });
@@ -3196,27 +3158,31 @@ export class OpenChat extends OpenChatAgentWorker {
 
         // TODO - what about mentions?
         this.sendMessageCommon(
-            chat, 
+            chat,
             messageContext,
             retryEvent,
             [],
             rulesAccepted,
-            communityRulesAccepted);
+            communityRulesAccepted,
+        );
     }
 
     private async sendMessageCommon(
         chat: ChatSummary,
-        messageContext: MessageContext, 
-        eventWrapper: EventWrapper<Message>, 
+        messageContext: MessageContext,
+        eventWrapper: EventWrapper<Message>,
         mentioned: User[] = [],
         rulesAccepted: number | undefined = undefined,
-        communityRulesAccepted: number | undefined = undefined): Promise<void> {
-
-        const {chatId, threadRootMessageIndex} = messageContext;
+        communityRulesAccepted: number | undefined = undefined,
+    ): Promise<void> {
+        const { chatId, threadRootMessageIndex } = messageContext;
 
         const canRetry = this.canRetryMessage(eventWrapper.event.content);
 
-        const messageFilterFailed = doesMessageFailFilter(eventWrapper.event, get(messageFiltersStore));
+        const messageFilterFailed = doesMessageFailFilter(
+            eventWrapper.event,
+            get(messageFiltersStore),
+        );
 
         this.sendRequest({
             kind: "sendMessage",
@@ -3229,59 +3195,59 @@ export class OpenChat extends OpenChatAgentWorker {
             communityRulesAccepted,
             messageFilterFailed,
         })
-        .then(([resp, msg]) => {
-            if (resp.kind === "success" || resp.kind === "transfer_success") {
-                this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
-                if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                    this.refreshAccountBalance(msg.content.transfer.ledger);
-                }
-                if (threadRootMessageIndex !== undefined) {
-                    trackEvent("sent_threaded_message");
-                } else {
-                    if (chat.kind === "direct_chat") {
-                        trackEvent("sent_direct_message");
+            .then(([resp, msg]) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                        this.refreshAccountBalance(msg.content.transfer.ledger);
+                    }
+                    if (threadRootMessageIndex !== undefined) {
+                        trackEvent("sent_threaded_message");
                     } else {
-                        if (chat.public) {
-                            trackEvent("sent_public_group_message");
+                        if (chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
                         } else {
-                            trackEvent("sent_private_group_message");
+                            if (chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
                         }
                     }
-                }
-                if (msg.repliesTo !== undefined) {
-                    // double counting here which I think is OK since we are limited to string events
-                    trackEvent("replied_to_message");
-                }
-            } else {
-                if (resp.kind == "rules_not_accepted") {
-                    this.markChatRulesAcceptedLocally(false);
-                }
+                    if (msg.repliesTo !== undefined) {
+                        // double counting here which I think is OK since we are limited to string events
+                        trackEvent("replied_to_message");
+                    }
+                } else {
+                    if (resp.kind == "rules_not_accepted") {
+                        this.markChatRulesAcceptedLocally(false);
+                    }
 
-                if (resp.kind == "community_rules_not_accepted") {
-                    this.markCommunityRulesAcceptedLocally(false);
-                }
+                    if (resp.kind == "community_rules_not_accepted") {
+                        this.markCommunityRulesAcceptedLocally(false);
+                    }
 
+                    this.onSendMessageFailure(
+                        chatId,
+                        msg.messageId,
+                        threadRootMessageIndex,
+                        eventWrapper,
+                        canRetry,
+                        resp,
+                    );
+                }
+            })
+            .catch((err) => {
                 this.onSendMessageFailure(
                     chatId,
-                    msg.messageId,
+                    eventWrapper.event.messageId,
                     threadRootMessageIndex,
                     eventWrapper,
                     canRetry,
-                    resp,
+                    undefined,
+                    err,
                 );
-            }
-        })
-        .catch((err) => {
-            this.onSendMessageFailure(
-                chatId,
-                eventWrapper.event.messageId,
-                threadRootMessageIndex,
-                eventWrapper,
-                canRetry,
-                undefined,
-                err,
-            );
-        });
+            });
     }
 
     private canRetryMessage(content: MessageContent): boolean {
@@ -3396,12 +3362,13 @@ export class OpenChat extends OpenChatAgentWorker {
         };
 
         this.sendMessageCommon(
-            chat, 
+            chat,
             messageContext,
             event,
             mentioned,
             rulesAccepted,
-            communityRulesAccepted);
+            communityRulesAccepted,
+        );
 
         this.postSendMessage(chat, event, threadRootMessageIndex);
     }
@@ -3572,8 +3539,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     }
                     return true;
                 })
-                .catch((err) => {
-                    this._logger.error("Exception sending message", err);
+                .catch(() => {
                     localMessageUpdates.revertEditedContent(msg.messageId);
                     return false;
                 });
@@ -3611,8 +3577,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return true;
             })
-            .catch((err) => {
-                this._logger.error("Exception sending message", err);
+            .catch(() => {
                 localMessageUpdates.revertEditedContent(msg.messageId);
                 return false;
             });
@@ -4055,8 +4020,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch((err) => {
-                this._logger.error("Error uninviting users", err);
+            .catch(() => {
                 this.uninviteUsersLocally(chatId, userIds);
                 return "failure";
             });
@@ -4085,8 +4049,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch((err) => {
-                this._logger.error("Error inviting users to community", err);
+            .catch(() => {
                 this.uninviteUsersToCommunityLocally(id, userIds);
                 return "failure";
             });
@@ -4127,10 +4090,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error trying to change role: ", err);
-                return false;
-            })
+            .catch(() => false)
             .then((success) => {
                 if (!success) {
                     // Revert the local store
@@ -4163,10 +4123,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((resp) => {
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error trying to change role: ", err);
-                return false;
-            })
+            .catch(() => false)
             .then((success) => {
                 if (!success) {
                     // Revert the local store
@@ -4577,10 +4534,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return false;
             })
-            .catch((err) => {
-                this._logger.error("Unable to freeze group", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     unfreezeGroup(chatId: GroupChatIdentifier): Promise<boolean> {
@@ -4592,44 +4546,32 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return false;
             })
-            .catch((err) => {
-                this._logger.error("Unable to unfreeze group", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     deleteFrozenGroup(chatId: GroupChatIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "deleteFrozenGroup", chatId })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to unfreeze group", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     addHotGroupExclusion(chatId: GroupChatIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "addHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to add hot group exclusion", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     removeHotGroupExclusion(chatId: GroupChatIdentifier): Promise<boolean> {
         return this.sendRequest({ kind: "removeHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to remove hot group exclusion", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     addMessageFilter(regex: string): Promise<boolean> {
         try {
             new RegExp(regex);
         } catch (e) {
-            this._logger.error("Unable to add message filter - invalid regex", regex);
+            console.error("Unable to add message filter - invalid regex", regex);
             return Promise.resolve(false);
         }
 
@@ -4643,62 +4585,41 @@ export class OpenChat extends OpenChatAgentWorker {
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.sendRequest({ kind: "suspendUser", userId, reason })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to suspend user", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     unsuspendUser(userId: string): Promise<boolean> {
         return this.sendRequest({ kind: "unsuspendUser", userId })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to un-suspend user", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setCommunityModerationFlags(communityId: string, flags: number): Promise<boolean> {
         return this.sendRequest({ kind: "setCommunityModerationFlags", communityId, flags })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to set community moderation flags", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setGroupUpgradeConcurrency", value })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to set group upgrade concurrency", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setCommunityUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setCommunityUpgradeConcurrency", value })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to set group community concurrency", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setUserUpgradeConcurrency(value: number): Promise<boolean> {
         return this.sendRequest({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
-            .catch((err) => {
-                this._logger.error("Unable to set user upgrade concurrency", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
-        return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch((err) => {
-            this._logger.error("Unable to set diamond membership fees", err);
-            return false;
-        });
+        return this.sendRequest({ kind: "setDiamondMembershipFees", fees }).catch(() => false);
     }
 
     stakeNeuronForSubmittingProposals(
@@ -4711,10 +4632,7 @@ export class OpenChat extends OpenChatAgentWorker {
             stake,
         })
             .then((resp) => resp.kind === "success")
-            .catch((err) => {
-                this._logger.error("Failed to stake neuron for submitting proposals", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     private onChatFrozen(
@@ -4960,7 +4878,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
         const updateRegistryTask = initialLoad ? this.updateRegistry() : undefined;
 
-        return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve, reject) => {
             this.sendStreamRequest({
                 kind: "getUpdates",
                 initialLoad,
@@ -4974,8 +4892,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     chatsLoading.set(!this._liveState.chatsInitialised);
                 })
                 .catch((err) => {
-                    this.config.logger.error("Error loading chats: ", err);
-                    throw err;
+                    reject(err);
                 })
                 .finally(() => {
                     resolve();
@@ -5063,41 +4980,60 @@ export class OpenChat extends OpenChatAgentWorker {
                     return true;
                 }
             })
-            .catch((err) => {
-                this._logger.error("Claiming prize failed", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
-    acceptP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+    acceptP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_reserved",
             reservedBy: this._liveState.user.userId,
         });
-        return this.sendRequest({ kind: "acceptP2PSwap", chatId, threadRootMessageIndex, messageId })
+        return this.sendRequest({
+            kind: "acceptP2PSwap",
+            chatId,
+            threadRootMessageIndex,
+            messageId,
+        })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId));
+                localMessageUpdates.setP2PSwapStatus(
+                    messageId,
+                    mapAcceptP2PSwapResponseToStatus(resp, this._liveState.user.userId),
+                );
                 return resp;
             })
             .catch((err) => {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
-                this._logger.error("Accepting p2p swap failed", err);
                 return { kind: "internal_error", text: err.toString() };
             });
     }
 
-    cancelP2PSwap(chatId: ChatIdentifier, threadRootMessageIndex: number | undefined, messageId: bigint): Promise<CancelP2PSwapResponse> {
+    cancelP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
         localMessageUpdates.setP2PSwapStatus(messageId, {
             kind: "p2p_swap_cancelled",
         });
-        return this.sendRequest({ kind: "cancelP2PSwap", chatId, threadRootMessageIndex, messageId })
+        return this.sendRequest({
+            kind: "cancelP2PSwap",
+            chatId,
+            threadRootMessageIndex,
+            messageId,
+        })
             .then((resp) => {
-                localMessageUpdates.setP2PSwapStatus(messageId, mapCancelP2PSwapResponseToStatus(resp));
+                localMessageUpdates.setP2PSwapStatus(
+                    messageId,
+                    mapCancelP2PSwapResponseToStatus(resp),
+                );
                 return resp;
             })
             .catch((err) => {
                 localMessageUpdates.setP2PSwapStatus(messageId, { kind: "p2p_swap_open" });
-                this._logger.error("Cancelling p2p swap failed", err);
                 return { kind: "internal_error", text: err.toString() };
             });
     }
@@ -5188,10 +5124,7 @@ export class OpenChat extends OpenChatAgentWorker {
                     return true;
                 }
             })
-            .catch((err) => {
-                this._logger.error("Paying for diamond membership failed", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     setMessageReminder(
@@ -5212,10 +5145,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 return res === "success";
             })
-            .catch((err) => {
-                this._logger.error("Unable to set message reminder", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     cancelMessageReminder(
@@ -5226,9 +5156,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({
             kind: "cancelMessageReminder",
             reminderId: content.reminderId,
-        }).catch((err) => {
+        }).catch(() => {
             localMessageUpdates.revertCancelled(messageId);
-            this._logger.error("Unable to cancel message reminder", err);
             return false;
         });
     }
@@ -5245,10 +5174,7 @@ export class OpenChat extends OpenChatAgentWorker {
             threadRootMessageIndex,
             messageId,
             deleteMessage,
-        }).catch((err) => {
-            this._logger.error("Unable to report message", err);
-            return false;
-        });
+        }).catch(() => false);
     }
 
     declineInvitation(chatId: MultiUserChatIdentifier): Promise<boolean> {
@@ -5256,10 +5182,7 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((res) => {
                 return res === "success";
             })
-            .catch((err) => {
-                this._logger.error("Failed to decline invitation", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     updateMarketMakerConfig(
@@ -5294,8 +5217,7 @@ export class OpenChat extends OpenChatAgentWorker {
             flags,
         })
             .then((resp) => (resp === "success" ? flags : previousValue))
-            .catch((err) => {
-                this._logger.error("Error setting moderation flags", err);
+            .catch(() => {
                 this.user.update((user) => ({
                     ...user,
                     moderationFlagsEnabled: previousValue,
@@ -5537,10 +5459,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 this._logger.error("Failed to submit proposal", resp);
                 return false;
             })
-            .catch((err) => {
-                this._logger.error("Unable to submit proposal", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     swappableTokens(): Promise<Set<string>> {
@@ -5774,10 +5693,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return undefined;
             })
-            .catch((err) => {
-                this._logger.error("Unable to import group to community", err);
-                return undefined;
-            });
+            .catch(() => undefined);
     }
 
     async joinCommunity(
@@ -5819,10 +5735,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return "success";
             })
-            .catch((err) => {
-                this._logger.error("Unable to join community", err);
-                return "failure";
-            });
+            .catch(() => "failure");
     }
 
     deleteCommunity(id: CommunityIdentifier): Promise<boolean> {
@@ -5838,10 +5751,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error deleting community", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     leaveCommunity(id: CommunityIdentifier): Promise<boolean> {
@@ -5857,10 +5767,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp === "success";
             })
-            .catch((err) => {
-                this._logger.error("Error leaving community", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     createCommunity(
@@ -5874,9 +5781,8 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
             defaultChannels,
             defaultChannelRules: defaultChatRules("channel"),
-        }).catch((err) => {
-            this._logger.error("Error creating community", err);
-            return { kind: "failure" };
+        }).catch(() => {
+            kind: "failure";
         });
     }
 
@@ -5903,9 +5809,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp === "success";
             })
-            .catch((err) => {
+            .catch(() => {
                 this.removeFromFavouritesLocally(chatId);
-                this._logger.error("Error adding chat to favourites", err);
                 return false;
             });
     }
@@ -5919,9 +5824,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp === "success";
             })
-            .catch((err) => {
+            .catch(() => {
                 this.addToFavouritesLocally(chatId);
-                this._logger.error("Error removing chat from favourites", err);
                 return false;
             });
     }
@@ -5968,10 +5872,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return false;
             })
-            .catch((err) => {
-                this._logger.error("Error creating community", err);
-                return false;
-            });
+            .catch(() => false);
     }
 
     convertGroupToCommunity(
@@ -5985,10 +5886,7 @@ export class OpenChat extends OpenChatAgentWorker {
             rules,
         })
             .then((resp) => (resp.kind === "success" ? resp.id : undefined))
-            .catch((err) => {
-                this._logger.error("Error converting group to community", err);
-                return undefined;
-            });
+            .catch(() => undefined);
     }
 
     private deleteUserGroupLocally(id: CommunityIdentifier, userGroup: UserGroupDetails) {
@@ -6018,9 +5916,8 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp.kind === "success";
             })
-            .catch((err) => {
+            .catch(() => {
                 this.undeleteUserGroupLocally(id, userGroup);
-                this._logger.error("Error deleting community user group", err);
                 return false;
             });
     }
@@ -6044,10 +5941,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch((err) => {
-                this._logger.error("Error creating community user group", err);
-                return CommonResponses.failure();
-            });
+            .catch(() => CommonResponses.failure());
     }
 
     getCommunityForChannel(id: ChannelIdentifier): CommunitySummary | undefined {
@@ -6079,10 +5973,7 @@ export class OpenChat extends OpenChatAgentWorker {
                 }
                 return resp;
             })
-            .catch((err) => {
-                this._logger.error("Error updating community user group", err);
-                return CommonResponses.failure();
-            });
+            .catch(() => CommonResponses.failure());
     }
 
     setChatListScope(scope: ChatListScope): void {
