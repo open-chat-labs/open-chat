@@ -5327,14 +5327,16 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
-    private async updateExchangeRates(): Promise<void> {
-        const exchangeRates = await this.sendRequest({ kind: "exchangeRates" });
+    private updateExchangeRates(): Promise<void> {
+        return this.sendRequest({ kind: "exchangeRates" })
+            .then((exchangeRates) => {
+                // Handle couple of special cases
+                exchangeRates["dkp"] = exchangeRates["sns1"];
+                exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
 
-        // Handle couple of special cases
-        exchangeRates["dkp"] = exchangeRates["sns1"];
-        exchangeRates["icp"] = { ...exchangeRates["icp"], toICP: 1 };
-
-        exchangeRatesLookupStore.set(exchangeRates);
+                exchangeRatesLookupStore.set(exchangeRates);
+            })
+            .catch(() => undefined);
     }
 
     private async refreshBalancesInSeries() {
