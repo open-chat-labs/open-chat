@@ -1,5 +1,4 @@
 use crate::{mutate_state, RuntimeState};
-use canister_client::make_c2c_call;
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -49,14 +48,7 @@ async fn notify_many(canisters: Vec<(CanisterId, UpdateUserPrincipalArgs)>) {
 }
 
 async fn notify(canister_id: CanisterId, args: UpdateUserPrincipalArgs) {
-    let response = make_c2c_call(
-        canister_id,
-        "c2c_update_user_principal_msgpack",
-        &args,
-        msgpack::serialize,
-        |r| msgpack::deserialize::<UpdateUserPrincipalResponse>(r),
-    )
-    .await;
+    let response = c2c_update_user_principal(canister_id, &args).await;
 
     mutate_state(|state| match response {
         Ok(_) => state.data.user_principal_updates_queue.mark_success(args.user_id),
@@ -65,4 +57,13 @@ async fn notify(canister_id: CanisterId, args: UpdateUserPrincipalArgs) {
             start_job_if_required(state);
         }
     });
+}
+
+canister_client::generate_c2c_call!(c2c_update_user_principal);
+
+pub mod c2c_update_user_principal {
+    use super::*;
+
+    pub type Args = UpdateUserPrincipalArgs;
+    pub type Response = UpdateUserPrincipalResponse;
 }
