@@ -84,7 +84,8 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
     if let Err(error) = validate_public_key(
         caller,
         &args.public_key,
-        vec![state.data.identity_canister_id, state.data.internet_identity_canister_id],
+        state.data.identity_canister_id,
+        state.data.internet_identity_canister_id,
     ) {
         return Err(PublicKeyInvalid(error));
     }
