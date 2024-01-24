@@ -11,20 +11,26 @@ use user_index_canister::c2c_update_user_principal::{Response::*, *};
 #[update_msgpack(guard = "caller_is_identity_canister")]
 #[trace]
 async fn c2c_update_user_principal(args: Args) -> Response {
-    let PrepareResult {
-        user_id,
-        old_principal,
-        new_principal,
-    } = read_state(|state| prepare(args, state));
+    let user_id = read_state(|state| get_user_id(&args, state));
 
     match user_canister_c2c_client::c2c_update_user_principal(
         user_id.into(),
-        &user_canister::c2c_update_user_principal::Args { new_principal },
+        &user_canister::c2c_update_user_principal::Args {
+            new_principal: args.new_principal,
+        },
     )
     .await
     {
         Ok(user_canister::c2c_update_user_principal::Response::Success(result)) => {
-            mutate_state(|state| commit(user_id, old_principal, new_principal, result.canisters_to_notify, state));
+            mutate_state(|state| {
+                commit(
+                    user_id,
+                    args.old_principal,
+                    args.new_principal,
+                    result.canisters_to_notify,
+                    state,
+                )
+            });
             Success
         }
         Err(error) => InternalError(format!("{error:?}")),
@@ -33,18 +39,10 @@ async fn c2c_update_user_principal(args: Args) -> Response {
 
 struct PrepareResult {
     user_id: UserId,
-    old_principal: Principal,
-    new_principal: Principal,
 }
 
-fn prepare(args: Args, state: &RuntimeState) -> PrepareResult {
-    let user_id = state.data.users.get_by_principal(&args.old_principal).unwrap().user_id;
-
-    PrepareResult {
-        user_id,
-        old_principal: args.old_principal,
-        new_principal: args.new_principal,
-    }
+fn get_user_id(args: &Args, state: &RuntimeState) -> UserId {
+    state.data.users.get_by_principal(&args.old_principal).unwrap().user_id
 }
 
 fn commit(
