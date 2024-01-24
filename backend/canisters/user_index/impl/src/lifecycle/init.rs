@@ -15,7 +15,7 @@ fn init(args: Args) {
     let env = init_env([0; 32]);
 
     let data = Data::new(
-        args.service_principals,
+        args.governance_principals,
         args.user_canister_wasm,
         args.local_user_index_canister_wasm,
         args.group_index_canister_id,
