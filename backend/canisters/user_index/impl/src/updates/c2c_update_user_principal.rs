@@ -37,10 +37,6 @@ async fn c2c_update_user_principal(args: Args) -> Response {
     }
 }
 
-struct PrepareResult {
-    user_id: UserId,
-}
-
 fn get_user_id(args: &Args, state: &RuntimeState) -> UserId {
     state.data.users.get_by_principal(&args.old_principal).unwrap().user_id
 }
