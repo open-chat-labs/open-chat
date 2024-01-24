@@ -185,6 +185,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
+                identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
@@ -444,6 +445,7 @@ pub struct NnsNeuron {
 pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
+    pub identity: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
