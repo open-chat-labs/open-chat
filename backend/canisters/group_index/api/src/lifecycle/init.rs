@@ -4,9 +4,7 @@ use types::{BuildVersion, CanisterId, CanisterWasm, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    // Only these principals can call upgrade_group_canister_wasm
-    pub service_principals: Vec<Principal>,
-
+    pub governance_principals: Vec<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub community_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm: CanisterWasm,

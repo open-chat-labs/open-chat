@@ -81,7 +81,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
+    if let Err(error) = validate_public_key(
+        caller,
+        &args.public_key,
+        state.data.identity_canister_id,
+        state.data.internet_identity_canister_id,
+    ) {
         return Err(PublicKeyInvalid(error));
     }
 
@@ -243,13 +248,18 @@ fn welcome_messages() -> Vec<String> {
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
 
-fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_canister_id: CanisterId) -> Result<(), String> {
+fn validate_public_key(
+    caller: Principal,
+    public_key: &[u8],
+    identity_canister_id: CanisterId,
+    internet_identity_canister_id: CanisterId,
+) -> Result<(), String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-    if canister_id != internet_identity_canister_id {
-        return Err("PublicKey is not derived from the InternetIdentity canister".to_string());
+    if canister_id != identity_canister_id && canister_id != internet_identity_canister_id {
+        return Err("PublicKey is not derived from the Identity canister or the InternetIdentity canister".to_string());
     }
 
     let expected_caller = Principal::self_authenticating(public_key);

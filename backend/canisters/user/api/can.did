@@ -748,24 +748,6 @@ type SubmitProposalResponse = variant {
     InternalError : text;
 };
 
-type InitUserPrincipalMigrationArgs = record {
-    new_principal : principal;
-};
-
-type InitUserPrincipalMigrationResponse = variant {
-    Success;
-};
-
-type MigrateUserPrincipalArgs = record {};
-
-type MigrateUserPrincipalResponse = variant {
-    Success;
-    MigrationNotInitialized;
-    MigrationAlreadyInProgress;
-    PrincipalAlreadyInUse;
-    InternalError : text;
-};
-
 type InitialStateResponse = variant {
     Success : record {
         timestamp : TimestampMillis;
@@ -1060,9 +1042,6 @@ service : {
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
     accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
-
-    init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
-    migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use group_canister::c2c_update_user_principal::{Response::*, *};
+use group_canister::c2c_update_user_principal::*;
 
 #[update_msgpack(guard = "caller_is_user_index")]
 #[trace]
@@ -15,9 +15,6 @@ async fn c2c_update_user_principal(args: Args) -> Response {
 fn c2c_update_user_principal_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(user_id) = state.data.principal_to_user_id_map.remove(&args.old_principal) {
         state.data.principal_to_user_id_map.insert(args.new_principal, user_id);
-
-        Success
-    } else {
-        UserNotFound
     }
+    Response::Success
 }

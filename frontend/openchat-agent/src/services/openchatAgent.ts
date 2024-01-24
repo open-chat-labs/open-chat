@@ -84,7 +84,6 @@ import type {
     MemberRole,
     Message,
     MessageContent,
-    MigrateUserPrincipalResponse,
     OptionUpdate,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
@@ -2440,17 +2439,6 @@ export class OpenChatAgent extends EventTarget {
                     adopt,
                 );
         }
-    }
-
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.userClient.initUserPrincipalMigration(newPrincipal);
-    }
-
-    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        const userClient = UserClient.create(userId, this.identity, this.config, this.db);
-        return userClient.migrateUserPrincipal();
     }
 
     getProposalVoteDetails(

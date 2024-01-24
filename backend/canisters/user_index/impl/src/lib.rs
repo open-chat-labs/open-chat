@@ -1,7 +1,7 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_principal_updates_queue::UserPrincipalUpdatesQueue;
 use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -85,6 +85,11 @@ impl RuntimeState {
     pub fn is_caller_group_index_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.group_index_canister_id
+    }
+
+    pub fn is_caller_identity_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.identity_canister_id
     }
 
     pub fn is_caller_platform_moderator(&self) -> bool {
@@ -180,6 +185,7 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
+                identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
@@ -201,6 +207,8 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
+    #[serde(default = "identity_canister_id")]
+    pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -209,7 +217,8 @@ struct Data {
     pub escrow_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub user_principal_migration_queue: UserPrincipalMigrationQueue,
+    #[serde(default)]
+    pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -231,6 +240,10 @@ struct Data {
     pub diamond_membership_fees: DiamondMembershipFees,
 }
 
+fn identity_canister_id() -> CanisterId {
+    CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -239,6 +252,7 @@ impl Data {
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
+        identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
@@ -255,6 +269,7 @@ impl Data {
             local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
             group_index_canister_id,
             notifications_index_canister_id,
+            identity_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -263,7 +278,7 @@ impl Data {
             escrow_canister_id,
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -337,6 +352,7 @@ impl Default for Data {
             local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
+            identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
@@ -345,7 +361,7 @@ impl Default for Data {
             escrow_canister_id: Principal::anonymous(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -429,6 +445,7 @@ pub struct NnsNeuron {
 pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
+    pub identity: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
