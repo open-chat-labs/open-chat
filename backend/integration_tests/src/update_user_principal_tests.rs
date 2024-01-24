@@ -49,6 +49,7 @@ fn principal_update_propagates_to_all_relevant_canisters() {
         canister_ids.notifications_index,
         "p256dh",
     );
+    client::storage_index::happy_path::user(env, new_principal, canister_ids.storage_index);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
