@@ -42,6 +42,7 @@ mod suspend_user_tests;
 mod tip_message_tests;
 mod update_group_tests;
 mod update_profile_tests;
+mod update_user_principal_tests;
 mod utils;
 mod wasms;
 

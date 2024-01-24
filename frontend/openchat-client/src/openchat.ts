@@ -700,18 +700,6 @@ export class OpenChat extends OpenChatAgentWorker {
             .then((user) => {
                 switch (user.kind) {
                     case "unknown_user":
-                        // TODO remove this once the principal migration can be done via the UI
-                        const principalMigrationUserId = localStorage.getItem(
-                            "openchat_principal_migration_user_id",
-                        );
-                        if (principalMigrationUserId !== null) {
-                            console.log("Migrating user principal", principalMigrationUserId);
-                            this.sendRequest({
-                                kind: "migrateUserPrincipal",
-                                userId: principalMigrationUserId,
-                            });
-                            return;
-                        }
                         this.onCreatedUser(anonymousUser());
                         this.identityState.set({ kind: "registering" });
                         break;
@@ -765,19 +753,6 @@ export class OpenChat extends OpenChatAgentWorker {
         this.user.set(user);
         this.setDiamondStatus(user.diamondStatus);
         const id = this._identity;
-        // TODO remove this once the principal migration can be done via the UI
-        const principalMigrationNewPrincipal = localStorage.getItem(
-            "openchat_principal_migration_new_principal",
-        );
-        if (principalMigrationNewPrincipal !== null) {
-            console.log("Initializing user principal migration", principalMigrationNewPrincipal);
-            this.sendRequest({ kind: "createUserClient", userId: user.userId });
-            this.sendRequest({
-                kind: "initUserPrincipalMigration",
-                newPrincipal: principalMigrationNewPrincipal,
-            });
-            return;
-        }
 
         if (user.canisterUpgradeStatus === "in_progress") {
             this.identityState.set({ kind: "upgrading_user" });

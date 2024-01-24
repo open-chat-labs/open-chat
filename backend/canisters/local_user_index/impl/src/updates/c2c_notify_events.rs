@@ -153,5 +153,11 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .referral_codes
                 .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
         }
+        Event::UserPrincipalUpdated(update) => {
+            state
+                .data
+                .global_users
+                .update_user_principal(update.old_principal, update.new_principal);
+        }
     }
 }

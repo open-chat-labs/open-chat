@@ -14,6 +14,7 @@ pub mod escrow;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
+pub mod identity;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -113,16 +114,5 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
         WasmResult::Reject(error) => panic!("{error}"),
-    }
-}
-
-#[derive(CandidType)]
-struct StartStopArgs {
-    canister_id: CanisterId,
-}
-
-impl StartStopArgs {
-    fn new(canister_id: CanisterId) -> StartStopArgs {
-        StartStopArgs { canister_id }
     }
 }

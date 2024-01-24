@@ -1,12 +1,16 @@
+use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashSet;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
+mod guards;
 mod lifecycle;
 mod memory;
 mod queries;
+mod updates;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -22,6 +26,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_governance_principal(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -41,6 +50,7 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub rng_seed: [u8; 32],
@@ -48,8 +58,14 @@ struct Data {
 }
 
 impl Data {
-    pub fn new(user_index_canister_id: CanisterId, cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
+    pub fn new(
+        governance_principals: HashSet<Principal>,
+        user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
+        test_mode: bool,
+    ) -> Data {
         Data {
+            governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
             rng_seed: [0; 32],

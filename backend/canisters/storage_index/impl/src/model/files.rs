@@ -119,6 +119,26 @@ impl Files {
         })
     }
 
+    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
+        let files: Vec<_> = self.iter_user_files_from_oldest(old_principal).collect();
+        for file in files {
+            if let Some(count) = self.blob_reference_counts.remove(&BlobReference {
+                hash: file.hash,
+                user_id: old_principal,
+                canister_id: file.bucket,
+            }) {
+                self.blob_reference_counts.insert(
+                    BlobReference {
+                        hash: file.hash,
+                        user_id: new_principal,
+                        canister_id: file.bucket,
+                    },
+                    count,
+                );
+            }
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             file_count: self.files_by_user.len(),

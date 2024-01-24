@@ -3372,6 +3372,8 @@ dependencies = [
  "stable_memory",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -3452,6 +3454,7 @@ dependencies = [
  "lazy_static",
  "ledger_utils",
  "local_user_index_canister",
+ "msgpack",
  "notifications_canister",
  "notifications_index_canister",
  "online_users_canister",
