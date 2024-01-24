@@ -14,7 +14,7 @@ fn init(args: Args) {
 
     let env = init_env([0; 32]);
     let data = Data::new(
-        args.service_principals,
+        args.governance_principals,
         args.push_service_principals,
         args.user_index_canister_id,
         args.cycles_dispenser_canister_id,

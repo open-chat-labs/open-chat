@@ -57,7 +57,7 @@ async fn install_service_canisters_impl(
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let user_index_init_args = user_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         user_canister_wasm: CanisterWasm::default(),
         local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id: canister_ids.group_index,
@@ -74,7 +74,7 @@ async fn install_service_canisters_impl(
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         group_canister_wasm: CanisterWasm::default(),
         community_canister_wasm: CanisterWasm::default(),
         local_group_index_canister_wasm: CanisterWasm::default(),
@@ -88,7 +88,7 @@ async fn install_service_canisters_impl(
 
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
     let notifications_index_init_args = notifications_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],

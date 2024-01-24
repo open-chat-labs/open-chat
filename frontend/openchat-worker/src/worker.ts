@@ -67,10 +67,7 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
-        logger?.error("WORKER: sending error: ", error);
-        if (payload !== undefined) {
-            console.error("WORKER: error caused by payload: ", payload);
-        }
+        logger?.error("WORKER: error caused by payload: ", error, payload);
         postMessage({
             kind: "worker_error",
             correlationId,
