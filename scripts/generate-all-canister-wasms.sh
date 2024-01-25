@@ -22,5 +22,6 @@ cd $SCRIPT_DIR/..
 ./scripts/generate-wasm.sh registry
 ./scripts/generate-wasm.sh storage_bucket
 ./scripts/generate-wasm.sh storage_index
+./scripts/generate-wasm.sh translations
 ./scripts/generate-wasm.sh user
 ./scripts/generate-wasm.sh user_index
