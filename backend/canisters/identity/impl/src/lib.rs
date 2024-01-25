@@ -1,3 +1,4 @@
+use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,7 @@ use utils::env::Environment;
 mod guards;
 mod lifecycle;
 mod memory;
+mod model;
 mod queries;
 mod updates;
 
@@ -26,6 +28,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_index_canister_id == caller
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {
@@ -53,6 +60,8 @@ struct Data {
     pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub user_principals: UserPrincipals,
+    pub legacy_principals: HashSet<Principal>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -68,6 +77,8 @@ impl Data {
             governance_principals,
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            user_principals: UserPrincipals::default(),
+            legacy_principals: HashSet::default(),
             rng_seed: [0; 32],
             test_mode,
         }

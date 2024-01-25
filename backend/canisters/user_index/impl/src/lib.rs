@@ -19,7 +19,7 @@ use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
 use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use types::{
     BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
     TimestampMillis, Timestamped, UserId,
@@ -219,6 +219,8 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     #[serde(default)]
     pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
+    #[serde(default)]
+    pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -238,8 +240,11 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
+    #[serde(default)]
+    pub legacy_principals_synced: bool,
 }
 
+// Post upgrade - remove
 fn identity_canister_id() -> CanisterId {
     CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap()
 }
@@ -279,6 +284,7 @@ impl Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -298,6 +304,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         };
 
         // Register the ProposalsBot
@@ -362,6 +369,7 @@ impl Default for Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -381,6 +389,7 @@ impl Default for Data {
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         }
     }
 }

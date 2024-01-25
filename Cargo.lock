@@ -3365,7 +3365,20 @@ name = "identity_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
+ "types",
+]
+
+[[package]]
+name = "identity_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.11.3",
+ "identity_canister",
+ "tracing",
  "types",
 ]
 
@@ -7337,6 +7350,8 @@ dependencies = [
  "ic-stable-structures",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
+ "identity_canister",
+ "identity_canister_c2c_client",
  "itertools 0.11.0",
  "ledger_utils",
  "local_user_index_canister",
