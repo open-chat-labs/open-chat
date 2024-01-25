@@ -1038,6 +1038,7 @@ dependencies = [
  "registry_canister",
  "storage_index_canister",
  "tokio",
+ "translations_canister",
  "types",
  "user_canister",
  "user_index_canister",
@@ -1119,6 +1120,7 @@ dependencies = [
  "storage_index_canister",
  "storage_index_canister_client",
  "tokio",
+ "translations_canister",
  "types",
  "user_canister",
  "user_index_canister",
@@ -3484,6 +3486,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
+ "translations_canister",
  "types",
  "user_canister",
  "user_index_canister",
@@ -6998,6 +7001,39 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "translations_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "translations_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "http_request",
+ "ic-cdk 0.11.3",
+ "ic-cdk-macros 0.7.0",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "rand",
+ "serde",
+ "serializer",
+ "stable_memory",
+ "tracing",
+ "translations_canister",
+ "types",
+ "utils",
 ]
 
 [[package]]

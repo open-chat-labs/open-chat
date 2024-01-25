@@ -92,6 +92,7 @@ pub struct CanisterIds {
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
     pub escrow: CanisterId,
+    pub translations: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,
