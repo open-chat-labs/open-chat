@@ -18,8 +18,8 @@ fn new_users_synced_to_identity_canister() {
     env.tick();
 
     for user in users {
-        let response = client::identity::check_principal(env, user.principal, canister_ids.identity, &Empty {});
-        assert!(matches!(response, identity_canister::check_principal::Response::Legacy));
+        let response = client::identity::check_auth_principal(env, user.principal, canister_ids.identity, &Empty {});
+        assert!(matches!(response, identity_canister::check_auth_principal::Response::Legacy));
     }
 }
 
@@ -28,6 +28,9 @@ fn unknown_principal_returns_not_found() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let response = client::identity::check_principal(env, random_principal(), canister_ids.identity, &Empty {});
-    assert!(matches!(response, identity_canister::check_principal::Response::NotFound));
+    let response = client::identity::check_auth_principal(env, random_principal(), canister_ids.identity, &Empty {});
+    assert!(matches!(
+        response,
+        identity_canister::check_auth_principal::Response::NotFound
+    ));
 }

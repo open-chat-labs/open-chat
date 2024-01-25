@@ -6,8 +6,7 @@ pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub enum Response {
-    User,
-    Authenticated,
+    Success,
     Legacy,
     NotFound,
 }

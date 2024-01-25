@@ -1,11 +1,12 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::ops::Index;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
-    user_principals: HashMap<u32, UserPrincipal>,
-    principal_to_index: HashMap<Principal, u32>,
+    user_principals: Vec<UserPrincipal>,
+    auth_principal_to_index: HashMap<Principal, u32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -18,23 +19,20 @@ pub struct UserPrincipal {
 impl UserPrincipals {
     #[allow(dead_code)]
     pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal) {
-        assert!(!self.user_principals.contains_key(&index));
-        assert!(!self.principal_to_index.contains_key(&auth_principal));
+        assert_eq!(self.user_principals.len(), index as usize);
+        assert!(!self.auth_principal_to_index.contains_key(&auth_principal));
 
-        self.user_principals.insert(
+        self.user_principals.push(UserPrincipal {
             index,
-            UserPrincipal {
-                index,
-                principal,
-                auth_principals: vec![auth_principal],
-            },
-        );
-        self.principal_to_index.insert(auth_principal, index);
+            principal,
+            auth_principals: vec![auth_principal],
+        });
+        self.auth_principal_to_index.insert(auth_principal, index);
     }
 
-    pub fn get(&self, principal: &Principal) -> Option<&UserPrincipal> {
-        self.principal_to_index
-            .get(principal)
-            .and_then(|id| self.user_principals.get(id))
+    pub fn get_by_auth_principal(&self, auth_principal: &Principal) -> Option<&UserPrincipal> {
+        self.auth_principal_to_index
+            .get(auth_principal)
+            .map(|id| self.user_principals.index(*id as usize))
     }
 }

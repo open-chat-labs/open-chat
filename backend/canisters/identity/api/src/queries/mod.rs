@@ -1,1 +1,1 @@
-pub mod check_principal;
+pub mod check_auth_principal;
