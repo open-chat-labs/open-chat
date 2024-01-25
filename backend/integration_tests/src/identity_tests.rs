@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::rng::random_principal;
-use crate::{client, env, TestEnv};
+use crate::{client, TestEnv};
 use std::ops::Deref;
 use types::Empty;
 
