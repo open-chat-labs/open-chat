@@ -1226,7 +1226,6 @@
         "acceptedBy": "Ưu đãi này đã được {user} chấp nhận và đang chờ hoàn thành.",
         "youCompleted": "Bạn đã chấp nhận lời đề nghị này.",
         "completed": "Ưu đãi này đã được {user} chấp nhận.",
-        "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} (bao gồm 2 phí giao dịch) sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ai đó chấp nhận ưu đãi. Bạn có muốn tiếp tục?",
         "confirmAccept": "Khi bạn chấp nhận ưu đãi này, {amount} {token} (bao gồm 2 phí giao dịch) sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Đổi lại bạn sẽ nhận được {amountOther} {tokenOther}. Bạn có muốn tiếp tục?",
         "confirmCancel": "Khi bạn hủy ưu đãi này, {amount} {token} sẽ được chuyển từ hộp Ký quỹ OpenChat trở lại ví của bạn. Bạn có muốn tiếp tục?",
         "insufficientBalanceMessage": "Bạn cần ít nhất {amount} {token} (bao gồm 2 phí giao dịch) để chấp nhận giao dịch hoán đổi này.",
@@ -1238,6 +1237,7 @@
         "swap_not_found": "Không thể tìm thấy ưu đãi trao đổi này",
         "insufficient_funds": "Bạn không còn đủ tiền để chấp nhận đề nghị hoán đổi này",
         "unknown_accept_error": "Lỗi chấp nhận đề nghị trao đổi",
-        "unknown_cancel_error": "Lỗi hủy ưu đãi trao đổi"
+        "unknown_cancel_error": "Lỗi hủy ưu đãi trao đổi",
+        "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} (bao gồm 2 phí giao dịch) sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ưu đãi được chấp nhận. Bạn có muốn tiếp tục?"
     }
 }
