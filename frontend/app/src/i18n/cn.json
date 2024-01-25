@@ -1226,7 +1226,6 @@
         "acceptedBy": "此要约已被 {user} 接受并等待完成。",
         "youCompleted": "您已接受此优惠。",
         "completed": "此报价已被 {user} 接受。",
-        "confirmSend": "当您创建此优惠时，{amount} {token}（包括 2 笔交易费用）将从您的钱包转移到 OpenChat 托管罐。它将一直保留在那里，直到要约过期、您取消要约或有人接受要约。你想继续吗？",
         "confirmAccept": "当您接受此优惠时，{amount} {token}（包括 2 笔交易费用）将从您的钱包转移到 OpenChat 托管罐。作为交换，您将收到 {amountOther} {tokenOther}。你想继续吗？",
         "confirmCancel": "当您取消此优惠时，{amount} {token} 将从 OpenChat 托管罐转回到您的钱包。你想继续吗？",
         "insufficientBalanceMessage": "您至少需要{amount} {token}（包括2笔交易费用）才能接受此交换。",
@@ -1238,6 +1237,7 @@
         "swap_not_found": "找不到此交换报价",
         "insufficient_funds": "您的剩余资金不足以接受此掉期优惠",
         "unknown_accept_error": "接受交换报价时出错",
-        "unknown_cancel_error": "取消掉期优惠时出错"
+        "unknown_cancel_error": "取消掉期优惠时出错",
+        "confirmSend": "当您创建此优惠时，{amount} {token}（包括 2 笔交易费用）将从您的钱包转移到 OpenChat 托管罐。它将一直保留在那里，直到要约过期、您取消要约或要约被接受。你想继续吗？"
     }
 }

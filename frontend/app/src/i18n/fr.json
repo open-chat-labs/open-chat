@@ -1225,7 +1225,6 @@
         "acceptedBy": "Cette offre a été acceptée par {user} et est en attente de finalisation.",
         "youCompleted": "Vous avez accepté cette offre.",
         "completed": "Cette offre a été acceptée par {user}.",
-        "confirmSend": "Lorsque vous créez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Il y restera jusqu'à ce que l'offre expire, que vous annuliez l'offre ou que quelqu'un accepte l'offre. Voulez-vous continuer?",
         "confirmAccept": "Lorsque vous acceptez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Vous recevrez {amountOther} {tokenOther} en échange. Voulez-vous continuer?",
         "confirmCancel": "Lorsque vous annulez cette offre, {amount} {token} sera transféré du conteneur OpenChat Escrow vers votre portefeuille. Voulez-vous continuer?",
         "insufficientBalanceMessage": "Vous avez besoin d'au moins {amount} {token} (comprend 2 frais de transaction) pour accepter cet échange.",
@@ -1237,6 +1236,7 @@
         "swap_not_found": "Cette offre d'échange est introuvable",
         "insufficient_funds": "Il ne vous reste pas suffisamment de fonds pour accepter cette offre d'échange",
         "unknown_accept_error": "Erreur lors de l'acceptation de l'offre d'échange",
-        "unknown_cancel_error": "Erreur lors de l'annulation de l'offre d'échange"
+        "unknown_cancel_error": "Erreur lors de l'annulation de l'offre d'échange",
+        "confirmSend": "Lorsque vous créez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Il y restera jusqu'à ce que l'offre expire, que vous annuliez l'offre ou que l'offre soit acceptée. Voulez-vous continuer?"
     }
 }

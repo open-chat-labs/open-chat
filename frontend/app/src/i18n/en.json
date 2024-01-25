@@ -1217,7 +1217,7 @@
         "acceptedBy": "This offer has been accepted by {user} and is pending completion.",
         "youCompleted": "You have accepted this offer.",
         "completed": "This offer has been accepted by {user}.",
-        "confirmSend": "When you create this offer {amount} {token} (includes 2 transaction fees) will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or someone accepts the offer. Do you wish to proceed?",
+        "confirmSend": "When you create this offer {amount} {token} (includes 2 transaction fees) will be transferred from your wallet to the OpenChat Escrow canister. It will stay there until either the offer expires, you cancel the offer, or the offer is accepted. Do you wish to proceed?",
         "confirmAccept": "When you accept this offer {amount} {token} (includes 2 transaction fees) will be transferred from your wallet to the OpenChat Escrow canister. You will receive {amountOther} {tokenOther} in exchange. Do you wish to proceed?",
         "confirmCancel": "When you cancel this offer {amount} {token} will be transferred from the OpenChat Escrow canister back to your wallet. Do you wish to proceed?",
         "insufficientBalanceMessage": "You need at least {amount} {token} (includes 2 transaction fees) to accept this swap.",
