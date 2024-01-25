@@ -29,6 +29,7 @@ pub enum CanisterName {
     Registry,
     StorageBucket,
     StorageIndex,
+    Translations,
     User,
     UserIndex,
 }
@@ -55,6 +56,7 @@ impl FromStr for CanisterName {
             "registry" => Ok(CanisterName::Registry),
             "storage_bucket" => Ok(CanisterName::StorageBucket),
             "storage_index" => Ok(CanisterName::StorageIndex),
+            "translations" => Ok(CanisterName::Translations),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
@@ -82,6 +84,7 @@ impl Display for CanisterName {
             CanisterName::Registry => "registry",
             CanisterName::StorageBucket => "storage_bucket",
             CanisterName::StorageIndex => "storage_index",
+            CanisterName::Translations => "translations",
             CanisterName::User => "user",
             CanisterName::UserIndex => "user_index",
         };
@@ -107,6 +110,7 @@ pub struct CanisterIds {
     pub market_maker: CanisterId,
     pub neuron_controller: CanisterId,
     pub escrow: CanisterId,
+    pub translations: CanisterId,
     pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_internet_identity: CanisterId,
