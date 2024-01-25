@@ -1553,6 +1553,8 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "serializer",
+ "sns_root_canister",
+ "sns_root_canister_c2c_client",
  "stable_memory",
  "tracing",
  "types",
@@ -6262,6 +6264,27 @@ dependencies = [
  "canister_client",
  "ic-cdk 0.11.3",
  "sns_governance_canister",
+ "types",
+]
+
+[[package]]
+name = "sns_root_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_root_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.11.3",
+ "sns_root_canister",
  "types",
 ]
 
