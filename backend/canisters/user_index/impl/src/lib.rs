@@ -240,8 +240,11 @@ struct Data {
     pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
     pub diamond_membership_fees: DiamondMembershipFees,
+    #[serde(default)]
+    pub legacy_principals_synced: bool,
 }
 
+// Post upgrade - remove
 fn identity_canister_id() -> CanisterId {
     CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap()
 }
@@ -301,6 +304,7 @@ impl Data {
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         };
 
         // Register the ProposalsBot
@@ -385,6 +389,7 @@ impl Default for Data {
             nns_8_year_neuron: None,
             rng_seed: [0; 32],
             diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         }
     }
 }

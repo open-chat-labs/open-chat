@@ -25,8 +25,10 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
+    // Post upgrade - remove
     mutate_state(|state| {
-        if state.data.test_mode {
+        if !state.data.legacy_principals_synced && state.data.test_mode {
+            state.data.legacy_principals_synced = true;
             state
                 .data
                 .legacy_principals_sync_queue
