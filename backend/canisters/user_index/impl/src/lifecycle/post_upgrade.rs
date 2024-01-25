@@ -26,11 +26,13 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        state
-            .data
-            .legacy_principals_sync_queue
-            .extend(state.data.users.iter().map(|u| u.principal));
+        if state.data.test_mode {
+            state
+                .data
+                .legacy_principals_sync_queue
+                .extend(state.data.users.iter().map(|u| u.principal));
 
-        crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+            crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+        }
     });
 }
