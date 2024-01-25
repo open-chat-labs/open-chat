@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+- Sync user principals to the Identity canister ([#5264](https://github.com/open-chat-labs/open-chat/pull/5264))
 
 ### Changed
 
