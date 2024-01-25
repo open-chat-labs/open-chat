@@ -1227,7 +1227,6 @@
         "acceptedBy": "Esta oferta ha sido aceptada por {user} y está pendiente de finalización.",
         "youCompleted": "Has aceptado esta oferta.",
         "completed": "Esta oferta ha sido aceptada por {user}.",
-        "confirmSend": "Cuando cree esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Permanecerá allí hasta que la oferta caduque, usted la cancele o alguien la acepte. ¿Desea continuar?",
         "confirmAccept": "Cuando acepte esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Recibirás {amountOther} {tokenOther} a cambio. ¿Desea continuar?",
         "confirmCancel": "Cuando cancele esta oferta, {amount} {token} se transferirá del contenedor de OpenChat Escrow a su billetera. ¿Desea continuar?",
         "insufficientBalanceMessage": "Necesita al menos {amount} {token} (incluye 2 tarifas de transacción) para aceptar este intercambio.",
@@ -1239,6 +1238,7 @@
         "swap_not_found": "Esta oferta de intercambio no se pudo encontrar",
         "insufficient_funds": "No le quedan fondos suficientes para aceptar esta oferta de intercambio",
         "unknown_accept_error": "Error al aceptar la oferta de intercambio",
-        "unknown_cancel_error": "Error al cancelar la oferta de intercambio"
+        "unknown_cancel_error": "Error al cancelar la oferta de intercambio",
+        "confirmSend": "Cuando cree esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Permanecerá allí hasta que la oferta caduque, usted la cancele o se acepte la oferta. ¿Desea continuar?"
     }
 }
