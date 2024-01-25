@@ -7,7 +7,6 @@ use types::{CommunityId, DeletedCommunityInfo, UserId};
 pub struct DeletedCommunities {
     communities: HashMap<CommunityId, DeletedCommunityInfo>,
     pending_community_deleted_notifications: VecDeque<(CommunityId, UserId)>,
-    #[serde(default)]
     failed_notifications: Vec<(CommunityId, UserId)>,
 }
 
