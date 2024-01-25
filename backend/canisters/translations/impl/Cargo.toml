@@ -20,11 +20,11 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
-translations_canister = { path = "../api" }
 rand = { workspace = true }
 serde = { workspace = true }
 serializer = { path = "../../../libraries/serializer" }
 stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
+translations_canister = { path = "../api" }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

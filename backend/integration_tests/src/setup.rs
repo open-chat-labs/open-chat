@@ -101,10 +101,10 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
     let registry_canister_wasm = wasms::REGISTRY.clone();
-    let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
+    let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
 
