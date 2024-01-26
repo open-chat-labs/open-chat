@@ -936,7 +936,10 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
-                messagePermissions: { default: "member" },
+                messagePermissions: {
+                    default: "member",
+                    p2pSwap: "none",
+                },
                 threadPermissions: undefined,
             },
             rules: { ...defaultChatRules(level), newVersion: false },

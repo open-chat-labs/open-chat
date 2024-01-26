@@ -368,7 +368,8 @@
             "crypto": "gửi tin nhắn mật mã",
             "giphy": "gửi tin nhắn giphy",
             "prize": "gửi tin nhắn trúng thưởng",
-            "memeFighter": "gửi tin nhắn Meme Fighter"
+            "memeFighter": "gửi tin nhắn Meme Fighter",
+            "p2pSwap": "gửi tin nhắn trao đổi P2P"
         },
         "threadPermissions": {
             "default": "gửi tin nhắn theo chủ đề theo mặc định",
@@ -381,7 +382,8 @@
             "crypto": "gửi tin nhắn mật mã trong chuỗi",
             "giphy": "gửi tin nhắn giphy trong chủ đề",
             "prize": "gửi tin nhắn giải thưởng trong chủ đề",
-            "memeFighter": "gửi tin nhắn Meme Fighter trong chủ đề"
+            "memeFighter": "gửi tin nhắn Meme Fighter trong chủ đề",
+            "p2pSwap": "gửi tin nhắn trao đổi P2P trong chủ đề"
         }
     },
     "rules": {

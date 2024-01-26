@@ -366,7 +366,8 @@
             "crypto": "发送加密消息",
             "giphy": "发送 giphy 消息",
             "prize": "发送有奖短信",
-            "memeFighter": "发送 Meme Fighter 消息"
+            "memeFighter": "发送 Meme Fighter 消息",
+            "p2pSwap": "发送P2P交换消息"
         },
         "threadPermissions": {
             "default": "默认在线程中发送消息",
@@ -379,7 +380,8 @@
             "crypto": "在线程中发送加密消息",
             "giphy": "在线程中发送 giphy 消息",
             "prize": "在话题中发送有奖信息",
-            "memeFighter": "在线程中发送 Meme Fighter 消息"
+            "memeFighter": "在线程中发送 Meme Fighter 消息",
+            "p2pSwap": "在线程中发送 P2P 交换消息"
         }
     },
     "rules": {
