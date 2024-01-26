@@ -23,8 +23,8 @@
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: tokenDecimals = tokenDetails.decimals;
+    $: symbol = tokenDetails?.symbol;
+    $: tokenDecimals = tokenDetails?.decimals;
 
     onMount(() => {
         if (amount > BigInt(0)) {
@@ -79,11 +79,11 @@
 
 <div class="label">
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
-{#if maxAmount !== undefined}
-    <div on:click={max} class="max">
-        <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
-    </div>
-{/if}
+    {#if maxAmount !== undefined}
+        <div on:click={max} class="max">
+            <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+        </div>
+    {/if}
 </div>
 <div class="wrapper">
     {#if transferFees !== undefined}
