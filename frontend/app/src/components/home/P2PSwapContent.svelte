@@ -212,7 +212,7 @@
                 <div class="amount">{fromAmount} {content.token0.symbol}</div>
             </div>
 
-            <div class="swap-icon"><SwapIcon size={"2.5rem"} /></div>
+            <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
 
             <div class="coin">
                 <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
@@ -319,7 +319,7 @@
     }
 
     .swap-icon {
-        height: 2.5rem;
+        height: 2.5em;
         position: relative;
         top: calc(2.5rem - 12px);
     }
