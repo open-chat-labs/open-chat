@@ -57,7 +57,7 @@ impl SonicClient {
     pub async fn swap(&self, amount: u128) -> CallResult<u128> {
         let args = (
             Nat::from(amount),
-            Nat::from(0),
+            Nat::from(0u32),
             vec![self.input_token().ledger.to_string(), self.output_token().ledger.to_string()],
             self.this_canister_id,
             Int::from(u64::MAX),

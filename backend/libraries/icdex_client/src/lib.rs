@@ -111,7 +111,7 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         .map_err(|t| (RejectionCode::Unknown, format!("{t:?}")))?;
 
         let quantity = match order.order_type {
-            OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0.into()),
+            OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0u32.into()),
             OrderType::Ask => OrderQuantity::Sell(order.amount.into()),
         };
         // Convert the price per whole into the price per `smallest_order_size`
