@@ -151,6 +151,12 @@
       "candid": "sns/candid/sns_swap.did",
       "type": "custom",
       "wasm": ""
+    },
+    "test_ledger": {
+      "build": "",
+      "candid": "",
+      "type": "custom",
+      "wasm": "./wasms/icrc_ledger.wasm.gz"
     }
   },
   "networks": {
