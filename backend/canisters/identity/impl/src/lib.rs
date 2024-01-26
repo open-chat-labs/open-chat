@@ -1,7 +1,10 @@
+use crate::model::salt::Salt;
 use crate::model::user_principals::UserPrincipals;
 use candid::Principal;
+use canister_sig_util::CanisterSigPublicKey;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
+use sha256::sha256;
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -35,9 +38,12 @@ impl RuntimeState {
         self.data.user_index_canister_id == caller
     }
 
-    pub fn is_caller_governance_principal(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.governance_principals.contains(&caller)
+    pub fn get_principal(&self, index: u32) -> Principal {
+        let canister_id = self.env.canister_id();
+        let salt = self.data.salt.get();
+        let seed = calculate_seed(index, salt);
+        let public_key = CanisterSigPublicKey::new(canister_id, seed.to_vec()).to_der();
+        Principal::self_authenticating(public_key)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -57,13 +63,15 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub governance_principals: HashSet<Principal>,
-    pub user_index_canister_id: CanisterId,
-    pub cycles_dispenser_canister_id: CanisterId,
-    pub user_principals: UserPrincipals,
-    pub legacy_principals: HashSet<Principal>,
-    pub rng_seed: [u8; 32],
-    pub test_mode: bool,
+    governance_principals: HashSet<Principal>,
+    user_index_canister_id: CanisterId,
+    cycles_dispenser_canister_id: CanisterId,
+    user_principals: UserPrincipals,
+    legacy_principals: HashSet<Principal>,
+    #[serde(default)]
+    salt: Salt,
+    rng_seed: [u8; 32],
+    test_mode: bool,
 }
 
 impl Data {
@@ -79,10 +87,24 @@ impl Data {
             cycles_dispenser_canister_id,
             user_principals: UserPrincipals::default(),
             legacy_principals: HashSet::default(),
+            salt: Salt::default(),
             rng_seed: [0; 32],
             test_mode,
         }
     }
+}
+
+fn calculate_seed(index: u32, salt: [u8; 32]) -> [u8; 32] {
+    let mut bytes: Vec<u8> = vec![];
+    bytes.push(salt.len() as u8);
+    bytes.extend_from_slice(&salt);
+
+    let index_str = index.to_string();
+    let index_bytes = index_str.bytes();
+    bytes.push(index_bytes.len() as u8);
+    bytes.extend(index_bytes);
+
+    sha256(&bytes)
 }
 
 #[derive(Serialize, Debug)]
