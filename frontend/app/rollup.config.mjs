@@ -280,7 +280,7 @@ export default {
                     base-uri 'self';
                     form-action 'self';
                     upgrade-insecure-requests;
-                    script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                    script-src 'self' 'unsafe-eval' https://cdn.metered.ca https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                         " ",
                     )}`;
                 if (development) {
@@ -330,6 +330,7 @@ export default {
                                     href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
+                                <script src="https://cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
                                 <script type="module" defer src="/${jsEntryFile}"></script>
                                 ${inlineScripts.map((s) => `<script>${s}</script>`).join("")}
