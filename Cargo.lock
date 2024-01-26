@@ -2969,8 +2969,9 @@ dependencies = [
 
 [[package]]
 name = "ic-stable-structures"
-version = "0.6.3"
-source = "git+https://github.com/hpeebles/stable-structures?rev=c90b987741a7454b10e306df55e2dde82d1694cf#c90b987741a7454b10e306df55e2dde82d1694cf"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "774d7d26420c095f2b5f0f71f7b2ff4a5b58b87e0959dccc78b3d513a7db5112"
 dependencies = [
  "ic_principal",
 ]
