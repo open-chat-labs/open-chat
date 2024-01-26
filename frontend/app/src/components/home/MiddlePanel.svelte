@@ -12,6 +12,7 @@
     import { currentTheme } from "../../theme/themes";
     import { layoutStore } from "../../stores/layout";
     import Loading from "../Loading.svelte";
+    import Room from "./video/Room.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +29,9 @@
 <section
     class:offset={$layoutStore.showNav && !$layoutStore.showLeft}
     class:halloween={$currentTheme.name === "halloween"}>
-    {#if $pathParams.kind === "explore_groups_route"}
+    {#if $selectedChatStore !== undefined && $selectedChatStore.kind === "group_chat" && $selectedChatStore.name === "VoiceChat"}
+        <Room />
+    {:else if $pathParams.kind === "explore_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
         <ExploreCommunities on:upgrade on:createCommunity />
