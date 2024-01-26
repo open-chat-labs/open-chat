@@ -152,6 +152,7 @@ aws-types = "0.57.1"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
 candid = "0.10.2"
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
 dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }

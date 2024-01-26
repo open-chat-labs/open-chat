@@ -1,7 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::ops::Index;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserPrincipals {
@@ -17,9 +16,8 @@ pub struct UserPrincipal {
 }
 
 impl UserPrincipals {
-    #[allow(dead_code)]
     pub fn push(&mut self, index: u32, principal: Principal, auth_principal: Principal) {
-        assert_eq!(self.user_principals.len(), index as usize);
+        assert_eq!(self.user_principals.len() as u32, index);
         assert!(!self.auth_principal_to_index.contains_key(&auth_principal));
 
         self.user_principals.push(UserPrincipal {
@@ -30,9 +28,13 @@ impl UserPrincipals {
         self.auth_principal_to_index.insert(auth_principal, index);
     }
 
+    pub fn next_index(&self) -> u32 {
+        self.user_principals.len() as u32
+    }
+
     pub fn get_by_auth_principal(&self, auth_principal: &Principal) -> Option<&UserPrincipal> {
         self.auth_principal_to_index
             .get(auth_principal)
-            .map(|id| self.user_principals.index(*id as usize))
+            .and_then(|id| self.user_principals.get(*id as usize))
     }
 }

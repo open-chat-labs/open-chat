@@ -1013,6 +1013,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_sig_util"
+version = "0.1.0"
+source = "git+https://github.com/dfinity/internet-identity?rev=f46da3bfefff638a844117606a4dea70b2dd4405#f46da3bfefff638a844117606a4dea70b2dd4405"
+dependencies = [
+ "candid",
+ "hex",
+ "ic-cdk",
+ "ic-certification",
+ "lazy_static",
+ "serde",
+ "serde_bytes",
+ "serde_cbor",
+ "sha2 0.10.8",
+]
+
+[[package]]
 name = "canister_state_macros"
 version = "0.1.0"
 
@@ -3251,6 +3267,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
+ "canister_sig_util",
  "canister_state_macros",
  "canister_tracing_macros",
  "http_request",
@@ -3262,6 +3279,7 @@ dependencies = [
  "rand",
  "serde",
  "serializer",
+ "sha256",
  "stable_memory",
  "tracing",
  "types",
