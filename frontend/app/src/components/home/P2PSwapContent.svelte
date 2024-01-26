@@ -315,6 +315,7 @@
 
     .amount {
         @include font(bold, normal, fs-80);
+        text-align: center;
     }
 
     .swap-icon {
