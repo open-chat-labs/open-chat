@@ -1,4 +1,6 @@
+use candid::Principal;
 use canister_state_macros::canister_state;
+use model::translations::Translations;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -6,6 +8,7 @@ use utils::env::Environment;
 
 mod lifecycle;
 mod memory;
+mod model;
 mod queries;
 mod updates;
 
@@ -33,6 +36,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with_borrow(|v| **v),
             git_commit_id: utils::git::git_commit_id().to_string(),
             canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -41,16 +45,27 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
+    pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub deployment_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
+    pub translations: Translations,
     pub test_mode: bool,
 }
 
 impl Data {
-    pub fn new(cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
+    pub fn new(
+        user_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
+        deployment_operators: Vec<Principal>,
+        test_mode: bool,
+    ) -> Data {
         Data {
+            user_index_canister_id,
             cycles_dispenser_canister_id,
+            deployment_operators,
             rng_seed: [0; 32],
+            translations: Translations::default(),
             test_mode,
         }
     }
@@ -68,5 +83,6 @@ pub struct Metrics {
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
+    pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
 }
