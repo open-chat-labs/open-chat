@@ -3,12 +3,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub old_principal: Principal,
-    pub new_principal: Principal,
+    pub public_key: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(SuccessResult),
+    AlreadyMigrated,
+    NotFound,
     InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub new_principal: Principal,
 }

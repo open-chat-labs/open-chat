@@ -1,2 +1,2 @@
 mod c2c_sync_legacy_user_principals;
-mod update_user_principal;
+mod migrate_legacy_principal;
