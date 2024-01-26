@@ -213,5 +213,4 @@ debug = false
 
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "1833cb37ecfd6154cc9cc55b5de76329114e8c5f" }
-ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "c90b987741a7454b10e306df55e2dde82d1694cf" }
 pocket-ic = { git = "https://github.com/dfinity/ic", rev = "a7862784e8da4a97a1d608fd5b3db365de41a2d7" }
