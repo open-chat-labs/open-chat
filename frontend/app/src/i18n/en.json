@@ -453,7 +453,8 @@
             "crypto": "send crypto messages",
             "giphy": "send giphy messages",
             "prize": "send prize mssages",
-            "memeFighter": "send Meme Fighter messages"
+            "memeFighter": "send Meme Fighter messages",
+            "p2pSwap": "send P2P swap messages"
         },
         "threadPermissions": {
             "default": "send messages in threads by default",
@@ -466,7 +467,8 @@
             "crypto": "send crypto messages in threads",
             "giphy": "send giphy messages in threads",
             "prize": "send prize mssages in threads",
-            "memeFighter": "send Meme Fighter messages in threads"
+            "memeFighter": "send Meme Fighter messages in threads",
+            "p2pSwap": "send P2P swap messages in threads"
         }
     },
     "level": {

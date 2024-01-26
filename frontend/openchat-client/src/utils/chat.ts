@@ -553,6 +553,7 @@ function mergeMessagePermissions(
         giphy: applyOptionUpdate(current.giphy, updated.giphy),
         prize: applyOptionUpdate(current.prize, updated.prize),
         memeFighter: applyOptionUpdate(current.memeFighter, updated.memeFighter),
+        p2pSwap: applyOptionUpdate(current.p2pSwap, updated.p2pSwap),
     };
 }
 
