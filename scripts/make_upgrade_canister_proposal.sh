@@ -16,7 +16,7 @@ FUNCTION_ID=$1
 CANISTER_NAME=$2
 VERSION=$3
 TITLE=$4
-SUMMARY=$5
+CHANGELOG=$5
 
 TAG=v$VERSION-$CANISTER_NAME
 COMMIT_ID=$(git rev-list -n 1 tags/$TAG) || exit 1
@@ -30,10 +30,33 @@ echo "URL: $URL"
 # Download the canister WASM at the given commit
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID || exit 1
 
+WASM_FILE=$CANISTER_NAME.wasm.gz
+WASM_PATH=$WASM_FOLDER/$WASM_FILE
+WASM_HASH=$(sha256sum $WASM_PATH | sed 's/ .*$//')
+
+SUMMARY="## GitHub commit
+
+https://github.com/open-chat-labs/open-chat/commit/$COMMIT_ID
+
+## Changelog
+
+$CHANGELOG
+
+## Wasm Verification
+
+Verify that the hash of the gzipped WASM matches the proposed hash.
+
+\`\`\`
+git fetch
+git checkout $COMMIT_ID
+./scripts/verify-release.sh $VERSION $WASM_HASH
+\`\`\`"
+
+echo "SUMMARY:
+$SUMMARY"
+
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
-    WASM_FILE=$CANISTER_NAME.wasm.gz
-    WASM_PATH=$WASM_FOLDER/$WASM_FILE
     PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/canister_upgrade_proposal_builder
     PROPOSAL_FILE=proposal.candid
     PROPOSAL_BUILDER_PATH=$PROPOSAL_BUILDER_FOLDER/$PROPOSAL_FILE

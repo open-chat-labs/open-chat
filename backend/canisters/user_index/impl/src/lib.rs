@@ -207,7 +207,6 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
-    #[serde(default = "identity_canister_id")]
     pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -242,11 +241,6 @@ struct Data {
     pub diamond_membership_fees: DiamondMembershipFees,
     #[serde(default)]
     pub legacy_principals_synced: bool,
-}
-
-// Post upgrade - remove
-fn identity_canister_id() -> CanisterId {
-    CanisterId::from_text("6klfq-niaaa-aaaar-qadbq-cai").unwrap()
 }
 
 impl Data {
