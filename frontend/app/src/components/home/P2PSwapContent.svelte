@@ -208,14 +208,14 @@
         {/if}
         <div class="coins">
             <div class="coin">
-                <SpinningToken logo={fromDetails.logo} spin={false} />
+                <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
                 <div class="amount">{fromAmount} {content.token0.symbol}</div>
             </div>
 
-            <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
+            <div class="swap-icon"><SwapIcon size={"2.5rem"} /></div>
 
             <div class="coin">
-                <SpinningToken logo={toDetails.logo} spin={false} />
+                <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
                 <div class="amount">{toAmount} {content.token1.symbol}</div>
             </div>
         </div>
@@ -309,7 +309,6 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        align-items: center;
         margin-top: $sp3;
         width: 100%;
     }
@@ -319,9 +318,9 @@
     }
 
     .swap-icon {
-        height: 2.5em;
+        height: 2.5rem;
         position: relative;
-        top: -10px;
+        top: calc(2.5rem - 12px);
     }
 
     .coin {
@@ -329,5 +328,6 @@
         flex-direction: column;
         gap: $sp2;
         align-items: center;
+        flex: 1;
     }
 </style>
