@@ -1,5 +1,5 @@
 use candid::{CandidType, Principal};
-use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
+use ic_agent::agent::http_transport::reqwest_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;

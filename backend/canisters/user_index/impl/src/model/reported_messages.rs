@@ -326,13 +326,13 @@ mod tests {
 
     fn dummy_outcome() -> ContentResult {
         ContentResult {
-            approvedCount: 0.into(),
-            rejectedCount: 3.into(),
+            approvedCount: 0u32.into(),
+            rejectedCount: 3u32.into(),
             sourceId: "0".to_string(),
             status: ContentStatus::rejected,
             violatedRules: vec![modclub_canister::subscribe::ViolatedRules {
                 id: "4bkt6-4aaaa-aaaaf-aaaiq-cai-rule-1".to_string(),
-                rejectionCount: 3.into(),
+                rejectionCount: 3u32.into(),
             }],
         }
     }
