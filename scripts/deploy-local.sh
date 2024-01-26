@@ -52,3 +52,5 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     $NNS_SNS_WASM_CANISTER_ID \
     $NNS_INDEX_CANISTER_ID \
     true \
+
+./scripts/deploy-test-ledger.sh $IDENTITY
