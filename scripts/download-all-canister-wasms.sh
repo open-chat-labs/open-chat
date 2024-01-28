@@ -31,6 +31,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh registry $WASM_SRC || exit 1
 ./download-canister-wasm.sh storage_bucket $WASM_SRC || exit 1
 ./download-canister-wasm.sh storage_index $WASM_SRC || exit 1
+./download-canister-wasm.sh translations $WASM_SRC || exit 1
 ./download-canister-wasm.sh user $WASM_SRC || exit 1
 ./download-canister-wasm.sh user_index $WASM_SRC || exit 1
 

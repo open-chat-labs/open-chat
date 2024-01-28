@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1025](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1025-group_index)] - 2024-01-25
+
 ### Changed
 
 - Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))

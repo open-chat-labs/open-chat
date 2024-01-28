@@ -88,7 +88,7 @@ async fn process_action(action: Action) {
             let args = TransferArg {
                 from_subaccount: None,
                 to: Account::from(Principal::from(user_id)),
-                fee: Some(10.into()),
+                fee: Some(10u32.into()),
                 created_at_time: Some(now_nanos),
                 memo: None,
                 amount: amount.into(),

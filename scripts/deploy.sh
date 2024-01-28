@@ -43,6 +43,7 @@ REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
+TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml -- \
@@ -70,4 +71,6 @@ cargo run \
   --nns-ledger $NNS_LEDGER_CANISTER_ID \
   --nns-cmc $NNS_CMC_CANISTER_ID \
   --nns-sns-wasm $NNS_SNS_WASM_CANISTER_ID \
-  --nns-index $NNS_INDEX_CANISTER_ID
+  --nns-index $NNS_INDEX_CANISTER_ID \
+  --translations $TRANSLATIONS_CANISTER_ID 
+

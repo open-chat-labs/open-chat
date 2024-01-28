@@ -371,7 +371,8 @@
             "crypto": "Krypto-Nachrichten senden",
             "giphy": "Senden Sie Giphy-Nachrichten",
             "prize": "Senden Sie Preisnachrichten",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten"
         },
         "threadPermissions": {
             "default": "Senden Sie Nachrichten standardmäßig in Threads",
@@ -384,7 +385,8 @@
             "crypto": "Senden Sie Kryptonachrichten in Threads",
             "giphy": "Senden Sie Giphy-Nachrichten in Threads",
             "prize": "Versenden Sie Preisnachrichten in Threads",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten in Threads"
         }
     },
     "rules": {
@@ -1230,7 +1232,6 @@
         "acceptedBy": "Dieses Angebot wurde von {user} angenommen und wartet auf den Abschluss.",
         "youCompleted": "Sie haben dieses Angebot angenommen.",
         "completed": "Dieses Angebot wurde von {user} angenommen.",
-        "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder jemand das Angebot annimmt. Möchten Sie fortfahren?",
         "confirmAccept": "Wenn Sie dieses Angebot annehmen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Treuhandkanister übertragen. Im Gegenzug erhalten Sie {amountOther} {tokenOther}. Möchten Sie fortfahren?",
         "confirmCancel": "Wenn Sie dieses Angebot stornieren, wird {amount} {token} aus dem OpenChat-Escrow-Kanister zurück auf Ihr Wallet übertragen. Möchten Sie fortfahren?",
         "insufficientBalanceMessage": "Sie benötigen mindestens {amount} {token} (inklusive 2 Transaktionsgebühren), um diesen Tausch zu akzeptieren.",
@@ -1242,6 +1243,7 @@
         "swap_not_found": "Dieses Tauschangebot konnte nicht gefunden werden",
         "insufficient_funds": "Ihr Guthaben reicht nicht aus, um dieses Tauschangebot anzunehmen",
         "unknown_accept_error": "Fehler beim Annehmen des Tauschangebots",
-        "unknown_cancel_error": "Fehler beim Stornieren des Tauschangebots"
+        "unknown_cancel_error": "Fehler beim Stornieren des Tauschangebots",
+        "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder das Angebot angenommen wird. Möchten Sie fortfahren?"
     }
 }

@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
+
+## [[2.0.1032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1032-user)] - 2024-01-25
+
 ### Added
 
 - Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))

@@ -10,6 +10,7 @@ wasms/
 **/*.pem
 **/*.rs.bk
 pocket-ic*
+changelog.md
 msg.json
 notes.md
 notification.did

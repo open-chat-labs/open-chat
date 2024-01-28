@@ -37,6 +37,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 market_maker
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -51,3 +52,5 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     $NNS_SNS_WASM_CANISTER_ID \
     $NNS_INDEX_CANISTER_ID \
     true \
+
+./scripts/deploy-test-ledger.sh $IDENTITY

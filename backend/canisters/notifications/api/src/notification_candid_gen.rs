@@ -16,6 +16,6 @@ fn main() {
         crypto_transfer: None,
     });
     let candid_type = candid::types::internal::get_type(&ignored);
-    let candid = candid::bindings::candid::pp_ty(&candid_type);
+    let candid = candid::pretty::candid::pp_ty(&candid_type);
     std::print!("type Notification = {}", candid.pretty(120));
 }

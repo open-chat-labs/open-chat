@@ -1,0 +1,24 @@
+// Copied from https://github.com/dfinity/ic/blob/master/rs/sns/root/canister/root.did
+
+type CanisterStatusResultV2 = record {
+  cycles : nat;
+};
+type CanisterStatusType = variant { stopped; stopping; running };
+type CanisterSummary = record {
+  status : opt CanisterStatusResultV2;
+  canister_id : opt principal;
+};
+type GetSnsCanistersSummaryRequest = record { };
+type GetSnsCanistersSummaryResponse = record {
+  root : opt CanisterSummary;
+  swap : opt CanisterSummary;
+  ledger : opt CanisterSummary;
+  index : opt CanisterSummary;
+  governance : opt CanisterSummary;
+  archives : vec CanisterSummary;
+};
+service : {
+  get_sns_canisters_summary : (GetSnsCanistersSummaryRequest) -> (
+      GetSnsCanistersSummaryResponse,
+    );
+}

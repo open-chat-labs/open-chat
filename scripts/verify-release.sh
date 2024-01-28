@@ -22,7 +22,7 @@ rm -rf wasms
 docker cp $container_id:/build/wasms wasms
 docker rm --volumes $container_id
 
-WASM_HASH=$(shasum -a 256 "./wasms/${CANISTER_NAME}.wasm.gz" | sed 's/ .*$//')
+WASM_HASH=$(sha256sum "./wasms/${CANISTER_NAME}.wasm.gz" | sed 's/ .*$//')
 
 if [[ $WASM_HASH == $EXPECTED_WASM_HASH ]]
 then

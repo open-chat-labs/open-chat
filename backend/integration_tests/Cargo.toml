@@ -35,6 +35,7 @@ serial_test = "2.0.0"
 storage_bucket_canister = { path = "../canisters/storage_bucket/api" }
 storage_index_canister = { path = "../canisters/storage_index/api" }
 test-case = { workspace = true }
+translations_canister = { path = "../canisters/translations/api" }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }
 user_index_canister = { path = "../canisters/user_index/api" }

@@ -83,6 +83,25 @@ pub async fn upgrade_identity_canister(
     println!("Identity canister upgraded");
 }
 
+pub async fn upgrade_translations_canister(
+    identity: Box<dyn Identity>,
+    url: String,
+    translations_canister_id: CanisterId,
+    version: BuildVersion,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        translations_canister_id,
+        version,
+        translations_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::Translations,
+    )
+    .await;
+
+    println!("Identity canister upgraded");
+}
+
 pub async fn upgrade_online_users_canister(
     identity: Box<dyn Identity>,
     url: String,
@@ -489,7 +508,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     println!("Upgrading wasm for canister {canister_id}");
     match management_canister
         .install_code(canister_id, wasm_bytes)
-        .with_mode(InstallMode::Upgrade)
+        .with_mode(InstallMode::Upgrade { skip_pre_upgrade: false })
         .with_arg(args)
         .call_and_wait()
         .await
