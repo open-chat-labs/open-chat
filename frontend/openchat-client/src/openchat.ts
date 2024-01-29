@@ -4696,6 +4696,8 @@ export class OpenChat extends OpenChatAgentWorker {
         return userIds;
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     private async updateUsers() {
         try {
             const now = BigInt(Date.now());
