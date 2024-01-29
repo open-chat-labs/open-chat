@@ -799,7 +799,8 @@ function updateReplyContexts(
         (e) => e.event.kind === "message",
     );
 
-    for (const event of events) {
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
         if (
             event.event.kind === "message" &&
             event.event.repliesTo?.kind === "rehydrated_reply_context" &&
@@ -808,10 +809,16 @@ function updateReplyContexts(
         ) {
             const updated = lookup[event.event.repliesTo.eventIndex];
             if (updated?.event.kind === "message") {
-                event.event.repliesTo = {
-                    ...event.event.repliesTo,
-                    content: updated.event.content,
-                    edited: updated.event.edited,
+                events[i] = {
+                    ...event,
+                    event: {
+                        ...event.event,
+                        repliesTo: {
+                            ...event.event.repliesTo,
+                            content: updated.event.content,
+                            edited: updated.event.edited,
+                        },
+                    },
                 };
             }
         }
