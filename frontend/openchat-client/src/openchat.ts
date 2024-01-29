@@ -468,7 +468,7 @@ const SESSION_TIMEOUT_NANOS = BigInt(30 * 24 * 60 * 60 * 1000 * 1000 * 1000); //
 const MAX_TIMEOUT_MS = Math.pow(2, 31) - 1;
 const CHAT_UPDATE_INTERVAL = 5000;
 const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
-// const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
+const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const REGISTRY_UPDATE_INTERVAL = 30 * ONE_MINUTE_MILLIS;
 const EXCHANGE_RATE_UPDATE_INTERVAL = 5 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
@@ -783,12 +783,11 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private startUserUpdatePoller() {
         this._userUpdatePoller?.stop();
-        // TODO - re-enable this when user index is fixed
-        // this._userUpdatePoller = new Poller(
-        //     () => this.updateUsers(),
-        //     USER_UPDATE_INTERVAL,
-        //     USER_UPDATE_INTERVAL,
-        // );
+        this._userUpdatePoller = new Poller(
+            () => this.updateUsers(),
+            USER_UPDATE_INTERVAL,
+            USER_UPDATE_INTERVAL,
+        );
     }
 
     pauseEventLoop() {
