@@ -783,11 +783,12 @@ export class OpenChat extends OpenChatAgentWorker {
 
     private startUserUpdatePoller() {
         this._userUpdatePoller?.stop();
-        this._userUpdatePoller = new Poller(
-            () => this.updateUsers(),
-            USER_UPDATE_INTERVAL,
-            USER_UPDATE_INTERVAL,
-        );
+        // TODO - re-enable this when user index is fixed
+        // this._userUpdatePoller = new Poller(
+        //     () => this.updateUsers(),
+        //     USER_UPDATE_INTERVAL,
+        //     USER_UPDATE_INTERVAL,
+        // );
     }
 
     pauseEventLoop() {
@@ -4347,8 +4348,8 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         }
 
-        return this.sendRequest({ kind: "getUsers", users: { userGroups }, allowStale }).then(
-            (resp) => {
+        return this.sendRequest({ kind: "getUsers", users: { userGroups }, allowStale })
+            .then((resp) => {
                 userStore.addMany(resp.users);
                 if (resp.serverTimestamp !== undefined) {
                     // If we went to the server, all users not returned are still up to date, so we mark them as such
@@ -4359,8 +4360,8 @@ export class OpenChat extends OpenChatAgentWorker {
                     userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
                 }
                 return resp;
-            },
-        );
+            })
+            .catch(() => ({ users: [] }));
     }
 
     getUser(userId: string, allowStale = false): Promise<UserSummary | undefined> {
