@@ -29,7 +29,7 @@
     let error: Writable<string | undefined> = writable(undefined);
     let usernameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
-    let closed: boolean = true;
+    let closed: boolean = false;
     let showGuidelines = false;
     let username = "";
     let usernameValid = false;
@@ -173,8 +173,8 @@
     </div>
     <div class="footer" slot="footer">
         {#if closed}
-            <Button on:click={() => client.logout()}
-                ><Translatable resourceKey={i18nKey("close")} /></Button>
+            <Button on:click={() => (window.location.href = "/home")}
+                ><Translatable resourceKey={i18nKey("home")} /></Button>
         {:else if badCode}
             <ButtonGroup>
                 <Button secondary on:click={clearCodeAndLogout}
