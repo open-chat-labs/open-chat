@@ -20,6 +20,11 @@
             },
             url: "https://openchat.daily.co/openchat_developers",
             userName: $user.username,
+            theme: {
+                colors: {
+                    accent: "pink",
+                },
+            },
         });
 
         await callframe.join();
