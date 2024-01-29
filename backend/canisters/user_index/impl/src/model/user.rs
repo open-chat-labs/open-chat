@@ -3,7 +3,8 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    is_default, is_empty_slice, CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary,
+    is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis,
+    UserId, UserSummary,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -28,7 +29,7 @@ pub struct User {
     #[serde(rename = "du", alias = "date_updated")]
     pub date_updated: TimestampMillis,
     #[serde(rename = "ct", alias = "cycle_top_ups")]
-    pub cycle_top_ups: Vec<CyclesTopUp>,
+    pub cycle_top_ups: Vec<CyclesTopUpInternal>,
     #[serde(rename = "av", alias = "avatar_id", default, skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
     #[serde(rename = "rf", alias = "registration_fee", default, skip_serializing_if = "Option::is_none")]
@@ -75,7 +76,7 @@ impl User {
     }
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
+        self.cycle_top_ups.push(top_up.into())
     }
 }
 
