@@ -29,7 +29,7 @@
     let error: Writable<string | undefined> = writable(undefined);
     let usernameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
-    let closed: boolean = false;
+    let closed: boolean = true;
     let showGuidelines = false;
     let username = "";
     let usernameValid = false;
