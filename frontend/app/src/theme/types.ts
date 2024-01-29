@@ -355,4 +355,19 @@ export interface Theme {
             bd: string;
         };
     };
+
+    // These are the confiration options for the daily.co prebuilt UI
+    // Note that they only accept colors in the #000000 form (which is annoying)
+    daily: {
+        accent: string;
+        accentText: string;
+        background: string;
+        backgroundAccent: string;
+        baseText: string;
+        border: string;
+        mainAreaBg: string;
+        mainAreaBgAccent: string;
+        mainAreaText: string;
+        supportiveText: string;
+    };
 }
