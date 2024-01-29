@@ -107,6 +107,10 @@
     }
 
     $: busy = $state.kind === "spinning";
+
+    function logout() {
+        client.logout();
+    }
 </script>
 
 {#if showGuidelines}
@@ -173,8 +177,7 @@
     </div>
     <div class="footer" slot="footer">
         {#if closed}
-            <Button on:click={() => (window.location.href = "/home")}
-                ><Translatable resourceKey={i18nKey("home")} /></Button>
+            <Button on:click={logout}><Translatable resourceKey={i18nKey("close")} /></Button>
         {:else if badCode}
             <ButtonGroup>
                 <Button secondary on:click={clearCodeAndLogout}
