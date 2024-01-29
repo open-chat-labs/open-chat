@@ -20,7 +20,6 @@
     let confirming = false;
     let confirmed = false;
     let refreshingBalance = false;
-    let disabled = true;
 
     $: isDiamond = client.isDiamond;
     $: canExtendDiamond = client.canExtendDiamond;
@@ -83,7 +82,7 @@
         <div class="body" slot="body">
             {#if step === "features"}
                 <Features
-                    canExtend={$canExtendDiamond && !disabled}
+                    canExtend={$canExtendDiamond}
                     isDiamond={$isDiamond}
                     on:cancel
                     on:upgrade={() => (step = "payment")} />
