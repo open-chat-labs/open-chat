@@ -965,6 +965,8 @@ type SnsProposal = record {
     tally : Tally;
     deadline : TimestampMillis;
     payload_text_rendering : opt text;
+    minimum_yes_proportion_of_total : nat32;
+    minimum_yes_proportion_of_exercised : nat32;
     last_updated : TimestampMillis;
 };
 

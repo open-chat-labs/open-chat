@@ -76,7 +76,6 @@
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
                         {intersecting}
-                        messageId={msg.messageId}
                         readonly
                         {chatId}
                         repliesTo={msg.repliesTo} />
