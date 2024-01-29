@@ -54,6 +54,17 @@
     $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
     $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
     $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
+    $: fromAmountInUsd = calculateDollarAmount(
+        content.token0Amount,
+        $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
+        fromDetails.decimals,
+    );
+    $: toAmountInUsd = calculateDollarAmount(
+        content.token1Amount,
+        $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
+        toDetails.decimals,
+    );
 
     $: {
         if (content.status.kind === "p2p_swap_open") {
@@ -105,6 +116,18 @@
             fromToken: content.token0.symbol,
             toToken: content.token1.symbol,
         });
+    }
+
+    function calculateDollarAmount(
+        e8s: bigint,
+        exchangeRate: number | undefined,
+        decimals: number,
+    ): string {
+        if (exchangeRate === undefined) return "???";
+
+        const tokens = Number(e8s) / Math.pow(10, decimals);
+        const dollar = tokens * exchangeRate;
+        return dollar.toFixed(2);
     }
 
     function onAcceptOrCancel(e: MouseEvent) {
@@ -208,15 +231,21 @@
         {/if}
         <div class="coins">
             <div class="coin">
-                <SpinningToken logo={fromDetails.logo} spin={false} />
-                <div class="amount">{fromAmount} {content.token0.symbol}</div>
+                <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
+                <div class="amount">
+                    <div>{fromAmount} {content.token0.symbol}</div>
+                    <div class="dollar">({fromAmountInUsd} USD)</div>
+                </div>
             </div>
 
             <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
 
             <div class="coin">
-                <SpinningToken logo={toDetails.logo} spin={false} />
-                <div class="amount">{toAmount} {content.token1.symbol}</div>
+                <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
+                <div class="amount">
+                    <div>{toAmount} {content.token1.symbol}</div>
+                    <div class="dollar">({toAmountInUsd} USD)</div>
+                </div>
             </div>
         </div>
     </div>
@@ -309,19 +338,23 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        align-items: center;
         margin-top: $sp3;
         width: 100%;
     }
 
     .amount {
         @include font(bold, normal, fs-80);
+        text-align: center;
+
+        .dollar {
+            @include font(light, normal, fs-60);
+        }
     }
 
     .swap-icon {
         height: 2.5em;
         position: relative;
-        top: -10px;
+        top: calc(2.5rem - 12px);
     }
 
     .coin {
@@ -329,5 +362,6 @@
         flex-direction: column;
         gap: $sp2;
         align-items: center;
+        flex: 1;
     }
 </style>

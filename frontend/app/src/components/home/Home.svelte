@@ -93,6 +93,7 @@
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
+    import GlobalAlert from "../GlobalAlert.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -936,7 +937,10 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
-                messagePermissions: { default: "member" },
+                messagePermissions: {
+                    default: "member",
+                    p2pSwap: "none",
+                },
                 threadPermissions: undefined,
             },
             rules: { ...defaultChatRules(level), newVersion: false },
@@ -1131,6 +1135,8 @@
 {#if $offlineStore}
     <OfflineFooter />
 {/if}
+
+<GlobalAlert />
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure

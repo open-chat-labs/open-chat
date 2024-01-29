@@ -963,6 +963,7 @@ function messagePermissions(candid: ApiMessagePermissions): MessagePermissions {
         crypto: optional(candid.crypto, permissionRole),
         giphy: optional(candid.giphy, permissionRole),
         prize: optional(candid.prize, permissionRole),
+        p2pSwap: optional(candid.p2p_swap, permissionRole),
         memeFighter: mf !== undefined ? permissionRole(mf) : undefined,
     };
 }

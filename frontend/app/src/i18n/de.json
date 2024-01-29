@@ -369,7 +369,8 @@
             "crypto": "Krypto-Nachrichten senden",
             "giphy": "Senden Sie Giphy-Nachrichten",
             "prize": "Senden Sie Preisnachrichten",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten"
         },
         "threadPermissions": {
             "default": "Senden Sie Nachrichten standardmäßig in Threads",
@@ -382,7 +383,8 @@
             "crypto": "Senden Sie Kryptonachrichten in Threads",
             "giphy": "Senden Sie Giphy-Nachrichten in Threads",
             "prize": "Versenden Sie Preisnachrichten in Threads",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten in Threads"
         }
     },
     "rules": {

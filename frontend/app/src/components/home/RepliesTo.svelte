@@ -18,7 +18,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let messageId: bigint;
     export let chatId: ChatIdentifier;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
@@ -49,7 +48,6 @@
     function zoomToMessage() {
         if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
             dispatch("goToMessageIndex", {
-                messageId,
                 index: repliesTo.messageIndex,
             });
         } else {

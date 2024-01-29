@@ -1,5 +1,5 @@
 {
-  "dfx": "0.15.2",
+  "dfx": "0.16.0",
   "canisters": {
     "user_index": {
       "type": "custom",
@@ -151,6 +151,12 @@
       "candid": "sns/candid/sns_swap.did",
       "type": "custom",
       "wasm": ""
+    },
+    "test_ledger": {
+      "build": "",
+      "candid": "",
+      "type": "custom",
+      "wasm": "./wasms/icrc_ledger.wasm.gz"
     }
   },
   "networks": {

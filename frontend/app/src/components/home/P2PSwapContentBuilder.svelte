@@ -184,7 +184,7 @@
                 </div>
                 <div class="amount">
                     <TokenInput
-                        ledger={fromLedger}
+                        ledger={toLedger}
                         bind:valid={toAmountValid}
                         bind:amount={toAmount} />
                 </div>

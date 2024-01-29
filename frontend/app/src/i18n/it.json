@@ -367,7 +367,8 @@
             "crypto": "inviare messaggi crittografati",
             "giphy": "inviare messaggi giphy",
             "prize": "inviare messaggi premio",
-            "memeFighter": "inviare messaggi di Meme Fighter"
+            "memeFighter": "inviare messaggi di Meme Fighter",
+            "p2pSwap": "inviare messaggi di scambio P2P"
         },
         "threadPermissions": {
             "default": "invia messaggi nei thread per impostazione predefinita",
@@ -380,7 +381,8 @@
             "crypto": "inviare messaggi crittografati nei thread",
             "giphy": "inviare messaggi giphy nei thread",
             "prize": "inviare messaggi premio nei thread",
-            "memeFighter": "inviare messaggi di Meme Fighter nei thread"
+            "memeFighter": "inviare messaggi di Meme Fighter nei thread",
+            "p2pSwap": "inviare messaggi di scambio P2P nei thread"
         }
     },
     "rules": {

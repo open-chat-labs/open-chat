@@ -20,6 +20,7 @@ mod escrow_tests;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
+mod identity_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod mentions_tests;
@@ -42,7 +43,6 @@ mod suspend_user_tests;
 mod tip_message_tests;
 mod update_group_tests;
 mod update_profile_tests;
-mod update_user_principal_tests;
 mod utils;
 mod wasms;
 
@@ -56,6 +56,7 @@ pub struct TestEnv {
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
+    pub public_key: Vec<u8>,
 }
 
 impl User {
