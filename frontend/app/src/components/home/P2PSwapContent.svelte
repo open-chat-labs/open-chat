@@ -57,12 +57,12 @@
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: fromAmountInUsd = calculateDollarAmount(
         content.token0Amount,
-        $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD ?? 0,
+        $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
         fromDetails.decimals,
     );
     $: toAmountInUsd = calculateDollarAmount(
         content.token1Amount,
-        $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD ?? 0,
+        $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
         toDetails.decimals,
     );
 
@@ -118,7 +118,13 @@
         });
     }
 
-    function calculateDollarAmount(e8s: bigint, exchangeRate: number, decimals: number): string {
+    function calculateDollarAmount(
+        e8s: bigint,
+        exchangeRate: number | undefined,
+        decimals: number,
+    ): string {
+        if (exchangeRate === undefined) return "???";
+
         const tokens = Number(e8s) / Math.pow(10, decimals);
         const dollar = tokens * exchangeRate;
         return dollar.toFixed(2);
