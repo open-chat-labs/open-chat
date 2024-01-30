@@ -246,6 +246,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "chatEventsBatch":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.chatEventsBatch(payload.localUserIndex, payload.requests),
+                );
+                break;
+
             case "chatEventsWindow":
                 executeThenReply(
                     payload,

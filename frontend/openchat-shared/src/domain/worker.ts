@@ -64,6 +64,8 @@ import type {
     TipMessageResponse,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -197,6 +199,7 @@ export type WorkerRequest =
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
+    | ChatEventsBatch
     | ChatEventsByEventIndex
     | ChatEventsWindow
     | LastOnline
@@ -853,6 +856,12 @@ type SearchUsers = {
     kind: "searchUsers";
 };
 
+type ChatEventsBatch = {
+    localUserIndex: string;
+    requests: ChatEventsArgs[];
+    kind: "chatEventsBatch";
+};
+
 type ChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: ChatIdentifier;
@@ -1119,13 +1128,13 @@ export type WorkerResponseInner =
     | UnpinChatResponse
     | PinChatResponse
     | ArchiveChatResponse
-    | ArchiveChatResponse
     | ToggleMuteNotificationResponse
     | GroupChatSummary
     | StorageStatus
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
+    | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
@@ -1134,7 +1143,6 @@ export type WorkerResponseInner =
     | UserLookup
     | UsersResponse
     | CurrentUserResponse
-    | EventsResponse<ChatEvent>
     | FreezeGroupResponse
     | UnfreezeGroupResponse
     | DeleteFrozenGroupResponse
@@ -1513,6 +1521,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? Record<string, number>
     : T extends MarkAsOnline
     ? void
+    : T extends ChatEventsBatch
+    ? ChatEventsResponse[]
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex

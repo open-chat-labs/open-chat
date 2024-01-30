@@ -158,6 +158,7 @@ export async function chatEventsResponse(
                 principal,
                 args.context.chatId,
                 result.Success.chat_last_updated,
+                true,
             );
 
             results.push(
