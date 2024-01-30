@@ -23,5 +23,6 @@
     "a11y-structure": "ignore",
     "a11y-mouse-events-have-key-events": "ignore",
     "a11y-missing-content": "ignore"
-  }
+  },
+  "rust-analyzer.showUnlinkedFileNotification": false
 }

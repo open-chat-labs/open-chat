@@ -6661,6 +6661,8 @@ dependencies = [
  "tracing",
  "translations_canister",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
