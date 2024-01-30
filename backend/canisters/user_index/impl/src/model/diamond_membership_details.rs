@@ -14,6 +14,7 @@ pub struct DiamondMembershipDetailsInternal {
     payments: Vec<DiamondMembershipPayment>,
     pay_in_chat: bool,
     subscription: DiamondMembershipSubscription,
+    #[serde(skip_deserializing)]
     payment_in_progress: bool,
 }
 
