@@ -16,8 +16,6 @@
     export let canExtend: boolean;
     export let landing = false;
 
-    let disabled = true;
-
     function cancel() {
         dispatch("cancel");
     }
@@ -181,6 +179,16 @@
     </Feature>
 
     <Feature {landing}>
+        <div slot="title"><Translatable resourceKey={i18nKey("upgrade.p2pSwap")} /></div>
+        <div slot="free">
+            <Minus size={"1em"} color={"var(--menu-warn)"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
         <div slot="title"><Translatable resourceKey={i18nKey("upgrade.diamondBadge")} /></div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -234,14 +242,12 @@
         <Footer>
             <Button tiny={$mobileWidth} small={!$mobileWidth} secondary on:click={cancel}
                 ><Translatable resourceKey={i18nKey(isDiamond ? "close" : "cancel")} /></Button>
-            {#if !disabled}
-                {#if !isDiamond}
-                    <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                        ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
-                {:else if canExtend}
-                    <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                        ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
-                {/if}
+            {#if !isDiamond}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    ><Translatable resourceKey={i18nKey("upgrade.button")} /></Button>
+            {:else if canExtend}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    ><Translatable resourceKey={i18nKey("upgrade.extendShort")} /></Button>
             {/if}
         </Footer>
     </div>

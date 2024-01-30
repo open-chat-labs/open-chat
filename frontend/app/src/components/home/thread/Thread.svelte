@@ -222,6 +222,7 @@
 {#if creatingP2PSwapMessage}
     <P2PSwapContentBuilder
         fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:upgrade
         on:sendMessageWithContent
         on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}

@@ -1,12 +1,10 @@
 import type {
     ApiEventsResponse,
-    ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiSearchDirectChatResponse,
@@ -66,8 +64,7 @@ import type {
 } from "./candid/idl";
 import type {
     EventsResponse,
-    EventWrapper,
-    DirectChatEvent,
+    ChatEvent,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -147,8 +144,7 @@ import {
     messageContent,
     apiOptional,
     messageEvent,
-    expiredEventsRange,
-    expiredMessagesRange,
+    eventsSuccessResponse,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -450,7 +446,7 @@ export function sendMessageResponse(
         return { kind: "internal_error" };
     }
     if ("DuplicateMessageId" in candid) {
-        return { kind: "duplicate_message_id"};
+        return { kind: "duplicate_message_id" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -473,16 +469,11 @@ export async function getEventsResponse(
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<DirectChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.events.map(event),
-            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return eventsSuccessResponse(candid.Success);
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
@@ -496,36 +487,6 @@ export async function getEventsResponse(
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-}
-
-function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
-    return {
-        event: directChatEvent(candid.event),
-        index: candid.index,
-        timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, Number),
-    };
-}
-
-function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
-    if ("Message" in candid) {
-        return message(candid.Message);
-    }
-
-    if ("DirectChatCreated" in candid) {
-        return {
-            kind: "direct_chat_created",
-        };
-    }
-
-    if ("Empty" in candid) {
-        return {
-            kind: "empty",
-        };
-    }
-
-    // todo - we know there are other event types that we are not dealing with yet
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
 function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {

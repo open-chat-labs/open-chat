@@ -93,7 +93,6 @@
     import EditLabel from "../EditLabel.svelte";
     import { i18nKey, type ResourceKey } from "../../i18n/i18n";
     import NotFound from "../NotFound.svelte";
-    import GlobalAlert from "../GlobalAlert.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -1135,8 +1134,6 @@
 {#if $offlineStore}
     <OfflineFooter />
 {/if}
-
-<GlobalAlert />
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure

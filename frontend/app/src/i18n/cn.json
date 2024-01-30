@@ -854,7 +854,8 @@
         "benefits": "钻石的好处",
         "message": "告诉我有关钻石会员的信息",
         "lifetimeMessage": "您拥有终身钻石会员资格。",
-        "lifetime": "寿命"
+        "lifetime": "寿命",
+        "p2pSwap": "进行/接受 p2p 交换"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",

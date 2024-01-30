@@ -11,7 +11,7 @@
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -21,8 +21,10 @@
     import Markdown from "./Markdown.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Translatable from "../Translatable.svelte";
+    import { calculateDollarAmount } from "../../utils/exchange";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let content: P2PSwapContent;
     export let messageContext: MessageContext;
@@ -54,6 +56,7 @@
     $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
     $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
     $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
+    $: isDiamond = client.isDiamond;
     $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: fromAmountInUsd = calculateDollarAmount(
         content.token0Amount,
@@ -118,21 +121,13 @@
         });
     }
 
-    function calculateDollarAmount(
-        e8s: bigint,
-        exchangeRate: number | undefined,
-        decimals: number,
-    ): string {
-        if (exchangeRate === undefined) return "???";
-
-        const tokens = Number(e8s) / Math.pow(10, decimals);
-        const dollar = tokens * exchangeRate;
-        return dollar.toFixed(2);
-    }
-
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
-            confirming = true;
+            if (!me && !$isDiamond) {
+                dispatch("upgrade");
+            } else {
+                confirming = true;
+            }
         }
     }
 

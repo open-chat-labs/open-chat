@@ -18,7 +18,7 @@ pub struct DiamondMembershipDetailsInternal {
     pay_in_chat: bool,
     #[serde(rename = "s", alias = "subscription", default, skip_serializing_if = "is_default")]
     subscription: DiamondMembershipSubscription,
-    #[serde(rename = "pr", alias = "payment_in_progress", default, skip_serializing_if = "is_default")]
+    #[serde(rename = "pr", alias = "payment_in_progress", skip)]
     payment_in_progress: bool,
 }
 
