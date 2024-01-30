@@ -90,6 +90,7 @@ import {
     mention,
     messageContent,
     messageEvent,
+    messagesSuccessResponse,
     threadDetails,
     userGroup,
 } from "../common/chatMappers";
@@ -230,12 +231,7 @@ export async function messagesByMessageIndexResponse(
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.messages.map(messageEvent),
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return messagesSuccessResponse(candid.Success);
     }
     if (
         "CallerNotInGroup" in candid ||
