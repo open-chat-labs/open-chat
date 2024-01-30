@@ -21,6 +21,7 @@
     import Markdown from "./Markdown.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Translatable from "../Translatable.svelte";
+    import { calculateDollarAmount } from "../../utils/exchange";
 
     const client = getContext<OpenChat>("client");
 
@@ -116,18 +117,6 @@
             fromToken: content.token0.symbol,
             toToken: content.token1.symbol,
         });
-    }
-
-    function calculateDollarAmount(
-        e8s: bigint,
-        exchangeRate: number | undefined,
-        decimals: number,
-    ): string {
-        if (exchangeRate === undefined) return "???";
-
-        const tokens = Number(e8s) / Math.pow(10, decimals);
-        const dollar = tokens * exchangeRate;
-        return dollar.toFixed(2);
     }
 
     function onAcceptOrCancel(e: MouseEvent) {

@@ -168,6 +168,7 @@
                         ledger={fromLedger}
                         {minAmount}
                         maxAmount={fromDetails.balance}
+                        showDollarAmount
                         bind:state={tokenInputState}
                         bind:valid={fromAmountValid}
                         bind:amount={fromAmount} />
@@ -185,6 +186,7 @@
                 <div class="amount">
                     <TokenInput
                         ledger={toLedger}
+                        showDollarAmount
                         bind:valid={toAmountValid}
                         bind:amount={toAmount} />
                 </div>
