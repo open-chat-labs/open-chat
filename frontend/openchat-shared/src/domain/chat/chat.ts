@@ -85,12 +85,12 @@ export interface P2PSwapContentInitial {
 }
 
 export interface TokenInfo {
-    fee: bigint,
-    decimals: number,
-    symbol: string,
-    ledger: string,
+    fee: bigint;
+    decimals: number;
+    symbol: string;
+    ledger: string;
 }
-  
+
 export type CaptionedContent =
     | AttachmentContent
     | CryptocurrencyContent
@@ -303,12 +303,18 @@ export interface P2PSwapContent {
     expiresAt: bigint;
     status: P2PSwapStatus;
     swapId: number;
-    token0TxnIn: TransactionId;    
+    token0TxnIn: TransactionId;
 }
 
 export type TransactionId = bigint;
 
-export type P2PSwapStatus = P2PSwapOpen | P2PSwapReserved | P2PSwapAccepted | P2PSwapCancelled | P2PSwapExpired | P2PSwapCompleted;
+export type P2PSwapStatus =
+    | P2PSwapOpen
+    | P2PSwapReserved
+    | P2PSwapAccepted
+    | P2PSwapCancelled
+    | P2PSwapExpired
+    | P2PSwapCompleted;
 
 export interface P2PSwapOpen {
     kind: "p2p_swap_open";
@@ -322,25 +328,25 @@ export interface P2PSwapReserved {
 export interface P2PSwapAccepted {
     kind: "p2p_swap_accepted";
     acceptedBy: string;
-    token1TxnIn: TransactionId,
+    token1TxnIn: TransactionId;
 }
 
 export interface P2PSwapCancelled {
     kind: "p2p_swap_cancelled";
-    token0TxnOut?: TransactionId,
+    token0TxnOut?: TransactionId;
 }
 
 export interface P2PSwapExpired {
     kind: "p2p_swap_expired";
-    token0TxnOut?: TransactionId,
+    token0TxnOut?: TransactionId;
 }
 
 export interface P2PSwapCompleted {
     kind: "p2p_swap_completed";
     acceptedBy: string;
-    token1TxnIn: TransactionId,
-    token0TxnOut: TransactionId,
-    token1TxnOut: TransactionId,
+    token1TxnIn: TransactionId;
+    token0TxnOut: TransactionId;
+    token1TxnOut: TransactionId;
 }
 
 export interface ProposalContent {
@@ -661,10 +667,9 @@ export type LocalMessageUpdates = {
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = Message | DirectChatCreated | EmptyEvent;
-
-export type GroupChatEvent =
+export type ChatEvent =
     | Message
+    | DirectChatCreated
     | GroupChatCreated
     | MembersAdded
     | MemberJoined
@@ -683,7 +688,6 @@ export type GroupChatEvent =
     | PermissionsChanged
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
-    | DirectChatCreated
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
@@ -691,8 +695,6 @@ export type GroupChatEvent =
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
     | EmptyEvent;
-
-export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
 export type MembersAdded = {
     kind: "members_added";
@@ -1666,11 +1668,11 @@ export type CommunityRulesNotAccepted = {
 export type P2PSwapSetUpFailed = {
     kind: "p2p_swap_setup_failed";
     text: string;
-}
+};
 
 export type DuplicateMessageId = {
     kind: "duplicate_message_id";
-}
+};
 
 export type GateUpdatedEvent = {
     kind: "gate_updated";
@@ -2049,22 +2051,23 @@ export type GroupAndCommunitySummaryUpdatesResponse =
       }
     | { kind: "error"; error: string };
 
-export type AcceptP2PSwapResponse = 
-    | { kind: "success", token1TxnIn : TransactionId }
-    | { kind: "already_reserved", reservedBy: string }
-    | { 
-        kind: "already_accepted", 
-        acceptedBy: string, 
-        token1TxnIn: TransactionId 
-    }
-    | { kind: "already_completed",
-        acceptedBy: string, 
-        token1TxnIn: TransactionId,
-        token0TxnOut: TransactionId,
-        token1TxnOut: TransactionId,
-    }
-    | { kind: "swap_cancelled", token0TxnOut?: TransactionId }
-    | { kind: "swap_expired", token0TxnOut?: TransactionId }
+export type AcceptP2PSwapResponse =
+    | { kind: "success"; token1TxnIn: TransactionId }
+    | { kind: "already_reserved"; reservedBy: string }
+    | {
+          kind: "already_accepted";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+      }
+    | {
+          kind: "already_completed";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+          token0TxnOut: TransactionId;
+          token1TxnOut: TransactionId;
+      }
+    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
+    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
     | { kind: "swap_not_found" }
     | { kind: "channel_not_found" }
     | { kind: "chat_not_found" }
@@ -2074,24 +2077,25 @@ export type AcceptP2PSwapResponse =
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
     | { kind: "insufficient_funds" }
-    | { kind: "internal_error", text: string };
+    | { kind: "internal_error"; text: string };
 
-export type CancelP2PSwapResponse = 
+export type CancelP2PSwapResponse =
     | { kind: "success" }
-    | { kind: "already_reserved", reservedBy: string }
-    | { 
-        kind: "already_accepted", 
-        acceptedBy: string, 
-        token1TxnIn: TransactionId 
-    }
-    | { kind: "already_completed",
-        acceptedBy: string, 
-        token1TxnIn: TransactionId,
-        token0TxnOut: TransactionId,
-        token1TxnOut: TransactionId,
-    }
-    | { kind: "swap_cancelled", token0TxnOut?: TransactionId }
-    | { kind: "swap_expired", token0TxnOut?: TransactionId }
+    | { kind: "already_reserved"; reservedBy: string }
+    | {
+          kind: "already_accepted";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+      }
+    | {
+          kind: "already_completed";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+          token0TxnOut: TransactionId;
+          token1TxnOut: TransactionId;
+      }
+    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
+    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
     | { kind: "swap_not_found" }
     | { kind: "chat_not_found" }
     | { kind: "channel_not_found" }
@@ -2100,4 +2104,4 @@ export type CancelP2PSwapResponse =
     | { kind: "user_not_in_community" }
     | { kind: "user_not_in_channel" }
     | { kind: "chat_frozen" }
-    | { kind: "internal_error", text: string };
+    | { kind: "internal_error"; text: string };
