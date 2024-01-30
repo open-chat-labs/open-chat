@@ -24,9 +24,9 @@ import type {
     ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
 } from "../community/candid/idl";
 import type {
+    ChatEvent,
     EventsResponse,
     EventWrapper,
-    GroupChatEvent,
     SendMessageResponse,
     RemoveMemberResponse,
     BlockUserResponse,
@@ -412,7 +412,7 @@ export async function getEventsResponse(
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<GroupChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
@@ -434,7 +434,7 @@ export async function getEventsResponse(
     return "events_failed";
 }
 
-function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
+function groupChatEvent(candid: ApiGroupChatEvent): ChatEvent {
     if ("Message" in candid) {
         return message(candid.Message);
     }
@@ -633,7 +633,7 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 
-function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
+function event(candid: ApiEventWrapper): EventWrapper<ChatEvent> {
     return {
         event: groupChatEvent(candid.event),
         index: candid.index,

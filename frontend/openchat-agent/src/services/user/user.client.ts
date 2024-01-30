@@ -19,7 +19,6 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
-    DirectChatEvent,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -174,11 +173,11 @@ export class UserClient extends CandidService {
         return new UserClient(identity, userId, config, db);
     }
 
-    private setCachedEvents<T extends ChatEvent>(
+    private setCachedEvents(
         chatId: ChatIdentifier,
-        resp: EventsResponse<T>,
+        resp: EventsResponse<ChatEvent>,
         threadRootMessageIndex?: number,
-    ): EventsResponse<T> {
+    ): EventsResponse<ChatEvent> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
         );
@@ -187,10 +186,10 @@ export class UserClient extends CandidService {
 
     private handleMissingEvents(
         chatId: DirectChatIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
@@ -344,8 +343,8 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, {
+    ): Promise<EventsResponse<ChatEvent>> {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
@@ -358,7 +357,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
@@ -378,14 +377,13 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing, totalMiss] =
-            await getCachedEventsWindowByMessageIndex<DirectChatEvent>(
-                this.db,
-                eventIndexRange,
-                { chatId },
-                messageIndex,
-            );
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
+            this.db,
+            eventIndexRange,
+            { chatId },
+            messageIndex,
+        );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -410,7 +408,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
@@ -435,8 +433,8 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
@@ -471,7 +469,7 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),

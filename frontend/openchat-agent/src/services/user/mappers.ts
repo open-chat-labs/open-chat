@@ -67,7 +67,7 @@ import type {
 import type {
     EventsResponse,
     EventWrapper,
-    DirectChatEvent,
+    ChatEvent,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -450,7 +450,7 @@ export function sendMessageResponse(
         return { kind: "internal_error" };
     }
     if ("DuplicateMessageId" in candid) {
-        return { kind: "duplicate_message_id"};
+        return { kind: "duplicate_message_id" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -473,7 +473,7 @@ export async function getEventsResponse(
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<DirectChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
@@ -498,7 +498,7 @@ export async function getEventsResponse(
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
 
-function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
+function event(candid: ApiDirectChatEventWrapper): EventWrapper<ChatEvent> {
     return {
         event: directChatEvent(candid.event),
         index: candid.index,
@@ -507,7 +507,7 @@ function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent>
     };
 }
 
-function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
+function directChatEvent(candid: ApiDirectChatEvent): ChatEvent {
     if ("Message" in candid) {
         return message(candid.Message);
     }
