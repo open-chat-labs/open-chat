@@ -970,7 +970,8 @@
         "notifications": "Notifications",
         "freeNotifications": "iOS, Android & Desktop",
         "diamondNotifications": "iOS, Android & Desktop",
-        "createCommunities": "Create communities"
+        "createCommunities": "Create communities",
+        "p2pSwap": "Make/accept p2p swaps"
     },
     "promoteTo": "Promote to {role}",
     "demoteTo": "Demote to {role}",

@@ -855,7 +855,8 @@
         "benefits": "ダイヤモンドの利点",
         "message": "ダイヤモンド会員について教えてください",
         "lifetimeMessage": "あなたは生涯ダイヤモンド会員権を持っています。",
-        "lifetime": "一生"
+        "lifetime": "一生",
+        "p2pSwap": "P2P スワップを行う/受け入れる"
     },
     "currentUsage": "現在のストレージ使用量",
     "promoteTo": "{role} に昇格",
