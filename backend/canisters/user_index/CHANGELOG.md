@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Unblock payments for users whose previous Diamond payments failed ([#5295](https://github.com/open-chat-labs/open-chat/pull/5295))
+
 ## [[2.0.1024](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1024-user_index)] - 2024-01-25
 
 ### Added

@@ -6,6 +6,7 @@
     import Legend from "../Legend.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { calculateDollarAmount } from "../../utils/exchange";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,13 +19,23 @@
     export let state: "ok" | "zero" | "too_low" | "too_high" = "zero";
     export let label: string = "tokenTransfer.amount";
     export let transferFees: bigint | undefined = undefined;
+    export let showDollarAmount = false;
 
     let inputElement: HTMLInputElement;
 
     $: cryptoLookup = client.cryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: symbol = tokenDetails.symbol;
-    $: tokenDecimals = tokenDetails.decimals;
+    $: symbol = tokenDetails?.symbol;
+    $: tokenDecimals = tokenDetails?.decimals;
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
+    $: amountInUsd =
+        tokenDetails !== undefined && showDollarAmount
+            ? calculateDollarAmount(
+                  amount,
+                  $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD,
+                  tokenDetails.decimals,
+              )
+            : "???";
 
     onMount(() => {
         if (amount > BigInt(0)) {
@@ -79,11 +90,14 @@
 
 <div class="label">
     <Legend label={i18nKey(label)} rules={i18nKey(symbol)} />
-{#if maxAmount !== undefined}
-    <div on:click={max} class="max">
-        <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
-    </div>
-{/if}
+    {#if maxAmount !== undefined}
+        <div on:click={max} class="max">
+            <Translatable resourceKey={i18nKey("tokenTransfer.max")} />
+        </div>
+    {/if}
+    {#if showDollarAmount && amount > 0}
+        <div class="usd">({amountInUsd} USD)</div>
+    {/if}
 </div>
 <div class="wrapper">
     {#if transferFees !== undefined}
@@ -135,6 +149,13 @@
                     background: var(--button-hv);
                 }
             }
+        }
+
+        .usd {
+            @include font(light, normal, fs-50);
+            color: var(--txt-light);
+            flex: 1;
+            text-align: right;
         }
     }
 

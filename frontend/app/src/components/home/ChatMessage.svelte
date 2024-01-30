@@ -133,7 +133,7 @@
     $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
-    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
+    $: isP2PSwap = msg.content.kind === "p2p_swap_content";
     $: isMemeFighter = msg.content.kind === "meme_fighter_content";
     $: inert =
         msg.content.kind === "deleted_content" ||
@@ -481,7 +481,7 @@
                     class:readByMe
                     class:crypto
                     class:failed
-                    class:prizeWinner={isPrizeWinner}
+                    class:p2pSwap={isP2PSwap}
                     class:proposal={isProposal && !inert}
                     class:thread={inThread}
                     class:rtl={$rtlStore}>
@@ -515,7 +515,6 @@
                     {#if msg.repliesTo !== undefined && !inert}
                         {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                             <RepliesTo
-                                messageId={msg.messageId}
                                 {readonly}
                                 {chatId}
                                 {intersecting}
@@ -939,8 +938,8 @@
             background-color: var(--error);
         }
 
-        &.prizeWinner {
-            // background-color: var(--prize);
+        &.p2pSwap {
+            width: 350px;
         }
     }
 

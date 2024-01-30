@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
 
+### Changed
+
+- Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
+- Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
 ## [[2.0.1021](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1021-community)] - 2024-01-24
 
 ### Changed

@@ -127,6 +127,11 @@
             defaultRole={permissions.messagePermissions.default}
             label={i18nKey("permissions.messagePermissions.memeFighter")}
             bind:rolePermission={permissions.messagePermissions.memeFighter} />
+        <SelectPermissionRole
+            {roles}
+            defaultRole={permissions.messagePermissions.default}
+            label={i18nKey("permissions.messagePermissions.p2pSwap")}
+            bind:rolePermission={permissions.messagePermissions.p2pSwap} />
     {:else if selectedTab === 2}
         <Toggle
             id="override-chat-messages"
@@ -190,6 +195,11 @@
                 defaultRole={permissions.threadPermissions.default}
                 label={i18nKey("permissions.threadPermissions.memeFighter")}
                 bind:rolePermission={permissions.threadPermissions.memeFighter} />
+            <SelectPermissionRole
+                {roles}
+                defaultRole={permissions.threadPermissions.default}
+                label={i18nKey("permissions.threadPermissions.p2pSwap")}
+                bind:rolePermission={permissions.threadPermissions.p2pSwap} />
         {/if}
     {/if}
 </div>

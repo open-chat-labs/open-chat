@@ -18,7 +18,6 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let messageId: bigint;
     export let chatId: ChatIdentifier;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
@@ -30,6 +29,7 @@
     $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === $currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: isP2PSwap = repliesTo.content.kind === "p2p_swap_content";
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = me
         ? client.toTitleCase($_("you"))
@@ -49,7 +49,6 @@
     function zoomToMessage() {
         if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
             dispatch("goToMessageIndex", {
-                messageId,
                 index: repliesTo.messageIndex,
             });
         } else {
@@ -63,6 +62,7 @@
         class="reply-wrapper"
         class:me
         class:rtl={$rtlStore}
+        class:p2pSwap={isP2PSwap}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {displayName}
@@ -121,6 +121,10 @@
             content: "";
             display: table;
             clear: both;
+        }
+
+        &.p2pSwap {
+            width: 350px;
         }
     }
 

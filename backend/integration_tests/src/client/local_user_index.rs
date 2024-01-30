@@ -37,7 +37,7 @@ pub mod happy_path {
             &local_user_index_canister::register_user::Args {
                 username: principal_to_username(principal),
                 referral_code,
-                public_key,
+                public_key: public_key.clone(),
             },
         );
 
@@ -47,6 +47,7 @@ pub mod happy_path {
             local_user_index_canister::register_user::Response::Success(res) => User {
                 principal,
                 user_id: res.user_id,
+                public_key,
             },
             response => panic!("'register_user' error: {response:?}"),
         }

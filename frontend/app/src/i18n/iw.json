@@ -375,7 +375,8 @@
             "crypto": "לשלוח הודעות קריפטו",
             "giphy": "לשלוח הודעות giphy",
             "prize": "לשלוח הודעות פרס",
-            "memeFighter": "לשלוח הודעות Meme Fighter"
+            "memeFighter": "לשלוח הודעות Meme Fighter",
+            "p2pSwap": "לשלוח הודעות חילופי P2P"
         },
         "threadPermissions": {
             "default": "לשלוח הודעות בשרשורים כברירת מחדל",
@@ -388,7 +389,8 @@
             "crypto": "לשלוח הודעות קריפטו בשרשורים",
             "giphy": "לשלוח הודעות giphy בשרשורים",
             "prize": "שלח הודעות פרס בשרשורים",
-            "memeFighter": "שלח הודעות Meme Fighter בשרשורים"
+            "memeFighter": "שלח הודעות Meme Fighter בשרשורים",
+            "p2pSwap": "לשלוח הודעות חילופי P2P בשרשורים"
         }
     },
     "rules": {
