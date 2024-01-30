@@ -5,14 +5,15 @@ export const idlFactory = ({ IDL }) => {
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const UserId = CanisterId;
+  const EventsContext = IDL.Variant({
+    'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
+    'Channel' : IDL.Tuple(CommunityId, ChannelId, IDL.Opt(MessageIndex)),
+    'Direct' : UserId,
+  });
   const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
   const ChatEventsArgsInner = IDL.Record({
-    'context' : IDL.Variant({
-      'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
-      'Channel' : IDL.Tuple(CommunityId, ChannelId, IDL.Opt(MessageIndex)),
-      'Direct' : UserId,
-    }),
+    'context' : EventsContext,
     'args' : IDL.Variant({
       'Page' : IDL.Record({
         'max_messages' : IDL.Nat32,

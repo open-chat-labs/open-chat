@@ -188,6 +188,8 @@ import type {
     TranslationCorrection,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
+    ChatEventsArgs,
+    ChatEventsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -348,7 +350,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
-        return LocalUserIndexClient.create(this.identity, this.config, canisterId);
+        return LocalUserIndexClient.create(this.identity, this.config, canisterId, this.db);
     }
 
     private getProvidedGroupInviteCode(chatId: MultiUserChatIdentifier): string | undefined {
@@ -653,6 +655,18 @@ export class OpenChatAgent extends EventTarget {
                 );
             }
         }
+    }
+
+    chatEventsBatch(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+    ): Promise<ChatEventsResponse[]> {
+        console.debug("CHAT EVENTS: Getting events batch", {
+            localUserIndex,
+            requests,
+        });
+
+        return this.createLocalUserIndexClient(localUserIndex).chatEvents(requests);
     }
 
     chatEventsWindow(

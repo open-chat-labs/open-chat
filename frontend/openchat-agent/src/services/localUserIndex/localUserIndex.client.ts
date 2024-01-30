@@ -3,6 +3,8 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, type LocalUserIndexService } from "./candid/idl";
 import type {
     ChannelIdentifier,
+    ChatEventsArgs,
+    ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
@@ -12,6 +14,8 @@ import type {
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
+    chatEventsArgs,
+    chatEventsResponse,
     groupAndCommunitySummaryUpdates,
     inviteUsersResponse,
     joinChannelResponse,
@@ -22,11 +26,17 @@ import type { AgentConfig } from "../../config";
 import { joinGroupResponse, apiOptional } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
+import { type Database, setCachedEvents } from "../../utils/caching";
 
 export class LocalUserIndexClient extends CandidService {
     private localUserIndexService: LocalUserIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
+    private constructor(
+        identity: Identity,
+        config: AgentConfig,
+        canisterId: string,
+        private db: Database,
+    ) {
         super(identity);
 
         this.localUserIndexService = this.createServiceClient<LocalUserIndexService>(
@@ -40,8 +50,9 @@ export class LocalUserIndexClient extends CandidService {
         identity: Identity,
         config: AgentConfig,
         canisterId: string,
+        db: Database,
     ): LocalUserIndexClient {
-        return new LocalUserIndexClient(identity, config, canisterId);
+        return new LocalUserIndexClient(identity, config, canisterId, db);
     }
 
     groupAndCommunitySummaryUpdates(
@@ -59,6 +70,38 @@ export class LocalUserIndexClient extends CandidService {
         return this.handleQueryResponse(
             () => this.localUserIndexService.group_and_community_summary_updates(args),
             groupAndCommunitySummaryUpdates,
+            args,
+        );
+    }
+
+    async chatEvents(requests: ChatEventsArgs[]): Promise<ChatEventsResponse[]> {
+        const resp = await this.getChatEventsFromBackend(requests);
+
+        for (let i = 0; i < resp.length; i++) {
+            const request = requests[i];
+            const result = resp[i];
+
+            if (result.kind === "success") {
+                setCachedEvents(
+                    this.db,
+                    request.context.chatId,
+                    result.result,
+                    request.context.threadRootMessageIndex,
+                );
+            }
+        }
+
+        return resp;
+    }
+
+    private getChatEventsFromBackend(requests: ChatEventsArgs[]): Promise<ChatEventsResponse[]> {
+        const args = {
+            requests: requests.map(chatEventsArgs),
+        };
+
+        return this.handleQueryResponse(
+            () => this.localUserIndexService.chat_events(args),
+            (resp) => chatEventsResponse(this.principal, requests, resp),
             args,
         );
     }

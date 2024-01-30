@@ -2051,6 +2051,46 @@ export type GroupAndCommunitySummaryUpdatesResponse =
       }
     | { kind: "error"; error: string };
 
+export type ChatEventsArgs = {
+    context: MessageContext;
+    args: ChatEventsArgsInner;
+    latestKnownUpdate: bigint | undefined;
+};
+
+export type ChatEventsArgsInner =
+    | {
+          kind: "page";
+          maxMessages: number;
+          maxEvents: number;
+          ascending: boolean;
+          startIndex: number;
+      }
+    | {
+          kind: "by_index";
+          events: number[];
+      }
+    | {
+          kind: "window";
+          midPoint: number;
+          maxMessages: number;
+          maxEvents: number;
+      };
+
+export type ReplicaNotUpToDate = {
+    kind: "replica_not_up_to_date";
+    replicaTimestamp: bigint;
+    clientTimestamp: bigint;
+};
+
+export type ChatEventsResponse =
+    | {
+          kind: "success";
+          result: EventsSuccessResult<ChatEvent>;
+      }
+    | ReplicaNotUpToDate
+    | { kind: "not_found" }
+    | { kind: "internal_error"; error: string };
+
 export type AcceptP2PSwapResponse =
     | { kind: "success"; token1TxnIn: TransactionId }
     | { kind: "already_reserved"; reservedBy: string }

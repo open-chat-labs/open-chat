@@ -177,9 +177,7 @@ export interface ChatEventWrapper {
 }
 export interface ChatEventsArgs { 'requests' : Array<ChatEventsArgsInner> }
 export interface ChatEventsArgsInner {
-  'context' : { 'Group' : [ChatId, [] | [MessageIndex]] } |
-    { 'Channel' : [CommunityId, ChannelId, [] | [MessageIndex]] } |
-    { 'Direct' : UserId },
+  'context' : EventsContext,
   'args' : {
       'Page' : {
         'max_messages' : number,
@@ -502,6 +500,9 @@ export type DocumentUpdate = { 'NoChange' : null } |
 export type Duration = bigint;
 export type EmptyArgs = {};
 export type EventIndex = number;
+export type EventsContext = { 'Group' : [ChatId, [] | [MessageIndex]] } |
+  { 'Channel' : [CommunityId, ChannelId, [] | [MessageIndex]] } |
+  { 'Direct' : UserId };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,

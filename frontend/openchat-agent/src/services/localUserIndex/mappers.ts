@@ -1,12 +1,19 @@
+import { Principal } from "@dfinity/principal";
 import type {
+    ChatEventsArgs,
+    ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
+    MessageContext,
     RegisterUserResponse,
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiChatEventsArgsInner,
+    ApiChatEventsResponse,
+    ApiEventsContext,
     ApiGroupAndCommunitySummaryUpdatesResponse,
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
@@ -14,14 +21,17 @@ import type {
     ApiJoinCommunityResponse,
     ApiRegisterUserResponse,
 } from "./candid/idl";
-import { bytesToHexString } from "../../utils/mapping";
+import { bytesToHexString, identity } from "../../utils/mapping";
 import {
+    apiOptional,
     communityChannelSummary,
     communitySummary,
+    eventsSuccessResponse,
     gateCheckFailedReason,
 } from "../common/chatMappers";
 import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
 import { communitySummaryUpdates } from "../community/mappers";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 
 export function groupAndCommunitySummaryUpdates(
     candid: ApiGroupAndCommunitySummaryUpdatesResponse,
@@ -69,6 +79,110 @@ export function groupAndCommunitySummaryUpdates(
         }
     }
 
+    return results;
+}
+
+export function chatEventsArgs(eventArgs: ChatEventsArgs): ApiChatEventsArgsInner {
+    return {
+        context: eventsContext(eventArgs.context),
+        args: eventsArgsInner(eventArgs.args),
+        latest_known_update: apiOptional(identity, eventArgs.latestKnownUpdate),
+    };
+}
+
+function eventsContext(context: MessageContext): ApiEventsContext {
+    switch (context.chatId.kind) {
+        case "direct_chat":
+            return {
+                Direct: Principal.fromText(context.chatId.userId),
+            };
+        case "group_chat":
+            return {
+                Group: [
+                    Principal.fromText(context.chatId.groupId),
+                    apiOptional(identity, context.threadRootMessageIndex),
+                ],
+            };
+        case "channel":
+            return {
+                Channel: [
+                    Principal.fromText(context.chatId.communityId),
+                    BigInt(context.chatId.channelId),
+                    apiOptional(identity, context.threadRootMessageIndex),
+                ],
+            };
+    }
+}
+
+function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["args"] {
+    switch (args.kind) {
+        case "page":
+            return {
+                Page: {
+                    max_messages: args.maxMessages,
+                    max_events: args.maxEvents,
+                    ascending: args.ascending,
+                    start_index: args.startIndex,
+                },
+            };
+        case "by_index":
+            return {
+                ByIndex: {
+                    events: args.events,
+                },
+            };
+        case "window": {
+            return {
+                Window: {
+                    mid_point: args.midPoint,
+                    max_messages: args.maxMessages,
+                    max_events: args.maxEvents,
+                },
+            };
+        }
+    }
+}
+
+export async function chatEventsResponse(
+    principal: Principal,
+    requests: ChatEventsArgs[],
+    candid: ApiChatEventsResponse,
+): Promise<ChatEventsResponse[]> {
+    const results = [] as ChatEventsResponse[];
+    for (let i = 0; i < requests.length; i++) {
+        const result = candid.Success[i];
+        const args = requests[i];
+
+        if ("Success" in result) {
+            const error = await ensureReplicaIsUpToDate(
+                principal,
+                args.context.chatId,
+                result.Success.chat_last_updated,
+            );
+
+            results.push(
+                error ?? {
+                    kind: "success",
+                    result: eventsSuccessResponse(result.Success),
+                },
+            );
+        } else if ("ReplicaNotUpToDate" in result) {
+            results.push({
+                kind: "replica_not_up_to_date",
+                replicaTimestamp: result.ReplicaNotUpToDate,
+                clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
+            });
+        } else if ("NotFound" in result) {
+            results.push({
+                kind: "not_found",
+            });
+        } else {
+            results.push({
+                kind: "internal_error",
+                error: result.InternalError,
+            });
+        }
+    }
     return results;
 }
 
