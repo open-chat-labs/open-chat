@@ -629,7 +629,10 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   const ChatEventsResponse = IDL.Variant({
-    'Success' : IDL.Vec(ChatEventsResponseInner),
+    'Success' : IDL.Record({
+      'responses' : IDL.Vec(ChatEventsResponseInner),
+      'timestamp' : TimestampMillis,
+    }),
   });
   const SummaryUpdatesArgs = IDL.Record({
     'updates_since' : IDL.Opt(TimestampMillis),

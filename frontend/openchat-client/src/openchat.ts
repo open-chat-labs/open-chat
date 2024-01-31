@@ -682,7 +682,6 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private async loadUser(anon: boolean = false) {
-        this._cachePrimer = new CachePrimer(this);
         await this.connectToWorker();
 
         this.startRegistryPoller();
@@ -4774,7 +4773,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
             this.updateReadUpToStore(chats);
 
-            this._cachePrimer?.processChats(chats);
+            if (this._cachePrimer === undefined) {
+                this._cachePrimer = new CachePrimer(
+                    this,
+                    chatsResponse.state.userCanisterLocalUserIndex,
+                );
+            }
+            this._cachePrimer.processChats(chats);
 
             const userIds = this.userIdsFromChatSummaries(chats);
             if (initialLoad) {
@@ -5447,14 +5452,6 @@ export class OpenChat extends OpenChatAgentWorker {
         return this.sendRequest({ kind: "getCachePrimerTimestamps" }).catch(() => ({}));
     }
 
-    setCachePrimerTimestamp(chatIdentifierString: string, timestamp: bigint): Promise<void> {
-        return this.sendRequest({
-            kind: "setCachePrimerTimestamp",
-            chatIdentifierString,
-            timestamp,
-        });
-    }
-
     submitProposal(governanceCanisterId: string, proposal: CandidateProposal): Promise<boolean> {
         const nervousSystem = this.tryGetNervousSystem(governanceCanisterId);
         if (nervousSystem === undefined) {
@@ -5559,7 +5556,7 @@ export class OpenChat extends OpenChatAgentWorker {
         throw new Error("Chat not found");
     }
 
-    private localUserIndexForCommunity(communityId: string): string {
+    localUserIndexForCommunity(communityId: string): string {
         const community = this._liveState.communities.get({ kind: "community", communityId });
         if (community === undefined) {
             throw new Error("Community not found");

@@ -96,6 +96,7 @@ export class AnonUserClient {
             },
             timestamp: BigInt(Date.now()),
             suspended: false,
+            localUserIndex: "",
         });
     }
 

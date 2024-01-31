@@ -1,4 +1,10 @@
-import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
+import {
+    type ChatEventsArgs,
+    type ChatEventsBatchResponse,
+    type ChatSummary,
+    MAX_EVENTS,
+    MAX_MESSAGES,
+} from "openchat-shared";
 import {
     ChatMap,
     compareChats,
@@ -14,11 +20,16 @@ import { get } from "svelte/store";
 import type { OpenChat } from "../openchat";
 import { runOnceIdle } from "./backgroundTasks";
 
+const BATCH_SIZE = 20;
+
 export class CachePrimer {
     private pending: ChatMap<ChatSummary> = new ChatMap();
     private runner: Poller | undefined = undefined;
 
-    constructor(private api: OpenChat) {
+    constructor(
+        private api: OpenChat,
+        private userCanisterLocalUserIndex: string,
+    ) {
         debug("initialized");
     }
 
@@ -35,58 +46,43 @@ export class CachePrimer {
             }
 
             if (this.pending.size > 0 && this.runner === undefined) {
-                this.runner = new Poller(() => runOnceIdle(() => this.processNext()), 0);
+                this.runner = new Poller(() => runOnceIdle(() => this.processNextBatch()), 0);
                 debug("runner started");
             }
         }
     }
 
-    async processNext(): Promise<void> {
+    async processNextBatch(): Promise<void> {
         try {
-            const chat = this.pending.values().sort(compareChats)[0];
-            if (chat === undefined) {
+            const next = this.getNextBatch();
+            if (next === undefined) {
                 debug("queue empty");
                 return;
             }
-            this.pending.delete(chat.id);
 
-            const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
-                chat.id,
-                chat.latestMessage?.event.messageIndex,
-            );
+            const [localUserIndex, batch] = next;
+
+            const batchResponse = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
-            if (firstUnreadMessage !== undefined) {
-                debug(chat.id + " loading events window");
-                const eventsWindowResponse = await this.getEventsWindow(chat, firstUnreadMessage);
-                debug(chat.id + " loaded events window");
-                if (eventsWindowResponse !== "events_failed") {
-                    userIdsFromEvents(eventsWindowResponse.events).forEach((u) => userIds.add(u));
+            for (const response of batchResponse.responses) {
+                if (response.kind === "success") {
+                    userIdsFromEvents(response.result.events).forEach((u) => userIds.add(u));
                 }
-            }
-
-            debug(chat.id + " loading latest events");
-            const latestEventsResponse = await this.getLatestEvents(chat);
-            debug(chat.id + " loaded latest events");
-            if (latestEventsResponse !== "events_failed") {
-                userIdsFromEvents(latestEventsResponse.events).forEach((u) => userIds.add(u));
             }
 
             if (userIds.size > 0) {
                 const missing = missingUserIds(get(userStore), userIds);
                 if (missing.length > 0) {
-                    debug(`${chat.id} loading ${missing.length} users`);
+                    debug(`Loading ${missing.length} users`);
                     await this.api.getUsers(
                         { userGroups: [{ users: missing, updatedSince: BigInt(0) }] },
                         true,
                     );
                 }
             }
-            await this.api.setCachePrimerTimestamp(
-                chatIdentifierToString(chat.id),
-                chat.lastUpdated,
-            );
-            debug(chat.id + " completed");
+
+            debug(`Batch of size ${batch.length} completed`);
         } finally {
             if (this.pending.size === 0) {
                 this.runner?.stop();
@@ -96,37 +92,90 @@ export class CachePrimer {
         }
     }
 
-    private async getEventsWindow(
-        chat: ChatSummary,
-        firstUnreadMessage: number,
-    ): Promise<EventsResponse<ChatEvent>> {
-        const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
-        return await this.api.sendRequest({
-            kind: "chatEventsWindow",
-            eventIndexRange: [minVisible, chat.latestEventIndex],
-            chatId: chat.id,
-            messageIndex: firstUnreadMessage,
-            threadRootMessageIndex: undefined,
-            latestKnownUpdate: chat.lastUpdated,
+    private getNextBatch(): [string, ChatEventsArgs[]] | undefined {
+        if (this.pending.size === 0) {
+            return undefined;
+        }
+        const sorted = this.pending.values().sort(compareChats);
+        const next = sorted[0];
+        const batch = this.getEventsArgs(next);
+        const localUserIndex = this.localUserIndex(next);
+
+        this.pending.delete(next.id);
+
+        for (let i = 1; i < sorted.length; i++) {
+            const chat = sorted[i];
+            if (this.localUserIndex(chat) === localUserIndex) {
+                this.getEventsArgs(chat).forEach((args) => batch.push(args));
+                this.pending.delete(chat.id);
+                if (batch.length >= BATCH_SIZE) {
+                    break;
+                }
+            }
+        }
+
+        return [localUserIndex, batch];
+    }
+
+    private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
+        const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
+            chat.id,
+            chat.latestMessage?.event.messageIndex,
+        );
+        const context = { chatId: chat.id };
+        const latestKnownUpdate = chat.lastUpdated;
+
+        const args = [] as ChatEventsArgs[];
+
+        if (firstUnreadMessage !== undefined) {
+            args.push({
+                context,
+                args: {
+                    kind: "window",
+                    midPoint: firstUnreadMessage,
+                    maxMessages: MAX_MESSAGES,
+                    maxEvents: MAX_EVENTS,
+                },
+                latestKnownUpdate,
+            });
+        }
+
+        args.push({
+            context,
+            args: {
+                kind: "page",
+                maxMessages: MAX_MESSAGES,
+                maxEvents: MAX_EVENTS,
+                ascending: false,
+                startIndex: chat.latestEventIndex,
+            },
+            latestKnownUpdate,
+        });
+
+        return args;
+    }
+
+    private getEventsBatch(
+        localUserIndex: string,
+        requests: ChatEventsArgs[],
+    ): Promise<ChatEventsBatchResponse> {
+        return this.api.sendRequest({
+            kind: "chatEventsBatch",
+            localUserIndex,
+            requests,
+            cachePrimer: true,
         });
     }
 
-    private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
-        const range: IndexRange =
-            chat.kind === "direct_chat"
-                ? [0, chat.latestEventIndex]
-                : [chat.minVisibleEventIndex, chat.latestEventIndex];
-
-        return await this.api.sendRequest({
-            kind: "chatEvents",
-            chatType: chat.kind,
-            chatId: chat.id,
-            eventIndexRange: range,
-            startIndex: chat.latestEventIndex,
-            ascending: false,
-            threadRootMessageIndex: undefined,
-            latestKnownUpdate: chat.lastUpdated,
-        });
+    private localUserIndex(chat: ChatSummary): string {
+        switch (chat.kind) {
+            case "direct_chat":
+                return this.userCanisterLocalUserIndex;
+            case "group_chat":
+                return chat.localUserIndex;
+            case "channel":
+                return this.api.localUserIndexForCommunity(chat.id.communityId);
+        }
     }
 }
 

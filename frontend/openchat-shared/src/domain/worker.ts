@@ -65,7 +65,7 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     ChatEventsArgs,
-    ChatEventsResponse,
+    ChatEventsBatchResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -296,7 +296,6 @@ export type WorkerRequest =
     | DeleteUserGroups
     | SetMemberDisplayName
     | GetCachePrimerTimestamps
-    | SetCachePrimerTimestamp
     | FollowThread
     | LoadSavedCryptoAccounts
     | SaveCryptoAccount
@@ -859,6 +858,7 @@ type SearchUsers = {
 type ChatEventsBatch = {
     localUserIndex: string;
     requests: ChatEventsArgs[];
+    cachePrimer: boolean;
     kind: "chatEventsBatch";
 };
 
@@ -1063,12 +1063,6 @@ type GetCachePrimerTimestamps = {
     kind: "getCachePrimerTimestamps";
 };
 
-type SetCachePrimerTimestamp = {
-    chatIdentifierString: string;
-    timestamp: bigint;
-    kind: "setCachePrimerTimestamp";
-};
-
 /**
  * Worker error type
  */
@@ -1134,7 +1128,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
-    | ChatEventsResponse[]
+    | ChatEventsBatchResponse
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
@@ -1522,7 +1516,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends MarkAsOnline
     ? void
     : T extends ChatEventsBatch
-    ? ChatEventsResponse[]
+    ? ChatEventsBatchResponse
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex
@@ -1771,8 +1765,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? FollowThreadResponse
     : T extends GetCachePrimerTimestamps
     ? Record< string, bigint >
-    : T extends SetCachePrimerTimestamp
-    ? void
     : T extends GetTokenSwaps
     ? Record<string, DexId[]>
     : T extends CanSwap

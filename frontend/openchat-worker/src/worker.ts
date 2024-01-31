@@ -250,7 +250,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.chatEventsBatch(payload.localUserIndex, payload.requests),
+                    agent.chatEventsBatch(
+                        payload.localUserIndex,
+                        payload.requests,
+                        payload.cachePrimer,
+                    ),
                 );
                 break;
 
@@ -1330,16 +1334,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
 
             case "getCachePrimerTimestamps":
                 executeThenReply(payload, correlationId, agent.getCachePrimerTimestamps());
-                break;
-
-            case "setCachePrimerTimestamp":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent
-                        .setCachePrimerTimestamp(payload.chatIdentifierString, payload.timestamp)
-                        .then(() => undefined),
-                );
                 break;
 
             case "tipMessage":

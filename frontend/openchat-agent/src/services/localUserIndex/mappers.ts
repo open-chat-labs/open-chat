@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import type {
     ChatEventsArgs,
+    ChatEventsBatchResponse,
     ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
@@ -143,48 +144,51 @@ function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["
     }
 }
 
-export async function chatEventsResponse(
+export async function chatEventsBatchResponse(
     principal: Principal,
     requests: ChatEventsArgs[],
     candid: ApiChatEventsResponse,
-): Promise<ChatEventsResponse[]> {
-    const results = [] as ChatEventsResponse[];
+): Promise<ChatEventsBatchResponse> {
+    const responses = [] as ChatEventsResponse[];
     for (let i = 0; i < requests.length; i++) {
-        const result = candid.Success[i];
+        const response = candid.Success.responses[i];
         const args = requests[i];
 
-        if ("Success" in result) {
+        if ("Success" in response) {
             const error = await ensureReplicaIsUpToDate(
                 principal,
                 args.context.chatId,
-                result.Success.chat_last_updated,
+                response.Success.chat_last_updated,
                 true,
             );
 
-            results.push(
+            responses.push(
                 error ?? {
                     kind: "success",
-                    result: eventsSuccessResponse(result.Success),
+                    result: eventsSuccessResponse(response.Success),
                 },
             );
-        } else if ("ReplicaNotUpToDate" in result) {
-            results.push({
+        } else if ("ReplicaNotUpToDate" in response) {
+            responses.push({
                 kind: "replica_not_up_to_date",
-                replicaTimestamp: result.ReplicaNotUpToDate,
+                replicaTimestamp: response.ReplicaNotUpToDate,
                 clientTimestamp: args.latestKnownUpdate ?? BigInt(-1),
             });
-        } else if ("NotFound" in result) {
-            results.push({
+        } else if ("NotFound" in response) {
+            responses.push({
                 kind: "not_found",
             });
         } else {
-            results.push({
+            responses.push({
                 kind: "internal_error",
-                error: result.InternalError,
+                error: response.InternalError,
             });
         }
     }
-    return results;
+    return {
+        responses,
+        timestamp: candid.Success.timestamp,
+    };
 }
 
 export function joinChannelResponse(

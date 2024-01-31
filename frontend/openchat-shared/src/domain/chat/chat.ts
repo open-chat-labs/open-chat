@@ -939,6 +939,7 @@ export type ChatStateFull = {
     pinnedFavouriteChats: ChatIdentifier[];
     pinnedChannels: ChannelIdentifier[];
     favouriteChats: ChatIdentifier[];
+    userCanisterLocalUserIndex: string;
 };
 
 export type CurrentChatState = {
@@ -1087,6 +1088,7 @@ export type InitialStateResponse = {
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
     suspended: boolean;
+    localUserIndex: string;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -2080,6 +2082,11 @@ export type ReplicaNotUpToDate = {
     kind: "replica_not_up_to_date";
     replicaTimestamp: bigint;
     clientTimestamp: bigint;
+};
+
+export type ChatEventsBatchResponse = {
+    responses: ChatEventsResponse[];
+    timestamp: bigint;
 };
 
 export type ChatEventsResponse =

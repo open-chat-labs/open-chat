@@ -196,7 +196,12 @@ export interface ChatEventsArgsInner {
     },
   'latest_known_update' : [] | [TimestampMillis],
 }
-export type ChatEventsResponse = { 'Success' : Array<ChatEventsResponseInner> };
+export type ChatEventsResponse = {
+    'Success' : {
+      'responses' : Array<ChatEventsResponseInner>,
+      'timestamp' : TimestampMillis,
+    }
+  };
 export type ChatEventsResponseInner = {
     'ReplicaNotUpToDate' : TimestampMillis
   } |

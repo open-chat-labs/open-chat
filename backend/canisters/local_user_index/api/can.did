@@ -32,7 +32,10 @@ type ChatEventsArgsInner = record {
 };
 
 type ChatEventsResponse = variant {
-    Success : vec ChatEventsResponseInner;
+    Success : record {
+        responses: vec ChatEventsResponseInner;
+        timestamp: TimestampMillis;
+    };
 };
 
 type ChatEventsResponseInner = variant {
