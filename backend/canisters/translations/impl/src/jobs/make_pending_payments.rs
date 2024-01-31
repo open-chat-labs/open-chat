@@ -59,7 +59,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
     };
 
     match icrc_ledger_canister_c2c_client::icrc1_transfer(pending_payment.currency.ledger_canister_id().unwrap(), &args).await {
-        Ok(Ok(block_index)) => Ok(block_index.0.try_into().unwrap()),
+        Ok(Ok(block_index)) => Ok(block_index.0.into()),
         Ok(Err(transfer_error)) => {
             error!(?transfer_error, ?args, "Transfer failed");
             Err(false)
