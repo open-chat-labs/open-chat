@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce size of user data when serialized ([#5289](https://github.com/open-chat-labs/open-chat/pull/5289))
+
 ### Fixed
 
 - Unblock payments for users whose previous Diamond payments failed ([#5295](https://github.com/open-chat-labs/open-chat/pull/5295))
