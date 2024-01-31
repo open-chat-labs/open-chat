@@ -1,16 +1,13 @@
-import {
-    type ChatEventsArgs,
-    type ChatEventsBatchResponse,
-    type ChatSummary,
-    MAX_EVENTS,
-    MAX_MESSAGES,
-} from "openchat-shared";
+import type { ChatEventsArgs, ChatEventsResponse, ChatSummary } from "openchat-shared";
 import {
     ChatMap,
     compareChats,
     missingUserIds,
     userIdsFromEvents,
+    chatIdentifiersEqual,
     chatIdentifierToString,
+    MAX_EVENTS,
+    MAX_MESSAGES,
 } from "openchat-shared";
 import { Poller } from "./poller";
 import { boolFromLS } from "../stores/localStorageSetting";
@@ -62,10 +59,10 @@ export class CachePrimer {
 
             const [localUserIndex, batch] = next;
 
-            const batchResponse = await this.getEventsBatch(localUserIndex, batch);
+            const responses = await this.getEventsBatch(localUserIndex, batch);
 
             const userIds = new Set<string>();
-            for (const response of batchResponse.responses) {
+            for (const response of responses) {
                 if (response.kind === "success") {
                     userIdsFromEvents(response.result.events).forEach((u) => userIds.add(u));
                 }
@@ -118,26 +115,28 @@ export class CachePrimer {
     }
 
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
-        const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
-            chat.id,
-            chat.latestMessage?.event.messageIndex,
-        );
         const context = { chatId: chat.id };
         const latestKnownUpdate = chat.lastUpdated;
 
         const args = [] as ChatEventsArgs[];
 
-        if (firstUnreadMessage !== undefined) {
-            args.push({
-                context,
-                args: {
-                    kind: "window",
-                    midPoint: firstUnreadMessage,
-                    maxMessages: MAX_MESSAGES,
-                    maxEvents: MAX_EVENTS,
-                },
-                latestKnownUpdate,
-            });
+        if (!chatIdentifiersEqual(get(this.api.selectedChatId), chat.id)) {
+            const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
+                chat.id,
+                chat.latestMessage?.event.messageIndex,
+            );
+            if (firstUnreadMessage !== undefined) {
+                args.push({
+                    context,
+                    args: {
+                        kind: "window",
+                        midPoint: firstUnreadMessage,
+                        maxMessages: MAX_MESSAGES,
+                        maxEvents: MAX_EVENTS,
+                    },
+                    latestKnownUpdate,
+                });
+            }
         }
 
         args.push({
@@ -158,7 +157,7 @@ export class CachePrimer {
     private getEventsBatch(
         localUserIndex: string,
         requests: ChatEventsArgs[],
-    ): Promise<ChatEventsBatchResponse> {
+    ): Promise<ChatEventsResponse[]> {
         return this.api.sendRequest({
             kind: "chatEventsBatch",
             localUserIndex,

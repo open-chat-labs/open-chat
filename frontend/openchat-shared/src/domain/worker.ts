@@ -65,7 +65,7 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     ChatEventsArgs,
-    ChatEventsBatchResponse,
+    ChatEventsResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -1128,7 +1128,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
-    | ChatEventsBatchResponse
+    | ChatEventsResponse[]
     | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
@@ -1516,7 +1516,7 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends MarkAsOnline
     ? void
     : T extends ChatEventsBatch
-    ? ChatEventsBatchResponse
+    ? ChatEventsResponse[]
     : T extends ChatEventsWindow
     ? EventsResponse<ChatEvent>
     : T extends ChatEventsByEventIndex

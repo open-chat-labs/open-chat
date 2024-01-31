@@ -5,6 +5,7 @@ import type {
     ChannelIdentifier,
     ChatEventsArgs,
     ChatEventsBatchResponse,
+    ChatEventsResponse,
     GroupAndCommunitySummaryUpdatesArgs,
     GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
@@ -77,7 +78,7 @@ export class LocalUserIndexClient extends CandidService {
     async chatEvents(
         requests: ChatEventsArgs[],
         cachePrimer = false,
-    ): Promise<ChatEventsBatchResponse> {
+    ): Promise<ChatEventsResponse[]> {
         const batchResponse = await this.getChatEventsFromBackend(requests);
 
         for (let i = 0; i < batchResponse.responses.length; i++) {
@@ -101,7 +102,7 @@ export class LocalUserIndexClient extends CandidService {
             }
         }
 
-        return batchResponse;
+        return batchResponse.responses;
     }
 
     private getChatEventsFromBackend(requests: ChatEventsArgs[]): Promise<ChatEventsBatchResponse> {
