@@ -21,6 +21,7 @@ pub struct Record {
     pub locale: String,
     pub key: String,
     pub candidates: Vec<CandidateTranslation>,
+    pub deployment_count: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

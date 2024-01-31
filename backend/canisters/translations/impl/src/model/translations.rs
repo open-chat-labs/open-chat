@@ -81,9 +81,15 @@ impl Translations {
         self.records
             .iter()
             .filter_map(|((locale, key), ids)| {
-                let candidates: Vec<_> = ids
+                let all: Vec<_> = ids.iter().map(|id| &self.translations[(*id) as usize]).collect();
+
+                let deployment_count = all
                     .iter()
-                    .map(|id| &self.translations[(*id) as usize])
+                    .filter(|t| matches!(t.status, TranslationStatus::Deployed(_)))
+                    .count() as u32;
+
+                let candidates: Vec<_> = all
+                    .iter()
                     .filter(|t| matches!(t.status, TranslationStatus::Proposed))
                     .map(|t| CandidateTranslation {
                         id: t.id,
@@ -100,6 +106,7 @@ impl Translations {
                         locale: locale.clone(),
                         key: key.clone(),
                         candidates,
+                        deployment_count,
                     })
                 }
             })
