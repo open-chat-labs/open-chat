@@ -59,6 +59,7 @@ type Record = record {
     locale : text;
     key : text;
     candidates : vec CandidateTranslation;
+    deployment_count : nat32;
 };
 
 type CandidateTranslation = record {
