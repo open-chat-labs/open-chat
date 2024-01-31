@@ -41,7 +41,7 @@ fn get_batched_events_succeeds() {
         );
     }
 
-    let local_user_index_canister::chat_events::Response::Success(responses) = client::local_user_index::chat_events(
+    let local_user_index_canister::chat_events::Response::Success(result) = client::local_user_index::chat_events(
         env,
         user1.principal,
         canister_ids.local_user_index,
@@ -71,10 +71,10 @@ fn get_batched_events_succeeds() {
         },
     );
 
-    assert_is_message_with_text(responses.first().unwrap(), "User: 0");
-    assert_is_message_with_text(responses.get(1).unwrap(), "Group1: 1");
-    assert_is_message_with_text(responses.get(2).unwrap(), "Group2: 2");
-    assert_is_message_with_text(responses.get(3).unwrap(), "Channel: 3");
+    assert_is_message_with_text(result.responses.first().unwrap(), "User: 0");
+    assert_is_message_with_text(result.responses.get(1).unwrap(), "Group1: 1");
+    assert_is_message_with_text(result.responses.get(2).unwrap(), "Group2: 2");
+    assert_is_message_with_text(result.responses.get(3).unwrap(), "Channel: 3");
 }
 
 #[test]
