@@ -53,7 +53,12 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
 
         let orders = icdex_canister_c2c_client::pending(self.dex_canister_id, args).await?.0;
 
-        Ok(orders.data.into_iter().map(|(_, o)| self.convert_order(o)).collect())
+        Ok(orders
+            .data
+            .into_iter()
+            .map(|(_, o)| self.convert_order(o))
+            .filter(|o| o.amount > 0)
+            .collect())
     }
 
     pub async fn orderbook(&self) -> CallResult<AggregatedOrders> {
