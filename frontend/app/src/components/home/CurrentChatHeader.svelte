@@ -211,6 +211,7 @@
             on:searchChat
             on:showProposalFilters
             on:makeProposal
+            on:startVideoCall
             on:showGroupMembers
             on:createPoll
             on:upgrade

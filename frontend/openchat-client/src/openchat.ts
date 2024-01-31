@@ -5613,6 +5613,44 @@ export class OpenChat extends OpenChatAgentWorker {
         });
     }
 
+    private getDailyAccessJWT(chatId: string): Promise<string | undefined> {
+        // TODO - this should be an OC service that checks that the user is allowed to create/join a video call in this
+        // chat or not and returns a JWT if they are
+        return fetch(
+            `${this.config.videoBridgeUrl}/room/access_jwt/${this._liveState.user.userId}/${this._liveState.user.username}/${chatId}`,
+        ).then((res) => (res.ok ? res.text() : undefined));
+    }
+
+    private getRoomAccessToken(authToken: string): Promise<string | undefined> {
+        // This will send the OC access JWT to the daily middleware service which will:
+        // * validate the jwt
+        // * create the room if necessary
+        // * obtain an access token for the user
+        // * return it to the front end
+        const headers = new Headers();
+        headers.append("x-auth-jwt", authToken);
+        return fetch(`${this.config.videoBridgeUrl}/room/meeting_access_token`, {
+            method: "GET",
+            headers: headers,
+        }).then((res) => {
+            if (res.ok) {
+                return res.text();
+            }
+            if (res.status === 401) {
+                console.warn(
+                    "Auth failed trying to obtain room access token. Might be something wrong with your JWT.",
+                );
+            }
+            return undefined;
+        });
+    }
+
+    getVideoChatAccessToken(chatId: string): Promise<string | undefined> {
+        return this.getDailyAccessJWT(chatId).then((token) => {
+            return token ? this.getRoomAccessToken(token) : undefined;
+        });
+    }
+
     // **** Communities Stuff
 
     // takes a list of communities that may contain communities that we are a member of and/or preview communities

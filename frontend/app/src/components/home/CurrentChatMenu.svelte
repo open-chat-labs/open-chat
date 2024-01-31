@@ -1,5 +1,6 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
+    import VideoPlus from "svelte-material-icons/VideoPlus.svelte";
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
@@ -211,6 +212,10 @@
     function makeProposal() {
         dispatch("makeProposal");
     }
+
+    function startVideoCall() {
+        dispatch("startVideoCall");
+    }
 </script>
 
 {#if desktop}
@@ -287,6 +292,12 @@
         </div>
         <div slot="menu">
             <Menu>
+                <MenuItem on:click={startVideoCall}>
+                    <VideoPlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                    <div slot="text">
+                        <Translatable resourceKey={i18nKey("Start video call")} />
+                    </div>
+                </MenuItem>
                 {#if !$favouritesStore.has(selectedChatSummary.id)}
                     <MenuItem on:click={addToFavourites}>
                         <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
