@@ -129,7 +129,7 @@ export class LocalUserIndexClient extends CandidService {
                     kind: "success",
                     result: fromCache,
                 };
-                if (cachePrimer) {
+                if (cachePrimer && request.latestKnownUpdate !== undefined) {
                     setCachePrimerTimestamp(
                         this.db,
                         request.context.chatId,
