@@ -6,8 +6,6 @@ import {
     userIdsFromEvents,
     chatIdentifiersEqual,
     chatIdentifierToString,
-    MAX_EVENTS,
-    MAX_MESSAGES,
 } from "openchat-shared";
 import { Poller } from "./poller";
 import { boolFromLS } from "../stores/localStorageSetting";
@@ -117,6 +115,8 @@ export class CachePrimer {
     private getEventsArgs(chat: ChatSummary): ChatEventsArgs[] {
         const context = { chatId: chat.id };
         const latestKnownUpdate = chat.lastUpdated;
+        const minVisible = "minVisibleEventIndex" in chat ? chat.minVisibleEventIndex : 0;
+        const eventIndexRange: [number, number] = [minVisible, chat.latestEventIndex];
 
         const args = [] as ChatEventsArgs[];
 
@@ -131,8 +131,7 @@ export class CachePrimer {
                     args: {
                         kind: "window",
                         midPoint: firstUnreadMessage,
-                        maxMessages: MAX_MESSAGES,
-                        maxEvents: MAX_EVENTS,
+                        eventIndexRange,
                     },
                     latestKnownUpdate,
                 });
@@ -143,10 +142,9 @@ export class CachePrimer {
             context,
             args: {
                 kind: "page",
-                maxMessages: MAX_MESSAGES,
-                maxEvents: MAX_EVENTS,
                 ascending: false,
                 startIndex: chat.latestEventIndex,
+                eventIndexRange,
             },
             latestKnownUpdate,
         });

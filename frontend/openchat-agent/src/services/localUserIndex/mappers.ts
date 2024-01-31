@@ -10,7 +10,7 @@ import type {
     MessageContext,
     RegisterUserResponse,
 } from "openchat-shared";
-import { CommonResponses, UnsupportedValueError } from "openchat-shared";
+import { CommonResponses, MAX_EVENTS, MAX_MESSAGES, UnsupportedValueError } from "openchat-shared";
 import type {
     ApiChatEventsArgsInner,
     ApiChatEventsResponse,
@@ -120,8 +120,8 @@ function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["
         case "page":
             return {
                 Page: {
-                    max_messages: args.maxMessages,
-                    max_events: args.maxEvents,
+                    max_messages: MAX_MESSAGES,
+                    max_events: MAX_EVENTS,
                     ascending: args.ascending,
                     start_index: args.startIndex,
                 },
@@ -136,8 +136,8 @@ function eventsArgsInner(args: ChatEventsArgs["args"]): ApiChatEventsArgsInner["
             return {
                 Window: {
                     mid_point: args.midPoint,
-                    max_messages: args.maxMessages,
-                    max_events: args.maxEvents,
+                    max_messages: MAX_MESSAGES,
+                    max_events: MAX_EVENTS,
                 },
             };
         }

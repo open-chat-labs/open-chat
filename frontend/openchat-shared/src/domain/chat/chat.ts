@@ -2062,10 +2062,9 @@ export type ChatEventsArgs = {
 export type ChatEventsArgsInner =
     | {
           kind: "page";
-          maxMessages: number;
-          maxEvents: number;
           ascending: boolean;
           startIndex: number;
+          eventIndexRange: [number, number];
       }
     | {
           kind: "by_index";
@@ -2074,8 +2073,7 @@ export type ChatEventsArgsInner =
     | {
           kind: "window";
           midPoint: number;
-          maxMessages: number;
-          maxEvents: number;
+          eventIndexRange: [number, number];
       };
 
 export type ReplicaNotUpToDate = {
