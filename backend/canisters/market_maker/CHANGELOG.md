@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+- Filter out orders which have 0 amount remaining ([#5301](https://github.com/open-chat-labs/open-chat/pull/5301))
 
 ## [[2.0.999](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.999-market_maker)] - 2024-01-05
 
