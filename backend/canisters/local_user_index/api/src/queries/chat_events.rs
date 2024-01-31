@@ -55,8 +55,8 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    responses: Vec<EventsResponse>,
-    timestamp: TimestampMillis,
+    pub responses: Vec<EventsResponse>,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
