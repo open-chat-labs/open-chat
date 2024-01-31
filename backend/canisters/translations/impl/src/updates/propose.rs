@@ -33,11 +33,13 @@ async fn propose(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        Success(
-            state
-                .data
-                .translations
-                .propose(args.locale, args.key, args.value, user_id, now),
-        )
+        match state
+            .data
+            .translations
+            .propose(args.locale, args.key, args.value, user_id, now)
+        {
+            Some(id) => Success(id),
+            None => AlreadyProposed,
+        }
     })
 }

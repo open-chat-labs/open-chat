@@ -8,6 +8,7 @@ type ProposeArgs = record {
 
 type ProposeResponse = variant {
     Success : nat64;
+    AlreadyProposed;
     UserNotFound;
     InvalidArgs : text;
     InternalError : text;

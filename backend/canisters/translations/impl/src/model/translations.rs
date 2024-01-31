@@ -6,17 +6,42 @@ use types::{TimestampMillis, UserId};
 #[derive(Serialize, Deserialize, Default)]
 pub struct Translations {
     translations: Vec<Translation>,
-    records: HashMap<(String, String), Vec<u64>>,
+    records: HashMap<(String, String), Vec<usize>>,
 }
 
 impl Translations {
-    pub fn propose(&mut self, locale: String, key: String, value: String, user_id: UserId, now: TimestampMillis) -> u64 {
-        let id = self.translations.len() as u64;
+    pub fn propose(
+        &mut self,
+        locale: String,
+        key: String,
+        value: String,
+        user_id: UserId,
+        now: TimestampMillis,
+    ) -> Option<u64> {
+        let tuple = (locale.clone(), key.clone());
+
+        // Loop backwards through translations until we reach the most recently deployed.
+        // If any of these translations matches the proposed value then don't add the translation.
+        if let Some(ids) = self.records.get(&tuple) {
+            for index in ids.iter().rev() {
+                if let Some(translation) = self.translations.get(*index) {
+                    if translation.value == value {
+                        return None;
+                    }
+
+                    if matches!(translation.status, TranslationStatus::Deployed(_)) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        let new_index = self.translations.len();
 
         self.records
-            .entry((locale.clone(), key.clone()))
+            .entry(tuple.clone())
             .and_modify(|e| {
-                e.push(id);
+                e.push(new_index);
 
                 if let Some(prev) = self
                     .translations
@@ -27,10 +52,10 @@ impl Translations {
                     prev.status = TranslationStatus::Overidden;
                 }
             })
-            .or_insert(vec![id]);
+            .or_insert(vec![new_index]);
 
         self.translations.push(Translation {
-            id,
+            id: new_index as u64,
             locale,
             key,
             value,
@@ -38,7 +63,7 @@ impl Translations {
             status: TranslationStatus::Proposed,
         });
 
-        id
+        Some(new_index as u64)
     }
 
     pub fn approve(&mut self, id: u64, approve: bool, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
@@ -81,23 +106,23 @@ impl Translations {
         self.records
             .iter()
             .filter_map(|((locale, key), ids)| {
-                let all: Vec<_> = ids.iter().map(|id| &self.translations[(*id) as usize]).collect();
+                let mut deployment_count: u32 = 0;
+                let mut candidates: Vec<CandidateTranslation> = Vec::new();
 
-                let deployment_count = all
-                    .iter()
-                    .filter(|t| matches!(t.status, TranslationStatus::Deployed(_)))
-                    .count() as u32;
-
-                let candidates: Vec<_> = all
-                    .iter()
-                    .filter(|t| matches!(t.status, TranslationStatus::Proposed))
-                    .map(|t| CandidateTranslation {
-                        id: t.id,
-                        value: t.value.clone(),
-                        proposed_by: t.proposed.who,
-                        proposed_at: t.proposed.when,
-                    })
-                    .collect();
+                for id in ids {
+                    if let Some(translation) = self.translations.get(*id) {
+                        match translation.status {
+                            TranslationStatus::Proposed => candidates.push(CandidateTranslation {
+                                id: *id as u64,
+                                value: translation.value.clone(),
+                                proposed_by: translation.proposed.who,
+                                proposed_at: translation.proposed.when,
+                            }),
+                            TranslationStatus::Deployed(_) => deployment_count += 1,
+                            _ => (),
+                        }
+                    }
+                }
 
                 if candidates.is_empty() {
                     None
@@ -123,10 +148,10 @@ impl Translations {
             .collect()
     }
 
-    fn find_most_recent_approved_or_deployed(&self, ids: &[u64]) -> Option<&Translation> {
+    fn find_most_recent_approved_or_deployed(&self, ids: &[usize]) -> Option<&Translation> {
         ids.iter()
             .rev()
-            .map(|id| &self.translations[(*id) as usize])
+            .filter_map(|id| self.translations.get(*id))
             .find(|t| matches!(t.status, TranslationStatus::Approved(_)) || matches!(t.status, TranslationStatus::Deployed(_)))
     }
 }

@@ -11,6 +11,7 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(u64),
+    AlreadyProposed,
     UserNotFound,
     InvalidArgs(String),
     InternalError(String),
