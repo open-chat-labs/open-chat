@@ -1,12 +1,13 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
-use model::translations::Translations;
+use model::{pending_payments_queue::PendingPaymentsQueue, translations::Translations};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -56,6 +57,7 @@ struct Data {
     pub deployment_operators: Vec<Principal>,
     pub rng_seed: [u8; 32],
     pub translations: Translations,
+    pub pending_payments_queue: PendingPaymentsQueue,
     pub test_mode: bool,
 }
 
@@ -72,6 +74,7 @@ impl Data {
             deployment_operators,
             rng_seed: [0; 32],
             translations: Translations::default(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
             test_mode,
         }
     }

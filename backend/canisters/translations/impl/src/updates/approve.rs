@@ -1,7 +1,14 @@
-use crate::{model::translations::ApproveResponse, mutate_state, read_state};
+use crate::{
+    model::{
+        pending_payments_queue::{PendingPayment, PendingPaymentReason},
+        translations::ApproveResponse,
+    },
+    mutate_state, read_state,
+};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use translations_canister::approve::{Response::*, *};
+use types::Cryptocurrency;
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update]
@@ -17,7 +24,16 @@ async fn approve(args: Args) -> Response {
     };
 
     mutate_state(|state| match state.data.translations.approve(args.id, true, user_id, now) {
-        ApproveResponse::Success => Success,
+        ApproveResponse::Success => {
+            state.data.pending_payments_queue.push(PendingPayment {
+                recipient_account: user_id.into(),
+                timestamp: now,
+                currency: Cryptocurrency::CHAT,
+                amount: 100_000_000, // 1 CHAT
+                reason: PendingPaymentReason::Approval,
+            });
+            Success
+        }
         ApproveResponse::NotProposed => NotProposed,
         ApproveResponse::NotFound => NotFound,
     })
