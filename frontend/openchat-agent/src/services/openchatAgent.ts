@@ -188,7 +188,7 @@ import type {
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     ChatEventsArgs,
-    ChatEventsBatchResponse,
+    ChatEventsResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -660,7 +660,7 @@ export class OpenChatAgent extends EventTarget {
         localUserIndex: string,
         requests: ChatEventsArgs[],
         cachePrimer: boolean,
-    ): Promise<ChatEventsBatchResponse> {
+    ): Promise<ChatEventsResponse[]> {
         console.debug("CHAT EVENTS: Getting events batch", {
             localUserIndex,
             requests,
