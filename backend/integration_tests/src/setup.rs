@@ -186,6 +186,8 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let translations_init_args = translations_canister::init::Args {
+        user_index_canister_id,
+        deployment_operators: vec![controller],
         cycles_dispenser_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,

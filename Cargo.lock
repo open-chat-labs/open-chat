@@ -6636,6 +6636,7 @@ name = "translations_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
