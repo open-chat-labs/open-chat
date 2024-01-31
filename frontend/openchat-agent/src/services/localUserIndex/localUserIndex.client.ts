@@ -32,9 +32,7 @@ import { identity } from "../../utils/mapping";
 import {
     type Database,
     getCachedEvents,
-    getCachedEventsWindow,
     getCachedEventsWindowByMessageIndex,
-    getNearestCachedEventIndexForMessageIndex,
     setCachedEvents,
     setCachePrimerTimestamp,
 } from "../../utils/caching";
