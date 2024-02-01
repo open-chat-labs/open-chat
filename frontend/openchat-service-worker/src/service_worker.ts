@@ -259,7 +259,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
 
     const existing = await self.registration.getNotifications();
     if (existing.length >= MAX_NOTIFICATIONS) {
-        existing.slice(0, existing.length - MAX_NOTIFICATIONS).forEach((n) => n.close());
+        existing.slice(0, existing.length + 1 - MAX_NOTIFICATIONS).forEach((n) => n.close());
     }
 
     const toShow = {
