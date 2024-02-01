@@ -10,22 +10,15 @@ pub struct Translations {
 }
 
 impl Translations {
-    pub fn propose(
-        &mut self,
-        locale: String,
-        key: String,
-        value: String,
-        user_id: UserId,
-        now: TimestampMillis,
-    ) -> Option<u64> {
-        let tuple = (locale.clone(), key.clone());
+    pub fn propose(&mut self, args: ProposeArgs) -> Option<u64> {
+        let tuple = (args.locale.clone(), args.key.clone());
 
         // Loop backwards through translations until we reach the most recently deployed.
         // If any of these translations matches the proposed value then don't add the translation.
         if let Some(ids) = self.records.get(&tuple) {
             for index in ids.iter().rev() {
                 if let Some(translation) = self.translations.get(*index) {
-                    if translation.value == value {
+                    if translation.value == args.value {
                         return None;
                     }
 
@@ -47,7 +40,7 @@ impl Translations {
                     .translations
                     .iter_mut()
                     .rev()
-                    .find(|t| t.proposed.who == user_id && matches!(t.status, TranslationStatus::Proposed))
+                    .find(|t| t.proposed.who == args.user_id && matches!(t.status, TranslationStatus::Proposed))
                 {
                     prev.status = TranslationStatus::Overidden;
                 }
@@ -56,10 +49,13 @@ impl Translations {
 
         self.translations.push(Translation {
             id: new_index as u64,
-            locale,
-            key,
-            value,
-            proposed: Attribution { who: user_id, when: now },
+            locale: args.locale,
+            key: args.key,
+            value: args.value,
+            proposed: Attribution {
+                who: args.user_id,
+                when: args.now,
+            },
             status: TranslationStatus::Proposed,
         });
 
@@ -156,6 +152,15 @@ impl Translations {
     }
 }
 
+#[derive(Clone)]
+pub struct ProposeArgs {
+    pub locale: String,
+    pub key: String,
+    pub value: String,
+    pub user_id: UserId,
+    pub now: TimestampMillis,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Translation {
     pub id: u64,
@@ -191,4 +196,205 @@ pub enum ApproveResponse {
     Success,
     NotProposed,
     NotFound,
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Principal;
+
+    use super::*;
+
+    const USER1: &str = "27eue-hyaaa-aaaaf-aaa4a-cai";
+    const USER2: &str = "3skqk-iqaaa-aaaaf-aaa3q-cai";
+    const USER3: &str = "2yfsq-kaaaa-aaaaf-aaa4q-cai";
+
+    #[test]
+    fn propose_returns_expected_index() {
+        let mut translations = Translations::default();
+        let result = translations.propose(test_proposal_1());
+
+        assert_eq!(result, Some(0));
+    }
+
+    #[test]
+    fn propose_identical_translation_returns_already_proposed() {
+        let mut translations = Translations::default();
+        let args = test_proposal_1();
+        translations.propose(args.clone());
+
+        let result = translations.propose(args);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn proposed_returns_expected() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].candidates.len(), 2);
+        assert_eq!(results[0].candidates[0].id, 0);
+        assert_eq!(results[0].candidates[1].id, 1);
+    }
+
+    #[test]
+    fn proposed_returns_expected_2() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].candidates.len(), 1);
+        assert_eq!(results[0].candidates[0].id, 1);
+    }
+
+    #[test]
+    fn proposed_returns_expected_3() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(1, false, user_id(USER3), 3);
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn same_user_proposes_twice_then_first_overridden() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+
+        let mut p2 = test_proposal_2();
+        p2.user_id = user_id(USER1);
+        translations.propose(p2);
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].candidates.len(), 1);
+        assert_eq!(results[0].candidates[0].id, 1);
+    }
+
+    #[test]
+    fn pending_deployment_has_one_translation() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+
+        let results = translations.pending_deployment();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, 0);
+    }
+
+    #[test]
+    fn when_record_has_multiple_approvals_ignore_all_but_most_recent() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(1, true, user_id(USER3), 3);
+
+        let results = translations.pending_deployment();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, 1);
+    }
+
+    #[test]
+    fn no_approvals_empty_pending_deployment() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, false, user_id(USER3), 2);
+
+        let results = translations.pending_deployment();
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn after_mark_deployed_empty_pending_deployment() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+        translations.mark_deployed(2, 3);
+
+        let results = translations.pending_deployment();
+
+        assert_eq!(results.len(), 0);
+    }
+
+    #[test]
+    fn approvals_after_deploy_not_marked_as_deployed() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(1, true, user_id(USER3), 3);
+        translations.mark_deployed(2, 3);
+
+        let results = translations.pending_deployment();
+
+        assert_eq!(results.len(), 1);
+    }
+
+    #[test]
+    fn after_mark_deployed_expected_proposed() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, true, user_id(USER3), 2);
+        translations.mark_deployed(0, 3);
+
+        let results = translations.proposed();
+
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].candidates.len(), 1);
+        assert_eq!(results[0].candidates[0].id, 1);
+    }
+
+    fn user_id(text: &str) -> UserId {
+        Principal::from_text(text).unwrap().into()
+    }
+
+    fn test_proposal_1() -> ProposeArgs {
+        ProposeArgs {
+            locale: "en".to_string(),
+            key: "abc.def".to_string(),
+            value: "xyz".to_string(),
+            user_id: user_id(USER1),
+            now: 0,
+        }
+    }
+
+    fn test_proposal_2() -> ProposeArgs {
+        ProposeArgs {
+            locale: "en".to_string(),
+            key: "abc.def".to_string(),
+            value: "ghi".to_string(),
+            user_id: user_id(USER2),
+            now: 1,
+        }
+    }
 }

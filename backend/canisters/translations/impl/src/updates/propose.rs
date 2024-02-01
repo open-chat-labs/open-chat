@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state};
+use crate::{model::translations::ProposeArgs, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use translations_canister::propose::{Response::*, *};
@@ -33,11 +33,13 @@ async fn propose(args: Args) -> Response {
     };
 
     mutate_state(|state| {
-        match state
-            .data
-            .translations
-            .propose(args.locale, args.key, args.value, user_id, now)
-        {
+        match state.data.translations.propose(ProposeArgs {
+            locale: args.locale,
+            key: args.key,
+            value: args.value,
+            user_id,
+            now,
+        }) {
             Some(id) => Success(id),
             None => AlreadyProposed,
         }
