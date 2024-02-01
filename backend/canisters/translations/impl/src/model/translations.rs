@@ -58,21 +58,31 @@ impl Translations {
         Some(new_index as u64)
     }
 
-    pub fn approve(&mut self, id: u64, approve: bool, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
+    pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveRejectResponse {
         if let Some(translation) = self.translations.get_mut(id as usize) {
             if !matches!(translation.status, TranslationStatus::Proposed) {
-                ApproveResponse::NotProposed
+                ApproveRejectResponse::NotProposed
             } else {
                 let attribution = Attribution { who: user_id, when: now };
-                translation.status = if approve {
-                    TranslationStatus::Approved(attribution)
-                } else {
-                    TranslationStatus::Rejected(attribution)
-                };
-                ApproveResponse::Success
+                translation.status = TranslationStatus::Approved(attribution);
+                ApproveRejectResponse::Success
             }
         } else {
-            ApproveResponse::NotFound
+            ApproveRejectResponse::NotFound
+        }
+    }
+
+    pub fn reject(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveRejectResponse {
+        if let Some(translation) = self.translations.get_mut(id as usize) {
+            if !matches!(translation.status, TranslationStatus::Proposed) {
+                ApproveRejectResponse::NotProposed
+            } else {
+                let attribution = Attribution { who: user_id, when: now };
+                translation.status = TranslationStatus::Rejected(attribution);
+                ApproveRejectResponse::Success
+            }
+        } else {
+            ApproveRejectResponse::NotFound
         }
     }
 
@@ -188,7 +198,7 @@ pub struct Attribution {
     pub when: TimestampMillis,
 }
 
-pub enum ApproveResponse {
+pub enum ApproveRejectResponse {
     Success,
     NotProposed,
     NotFound,
@@ -243,7 +253,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(0, user_id(USER3), 2);
 
         let results = translations.proposed();
 
@@ -258,8 +268,8 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
-        translations.approve(1, false, user_id(USER3), 3);
+        translations.approve(0, user_id(USER3), 2);
+        translations.reject(1, user_id(USER3), 3);
 
         let results = translations.proposed();
 
@@ -289,7 +299,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(0, user_id(USER3), 2);
 
         let results = translations.pending_deployment();
 
@@ -303,8 +313,8 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
-        translations.approve(1, true, user_id(USER3), 3);
+        translations.approve(0, user_id(USER3), 2);
+        translations.approve(1, user_id(USER3), 3);
 
         let results = translations.pending_deployment();
 
@@ -318,7 +328,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, false, user_id(USER3), 2);
+        translations.reject(0, user_id(USER3), 2);
 
         let results = translations.pending_deployment();
 
@@ -331,7 +341,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(0, user_id(USER3), 2);
         translations.mark_deployed(2, 3);
 
         let results = translations.pending_deployment();
@@ -345,8 +355,8 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
-        translations.approve(1, true, user_id(USER3), 3);
+        translations.approve(0, user_id(USER3), 2);
+        translations.approve(1, user_id(USER3), 3);
         translations.mark_deployed(2, 3);
 
         let results = translations.pending_deployment();
@@ -360,7 +370,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, true, user_id(USER3), 2);
+        translations.approve(0, user_id(USER3), 2);
         translations.mark_deployed(0, 3);
 
         let results = translations.proposed();
