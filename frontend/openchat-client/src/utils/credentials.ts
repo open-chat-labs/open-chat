@@ -18,6 +18,7 @@ function getEventHandler(
     principal: string,
     issuerOrigin: string,
     credentialId: string,
+    derivationOrigin: string | undefined,
     url: URL,
     onSuccess: (result: string) => void,
     _onError: (err: unknown) => void,
@@ -28,21 +29,27 @@ function getEventHandler(
             console.debug("VC: message from correct origin received", ev.data);
             if ("method" in ev.data) {
                 if (ev.data.method === "vc-flow-ready") {
-                    iiWindow?.postMessage(
-                        {
-                            id,
-                            jsonrpc: "2.0",
-                            method: "request_credential",
-                            params: {
-                                issuer: {
-                                    issuerOrigin: issuerOrigin,
-                                    credentialId: credentialId,
-                                },
-                                credentialSubject: principal,
+                    const msg = {
+                        id,
+                        jsonrpc: "2.0",
+                        method: "request_credential",
+                        params: {
+                            issuer: {
+                                origin: issuerOrigin,
+                                credentialId: credentialId,
                             },
+                            credentialSubject: principal,
+                            credentialSpec: {
+                                credentialType: credentialId,
+                                arguments: {
+                                    employerName: "DFINITY Foundation",
+                                },
+                            },
+                            derivationOrigin,
                         },
-                        url.origin,
-                    );
+                    };
+                    console.debug("VC: sending request_credential msg: ", msg);
+                    iiWindow?.postMessage(msg, url.origin);
                 }
             }
             if ("result" in ev.data && "verifiablePresentation" in ev.data.result) {
@@ -91,11 +98,27 @@ function checkInterruption(reject: (err: unknown) => void): void {
     }
 }
 
+/* 
+Unexpected error: flow request 
+[ { 
+    "code": "invalid_type", 
+    "expected": "string", 
+    "received": "undefined", 
+    "path": [ "params", "issuer", "origin" ], 
+    "message": "Required" 
+}, { 
+    "code": "invalid_type", 
+    "expected": "object", 
+    "received": "undefined", 
+    "path": [ "params", "credentialSpec" ], "message": "Required" } ]
+*/
+
 export function verifyCredential(
     iiUrl: string,
     principal: string,
     issuerOrigin: string,
     credentialId: string,
+    derivationOrigin: string | undefined,
 ): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
         cleanUp();
@@ -119,6 +142,7 @@ export function verifyCredential(
             principal,
             issuerOrigin,
             credentialId,
+            derivationOrigin,
             url,
             onSuccess(resolve),
             onError(reject),
