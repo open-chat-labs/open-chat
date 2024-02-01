@@ -170,6 +170,7 @@ function toUint8Array(base64String: string): Uint8Array {
 }
 
 const MAX_NOTIFICATIONS = 50;
+const MAX_NOTIFICATIONS_PER_GROUP = 20;
 
 async function showNotification(n: Notification, id: string): Promise<void> {
     let icon = "/_/raw/icon.png";
@@ -242,30 +243,29 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     }
 
     const path = notificationPath(n);
-    const tag = path;
+    let tag = path;
 
-    // If true, we close existing notifications where the `path` matches, this ensures this new notification will
-    // trigger an alert. If false, and there is already at least one notification with a matching path, then this new
-    // notification will be silent
     if (isMessageNotification(n)) {
         if (icon === undefined && n.messageType === "File") {
             icon = FILE_ICON;
         }
-
-        // We need to close any existing notifications for the same tag otherwise the new notification will not be shown
-        const matching = await self.registration.getNotifications({ tag });
-        matching.forEach((n) => n.close());
+        tag += "/" + n.messageIndex;
     }
 
     const existing = await self.registration.getNotifications();
-    if (existing.length >= MAX_NOTIFICATIONS) {
-        existing.slice(0, existing.length + 1 - MAX_NOTIFICATIONS).forEach((n) => n.close());
+    const matching = existing.filter((n) => n.data.path === path);
+    const closed = closeExcessNotifications(matching, MAX_NOTIFICATIONS_PER_GROUP);
+
+    if (existing.length - closed >= MAX_NOTIFICATIONS) {
+        const existing = await self.registration.getNotifications();
+        closeExcessNotifications(existing, MAX_NOTIFICATIONS);
     }
 
     const toShow = {
         body,
         icon,
         image,
+        renotify: true,
         tag,
         timestamp: Number(n.timestamp),
         data: {
@@ -276,6 +276,17 @@ async function showNotification(n: Notification, id: string): Promise<void> {
 
     console.debug("SW: about to show notification: ", toShow, id);
     await self.registration.showNotification(title, toShow);
+}
+
+function closeExcessNotifications(
+    notifications: globalThis.Notification[],
+    maxCount: number,
+): number {
+    const toClose = Math.max(notifications.length + 1 - maxCount, 0);
+    if (toClose > 0) {
+        notifications.slice(0, toClose).forEach((n) => n.close());
+    }
+    return toClose;
 }
 
 function messageText(
