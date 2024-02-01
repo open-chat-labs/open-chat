@@ -243,13 +243,14 @@ async function showNotification(n: Notification, id: string): Promise<void> {
     }
 
     const path = notificationPath(n);
-    let tag = path;
+    let tag: string | undefined = undefined;
 
     if (isMessageNotification(n)) {
         if (icon === undefined && n.messageType === "File") {
             icon = FILE_ICON;
         }
-        tag += "/" + n.messageIndex;
+    } else {
+        tag = path;
     }
 
     const existing = await self.registration.getNotifications();
@@ -265,7 +266,7 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         body,
         icon,
         image,
-        renotify: true,
+        renotify: tag !== undefined,
         tag,
         timestamp: Number(n.timestamp),
         data: {
