@@ -1,4 +1,5 @@
 .dfx/
+.vscode/
 target/
 dist/
 node_modules/
@@ -16,4 +17,3 @@ notes.md
 notification.did
 summary.md
 temp.did
-.vscode/settings.json
