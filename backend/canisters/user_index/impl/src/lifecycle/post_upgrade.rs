@@ -1,13 +1,17 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use itertools::Itertools;
+use icrc_ledger_types::icrc1::account::Account;
+use rand::Rng;
 use stable_memory::get_reader;
 use tracing::info;
+use types::Cryptocurrency;
 use user_index_canister::post_upgrade::Args;
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
@@ -38,20 +42,15 @@ fn post_upgrade(args: Args) {
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
 
-        let users_whose_payments_failed: Vec<_> = state
-            .data
-            .users
-            .iter()
-            .filter(|u| u.diamond_membership_details.payment_in_progress())
-            .map(|u| u.user_id)
-            .collect();
-
-        for user_id in users_whose_payments_failed.iter() {
-            if let Some(membership) = state.data.users.diamond_membership_details_mut(user_id) {
-                membership.set_payment_in_progress(false);
-            }
-        }
-
-        info!(users_whose_payments_failed = ?users_whose_payments_failed.into_iter().map(|u| u.to_string()).collect_vec());
+        // Transfer previously raised funds to the treasury
+        state.data.pending_payments_queue.push(PendingPayment {
+            amount: 365285570000,
+            currency: Cryptocurrency::InternetComputer,
+            timestamp: state.env.now_nanos(),
+            recipient_account: Account::from(SNS_GOVERNANCE_CANISTER_ID),
+            memo: state.env.rng().gen(),
+            reason: PendingPaymentReason::Treasury,
+        });
+        crate::jobs::make_pending_payments::start_job_if_required(state);
     });
 }
