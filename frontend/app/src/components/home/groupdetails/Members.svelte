@@ -5,20 +5,25 @@
     import BlockedUser from "./BlockedUser.svelte";
     import MembersHeader from "./MembersHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
-    import type {
-        FullMember,
-        Member as MemberType,
-        OpenChat,
-        UserSummary,
-        UserLookup,
-        CommunitySummary,
-        MultiUserChat,
+    import {
+        type FullMember,
+        type Member as MemberType,
+        type OpenChat,
+        type UserSummary,
+        type UserLookup,
+        type CommunitySummary,
+        type MultiUserChat,
+        type CommunityIdentifier,
+        type MultiUserChatIdentifier,
+        chatIdentifiersEqual,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import SelectionButton from "../SelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
     import UserGroups from "../communities/details/UserGroups.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -60,7 +65,7 @@
     $: searchTermLower = searchTerm.toLowerCase();
 
     $: {
-        if (collection.id !== id) {
+        if (!idsMatch(collection.id, id)) {
             id = collection.id;
             memberView = "members";
         }
@@ -78,6 +83,18 @@
     }
 
     const dispatch = createEventDispatcher();
+
+    function idsMatch(
+        previous: CommunityIdentifier | MultiUserChatIdentifier,
+        next: CommunityIdentifier | MultiUserChatIdentifier,
+    ): boolean {
+        if (previous === next) return true;
+        if (previous.kind === "community" && next.kind === "community")
+            return previous.communityId === next.communityId;
+        if (previous.kind !== "community" && next.kind !== "community")
+            return chatIdentifiersEqual(previous, next);
+        return false;
+    }
 
     function close() {
         dispatch("close");
@@ -149,7 +166,7 @@
             on:click={() => selectTab("users")}
             class:selected={selectedTab === "users"}
             class="tab">
-            {$_("communities.members")}
+            <Translatable resourceKey={i18nKey("communities.members")} />
         </div>
         <div
             tabindex="0"
@@ -157,7 +174,7 @@
             on:click={() => selectTab("groups")}
             class:selected={selectedTab === "groups"}
             class="tab">
-            {$_("communities.userGroups")}
+            <Translatable resourceKey={i18nKey("communities.userGroups")} />
         </div>
     </div>
 {/if}
@@ -168,7 +185,7 @@
             on:searchEntered={() => membersList.reset()}
             searching={false}
             bind:searchTerm
-            placeholder={"search"} />
+            placeholder={i18nKey("search")} />
     </div>
 
     {#if showBlocked || showInvited}

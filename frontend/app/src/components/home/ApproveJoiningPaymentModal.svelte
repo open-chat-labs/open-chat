@@ -5,11 +5,12 @@
     import ErrorMessage from "../ErrorMessage.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Button from "../Button.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import ButtonGroup from "../ButtonGroup.svelte";
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import Markdown from "./Markdown.svelte";
+    import { i18nKey, interpolate, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,7 +19,7 @@
     export let gate: PaymentGate;
 
     let joining = false;
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
     let balanceWithRefresh: BalanceWithRefresh;
     let refreshingBalance = false;
 
@@ -27,14 +28,26 @@
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[token.ledger] ?? BigInt(0);
     $: insufficientFunds = cryptoBalance < gate.amount;
-    $: approvalMessage = interpolateLevel("access.paymentApprovalMessage", group.level, true, {
-        amount: client.formatTokens(gate.amount, token.decimals),
-        token: token.symbol,
-    });
-    $: distributionMessage = interpolateLevel(
-        "access.paymentDistributionMessage",
-        group.kind === "group_chat" ? "group" : "community",
-        true,
+    $: approvalMessage = interpolate(
+        $_,
+        i18nKey(
+            "access.paymentApprovalMessage",
+            {
+                amount: client.formatTokens(gate.amount, token.decimals),
+                token: token.symbol,
+            },
+            group.level,
+            true,
+        ),
+    );
+    $: distributionMessage = interpolate(
+        $_,
+        i18nKey(
+            "access.paymentDistributionMessage",
+            undefined,
+            group.kind === "group_chat" ? "group" : "community",
+            true,
+        ),
     );
 
     function onStartRefreshingBalance() {
@@ -42,12 +55,12 @@
     }
 
     function onRefreshingBalanceSuccess() {
-        error = insufficientFunds ? "Insufficient funds" : undefined;
+        error = insufficientFunds ? i18nKey("Insufficient funds") : undefined;
         refreshingBalance = false;
     }
 
     function onRefreshingBalanceFailed() {
-        error = "Failed to refresh balance";
+        error = i18nKey("Failed to refresh balance");
         refreshingBalance = false;
     }
 
@@ -73,19 +86,19 @@
                         dispatch("joined");
                         break;
                     case "failure":
-                        error = $_("communities.errors.joinFailed");
+                        error = i18nKey("communities.errors.joinFailed");
                         break;
                     case "gate_check_failed":
-                        error = $_("access.paymentFailed");
+                        error = i18nKey("access.paymentFailed");
                         break;
                     case "blocked":
-                        error = $_("youreBlocked");
+                        error = i18nKey("youreBlocked");
                         break;
                 }
             })
             .catch((err) => {
                 client.logError(`Failed to join ${group.level}: `, err);
-                error = $_("communities.errors.joinFailed");
+                error = i18nKey("communities.errors.joinFailed");
             })
             .finally(() => (joining = false));
     }
@@ -95,13 +108,15 @@
     <div class="header" slot="header">
         <div class="title-and-icon">
             <div class="icon">🔒️</div>
-            <div class="title">{$_("access.approvePaymentTitle")}</div>
+            <div class="title">
+                <Translatable resourceKey={i18nKey("access.approvePaymentTitle")} />
+            </div>
         </div>
         <BalanceWithRefresh
             bind:this={balanceWithRefresh}
             ledger={gate.ledgerCanister}
             value={cryptoBalance}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:click={onStartRefreshingBalance}
             on:refreshed={onRefreshingBalanceSuccess}
@@ -110,13 +125,13 @@
     <div slot="body">
         <Markdown text={approvalMessage + " " + distributionMessage} />
         {#if error !== undefined}
-            <ErrorMessage>{error}</ErrorMessage>
+            <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
         {/if}
         {#if insufficientFunds}
             <AccountInfo ledger={gate.ledgerCanister} user={$user} />
-            <p>{$_("tokenTransfer.makeDeposit")}</p>
+            <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
             <a rel="noreferrer" class="how-to" href={token.howToBuyUrl} target="_blank">
-                {$_("howToBuyToken", { values: { token: token.symbol } })}
+                <Translatable resourceKey={i18nKey("howToBuyToken", { token: token.symbol })} />
             </a>
         {/if}
     </div>
@@ -127,7 +142,10 @@
                 loading={joining || refreshingBalance}
                 disabled={joining}
                 on:click={onClickPrimary}
-                >{insufficientFunds ? "Refresh" : $_("access.payAndJoin")}</Button>
+                ><Translatable
+                    resourceKey={i18nKey(
+                        insufficientFunds ? "Refresh" : "access.payAndJoin",
+                    )} /></Button>
         </ButtonGroup>
     </div>
 </ModalContent>

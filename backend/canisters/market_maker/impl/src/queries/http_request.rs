@@ -30,11 +30,16 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         build_response(body, "text/plain")
     }
 
+    fn get_balance_history(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.data.balance_history)
+    }
+
     match extract_route(&request.url) {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
         Route::Other(p, _) if p == "orders" => read_state(get_order_logs),
+        Route::Other(p, _) if p == "balance_history" => read_state(get_balance_history),
         _ => HttpResponse::not_found(),
     }
 }

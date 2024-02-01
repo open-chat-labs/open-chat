@@ -7,6 +7,8 @@
     import { iconSize } from "../../../../stores/iconSize";
     import EditableChannel from "./EditableChannel.svelte";
     import ErrorMessage from "../../../ErrorMessage.svelte";
+    import { i18nKey, type ResourceKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const MIN_CHANNEL_LENGTH = 3;
     const MAX_CHANNEL_LENGTH = 25;
@@ -14,23 +16,21 @@
     export let channels: DefaultChannel[];
     export let valid = true;
 
-    let error: string | undefined = undefined;
+    let error: ResourceKey | undefined = undefined;
 
     let nextChannelName: string = "";
 
     $: {
         if (channels.length === 0) {
-            error = $_("communities.mustHaveOneChannel");
+            error = i18nKey("communities.mustHaveOneChannel");
         } else if (containsDuplicates(channels)) {
-            error = $_("communities.mustHaveUniqueChannels");
+            error = i18nKey("communities.mustHaveUniqueChannels");
         } else if (containsBlanks(channels)) {
-            error = $_("communities.noBlankChannels");
+            error = i18nKey("communities.noBlankChannels");
         } else if (containsInvalid(channels)) {
-            error = $_("communities.noInvalidChannels", {
-                values: {
-                    min: MIN_CHANNEL_LENGTH,
-                    max: MAX_CHANNEL_LENGTH,
-                },
+            error = i18nKey("communities.noInvalidChannels", {
+                min: MIN_CHANNEL_LENGTH,
+                max: MAX_CHANNEL_LENGTH,
             });
         } else {
             error = undefined;
@@ -68,7 +68,7 @@
 </script>
 
 <p class="info">
-    {$_("communities.channelsInfo")}
+    <Translatable resourceKey={i18nKey("communities.channelsInfo")} />
 </p>
 {#each channels as channel (channel.createdAt)}
     <EditableChannel
@@ -85,7 +85,7 @@
             maxlength={MAX_CHANNEL_LENGTH}
             countdown
             on:enter={addChannel}
-            placeholder={$_("communities.channelPlaceholder")} />
+            placeholder={i18nKey("communities.channelPlaceholder")} />
     </div>
     <div class="add-btn" on:click={addChannel}>
         <PlusCircleOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -93,7 +93,7 @@
 </div>
 
 {#if error}
-    <ErrorMessage>{error}</ErrorMessage>
+    <ErrorMessage><Translatable resourceKey={error} /></ErrorMessage>
 {/if}
 
 <style lang="scss">

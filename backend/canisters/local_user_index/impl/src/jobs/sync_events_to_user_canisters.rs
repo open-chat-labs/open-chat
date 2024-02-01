@@ -11,12 +11,21 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none()
-        && (!state.data.user_event_sync_queue.is_empty() || state.data.user_event_sync_queue.sync_in_progress())
-    {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+    if TIMER_ID.get().is_none() && !state.data.user_event_sync_queue.is_empty() {
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'sync_events_to_user_canisters' job started");
+        true
+    } else {
+        false
+    }
+}
+
+pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
+    if let Some(batch) = next_batch(state) {
+        if let Some(timer_id) = TIMER_ID.take() {
+            ic_cdk_timers::clear_timer(timer_id);
+        }
+        ic_cdk::spawn(process_batch(batch));
         true
     } else {
         false
@@ -24,32 +33,16 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    match mutate_state(next_batch) {
-        NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch)),
-        NextBatchResult::Continue => {}
-        NextBatchResult::QueueEmpty => {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'sync_events_to_user_canisters' job stopped");
-            }
-        }
+    trace!("'sync_events_to_user_canisters' job running");
+    TIMER_ID.set(None);
+
+    if let Some(batch) = mutate_state(next_batch) {
+        ic_cdk::spawn(process_batch(batch));
     }
 }
 
-enum NextBatchResult {
-    Success(Vec<(CanisterId, Vec<UserEvent>)>),
-    Continue,
-    QueueEmpty,
-}
-
-fn next_batch(state: &mut RuntimeState) -> NextBatchResult {
-    if let Some(batch) = state.data.user_event_sync_queue.try_start_batch() {
-        NextBatchResult::Success(batch)
-    } else if !state.data.user_event_sync_queue.is_empty() || state.data.user_event_sync_queue.sync_in_progress() {
-        NextBatchResult::Continue
-    } else {
-        NextBatchResult::QueueEmpty
-    }
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<UserEvent>)>> {
+    state.data.user_event_sync_queue.try_start_batch()
 }
 
 async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
@@ -60,11 +53,14 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<UserEvent>)>) {
 
     futures::future::join_all(futures).await;
 
-    mutate_state(|state| state.data.user_event_sync_queue.mark_batch_completed());
+    mutate_state(|state| {
+        state.data.user_event_sync_queue.mark_batch_completed();
+        start_job_if_required(state);
+    });
 }
 
 async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
-    let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
+    let args = user_canister::c2c_notify_events::Args { events: events.clone() };
     if user_canister_c2c_client::c2c_notify_events(canister_id, &args).await.is_err() {
         mutate_state(|state| {
             state

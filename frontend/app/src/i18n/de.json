@@ -157,7 +157,7 @@
     "previewing": "Vorschaugruppe",
     "userIsBlocked": "Entsperren Sie den Benutzer, um Nachrichten zu senden",
     "remove": "Entfernen",
-    "close": "Nah dran",
+    "close": "Schlie­ßen",
     "save": "Speichern",
     "discard": "Verwerfen",
     "submit": "einreichen",
@@ -369,7 +369,8 @@
             "crypto": "Krypto-Nachrichten senden",
             "giphy": "Senden Sie Giphy-Nachrichten",
             "prize": "Senden Sie Preisnachrichten",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten"
         },
         "threadPermissions": {
             "default": "Senden Sie Nachrichten standardmäßig in Threads",
@@ -382,7 +383,8 @@
             "crypto": "Senden Sie Kryptonachrichten in Threads",
             "giphy": "Senden Sie Giphy-Nachrichten in Threads",
             "prize": "Versenden Sie Preisnachrichten in Threads",
-            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads"
+            "memeFighter": "Senden Sie Meme Fighter-Nachrichten in Threads",
+            "p2pSwap": "Senden Sie P2P-Swap-Nachrichten in Threads"
         }
     },
     "rules": {
@@ -664,13 +666,10 @@
             "enterRecipientOwner": "Geben Sie den Kontoinhaber des Empfängers ein",
             "enterRecipientSubaccount": "Geben Sie optional ein Empfänger-Unterkonto ein",
             "ledgerCanisterId": "Hauptbuchkanister-ID",
-            "enterLedgerCanisterId": "Geben Sie die Hauptbuchkanister-ID ein",
             "tokenInfoUrl": "Token-Info-URL",
-            "enterTokenInfoUrl": "Geben Sie eine URL mit den Token-Informationen ein",
             "howToBuyUrl": "So kaufen Sie eine URL",
-            "enterHowToBuyUrl": "Geben Sie eine URL ein, die zeigt, wie Sie den Token kaufen können",
             "transactionUrlFormat": "Transaktions-URL-Format",
-            "enterTransactionUrlFormat": "Z.B. https://token.com/?index={transaction_index}"
+            "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Neuron-Controller-Aktionen"
     },
@@ -679,7 +678,7 @@
     "groupNameReserved": "Der Name {level} ist reserviert",
     "loadingTweetPreview": "Tweet-Vorschau wird geladen...",
     "displayWidth": "Anzeigebreite",
-    "apply": "Sich bewerben",
+    "apply": "Auswählen",
     "archiveChat": "Chat archivieren",
     "archiveChatFailed": "Chat konnte nicht archiviert werden",
     "unarchiveChatFailed": "Archivierung des Chats fehlgeschlagen",
@@ -760,7 +759,7 @@
     "lowBandwidth": "Niedrige Bandbreite",
     "showTweet": "Tweet anzeigen",
     "showVideo": "Videos zeigen",
-    "wallet": "Geldbörse",
+    "wallet": "Wallet",
     "prizeMessage": "Gewinnnachricht",
     "prizes": {
         "click": "Klicken Sie auf die Schaltfläche unten, um einen Preis zu gewinnen.",
@@ -857,7 +856,8 @@
         "benefits": "Vorteile von Diamant",
         "message": "Erzählen Sie mir von der Diamond-Mitgliedschaft",
         "lifetimeMessage": "Sie haben eine lebenslange Diamond-Mitgliedschaft.",
-        "lifetime": "Lebensdauer"
+        "lifetime": "Lebensdauer",
+        "p2pSwap": "P2P-Swaps durchführen/akzeptieren"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",
@@ -1159,9 +1159,6 @@
     "sendTextDisabled": "Textnachrichten sind deaktiviert",
     "disappearingMessages": {
         "label": "Verschwindende Nachrichten",
-        "hours": "Std)",
-        "minutes": "Protokoll)",
-        "days": "Tage)",
         "summary": "Nachrichten verschwinden nach {duration}",
         "timeUpdatedBy": "{changedBy} setzt die Zeit für das Verschwinden der Nachricht auf {duration}",
         "disabledBy": "{changedBy} hat das Verschwinden von Nachrichten deaktiviert",
@@ -1183,7 +1180,7 @@
     "renderPreviews": "Linkvorschauen automatisch rendern",
     "tokenSwap": {
         "swap": "Tauschen",
-        "quote": "Zitat",
+        "quote": "Quotierung",
         "requote": "Nochmals zitieren",
         "back": "Zurück",
         "swapNotAvailable": "Derzeit ist es nicht möglich, {tokenIn} gegen einen anderen Token auszutauschen",
@@ -1208,5 +1205,43 @@
         "swapTokenTo": "Tauschen Sie {tokenIn} gegen {tokenOut} aus",
         "quoteTooLow": "Der beste angegebene Tarif ist {rate} {tokenOut} pro {tokenIn} ab {dex}. Dies ergibt {amountOut} {tokenOut} für {amountIn} {tokenIn}. Sie können nur tauschen, wenn der angegebene Betrag {minAmountOut} überschreitet."
     },
-    "messageBlocked": "Nachricht ausgeblendet"
+    "messageBlocked": "Nachricht ausgeblendet",
+    "removePreviewQuestion": "Vorschau entfernen?",
+    "showPreview": "Vorschau zeigen",
+    "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet.",
+    "hours": "Std",
+    "minutes": "Protokoll",
+    "days": "Tage",
+    "p2pSwap": {
+        "builderTitle": "Machen Sie ein Tauschangebot",
+        "expiryTime": "Ablaufdatum",
+        "creatingYourMessage": "Bitte warten Sie, während ein Tauschangebot erstellt wird",
+        "failedToCreateMessage": "Das Tauschangebot konnte nicht erstellt werden",
+        "expired": "Abgelaufen",
+        "accepted": "Akzeptiert",
+        "accept": "Akzeptieren",
+        "cancel": "Stornieren",
+        "cancelled": "Abgesagt",
+        "reserved": "Reserviert",
+        "summary": "Dies ist ein Angebot zum Tausch von {fromAmount} {fromToken} gegen {toAmount} {toToken}.",
+        "youReserved": "Sie haben dieses Angebot reserviert und es wartet auf die Fertigstellung.",
+        "youAccepted": "Sie haben dieses Angebot angenommen und die Fertigstellung steht noch aus.",
+        "reservedBy": "Dieses Angebot wurde von {user} reserviert und muss noch abgeschlossen werden.",
+        "acceptedBy": "Dieses Angebot wurde von {user} angenommen und wartet auf den Abschluss.",
+        "youCompleted": "Sie haben dieses Angebot angenommen.",
+        "completed": "Dieses Angebot wurde von {user} angenommen.",
+        "confirmAccept": "Wenn Sie dieses Angebot annehmen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Treuhandkanister übertragen. Im Gegenzug erhalten Sie {amountOther} {tokenOther}. Möchten Sie fortfahren?",
+        "confirmCancel": "Wenn Sie dieses Angebot stornieren, wird {amount} {token} aus dem OpenChat-Escrow-Kanister zurück auf Ihr Wallet übertragen. Möchten Sie fortfahren?",
+        "insufficientBalanceMessage": "Sie benötigen mindestens {amount} {token} (inklusive 2 Transaktionsgebühren), um diesen Tausch zu akzeptieren.",
+        "insufficientBalance": "Mangelhaftes Gleichgewicht",
+        "tokenBalance": "{token} Guthaben",
+        "already_accepted": "Dieses Tauschangebot wurde bereits angenommen",
+        "swap_cancelled": "Dieses Tauschangebot wurde storniert",
+        "swap_expired": "Dieses Tauschangebot ist abgelaufen",
+        "swap_not_found": "Dieses Tauschangebot konnte nicht gefunden werden",
+        "insufficient_funds": "Ihr Guthaben reicht nicht aus, um dieses Tauschangebot anzunehmen",
+        "unknown_accept_error": "Fehler beim Annehmen des Tauschangebots",
+        "unknown_cancel_error": "Fehler beim Stornieren des Tauschangebots",
+        "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder das Angebot angenommen wird. Möchten Sie fortfahren?"
+    }
 }

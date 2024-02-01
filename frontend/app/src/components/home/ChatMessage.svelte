@@ -27,6 +27,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
+    import Translatable from "../Translatable.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
@@ -55,6 +56,7 @@
     import { removeQueryStringParam } from "../../utils/urls";
     import Diamond from "../icons/Diamond.svelte";
     import IntersectionObserverComponent from "./IntersectionObserver.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -100,7 +102,10 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
+    let crypto =
+        msg.content.kind === "crypto_content" ||
+        msg.content.kind === "prize_content" ||
+        msg.content.kind === "p2p_swap_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
@@ -120,7 +125,6 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
     $: mediaDimensions = extractDimensions(msg.content);
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
@@ -129,11 +133,14 @@
     $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
-    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
+    $: isP2PSwap = msg.content.kind === "p2p_swap_content";
+    $: isMemeFighter = msg.content.kind === "meme_fighter_content";
     $: inert =
         msg.content.kind === "deleted_content" ||
         msg.content.kind === "blocked_content" ||
         collapsed;
+    $: canEdit =
+        me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
@@ -198,7 +205,7 @@
             messageIndex: msg.messageIndex,
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
-            sourceContext: { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex },
+            sourceContext: messageContext,
         };
     }
 
@@ -217,9 +224,9 @@
             .cancelMessageReminder(msg.messageId, { ...ev.detail, hidden: true })
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("reminders.cancelSuccess");
+                    toastStore.showSuccessToast(i18nKey("reminders.cancelSuccess"));
                 } else {
-                    toastStore.showFailureToast("reminders.cancelFailure");
+                    toastStore.showFailureToast(i18nKey("reminders.cancelFailure"));
                 }
             });
     }
@@ -355,7 +362,7 @@
             )
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("poll.voteFailed");
+                    toastStore.showFailureToast(i18nKey("poll.voteFailed"));
                 }
             });
     }
@@ -370,7 +377,7 @@
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind !== "success") {
-                toastStore.showFailureToast("tip.failure");
+                toastStore.showFailureToast(i18nKey("tip.failure"));
             }
         });
     }
@@ -395,7 +402,7 @@
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
-                    <h4>{$_("chooseReaction")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
                     <span
                         title={$_("close")}
                         class="close-emoji"
@@ -474,7 +481,7 @@
                     class:readByMe
                     class:crypto
                     class:failed
-                    class:prizeWinner={isPrizeWinner}
+                    class:p2pSwap={isP2PSwap}
                     class:proposal={isProposal && !inert}
                     class:thread={inThread}
                     class:rtl={$rtlStore}>
@@ -508,7 +515,6 @@
                     {#if msg.repliesTo !== undefined && !inert}
                         {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                             <RepliesTo
-                                messageId={msg.messageId}
                                 {readonly}
                                 {chatId}
                                 {intersecting}
@@ -524,16 +530,18 @@
                         {readonly}
                         {fill}
                         {me}
-                        {chatId}
+                        {messageContext}
                         {collapsed}
                         {undeleting}
                         {intersecting}
+                        {failed}
                         messageIndex={msg.messageIndex}
                         messageId={msg.messageId}
                         myUserId={user.userId}
                         content={msg.content}
                         edited={msg.edited}
                         height={mediaCalculatedHeight}
+                        on:removePreview
                         on:registerVote={registerVote}
                         on:goToMessageIndex
                         on:upgrade
@@ -930,8 +938,8 @@
             background-color: var(--error);
         }
 
-        &.prizeWinner {
-            // background-color: var(--prize);
+        &.p2pSwap {
+            width: 350px;
         }
     }
 

@@ -4,7 +4,7 @@ use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
-use crate::model::p2p_trades::P2PTrades;
+use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -23,13 +23,15 @@ use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
     TimestampMillis, Timestamped, UserId,
 };
-use user_canister::NamedAccount;
+use user_canister::{NamedAccount, UserCanisterEvent};
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod governance_clients;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -77,6 +79,10 @@ impl RuntimeState {
         self.env.caller() == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_chats.exists(&caller.into())
@@ -118,6 +124,11 @@ impl RuntimeState {
                 .timer_jobs
                 .enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
         }
+    }
+
+    pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
+        self.data.user_canister_events_queue.push(canister_id, event);
+        jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -170,7 +181,6 @@ struct Data {
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
-    pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
@@ -179,7 +189,8 @@ struct Data {
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
     pub token_swaps: TokenSwaps,
-    pub p2p_trades: P2PTrades,
+    pub p2p_swaps: P2PSwaps,
+    pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub rng_seed: [u8; 32],
 }
 
@@ -220,7 +231,6 @@ impl Data {
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
-            pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
@@ -229,7 +239,8 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
-            p2p_trades: P2PTrades::default(),
+            p2p_swaps: P2PSwaps::default(),
+            user_canister_events_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],
         }
     }

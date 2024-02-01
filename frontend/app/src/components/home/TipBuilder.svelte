@@ -21,6 +21,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -214,7 +216,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("tip.title")}</div>
+                    <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
                     <div>
                         <CryptoSelector bind:ledger filter={hasExchangeRate} />
                     </div>
@@ -225,7 +227,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 bind:refreshing
@@ -238,24 +240,28 @@
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>
-                            {$_("tokenTransfer.zeroBalance", {
-                                values: { token: tokenDetails.symbol },
-                            })}
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: tokenDetails.symbol,
+                                })} />
                         </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a
                         rel="noreferrer"
                         class="how-to"
                         href={tokenDetails.howToBuyUrl}
                         target="_blank">
-                        {$_("howToBuyToken", { values: { token: tokenDetails.symbol } })}
+                        <Translatable
+                            resourceKey={i18nKey("howToBuyToken", {
+                                token: tokenDetails.symbol,
+                            })} />
                     </a>
                 {:else}
                     <div class="amounts">
                         {#each increments as increment}
                             <TipButton
-                                label={$_(amountLabel(increment))}
+                                label={i18nKey(amountLabel(increment))}
                                 on:click={(e) => clickAmount(e, increment)}
                                 disabled={exchangeRate === 0 ||
                                     calculateAmount(centAmount + increment, exchangeRate) >
@@ -274,24 +280,24 @@
                                         {tokenDetails.symbol}
                                     </div>
                                     <div class="fee">
-                                        {$_("tip.plusFee", {
-                                            values: {
+                                        <Translatable
+                                            resourceKey={i18nKey("tip.plusFee", {
                                                 fee: displayFee,
                                                 token: tokenDetails.symbol,
-                                            },
-                                        })}
+                                            })} />
                                     </div>
                                 </div>
                             {:else}
                                 <div class="summary">
-                                    {$_("tip.advice")}
+                                    <Translatable resourceKey={i18nKey("tip.advice")} />
                                 </div>
                             {/if}
                         {:else}
                             <ErrorMessage
-                                >{$_("tip.noExchangeRate", {
-                                    values: { token: tokenDetails.symbol },
-                                })}</ErrorMessage>
+                                ><Translatable
+                                    resourceKey={i18nKey("tip.noExchangeRate", {
+                                        token: tokenDetails.symbol,
+                                    })} /></ErrorMessage>
                         {/if}
                         {#if error}
                             <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -306,7 +312,7 @@
                                 class="options"
                                 in:fade|local={{ duration: 500 }}
                                 class:expanded={showCustomTip}>
-                                {$_("tip.showCustom")}
+                                <Translatable resourceKey={i18nKey("tip.showCustom")} />
                             </a>
                         {/if}
 
@@ -327,20 +333,21 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={send}>{$_("tokenTransfer.send")}</Button>
+                        on:click={send}
+                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
             </ButtonGroup>
         </span>

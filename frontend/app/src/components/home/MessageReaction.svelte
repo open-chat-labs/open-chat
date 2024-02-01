@@ -6,6 +6,8 @@
     import { emojiDatabase } from "../../utils/emojis";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,7 +30,7 @@
     function buildReactionUsernames(
         userStore: UserLookup,
         userIds: Set<string>,
-        myUserId: string | undefined
+        myUserId: string | undefined,
     ): string {
         if (userIds.size === 1 && myUserId !== undefined && userIds.has(myUserId)) {
             return $_("reactions.youClickToRemove");
@@ -71,7 +73,7 @@
             <div class="reaction-tooltip-emoji">{reaction}</div>
             <div>
                 <span class="reaction_usernames">{usernames}</span>
-                {$_("reactions.reactedWith")}
+                <Translatable resourceKey={i18nKey("reactions.reactedWith")} />
                 <span class="reaction_code">
                     {reactionCode}
                 </span>

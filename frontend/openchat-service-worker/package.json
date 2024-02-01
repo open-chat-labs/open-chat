@@ -6,8 +6,9 @@
     "scripts": {
         "build": "rollup -c",
         "dev": "rollup -cw",
+        "wait": "npm run clean && wait-on lib/service_worker.js",
+        "clean": "rm -f lib/service_worker.js",
         "typecheck": "tsc --noEmit",
-        "wait": "rm -f lib/service_worker.js && wait-on lib/service_worker.js",
         "lint": "eslint ./src --fix"
     },
     "author": "julian.jelfs@gmail.com",
@@ -22,8 +23,6 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
-        "process": "^0.11.10",
-        "ts-loader": "^9.4.4",
         "wait-on": "^7.0.1"
     }
 }

@@ -2,7 +2,6 @@
     import GroupDetailsHeader from "./GroupDetailsHeader.svelte";
     import Avatar from "../../Avatar.svelte";
     import Stats from "../Stats.svelte";
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
@@ -22,8 +21,9 @@
     import type { OpenChat, MultiUserChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import AccessGateSummary from "../AccessGateSummary.svelte";
-    import { interpolateLevel } from "../../../utils/i18n";
     import DisappearingMessagesSummary from "../DisappearingMessagesSummary.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -82,20 +82,20 @@
         <CollapsibleCard
             on:toggle={groupInfoOpen.toggle}
             open={$groupInfoOpen}
-            headerText={interpolateLevel("group.groupInfo", chat.level)}>
+            headerText={i18nKey("group.groupInfo", undefined, chat.level)}>
             <div class="sub-section photo">
                 <Avatar url={avatarSrc} size={AvatarSize.Large} />
 
                 <h3 class="group-name">{chat.name}</h3>
                 <p class="members">
-                    {$_("memberCount", { values: { count: memberCount } })}
+                    <Translatable resourceKey={i18nKey("memberCount", { count: memberCount })} />
                 </p>
             </div>
 
             {#if chat.description?.length > 0}
                 <fieldset>
                     <legend>
-                        <Legend label={interpolateLevel("groupDesc", chat.level)} />
+                        <Legend label={i18nKey("groupDesc", undefined, chat.level)} />
                     </legend>
                     <Markdown text={description(chat)} />
                 </fieldset>
@@ -104,25 +104,40 @@
         <CollapsibleCard
             on:toggle={groupVisibilityOpen.toggle}
             open={$groupVisibilityOpen}
-            headerText={$_("access.visibility")}>
+            headerText={i18nKey("access.visibility")}>
             {#if chat.public}
-                <h4>{interpolateLevel("group.publicGroup", chat.level, true)}</h4>
+                <h4>
+                    <Translatable
+                        resourceKey={i18nKey("group.publicGroup", undefined, chat.level, true)} />
+                </h4>
             {:else}
-                <h4>{interpolateLevel("group.privateGroup", chat.level, true)}</h4>
+                <h4>
+                    <Translatable
+                        resourceKey={i18nKey("group.privateGroup", undefined, chat.level, true)} />
+                </h4>
             {/if}
             <div class="info">
                 {#if chat.public}
-                    {chat.level === "channel"
-                        ? $_("publicChannelInfo")
-                        : interpolateLevel("publicGroupInfo", chat.level, true)}
+                    <Translatable
+                        resourceKey={chat.level === "channel"
+                            ? i18nKey("publicChannelInfo")
+                            : i18nKey("publicGroupInfo", undefined, chat.level, true)} />
                 {:else}
-                    <p>{interpolateLevel("group.privateGroupInfo", chat.level, true)}</p>
+                    <p>
+                        <Translatable
+                            resourceKey={i18nKey(
+                                "group.privateGroupInfo",
+                                undefined,
+                                chat.level,
+                                true,
+                            )} />
+                    </p>
                 {/if}
                 {#if !chat.public}
                     {#if chat.historyVisible}
-                        <p>{$_("historyOnInfo")}</p>
+                        <p><Translatable resourceKey={i18nKey("historyOnInfo")} /></p>
                     {:else}
-                        <p>{$_("historyOffInfo")}</p>
+                        <p><Translatable resourceKey={i18nKey("historyOffInfo")} /></p>
                     {/if}
                 {/if}
             </div>
@@ -133,7 +148,7 @@
             <CollapsibleCard
                 on:toggle={groupRulesOpen.toggle}
                 open={$groupRulesOpen}
-                headerText={$_("rules.rules")}>
+                headerText={i18nKey("rules.rules")}>
                 <Markdown inline={false} text={combinedRulesText} />
             </CollapsibleCard>
         {/if}
@@ -141,27 +156,27 @@
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
-                headerText={interpolateLevel("invite.inviteWithLink", chat.level, true)}>
+                headerText={i18nKey("invite.inviteWithLink", undefined, chat.level, true)}>
                 <InviteUsersWithLink container={chat} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
-            headerText={$_("permissions.permissions")}>
+            headerText={i18nKey("permissions.permissions")}>
             <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
             open={$groupStatsOpen}
-            headerText={interpolateLevel("stats.groupStats", chat.level)}>
+            headerText={i18nKey("stats.groupStats", undefined, chat.level)}>
             <Stats showReported={false} stats={chat.metrics} />
         </CollapsibleCard>
         {#if client.canDeleteGroup(chat.id)}
             <CollapsibleCard
                 on:toggle={groupAdvancedOpen.toggle}
                 open={$groupAdvancedOpen}
-                headerText={$_("group.advanced")}>
+                headerText={i18nKey("group.advanced")}>
                 <AdvancedSection on:deleteGroup group={chat} />
             </CollapsibleCard>
         {/if}

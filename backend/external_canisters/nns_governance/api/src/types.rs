@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
-use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
+use types::TimestampMillis;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Empty {}
@@ -35,6 +35,16 @@ pub struct Neuron {
     pub dissolve_state: Option<neuron::DissolveState>,
 }
 
+impl Neuron {
+    pub fn is_dissolved(&self, now: TimestampMillis) -> bool {
+        match self.dissolve_state {
+            Some(neuron::DissolveState::WhenDissolvedTimestampSeconds(ts)) => ts * 1000 < now,
+            None => true,
+            _ => false,
+        }
+    }
+}
+
 pub mod neuron {
     use super::*;
 
@@ -55,6 +65,16 @@ pub struct ManageNeuron {
     pub id: Option<NeuronId>,
     pub neuron_id_or_subaccount: Option<manage_neuron::NeuronIdOrSubaccount>,
     pub command: Option<manage_neuron::Command>,
+}
+
+impl ManageNeuron {
+    pub fn new(neuron_id: u64, command: manage_neuron::Command) -> ManageNeuron {
+        ManageNeuron {
+            id: Some(NeuronId { id: neuron_id }),
+            neuron_id_or_subaccount: None,
+            command: Some(command),
+        }
+    }
 }
 
 pub mod manage_neuron {
@@ -144,7 +164,7 @@ pub mod manage_neuron {
         pub source_neuron_id: Option<NeuronId>,
     }
 
-    #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+    #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
     pub struct Spawn {
         pub new_controller: Option<Principal>,
         pub nonce: Option<u64>,
@@ -330,6 +350,7 @@ pub struct ProposalInfo {
     pub reject_cost_e8s: u64,
     pub proposal: Option<Proposal>,
     pub proposal_timestamp_seconds: u64,
+    pub ballots: HashMap<u64, Ballot>,
     pub latest_tally: Option<Tally>,
     pub decided_timestamp_seconds: u64,
     pub executed_timestamp_seconds: u64,
@@ -349,6 +370,12 @@ pub struct Proposal {
     pub url: String,
     #[serde(deserialize_with = "ok_or_default")]
     pub action: Option<proposal::Action>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Ballot {
+    pub vote: i32,
+    pub voting_power: u64,
 }
 
 fn ok_or_default<'de, T, D>(deserializer: D) -> Result<T, D::Error>
@@ -602,9 +629,21 @@ pub struct NeuronId {
     pub id: u64,
 }
 
+impl From<u64> for NeuronId {
+    fn from(value: u64) -> Self {
+        NeuronId { id: value }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalId {
     pub id: u64,
+}
+
+impl From<u64> for ProposalId {
+    fn from(value: u64) -> Self {
+        ProposalId { id: value }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -642,6 +681,11 @@ pub struct Countries {
     pub iso_codes: Vec<String>,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct AccountIdentifier {
+    pub hash: Vec<u8>,
+}
+
 impl TryFrom<ProposalInfo> for types::Proposal {
     type Error = String;
 
@@ -671,7 +715,10 @@ impl TryFrom<ProposalInfo> for types::NnsProposal {
                 .try_into()
                 .map_err(|r| format!("unknown reward status: {r}"))?,
             tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
-            deadline: p.deadline_timestamp_seconds.ok_or("deadline not set".to_string())?,
+            deadline: p
+                .deadline_timestamp_seconds
+                .map(|ts| ts * 1000)
+                .ok_or("deadline not set".to_string())?,
             payload_text_rendering: proposal
                 .action
                 .map(|a| serde_json::to_string_pretty(&a).unwrap_or("Failed to serialize payload".to_string())),

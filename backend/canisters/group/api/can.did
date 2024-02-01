@@ -100,23 +100,33 @@ type RegisterPollVoteResponse = variant {
     UserCannotChangeVote;
 };
 
-type AcceptP2PTradeOfferArgs = record {
+type AcceptP2PSwapArgs = record {
     thread_root_message_index : opt MessageIndex;
-    message_index : MessageIndex;
+    message_id : MessageId;
 };
 
-type AcceptP2PTradeOfferResponse = variant {
-    Success;
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
     InsufficientFunds;
-    AlreadyAccepted;
-    AlreadyCompleted;
-    OfferExpired;
-    OfferCancelled;
-    OfferNotFound;
+    StatusError : SwapStatusError;
+    SwapNotFound;
     UserNotInGroup;
     UserSuspended;
     ChatFrozen;
     InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    UserNotInGroup;
+    ChatFrozen;
 };
 
 type AddReactionArgs = record {
@@ -490,7 +500,6 @@ type DeletedMessageResponse = variant {
     CallerNotInGroup;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
@@ -648,7 +657,8 @@ service : {
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
-    accept_p2p_trade_offer : (AcceptP2PTradeOfferArgs) -> (AcceptP2PTradeOfferResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);

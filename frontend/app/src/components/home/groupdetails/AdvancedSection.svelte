@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import Button from "../../Button.svelte";
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { MultiUserChat } from "openchat-client";
-    import { interpolateLevel } from "../../../utils/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let group: MultiUserChat;
 
@@ -16,13 +16,14 @@
             chatId: group.id,
             level: group.level,
             doubleCheck: {
-                challenge: $_("typeGroupName", { values: { name: group.name } }),
-                response: group.name,
+                challenge: i18nKey("typeGroupName", { name: group.name }),
+                response: i18nKey(group.name),
             },
         });
     }
 </script>
 
 <ButtonGroup align="start">
-    <Button on:click={deleteGroup}>{interpolateLevel("deleteGroup", group.level)}</Button>
+    <Button on:click={deleteGroup}
+        ><Translatable resourceKey={i18nKey("deleteGroup", undefined, group.level)} /></Button>
 </ButtonGroup>

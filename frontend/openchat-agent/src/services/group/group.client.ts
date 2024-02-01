@@ -2,7 +2,6 @@ import type { Identity } from "@dfinity/agent";
 import { idlFactory, type GroupService } from "./candid/idl";
 import type {
     EventsResponse,
-    GroupChatEvent,
     Message,
     SendMessageResponse,
     RemoveMemberResponse,
@@ -47,6 +46,7 @@ import type {
     FollowThreadResponse,
     OptionalChatPermissions,
     ToggleMuteNotificationResponse,
+    AcceptP2PSwapResponse,
 } from "openchat-shared";
 import {
     DestinationInvalidError,
@@ -113,6 +113,8 @@ import {
     groupDetailsUpdatesResponse,
     registerProposalVoteResponse,
     claimPrizeResponse,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { mergeGroupChatDetails } from "../../utils/chat";
@@ -122,6 +124,7 @@ import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 import { setCachedMessageFromSendResponse } from "../../utils/caching";
 import { muteNotificationsResponse } from "../notifications/mappers";
+import type { CancelP2PSwapResponse } from "openchat-shared";
 
 export class GroupClient extends CandidService {
     private groupService: GroupService;
@@ -179,8 +182,8 @@ export class GroupClient extends CandidService {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        return getCachedEventsByIndex<GroupChatEvent>(this.db, eventIndexes, {
+    ): Promise<EventsResponse<ChatEvent>> {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId: this.chatId,
             threadRootMessageIndex,
         }).then((res) => this.handleMissingEvents(res, threadRootMessageIndex, latestKnownUpdate));
@@ -197,10 +200,10 @@ export class GroupClient extends CandidService {
     }
 
     private handleMissingEvents(
-        [cachedEvents, missing]: [EventsSuccessResult<GroupChatEvent>, Set<number>],
+        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
@@ -223,7 +226,7 @@ export class GroupClient extends CandidService {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
@@ -242,14 +245,13 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        const [cachedEvents, missing, totalMiss] =
-            await getCachedEventsWindowByMessageIndex<GroupChatEvent>(
-                this.db,
-                eventIndexRange,
-                { chatId: this.chatId, threadRootMessageIndex },
-                messageIndex,
-            );
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
+            this.db,
+            eventIndexRange,
+            { chatId: this.chatId, threadRootMessageIndex },
+            messageIndex,
+        );
 
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
@@ -264,7 +266,11 @@ export class GroupClient extends CandidService {
                 latestKnownUpdate,
             ).then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
-            return this.handleMissingEvents([cachedEvents, missing], undefined, latestKnownUpdate);
+            return this.handleMissingEvents(
+                [cachedEvents, missing],
+                threadRootMessageIndex,
+                latestKnownUpdate,
+            );
         }
     }
 
@@ -272,7 +278,7 @@ export class GroupClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             max_messages: MAX_MESSAGES,
@@ -294,8 +300,8 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId: this.chatId, threadRootMessageIndex },
@@ -327,7 +333,7 @@ export class GroupClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             max_messages: MAX_MESSAGES,
@@ -904,6 +910,32 @@ export class GroupClient extends CandidService {
                 delete: deleteMessage,
             }),
             reportMessageResponse,
+        );
+    }
+
+    acceptP2PSwap(
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.groupService.accept_p2p_swap({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+            }),
+            acceptP2PSwapResponse,
+        );
+    }
+
+    cancelP2PSwap(
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.groupService.cancel_p2p_swap({
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_id: messageId,
+            }),
+            cancelP2PSwapResponse,
         );
     }
 }

@@ -31,6 +31,8 @@ pub enum Response {
     TransferFailed(String),
     TransferCannotBeZero,
     TransferCannotBeToSelf,
+    P2PSwapSetUpFailed(String),
+    DuplicateMessageId,
     UserSuspended,
     InternalError(String),
 }

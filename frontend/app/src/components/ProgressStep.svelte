@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Spinner from "./icons/Spinner.svelte";
     import DoneIcon from "svelte-material-icons/CheckCircle.svelte";
     import FailedIcon from "svelte-material-icons/CloseCircle.svelte";
     import { currentTheme } from "../theme/themes";
+    import type { ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
-    export let label: string;
+    export let label: ResourceKey;
     export let status: string;
     export let step = 0;
 </script>
@@ -33,7 +34,7 @@
         </div>
     {/if}
     <div class={`label ${status}`}>
-        {label}
+        <Translatable resourceKey={label} />
     </div>
 </div>
 

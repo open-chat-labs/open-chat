@@ -26,6 +26,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.user_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.group_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.identity, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
@@ -34,6 +35,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.market_maker, controllers.clone()),
         set_controllers(management_canister, &canister_ids.neuron_controller, controllers.clone()),
         set_controllers(management_canister, &canister_ids.escrow, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.translations, controllers.clone()),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -56,11 +58,12 @@ async fn install_service_canisters_impl(
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
     let user_index_init_args = user_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         user_canister_wasm: CanisterWasm::default(),
         local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
+        identity_canister_id: canister_ids.identity,
         proposals_bot_canister_id: canister_ids.proposals_bot,
         storage_index_canister_id: canister_ids.storage_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
@@ -73,7 +76,7 @@ async fn install_service_canisters_impl(
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         group_canister_wasm: CanisterWasm::default(),
         community_canister_wasm: CanisterWasm::default(),
         local_group_index_canister_wasm: CanisterWasm::default(),
@@ -87,12 +90,30 @@ async fn install_service_canisters_impl(
 
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
     let notifications_index_init_args = notifications_index_canister::init::Args {
-        service_principals: vec![principal],
+        governance_principals: vec![principal],
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         notifications_canister_wasm: CanisterWasm::default(),
+        wasm_version: version,
+        test_mode,
+    };
+
+    let identity_canister_wasm = get_canister_wasm(CanisterName::Identity, version);
+    let identity_init_args = identity_canister::init::Args {
+        governance_principals: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
+    let translations_init_args = translations_canister::init::Args {
+        deployment_operators: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
     };
@@ -185,6 +206,7 @@ async fn install_service_canisters_impl(
         governance_principals: vec![principal],
         nns_governance_canister_id: canister_ids.nns_governance,
         nns_ledger_canister_id: canister_ids.nns_ledger,
+        cycles_minting_canister_id: canister_ids.nns_cmc,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
@@ -218,20 +240,26 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
+            &canister_ids.identity,
+            &identity_canister_wasm.module,
+            identity_init_args,
+        ),
+        install_wasm(
+            management_canister,
             &canister_ids.online_users,
             &online_users_canister_wasm.module,
             online_users_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.proposals_bot,
             &proposals_bot_canister_wasm.module,
             proposals_bot_init_args,
         ),
-    )
-    .await;
-
-    futures::future::join5(
         install_wasm(
             management_canister,
             &canister_ids.storage_index,
@@ -256,20 +284,28 @@ async fn install_service_canisters_impl(
             &market_maker_canister_wasm.module,
             market_maker_init_args,
         ),
+    )
+    .await;
+
+    futures::future::join3(
         install_wasm(
             management_canister,
             &canister_ids.neuron_controller,
             &neuron_controller_canister_wasm.module,
             neuron_controller_init_args,
         ),
-    )
-    .await;
-
-    install_wasm(
-        management_canister,
-        &canister_ids.escrow,
-        &escrow_canister_wasm.module,
-        escrow_init_args,
+        install_wasm(
+            management_canister,
+            &canister_ids.escrow,
+            &escrow_canister_wasm.module,
+            escrow_init_args,
+        ),
+        install_wasm(
+            management_canister,
+            &canister_ids.translations,
+            &translations_canister_wasm.module,
+            translations_init_args,
+        ),
     )
     .await;
 

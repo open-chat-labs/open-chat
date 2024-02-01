@@ -13,11 +13,17 @@ pub struct ReportedMessages {
 }
 
 impl ReportedMessages {
+    #[allow(dead_code)]
+    pub fn set_rules(&mut self, rules: Vec<Rule>) {
+        self.rules = rules;
+    }
+
     pub fn add_report(&mut self, args: AddReportArgs) -> AddReportResult {
+        let new_index = self.messages.len();
+
         if let Some(index) = self
             .lookup
-            .get(&(args.chat_id, args.thread_root_message_index, args.message_index))
-            .copied()
+            .insert((args.chat_id, args.thread_root_message_index, args.message_index), new_index)
         {
             let message = self.messages.get_mut(index).unwrap();
 
@@ -43,7 +49,7 @@ impl ReportedMessages {
                 reports: HashMap::from([(args.reporter, args.timestamp)]),
                 outcome: None,
             });
-            AddReportResult::New((self.messages.len() - 1) as u64)
+            AddReportResult::New(new_index as u64)
         }
     }
 
@@ -90,6 +96,10 @@ impl ReportedMessages {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &ReportedMessage> {
+        self.messages.iter()
+    }
+
     fn index_from_rule_id(&self, rule_id: String) -> usize {
         self.rules.iter().position(|r| r.id == rule_id).unwrap()
     }
@@ -102,6 +112,7 @@ pub struct ReportingMetrics {
     pub rules: Vec<Rule>,
 }
 
+#[derive(Clone)]
 pub struct AddReportArgs {
     pub chat_id: Chat,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -113,6 +124,7 @@ pub struct AddReportArgs {
     pub timestamp: TimestampMillis,
 }
 
+#[derive(PartialEq, Debug)]
 pub enum AddReportResult {
     New(u64),
     ExistingPending,
@@ -219,4 +231,109 @@ fn build_message_link(reported_message: &ReportedMessage) -> String {
         reported_message.thread_root_message_index,
         reported_message.message_index,
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Principal;
+    use modclub_canister::subscribe::ContentStatus;
+
+    use super::*;
+
+    #[test]
+    fn reporting_message_returns_expected() {
+        let mut reported_messages = ReportedMessages::default();
+        let args = dummy_report_args();
+
+        if let AddReportResult::New(index) = reported_messages.add_report(args) {
+            assert_eq!(index, 0)
+        } else {
+            panic!("Expected AddReportResult::New");
+        }
+    }
+
+    #[test]
+    fn reporting_same_message_and_reporter_returns_expected() {
+        let mut reported_messages = ReportedMessages::default();
+        let args = dummy_report_args();
+
+        reported_messages.add_report(args.clone());
+
+        let result = reported_messages.add_report(args);
+
+        assert_eq!(result, AddReportResult::AlreadyReportedByUser);
+    }
+
+    #[test]
+    fn reporting_same_message_and_different_reporter_returns_expected() {
+        let mut reported_messages = ReportedMessages::default();
+        let mut args = dummy_report_args();
+
+        reported_messages.add_report(args.clone());
+
+        args.reporter = Principal::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap().into();
+        let result = reported_messages.add_report(args);
+
+        assert_eq!(result, AddReportResult::ExistingPending);
+    }
+
+    #[test]
+    fn reporting_same_message_and_different_reporter_with_outcome_returns_expected() {
+        let mut reported_messages = ReportedMessages::default();
+        reported_messages.set_rules(vec![Rule {
+            description: "Thou shalt not kill".to_string(),
+            id: "4bkt6-4aaaa-aaaaf-aaaiq-cai-rule-1".to_string(),
+        }]);
+        let mut args = dummy_report_args();
+
+        reported_messages.add_report(args.clone());
+        reported_messages.record_outcome(dummy_outcome(), 1706107419000);
+
+        args.reporter = Principal::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap().into();
+        let result = reported_messages.add_report(args);
+
+        assert_eq!(result, AddReportResult::ExistingOutcome(0));
+    }
+
+    #[test]
+    fn reporting_new_message_and_reporter_returns_expected() {
+        let mut reported_messages = ReportedMessages::default();
+        let mut args = dummy_report_args();
+
+        reported_messages.add_report(args.clone());
+        args.message_index = 2.into();
+        args.message_id = 123729212795234236487236419860990447789.into();
+
+        if let AddReportResult::New(index) = reported_messages.add_report(args) {
+            assert_eq!(index, 1)
+        } else {
+            panic!("Expected AddReportResult::New");
+        }
+    }
+
+    fn dummy_report_args() -> AddReportArgs {
+        AddReportArgs {
+            chat_id: Chat::Group(Principal::from_text("wowos-hyaaa-aaaar-ar4ca-cai").unwrap().into()),
+            thread_root_message_index: None,
+            message_index: 87884.into(),
+            message_id: 87672921279501061003607611986099044352.into(),
+            sender: Principal::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap().into(),
+            reporter: Principal::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap().into(),
+            already_deleted: false,
+            timestamp: 1706107415000,
+        }
+    }
+
+    fn dummy_outcome() -> ContentResult {
+        ContentResult {
+            approvedCount: 0u32.into(),
+            rejectedCount: 3u32.into(),
+            sourceId: "0".to_string(),
+            status: ContentStatus::rejected,
+            violatedRules: vec![modclub_canister::subscribe::ViolatedRules {
+                id: "4bkt6-4aaaa-aaaaf-aaaiq-cai-rule-1".to_string(),
+                rejectionCount: 3u32.into(),
+            }],
+        }
+    }
 }

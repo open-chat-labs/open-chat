@@ -9,7 +9,8 @@
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { communityFiltersStore } from "../../../../stores/communityFilters";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
-    import { supportedLanguages } from "../../../../i18n/i18n";
+    import { i18nKey, supportedLanguages } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -19,7 +20,7 @@
 </script>
 
 <SectionHeader shadow flush={$mobileWidth}>
-    <h4>{$_("communities.filters")}</h4>
+    <h4><Translatable resourceKey={i18nKey("communities.filters")} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -28,13 +29,13 @@
 </SectionHeader>
 
 <div class="community-filters">
-    <CollapsibleCard open headerText={$_("communities.primaryLanguage")}>
+    <CollapsibleCard open headerText={i18nKey("communities.primaryLanguage")}>
         {#each supportedLanguages as lang}
             <div class="toggle">
                 <Checkbox
                     id={`language_${lang.code}`}
                     on:change={() => communityFiltersStore.toggleLanguage(lang.code)}
-                    label={lang.name}
+                    label={i18nKey(lang.name)}
                     checked={$communityFiltersStore.languages.has(lang.code)} />
             </div>
         {/each}

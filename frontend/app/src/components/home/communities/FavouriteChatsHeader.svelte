@@ -1,8 +1,9 @@
 <script lang="ts">
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import { _ } from "svelte-i18n";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 </script>
 
 <SectionHeader slim border={false}>
@@ -11,7 +12,7 @@
             <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
-            <h4 class="name">{$_("communities.favourites")}</h4>
+            <h4 class="name"><Translatable resourceKey={i18nKey("communities.favourites")} /></h4>
         </div>
     </div>
 </SectionHeader>

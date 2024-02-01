@@ -1,0 +1,9 @@
+type CheckAuthPrincipalResponse = variant {
+    Success;
+    Legacy;
+    NotFound;
+};
+
+service : {
+    check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
+}

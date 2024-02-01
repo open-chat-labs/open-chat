@@ -1,6 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, CryptoTransferDetails, Cryptocurrency, MessageIndex,
+    Milliseconds, P2PSwapAccepted, P2PSwapCancelled, P2PSwapCompleted, P2PSwapExpired, P2PSwapReserved, P2PSwapStatus,
     ProposalContent, TimestampMillis, TokenInfo, TotalVotes, User, UserId,
 };
 use candid::CandidType;
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-pub const MAX_TEXT_LENGTH: u32 = 5_000;
+pub const MAX_TEXT_LENGTH: u32 = 10_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -27,7 +28,7 @@ pub enum MessageContentInitial {
     Prize(PrizeContentInitial),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
-    P2PTrade(P2PTradeContentInitial),
+    P2PSwap(P2PSwapContentInitial),
     Custom(CustomContent),
 }
 
@@ -48,7 +49,7 @@ pub enum MessageContent {
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
     ReportedMessage(ReportedMessage),
-    P2PTrade(P2PTradeContent),
+    P2PSwap(P2PSwapContent),
     Custom(CustomContent),
 }
 
@@ -102,7 +103,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
-            | MessageContent::P2PTrade(_)
+            | MessageContent::P2PSwap(_)
             | MessageContent::Custom(_) => {}
         }
 
@@ -126,7 +127,7 @@ impl MessageContent {
             MessageContent::MessageReminderCreated(_) => "MessageReminderCreated",
             MessageContent::MessageReminder(_) => "MessageReminder",
             MessageContent::ReportedMessage(_) => "ReportedMessage",
-            MessageContent::P2PTrade(_) => "P2PTrade",
+            MessageContent::P2PSwap(_) => "P2PSwap",
             MessageContent::Custom(c) => &c.kind,
         };
 
@@ -145,7 +146,7 @@ impl MessageContent {
             MessageContent::Giphy(g) => g.caption.as_deref(),
             MessageContent::GovernanceProposal(gp) => Some(gp.proposal.title()),
             MessageContent::Prize(p) => p.caption.as_deref(),
-            MessageContent::P2PTrade(p) => p.caption.as_deref(),
+            MessageContent::P2PSwap(p) => p.caption.as_deref(),
             MessageContent::Deleted(_)
             | MessageContent::PrizeWinner(_)
             | MessageContent::MessageReminderCreated(_)
@@ -189,7 +190,7 @@ impl MessageContent {
             | MessageContent::MessageReminderCreated(_)
             | MessageContent::MessageReminder(_)
             | MessageContent::ReportedMessage(_)
-            | MessageContent::P2PTrade(_)
+            | MessageContent::P2PSwap(_)
             | MessageContent::Custom(_) => None,
         }
     }
@@ -222,7 +223,7 @@ impl MessageContentInitial {
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContentInitial::Crypto(_) | MessageContentInitial::Poll(_) | MessageContentInitial::P2PTrade(_) => {
+                MessageContentInitial::Crypto(_) | MessageContentInitial::Poll(_) | MessageContentInitial::P2PSwap(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -245,7 +246,7 @@ impl MessageContentInitial {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
                 }
             }
-            MessageContentInitial::P2PTrade(_) => {
+            MessageContentInitial::P2PSwap(_) => {
                 if sender_is_bot {
                     return Err(ContentValidationError::Unauthorized);
                 }
@@ -272,7 +273,7 @@ impl MessageContentInitial {
             | MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
             | MessageContentInitial::MessageReminder(_)
-            | MessageContentInitial::P2PTrade(_)
+            | MessageContentInitial::P2PSwap(_)
             | MessageContentInitial::Custom(_) => false,
         };
 
@@ -304,7 +305,7 @@ impl MessageContentInitial {
             MessageContentInitial::Prize(p) => p.caption.as_deref(),
             MessageContentInitial::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInitial::MessageReminder(r) => r.notes.as_deref(),
-            MessageContentInitial::P2PTrade(p) => p.caption.as_deref(),
+            MessageContentInitial::P2PSwap(p) => p.caption.as_deref(),
             MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => None,
         }
     }
@@ -328,7 +329,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
             MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
-            MessageContent::P2PTrade(_) => todo!(),
+            MessageContent::P2PSwap(_) => todo!(),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
@@ -358,7 +359,7 @@ impl From<MessageContentInitial> for MessageContent {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
-            MessageContentInitial::P2PTrade(_) => unimplemented!(),
+            MessageContentInitial::P2PSwap(_) => unimplemented!(),
             MessageContentInitial::Custom(c) => MessageContent::Custom(c),
         }
     }
@@ -524,90 +525,117 @@ pub struct MessageReport {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PTradeContentInitial {
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
-    pub expires_at: TimestampMillis,
+pub struct P2PSwapContentInitial {
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
+    pub expires_in: Milliseconds,
     pub caption: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct P2PTradeContent {
-    pub offer_id: u32,
-    pub input_token: TokenInfo,
-    pub input_amount: u128,
-    pub input_transaction_index: u64,
-    pub output_token: TokenInfo,
-    pub output_amount: u128,
+pub struct P2PSwapContent {
+    pub swap_id: u32,
+    pub token0: TokenInfo,
+    pub token0_amount: u128,
+    pub token1: TokenInfo,
+    pub token1_amount: u128,
     pub expires_at: TimestampMillis,
-    pub status: P2PTradeStatus,
     pub caption: Option<String>,
+    pub token0_txn_in: u64,
+    pub status: P2PSwapStatus,
 }
 
-impl P2PTradeContent {
-    pub fn new(offer_id: u32, content: P2PTradeContentInitial, transfer: CompletedCryptoTransaction) -> P2PTradeContent {
-        P2PTradeContent {
-            offer_id,
-            input_token: content.input_token,
-            input_amount: transfer.units(),
-            input_transaction_index: transfer.index(),
-            output_token: content.output_token,
-            output_amount: content.output_amount,
-            expires_at: content.expires_at,
-            status: P2PTradeStatus::Open,
+impl P2PSwapContent {
+    pub fn new(
+        swap_id: u32,
+        content: P2PSwapContentInitial,
+        transfer: CompletedCryptoTransaction,
+        now: TimestampMillis,
+    ) -> P2PSwapContent {
+        P2PSwapContent {
+            swap_id,
+            token0: content.token0,
+            token0_amount: content.token0_amount,
+            token1: content.token1,
+            token1_amount: content.token1_amount,
+            expires_at: now + content.expires_in,
             caption: content.caption,
+            token0_txn_in: transfer.index(),
+            status: P2PSwapStatus::Open,
         }
     }
 
-    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> Result<(), ReserveP2PTradeError> {
-        match self.status {
-            P2PTradeStatus::Open if now < self.expires_at => {
-                self.status = P2PTradeStatus::Reserved(user_id, now);
-                Ok(())
+    pub fn reserve(&mut self, user_id: UserId, now: TimestampMillis) -> bool {
+        if let P2PSwapStatus::Open = self.status {
+            if now < self.expires_at {
+                self.status = P2PSwapStatus::Reserved(P2PSwapReserved { reserved_by: user_id });
+                return true;
+            } else {
+                self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
             }
-            P2PTradeStatus::Open => Err(ReserveP2PTradeError::Expired),
-            P2PTradeStatus::Cancelled => Err(ReserveP2PTradeError::Cancelled),
-            P2PTradeStatus::Reserved(u, _) => Err(ReserveP2PTradeError::AlreadyReserved(u)),
-            P2PTradeStatus::Completed(u, _, _) => Err(ReserveP2PTradeError::AlreadyCompleted(u)),
         }
+
+        false
     }
 
     pub fn unreserve(&mut self, user_id: UserId) -> bool {
-        if let P2PTradeStatus::Reserved(u, _) = self.status {
-            if u == user_id {
-                self.status = P2PTradeStatus::Open;
+        if let P2PSwapStatus::Reserved(r) = &self.status {
+            if r.reserved_by == user_id {
+                self.status = P2PSwapStatus::Open;
                 return true;
             }
         }
         false
     }
 
-    pub fn complete(&mut self, user_id: UserId, transaction_index: u64, now: TimestampMillis) -> bool {
-        if let P2PTradeStatus::Reserved(u, _) = self.status {
-            if u == user_id {
-                self.status = P2PTradeStatus::Completed(user_id, transaction_index, now);
+    pub fn accept(&mut self, user_id: UserId, token1_txn_in: u64) -> bool {
+        if let P2PSwapStatus::Reserved(a) = &self.status {
+            if a.reserved_by == user_id {
+                self.status = P2PSwapStatus::Accepted(P2PSwapAccepted {
+                    accepted_by: user_id,
+                    token1_txn_in,
+                });
                 return true;
             }
         }
         false
     }
-}
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum P2PTradeStatus {
-    Open,
-    Cancelled,
-    Reserved(UserId, TimestampMillis),
-    Completed(UserId, u64, TimestampMillis), // u64 is the transaction index
-}
+    pub fn complete(&mut self, user_id: UserId, token0_txn_out: u64, token1_txn_out: u64) -> Option<P2PSwapCompleted> {
+        if let P2PSwapStatus::Accepted(a) = &self.status {
+            if a.accepted_by == user_id {
+                let status = P2PSwapCompleted {
+                    accepted_by: user_id,
+                    token1_txn_in: a.token1_txn_in,
+                    token0_txn_out,
+                    token1_txn_out,
+                };
+                self.status = P2PSwapStatus::Completed(status.clone());
+                return Some(status);
+            }
+        }
+        None
+    }
 
-pub enum ReserveP2PTradeError {
-    Cancelled,
-    Expired,
-    AlreadyReserved(UserId),
-    AlreadyCompleted(UserId),
+    pub fn cancel(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Cancelled(P2PSwapCancelled { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn mark_expired(&mut self) -> bool {
+        if matches!(self.status, P2PSwapStatus::Open) {
+            self.status = P2PSwapStatus::Expired(P2PSwapExpired { token0_txn_out: None });
+            true
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

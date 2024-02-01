@@ -7,15 +7,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
+### Changed
+
+- Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
+- Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
+## [[2.0.1021](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1021-community)] - 2024-01-24
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid sending prize winner notifications ([#5236](https://github.com/open-chat-labs/open-chat/pull/5236))
+- Add timer job to mark P2P swaps as expired ([#5246](https://github.com/open-chat-labs/open-chat/pull/5246))
+
+### Fixed
+
+- Fix p2p swaps in threads which weren't being marked as updated ([#5235](https://github.com/open-chat-labs/open-chat/pull/5235))
+
+## [[2.0.1015](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1015-community)] - 2024-01-19
+
+### Added
+
 - Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Expose details of timer jobs for public Communities ([#5154](https://github.com/open-chat-labs/open-chat/pull/5154))
+- Notify community when p2p swap status changes ([#5201](https://github.com/open-chat-labs/open-chat/pull/5201))
+- Implement `cancel_p2p_swap` for communities ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
 
 ### Changed
 
 - Add `subtype` to channel search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
+- Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
+- Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
+- Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
+- Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
+- Use `message_id` in `accept_p2p_trade_offer` args ([#5162](https://github.com/open-chat-labs/open-chat/pull/5162))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+- Only use transaction index for p2p swaps and drop usage of hash ([#5203](https://github.com/open-chat-labs/open-chat/pull/5203))
 
 ### Fixed
 
 - Prevent latest messages of payment gated groups from being public ([#5080](https://github.com/open-chat-labs/open-chat/pull/5080))
+- Fix bug where `cancel_job` would fail to find the job to cancel ([#5148](https://github.com/open-chat-labs/open-chat/pull/5148))
 
 ## [[2.0.985](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.985-community)] - 2023-12-19
 

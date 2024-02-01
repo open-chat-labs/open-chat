@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
     import type {
@@ -27,6 +26,8 @@
     import { randomSentence } from "../../../utils/randomMsg";
     import TimelineDate from "../TimelineDate.svelte";
     import { reverseScroll } from "../../../stores/scrollPos";
+    import { i18nKey } from "../../../i18n/i18n";
+    import P2PSwapContentBuilder from "../P2PSwapContentBuilder.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -45,6 +46,7 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
+    let creatingP2PSwapMessage = false;
 
     $: user = client.user;
     $: focusMessageIndex = client.focusThreadMessageIndex;
@@ -60,7 +62,7 @@
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them.userId);
     $: draftMessage = readable(draftMessagesStore.get(messageContext), (set) =>
-        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {}))
+        draftMessagesStore.subscribe((d) => set(d.get(messageContext) ?? {})),
     );
     $: textContent = derived(draftMessage, (d) => d.textContent);
     $: replyingTo = derived(draftMessage, (d) => d.replyingTo);
@@ -106,7 +108,7 @@
                 .editMessageWithAttachment(messageContext, text, $attachment, $editingEvent)
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("errorEditingMessage");
+                        toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {
@@ -209,9 +211,21 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
+
+    function createP2PSwapMessage() {
+        creatingP2PSwapMessage = true;
+    }
 </script>
 
 <PollBuilder on:sendMessageWithContent bind:this={pollBuilder} bind:open={creatingPoll} />
+
+{#if creatingP2PSwapMessage}
+    <P2PSwapContentBuilder
+        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:upgrade
+        on:sendMessageWithContent
+        on:close={() => (creatingP2PSwapMessage = false)} />
+{/if}
 
 <GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
 
@@ -340,5 +354,6 @@
         on:makeMeme={makeMeme}
         on:tokenTransfer={tokenTransfer}
         on:createTestMessages={createTestMessages}
+        on:createP2PSwapMessage={createP2PSwapMessage}
         on:createPoll={createPoll} />
 {/if}

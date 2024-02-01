@@ -1,12 +1,10 @@
 import type {
     ApiEventsResponse,
-    ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiSearchDirectChatResponse,
@@ -22,7 +20,6 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
-    ApiMigrateUserPrincipalResponse,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
@@ -67,8 +64,7 @@ import type {
 } from "./candid/idl";
 import type {
     EventsResponse,
-    EventWrapper,
-    DirectChatEvent,
+    ChatEvent,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -91,7 +87,6 @@ import type {
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     SearchDirectChatResponse,
     SetBioResponse,
@@ -149,8 +144,7 @@ import {
     messageContent,
     apiOptional,
     messageEvent,
-    expiredEventsRange,
-    expiredMessagesRange,
+    eventsSuccessResponse,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -345,7 +339,7 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -353,8 +347,8 @@ export function sendMessageWithTransferToChannelResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -365,7 +359,7 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -373,8 +367,8 @@ export function sendMessageWithTransferToGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -442,8 +436,17 @@ export function sendMessageResponse(
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("P2PSwapSetUpFailed" in candid) {
+        return { kind: "p2p_swap_setup_failed", text: candid.P2PSwapSetUpFailed };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
+    }
+    if ("DuplicateMessageId" in candid) {
+        return { kind: "duplicate_message_id" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -466,16 +469,11 @@ export async function getEventsResponse(
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<DirectChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.events.map(event),
-            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return eventsSuccessResponse(candid.Success);
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
@@ -489,36 +487,6 @@ export async function getEventsResponse(
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-}
-
-function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
-    return {
-        event: directChatEvent(candid.event),
-        index: candid.index,
-        timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, Number),
-    };
-}
-
-function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
-    if ("Message" in candid) {
-        return message(candid.Message);
-    }
-
-    if ("DirectChatCreated" in candid) {
-        return {
-            kind: "direct_chat_created",
-        };
-    }
-
-    if ("Empty" in candid) {
-        return {
-            kind: "empty",
-        };
-    }
-
-    // todo - we know there are other event types that we are not dealing with yet
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
 function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
@@ -988,20 +956,6 @@ export function withdrawCryptoResponse(
         }
     }
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-}
-
-export function migrateUserPrincipal(
-    candid: ApiMigrateUserPrincipalResponse,
-): MigrateUserPrincipalResponse {
-    if ("Success" in candid) return "success";
-    if ("MigrationNotInitialized" in candid) return "migration_not_initialized";
-    if ("MigrationAlreadyInProgress" in candid) return "migration_already_in_progress";
-    if ("PrincipalAlreadyInUse" in candid) return "principal_already_in_use";
-    if ("InternalError" in candid) return "internal_error";
-    throw new UnsupportedValueError(
-        "Unexpected ApiMigrateUserPrincipalResponse type received",
-        candid,
-    );
 }
 
 function formatIcrc1Account(candid: ApiIcrc1Account): string {

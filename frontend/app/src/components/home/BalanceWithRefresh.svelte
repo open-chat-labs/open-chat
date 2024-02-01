@@ -4,19 +4,21 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import type { ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let ledger: string;
     export let value: bigint;
-    export let label: string | undefined = undefined;
+    export let label: ResourceKey | undefined = undefined;
     export let bold = false;
     export let toppingUp = false;
     export let showTopUp = false;
     export let showRefresh = true;
     export let refreshing = false;
-    export let conversion: "none" | "icp" | "usd" = "none";
+    export let conversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
 
     $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
@@ -24,9 +26,7 @@
     $: formattedValue =
         conversion === "none"
             ? client.formatTokens(value, tokenDetails.decimals)
-            : conversion === "icp"
-              ? tokenDetails.icpBalance.toFixed(3)
-              : tokenDetails.dollarBalance.toFixed(2);
+            : convertValue(conversion, tokenDetails);
 
     $: {
         if (ledger) {
@@ -56,11 +56,20 @@
     function topUp() {
         toppingUp = !toppingUp;
     }
+
+    function convertValue(c: Exclude<typeof conversion, "none">, t: typeof tokenDetails): string {
+        switch (c) {
+            case "usd": return t.dollarBalance.toFixed(2);
+            case "icp": return t.icpBalance.toFixed(3);
+            case "btc": return t.btcBalance.toFixed(6);
+            case "eth": return t.ethBalance.toFixed(6);
+        }
+    }
 </script>
 
 <div class="container">
     {#if label !== undefined}
-        <div class="label">{label}</div>
+        <div class="label"><Translatable resourceKey={label} /></div>
     {/if}
     <div class="amount" class:bold>
         {formattedValue}

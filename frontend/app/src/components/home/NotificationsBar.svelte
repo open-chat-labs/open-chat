@@ -1,9 +1,10 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
     import Link from "../Link.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -15,12 +16,12 @@
 
 {#if !$anonUser && $notificationStatus === "prompt"}
     <div in:fade={{ duration: 100 }} out:fade={{ duration: 100 }} class="notification-bar">
-        <div class="txt">{$_("enableNotifications")}</div>
+        <div class="txt"><Translatable resourceKey={i18nKey("enableNotifications")} /></div>
         <div class="links">
             <Link on:click={() => client.askForNotificationPermission()} underline="always"
-                >{$_("yesPlease")}</Link>
+                ><Translatable resourceKey={i18nKey("yesPlease")} /></Link>
             <Link on:click={() => client.setSoftDisabled(true)} underline="always"
-                >{$_("noThanks")}</Link>
+                ><Translatable resourceKey={i18nKey("noThanks")} /></Link>
         </div>
     </div>
 {/if}

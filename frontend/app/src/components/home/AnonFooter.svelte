@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 </script>
@@ -11,7 +12,7 @@
     tabindex="0"
     on:click={() => client.identityState.set({ kind: "logging_in" })}
     class="anon">
-    {$_("tapToLogin")}
+    <Translatable resourceKey={i18nKey("tapToLogin")} />
 </div>
 
 <style lang="scss">

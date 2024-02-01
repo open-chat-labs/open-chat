@@ -1,9 +1,13 @@
 use ic_cdk::api::call::CallResult;
 use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument, SignWithEcdsaArgument};
+use ic_cdk::api::management_canister::http_request::{
+    CanisterHttpRequestArgument, HttpHeader, HttpMethod, TransformContext, TransformFunc,
+};
 use ic_transport_types::{to_request_id, EnvelopeContent};
 use serde::Serialize;
 use sha256::sha256;
 use tracing::{error, info};
+use types::CanisterId;
 
 pub fn get_key_id(is_local_dev_mode: bool) -> EcdsaKeyId {
     let key_name = if is_local_dev_mode { "dfx_test_key" } else { "key_1" };
@@ -30,7 +34,44 @@ pub async fn get_public_key(key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
     }
 }
 
-pub async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
+pub struct CanisterEcdsaRequest {
+    pub envelope_content: EnvelopeContent,
+    pub request_url: String,
+    pub public_key: Vec<u8>,
+    pub key_id: EcdsaKeyId,
+    pub this_canister_id: CanisterId,
+}
+
+pub async fn make_canister_call_via_ecdsa(request: CanisterEcdsaRequest) -> Result<String, String> {
+    let body = match sign_envelope(request.envelope_content, request.public_key, request.key_id).await {
+        Ok(bytes) => bytes,
+        Err(error) => return Err(format!("Failed to sign envelope: {error:?}")),
+    };
+
+    let (response,) = ic_cdk::api::management_canister::http_request::http_request(
+        CanisterHttpRequestArgument {
+            url: request.request_url,
+            max_response_bytes: Some(1024 * 1024), // 1 MB
+            method: HttpMethod::POST,
+            headers: vec![HttpHeader {
+                name: "content-type".to_string(),
+                value: "application/cbor".to_string(),
+            }],
+            body: Some(body),
+            transform: Some(TransformContext {
+                function: TransformFunc::new(request.this_canister_id, "transform_http_response".to_string()),
+                context: Vec::new(),
+            }),
+        },
+        100_000_000_000,
+    )
+    .await
+    .map_err(|error| format!("Failed to make http request: {error:?}"))?;
+
+    Ok(String::from_utf8(response.body).unwrap())
+}
+
+async fn sign_envelope(content: EnvelopeContent, public_key: Vec<u8>, key_id: EcdsaKeyId) -> CallResult<Vec<u8>> {
     let request_id = to_request_id(&content).unwrap();
 
     let signature = sign(key_id, &request_id.signable()).await?;

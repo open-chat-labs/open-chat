@@ -76,7 +76,6 @@
                 {#if msg.repliesTo.kind === "rehydrated_reply_context"}
                     <RepliesTo
                         {intersecting}
-                        messageId={msg.messageId}
                         readonly
                         {chatId}
                         repliesTo={msg.repliesTo} />
@@ -90,7 +89,8 @@
                 pinned
                 {senderId}
                 {fill}
-                {chatId}
+                failed={false}
+                messageContext={{ chatId }}
                 edited={msg.edited}
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}

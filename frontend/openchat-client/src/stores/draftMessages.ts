@@ -1,5 +1,6 @@
 import { get } from "svelte/store";
 import {
+    getContentAsText,
     isAttachmentContent,
     type AttachmentContent,
     type EnhancedReplyContext,
@@ -31,8 +32,8 @@ function createDraftMessages() {
             store.update(context, (current) => ({ ...current, attachment })),
         setEditing: (context: MessageContext, editingEvent: EventWrapper<Message>): void => {
             const users = get(userStore);
-            store.update(context, (m) => ({
-                ...m,
+            store.update(context, (_) => ({
+                textContent: getContentAsText(editingEvent.event.content),
                 editingEvent,
                 attachment: isAttachmentContent(editingEvent.event.content)
                     ? editingEvent.event.content

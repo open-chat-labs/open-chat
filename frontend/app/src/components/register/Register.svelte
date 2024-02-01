@@ -1,7 +1,6 @@
 <script lang="ts">
     import { locale } from "svelte-i18n";
-    import { setLocale, supportedLanguages } from "../../i18n/i18n";
-    import { _ } from "svelte-i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
@@ -15,6 +14,7 @@
     import Legend from "../Legend.svelte";
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -90,6 +90,7 @@
                     canisterUpgradeStatus: "not_required",
                     referrals: [],
                     isPlatformModerator: false,
+                    isPlatformOperator: false,
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
                     diamondStatus: { kind: "inactive" },
@@ -126,30 +127,32 @@
         <div class="subtitle">
             <div class="logo" />
             {#if closed}
-                <h4>{$_("register.closedTitle")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.closedTitle")} /></h4>
             {:else if badCode}
-                <h4>{$_("register.invalidCode")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.invalidCode")} /></h4>
             {:else}
-                <h4>{$_("register.title")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.title")} /></h4>
             {/if}
         </div>
     </div>
     <div class="body" slot="body">
         {#if closed}
             <div class="closed">
-                <h4>{$_("register.closed")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.closed")} /></h4>
             </div>
         {:else if badCode}
             <div class="bad-code">
                 <img class="shirt" src="/assets/miami/miami_shirt.png" alt="Miami shirt" />
                 <div class="message">
-                    <h4 class="invalid">{$_("register.referralCodeInvalid")}</h4>
-                    <p>{$_("register.doYouWantToProceed")}</p>
+                    <h4 class="invalid">
+                        <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
+                    </h4>
+                    <p><Translatable resourceKey={i18nKey("register.doYouWantToProceed")} /></p>
                 </div>
             </div>
         {:else}
             <form class="username-wrapper" on:submit|preventDefault={register}>
-                <Legend label={$_("username")} rules={$_("usernameRules")} />
+                <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
                 <UsernameInput
                     {client}
                     disabled={busy}
@@ -161,30 +164,33 @@
             </form>
 
             {#if $error}
-                <ErrorMessage>{$_($error)}</ErrorMessage>
+                <ErrorMessage><Translatable resourceKey={i18nKey($error)} /></ErrorMessage>
             {/if}
             <div on:click={() => (showGuidelines = true)} class="smallprint">
-                {$_("register.disclaimer")}
+                <Translatable resourceKey={i18nKey("register.disclaimer")} />
             </div>
         {/if}
     </div>
     <div class="footer" slot="footer">
         {#if closed}
-            <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+            <Button on:click={() => client.logout()}
+                ><Translatable resourceKey={i18nKey("close")} /></Button>
         {:else if badCode}
             <ButtonGroup>
-                <Button secondary on:click={clearCodeAndLogout}>{$_("cancel")}</Button>
+                <Button secondary on:click={clearCodeAndLogout}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     loading={checkingUsername || busy}
                     disabled={!usernameValid || busy}
-                    on:click={clearCodeAndRegister}>{$_("register.proceed")}</Button>
+                    on:click={clearCodeAndRegister}
+                    ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
             </ButtonGroup>
         {:else}
             <Button
                 loading={checkingUsername || busy}
                 disabled={!usernameValid || busy}
                 on:click={register}>
-                {$_("register.createUser")}
+                <Translatable resourceKey={i18nKey("register.createUser")} />
             </Button>
         {/if}
     </div>
@@ -195,7 +201,7 @@
     role="button"
     href="/"
     on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
-    {$_("logout")}
+    <Translatable resourceKey={i18nKey("logout")} />
 </a>
 
 <div class="lang">

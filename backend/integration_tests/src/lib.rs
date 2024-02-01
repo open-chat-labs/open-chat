@@ -20,11 +20,12 @@ mod escrow_tests;
 mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
+mod identity_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod mentions_tests;
 mod notification_tests;
-mod p2p_trade_tests;
+mod p2p_swap_tests;
 mod platform_moderator_tests;
 mod poll_tests;
 mod prize_message_tests;
@@ -55,6 +56,7 @@ pub struct TestEnv {
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
+    pub public_key: Vec<u8>,
 }
 
 impl User {
@@ -84,12 +86,14 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+    pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub registry: CanisterId,
     pub escrow: CanisterId,
+    pub translations: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
     pub cycles_minting_canister: CanisterId,

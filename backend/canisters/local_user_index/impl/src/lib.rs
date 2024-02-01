@@ -76,14 +76,15 @@ impl RuntimeState {
 
     pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
         self.data.user_event_sync_queue.push(user_id.into(), event);
-        jobs::sync_events_to_user_canisters::start_job_if_required(self);
+        jobs::sync_events_to_user_canisters::try_run_now(self);
     }
 
     pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
         self.data
             .user_index_event_sync_queue
             .push(self.data.user_index_canister_id, event);
-        jobs::sync_events_to_user_index_canister::start_job_if_required(self);
+
+        jobs::sync_events_to_user_index_canister::try_run_now(self);
     }
 
     pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, message: MessageContent) {
@@ -177,9 +178,11 @@ impl RuntimeState {
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
+                identity: self.data.identity_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                escrow: self.data.escrow_canister_id,
             },
         }
     }
@@ -193,6 +196,7 @@ struct Data {
     pub user_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -225,6 +229,7 @@ impl Data {
         user_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
+        identity_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
@@ -240,6 +245,7 @@ impl Data {
             user_canister_wasm_for_upgrades: user_canister_wasm,
             user_index_canister_id,
             group_index_canister_id,
+            identity_canister_id,
             notifications_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
@@ -289,7 +295,9 @@ pub struct Metrics {
 pub struct CanisterIds {
     pub user_index: CanisterId,
     pub group_index: CanisterId,
+    pub identity: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub escrow: CanisterId,
 }

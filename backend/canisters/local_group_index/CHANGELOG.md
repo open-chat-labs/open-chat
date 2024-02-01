@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1012](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1012-local_group_index)] - 2024-01-18
+
+### Added
+
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+
 ## [[2.0.978](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.978-local_group_index)] - 2023-12-19
 
 ### Changed

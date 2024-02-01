@@ -7,7 +7,8 @@ use ic_ledger_types::Tokens;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId,
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
+    TextContent, UserId,
 };
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -77,8 +78,9 @@ impl Job for TimerJob {
 
 impl Job for RecurringDiamondMembershipPayment {
     fn execute(self) {
-        if let Some((duration, pay_in_chat)) = read_state(|state| {
+        if let Some((duration, pay_in_chat, fees)) = read_state(|state| {
             let now = state.env.now();
+            let fees = state.data.diamond_membership_fees.clone();
             state
                 .data
                 .users
@@ -88,16 +90,21 @@ impl Job for RecurringDiamondMembershipPayment {
                 .and_then(|d| {
                     DiamondMembershipPlanDuration::try_from(d.subscription())
                         .ok()
-                        .map(|duration| (duration, d.pay_in_chat()))
+                        .map(|duration| (duration, d.pay_in_chat(), fees))
                 })
         }) {
-            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration, pay_in_chat));
+            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
         }
 
-        async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration, pay_in_chat: bool) {
+        async fn pay_for_diamond_membership(
+            user_id: UserId,
+            duration: DiamondMembershipPlanDuration,
+            fees: DiamondMembershipFees,
+            pay_in_chat: bool,
+        ) {
             use user_index_canister::pay_for_diamond_membership::*;
 
-            let price_e8s = if pay_in_chat { duration.chat_price_e8s() } else { duration.icp_price_e8s() };
+            let price_e8s = if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) };
 
             let args = Args {
                 duration,

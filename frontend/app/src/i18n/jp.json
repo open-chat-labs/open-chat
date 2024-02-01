@@ -367,7 +367,8 @@
             "crypto": "暗号メッセージを送信する",
             "giphy": "giphy メッセージを送信する",
             "prize": "賞品メッセージを送信する",
-            "memeFighter": "ミームファイターメッセージを送信する"
+            "memeFighter": "ミームファイターメッセージを送信する",
+            "p2pSwap": "P2P スワップ メッセージを送信する"
         },
         "threadPermissions": {
             "default": "デフォルトでメッセージをスレッドに送信する",
@@ -380,7 +381,8 @@
             "crypto": "スレッドで暗号メッセージを送信する",
             "giphy": "スレッドで giphy メッセージを送信する",
             "prize": "スレッドで賞品メッセージを送信する",
-            "memeFighter": "ミームファイターのメッセージをスレッドに送信する"
+            "memeFighter": "ミームファイターのメッセージをスレッドに送信する",
+            "p2pSwap": "P2P スワップ メッセージをスレッドで送信する"
         }
     },
     "rules": {
@@ -660,13 +662,10 @@
             "enterRecipientOwner": "受信者のアカウントプリンシパルを入力してください",
             "enterRecipientSubaccount": "オプションの受信者のサブアカウントを入力します",
             "ledgerCanisterId": "レジャーキャニスターID",
-            "enterLedgerCanisterId": "レジャー キャニスター ID を入力してください",
             "tokenInfoUrl": "トークン情報のURL",
-            "enterTokenInfoUrl": "トークン情報を示す URL を入力してください",
             "howToBuyUrl": "購入方法URL",
-            "enterHowToBuyUrl": "トークンの購入方法を示す URL を入力してください",
             "transactionUrlFormat": "トランザクションURL形式",
-            "enterTransactionUrlFormat": "例えば。 https://token.com/?index={transaction_index}"
+            "tokenLogo": "ロゴ"
         },
         "neuronControllerAction": "ニューロン コントローラーのアクション"
     },
@@ -856,7 +855,8 @@
         "benefits": "ダイヤモンドの利点",
         "message": "ダイヤモンド会員について教えてください",
         "lifetimeMessage": "あなたは生涯ダイヤモンド会員権を持っています。",
-        "lifetime": "一生"
+        "lifetime": "一生",
+        "p2pSwap": "P2P スワップを行う/受け入れる"
     },
     "currentUsage": "現在のストレージ使用量",
     "promoteTo": "{role} に昇格",
@@ -1158,9 +1158,6 @@
     "sendTextDisabled": "テキストメッセージが無効になっています",
     "disappearingMessages": {
         "label": "消えるメッセージ",
-        "hours": "時間）",
-        "minutes": "分）",
-        "days": "日々）",
         "summary": "メッセージは {duration} 後に消えます",
         "timeUpdatedBy": "{changedBy} はメッセージが消える時間を {duration} に設定します",
         "disabledBy": "{changedBy} は消えるメッセージを無効にしました",
@@ -1207,5 +1204,43 @@
         "swapTokenTo": "{tokenIn} を {tokenOut} に交換します",
         "quoteTooLow": "見積もられた最良レートは、{rate} からの {tokenOut} あたり {tokenIn} {dex} です。これにより、{amountOut} {tokenOut} の {amountIn} {tokenIn} が得られます。見積金額が {minAmountOut} を超える場合にのみ交換できます。"
     },
-    "messageBlocked": "メッセージが隠されています"
+    "messageBlocked": "メッセージが隠されています",
+    "removePreviewQuestion": "プレビューを削除しますか?",
+    "showPreview": "ショープレビュー",
+    "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。",
+    "hours": "時間",
+    "minutes": "分",
+    "days": "日々",
+    "p2pSwap": {
+        "builderTitle": "交換オファーをする",
+        "expiryTime": "有効期限",
+        "creatingYourMessage": "スワップオファーが作成されるまでお待ちください",
+        "failedToCreateMessage": "スワップオファーの作成に失敗しました",
+        "expired": "期限切れ",
+        "accepted": "承認されました",
+        "accept": "受け入れる",
+        "cancel": "キャンセル",
+        "cancelled": "キャンセル",
+        "reserved": "予約済み",
+        "summary": "これは、{fromAmount} {fromToken} と {toAmount} {toToken} を交換するというオファーです。",
+        "youReserved": "このオファーは予約済みで、完了待ちです。",
+        "youAccepted": "あなたはこのオファーを受け入れましたが、完了は保留中です。",
+        "reservedBy": "このオファーは {user} によって予約されており、完了待ちです。",
+        "acceptedBy": "このオファーは {user} によって受け入れられ、完了待ちです。",
+        "youCompleted": "あなたはこの申し出を受け入れました。",
+        "completed": "このオファーは {user} によって受け入れられました。",
+        "confirmAccept": "このオファーを受け入れると、{amount} {token} (2 つの取引手数料を含む) がウォレットから OpenChat エスクロー キャニスターに転送されます。代わりに {amountOther} {tokenOther} を受け取ります。続行しますか?",
+        "confirmCancel": "このオファーをキャンセルすると、{amount} {token} が OpenChat エスクロー キャニスターからウォレットに戻されます。続行しますか?",
+        "insufficientBalanceMessage": "このスワップを受け入れるには、少なくとも {amount} {token} (2 つの取引手数料を含む) が必要です。",
+        "insufficientBalance": "残高不足",
+        "tokenBalance": "{token} 残高",
+        "already_accepted": "このスワップオファーはすでに受け入れられています",
+        "swap_cancelled": "このスワップオファーはキャンセルされました",
+        "swap_expired": "このスワップオファーは期限切れです",
+        "swap_not_found": "このスワップ オファーが見つかりませんでした",
+        "insufficient_funds": "このスワップオファーを受け入れるには資金が不足しています",
+        "unknown_accept_error": "スワップオファーの受け入れエラー",
+        "unknown_cancel_error": "スワップオファーのキャンセル中にエラーが発生しました",
+        "confirmSend": "このオファーを作成すると、{amount} {token} (2 つの取引手数料を含む) がウォレットから OpenChat エスクロー キャニスターに転送されます。オファーの有効期限が切れるか、オファーをキャンセルするか、オファーが受け入れられるまで、そこに残ります。続行しますか?"
+    }
 }

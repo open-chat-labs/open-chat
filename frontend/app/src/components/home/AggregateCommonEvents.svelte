@@ -5,7 +5,7 @@
     import { getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     export let chatId: ChatIdentifier;
     export let user: UserSummary | undefined;
@@ -42,14 +42,30 @@
 
     function buildJoinedText(userStore: UserLookup, userIds: Set<string>): string | undefined {
         return userIds.size > 10
-            ? interpolateLevel("nUsersJoined", level, true, {
-                  number: userIds.size.toString(),
-              })
+            ? interpolate(
+                  $_,
+                  i18nKey(
+                      "nUsersJoined",
+                      {
+                          number: userIds.size.toString(),
+                      },
+                      level,
+                      true,
+                  ),
+              )
             : userIds.size > 0
-            ? interpolateLevel("userJoined", level, true, {
-                  username: buildUserList(userStore, userIds),
-              })
-            : undefined;
+              ? interpolate(
+                    $_,
+                    i18nKey(
+                        "userJoined",
+                        {
+                            username: buildUserList(userStore, userIds),
+                        },
+                        level,
+                        true,
+                    ),
+                )
+              : undefined;
     }
 
     function buildUserList(userStore: UserLookup, userIds: Set<string>): string {
@@ -60,7 +76,7 @@
             $_("unknownUser"),
             $_("you"),
             user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
-            false
+            false,
         );
     }
 

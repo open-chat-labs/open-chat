@@ -20,6 +20,8 @@
     import ReceiveCrypto from "./ReceiveCrypto.svelte";
     import MultiToggle from "../../MultiToggle.svelte";
     import { sum } from "../../../utils/math";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,8 +36,11 @@
         { id: "none", label: $_("cryptoAccount.tokens") },
         { id: "usd", label: "USD" },
         { id: "icp", label: "ICP" },
+        { id: "btc", label: "BTC" },
+        { id: "eth", label: "ETH" },
     ];
-    let selectedConversion: "none" | "icp" | "usd" = "none";
+    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    let swappableTokensPromise = client.swappableTokens();
 
     $: accountsSorted = client.cryptoTokensSorted;
     $: nervousSystemLookup = client.nervousSystemLookup;
@@ -48,20 +53,19 @@
     $: total =
         selectedConversion === "none"
             ? ""
-            : selectedConversion === "usd"
-              ? calculateTotalUSD($cryptoLookup)
-              : calculateTotalICP($cryptoLookup);
+            : calculateTotal($cryptoLookup, selectedConversion)
 
     $: {
         zeroCount = $accountsSorted.filter((a) => a.zero).length;
     }
 
-    function calculateTotalUSD(lookup: Record<string, EnhancedTokenDetails>): string {
-        return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
-    }
-
-    function calculateTotalICP(lookup: Record<string, EnhancedTokenDetails>): string {
-        return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+    function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
+        switch (conversion) {
+            case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+            case "icp": return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+            case "btc": return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+            case "eth": return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+        }
     }
 
     function onBalanceRefreshed() {
@@ -119,7 +123,7 @@
 
 <table>
     <tr>
-        <th class="token-header">{$_("cryptoAccount.token")}</th>
+        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
         <th class="balance-header" colspan="2">
             <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
         </th>
@@ -158,23 +162,31 @@
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.send")}</div>
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+                                    </div>
                                 </MenuItem>
                                 <MenuItem on:click={() => showReceive(token.ledger)}>
                                     <ArrowLeftBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.receive")}</div>
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.receive")} />
+                                    </div>
                                 </MenuItem>
-                                {#await client.getTokenSwaps(token.ledger) then swaps}
-                                    {#if Object.keys(swaps).length > 0}
+                                {#await swappableTokensPromise then swappableTokens}
+                                    {#if swappableTokens.has(token.ledger)}
                                         <MenuItem on:click={() => showSwap(token.ledger)}>
                                             <SwapIcon
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("cryptoAccount.swap")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
                                         </MenuItem>
                                     {/if}
                                 {/await}
@@ -184,7 +196,12 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("cryptoAccount.transactions")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "cryptoAccount.transactions",
+                                                )} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                             </Menu>
@@ -199,7 +216,7 @@
             <td>
                 <div class="token">
                     <div class="icon"></div>
-                    {$_("cryptoAccount.total")}
+                    <Translatable resourceKey={i18nKey("cryptoAccount.total")} />
                 </div>
             </td>
             <td class="total">{total}</td>

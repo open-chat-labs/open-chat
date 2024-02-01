@@ -5,6 +5,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1031](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1031-local_user_index)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
+### Changed
+
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1019](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1019-local_user_index)] - 2024-01-24
+
+### Changed
+
+- Upgrade Diamond members first ([#5214](https://github.com/open-chat-labs/open-chat/pull/5214))
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+
+### Removed
+
+- Remove `DiamondMembershipExpiryDate` event which is no longer needed ([#5245](https://github.com/open-chat-labs/open-chat/pull/5245))
+
+## [[2.0.1011](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1011-local_user_index)] - 2024-01-18
+
+### Added
+
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Add Escrow canister Id to metrics ([#5202](https://github.com/open-chat-labs/open-chat/pull/5202))
+
+### Changed
+
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+
 ## [[2.0.976](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.976-local_user_index)] - 2023-12-19
 
 ### Added

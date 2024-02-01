@@ -1,7 +1,8 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { afterUpdate, createEventDispatcher } from "svelte";
     import { menuStore } from "../../stores/menu";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
     const dispatch = createEventDispatcher();
 
     type Step = {
@@ -30,7 +31,7 @@
             on:click={() => selectStep(i)}
             class:selected={step === i}
             class="step">
-            {$_(s.labelKey)}
+            <Translatable resourceKey={i18nKey(s.labelKey)} />
         </div>
     {/each}
 </div>

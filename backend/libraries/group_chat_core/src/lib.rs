@@ -36,26 +36,19 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
-    #[serde(alias = "is_public_v2")]
     pub is_public: Timestamped<bool>,
-    #[serde(alias = "name_v2")]
     pub name: Timestamped<String>,
-    #[serde(alias = "description_v2")]
     pub description: Timestamped<String>,
-    #[serde(alias = "rules_v2")]
     pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    #[serde(alias = "avatar_v2")]
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
-    #[serde(alias = "pinned_messages_v2")]
     pub pinned_messages: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(alias = "permissions_v2")]
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
@@ -446,7 +439,7 @@ impl GroupChatCore {
                             NotAuthorized
                         }
                     } else {
-                        MessageNotDeleted
+                        Success(Box::new(message.content.hydrate(Some(user_id))))
                     };
                 }
             }
@@ -1685,7 +1678,7 @@ impl GroupChatCore {
             crypto: new.crypto.apply_to(old.crypto),
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
-            p2p_trade: new.p2p_trade.apply_to(old.p2p_trade),
+            p2p_swap: new.p2p_swap.apply_to(old.p2p_swap),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }
@@ -1893,7 +1886,6 @@ pub enum DeletedMessageResult {
     UserNotInGroup,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 

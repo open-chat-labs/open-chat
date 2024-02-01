@@ -36,7 +36,6 @@ import type {
     TimelineItem,
     TipsReceived,
     ThreadSummary,
-    PrizeContent,
     MessagePermission,
     ChatPermissions,
     OptionalChatPermissions,
@@ -56,8 +55,9 @@ import {
     defaultOptionalChatPermissions,
     getContentAsFormattedText,
     getContentAsText,
+    messageContextsEqual,
 } from "openchat-shared";
-import { distinctBy, groupWhile } from "../utils/list";
+import { distinctBy, groupWhile, toRecordFiltered } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
 import { v1 as uuidv1 } from "uuid";
 import DRange from "drange";
@@ -553,6 +553,7 @@ function mergeMessagePermissions(
         giphy: applyOptionUpdate(current.giphy, updated.giphy),
         prize: applyOptionUpdate(current.prize, updated.prize),
         memeFighter: applyOptionUpdate(current.memeFighter, updated.memeFighter),
+        p2pSwap: applyOptionUpdate(current.p2pSwap, updated.p2pSwap),
     };
 }
 
@@ -775,10 +776,53 @@ export function containsReaction(userId: string, reaction: string, reactions: Re
 export function mergeServerEvents(
     events: EventWrapper<ChatEvent>[],
     newEvents: EventWrapper<ChatEvent>[],
+    messageContext: MessageContext,
 ): EventWrapper<ChatEvent>[] {
+    updateReplyContexts(events, newEvents, messageContext);
+
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
     merged.sort(sortByTimestampThenEventIndex);
     return merged;
+}
+
+function updateReplyContexts(
+    events: EventWrapper<ChatEvent>[],
+    newEvents: EventWrapper<ChatEvent>[],
+    messageContext: MessageContext,
+) {
+    if (events.length == 0) return;
+
+    const lookup = toRecordFiltered(
+        newEvents,
+        (e) => e.index,
+        (e) => e,
+        (e) => e.event.kind === "message",
+    );
+
+    for (let i = 0; i < events.length; i++) {
+        const event = events[i];
+        if (
+            event.event.kind === "message" &&
+            event.event.repliesTo?.kind === "rehydrated_reply_context" &&
+            (event.event.repliesTo.sourceContext === undefined ||
+                messageContextsEqual(event.event.repliesTo.sourceContext, messageContext))
+        ) {
+            const updated = lookup[event.event.repliesTo.eventIndex];
+            if (updated?.event.kind === "message") {
+                events[i] = {
+                    ...event,
+                    event: {
+                        ...event.event,
+                        repliesTo: {
+                            ...event.event.repliesTo,
+                            content: updated.event.content,
+                            edited: updated.event.edited,
+                        },
+                    },
+                };
+            }
+        }
+    }
 }
 
 function sortByTimestampThenEventIndex(
@@ -1054,6 +1098,10 @@ export function canSendGroupMessage(
             ? chat.permissions.threadPermissions ?? chat.permissions.messagePermissions
             : chat.permissions.messagePermissions;
 
+    if (permission === "prize" && mode === "thread") {
+        return false;
+    }
+
     return (
         !chat.frozen &&
         isPermitted(
@@ -1215,26 +1263,6 @@ export function mergeSendMessageResponse(
     msg: Message,
     resp: SendMessageSuccess | TransferSuccess,
 ): EventWrapper<Message> {
-    let content = msg.content;
-    if (resp.kind === "transfer_success") {
-        switch (msg.content.kind) {
-            case "crypto_content":
-                content = { ...msg.content, transfer: resp.transfer } as CryptocurrencyContent;
-                break;
-            case "prize_content_initial":
-                content = {
-                    kind: "prize_content",
-                    prizesRemaining: msg.content.prizes.length,
-                    prizesPending: 0,
-                    winners: [],
-                    token: msg.content.transfer.token,
-                    endDate: msg.content.endDate,
-                    caption: msg.content.caption,
-                    diamondOnly: msg.content.diamondOnly,
-                } as PrizeContent;
-                break;
-        }
-    }
     return {
         index: resp.eventIndex,
         timestamp: resp.timestamp,
@@ -1242,7 +1270,6 @@ export function mergeSendMessageResponse(
         event: {
             ...msg,
             messageIndex: resp.messageIndex,
-            content,
         },
     };
 }
@@ -1416,7 +1443,9 @@ function mergeLocalUpdates(
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;
-        message.edited = true;
+        if (!localUpdates.linkRemoved) {
+            message.edited = true;
+        }
     }
 
     if (localUpdates?.undeletedContent !== undefined) {
@@ -1431,11 +1460,19 @@ function mergeLocalUpdates(
     if (localUpdates?.prizeClaimed !== undefined) {
         if (message.content.kind === "prize_content") {
             if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
+                message.content = { ...message.content };
                 message.content.winners.push(localUpdates.prizeClaimed);
                 message.content.prizesRemaining -= 1;
                 message.content.prizesPending += 1;
             }
         }
+    }
+
+    if (localUpdates?.p2pSwapStatus !== undefined && message.content.kind === "p2p_swap_content") {
+        message.content = {
+            ...message.content,
+            status: localUpdates.p2pSwapStatus,
+        };
     }
 
     if (localUpdates?.reactions !== undefined) {
@@ -1862,6 +1899,7 @@ function diffMessagePermissions(
     diff.giphy = updateFromOptions(original.giphy, updated.giphy);
     diff.prize = updateFromOptions(original.prize, updated.prize);
     diff.memeFighter = updateFromOptions(original.memeFighter, updated.memeFighter);
+    diff.p2pSwap = updateFromOptions(original.p2pSwap, updated.p2pSwap);
 
     return diff;
 }

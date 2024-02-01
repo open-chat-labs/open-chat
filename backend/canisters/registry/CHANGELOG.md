@@ -6,9 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1005](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1005-registry)] - 2024-01-15
+
+### Fixed
+
+- Update Windoge98 transaction fee ([#5176](https://github.com/open-chat-labs/open-chat/pull/5176))
+
+## [[2.0.1003](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1003-registry)] - 2024-01-10
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
 ### Fixed
 
 - Get standards in parallel + get them for new token ([#5004](https://github.com/open-chat-labs/open-chat/pull/5004))
+- Fix job to update supported token standards ([#5155](https://github.com/open-chat-labs/open-chat/pull/5155))
 
 ## [[2.0.972](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.972-registry)] - 2023-12-12
 

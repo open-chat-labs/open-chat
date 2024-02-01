@@ -7,6 +7,7 @@
     import { iconSize } from "../../../../stores/iconSize";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, onMount } from "svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -39,7 +40,7 @@
             invalid={editingChannel.name.length < min || editingChannel.name.length > max}
             on:blur={stopEditing}
             on:enter={stopEditing}
-            placeholder={$_("communities.updateChannelPlaceholder")}>
+            placeholder={i18nKey("communities.updateChannelPlaceholder")}>
             <div class="hash">
                 <Pound size={$iconSize} color={"var(--icon-txt)"} />
             </div>

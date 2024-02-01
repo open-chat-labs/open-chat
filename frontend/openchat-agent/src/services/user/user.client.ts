@@ -19,7 +19,6 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
-    DirectChatEvent,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -37,7 +36,6 @@ import type {
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
@@ -73,6 +71,8 @@ import type {
     ApproveTransferResponse,
     MessageContext,
     PendingCryptocurrencyTransfer,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -94,7 +94,6 @@ import {
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
-    migrateUserPrincipal,
     archiveChatResponse,
     deletedMessageResponse,
     setMessageReminderResponse,
@@ -138,6 +137,8 @@ import {
     deleteGroupResponse,
     apiChatIdentifier,
     apiToken,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
@@ -172,11 +173,11 @@ export class UserClient extends CandidService {
         return new UserClient(identity, userId, config, db);
     }
 
-    private setCachedEvents<T extends ChatEvent>(
+    private setCachedEvents(
         chatId: ChatIdentifier,
-        resp: EventsResponse<T>,
+        resp: EventsResponse<ChatEvent>,
         threadRootMessageIndex?: number,
-    ): EventsResponse<T> {
+    ): EventsResponse<ChatEvent> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
         );
@@ -185,10 +186,10 @@ export class UserClient extends CandidService {
 
     private handleMissingEvents(
         chatId: DirectChatIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
@@ -342,8 +343,8 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, {
+    ): Promise<EventsResponse<ChatEvent>> {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
@@ -356,7 +357,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
@@ -376,14 +377,13 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing, totalMiss] =
-            await getCachedEventsWindowByMessageIndex<DirectChatEvent>(
-                this.db,
-                eventIndexRange,
-                { chatId },
-                messageIndex,
-            );
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
+            this.db,
+            eventIndexRange,
+            { chatId },
+            messageIndex,
+        );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -408,7 +408,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
@@ -433,8 +433,8 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
@@ -469,7 +469,7 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
@@ -588,7 +588,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToGroup(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -614,7 +614,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -664,7 +664,7 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToChannel(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -692,7 +692,7 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToChannelToBackend(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -1077,22 +1077,6 @@ export class UserClient extends CandidService {
         );
     }
 
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.handleResponse(
-            this.userService.init_user_principal_migration({
-                new_principal: Principal.fromText(newPrincipal),
-            }),
-            toVoid,
-        );
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
-        return this.handleResponse(
-            this.userService.migrate_user_principal({}),
-            migrateUserPrincipal,
-        );
-    }
-
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
         return this.handleResponse(
             this.userService.deleted_message({
@@ -1252,6 +1236,26 @@ export class UserClient extends CandidService {
                 block_user: blockUser,
             }),
             (resp) => "Success" in resp,
+        );
+    }
+
+    acceptP2PSwap(userId: string, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.accept_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            acceptP2PSwapResponse,
+        );
+    }
+
+    cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.cancel_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            cancelP2PSwapResponse,
         );
     }
 }

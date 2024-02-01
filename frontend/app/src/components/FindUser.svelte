@@ -12,6 +12,8 @@
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
     import Diamond from "./icons/Diamond.svelte";
+    import { i18nKey } from "../i18n/i18n";
+    import { translatable } from "../actions/translatable";
 
     const client = getContext<OpenChat>("client");
 
@@ -56,7 +58,7 @@
             searching = true;
             userLookup(value)
                 .then((u) => (users = u))
-                .catch((_err) => toastStore.showFailureToast("userSearchFailed"))
+                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
                 .finally(() => (searching = false));
         }, 350);
     }
@@ -79,6 +81,7 @@
         disabled={!enabled}
         type="text"
         on:input={onInput}
+        use:translatable={{ key: i18nKey("searchForUsername") }}
         placeholder={$_("searchForUsername")} />
     {#if searching}
         <span class="loading" />

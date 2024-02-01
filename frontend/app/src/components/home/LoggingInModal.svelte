@@ -3,12 +3,13 @@
     import ModalContent from "../ModalContent.svelte";
     import Alert from "svelte-material-icons/Alert.svelte";
     import Radio from "../Radio.svelte";
-    import { _ } from "svelte-i18n";
     import Button from "../Button.svelte";
     import { createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { AuthProvider, type OpenChat } from "openchat-client";
     import InternetIdentityLogo from "../landingpages/InternetIdentityLogo.svelte";
     import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -64,7 +65,9 @@
 </script>
 
 <ModalContent compactFooter on:close={cancel} closeIcon>
-    <div class="header" slot="header">{$_("loginToOpenChat")}</div>
+    <div class="header" slot="header">
+        <Translatable resourceKey={i18nKey("loginToOpenChat")} />
+    </div>
     <div class="body" slot="body">
         {#if warn}
             <div transition:fade|local={{ duration: 300 }} class="confirming">
@@ -72,9 +75,11 @@
                     <Alert size={$iconSize} color={"var(--warn"} />
                 </div>
                 <div class="alert-txt">
-                    {$_("loginProviderChanged", {
-                        values: { previous: $selectedAuthProviderStore, next: selected },
-                    })}
+                    <Translatable
+                        resourceKey={i18nKey("loginProviderChanged", {
+                            previous: $selectedAuthProviderStore,
+                            next: selected,
+                        })} />
                 </div>
             </div>
         {/if}
@@ -83,7 +88,7 @@
                 disabled={state === "logging-in"}
                 loading={state === "logging-in"}
                 on:click={() => login()}>
-                {$_("login")}
+                <Translatable resourceKey={i18nKey("login")} />
             </Button>
         </div>
     </div>
@@ -95,7 +100,8 @@
             on:click={() => (expanded = !expanded)}
             class="options"
             class:expanded>
-            {expanded ? $_("hideAuthProviders") : $_("showAuthProviders")}
+            <Translatable
+                resourceKey={i18nKey(expanded ? "hideAuthProviders" : "showAuthProviders")} />
         </a>
 
         {#if expanded}
@@ -105,7 +111,7 @@
                     compact
                     group="authprovider"
                     value={AuthProvider.II}
-                    label={AuthProvider.II}
+                    label={i18nKey(AuthProvider.II)}
                     disabled={state === "logging-in"}
                     checked={selected === AuthProvider.II}
                     on:change={() => selectProvider(AuthProvider.II)}>
@@ -121,7 +127,7 @@
                     compact
                     group="authprovider"
                     value={AuthProvider.NFID}
-                    label={AuthProvider.NFID}
+                    label={i18nKey(AuthProvider.NFID)}
                     disabled={state === "logging-in"}
                     checked={selected === AuthProvider.NFID}
                     on:change={() => selectProvider(AuthProvider.NFID)}>

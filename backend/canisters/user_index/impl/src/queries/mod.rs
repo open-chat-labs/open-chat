@@ -8,6 +8,7 @@ pub mod platform_moderators_group;
 pub mod platform_operators;
 pub mod referral_leaderboard;
 pub mod referral_metrics;
+pub mod reported_messages;
 pub mod search;
 pub mod suspected_bots;
 pub mod user;

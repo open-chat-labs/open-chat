@@ -42,7 +42,7 @@
             $_,
             $userStore,
             { chatId: chatSummary.id, threadRootMessageIndex },
-            typing
+            typing,
         );
 
         const msgTxt = client.getContentAsText($_, rootEvent.event.content);

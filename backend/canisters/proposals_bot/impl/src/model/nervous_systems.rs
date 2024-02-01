@@ -1,4 +1,4 @@
-use crate::NervousSystemMetrics;
+use crate::{generate_message_id, NervousSystemMetrics};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
@@ -193,8 +193,14 @@ impl NervousSystems {
             }
 
             for proposal in active_proposals {
-                ns.process_proposal(proposal);
+                ns.process_proposal(proposal, false);
             }
+        }
+    }
+
+    pub fn process_finished_proposal(&mut self, governance_canister_id: &CanisterId, proposal: Proposal) {
+        if let Some(ns) = self.nervous_systems.get_mut(governance_canister_id) {
+            ns.process_proposal(proposal, true);
         }
     }
 
@@ -210,12 +216,6 @@ impl NervousSystems {
             mem::take(&mut ns.decided_user_submitted_proposals)
         } else {
             Vec::new()
-        }
-    }
-
-    pub fn queue_proposal_to_update(&mut self, governance_canister_id: CanisterId, proposal: ProposalUpdate) {
-        if let Some(ns) = self.nervous_systems.get_mut(&governance_canister_id) {
-            ns.proposals_to_be_updated.pending.insert(proposal.message_id, proposal);
         }
     }
 
@@ -313,7 +313,7 @@ pub struct NervousSystem {
     neuron_id_for_submitting_proposals: Option<SnsNeuronId>,
     neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
     sync_in_progress: bool,
-    active_user_submitted_proposals: HashMap<ProposalId, UserId>,
+    active_user_submitted_proposals: BTreeMap<ProposalId, UserId>,
     decided_user_submitted_proposals: Vec<UserSubmittedProposalResult>,
     transaction_fee: u64,
     min_neuron_stake: u64,
@@ -349,7 +349,7 @@ impl NervousSystem {
             neuron_id_for_submitting_proposals: None,
             neuron_for_submitting_proposals_dissolve_delay: 0,
             sync_in_progress: false,
-            active_user_submitted_proposals: HashMap::default(),
+            active_user_submitted_proposals: BTreeMap::default(),
             decided_user_submitted_proposals: Vec::new(),
             transaction_fee: nervous_system.transaction_fee,
             min_neuron_stake: nervous_system.min_neuron_stake,
@@ -358,7 +358,7 @@ impl NervousSystem {
         }
     }
 
-    pub fn process_proposal(&mut self, proposal: Proposal) {
+    pub fn process_proposal(&mut self, proposal: Proposal, finished: bool) {
         let proposal_id = proposal.id();
 
         if let Some(user_id) = self.active_user_submitted_proposals.get(&proposal_id).copied() {
@@ -378,7 +378,16 @@ impl NervousSystem {
             }
         }
 
-        if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
+        if finished {
+            let update = ProposalUpdate {
+                message_id: generate_message_id(self.governance_canister_id, proposal_id),
+                status: Some(proposal.status()),
+                reward_status: Some(proposal.reward_status()),
+                latest_tally: Some(proposal.tally()),
+                deadline: Some(proposal.deadline()),
+            };
+            self.upsert_proposal_update(update);
+        } else if let Some((previous, message_id)) = self.active_proposals.get_mut(&proposal_id) {
             let status = proposal.status();
             let reward_status = proposal.reward_status();
             let latest_tally = proposal.tally();
@@ -391,7 +400,6 @@ impl NervousSystem {
                 latest_tally: (latest_tally != previous.tally()).then_some(latest_tally),
                 deadline: (deadline != previous.deadline()).then_some(deadline),
             };
-
             self.upsert_proposal_update(update);
         } else {
             self.proposals_to_be_pushed.queue.insert(proposal_id, proposal);
@@ -426,6 +434,9 @@ impl NervousSystem {
                 }
                 if let Some(t) = update.latest_tally {
                     current.latest_tally = Some(t);
+                }
+                if let Some(d) = update.deadline {
+                    current.deadline = Some(d);
                 }
             }
             Vacant(e) => {
@@ -463,6 +474,7 @@ impl From<&NervousSystem> for NervousSystemMetrics {
             latest_failed_proposals_update: ns.latest_failed_proposals_update,
             queued_proposals: ns.proposals_to_be_pushed.queue.keys().copied().collect(),
             active_proposals: ns.active_proposals.keys().copied().collect(),
+            active_user_submitted_proposals: ns.active_user_submitted_proposals.keys().copied().collect(),
             neuron_for_submitting_proposals: ns.neuron_id_for_submitting_proposals.map(hex::encode),
             neuron_for_submitting_proposals_dissolve_delay: ns.neuron_for_submitting_proposals_dissolve_delay,
             transaction_fee: ns.transaction_fee,

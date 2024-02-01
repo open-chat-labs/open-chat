@@ -5,6 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1026](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1026-notifications_index)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Rename `service_principals` to `governance_principals` in init args ([#5251](https://github.com/open-chat-labs/open-chat/pull/5251))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
 ## [[2.0.971](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.971-notifications_index)] - 2023-12-12
 
 ### Changed

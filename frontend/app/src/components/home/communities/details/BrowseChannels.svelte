@@ -1,11 +1,12 @@
 <script lang="ts">
     import { ChatMap, type ChannelMatch, type OpenChat } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import { getContext } from "svelte";
     import ChannelCard from "./ChannelCard.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import { browseChannels } from "../../../../stores/settings";
+    import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -49,10 +50,7 @@
                 pageSize,
             )
             .then((results) => {
-                if (
-                    results.kind === "success" &&
-                    communityId === matchedCommunityId
-                ) {
+                if (results.kind === "success" && communityId === matchedCommunityId) {
                     if (reset) {
                         searchResults = results.matches;
                     } else {
@@ -86,10 +84,12 @@
             first
             on:toggle={browseChannels.toggle}
             open={$browseChannels || autoOpen}
-            headerText={$_("communities.otherChannels")}>
+            headerText={i18nKey("communities.otherChannels")}>
             <div slot="titleSlot" class="browse-channels">
                 <div class="disc">#</div>
-                <div class="label">{$_("communities.otherChannels")}</div>
+                <div class="label">
+                    <Translatable resourceKey={i18nKey("communities.otherChannels")} />
+                </div>
             </div>
 
             <div class="channels">
@@ -102,7 +102,7 @@
                             disabled={searching}
                             loading={searching}
                             on:click={() => search(searchTerm, false)}
-                            >{$_("communities.loadMore")}</Button>
+                            ><Translatable resourceKey={i18nKey("communities.loadMore")} /></Button>
                     </div>
                 {/if}
             </div>

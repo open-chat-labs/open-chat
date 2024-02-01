@@ -114,6 +114,7 @@ export function anonymousUser(): CreatedUser {
         canisterUpgradeStatus: "not_required",
         referrals: [],
         isPlatformModerator: false,
+        isPlatformOperator: false,
         suspensionDetails: undefined,
         isSuspectedBot: false,
         diamondStatus: { kind: "inactive" },
@@ -130,6 +131,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     referrals: string[];
     isPlatformModerator: boolean;
+    isPlatformOperator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
     diamondStatus: DiamondMembershipStatus;
@@ -231,14 +233,6 @@ export type UnpinChatResponse = "success" | "failure" | "offline";
 export type ArchiveChatResponse = "failure" | "success" | "offline";
 
 export type ManageFavouritesResponse = "success" | "failure" | "offline";
-
-export type MigrateUserPrincipalResponse =
-    | "success"
-    | "principal_already_in_use"
-    | "migration_already_in_progress"
-    | "internal_error"
-    | "migration_not_initialized"
-    | "offline";
 
 export type SuspendUserResponse =
     | "success"

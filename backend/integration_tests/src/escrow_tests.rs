@@ -4,11 +4,11 @@ use crate::{client, TestEnv};
 use escrow_canister::deposit_subaccount;
 use icrc_ledger_types::icrc1::account::Account;
 use std::ops::Deref;
-use types::Cryptocurrency;
+use types::{Chat, Cryptocurrency, P2PSwapLocation};
 use utils::time::DAY_IN_MS;
 
 #[test]
-fn trade_via_escrow_canister_succeeds() {
+fn swap_via_escrow_canister_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -23,10 +23,11 @@ fn trade_via_escrow_canister_succeeds() {
     let icp_amount = 100_000_000_000;
     let chat_amount = 1_000_000_000_000;
 
-    let offer_id = client::escrow::happy_path::create_offer(
+    let swap_id = client::escrow::happy_path::create_swap(
         env,
         user1.user_id.into(),
         canister_ids.escrow,
+        P2PSwapLocation::from_message(Chat::Direct(user2.user_id.into()), None, 0.into()),
         Cryptocurrency::InternetComputer,
         icp_amount,
         Cryptocurrency::CHAT,
@@ -36,7 +37,7 @@ fn trade_via_escrow_canister_succeeds() {
 
     let user1_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user1.user_id, offer_id)),
+        subaccount: Some(deposit_subaccount(user1.user_id, swap_id)),
     };
 
     client::icrc1::happy_path::transfer(
@@ -49,7 +50,7 @@ fn trade_via_escrow_canister_succeeds() {
 
     let user2_deposit_account = Account {
         owner: canister_ids.escrow,
-        subaccount: Some(deposit_subaccount(user2.user_id, offer_id)),
+        subaccount: Some(deposit_subaccount(user2.user_id, swap_id)),
     };
 
     client::icrc1::happy_path::transfer(
@@ -60,8 +61,8 @@ fn trade_via_escrow_canister_succeeds() {
         chat_amount + 100_000,
     );
 
-    let result1 = client::escrow::happy_path::notify_deposit(env, user1.user_id, canister_ids.escrow, offer_id);
-    let result2 = client::escrow::happy_path::notify_deposit(env, user2.user_id, canister_ids.escrow, offer_id);
+    let result1 = client::escrow::happy_path::notify_deposit(env, user1.user_id, canister_ids.escrow, swap_id);
+    let result2 = client::escrow::happy_path::notify_deposit(env, user2.user_id, canister_ids.escrow, swap_id);
 
     assert!(!result1.complete);
     assert!(result2.complete);

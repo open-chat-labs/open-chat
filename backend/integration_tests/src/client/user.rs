@@ -9,9 +9,11 @@ generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
 // Updates
+generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_message_reminder);
+generate_update_call!(cancel_p2p_swap);
 generate_update_call!(create_community);
 generate_update_call!(create_group);
 generate_update_call!(delete_community);

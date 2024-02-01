@@ -48,8 +48,19 @@ impl GlobalUserMap {
             .map(|principal| self.hydrate_user(*user_id, *principal))
     }
 
+    pub fn diamond_membership_expiry_date(&self, user_id: &UserId) -> Option<TimestampMillis> {
+        self.diamond_membership_expiry_dates.get(user_id).copied()
+    }
+
     pub fn set_diamond_membership_expiry_date(&mut self, user_id: UserId, expires_at: TimestampMillis) {
         self.diamond_membership_expiry_dates.insert(user_id, expires_at);
+    }
+
+    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
+        if let Some(user_id) = self.principal_to_user_id.remove(&old_principal) {
+            self.principal_to_user_id.insert(new_principal, user_id);
+            self.user_id_to_principal.insert(user_id, new_principal);
+        }
     }
 
     pub fn is_bot(&self, user_id: &UserId) -> bool {

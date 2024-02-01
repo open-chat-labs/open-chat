@@ -36,6 +36,8 @@ type SendMessageResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PSwapSetUpFailed : text;
+    DuplicateMessageId;
     UserSuspended;
     InternalError : text;
 };
@@ -143,7 +145,7 @@ type ApproveTransferArgs = record {
 
 type ApproveTransferResponse = variant {
     Success;
-    ApproveError : ApproveError;
+    ApproveError : ICRC2_ApproveError;
     InternalError : text;
 };
 
@@ -202,6 +204,33 @@ type TokenSwapStatusResponse = variant {
         success : opt bool;
     };
     NotFound;
+};
+
+type AcceptP2PSwapArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
+    InsufficientFunds;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChatNotFound;
+    UserSuspended;
+    InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChatNotFound;
 };
 
 type TipMessageArgs = record {
@@ -548,7 +577,7 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
-    P2PTradeSetUpFailed : text;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
@@ -586,7 +615,7 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
-    P2PTradeSetUpFailed : text;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
@@ -716,24 +745,6 @@ type SubmitProposalResponse = variant {
     UserSuspended;
     TransferFailed : text;
     Retrying : text;
-    InternalError : text;
-};
-
-type InitUserPrincipalMigrationArgs = record {
-    new_principal : principal;
-};
-
-type InitUserPrincipalMigrationResponse = variant {
-    Success;
-};
-
-type MigrateUserPrincipalArgs = record {};
-
-type MigrateUserPrincipalResponse = variant {
-    Success;
-    MigrationNotInitialized;
-    MigrationAlreadyInProgress;
-    PrincipalAlreadyInUse;
     InternalError : text;
 };
 
@@ -987,7 +998,6 @@ type DeletedMessageResponse = variant {
     ChatNotFound;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
@@ -1030,9 +1040,8 @@ service : {
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
-
-    init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
-    migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;

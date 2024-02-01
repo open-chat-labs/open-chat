@@ -1,7 +1,9 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::model::user_groups::UserGroup;
-use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob};
+use crate::timer_job_types::{
+    DeleteFileReferencesJob, EndPollJob, MarkP2PSwapExpiredJob, RefundPrizeJob, RemoveExpiredEventsJob, TimerJob,
+};
 use crate::{mutate_state, run_regular_jobs, Data, RuntimeState};
 use candid::Principal;
 use canister_api_macros::{update_candid_and_msgpack, update_msgpack};
@@ -268,20 +270,6 @@ fn register_timer_jobs(
     now: TimestampMillis,
     timer_jobs: &mut TimerJobs<TimerJob>,
 ) {
-    if let MessageContent::Poll(p) = &message_event.event.content {
-        if let Some(end_date) = p.config.end_date {
-            timer_jobs.enqueue_job(
-                TimerJob::EndPoll(EndPollJob {
-                    channel_id,
-                    thread_root_message_index,
-                    message_index: message_event.event.message_index,
-                }),
-                end_date,
-                now,
-            );
-        }
-    }
-
     let files = message_event.event.content.blob_references();
     if !files.is_empty() {
         if let Some(expiry) = message_event.expires_at {
@@ -289,21 +277,48 @@ fn register_timer_jobs(
         }
     }
 
-    if let MessageContent::Prize(p) = &message_event.event.content {
-        timer_jobs.enqueue_job(
-            TimerJob::RefundPrize(RefundPrizeJob {
-                channel_id,
-                thread_root_message_index,
-                message_index: message_event.event.message_index,
-            }),
-            p.end_date,
-            now,
-        );
-    }
-
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    }
+
+    match &message_event.event.content {
+        MessageContent::Poll(p) => {
+            if let Some(end_date) = p.config.end_date {
+                timer_jobs.enqueue_job(
+                    TimerJob::EndPoll(EndPollJob {
+                        channel_id,
+                        thread_root_message_index,
+                        message_index: message_event.event.message_index,
+                    }),
+                    end_date,
+                    now,
+                );
+            }
+        }
+        MessageContent::Prize(p) => {
+            timer_jobs.enqueue_job(
+                TimerJob::RefundPrize(RefundPrizeJob {
+                    channel_id,
+                    thread_root_message_index,
+                    message_index: message_event.event.message_index,
+                }),
+                p.end_date,
+                now,
+            );
+        }
+        MessageContent::P2PSwap(c) => {
+            timer_jobs.enqueue_job(
+                TimerJob::MarkP2PSwapExpired(MarkP2PSwapExpiredJob {
+                    channel_id,
+                    thread_root_message_index,
+                    message_id: message_event.event.message_id,
+                }),
+                c.expires_at,
+                now,
+            );
+        }
+        _ => {}
     }
 }
 

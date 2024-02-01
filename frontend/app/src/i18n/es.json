@@ -368,7 +368,8 @@
             "crypto": "enviar mensajes criptográficos",
             "giphy": "enviar mensajes giphy",
             "prize": "enviar mensajes de premio",
-            "memeFighter": "enviar mensajes de Meme Fighter"
+            "memeFighter": "enviar mensajes de Meme Fighter",
+            "p2pSwap": "enviar mensajes de intercambio P2P"
         },
         "threadPermissions": {
             "default": "enviar mensajes en hilos de forma predeterminada",
@@ -381,7 +382,8 @@
             "crypto": "enviar mensajes criptográficos en hilos",
             "giphy": "enviar mensajes giphy en hilos",
             "prize": "enviar mensajes de premio en hilos",
-            "memeFighter": "enviar mensajes de Meme Fighter en hilos"
+            "memeFighter": "enviar mensajes de Meme Fighter en hilos",
+            "p2pSwap": "enviar mensajes de intercambio P2P en hilos"
         }
     },
     "rules": {
@@ -662,13 +664,10 @@
             "enterRecipientOwner": "Ingrese el principal de la cuenta del destinatario",
             "enterRecipientSubaccount": "Ingrese una subcuenta de destinatario opcional",
             "ledgerCanisterId": "ID del contenedor del libro mayor",
-            "enterLedgerCanisterId": "Ingrese el ID del contenedor del libro mayor",
             "tokenInfoUrl": "URL de información del token",
-            "enterTokenInfoUrl": "Ingrese una URL que muestre la información del token",
             "howToBuyUrl": "como comprar URL",
-            "enterHowToBuyUrl": "Ingrese una URL que muestre cómo comprar el token.",
             "transactionUrlFormat": "Formato de URL de transacción",
-            "enterTransactionUrlFormat": "P.ej. https://token.com/?index={transaction_index}"
+            "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Acciones del controlador de neuronas"
     },
@@ -857,7 +856,8 @@
         "benefits": "Beneficios del diamante",
         "message": "Cuéntame sobre la membresía Diamante",
         "lifetimeMessage": "Tienes membresía Diamond vitalicia.",
-        "lifetime": "Toda la vida"
+        "lifetime": "Toda la vida",
+        "p2pSwap": "Hacer/aceptar intercambios p2p"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",
@@ -1159,9 +1159,6 @@
     "sendTextDisabled": "Los mensajes de texto están deshabilitados",
     "disappearingMessages": {
         "label": "Mensajes que desaparecen",
-        "hours": "Horas)",
-        "minutes": "Minutos)",
-        "days": "Días)",
         "summary": "Los mensajes desaparecerán después de {duration}",
         "timeUpdatedBy": "{changedBy} establece el tiempo de desaparición del mensaje en {duration}",
         "disabledBy": "{changedBy} deshabilitó los mensajes que desaparecen",
@@ -1208,5 +1205,43 @@
         "swapTokenTo": "Intercambiar {tokenIn} por {tokenOut}",
         "quoteTooLow": "La mejor tarifa cotizada es {rate} {tokenOut} por {tokenIn} de {dex}. Esto da {amountOut} {tokenOut} para {amountIn} {tokenIn}. Solo puede intercambiar si el monto cotizado excede {minAmountOut}."
     },
-    "messageBlocked": "Mensaje oculto"
+    "messageBlocked": "Mensaje oculto",
+    "removePreviewQuestion": "¿Eliminar vista previa?",
+    "showPreview": "Mostrar vista previa",
+    "excessiveLinksNote": "Las vistas previas de enlaces están ocultas para mensajes con más de 5 enlaces.",
+    "hours": "Horas",
+    "minutes": "Minutos",
+    "days": "Días",
+    "p2pSwap": {
+        "builderTitle": "hacer oferta de permuta",
+        "expiryTime": "Tiempo de expiración",
+        "creatingYourMessage": "Espere mientras se crea una oferta de intercambio.",
+        "failedToCreateMessage": "No se pudo crear la oferta de intercambio",
+        "expired": "Venció",
+        "accepted": "Aceptado",
+        "accept": "Aceptar",
+        "cancel": "Cancelar",
+        "cancelled": "Cancelado",
+        "reserved": "Reservado",
+        "summary": "Esta es una oferta para intercambiar {fromAmount} {fromToken} por {toAmount} {toToken}.",
+        "youReserved": "Has reservado esta oferta y está pendiente de completarse.",
+        "youAccepted": "Has aceptado esta oferta y está pendiente de completarse.",
+        "reservedBy": "Esta oferta ha sido reservada por {user} y está pendiente de completarse.",
+        "acceptedBy": "Esta oferta ha sido aceptada por {user} y está pendiente de finalización.",
+        "youCompleted": "Has aceptado esta oferta.",
+        "completed": "Esta oferta ha sido aceptada por {user}.",
+        "confirmAccept": "Cuando acepte esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Recibirás {amountOther} {tokenOther} a cambio. ¿Desea continuar?",
+        "confirmCancel": "Cuando cancele esta oferta, {amount} {token} se transferirá del contenedor de OpenChat Escrow a su billetera. ¿Desea continuar?",
+        "insufficientBalanceMessage": "Necesita al menos {amount} {token} (incluye 2 tarifas de transacción) para aceptar este intercambio.",
+        "insufficientBalance": "Saldo insuficiente",
+        "tokenBalance": "saldo {token}",
+        "already_accepted": "Esta oferta de intercambio ya ha sido aceptada",
+        "swap_cancelled": "Esta oferta de intercambio ha sido cancelada.",
+        "swap_expired": "Esta oferta de intercambio ha caducado",
+        "swap_not_found": "Esta oferta de intercambio no se pudo encontrar",
+        "insufficient_funds": "No le quedan fondos suficientes para aceptar esta oferta de intercambio",
+        "unknown_accept_error": "Error al aceptar la oferta de intercambio",
+        "unknown_cancel_error": "Error al cancelar la oferta de intercambio",
+        "confirmSend": "Cuando cree esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Permanecerá allí hasta que la oferta caduque, usted la cancele o se acepte la oferta. ¿Desea continuar?"
+    }
 }

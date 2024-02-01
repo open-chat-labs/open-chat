@@ -1,8 +1,21 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AcceptP2PSwapArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type AcceptP2PSwapResponse = { 'ChatNotFound' : null } |
+  { 'Success' : AcceptSwapSuccess } |
+  { 'UserSuspended' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null } |
+  { 'InternalError' : string } |
+  { 'InsufficientFunds' : null };
+export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
+  { 'TokenBalance' : TokenBalanceGate } |
   { 'DiamondMember' : null } |
   { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
@@ -120,6 +133,14 @@ export interface CachedGroupChatSummaries {
 }
 export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
 export type CancelMessageReminderResponse = { 'Success' : null };
+export interface CancelP2PSwapArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type CancelP2PSwapResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -131,6 +152,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -541,8 +563,7 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'content' : MessageContent } } |
-  { 'MessageHardDeleted' : null } |
-  { 'MessageNotDeleted' : null };
+  { 'MessageHardDeleted' : null };
 export interface DiamondMembershipDetails {
   'pay_in_chat' : boolean,
   'subscription' : DiamondMembershipSubscription,
@@ -741,6 +762,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
   { 'PaymentFailed' : TransferFromError } |
+  { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -899,6 +921,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -1061,7 +1084,6 @@ export interface IndexedNotification {
 }
 export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
 export type InitUserPrincipalMigrationResponse = { 'Success' : null };
-export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
 export type InitialStateResponse = {
     'Success' : {
       'communities' : CommunitiesInitial,
@@ -1071,6 +1093,7 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'local_user_index_canister_id' : CanisterId,
       'suspended' : boolean,
     }
   };
@@ -1139,6 +1162,7 @@ export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
   { 'Custom' : CustomMessageContent } |
@@ -1154,6 +1178,7 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContentInitial } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
   { 'Custom' : CustomMessageContent } |
@@ -1193,8 +1218,10 @@ export interface MessagePermissions {
   'crypto' : [] | [PermissionRole],
   'giphy' : [] | [PermissionRole],
   'default' : PermissionRole,
+  'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
+  'p2p_swap' : [] | [PermissionRole],
 }
 export interface MessagePinned {
   'pinned_by' : UserId,
@@ -1362,10 +1389,49 @@ export interface OptionalMessagePermissions {
   'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
+  'p2p_swap' : PermissionRoleUpdate,
 }
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
+export interface P2PSwapAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
+}
+export interface P2PSwapCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface P2PSwapCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface P2PSwapContent {
+  'status' : P2PSwapStatus,
+  'token0_txn_in' : bigint,
+  'swap_id' : number,
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_at' : TimestampMillis,
+}
+export interface P2PSwapContentInitial {
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_in' : Milliseconds,
+}
+export type P2PSwapExpired = P2PSwapCancelled;
+export interface P2PSwapReserved { 'reserved_by' : UserId }
+export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
+  { 'Open' : null } |
+  { 'Accepted' : P2PSwapAccepted } |
+  { 'Cancelled' : P2PSwapCancelled } |
+  { 'Completed' : P2PSwapCompleted } |
+  { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1571,6 +1637,14 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
+export type ReserveP2PSwapResult = { 'Success' : ReserveP2PSwapSuccess } |
+  { 'SwapNotFound' : null } |
+  { 'Failure' : P2PSwapStatus };
+export interface ReserveP2PSwapSuccess {
+  'created' : TimestampMillis,
+  'content' : P2PSwapContent,
+  'created_by' : UserId,
+}
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1608,6 +1682,7 @@ export interface SelectedGroupUpdates {
   'blocked_users_added' : Array<UserId>,
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1619,6 +1694,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'TransferCannotBeZero' : null } |
+  { 'DuplicateMessageId' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -1662,8 +1738,10 @@ export interface SendMessageWithTransferToChannelArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToChannelResponse = {
-    'TextTooLong' : number
+    'Retrying' : [string, CompletedCryptoTransaction]
   } |
+  { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
   { 'TransferCannotBeZero' : null } |
@@ -1684,7 +1762,6 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
@@ -1701,8 +1778,10 @@ export interface SendMessageWithTransferToGroupArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToGroupResponse = {
-    'TextTooLong' : number
+    'Retrying' : [string, CompletedCryptoTransaction]
   } |
+  { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
@@ -1720,7 +1799,6 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SetAvatarArgs { 'avatar' : [] | [Document] }
@@ -1800,6 +1878,24 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
+  { 'Accepted' : SwapStatusErrorAccepted } |
+  { 'Cancelled' : SwapStatusErrorCancelled } |
+  { 'Completed' : SwapStatusErrorCompleted } |
+  { 'Expired' : SwapStatusErrorExpired };
+export interface SwapStatusErrorAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface SwapTokensArgs {
   'input_amount' : bigint,
   'min_output_amount' : bigint,
@@ -1875,6 +1971,10 @@ export type TipMessageResponse = { 'Retrying' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CannotTipSelf' : null };
+export interface TokenBalanceGate {
+  'min_balance' : bigint,
+  'ledger_canister_id' : CanisterId,
+}
 export interface TokenInfo {
   'fee' : bigint,
   'decimals' : number,
@@ -2083,6 +2183,7 @@ export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
+  'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_hot_group_exclusions' : ActorMethod<
     [AddHotGroupExclusionsArgs],
     AddHotGroupExclusionsResponse
@@ -2102,6 +2203,7 @@ export interface _SERVICE {
     [CancelMessageReminderArgs],
     CancelMessageReminderResponse
   >,
+  'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],
@@ -2131,7 +2233,7 @@ export interface _SERVICE {
     [InitUserPrincipalMigrationArgs],
     InitUserPrincipalMigrationResponse
   >,
-  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
+  'initial_state' : ActorMethod<[EmptyArgs], InitialStateResponse>,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'manage_favourite_chats' : ActorMethod<

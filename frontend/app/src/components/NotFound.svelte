@@ -1,28 +1,35 @@
 <script lang="ts">
-    import Link from "./Link.svelte";
-    import ModalPage from "./ModalPage.svelte";
-    import { _ } from "svelte-i18n";
-    import page from "page";
-    import { getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
-    import { routeForScope } from "../routes";
+    import { createEventDispatcher } from "svelte";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
+    import ModalContent from "./ModalContent.svelte";
+    import Button from "./Button.svelte";
+    import { mobileWidth } from "../stores/screenDimensions";
+    import ButtonGroup from "./ButtonGroup.svelte";
 
-    const client = getContext<OpenChat>("client");
-    $: chatListScope = client.chatListScope;
+    const dispatch = createEventDispatcher();
 </script>
 
-<ModalPage bgClass="none" minHeight="200px">
-    <div class="not-found" />
-    <div class="content">
-        <div>
-            <h1 class="msg">404</h1>
-            <Link underline={"always"} on:click={() => page(routeForScope($chatListScope))}
-                >{$_("home")}</Link>
-        </div>
+<ModalContent on:close>
+    <div class="body" slot="body">
+        <div class="not-found" />
+        <h1 class="msg">404</h1>
     </div>
-</ModalPage>
+    <div slot="footer">
+        <ButtonGroup align={$mobileWidth ? "fill" : "center"}>
+            <Button on:click={() => dispatch("close")}>
+                <Translatable resourceKey={i18nKey("goHome")} />
+            </Button>
+        </ButtonGroup>
+    </div>
+</ModalContent>
 
 <style lang="scss">
+    .body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
     .msg {
         @include font(bold, normal, fs-260);
         text-shadow: 3px 3px #000;
@@ -31,12 +38,12 @@
 
     .not-found {
         background-image: url("/assets/not_found.svg");
-        width: 400px;
-        height: 420px;
+        width: 250px;
+        height: 260px;
 
         @include mobile() {
-            width: 200px;
-            height: 210px;
+            width: 150px;
+            height: 160px;
         }
     }
 </style>

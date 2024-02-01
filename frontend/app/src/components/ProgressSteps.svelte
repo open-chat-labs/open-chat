@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { fade } from "svelte/transition";
     import { flip } from "svelte/animate";
     import Progress from "./Progress.svelte";
     import ProgressStep from "./ProgressStep.svelte";
     import type { InterpolationValues } from "openchat-client";
+    import { i18nKey } from "../i18n/i18n";
 
     export let stepLabels: string[];
     export let labelValues: InterpolationValues | undefined = undefined;
@@ -64,12 +64,12 @@
 <div>
     {#each toShow as status, i (stepLabels[i])}
         <div in:fade={{ duration: 500 }} animate:flip={{ duration: 500 }}>
-            <ProgressStep label={$_(stepLabels[i], { values: labelValues })} step={i} {status} />
+            <ProgressStep label={i18nKey(stepLabels[i], labelValues)} step={i} {status} />
         </div>
     {/each}
     {#if finalStatus !== undefined && finalLabel !== undefined}
         <div>
-            <ProgressStep label={$_(finalLabel, { values: labelValues })} status={finalStatus} />
+            <ProgressStep label={i18nKey(finalLabel, labelValues)} status={finalStatus} />
         </div>
     {/if}
 </div>

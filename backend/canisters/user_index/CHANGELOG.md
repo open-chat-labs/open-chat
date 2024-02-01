@@ -5,6 +5,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce size of user data when serialized ([#5289](https://github.com/open-chat-labs/open-chat/pull/5289))
+- Log the users whose Diamond membership payments failed ([#5305](https://github.com/open-chat-labs/open-chat/pull/5305))
+
+### Fixed
+
+- Unblock payments for users whose previous Diamond payments failed ([#5295](https://github.com/open-chat-labs/open-chat/pull/5295))
+
+## [[2.0.1024](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1024-user_index)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+- Sync user principals to the Identity canister ([#5264](https://github.com/open-chat-labs/open-chat/pull/5264))
+
+### Changed
+
+- Rename `service_principals` to `governance_principals` in init args ([#5251](https://github.com/open-chat-labs/open-chat/pull/5251))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+### Fixed
+
+- Fix message reporting ([#5258](https://github.com/open-chat-labs/open-chat/pull/5258))
+
+## [[2.0.1018](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1018-user_index)] - 2024-01-24
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+
+### Removed
+
+- Remove `DiamondMembershipExpiryDate` event which is no longer needed ([#5245](https://github.com/open-chat-labs/open-chat/pull/5245))
+
+### Fixed
+
+- Notify community canisters when a user is unsuspended ([#5227](https://github.com/open-chat-labs/open-chat/pull/5227))
+- Unsuspend user who was only partially unsuspended due to bug ([#5247](https://github.com/open-chat-labs/open-chat/pull/5247))
+- Unsuspend more users who were also affected ([#5248](https://github.com/open-chat-labs/open-chat/pull/5248))
+
+## [[2.0.1007](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1007-user_index)] - 2024-01-16
+
+### Added
+
+- Add endpoint for viewing moderation reports ([#5188](https://github.com/open-chat-labs/open-chat/pull/5188))
+
+### Changed
+
+- Add `is_platform_operator` to `current_user` response ([#5161](https://github.com/open-chat-labs/open-chat/pull/5161))
+
+## [[2.0.1000](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1000-user_index)] - 2024-01-05
+
+### Added
+
+- Add endpoint for platform_ops to set diamond fees ([#5108](https://github.com/open-chat-labs/open-chat/pull/5108))
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
 ## [[2.0.977](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.977-user_index)] - 2023-12-19
 
 ### Changed

@@ -1,12 +1,16 @@
-use candid::Principal;
+use crate::ecdsa::{get_key_id, CanisterEcdsaRequest};
+use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use ic_transport_types::EnvelopeContent;
 use k256::pkcs8::EncodePublicKey;
 use k256::PublicKey;
 use nns_governance_canister::types::Neuron;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
 use utils::env::Environment;
+use utils::time::{MINUTE_IN_MS, NANOS_PER_MILLISECOND};
 
 mod ecdsa;
 mod guards;
@@ -15,6 +19,8 @@ mod lifecycle;
 mod memory;
 mod queries;
 mod updates;
+
+const IC_URL: &str = "https://icp-api.io";
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<BuildVersion>> = RefCell::default();
@@ -37,6 +43,32 @@ impl RuntimeState {
         self.data.governance_principals.contains(&caller)
     }
 
+    pub fn prepare_canister_call_via_ecdsa<A: CandidType>(
+        &mut self,
+        canister_id: CanisterId,
+        method_name: String,
+        args: A,
+    ) -> CanisterEcdsaRequest {
+        let nonce: [u8; 8] = self.env.rng().gen();
+
+        let envelope_content = EnvelopeContent::Call {
+            nonce: Some(nonce.to_vec()),
+            ingress_expiry: self.env.now_nanos() + 5 * MINUTE_IN_MS * NANOS_PER_MILLISECOND,
+            sender: self.data.get_principal(),
+            canister_id,
+            method_name,
+            arg: candid::encode_one(&args).unwrap(),
+        };
+
+        CanisterEcdsaRequest {
+            envelope_content,
+            request_url: format!("{IC_URL}/api/v2/canister/{canister_id}/call"),
+            public_key: self.data.get_public_key_der(),
+            key_id: get_key_id(false),
+            this_canister_id: self.env.canister_id(),
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -48,16 +80,25 @@ impl RuntimeState {
             public_key_der: hex::encode(self.data.get_public_key_der()),
             principal: self.data.get_principal(),
             governance_principals: self.data.governance_principals.clone(),
-            neurons: self
+            active_neurons: self
                 .data
                 .neurons
-                .value
+                .active_neurons
                 .iter()
                 .filter_map(|n| n.id.as_ref().map(|i| i.id))
                 .collect(),
+            spawning_neurons: self
+                .data
+                .neurons
+                .spawning_neurons
+                .iter()
+                .filter_map(|n| n.id.as_ref().map(|i| i.id))
+                .collect(),
+            disbursed_neurons: self.data.neurons.disbursed_neurons.clone(),
             canister_ids: CanisterIds {
-                nns_governance_canister_id: self.data.nns_governance_canister_id,
-                nns_ledger_canister_id: self.data.nns_ledger_canister_id,
+                nns_governance_canister: self.data.nns_governance_canister_id,
+                nns_ledger_canister: self.data.nns_ledger_canister_id,
+                cycles_minting_canister: self.data.cycles_minting_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -70,8 +111,9 @@ struct Data {
     pub governance_principals: Vec<Principal>,
     pub nns_governance_canister_id: CanisterId,
     pub nns_ledger_canister_id: CanisterId,
+    pub cycles_minting_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub neurons: Timestamped<Vec<Neuron>>,
+    pub neurons: Neurons,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -81,6 +123,7 @@ impl Data {
         governance_principals: Vec<Principal>,
         nns_governance_canister_id: CanisterId,
         nns_ledger_canister_id: CanisterId,
+        cycles_minting_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
@@ -89,8 +132,9 @@ impl Data {
             governance_principals,
             nns_governance_canister_id,
             nns_ledger_canister_id,
+            cycles_minting_canister_id,
             cycles_dispenser_canister_id,
-            neurons: Timestamped::default(),
+            neurons: Neurons::default(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -120,13 +164,24 @@ pub struct Metrics {
     pub public_key_der: String,
     pub principal: Principal,
     pub governance_principals: Vec<Principal>,
-    pub neurons: Vec<u64>,
+    pub active_neurons: Vec<u64>,
+    pub spawning_neurons: Vec<u64>,
+    pub disbursed_neurons: Vec<u64>,
     pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
-    pub nns_governance_canister_id: CanisterId,
-    pub nns_ledger_canister_id: CanisterId,
+    pub nns_governance_canister: CanisterId,
+    pub nns_ledger_canister: CanisterId,
+    pub cycles_minting_canister: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct Neurons {
+    timestamp: TimestampMillis,
+    active_neurons: Vec<Neuron>,
+    spawning_neurons: Vec<Neuron>,
+    disbursed_neurons: Vec<u64>,
 }

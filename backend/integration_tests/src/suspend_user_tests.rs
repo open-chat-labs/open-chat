@@ -1,5 +1,5 @@
 use crate::env::ENV;
-use crate::rng::random_message_id;
+use crate::rng::{random_message_id, random_string};
 use crate::utils::now_millis;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
@@ -26,7 +26,9 @@ fn suspend_user() {
         platform_moderator,
     } = init_test_data(env, canister_ids, *controller);
 
-    let group = client::user::happy_path::create_group(env, &user1, "SUSPEND_USER_TEST", false, false);
+    let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
+    let community_id = client::user::happy_path::create_community(env, &user1, &random_string(), false, vec![random_string()]);
+    let channel_id = client::community::happy_path::create_channel(env, user1.principal, community_id, true, random_string());
 
     client::user_index::suspend_user(
         env,
@@ -67,7 +69,7 @@ fn suspend_user() {
     let group_message_response1 = client::group::send_message_v2(
         env,
         user1.principal,
-        group.into(),
+        group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
@@ -85,6 +87,30 @@ fn suspend_user() {
     assert!(matches!(
         group_message_response1,
         group_canister::send_message_v2::Response::UserSuspended
+    ));
+
+    let community_message_response1 = client::community::send_message(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::send_message::Args {
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_message_id(),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+            message_filter_failed: None,
+        },
+    );
+    assert!(matches!(
+        community_message_response1,
+        community_canister::send_message::Response::UserSuspended
     ));
 
     client::user_index::unsuspend_user(
@@ -122,7 +148,7 @@ fn suspend_user() {
     let group_message_response2 = client::group::send_message_v2(
         env,
         user1.principal,
-        group.into(),
+        group_id.into(),
         &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
@@ -140,6 +166,30 @@ fn suspend_user() {
     assert!(matches!(
         group_message_response2,
         group_canister::send_message_v2::Response::Success(_)
+    ));
+
+    let community_message_response2 = client::community::send_message(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::send_message::Args {
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_message_id(),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
+            replies_to: None,
+            mentioned: Vec::new(),
+            forwarding: false,
+            community_rules_accepted: None,
+            channel_rules_accepted: None,
+            message_filter_failed: None,
+        },
+    );
+    assert!(matches!(
+        community_message_response2,
+        community_canister::send_message::Response::Success(_)
     ));
 }
 
@@ -257,7 +307,7 @@ fn suspended_users_returned_from_user_index_users() {
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
-    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user1 = client::register_diamond_user(env, canister_ids, controller);
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 

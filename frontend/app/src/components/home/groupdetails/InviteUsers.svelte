@@ -16,9 +16,10 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { interpolateLevel } from "../../../utils/i18n";
     import InviteUsersWithLink from "../InviteUsersWithLink.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -52,7 +53,7 @@
 </script>
 
 <SectionHeader border={false} flush>
-    <h4>{interpolateLevel("group.inviteUsers", level, true)}</h4>
+    <h4><Translatable resourceKey={i18nKey("group.inviteUsers", undefined, level, true)} /></h4>
     <span title={$_("close")} class="close" on:click={cancelInviteUsers}>
         <HoverIcon>
             {#if closeIcon === "close"}
@@ -66,7 +67,7 @@
 
 {#if !busy}
     <div class="find-user">
-        <CollapsibleCard open headerText={$_("searchForUsername")}>
+        <CollapsibleCard open headerText={i18nKey("searchForUsername")}>
             <SelectUsers
                 {userLookup}
                 mode={"edit"}
@@ -77,7 +78,7 @@
         {#if canInvite}
             <CollapsibleCard
                 open
-                headerText={interpolateLevel("invite.inviteWithLink", container.level, true)}>
+                headerText={i18nKey("invite.inviteWithLink", undefined, container.level, true)}>
                 <InviteUsersWithLink {container} />
             </CollapsibleCard>
         {/if}
@@ -94,7 +95,9 @@
         loading={busy}
         square
         on:click={inviteUsers}
-        fill>{interpolateLevel("group.inviteUsers", level, true)}</Button>
+        fill
+        ><Translatable
+            resourceKey={i18nKey("group.inviteUsers", undefined, level, true)} /></Button>
 </div>
 
 <style lang="scss">

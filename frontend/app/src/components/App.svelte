@@ -3,7 +3,6 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
-    import "../utils/i18n";
     import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
@@ -15,7 +14,7 @@
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, UserLoggedIn } from "openchat-client";
+    import { OpenChat, UserLoggedIn, type DiamondMembershipFees } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -101,11 +100,13 @@
             unfreezeGroup,
             addMessageFilter,
             removeMessageFilter,
+            reportedMessages,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            setDiamondMembershipFees,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
             pauseEventLoop: () => client.pauseEventLoop(),
@@ -188,6 +189,10 @@
 
     function removeMessageFilter(id: bigint): void {
         client.removeMessageFilter(id);
+    }
+
+    function reportedMessages(userId?: string): void {
+        console.log(client.reportedMessages(userId));
     }
 
     function deleteChannelMessage(
@@ -276,6 +281,16 @@
                 console.log("User upgrade concurrency set", value);
             } else {
                 console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
+    }
+
+    function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
+        client.setDiamondMembershipFees(fees).then((success) => {
+            if (success) {
+                console.log("Diamond membership fees set", fees);
+            } else {
+                console.log("Failed to set diamond membership fees", fees);
             }
         });
     }
@@ -653,6 +668,11 @@
             top: -1000px;
             left: -1000px;
             @include z-index("dollar");
+        }
+
+        .is-translatable {
+            position: relative;
+            top: 4px;
         }
     }
 

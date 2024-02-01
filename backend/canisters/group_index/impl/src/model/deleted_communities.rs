@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
@@ -8,6 +7,7 @@ use types::{CommunityId, DeletedCommunityInfo, UserId};
 pub struct DeletedCommunities {
     communities: HashMap<CommunityId, DeletedCommunityInfo>,
     pending_community_deleted_notifications: VecDeque<(CommunityId, UserId)>,
+    failed_notifications: Vec<(CommunityId, UserId)>,
 }
 
 impl DeletedCommunities {
@@ -36,6 +36,15 @@ impl DeletedCommunities {
         self.pending_community_deleted_notifications
             .pop_front()
             .and_then(|(community_id, user_id)| self.communities.get(&community_id).map(|d| (user_id, d.clone())))
+    }
+
+    pub fn mark_notification_failed(&mut self, community_id: CommunityId, user_id: UserId, retry: bool) {
+        if retry {
+            self.pending_community_deleted_notifications
+                .push_back((community_id, user_id));
+        } else {
+            self.failed_notifications.push((community_id, user_id));
+        }
     }
 
     pub fn notifications_pending(&self) -> usize {

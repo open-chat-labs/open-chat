@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import AreYouSure from "../../../AreYouSure.svelte";
@@ -20,6 +19,8 @@
     import { toastStore } from "../../../../stores/toast";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
     import User from "../../groupdetails/User.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,19 +52,22 @@
 
     function createLookup(
         members: Map<string, Member>,
-        allUsers: UserLookup
+        allUsers: UserLookup,
     ): Record<string, UserSummary> {
-        return [...members.values()].reduce((map, m) => {
-            const user = allUsers[m.userId];
-            if (user !== undefined) {
-                map[user.userId] = {
-                    ...user,
-                    displayName: m.displayName ?? user.displayName,
-                    username: user.username,
-                };
-            }
-            return map;
-        }, {} as Record<string, UserSummary>);
+        return [...members.values()].reduce(
+            (map, m) => {
+                const user = allUsers[m.userId];
+                if (user !== undefined) {
+                    map[user.userId] = {
+                        ...user,
+                        displayName: m.displayName ?? user.displayName,
+                        username: user.username,
+                    };
+                }
+                return map;
+            },
+            {} as Record<string, UserSummary>,
+        );
     }
 
     function matchesSearch(searchTerm: string, userGroup: UserGroupDetails): boolean {
@@ -96,7 +100,9 @@
             .deleteUserGroup(community.id, groupToDelete)
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast($_("communities.errors.deleteUserGroupFailed"));
+                    toastStore.showFailureToast(
+                        i18nKey("communities.errors.deleteUserGroupFailed"),
+                    );
                 }
             })
             .finally(() => (groupToDelete = undefined));
@@ -118,7 +124,7 @@
 </script>
 
 {#if confirmingDelete}
-    <AreYouSure message={$_("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
+    <AreYouSure message={i18nKey("communities.confirmDeleteUserGroup")} action={deleteUserGroup} />
 {/if}
 
 {#if selectedGroup !== undefined}
@@ -137,7 +143,7 @@
                     fill
                     searching={false}
                     bind:searchTerm
-                    placeholder={"communities.searchUserGroups"} />
+                    placeholder={i18nKey("communities.searchUserGroups")} />
             </div>
             {#if canManageUserGroups}
                 <div class="add">
@@ -150,14 +156,14 @@
         <div class="groups">
             {#if matchingGroups.length === 0}
                 <div class="no-groups">
-                    {$_("communities.noUserGroups")}
+                    <Translatable resourceKey={i18nKey("communities.noUserGroups")} />
                 </div>
             {:else}
                 {#each matchingGroups as userGroup}
                     <div class="user-group-card">
                         <CollapsibleCard
                             open={userGroup.id === openedGroupId}
-                            headerText={userGroup.name}>
+                            headerText={i18nKey(userGroup.name)}>
                             <h4 slot="titleSlot" class="name">
                                 {#if canManageUserGroups}
                                     <div
@@ -186,7 +192,7 @@
                                 <span class="members">
                                     <span class="num"
                                         >{userGroup.members.size.toLocaleString()}</span>
-                                    {$_("members")}
+                                    <Translatable resourceKey={i18nKey("members")} />
                                 </span>
                             </h4>
 
@@ -284,7 +290,9 @@
                 justify-content: space-between;
                 align-items: center;
                 padding: toRem(12) $sp4;
-                transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+                transition:
+                    background-color ease-in-out 100ms,
+                    border-color ease-in-out 100ms;
                 gap: 12px;
 
                 @media (hover: hover) {

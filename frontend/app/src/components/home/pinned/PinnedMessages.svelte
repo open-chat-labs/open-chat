@@ -15,6 +15,8 @@
     import type { RemoteData } from "../../../utils/remoteData";
     import Loading from "../../Loading.svelte";
     import PinnedMessage from "./PinnedMessage.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let pinned: Set<number>;
     export let chatId: MultiUserChatIdentifier;
@@ -65,7 +67,7 @@
                         messages = {
                             kind: "success",
                             data: client.groupMessagesByDate(
-                                resp.events.sort((a, b) => a.index - b.index)
+                                resp.events.sort((a, b) => a.index - b.index),
                             ),
                         };
 
@@ -103,7 +105,7 @@
 </script>
 
 <SectionHeader gap>
-    <h4>{$_("pinnedMessages")}</h4>
+    <h4><Translatable resourceKey={i18nKey("pinnedMessages")} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

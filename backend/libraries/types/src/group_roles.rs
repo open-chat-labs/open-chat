@@ -38,8 +38,7 @@ pub struct MessagePermissions {
     pub crypto: Option<GroupPermissionRole>,
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
-    #[serde(default)]
-    pub p2p_trade: Option<GroupPermissionRole>,
+    pub p2p_swap: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
 
@@ -75,6 +74,7 @@ pub struct OptionalMessagePermissions {
     pub crypto: OptionUpdate<GroupPermissionRole>,
     pub giphy: OptionUpdate<GroupPermissionRole>,
     pub prize: OptionUpdate<GroupPermissionRole>,
+    pub p2p_swap: OptionUpdate<GroupPermissionRole>,
     pub p2p_trade: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
@@ -111,7 +111,7 @@ impl Default for MessagePermissions {
             crypto: None,
             giphy: None,
             prize: None,
-            p2p_trade: None,
+            p2p_swap: None,
             custom: Vec::new(),
         }
     }

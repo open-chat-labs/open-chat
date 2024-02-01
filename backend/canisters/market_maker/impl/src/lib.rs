@@ -5,7 +5,7 @@ use icdex_client::ICDexClient;
 use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use types::{
     AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
     Timestamped, TokenInfo,
@@ -91,6 +91,7 @@ struct Data {
     pub orders_log: OrdersLog,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
+    pub balance_history: VecDeque<CanisterBalances>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -112,6 +113,7 @@ impl Data {
             orders_log: OrdersLog::default(),
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
+            balance_history: VecDeque::new(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -170,4 +172,10 @@ fn on_order_cancelled(exchange_id: ExchangeId, order: CancelOrderRequest) {
             state.data.orders_log.log_order_cancelled(exchange_id, order, now);
         })
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CanisterBalances {
+    pub timestamp: TimestampMillis,
+    pub balances: BTreeMap<CanisterId, u128>,
 }

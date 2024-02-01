@@ -4,7 +4,7 @@ use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use local_user_index_canister::Event;
+use itertools::Itertools;
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
@@ -24,22 +24,34 @@ fn post_upgrade(args: Args) {
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id, data.test_mode);
     init_state(env, data, args.wasm_version);
 
+    info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    // Post upgrade - remove
     mutate_state(|state| {
-        let now = state.env.now();
-        for user in state.data.users.iter() {
-            if let Some(expires_at) = user.diamond_membership_details.expires_at() {
-                if expires_at > now {
-                    for local_user_index_canister_id in state.data.local_index_map.canisters() {
-                        state.data.user_index_event_sync_queue.push(
-                            *local_user_index_canister_id,
-                            Event::DiamondMembershipExpiryDate(user.user_id, expires_at),
-                        );
-                    }
-                }
+        if !state.data.legacy_principals_synced && state.data.test_mode {
+            state.data.legacy_principals_synced = true;
+            state
+                .data
+                .legacy_principals_sync_queue
+                .extend(state.data.users.iter().map(|u| u.principal));
+
+            crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
+        }
+
+        let users_whose_payments_failed: Vec<_> = state
+            .data
+            .users
+            .iter()
+            .filter(|u| u.diamond_membership_details.payment_in_progress())
+            .map(|u| u.user_id)
+            .collect();
+
+        for user_id in users_whose_payments_failed.iter() {
+            if let Some(membership) = state.data.users.diamond_membership_details_mut(user_id) {
+                membership.set_payment_in_progress(false);
             }
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
-    });
 
-    info!(version = %args.wasm_version, "Post-upgrade complete");
+        info!(users_whose_payments_failed = ?users_whose_payments_failed.into_iter().map(|u| u.to_string()).collect_vec());
+    });
 }

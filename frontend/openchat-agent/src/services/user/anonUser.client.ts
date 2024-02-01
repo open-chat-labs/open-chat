@@ -1,3 +1,5 @@
+import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { AcceptP2PSwapResponse } from "openchat-shared";
 import type {
     InitialStateResponse,
     UpdatesResponse,
@@ -5,7 +7,7 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
-    DirectChatEvent,
+    ChatEvent,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -23,7 +25,6 @@ import type {
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
@@ -130,7 +131,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -139,7 +140,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _messageIndex: number,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -150,7 +151,7 @@ export class AnonUserClient {
         _ascending: boolean,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -185,7 +186,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToGroup(
         _groupId: GroupChatIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -204,7 +205,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToChannel(
         _id: ChannelIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -329,14 +330,6 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    initUserPrincipalMigration(_newPrincipal: string): Promise<void> {
-        throw new AnonymousOperationError();
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
-        throw new AnonymousOperationError();
-    }
-
     getDeletedMessage(_userId: string, _messageId: bigint): Promise<DeletedDirectMessageResponse> {
         throw new AnonymousOperationError();
     }
@@ -403,6 +396,14 @@ export class AnonUserClient {
     }
 
     deleteDirectChat(_userId: string, _blockUser: boolean): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 }

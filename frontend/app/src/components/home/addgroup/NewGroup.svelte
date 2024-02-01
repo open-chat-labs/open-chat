@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
@@ -27,7 +26,8 @@
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
-    import { interpolateLevel } from "../../../utils/i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -83,7 +83,7 @@
         let steps = [
             { labelKey: "group.details", valid: detailsValid },
             { labelKey: "access.visibility", valid: visibilityValid },
-            { labelKey: $_("rules.rules"), valid: rulesValid },
+            { labelKey: "rules.rules", valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -99,55 +99,55 @@
         return client.searchUsersForInvite(term, 20, candidateGroup.level, true, canInvite);
     }
 
-    function interpolateError(error: string, level: Level): string {
-        return interpolateLevel(error, level, true);
-    }
-
-    function groupUpdateErrorMessage(resp: UpdateGroupResponse, level: Level): string | undefined {
+    function groupUpdateErrorMessage(
+        resp: UpdateGroupResponse,
+        level: Level,
+    ): ResourceKey | undefined {
         if (resp.kind === "success") return undefined;
         if (resp.kind === "unchanged") return undefined;
-        if (resp.kind === "name_too_short") return "groupNameTooShort";
-        if (resp.kind === "name_too_long") return "groupNameTooLong";
-        if (resp.kind === "name_reserved") return "groupNameReserved";
-        if (resp.kind === "desc_too_long") return "groupDescTooLong";
-        if (resp.kind === "name_taken" && level === "group") return "groupAlreadyExists";
-        if (resp.kind === "name_taken") return "channelAlreadyExists";
-        if (resp.kind === "not_in_group") return "userNotInGroup";
-        if (resp.kind === "internal_error") return "groupUpdateFailed";
-        if (resp.kind === "not_authorized") return "groupUpdateFailed";
-        if (resp.kind === "avatar_too_big") return "avatarTooBig";
-        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
-        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
-        if (resp.kind === "user_suspended") return "userSuspended";
-        if (resp.kind === "chat_frozen") return "chatFrozen";
-        if (resp.kind === "failure") return "failure";
-        if (resp.kind === "offline") return "offlineError";
+        if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");
+        if (resp.kind === "name_too_long") return i18nKey("groupNameTooLong");
+        if (resp.kind === "name_reserved") return i18nKey("groupNameReserved");
+        if (resp.kind === "desc_too_long") return i18nKey("groupDescTooLong");
+        if (resp.kind === "name_taken" && level === "group") return i18nKey("groupAlreadyExists");
+        if (resp.kind === "name_taken") return i18nKey("channelAlreadyExists");
+        if (resp.kind === "not_in_group") return i18nKey("userNotInGroup");
+        if (resp.kind === "internal_error") return i18nKey("groupUpdateFailed");
+        if (resp.kind === "not_authorized") return i18nKey("groupUpdateFailed");
+        if (resp.kind === "avatar_too_big") return i18nKey("avatarTooBig");
+        if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
+        if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
+        if (resp.kind === "user_suspended") return i18nKey("userSuspended");
+        if (resp.kind === "chat_frozen") return i18nKey("chatFrozen");
+        if (resp.kind === "failure") return i18nKey("failure");
+        if (resp.kind === "offline") return i18nKey("offlineError");
         throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
     }
 
     function groupCreationErrorMessage(
         resp: CreateGroupResponse,
         level: Level,
-    ): string | undefined {
+    ): ResourceKey | undefined {
         if (resp.kind === "success") return undefined;
-        if (resp.kind === "offline") return "offlineError";
-        if (resp.kind === "internal_error") return "groupCreationFailed";
-        if (resp.kind === "name_too_short") return "groupNameTooShort";
-        if (resp.kind === "name_too_long") return "groupNameTooLong";
-        if (resp.kind === "name_reserved") return "groupNameReserved";
-        if (resp.kind === "description_too_long") return "groupDescTooLong";
-        if (resp.kind === "group_name_taken" && level === "group") return "groupAlreadyExists";
-        if (resp.kind === "group_name_taken") return "channelAlreadyExists";
-        if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
-        if (resp.kind === "max_groups_created") return "maxGroupsCreated";
-        if (resp.kind === "throttled") return "groupCreationFailed";
-        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
-        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
-        if (resp.kind === "user_suspended") return "userSuspended";
-        if (resp.kind === "default_must_be_public") return "defaultMustBePublic";
+        if (resp.kind === "offline") return i18nKey("offlineError");
+        if (resp.kind === "internal_error") return i18nKey("groupCreationFailed");
+        if (resp.kind === "name_too_short") return i18nKey("groupNameTooShort");
+        if (resp.kind === "name_too_long") return i18nKey("groupNameTooLong");
+        if (resp.kind === "name_reserved") return i18nKey("groupNameReserved");
+        if (resp.kind === "description_too_long") return i18nKey("groupDescTooLong");
+        if (resp.kind === "group_name_taken" && level === "group")
+            return i18nKey("groupAlreadyExists");
+        if (resp.kind === "group_name_taken") return i18nKey("channelAlreadyExists");
+        if (resp.kind === "avatar_too_big") return i18nKey("groupAvatarTooBig");
+        if (resp.kind === "max_groups_created") return i18nKey("maxGroupsCreated");
+        if (resp.kind === "throttled") return i18nKey("groupCreationFailed");
+        if (resp.kind === "rules_too_short") return i18nKey("groupRulesTooShort");
+        if (resp.kind === "rules_too_long") return i18nKey("groupRulesTooLong");
+        if (resp.kind === "user_suspended") return i18nKey("userSuspended");
+        if (resp.kind === "default_must_be_public") return i18nKey("defaultMustBePublic");
         if (resp.kind === "unauthorized_to_create_public_group")
-            return "unauthorizedToCreatePublicGroup";
-        return "groupCreationFailed";
+            return i18nKey("unauthorizedToCreatePublicGroup");
+        return i18nKey("groupCreationFailed");
     }
 
     function optionallyInviteUsers(chatId: MultiUserChatIdentifier): Promise<void> {
@@ -211,9 +211,13 @@
                 if (resp.kind === "success") {
                     originalGroup = updatedGroup;
                 } else {
-                    const err = groupUpdateErrorMessage(resp, updatedGroup.level);
-                    if (err) {
-                        toastStore.showFailureToast(interpolateError(err, updatedGroup.level));
+                    const resourceKey = groupUpdateErrorMessage(resp, updatedGroup.level);
+                    if (resourceKey) {
+                        toastStore.showFailureToast({
+                            ...resourceKey,
+                            level: updatedGroup.level,
+                            lowercase: true,
+                        });
                     }
                 }
             })
@@ -232,8 +236,13 @@
             .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
-                    const err = groupCreationErrorMessage(resp, level);
-                    if (err) toastStore.showFailureToast(interpolateError(err, level));
+                    const resourceKey = groupCreationErrorMessage(resp, level);
+                    if (resourceKey)
+                        toastStore.showFailureToast({
+                            ...resourceKey,
+                            level,
+                            lowercase: true,
+                        });
                     step = 0;
                 } else if (!hideInviteUsers) {
                     return optionallyInviteUsers(resp.canisterId)
@@ -241,7 +250,7 @@
                             onGroupCreated(resp.canisterId);
                         })
                         .catch((_err) => {
-                            toastStore.showFailureToast("inviteUsersFailed");
+                            toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                             step = 0;
                         });
                 } else {
@@ -249,7 +258,7 @@
                 }
             })
             .catch((_err) => {
-                toastStore.showFailureToast("groupCreationFailed");
+                toastStore.showFailureToast(i18nKey("groupCreationFailed"));
                 step = 0;
             })
             .finally(() => (busy = false));
@@ -275,8 +284,9 @@
 
 {#if confirming}
     <AreYouSure
-        message={interpolateLevel(
+        message={i18nKey(
             `confirmMakeGroup${candidateGroup.public ? "Public" : "Private"}`,
+            undefined,
             candidateGroup.level,
             true,
         )}
@@ -285,9 +295,10 @@
 
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">
-        {editing
-            ? interpolateLevel("group.edit", candidateGroup.level, true)
-            : interpolateLevel("group.createTitle", candidateGroup.level, true)}
+        <Translatable
+            resourceKey={editing
+                ? i18nKey("group.edit", undefined, candidateGroup.level, true)
+                : i18nKey("group.createTitle", undefined, candidateGroup.level, true)} />
     </div>
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
@@ -344,7 +355,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -353,7 +365,7 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => dispatch("close")}
-                    secondary>{$_("cancel")}</Button>
+                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                 {#if editing}
                     <Button
@@ -362,13 +374,19 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => updateGroup()}
-                        >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.update",
+                                undefined,
+                                candidateGroup.level,
+                                true,
+                            )} /></Button>
                 {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step + 1)}>
-                        {$_("group.next")}
+                        on:click={() => (step = step + 1)}
+                        ><Translatable resourceKey={i18nKey("group.next")} />
                     </Button>
                 {:else}
                     <Button
@@ -377,7 +395,13 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={createGroup}
-                        >{interpolateLevel("group.create", candidateGroup.level, true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.create",
+                                undefined,
+                                candidateGroup.level,
+                                true,
+                            )} /></Button>
                 {/if}
             </div>
         </div>

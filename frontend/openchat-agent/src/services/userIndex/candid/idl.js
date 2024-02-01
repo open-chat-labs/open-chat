@@ -74,6 +74,7 @@ export const idlFactory = ({ IDL }) => {
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
+      'is_platform_operator' : IDL.Bool,
       'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
@@ -186,6 +187,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemovePlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const ReportedMessagesArgs = IDL.Record({ 'user_id' : IDL.Opt(UserId) });
+  const ReportedMessagesResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'json' : IDL.Text }),
+  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -210,6 +215,22 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummary),
     }),
+  });
+  const DiamondMembershipFeesByDuration = IDL.Record({
+    'one_year' : IDL.Nat64,
+    'lifetime' : IDL.Nat64,
+    'one_month' : IDL.Nat64,
+    'three_months' : IDL.Nat64,
+  });
+  const SetDiamondMembershipFeesArgs = IDL.Record({
+    'fees' : IDL.Record({
+      'icp_fees' : DiamondMembershipFeesByDuration,
+      'chat_fees' : DiamondMembershipFeesByDuration,
+    }),
+  });
+  const SetDiamondMembershipFeesResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'Success' : IDL.Null,
   });
   const SetDisplayNameArgs = IDL.Record({ 'display_name' : IDL.Opt(IDL.Text) });
   const SetDisplayNameResponse = IDL.Variant({
@@ -376,7 +397,17 @@ export const idlFactory = ({ IDL }) => {
         [RemovePlatformOperatorResponse],
         [],
       ),
+    'reported_messages' : IDL.Func(
+        [ReportedMessagesArgs],
+        [ReportedMessagesResponse],
+        ['query'],
+      ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_diamond_membership_fees' : IDL.Func(
+        [SetDiamondMembershipFeesArgs],
+        [SetDiamondMembershipFeesResponse],
+        [],
+      ),
     'set_display_name' : IDL.Func(
         [SetDisplayNameArgs],
         [SetDisplayNameResponse],

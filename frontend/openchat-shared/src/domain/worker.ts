@@ -12,7 +12,6 @@ import type {
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
-    DirectChatEvent,
     DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
@@ -21,7 +20,6 @@ import type {
     FreezeGroupResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
-    GroupChatEvent,
     GroupChatSummary,
     IndexRange,
     InviteCodeResponse,
@@ -64,6 +62,8 @@ import type {
     MessageContext,
     PendingCryptocurrencyTransfer,
     TipMessageResponse,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -73,7 +73,6 @@ import type {
     CheckUsernameResponse,
     CreatedUser,
     CurrentUserResponse,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     RegisterUserResponse,
@@ -145,6 +144,7 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
+import type { TranslationCorrection, TranslationCorrections } from "./i18n";
 /**
  * Worker request types
  */
@@ -194,8 +194,6 @@ export type WorkerRequest =
     | ToggleMuteNotifications
     | GetPublicGroupSummary
     | GetUserStorageLimits
-    | InitUserPrincipalMigration
-    | MigrateUserPrincipal
     | SearchUsers
     | CheckUsername
     | RehydrateMessage
@@ -252,6 +250,7 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetCommunityUpgradeConcurrency
     | SetUserUpgradeConcurrency
+    | SetDiamondMembershipFees
     | StakeNeuronForSubmittingProposals
     | UpdateMarketMakerConfig
     | SetMessageReminder
@@ -308,7 +307,33 @@ export type WorkerRequest =
     | ApproveTransfer
     | DeleteDirectChat
     | GetDiamondMembershipFees
-    | GetExchangeRates;
+    | GetReportedMessages
+    | SetTranslationCorrection
+    | ApproveTranslationCorrection
+    | RejectTranslationCorrection
+    | GetTranslationCorrections
+    | GetExchangeRates
+    | AcceptP2PSwap
+    | CancelP2PSwap;
+
+type GetTranslationCorrections = {
+    kind: "getTranslationCorrections";
+};
+
+type SetTranslationCorrection = {
+    kind: "setTranslationCorrection";
+    correction: TranslationCorrection;
+};
+
+type ApproveTranslationCorrection = {
+    kind: "approveTranslationCorrection";
+    correction: TranslationCorrection;
+};
+
+type RejectTranslationCorrection = {
+    kind: "rejectTranslationCorrection";
+    correction: TranslationCorrection;
+};
 
 type LoadSavedCryptoAccounts = {
     kind: "loadSavedCryptoAccounts";
@@ -817,16 +842,6 @@ type GetUserStorageLimits = {
     kind: "getUserStorageLimits";
 };
 
-type InitUserPrincipalMigration = {
-    newPrincipal: string;
-    kind: "initUserPrincipalMigration";
-};
-
-type MigrateUserPrincipal = {
-    userId: string;
-    kind: "migrateUserPrincipal";
-};
-
 type CheckUsername = {
     username: string;
     kind: "checkUsername";
@@ -961,6 +976,11 @@ type SetCommunityUpgradeConcurrency = {
 type SetUserUpgradeConcurrency = {
     value: number;
     kind: "setUserUpgradeConcurrency";
+};
+
+type SetDiamondMembershipFees = {
+    fees: DiamondMembershipFees[];
+    kind: "setDiamondMembershipFees";
 };
 
 type StakeNeuronForSubmittingProposals = {
@@ -1103,14 +1123,10 @@ export type WorkerResponseInner =
     | ToggleMuteNotificationResponse
     | GroupChatSummary
     | StorageStatus
-    | MigrateUserPrincipalResponse
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
-    | EventsResponse<DirectChatEvent>
-    | EventsResponse<GroupChatEvent>
-    | EventsResponse<DirectChatEvent>
-    | EventsResponse<GroupChatEvent>
+    | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
     | GroupChatDetails
@@ -1175,6 +1191,9 @@ export type WorkerResponseInner =
     | SwapTokensResponse
     | TokenSwapStatusResponse
     | DiamondMembershipFees[]
+    | TranslationCorrections
+    | AcceptP2PSwapResponse
+    | CancelP2PSwapResponse
     | Record<string, TokenExchangeRates>;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
@@ -1438,6 +1457,25 @@ type GetExchangeRates = {
     kind: "exchangeRates";
 };
 
+type GetReportedMessages = {
+    kind: "reportedMessages";
+    userId: string | undefined;
+};
+
+type AcceptP2PSwap = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    kind: "acceptP2PSwap";
+};
+
+type CancelP2PSwap = {
+    chatId: ChatIdentifier;
+    threadRootMessageIndex: number | undefined;
+    messageId: bigint;
+    kind: "cancelP2PSwap";
+};
+
 // prettier-ignore
 export type WorkerResult<T> = T extends PinMessage
     ? PinMessageResponse
@@ -1485,10 +1523,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CheckUsernameResponse
     : T extends SearchUsers
     ? UserSummary[]
-    : T extends MigrateUserPrincipal
-    ? MigrateUserPrincipalResponse
-    : T extends InitUserPrincipalMigration
-    ? void
     : T extends GetUserStorageLimits
     ? StorageStatus
     : T extends GetPublicGroupSummary
@@ -1631,6 +1665,8 @@ export type WorkerResult<T> = T extends PinMessage
     ? SetGroupUpgradeConcurrencyResponse
     : T extends SetUserUpgradeConcurrency
     ? SetUserUpgradeConcurrencyResponse
+    : T extends SetDiamondMembershipFees
+    ? boolean
     : T extends StakeNeuronForSubmittingProposals
     ? StakeNeuronForSubmittingProposalsResponse
     : T extends LoadFailedMessages
@@ -1666,11 +1702,11 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends DeclineChannelInvitation
     ? DeclineInvitationResponse
     : T extends ChannelEvents
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelEventsByIndex
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelEventsWindow
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember
@@ -1741,6 +1777,20 @@ export type WorkerResult<T> = T extends PinMessage
     ? boolean
     : T extends GetDiamondMembershipFees
     ? DiamondMembershipFees[]
+    : T extends GetReportedMessages
+    ? string
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
+    : T extends SetTranslationCorrection
+    ? boolean
+    : T extends ApproveTranslationCorrection
+    ? TranslationCorrections
+    : T extends RejectTranslationCorrection
+    ? TranslationCorrections
+    : T extends GetTranslationCorrections
+    ? TranslationCorrections
+    : T extends AcceptP2PSwap
+    ? AcceptP2PSwapResponse
+    : T extends CancelP2PSwap
+    ? CancelP2PSwapResponse
     : never;

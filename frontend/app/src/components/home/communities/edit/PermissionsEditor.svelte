@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectPermissionRole from "../../SelectPermissionRole.svelte";
     import { type CommunityPermissions, communityRoles } from "openchat-client";
+    import { i18nKey } from "../../../../i18n/i18n";
 
     export let permissions: CommunityPermissions;
     export let isPublic: boolean;
@@ -14,9 +14,9 @@
         ]);
 </script>
 
-{#each selectors as [key, i18nKey]}
+{#each selectors as [key, resourceKey]}
     <SelectPermissionRole
         roles={communityRoles}
-        label={$_(i18nKey)}
+        label={i18nKey(resourceKey)}
         bind:rolePermission={permissions[key]} />
 {/each}

@@ -14,10 +14,10 @@ use user_canister::c2c_send_messages_v2::{Response::*, *};
 #[update_msgpack]
 #[trace]
 async fn c2c_send_messages_v2(args: Args) -> Response {
-    c2c_send_messages_impl(args).await
+    c2c_send_messages_with_sender_check(args).await
 }
 
-async fn c2c_send_messages_impl(args: Args) -> Response {
+async fn c2c_send_messages_with_sender_check(args: Args) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -31,42 +31,38 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
         }
     };
 
-    mutate_state(|state| {
-        let now = state.env.now();
-        for message in args.messages {
-            // Messages sent c2c can be retried so the same messageId may be received multiple
-            // times, so here we skip any messages whose messageId already exists.
-            if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
-                if chat
-                    .events
-                    .main_events_reader()
-                    .message_internal(message.message_id.into())
-                    .is_some()
-                {
-                    continue;
-                }
+    mutate_state(|state| c2c_send_messages_impl(args, sender_user_id, state))
+}
+pub(crate) fn c2c_send_messages_impl(args: Args, sender_user_id: UserId, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    for message in args.messages {
+        // Messages sent c2c can be retried so the same messageId may be received multiple
+        // times, so here we skip any messages whose messageId already exists.
+        if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
+            if chat.events.contains_message_id(None, message.message_id) {
+                continue;
             }
-
-            handle_message_impl(
-                sender_user_id,
-                HandleMessageArgs {
-                    message_id: Some(message.message_id),
-                    sender_message_index: Some(message.sender_message_index),
-                    sender_name: args.sender_name.clone(),
-                    sender_display_name: args.sender_display_name.clone(),
-                    content: message.content,
-                    replies_to: message.replies_to,
-                    forwarding: message.forwarding,
-                    correlation_id: message.correlation_id,
-                    is_bot: false,
-                    sender_avatar_id: args.sender_avatar_id,
-                    now,
-                },
-                message.message_filter_failed.is_some(),
-                state,
-            );
         }
-    });
+
+        handle_message_impl(
+            sender_user_id,
+            HandleMessageArgs {
+                message_id: Some(message.message_id),
+                sender_message_index: Some(message.sender_message_index),
+                sender_name: args.sender_name.clone(),
+                sender_display_name: args.sender_display_name.clone(),
+                content: message.content,
+                replies_to: message.replies_to,
+                forwarding: message.forwarding,
+                correlation_id: message.correlation_id,
+                is_bot: false,
+                sender_avatar_id: args.sender_avatar_id,
+                now,
+            },
+            message.message_filter_failed.is_some(),
+            state,
+        );
+    }
 
     Success
 }
@@ -135,13 +131,13 @@ pub(crate) struct HandleMessageArgs {
     pub now: TimestampMillis,
 }
 
-enum SenderStatus {
+pub(crate) enum SenderStatus {
     Ok(UserId),
     Blocked,
     UnknownUser(CanisterId, UserId),
 }
 
-fn get_sender_status(state: &RuntimeState) -> SenderStatus {
+pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     let sender = state.env.caller().into();
 
     if state.data.blocked_users.contains(&sender) {
@@ -153,7 +149,7 @@ fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     }
 }
 
-async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
+pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: user_id.into(),
     };
@@ -189,6 +185,8 @@ pub(crate) fn handle_message_impl(
         now: args.now,
     };
 
+    let message_id = push_message_args.message_id;
+
     let message_event =
         state
             .data
@@ -204,6 +202,8 @@ pub(crate) fn handle_message_impl(
     }
 
     register_timer_jobs(
+        sender.into(),
+        message_id,
         &message_event,
         files,
         is_next_event_to_expire,

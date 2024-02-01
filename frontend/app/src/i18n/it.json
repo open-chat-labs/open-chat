@@ -367,7 +367,8 @@
             "crypto": "inviare messaggi crittografati",
             "giphy": "inviare messaggi giphy",
             "prize": "inviare messaggi premio",
-            "memeFighter": "inviare messaggi di Meme Fighter"
+            "memeFighter": "inviare messaggi di Meme Fighter",
+            "p2pSwap": "inviare messaggi di scambio P2P"
         },
         "threadPermissions": {
             "default": "invia messaggi nei thread per impostazione predefinita",
@@ -380,7 +381,8 @@
             "crypto": "inviare messaggi crittografati nei thread",
             "giphy": "inviare messaggi giphy nei thread",
             "prize": "inviare messaggi premio nei thread",
-            "memeFighter": "inviare messaggi di Meme Fighter nei thread"
+            "memeFighter": "inviare messaggi di Meme Fighter nei thread",
+            "p2pSwap": "inviare messaggi di scambio P2P nei thread"
         }
     },
     "rules": {
@@ -660,13 +662,10 @@
             "enterRecipientOwner": "Inserisci l'entità del conto del destinatario",
             "enterRecipientSubaccount": "Inserisci un account secondario del destinatario facoltativo",
             "ledgerCanisterId": "ID contenitore registro",
-            "enterLedgerCanisterId": "Inserisci l'ID del contenitore del registro",
             "tokenInfoUrl": "URL delle informazioni sul token",
-            "enterTokenInfoUrl": "Inserisci un URL che mostri le informazioni sul token",
             "howToBuyUrl": "Come acquistare l'URL",
-            "enterHowToBuyUrl": "Inserisci un URL che mostri come acquistare il token",
             "transactionUrlFormat": "Formato dell'URL della transazione",
-            "enterTransactionUrlFormat": "Per esempio. https://token.com/?index={transaction_index}"
+            "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Azioni del controller neuronale"
     },
@@ -855,7 +854,8 @@
         "benefits": "Vantaggi del diamante",
         "message": "Parlami dell'abbonamento Diamond",
         "lifetimeMessage": "Hai un abbonamento Diamond a vita.",
-        "lifetime": "Tutta la vita"
+        "lifetime": "Tutta la vita",
+        "p2pSwap": "Effettua/accetta scambi p2p"
     },
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
     "promoteTo": "Promuovi a {role}",
@@ -1157,9 +1157,6 @@
     "sendTextDisabled": "I messaggi di testo sono disabilitati",
     "disappearingMessages": {
         "label": "Messaggi che scompaiono",
-        "hours": "Ore)",
-        "minutes": "Minuti)",
-        "days": "Giorno(i)",
         "summary": "I messaggi scompariranno dopo le ore {duration}",
         "timeUpdatedBy": "{changedBy} imposta l'ora del messaggio a scomparsa su {duration}",
         "disabledBy": "{changedBy} ha disabilitato i messaggi a scomparsa",
@@ -1206,5 +1203,43 @@
         "swapTokenTo": "Scambia {tokenIn} in {tokenOut}",
         "quoteTooLow": "La migliore tariffa indicata è {rate} {tokenOut} per {tokenIn} da {dex}. Questo dà {amountOut} {tokenOut} per {amountIn} {tokenIn}. Puoi scambiare solo se l'importo indicato supera {minAmountOut}."
     },
-    "messageBlocked": "Messaggio nascosto"
+    "messageBlocked": "Messaggio nascosto",
+    "removePreviewQuestion": "Rimuovere l'anteprima?",
+    "showPreview": "Anteprima dello spettacolo",
+    "excessiveLinksNote": "Le anteprime dei collegamenti sono nascoste per i messaggi con più di 5 collegamenti.",
+    "hours": "Ore",
+    "minutes": "Minuti",
+    "days": "Giorni",
+    "p2pSwap": {
+        "builderTitle": "Fai un'offerta di scambio",
+        "expiryTime": "Tempo di scadenza",
+        "creatingYourMessage": "Attendi mentre viene creata un'offerta di scambio",
+        "failedToCreateMessage": "Impossibile creare l'offerta di scambio",
+        "expired": "Scaduto",
+        "accepted": "Accettato",
+        "accept": "Accettare",
+        "cancel": "Annulla",
+        "cancelled": "Annullato",
+        "reserved": "Riservato",
+        "summary": "Questa è un'offerta per scambiare {fromAmount} {fromToken} con {toAmount} {toToken}.",
+        "youReserved": "Hai prenotato questa offerta ed è in attesa di completamento.",
+        "youAccepted": "Hai accettato questa offerta ed è in attesa di completamento.",
+        "reservedBy": "Questa offerta è stata prenotata da {user} ed è in attesa di completamento.",
+        "acceptedBy": "Questa offerta è stata accettata da {user} ed è in attesa di completamento.",
+        "youCompleted": "Hai accettato questa offerta.",
+        "completed": "Questa offerta è stata accettata da {user}.",
+        "confirmAccept": "Quando accetti questa offerta, {amount} {token} (include 2 commissioni di transazione) verrà trasferito dal tuo portafoglio al contenitore di deposito a garanzia di OpenChat. Riceverai {amountOther} {tokenOther} in cambio. Desideri procedere?",
+        "confirmCancel": "Quando annulli questa offerta, {amount} {token} verrà trasferito dal contenitore di deposito in garanzia di OpenChat al tuo portafoglio. Desideri procedere?",
+        "insufficientBalanceMessage": "Sono necessari almeno {amount} {token} (include 2 commissioni di transazione) per accettare questo scambio.",
+        "insufficientBalance": "Equilibrio insufficiente",
+        "tokenBalance": "saldo {token}",
+        "already_accepted": "Questa offerta di scambio è già stata accettata",
+        "swap_cancelled": "Questa offerta di scambio è stata annullata",
+        "swap_expired": "Questa offerta di scambio è scaduta",
+        "swap_not_found": "Impossibile trovare questa offerta di scambio",
+        "insufficient_funds": "Non hai fondi rimanenti sufficienti per accettare questa offerta di scambio",
+        "unknown_accept_error": "Errore nell'accettazione dell'offerta di scambio",
+        "unknown_cancel_error": "Errore durante l'annullamento dell'offerta di scambio",
+        "confirmSend": "Quando crei questa offerta, {amount} {token} (include 2 commissioni di transazione) verrà trasferito dal tuo portafoglio al contenitore di deposito a garanzia di OpenChat. Rimarrà lì fino alla scadenza dell'offerta, all'annullamento dell'offerta o all'accettazione dell'offerta. Desideri procedere?"
+    }
 }

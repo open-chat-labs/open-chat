@@ -60,7 +60,6 @@ import type {
     DeleteMessageResponse,
     DexId,
     DiamondMembershipFees,
-    DirectChatEvent,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     DisableInviteCodeResponse,
@@ -70,7 +69,6 @@ import type {
     EventWrapper,
     ExchangeTokenSwapArgs,
     GroupChatDetailsResponse,
-    GroupChatEvent,
     GroupChatSummary,
     GroupInvite,
     Rules,
@@ -84,7 +82,6 @@ import type {
     MemberRole,
     Message,
     MessageContent,
-    MigrateUserPrincipalResponse,
     OptionUpdate,
     PendingCryptocurrencyWithdrawal,
     PinChatResponse,
@@ -187,6 +184,10 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
+    TranslationCorrections,
+    TranslationCorrection,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import {
     UnsupportedValueError,
@@ -400,11 +401,14 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "channel") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_swap_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToChannel(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -428,11 +432,14 @@ export class OpenChatAgent extends EventTarget {
         if (chatId.kind === "group_chat") {
             if (
                 event.event.content.kind === "crypto_content" ||
-                event.event.content.kind === "prize_content_initial"
+                event.event.content.kind === "prize_content_initial" ||
+                event.event.content.kind === "p2p_swap_content_initial"
             ) {
                 return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
-                    event.event.content.transfer.recipient,
+                    event.event.content.kind !== "p2p_swap_content_initial"
+                        ? event.event.content.transfer.recipient
+                        : undefined,
                     user,
                     event,
                     threadRootMessageIndex,
@@ -695,7 +702,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEventsWindow(
@@ -764,7 +771,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEvents(
@@ -786,7 +793,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEventsByIndex(
@@ -806,7 +813,7 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).eventsWindow(
@@ -849,7 +856,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).events(
@@ -872,7 +879,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEvents(
@@ -931,7 +938,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).eventsByIndex(
@@ -951,7 +958,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEventsByIndex(
@@ -2432,17 +2439,6 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.userClient.initUserPrincipalMigration(newPrincipal);
-    }
-
-    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
-        if (offline()) return Promise.resolve("offline");
-
-        const userClient = UserClient.create(userId, this.identity, this.config, this.db);
-        return userClient.migrateUserPrincipal();
-    }
-
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -2791,33 +2787,38 @@ export class OpenChatAgent extends EventTarget {
             }
 
             if (!isOffline) {
-                const updates = await this._registryClient.updates(current?.lastUpdated);
-                if (updates.kind === "success") {
-                    const updated = {
-                        lastUpdated: updates.lastUpdated,
-                        tokenDetails: distinctBy(
-                            [...updates.tokenDetails, ...(current?.tokenDetails ?? [])],
-                            (t) => t.ledger,
-                        ),
-                        nervousSystemSummary: distinctBy(
-                            [
-                                ...updates.nervousSystemSummary,
-                                ...(current?.nervousSystemSummary ?? []),
-                            ],
-                            (ns) => ns.governanceCanisterId,
-                        ),
-                        messageFilters: [
-                            ...(current?.messageFilters ?? []),
-                            ...updates.messageFiltersAdded,
-                        ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
-                    };
-                    setCachedRegistry(updated);
-                    resolve([updated, true], true);
-                } else if (updates.kind === "success_no_updates" && current !== undefined) {
-                    resolve([current, false], true);
-                } else {
-                    // this is a fallback for is we had nothing in the cache and nothing from the api
-                    reject("Registry is empty... this should never happen!");
+                try {
+                    const updates = await this._registryClient.updates(current?.lastUpdated);
+                    if (updates.kind === "success") {
+                        const updated = {
+                            lastUpdated: updates.lastUpdated,
+                            tokenDetails: distinctBy(
+                                [...(current?.tokenDetails ?? []), ...updates.tokenDetails],
+                                (t) => t.ledger,
+                            ),
+                            nervousSystemSummary: distinctBy(
+                                [
+                                    ...updates.nervousSystemSummary,
+                                    ...(current?.nervousSystemSummary ?? []),
+                                ],
+                                (ns) => ns.governanceCanisterId,
+                            ),
+                            messageFilters: [
+                                ...(current?.messageFilters ?? []),
+                                ...updates.messageFiltersAdded,
+                            ].filter((f) => !updates.messageFiltersRemoved.includes(f.id)),
+                        };
+                        setCachedRegistry(updated);
+                        resolve([updated, true], true);
+                    } else if (updates.kind === "success_no_updates" && current !== undefined) {
+                        resolve([current, false], true);
+                    } else {
+                        // this is a fallback for is we had nothing in the cache and nothing from the api
+                        reject("Registry is empty... this should never happen!");
+                    }
+                } catch (err) {
+                    console.warn("Getting registry updates failed: ", err);
+                    reject(err);
                 }
             }
         });
@@ -3060,6 +3061,10 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.diamondMembershipFees();
     }
 
+    setDiamondMembershipFees(fees: DiamondMembershipFees[]): Promise<boolean> {
+        return this._userIndexClient.setDiamondMembershipFees(fees);
+    }
+
     addMessageFilter(regex: string): Promise<boolean> {
         return this._registryClient.addMessageFilter(regex);
     }
@@ -3070,5 +3075,78 @@ export class OpenChatAgent extends EventTarget {
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return this._icpcoinsClient.exchangeRates();
+    }
+
+    setTranslationCorrection(correction: TranslationCorrection): Promise<boolean> {
+        console.log("Setting translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return Promise.resolve(true);
+    }
+
+    rejectTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Rejecting translation correction: ", correction);
+        // TODO - for now I'm just going to record these corrections in indexed db
+        // eventually we will want an api, but let's get the shape right first
+        return this.getTranslationCorrections();
+    }
+
+    approveTranslationCorrection(
+        correction: TranslationCorrection,
+    ): Promise<TranslationCorrections> {
+        console.log("Approving translation correction: ", correction);
+        return this.getTranslationCorrections();
+    }
+
+    getTranslationCorrections(): Promise<TranslationCorrections> {
+        return Promise.resolve({});
+    }
+
+    reportedMessages(userId: string | undefined): Promise<string> {
+        return this._userIndexClient.reportedMessages(userId);
+    }
+
+    acceptP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<AcceptP2PSwapResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).acceptP2PSwap(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).acceptP2PSwap(
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else {
+            return this.userClient.acceptP2PSwap(chatId.userId, messageId);
+        }
+    }
+
+    cancelP2PSwap(
+        chatId: ChatIdentifier,
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+    ): Promise<CancelP2PSwapResponse> {
+        if (chatId.kind === "channel") {
+            return this.communityClient(chatId.communityId).cancelP2PSwap(
+                chatId.channelId,
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else if (chatId.kind === "group_chat") {
+            return this.getGroupClient(chatId.groupId).cancelP2PSwap(
+                threadRootMessageIndex,
+                messageId,
+            );
+        } else {
+            return this.userClient.cancelP2PSwap(chatId.userId, messageId);
+        }
     }
 }

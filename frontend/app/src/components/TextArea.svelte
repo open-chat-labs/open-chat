@@ -1,11 +1,14 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { _ } from "svelte-i18n";
+    import { interpolate, type ResourceKey } from "../i18n/i18n";
+    import { translatable } from "../actions/translatable";
     let inp: HTMLTextAreaElement;
     export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string = "";
     export let autofocus: boolean = false;
-    export let placeholder: string = "";
+    export let placeholder: ResourceKey | undefined = undefined;
     export let minlength: number = 0;
     export let maxlength: number = Number.MAX_VALUE;
     export let rows: number = 4;
@@ -37,7 +40,8 @@
             {disabled}
             {minlength}
             {maxlength}
-            {placeholder}
+            placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+            use:translatable={{ key: placeholder, position: "absolute", right: 12, top: 12 }}
             bind:value
             class="textbox"
             class:scroll />

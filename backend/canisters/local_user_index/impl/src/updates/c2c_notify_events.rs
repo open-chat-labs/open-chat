@@ -153,11 +153,11 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .referral_codes
                 .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
         }
-        Event::DiamondMembershipExpiryDate(user_id, expires_at) => {
+        Event::UserPrincipalUpdated(update) => {
             state
                 .data
                 .global_users
-                .set_diamond_membership_expiry_date(user_id, expires_at);
+                .update_user_principal(update.old_principal, update.new_principal);
         }
     }
 }

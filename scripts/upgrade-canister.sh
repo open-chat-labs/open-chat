@@ -25,6 +25,7 @@ fi
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
 NOTIFICATIONS_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id notifications_index)
+IDENTITY_CANISTER_ID=$(dfx canister --network $NETWORK id identity)
 ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
@@ -33,6 +34,7 @@ REGISTRY_CANISTER_ID=$(dfx canister --network $NETWORK id registry)
 MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 NEURON_CONTROLLER_CANISTER_ID=$(dfx canister --network $NETWORK id neuron_controller)
 ESCROW_CANISTER_ID=$(dfx canister --network $NETWORK id escrow)
+TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml -- \
@@ -41,6 +43,7 @@ cargo run \
   --user-index $USER_INDEX_CANISTER_ID \
   --group-index $GROUP_INDEX_CANISTER_ID \
   --notifications-index $NOTIFICATIONS_INDEX_CANISTER_ID \
+  --identity $IDENTITY_CANISTER_ID \
   --online-users $ONLINE_USERS_CANISTER_ID \
   --proposals-bot $PROPOSALS_BOT_CANISTER_ID \
   --storage-index $STORAGE_INDEX_CANISTER_ID \
@@ -49,5 +52,6 @@ cargo run \
   --market-maker $MARKET_MAKER_CANISTER_ID \
   --neuron-controller $NEURON_CONTROLLER_CANISTER_ID \
   --escrow $ESCROW_CANISTER_ID \
+  --translations $TRANSLATIONS_CANISTER_ID \
   --canister-to-upgrade $CANISTER_NAME \
   --version $VERSION \

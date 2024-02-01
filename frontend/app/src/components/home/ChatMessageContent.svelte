@@ -19,9 +19,11 @@
     import MessageReminderContent from "./MessageReminderContent.svelte";
     import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
-    import type { ChatIdentifier, MessageContent } from "openchat-client";
+    import type { MessageContent, MessageContext } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import PrizeContentInitial from "./PrizeContentInitial.svelte";
+    import MessageContentInitial from "./MessageContentInitial.svelte";
+    import P2PSwapContent from "./P2PSwapContent.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let content: MessageContent;
     export let me: boolean = false;
@@ -35,15 +37,16 @@
     export let myUserId: string | undefined;
     export let messageId: bigint;
     export let edited: boolean;
-    export let chatId: ChatIdentifier;
+    export let messageContext: MessageContext;
     export let messageIndex: number;
     export let collapsed = false;
     export let undeleting: boolean = false;
     export let intersecting: boolean;
+    export let failed: boolean;
 </script>
 
 {#if content.kind === "text_content"}
-    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} />
+    <TextContent {me} {fill} {truncate} {pinned} {content} {edited} on:removePreview />
 {:else if content.kind === "image_content"}
     <ImageContent {edited} {intersecting} {fill} {content} {reply} {pinned} {height} />
 {:else if content.kind === "video_content"}
@@ -61,9 +64,15 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content_initial"}
-    <PrizeContentInitial {me} />
+    <MessageContentInitial text={i18nKey("prizes.creatingYourPrizeMessage")} {failed} />
+{:else if content.kind === "p2p_swap_content_initial"}
+    <MessageContentInitial
+        text={i18nKey(failed ? "p2pSwap.failedToCreateMessage" : "p2pSwap.creatingYourMessage")}
+        {failed} />
 {:else if content.kind === "prize_content"}
-    <PrizeContent on:upgrade {chatId} {messageId} {content} {me} />
+    <PrizeContent on:upgrade chatId={messageContext.chatId} {messageId} {content} {me} />
+{:else if content.kind === "p2p_swap_content"}
+    <P2PSwapContent on:upgrade {messageContext} {messageId} {content} {me} {reply} {pinned} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}
@@ -73,7 +82,7 @@
 {:else if content.kind === "proposal_content"}
     <ProposalContent
         {content}
-        {chatId}
+        chatId={messageContext.chatId}
         {messageIndex}
         {messageId}
         {collapsed}

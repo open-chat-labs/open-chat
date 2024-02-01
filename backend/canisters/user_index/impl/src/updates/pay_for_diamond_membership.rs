@@ -12,7 +12,7 @@ use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use rand::Rng;
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
+use types::{Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::DAY_IN_MS;
@@ -64,6 +64,7 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
 
 fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(), Response> {
     let diamond_membership = state.data.users.diamond_membership_details_mut(&user_id).unwrap();
+    let fees = &state.data.diamond_membership_fees;
     if diamond_membership.payment_in_progress() {
         Err(PaymentAlreadyInProgress)
     } else if diamond_membership.is_lifetime_diamond_member() {
@@ -71,12 +72,12 @@ fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(),
     } else {
         match args.token {
             Cryptocurrency::CHAT => {
-                if args.expected_price_e8s != args.duration.chat_price_e8s() {
+                if args.expected_price_e8s != fees.chat_price_e8s(args.duration) {
                     return Err(PriceMismatch);
                 }
             }
             Cryptocurrency::InternetComputer => {
-                if args.expected_price_e8s != args.duration.icp_price_e8s() {
+                if args.expected_price_e8s != fees.icp_price_e8s(args.duration) {
                     return Err(PriceMismatch);
                 }
             }
@@ -130,14 +131,13 @@ fn process_charge(
                 send_bot_message: true,
             }),
         );
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
 
         if let Some(user) = state.data.users.get_by_user_id(&user_id) {
             state.data.storage_index_user_sync_queue.push(UserConfig {
                 user_id: user.principal,
                 byte_limit: ONE_GB,
             });
-            crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
+            crate::jobs::sync_users_to_storage_index::try_run_now(state);
         }
 
         if recurring {
@@ -155,7 +155,9 @@ fn process_charge(
         let now_nanos = state.env.now_nanos();
 
         if let Some(share_with) = share_with {
-            let amount_to_referrer = amount_to_referer(&args.token, args.duration);
+            let fees = &state.data.diamond_membership_fees;
+
+            let amount_to_referrer = amount_to_referer(&args.token, args.duration, fees);
             amount_to_treasury = amount_to_treasury.saturating_sub(amount_to_referrer + transaction_fee);
 
             let referral_payment = PendingPayment {
@@ -251,7 +253,7 @@ fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<Us
     None
 }
 
-fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDuration) -> u64 {
+fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDuration, fees: &DiamondMembershipFees) -> u64 {
     // The referral reward is only for membership payments for the first year, so if a user pays for
     // lifetime Diamond membership, the referer is rewarded as if they had paid for 1 year.
     let reward_based_on_duration = if matches!(duration, DiamondMembershipPlanDuration::Lifetime) {
@@ -261,9 +263,9 @@ fn amount_to_referer(token: &Cryptocurrency, duration: DiamondMembershipPlanDura
     };
 
     if matches!(token, Cryptocurrency::CHAT) {
-        reward_based_on_duration.chat_price_e8s() / 2
+        fees.chat_price_e8s(reward_based_on_duration) / 2
     } else {
-        reward_based_on_duration.icp_price_e8s() / 2
+        fees.icp_price_e8s(reward_based_on_duration) / 2
     }
 }
 

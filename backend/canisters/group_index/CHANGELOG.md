@@ -5,9 +5,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1025](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1025-group_index)] - 2024-01-25
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Rename `service_principals` to `governance_principals` in init args ([#5251](https://github.com/open-chat-labs/open-chat/pull/5251))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1010](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1010-group_index)] - 2024-01-18
+
+### Added
+
+- Expose metrics of access gates on public groups and communities ([#5118](https://github.com/open-chat-labs/open-chat/pull/5118))
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+
 ### Changed
 
 - Add `subtype` to group search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
 
 ## [[2.0.979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.979-group_index)] - 2023-12-19
 

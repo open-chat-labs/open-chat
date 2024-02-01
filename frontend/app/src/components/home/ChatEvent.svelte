@@ -28,7 +28,7 @@
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
     import page from "page";
-    import { interpolateLevel } from "../../utils/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -115,6 +115,10 @@
             }
         }
     }
+
+    function removePreview(ev: CustomEvent<string>) {
+        dispatch("removePreview", { event, url: ev.detail });
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -158,6 +162,7 @@
             on:forward
             on:expandMessage
             on:collapseMessage
+            on:removePreview={removePreview}
             on:initiateThread={initiateThread}
             on:deleteFailedMessage={deleteFailedMessage}
             eventIndex={event.index}
@@ -225,14 +230,14 @@
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupName", levelType, true)}
+        property={interpolate($_, i18nKey("groupName", undefined, levelType, true))}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "desc_changed"}
     <GroupChangedEvent
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupDesc", levelType, true)}
+        property={interpolate($_, i18nKey("groupDesc", undefined, levelType, true))}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "rules_changed"}
     <GroupRulesChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
@@ -241,7 +246,7 @@
         {level}
         user={userSummary}
         changedBy={event.event.changedBy}
-        property={interpolateLevel("groupAvatar", levelType, true)}
+        property={interpolate($_, i18nKey("groupAvatar", undefined, levelType, true))}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "gate_updated"}
     <GroupChangedEvent

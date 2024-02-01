@@ -17,12 +17,14 @@ fn main() {
     generate_candid_method!(user, token_swap_status, query);
     generate_candid_method!(user, updates, query);
 
+    generate_candid_method!(user, accept_p2p_swap, update);
     generate_candid_method!(user, add_hot_group_exclusions, update);
     generate_candid_method!(user, add_reaction, update);
     generate_candid_method!(user, approve_transfer, update);
     generate_candid_method!(user, archive_unarchive_chats, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);
+    generate_candid_method!(user, cancel_p2p_swap, update);
     generate_candid_method!(user, create_community, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_community, update);
@@ -30,12 +32,10 @@ fn main() {
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
-    generate_candid_method!(user, init_user_principal_migration, update);
     generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, manage_favourite_chats, update);
     generate_candid_method!(user, mark_read, update);
-    generate_candid_method!(user, migrate_user_principal, update);
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat_v2, update);
     generate_candid_method!(user, remove_reaction, update);

@@ -1,15 +1,13 @@
-use crate::model::p2p_trades::P2PTradeOfferStatus;
 use crate::model::token_swaps::TokenSwap;
-use crate::updates::send_message::send_to_recipients_canister;
-use crate::updates::send_message_with_transfer::update_p2p_trade_status;
 use crate::updates::swap_tokens::process_token_swap;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use chat_events::{MessageContentInternal, MessageReminderContentInternal};
 use serde::{Deserialize, Serialize};
 use tracing::error;
-use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, UserId};
+use types::{BlobReference, Chat, ChatId, CommunityId, EventIndex, MessageId, MessageIndex, P2PSwapStatus, UserId};
 use user_canister::c2c_send_messages_v2::C2CReplyContext;
+use user_canister::UserCanisterEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::SECOND_IN_MS;
 
@@ -22,6 +20,8 @@ pub enum TimerJob {
     RemoveExpiredEvents(RemoveExpiredEventsJob),
     ProcessTokenSwap(Box<ProcessTokenSwapJob>),
     NotifyEscrowCanisterOfDeposit(Box<NotifyEscrowCanisterOfDepositJob>),
+    CancelP2PSwapInEscrowCanister(Box<CancelP2PSwapInEscrowCanisterJob>),
+    MarkP2PSwapExpired(Box<MarkP2PSwapExpiredJob>),
     SendMessageToGroup(Box<SendMessageToGroupJob>),
     SendMessageToChannel(Box<SendMessageToChannelJob>),
 }
@@ -37,7 +37,6 @@ pub struct HardDeleteMessageContentJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub delete_files: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -66,22 +65,42 @@ pub struct ProcessTokenSwapJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NotifyEscrowCanisterOfDepositJob {
-    pub offer_id: u32,
+    pub swap_id: u32,
     pub attempt: u32,
 }
 
 impl NotifyEscrowCanisterOfDepositJob {
-    pub fn run(offer_id: u32) {
-        let job = NotifyEscrowCanisterOfDepositJob { offer_id, attempt: 0 };
+    pub fn run(swap_id: u32) {
+        let job = NotifyEscrowCanisterOfDepositJob { swap_id, attempt: 0 };
         job.execute();
     }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CancelP2PSwapInEscrowCanisterJob {
+    pub swap_id: u32,
+    pub attempt: u32,
+}
+
+impl CancelP2PSwapInEscrowCanisterJob {
+    pub fn run(swap_id: u32) {
+        let job = CancelP2PSwapInEscrowCanisterJob { swap_id, attempt: 0 };
+        job.execute();
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MarkP2PSwapExpiredJob {
+    pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SendMessageToGroupJob {
     pub chat_id: ChatId,
     pub args: group_canister::c2c_send_message::Args,
-    pub p2p_offer_id: Option<u32>,
+    pub p2p_swap_id: Option<u32>,
     pub attempt: u32,
 }
 
@@ -89,7 +108,7 @@ pub struct SendMessageToGroupJob {
 pub struct SendMessageToChannelJob {
     pub community_id: CommunityId,
     pub args: community_canister::c2c_send_message::Args,
-    pub p2p_offer_id: Option<u32>,
+    pub p2p_swap_id: Option<u32>,
     pub attempt: u32,
 }
 
@@ -103,6 +122,8 @@ impl Job for TimerJob {
             TimerJob::RemoveExpiredEvents(job) => job.execute(),
             TimerJob::ProcessTokenSwap(job) => job.execute(),
             TimerJob::NotifyEscrowCanisterOfDeposit(job) => job.execute(),
+            TimerJob::CancelP2PSwapInEscrowCanister(job) => job.execute(),
+            TimerJob::MarkP2PSwapExpired(job) => job.execute(),
             TimerJob::SendMessageToGroup(job) => job.execute(),
             TimerJob::SendMessageToChannel(job) => job.execute(),
         }
@@ -132,19 +153,28 @@ impl Job for RetrySendingFailedMessagesJob {
                 sender_display_name,
                 sender_avatar_id,
             };
-            ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
+            mutate_state(|state| {
+                if let Some(chat) = state.data.direct_chats.get_mut(&self.recipient.into()) {
+                    for message_id in args.messages.iter().map(|a| a.message_id) {
+                        chat.mark_message_confirmed(message_id);
+                    }
+                }
+                state.push_user_canister_event(self.recipient.into(), UserCanisterEvent::SendMessages(Box::new(args)));
+            });
         }
     }
 }
 
 impl Job for HardDeleteMessageContentJob {
     fn execute(self) {
+        let mut p2p_swap_to_cancel = None;
         mutate_state(|state| {
-            if let Some((content, _)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
+            if let Some((content, sender)) = state.data.direct_chats.get_mut(&self.chat_id).and_then(|chat| {
                 chat.events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
             }) {
-                if self.delete_files {
+                let my_user_id = state.env.canister_id().into();
+                if sender == my_user_id {
                     let files_to_delete = content.blob_references();
                     if !files_to_delete.is_empty() {
                         // If there was already a job queued up to delete these files, cancel it
@@ -157,9 +187,18 @@ impl Job for HardDeleteMessageContentJob {
                         });
                         ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                     }
+                    if let MessageContentInternal::P2PSwap(s) = content {
+                        if matches!(s.status, P2PSwapStatus::Open) {
+                            p2p_swap_to_cancel = Some(s.swap_id);
+                        }
+                    }
                 }
             }
         });
+
+        if let Some(swap_id) = p2p_swap_to_cancel {
+            CancelP2PSwapInEscrowCanisterJob::run(swap_id);
+        }
     }
 }
 
@@ -210,7 +249,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
             match escrow_canister_c2c_client::notify_deposit(
                 escrow_canister_id,
                 &escrow_canister::notify_deposit::Args {
-                    offer_id: self.offer_id,
+                    swap_id: self.swap_id,
                     user_id: None,
                 },
             )
@@ -222,7 +261,7 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
                         let now = state.env.now();
                         state.data.timer_jobs.enqueue_job(
                             TimerJob::NotifyEscrowCanisterOfDeposit(Box::new(NotifyEscrowCanisterOfDepositJob {
-                                offer_id: self.offer_id,
+                                swap_id: self.swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,
@@ -236,15 +275,55 @@ impl Job for NotifyEscrowCanisterOfDepositJob {
     }
 }
 
+impl Job for CancelP2PSwapInEscrowCanisterJob {
+    fn execute(self) {
+        let escrow_canister_id = read_state(|state| state.data.escrow_canister_id);
+
+        ic_cdk::spawn(async move {
+            match escrow_canister_c2c_client::cancel_swap(
+                escrow_canister_id,
+                &escrow_canister::cancel_swap::Args { swap_id: self.swap_id },
+            )
+            .await
+            {
+                Ok(escrow_canister::cancel_swap::Response::Success) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapAlreadyAccepted) => {}
+                Ok(escrow_canister::cancel_swap::Response::SwapExpired) => {}
+                Err(_) if self.attempt < 20 => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::CancelP2PSwapInEscrowCanister(Box::new(CancelP2PSwapInEscrowCanisterJob {
+                                swap_id: self.swap_id,
+                                attempt: self.attempt + 1,
+                            })),
+                            now + 10 * SECOND_IN_MS,
+                            now,
+                        );
+                    });
+                }
+                response => error!(?response, "Failed to cancel p2p swap"),
+            };
+        })
+    }
+}
+
+impl Job for MarkP2PSwapExpiredJob {
+    fn execute(self) {
+        mutate_state(|state| {
+            if let Some(chat) = state.data.direct_chats.get_mut(&self.chat_id) {
+                chat.events
+                    .mark_p2p_swap_expired(self.thread_root_message_index, self.message_id, state.env.now());
+            }
+        });
+    }
+}
+
 impl Job for SendMessageToGroupJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
             match group_canister_c2c_client::c2c_send_message(self.chat_id.into(), &self.args).await {
-                Ok(group_canister::c2c_send_message::Response::Success(_)) => {
-                    if let Some(id) = self.p2p_offer_id {
-                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
-                    }
-                }
+                Ok(group_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {
                     mutate_state(|state| {
                         let now = state.env.now();
@@ -252,7 +331,7 @@ impl Job for SendMessageToGroupJob {
                             TimerJob::SendMessageToGroup(Box::new(SendMessageToGroupJob {
                                 chat_id: self.chat_id,
                                 args: self.args,
-                                p2p_offer_id: self.p2p_offer_id,
+                                p2p_swap_id: self.p2p_swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,
@@ -270,11 +349,7 @@ impl Job for SendMessageToChannelJob {
     fn execute(self) {
         ic_cdk::spawn(async move {
             match community_canister_c2c_client::c2c_send_message(self.community_id.into(), &self.args).await {
-                Ok(community_canister::c2c_send_message::Response::Success(_)) => {
-                    if let Some(id) = self.p2p_offer_id {
-                        update_p2p_trade_status(id, P2PTradeOfferStatus::Open);
-                    }
-                }
+                Ok(community_canister::c2c_send_message::Response::Success(_)) => {}
                 Err(_) if self.attempt < 20 => {
                     mutate_state(|state| {
                         let now = state.env.now();
@@ -282,7 +357,7 @@ impl Job for SendMessageToChannelJob {
                             TimerJob::SendMessageToChannel(Box::new(SendMessageToChannelJob {
                                 community_id: self.community_id,
                                 args: self.args,
-                                p2p_offer_id: self.p2p_offer_id,
+                                p2p_swap_id: self.p2p_swap_id,
                                 attempt: self.attempt + 1,
                             })),
                             now + 10 * SECOND_IN_MS,

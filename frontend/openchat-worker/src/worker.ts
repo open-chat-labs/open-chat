@@ -67,10 +67,7 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
-        logger?.error("WORKER: sending error: ", error);
-        if (payload !== undefined) {
-            console.error("WORKER: error caused by payload: ", payload);
-        }
+        logger?.error("WORKER: error caused by payload: ", error, payload);
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -298,22 +295,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.searchUsers(payload.searchTerm, payload.maxResults),
-                );
-                break;
-
-            case "migrateUserPrincipal":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.migrateUserPrincipal(payload.userId),
-                );
-                break;
-
-            case "initUserPrincipalMigration":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.initUserPrincipalMigration(payload.newPrincipal).then(() => undefined),
                 );
                 break;
 
@@ -913,6 +894,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "setDiamondMembershipFees":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setDiamondMembershipFees(payload.fees),
+                );
+                break;
+
             case "stakeNeuronForSubmittingProposals":
                 executeThenReply(
                     payload,
@@ -1429,8 +1418,64 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.diamondMembershipFees());
                 break;
 
+            case "reportedMessages":
+                executeThenReply(payload, correlationId, agent.reportedMessages(payload.userId));
+                break;
+
             case "exchangeRates":
                 executeThenReply(payload, correlationId, agent.exchangeRates());
+                break;
+
+            case "setTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "approveTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "rejectTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.rejectTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "getTranslationCorrections":
+                executeThenReply(payload, correlationId, agent.getTranslationCorrections());
+                break;
+
+            case "acceptP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.acceptP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
+                );
+                break;
+
+            case "cancelP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
+                );
                 break;
 
             default:

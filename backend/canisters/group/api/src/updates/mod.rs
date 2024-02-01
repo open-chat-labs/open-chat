@@ -1,4 +1,4 @@
-pub mod accept_p2p_trade_offer;
+pub mod accept_p2p_swap;
 pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_delete_group;
@@ -16,6 +16,7 @@ pub mod c2c_unfreeze_group;
 pub mod c2c_update_proposals;
 pub mod c2c_update_user_principal;
 pub mod cancel_invites;
+pub mod cancel_p2p_swap;
 pub mod change_role;
 pub mod claim_prize;
 pub mod convert_into_community;

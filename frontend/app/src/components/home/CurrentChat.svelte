@@ -35,6 +35,9 @@
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { mobileWidth } from "../../stores/screenDimensions";
     import PrizeContentBuilder from "./PrizeContentBuilder.svelte";
+    import P2PSwapContentBuilder from "./P2PSwapContentBuilder.svelte";
+    import AreYouSure from "../AreYouSure.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let joining: MultiUserChat | undefined;
     export let chat: ChatSummary;
@@ -51,6 +54,7 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { ledger: string; amount: bigint } | undefined = undefined;
     let creatingPrizeMessage = false;
+    let creatingP2PSwapMessage = false;
     let selectingGif = false;
     let buildingMeme = false;
     let pollBuilder: PollBuilder;
@@ -59,6 +63,8 @@
     let showSearchHeader = false;
     let searchTerm = "";
     let importToCommunities: CommunityMap<CommunitySummary> | undefined;
+    let removeLinkPreviewDetails: { event: EventWrapper<Message>; url: string } | undefined =
+        undefined;
 
     $: user = client.user;
     $: suspendedUser = client.suspendedUser;
@@ -113,7 +119,7 @@
     function importToCommunity() {
         importToCommunities = $communities.filter((c) => c.membership.role === "owner");
         if (importToCommunities.size === 0) {
-            toastStore.showFailureToast("communities.noOwned");
+            toastStore.showFailureToast(i18nKey("communities.noOwned"));
             importToCommunities = undefined;
         } else {
             rightPanelHistory.set([]);
@@ -148,6 +154,10 @@
 
     function createPrizeMessage() {
         creatingPrizeMessage = true;
+    }
+
+    function createP2PSwapMessage() {
+        creatingP2PSwapMessage = true;
     }
 
     function fileSelected(ev: CustomEvent<AttachmentContent>) {
@@ -201,11 +211,11 @@
                     messageContext,
                     text,
                     $currentChatAttachment,
-                    $currentChatEditingEvent
+                    $currentChatEditingEvent,
                 )
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("errorEditingMessage");
+                        toastStore.showFailureToast(i18nKey("errorEditingMessage"));
                     }
                 });
         } else {
@@ -216,7 +226,7 @@
     function sendMessageWithAttachment(
         textContent: string | undefined,
         attachment: AttachmentContent | undefined,
-        mentioned: User[] = []
+        mentioned: User[] = [],
     ) {
         dispatch("sendMessageWithAttachment", { textContent, attachment, mentioned });
     }
@@ -229,6 +239,25 @@
         draftMessagesStore.setTextContent({ chatId: chat.id }, ev.detail);
     }
 
+    function onRemovePreview(ev: CustomEvent<{ event: EventWrapper<Message>; url: string }>): void {
+        removeLinkPreviewDetails = ev.detail;
+    }
+
+    function removePreview(yes: boolean): Promise<void> {
+        if (removeLinkPreviewDetails !== undefined && yes) {
+            const { event, url } = removeLinkPreviewDetails;
+
+            client.hideLinkPreview(messageContext, event, url).then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast(i18nKey("errorRemovingLinkPreview"));
+                }
+            });
+        }
+
+        removeLinkPreviewDetails = undefined;
+        return Promise.resolve();
+    }
+
     function isBlocked(chatSummary: ChatSummary, blockedUsers: Set<string>): boolean {
         return chatSummary.kind === "direct_chat" && blockedUsers.has(chatSummary.them.userId);
     }
@@ -239,6 +268,10 @@
 </script>
 
 <svelte:window on:focus={onWindowFocus} />
+
+{#if removeLinkPreviewDetails !== undefined}
+    <AreYouSure title={i18nKey("removePreviewQuestion")} action={removePreview} />
+{/if}
 
 {#if importToCommunities !== undefined}
     <ImportToCommunity
@@ -269,6 +302,14 @@
         draftAmount={0n}
         on:sendMessageWithContent
         on:close={() => (creatingPrizeMessage = false)} />
+{/if}
+
+{#if creatingP2PSwapMessage}
+    <P2PSwapContentBuilder
+        fromLedger={$lastCryptoSent ?? LEDGER_CANISTER_ICP}
+        on:upgrade
+        on:sendMessageWithContent
+        on:close={() => (creatingP2PSwapMessage = false)} />
 {/if}
 
 <GiphySelector on:sendMessageWithContent bind:this={giphySelector} bind:open={selectingGif} />
@@ -309,6 +350,7 @@
         on:upgrade
         on:forward
         on:retrySend
+        on:removePreview={onRemovePreview}
         {chat}
         {events}
         {filteredProposals}
@@ -338,7 +380,8 @@
             on:joinGroup
             on:upgrade
             on:cancelReply={() => draftMessagesStore.setReplyingTo({ chatId: chat.id }, undefined)}
-            on:clearAttachment={() => draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
+            on:clearAttachment={() =>
+                draftMessagesStore.setAttachment({ chatId: chat.id }, undefined)}
             on:cancelEditEvent={() => draftMessagesStore.delete({ chatId: chat.id })}
             on:setTextContent={setTextContent}
             on:startTyping={() => client.startTyping(chat, $user.userId)}
@@ -351,6 +394,7 @@
             on:makeMeme={makeMeme}
             on:tokenTransfer={tokenTransfer}
             on:createPrizeMessage={createPrizeMessage}
+            on:createP2PSwapMessage={createP2PSwapMessage}
             on:searchChat={searchChat}
             on:createPoll={createPoll} />
     {/if}

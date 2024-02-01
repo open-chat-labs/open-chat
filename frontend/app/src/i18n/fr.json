@@ -366,7 +366,8 @@
             "crypto": "envoyer des messages cryptographiques",
             "giphy": "envoyer des messages giphy",
             "prize": "envoyer des messages de récompense",
-            "memeFighter": "envoyer des messages à Meme Fighter"
+            "memeFighter": "envoyer des messages à Meme Fighter",
+            "p2pSwap": "envoyer des messages d'échange P2P"
         },
         "threadPermissions": {
             "default": "envoyer des messages dans les fils de discussion par défaut",
@@ -379,7 +380,8 @@
             "crypto": "envoyer des messages cryptographiques dans les fils de discussion",
             "giphy": "envoyer des messages Giphy dans les discussions",
             "prize": "envoyer des messages de récompense dans les discussions",
-            "memeFighter": "envoyer des messages Meme Fighter dans les discussions"
+            "memeFighter": "envoyer des messages Meme Fighter dans les discussions",
+            "p2pSwap": "envoyer des messages d'échange P2P dans les fils de discussion"
         }
     },
     "rules": {
@@ -660,13 +662,10 @@
             "enterRecipientOwner": "Saisissez le principal du compte du destinataire",
             "enterRecipientSubaccount": "Saisissez un sous-compte de destinataire facultatif",
             "ledgerCanisterId": "Identifiant de la cartouche du grand livre",
-            "enterLedgerCanisterId": "Saisissez l'ID de la cartouche du grand livre",
             "tokenInfoUrl": "URL des informations sur le jeton",
-            "enterTokenInfoUrl": "Entrez une URL affichant les informations du jeton",
             "howToBuyUrl": "Comment acheter une URL",
-            "enterHowToBuyUrl": "Entrez une URL montrant comment acheter le jeton",
             "transactionUrlFormat": "Format de l'URL de la transaction",
-            "enterTransactionUrlFormat": "Par exemple. https://token.com/?index={transaction_index}"
+            "tokenLogo": "Logo"
         },
         "neuronControllerAction": "Actions du contrôleur de neurones"
     },
@@ -855,7 +854,8 @@
         "benefits": "Avantages du diamant",
         "message": "Parlez-moi de l'adhésion Diamond",
         "lifetimeMessage": "Vous êtes membre Diamond à vie.",
-        "lifetime": "Durée de vie"
+        "lifetime": "Durée de vie",
+        "p2pSwap": "Faire/accepter des échanges p2p"
     },
     "currentUsage": "Utilisation actuelle du stockage",
     "promoteTo": "Promouvoir à {role}",
@@ -1157,9 +1157,6 @@
     "sendTextDisabled": "Les messages texte sont désactivés",
     "disappearingMessages": {
         "label": "Messages qui disparaissent",
-        "hours": "Heures)",
-        "minutes": "Minutes)",
-        "days": "Jours)",
         "summary": "Les messages disparaîtront après {duration}",
         "timeUpdatedBy": "{changedBy} définit l'heure de disparition du message sur {duration}",
         "disabledBy": "{changedBy} a désactivé les messages qui disparaissent",
@@ -1206,5 +1203,43 @@
         "swapTokenTo": "Remplacer {tokenIn} par {tokenOut}",
         "quoteTooLow": "Le meilleur tarif indiqué est de {rate} {tokenOut} pour {tokenIn} à partir de {dex}. Cela donne {amountOut} {tokenOut} pour {amountIn} {tokenIn}. Vous ne pouvez échanger que si le montant indiqué dépasse {minAmountOut}."
     },
-    "messageBlocked": "Message masqué"
+    "messageBlocked": "Message masqué",
+    "removePreviewQuestion": "Supprimer l'aperçu ?",
+    "showPreview": "Afficher l'aperçu",
+    "excessiveLinksNote": "Les aperçus des liens sont masqués pour les messages contenant plus de 5 liens.",
+    "hours": "Heures",
+    "minutes": "Minutes",
+    "days": "Jours",
+    "p2pSwap": {
+        "builderTitle": "Faire une offre d'échange",
+        "expiryTime": "Date d'expiration",
+        "creatingYourMessage": "Veuillez patienter pendant la création d'une offre d'échange",
+        "failedToCreateMessage": "Échec de la création de l'offre d'échange",
+        "expired": "Expiré",
+        "accepted": "Accepté",
+        "accept": "Accepter",
+        "cancel": "Annuler",
+        "cancelled": "Annulé",
+        "reserved": "Réservé",
+        "summary": "Il s'agit d'une offre d'échange de {fromAmount} {fromToken} contre {toAmount} {toToken}.",
+        "youReserved": "Vous avez réservé cette offre et elle est en cours de finalisation.",
+        "youAccepted": "Vous avez accepté cette offre et elle est en attente de finalisation.",
+        "reservedBy": "Cette offre a été réservée par {user} et est en attente de finalisation.",
+        "acceptedBy": "Cette offre a été acceptée par {user} et est en attente de finalisation.",
+        "youCompleted": "Vous avez accepté cette offre.",
+        "completed": "Cette offre a été acceptée par {user}.",
+        "confirmAccept": "Lorsque vous acceptez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Vous recevrez {amountOther} {tokenOther} en échange. Voulez-vous continuer?",
+        "confirmCancel": "Lorsque vous annulez cette offre, {amount} {token} sera transféré du conteneur OpenChat Escrow vers votre portefeuille. Voulez-vous continuer?",
+        "insufficientBalanceMessage": "Vous avez besoin d'au moins {amount} {token} (comprend 2 frais de transaction) pour accepter cet échange.",
+        "insufficientBalance": "Solde insuffisant",
+        "tokenBalance": "solde {token}",
+        "already_accepted": "Cette offre d'échange a déjà été acceptée",
+        "swap_cancelled": "Cette offre d'échange a été annulée",
+        "swap_expired": "Cette offre d'échange est expirée",
+        "swap_not_found": "Cette offre d'échange est introuvable",
+        "insufficient_funds": "Il ne vous reste pas suffisamment de fonds pour accepter cette offre d'échange",
+        "unknown_accept_error": "Erreur lors de l'acceptation de l'offre d'échange",
+        "unknown_cancel_error": "Erreur lors de l'annulation de l'offre d'échange",
+        "confirmSend": "Lorsque vous créez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Il y restera jusqu'à ce que l'offre expire, que vous annuliez l'offre ou que l'offre soit acceptée. Voulez-vous continuer?"
+    }
 }
