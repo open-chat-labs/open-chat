@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Transfer balance from old Diamond membership payments to treasury ([#5307](https://github.com/open-chat-labs/open-chat/pull/5307))
 
+### Changed
+
+- Remove excess 0's from token amount in referral reward messages ([#5308](https://github.com/open-chat-labs/open-chat/pull/5308))
+
 ## [[2.0.1039](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1039-user_index)] - 2024-02-01
 
 ### Changed
