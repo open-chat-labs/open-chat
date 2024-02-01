@@ -41,10 +41,7 @@ impl Translations {
 
         let new_index = self.translations.len();
 
-        self.records
-            .entry(tuple.clone())
-            .and_modify(|e| e.push(new_index))
-            .or_insert(vec![new_index]);
+        self.records.entry(tuple.clone()).or_default().push(new_index);
 
         self.translations.push(Translation {
             id: new_index as u64,
