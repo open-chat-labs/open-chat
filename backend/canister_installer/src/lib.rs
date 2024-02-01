@@ -111,6 +111,8 @@ async fn install_service_canisters_impl(
 
     let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
     let translations_init_args = translations_canister::init::Args {
+        deployment_operators: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,
