@@ -2,30 +2,70 @@ use crate::model::account_billing::AccountBilling;
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CyclesTopUp, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary};
+use types::{
+    is_default, is_empty_slice, CyclesTopUp, CyclesTopUpInternal, Milliseconds, PhoneNumber, RegistrationFee, TimestampMillis,
+    UserId, UserSummary,
+};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
+    #[serde(rename = "pr", alias = "principal")]
     pub principal: Principal,
+    #[serde(rename = "id", alias = "user_id")]
     pub user_id: UserId,
+    #[serde(rename = "un", alias = "username")]
     pub username: String,
+    #[serde(rename = "dn", alias = "display_name", default, skip_serializing_if = "Option::is_none")]
     pub display_name: Option<String>,
+    #[serde(
+        rename = "dnu",
+        alias = "display_name_upper",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub display_name_upper: Option<String>,
+    #[serde(rename = "dc", alias = "date_created")]
     pub date_created: TimestampMillis,
+    #[serde(rename = "du", alias = "date_updated")]
     pub date_updated: TimestampMillis,
-    pub upgrade_in_progress: bool,
-    pub cycle_top_ups: Vec<CyclesTopUp>,
+    #[serde(rename = "ct", alias = "cycle_top_ups")]
+    pub cycle_top_ups: Vec<CyclesTopUpInternal>,
+    #[serde(rename = "av", alias = "avatar_id", default, skip_serializing_if = "Option::is_none")]
     pub avatar_id: Option<u128>,
+    #[serde(rename = "rf", alias = "registration_fee", default, skip_serializing_if = "Option::is_none")]
     pub registration_fee: Option<RegistrationFee>,
+    #[serde(rename = "ab", alias = "account_billing")]
     pub account_billing: AccountBilling,
+    #[serde(rename = "ps", alias = "phone_status", default, skip_serializing_if = "is_default")]
     pub phone_status: PhoneStatus,
+    #[serde(rename = "rb", alias = "referred_by", default, skip_serializing_if = "Option::is_none")]
     pub referred_by: Option<UserId>,
+    #[serde(rename = "ib", alias = "is_bot", default, skip_serializing_if = "is_default")]
     pub is_bot: bool,
+    #[serde(
+        rename = "sd",
+        alias = "suspension_details",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
     pub suspension_details: Option<SuspensionDetails>,
+    #[serde(
+        rename = "dm",
+        alias = "diamond_membership_details",
+        default,
+        skip_serializing_if = "DiamondMembershipDetailsInternal::has_never_been_diamond_member"
+    )]
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
+    #[serde(
+        rename = "mf",
+        alias = "moderation_flags_enabled",
+        default,
+        skip_serializing_if = "is_default"
+    )]
     pub moderation_flags_enabled: u32,
+    #[serde(rename = "rm", alias = "reported_messages", default, skip_serializing_if = "is_empty_slice")]
     pub reported_messages: Vec<u64>,
-    #[serde(default)]
+    #[serde(rename = "pm", alias = "principal_migrated", default, skip_serializing_if = "is_default")]
     pub principal_migrated: bool,
 }
 
@@ -36,7 +76,7 @@ impl User {
     }
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
+        self.cycle_top_ups.push(top_up.into())
     }
 }
 
@@ -65,7 +105,6 @@ impl User {
             display_name_upper: None,
             date_created: now,
             date_updated: now,
-            upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
@@ -138,7 +177,6 @@ impl Default for User {
             display_name_upper: None,
             date_created: 0,
             date_updated: 0,
-            upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
             registration_fee: None,
