@@ -1,4 +1,4 @@
-use crate::{model::translations::ApproveRejectResponse, mutate_state, read_state};
+use crate::{model::translations::RejectResponse, mutate_state, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use translations_canister::reject::{Response::*, *};
@@ -17,8 +17,8 @@ async fn reject(args: Args) -> Response {
     };
 
     mutate_state(|state| match state.data.translations.reject(args.id, user_id, now) {
-        ApproveRejectResponse::Success => Success,
-        ApproveRejectResponse::NotProposed => NotProposed,
-        ApproveRejectResponse::NotFound => NotFound,
+        RejectResponse::Success => Success,
+        RejectResponse::NotProposed => NotProposed,
+        RejectResponse::NotFound => NotFound,
     })
 }

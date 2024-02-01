@@ -1,7 +1,7 @@
 use crate::{
     model::{
         pending_payments_queue::{PendingPayment, PendingPaymentReason},
-        translations::ApproveRejectResponse,
+        translations::ApproveResponse,
     },
     mutate_state, read_state,
 };
@@ -24,9 +24,9 @@ async fn approve(args: Args) -> Response {
     };
 
     mutate_state(|state| match state.data.translations.approve(args.id, user_id, now) {
-        ApproveRejectResponse::Success => {
+        ApproveResponse::Success(proposed_by) => {
             state.data.pending_payments_queue.push(PendingPayment {
-                recipient_account: user_id.into(),
+                recipient_account: proposed_by.into(),
                 timestamp: now,
                 currency: Cryptocurrency::CHAT,
                 amount: 100_000_000, // 1 CHAT
@@ -34,7 +34,7 @@ async fn approve(args: Args) -> Response {
             });
             Success
         }
-        ApproveRejectResponse::NotProposed => NotProposed,
-        ApproveRejectResponse::NotFound => NotFound,
+        ApproveResponse::NotProposed => NotProposed,
+        ApproveResponse::NotFound => NotFound,
     })
 }

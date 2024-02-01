@@ -58,31 +58,31 @@ impl Translations {
         Some(new_index as u64)
     }
 
-    pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveRejectResponse {
+    pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
         if let Some(translation) = self.translations.get_mut(id as usize) {
             if !matches!(translation.status, TranslationStatus::Proposed) {
-                ApproveRejectResponse::NotProposed
+                ApproveResponse::NotProposed
             } else {
                 let attribution = Attribution { who: user_id, when: now };
                 translation.status = TranslationStatus::Approved(attribution);
-                ApproveRejectResponse::Success
+                ApproveResponse::Success(translation.proposed.who)
             }
         } else {
-            ApproveRejectResponse::NotFound
+            ApproveResponse::NotFound
         }
     }
 
-    pub fn reject(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveRejectResponse {
+    pub fn reject(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> RejectResponse {
         if let Some(translation) = self.translations.get_mut(id as usize) {
             if !matches!(translation.status, TranslationStatus::Proposed) {
-                ApproveRejectResponse::NotProposed
+                RejectResponse::NotProposed
             } else {
                 let attribution = Attribution { who: user_id, when: now };
                 translation.status = TranslationStatus::Rejected(attribution);
-                ApproveRejectResponse::Success
+                RejectResponse::Success
             }
         } else {
-            ApproveRejectResponse::NotFound
+            RejectResponse::NotFound
         }
     }
 
@@ -198,7 +198,13 @@ pub struct Attribution {
     pub when: TimestampMillis,
 }
 
-pub enum ApproveRejectResponse {
+pub enum ApproveResponse {
+    Success(UserId),
+    NotProposed,
+    NotFound,
+}
+
+pub enum RejectResponse {
     Success,
     NotProposed,
     NotFound,
