@@ -43,6 +43,7 @@
         fromAmount > 0n ? fromDetails.balance - fromAmount - totalFees : fromDetails.balance;
     $: minAmount = fromDetails.transferFee * BigInt(100);
     $: valid = error === undefined && fromAmountValid && toAmountValid;
+    $: isDiamond = client.isDiamond;
 
     $: {
         if (tokenInputState === "too_low") {
@@ -58,6 +59,11 @@
     }
 
     function onSend() {
+        if (!$isDiamond) {
+            dispatch("upgrade");
+            return;
+        }
+
         if (!valid) {
             return;
         }

@@ -7,7 +7,7 @@ import type {
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
-    DirectChatEvent,
+    ChatEvent,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -131,7 +131,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -140,7 +140,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _messageIndex: number,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -151,7 +151,7 @@ export class AnonUserClient {
         _ascending: boolean,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 

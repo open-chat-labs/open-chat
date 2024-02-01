@@ -13,12 +13,6 @@ fn current_user_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
     if let Some(u) = state.data.users.get_by_principal(&caller) {
-        let canister_upgrade_status = if u.upgrade_in_progress {
-            CanisterUpgradeStatus::InProgress
-        } else {
-            CanisterUpgradeStatus::NotRequired
-        };
-
         let suspension_details = u.suspension_details.as_ref().map(|d| SuspensionDetails {
             reason: d.reason.to_owned(),
             action: match d.duration {
@@ -36,7 +30,7 @@ fn current_user_impl(state: &RuntimeState) -> Response {
             user_id: u.user_id,
             username: u.username.clone(),
             display_name: u.display_name.clone(),
-            canister_upgrade_status,
+            canister_upgrade_status: CanisterUpgradeStatus::NotRequired,
             avatar_id: u.avatar_id,
             wasm_version: BuildVersion::default(),
             icp_account: default_ledger_account(u.user_id.into()),

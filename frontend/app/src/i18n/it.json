@@ -854,7 +854,8 @@
         "benefits": "Vantaggi del diamante",
         "message": "Parlami dell'abbonamento Diamond",
         "lifetimeMessage": "Hai un abbonamento Diamond a vita.",
-        "lifetime": "Tutta la vita"
+        "lifetime": "Tutta la vita",
+        "p2pSwap": "Effettua/accetta scambi p2p"
     },
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
     "promoteTo": "Promuovi a {role}",

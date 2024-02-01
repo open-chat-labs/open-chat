@@ -8,6 +8,9 @@ import {
     optional,
 } from "../../utils/mapping";
 import type {
+    ApiChatEvent,
+    ApiChatEventWrapper,
+    ApiEventsSuccessResult,
     ApiBlobReference,
     ApiFileContent,
     ApiImageContent,
@@ -72,6 +75,8 @@ import type {
 } from "../user/candid/idl";
 import type {
     Message,
+    ChatEvent,
+    EventsSuccessResult,
     ThreadSummary,
     StaleMessage,
     MessageContent,
@@ -163,6 +168,7 @@ import type {
     P2PSwapStatus,
     TokenInfo,
     CancelP2PSwapResponse,
+    GroupInviteCodeChange,
 } from "openchat-shared";
 import {
     ProposalDecisionStatus,
@@ -186,6 +192,7 @@ import type {
     ApiRemoveReactionResponse as ApiRemoveGroupReactionResponse,
     ApiGroupCanisterThreadDetails,
     ApiMessageEventWrapper,
+    ApiMessagesSuccessResult,
     ApiUpdateGroupResponse,
     ApiUnpinMessageResponse,
     ApiPinMessageResponse,
@@ -252,6 +259,208 @@ import { messageMatch } from "../user/mappers";
 import type { AcceptP2PSwapResponse } from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
+
+export function eventsSuccessResponse(
+    candid: ApiEventsSuccessResult,
+): EventsSuccessResult<ChatEvent> {
+    return {
+        events: candid.events.map(eventWrapper),
+        expiredEventRanges: candid.expired_event_ranges.map(expiredEventsRange),
+        expiredMessageRanges: candid.expired_message_ranges.map(expiredMessagesRange),
+        latestEventIndex: candid.latest_event_index,
+    };
+}
+
+export function eventWrapper(candid: ApiChatEventWrapper): EventWrapper<ChatEvent> {
+    return {
+        event: event(candid.event),
+        index: candid.index,
+        timestamp: candid.timestamp,
+        expiresAt: optional(candid.expires_at, Number),
+    };
+}
+
+export function event(candid: ApiChatEvent): ChatEvent {
+    if ("Message" in candid) {
+        return message(candid.Message);
+    }
+    if ("GroupChatCreated" in candid) {
+        return {
+            kind: "group_chat_created",
+            name: candid.GroupChatCreated.name,
+            description: candid.GroupChatCreated.description,
+            created_by: candid.GroupChatCreated.created_by.toString(),
+        };
+    }
+    if ("DirectChatCreated" in candid) {
+        return {
+            kind: "direct_chat_created",
+        };
+    }
+    if ("ParticipantsAdded" in candid) {
+        return {
+            kind: "members_added",
+            userIds: candid.ParticipantsAdded.user_ids.map((p) => p.toString()),
+            addedBy: candid.ParticipantsAdded.added_by.toString(),
+        };
+    }
+    if ("UsersInvited" in candid) {
+        return {
+            kind: "users_invited",
+            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
+            invitedBy: candid.UsersInvited.invited_by.toString(),
+        };
+    }
+    if ("ParticipantJoined" in candid) {
+        return {
+            kind: "member_joined",
+            userId: candid.ParticipantJoined.user_id.toString(),
+        };
+    }
+    if ("ParticipantsRemoved" in candid) {
+        return {
+            kind: "members_removed",
+            userIds: candid.ParticipantsRemoved.user_ids.map((p) => p.toString()),
+            removedBy: candid.ParticipantsRemoved.removed_by.toString(),
+        };
+    }
+    if ("ParticipantLeft" in candid) {
+        return {
+            kind: "member_left",
+            userId: candid.ParticipantLeft.user_id.toString(),
+        };
+    }
+    if ("GroupNameChanged" in candid) {
+        return {
+            kind: "name_changed",
+            changedBy: candid.GroupNameChanged.changed_by.toString(),
+        };
+    }
+    if ("GroupDescriptionChanged" in candid) {
+        return {
+            kind: "desc_changed",
+            changedBy: candid.GroupDescriptionChanged.changed_by.toString(),
+        };
+    }
+    if ("GroupRulesChanged" in candid) {
+        return {
+            kind: "rules_changed",
+            enabled: candid.GroupRulesChanged.enabled,
+            enabledPrev: candid.GroupRulesChanged.prev_enabled,
+            changedBy: candid.GroupRulesChanged.changed_by.toString(),
+        };
+    }
+    if ("AvatarChanged" in candid) {
+        return {
+            kind: "avatar_changed",
+            changedBy: candid.AvatarChanged.changed_by.toString(),
+        };
+    }
+    if ("UsersBlocked" in candid) {
+        return {
+            kind: "users_blocked",
+            userIds: candid.UsersBlocked.user_ids.map((p) => p.toString()),
+            blockedBy: candid.UsersBlocked.blocked_by.toString(),
+        };
+    }
+    if ("UsersUnblocked" in candid) {
+        return {
+            kind: "users_unblocked",
+            userIds: candid.UsersUnblocked.user_ids.map((p) => p.toString()),
+            unblockedBy: candid.UsersUnblocked.unblocked_by.toString(),
+        };
+    }
+    if ("RoleChanged" in candid) {
+        return {
+            kind: "role_changed",
+            userIds: candid.RoleChanged.user_ids.map((p) => p.toString()),
+            changedBy: candid.RoleChanged.changed_by.toString(),
+            oldRole: memberRole(candid.RoleChanged.old_role),
+            newRole: memberRole(candid.RoleChanged.new_role),
+        };
+    }
+    if ("MessagePinned" in candid) {
+        return {
+            kind: "message_pinned",
+            pinnedBy: candid.MessagePinned.pinned_by.toString(),
+            messageIndex: candid.MessagePinned.message_index,
+        };
+    }
+    if ("MessageUnpinned" in candid) {
+        return {
+            kind: "message_unpinned",
+            unpinnedBy: candid.MessageUnpinned.unpinned_by.toString(),
+            messageIndex: candid.MessageUnpinned.message_index,
+        };
+    }
+
+    if ("PermissionsChanged" in candid) {
+        return {
+            kind: "permissions_changed",
+            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions_v2),
+            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions_v2),
+            changedBy: candid.PermissionsChanged.changed_by.toString(),
+        };
+    }
+    if ("GroupVisibilityChanged" in candid) {
+        return {
+            kind: "group_visibility_changed",
+            nowPublic: candid.GroupVisibilityChanged.now_public,
+            changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
+        };
+    }
+    if ("GroupInviteCodeChanged" in candid) {
+        let change: GroupInviteCodeChange = "disabled";
+        if ("Enabled" in candid.GroupInviteCodeChanged.change) {
+            change = "enabled";
+        } else if ("Reset" in candid.GroupInviteCodeChanged.change) {
+            change = "reset";
+        }
+
+        return {
+            kind: "group_invite_code_changed",
+            change,
+            changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
+        };
+    }
+    if ("ChatFrozen" in candid) {
+        return {
+            kind: "chat_frozen",
+            frozenBy: candid.ChatFrozen.frozen_by.toString(),
+            reason: optional(candid.ChatFrozen.reason, identity),
+        };
+    }
+    if ("ChatUnfrozen" in candid) {
+        return {
+            kind: "chat_unfrozen",
+            unfrozenBy: candid.ChatUnfrozen.unfrozen_by.toString(),
+        };
+    }
+    if ("EventsTimeToLiveUpdated" in candid) {
+        return {
+            kind: "events_ttl_updated",
+            updatedBy: candid.EventsTimeToLiveUpdated.updated_by.toString(),
+            newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity),
+        };
+    }
+    if ("GroupGateUpdated" in candid) {
+        return {
+            kind: "gate_updated",
+            updatedBy: candid.GroupGateUpdated.updated_by.toString(),
+        };
+    }
+    if ("MembersAddedToDefaultChannel" in candid) {
+        return {
+            kind: "members_added_to_default_channel",
+            count: candid.MembersAddedToDefaultChannel.count,
+        };
+    }
+    if ("Empty" in candid) {
+        return { kind: "empty" };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
+}
 
 export function message(candid: ApiMessage): Message {
     const sender = candid.sender.toString();
@@ -464,43 +673,41 @@ function p2pTradeStatus(candid: ApiP2PSwapStatus): P2PSwapStatus {
         return { kind: "p2p_swap_open" };
     }
     if ("Reserved" in candid) {
-        return { 
+        return {
             kind: "p2p_swap_reserved",
             reservedBy: candid.Reserved.reserved_by.toString(),
         };
     }
     if ("Accepted" in candid) {
-        return { 
+        return {
             kind: "p2p_swap_accepted",
             acceptedBy: candid.Accepted.accepted_by.toString(),
             token1TxnIn: candid.Accepted.token1_txn_in,
         };
     }
     if ("Cancelled" in candid) {
-        return { 
+        return {
             kind: "p2p_swap_cancelled",
             token0TxnOut: optional(candid.Cancelled.token0_txn_out, identity),
         };
-
     }
     if ("Expired" in candid) {
-        return { 
+        return {
             kind: "p2p_swap_expired",
             token0TxnOut: optional(candid.Expired.token0_txn_out, identity),
         };
-
     }
     if ("Completed" in candid) {
         const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.Completed;
-        return { 
-            kind: "p2p_swap_completed", 
+        return {
+            kind: "p2p_swap_completed",
             acceptedBy: accepted_by.toString(),
             token1TxnIn: token1_txn_in,
             token0TxnOut: token0_txn_out,
             token1TxnOut: token1_txn_out,
         };
     }
-    
+
     throw new UnsupportedValueError("Unexpected ApiP2PSwapStatus type received", candid);
 }
 
@@ -1443,7 +1650,7 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
             kind: "token_balance_gate",
             ledgerCanister: candid.TokenBalance.ledger_canister_id.toString(),
             minBalance: candid.TokenBalance.min_balance,
-        }
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
@@ -1811,6 +2018,17 @@ export function groupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
         kind: "governance_proposals",
         isNns: subtype.GovernanceProposals.is_nns,
         governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toString(),
+    };
+}
+
+export function messagesSuccessResponse(
+    candid: ApiMessagesSuccessResult,
+): EventsSuccessResult<Message> {
+    return {
+        events: candid.messages.map(messageEvent),
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: candid.latest_event_index,
     };
 }
 
@@ -2433,19 +2651,21 @@ export function claimPrizeResponse(
     }
 }
 
-export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & CancelP2PSwapResponse {
+export function statusError(
+    candid: SwapStatusError,
+): AcceptP2PSwapResponse & CancelP2PSwapResponse {
     if ("Reserved" in candid) {
         return {
             kind: "already_reserved",
             reservedBy: candid.Reserved.reserved_by.toString(),
-        }
+        };
     }
     if ("Accepted" in candid) {
         return {
             kind: "already_accepted",
             acceptedBy: candid.Accepted.accepted_by.toString(),
             token1TxnIn: candid.Accepted.token1_txn_in,
-        }
+        };
     }
     if ("Completed" in candid) {
         const { accepted_by, token1_txn_in, token0_txn_out, token1_txn_out } = candid.Completed;
@@ -2455,27 +2675,30 @@ export function statusError(candid: SwapStatusError): AcceptP2PSwapResponse & Ca
             token1TxnIn: token1_txn_in,
             token0TxnOut: token0_txn_out,
             token1TxnOut: token1_txn_out,
-        }
+        };
     }
     if ("Cancelled" in candid) {
         return {
             kind: "swap_cancelled",
             token0TxnOut: optional(candid.Cancelled.token0_txn_out, identity),
-        }
+        };
     }
     if ("Expired" in candid) {
         return {
             kind: "swap_expired",
             token0TxnOut: optional(candid.Expired.token0_txn_out, identity),
-        }
+        };
     }
 
     throw new UnsupportedValueError("Unexpected SwapStatusError type received", candid);
 }
 
 export function acceptP2PSwapResponse(
-    candid: ApiCommunityAcceptP2PSwapResponse | ApiGroupAcceptP2PSwapResponse | ApiUserAcceptP2PSwapResponse)
-: AcceptP2PSwapResponse {
+    candid:
+        | ApiCommunityAcceptP2PSwapResponse
+        | ApiGroupAcceptP2PSwapResponse
+        | ApiUserAcceptP2PSwapResponse,
+): AcceptP2PSwapResponse {
     if ("Success" in candid) {
         return { kind: "success", token1TxnIn: candid.Success.token1_txn_in };
     }
@@ -2497,8 +2720,11 @@ export function acceptP2PSwapResponse(
 }
 
 export function cancelP2PSwapResponse(
-    candid: ApiCommunityCancelP2PSwapResponse | ApiGroupCancelP2PSwapResponse | ApiUserCancelP2PSwapResponse)
-: CancelP2PSwapResponse {
+    candid:
+        | ApiCommunityCancelP2PSwapResponse
+        | ApiGroupCancelP2PSwapResponse
+        | ApiUserCancelP2PSwapResponse,
+): CancelP2PSwapResponse {
     if ("Success" in candid) {
         return { kind: "success" };
     }

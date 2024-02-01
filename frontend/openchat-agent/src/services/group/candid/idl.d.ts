@@ -17,6 +17,7 @@ import {
     EventsByIndexArgs,
     EventsResponse,
     EventsSuccessResult,
+    MessagesSuccessResult,
     EventsArgs,
     ChatEvent,
     SendMessageV2Args,
@@ -69,7 +70,7 @@ import {
     UnfollowThreadResponse,
     OptionalMessagePermissions,
     AcceptP2PSwapResponse,
-    CancelP2PSwapResponse
+    CancelP2PSwapResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -92,6 +93,7 @@ export {
     EventsByIndexArgs as ApiEventsByIndexArgs,
     EventsResponse as ApiEventsResponse,
     EventsSuccessResult as ApiEventsSuccessResult,
+    MessagesSuccessResult as ApiMessagesSuccessResult,
     EventsArgs as ApiEventsArgs,
     ChatEvent as ApiGroupChatEvent,
     ChangeRoleResponse as ApiChangeRoleResponse,
@@ -141,7 +143,7 @@ export {
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
     OptionalMessagePermissions as ApiOptionalMessagePermissions,
     AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
-    CancelP2PSwapResponse as ApiCancelP2PSwapResponse
+    CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

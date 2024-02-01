@@ -852,7 +852,8 @@
         "benefits": "היתרונות של יהלום",
         "message": "ספר לי על חברות ב-Diamond",
         "lifetimeMessage": "יש לך חברות Diamond לכל החיים.",
-        "lifetime": "לכל החיים"
+        "lifetime": "לכל החיים",
+        "p2pSwap": "בצע/קבל החלפות P2P"
     },
     "currentUsage": "שימוש נוכחי באחסון",
     "promoteTo": "קדם ל-{role}",

@@ -856,7 +856,8 @@
         "benefits": "Vorteile von Diamant",
         "message": "Erzählen Sie mir von der Diamond-Mitgliedschaft",
         "lifetimeMessage": "Sie haben eine lebenslange Diamond-Mitgliedschaft.",
-        "lifetime": "Lebensdauer"
+        "lifetime": "Lebensdauer",
+        "p2pSwap": "P2P-Swaps durchführen/akzeptieren"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",
