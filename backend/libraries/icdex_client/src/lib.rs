@@ -1,3 +1,4 @@
+use candid::Nat;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use icdex_canister::{ICDexOrderType, MakeOrderResponse, OrderPrice, OrderQuantity, TradingOrder};
 use icrc_ledger_types::icrc1::transfer::TransferArg;
@@ -49,11 +50,16 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
     }
 
     pub async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
-        let args = (self.this_canister_id.to_string(), None, None);
+        let args = (self.this_canister_id.to_string(), None, Some(Nat::from(250u32)));
 
         let orders = icdex_canister_c2c_client::pending(self.dex_canister_id, args).await?.0;
 
-        Ok(orders.data.into_iter().map(|(_, o)| self.convert_order(o)).collect())
+        Ok(orders
+            .data
+            .into_iter()
+            .map(|(_, o)| self.convert_order(o))
+            .filter(|o| o.amount > 0)
+            .collect())
     }
 
     pub async fn orderbook(&self) -> CallResult<AggregatedOrders> {

@@ -6636,6 +6636,7 @@ name = "translations_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
@@ -6654,6 +6655,9 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
+ "icrc_ledger_canister_c2c_client",
  "rand",
  "serde",
  "serializer",
@@ -6661,6 +6665,8 @@ dependencies = [
  "tracing",
  "translations_canister",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
