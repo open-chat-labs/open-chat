@@ -1507,7 +1507,7 @@ type GateCheckFailedReason = variant {
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
-    PaymentFailed : TransferFromError;
+    PaymentFailed : ICRC2_TransferFromError;
     InsufficientBalance : nat;
 };
 

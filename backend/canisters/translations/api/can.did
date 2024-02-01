@@ -14,7 +14,7 @@ type ProposeResponse = variant {
     InternalError : text;
 };
 
-type Approve2Args = record {
+type ApproveArgs = record {
     id : nat64;
 };
 
@@ -87,7 +87,7 @@ type Translation = record {
 
 service : {
     propose : (ProposeArgs) -> (ProposeResponse);
-    approve : (Approve2Args) -> (ApproveResponse);
+    approve : (ApproveArgs) -> (ApproveResponse);
     reject : (RejectArgs) -> (RejectResponse);
     mark_deployed : (MarkDeployedArgs) -> (MarkDeployedResponse);
 
