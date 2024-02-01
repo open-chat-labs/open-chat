@@ -169,6 +169,8 @@ function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
 }
 
+const MAX_NOTIFICATIONS = 50;
+
 async function showNotification(n: Notification, id: string): Promise<void> {
     let icon = "/_/raw/icon.png";
     let image = undefined;
@@ -251,8 +253,15 @@ async function showNotification(n: Notification, id: string): Promise<void> {
         }
 
         // We need to close any existing notifications for the same tag otherwise the new notification will not be shown
-        const existing = await self.registration.getNotifications({ tag });
-        existing.forEach((n) => n.close());
+        const matching = await self.registration.getNotifications({ tag });
+        matching.forEach((n) => n.close());
+    }
+
+    const existing = await self.registration.getNotifications();
+    if (existing.length >= MAX_NOTIFICATIONS) {
+        for (const toClose of existing.slice(0, existing.length - MAX_NOTIFICATIONS)) {
+            toClose.close();
+        }
     }
 
     const toShow = {
