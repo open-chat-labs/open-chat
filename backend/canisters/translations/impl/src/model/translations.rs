@@ -13,9 +13,9 @@ impl Translations {
     pub fn propose(&mut self, args: ProposeArgs) -> Option<u64> {
         let tuple = (args.locale.clone(), args.key.clone());
 
-        // Loop backwards through translations until we reach the most recently deployed.
-        // If any of these translations matches the proposed value then don't add the translation.
         if let Some(ids) = self.records.get(&tuple) {
+            // Loop backwards through translations until we reach the most recently deployed.
+            // If any of these translations matches the proposed value then don't add the translation.
             for index in ids.iter().rev() {
                 if let Some(translation) = self.translations.get(*index) {
                     if translation.value == args.value {
@@ -27,24 +27,23 @@ impl Translations {
                     }
                 }
             }
+
+            // If this user has a previous proposed translation for this record then mark it as `overidden`
+            for index in ids.iter().rev() {
+                if let Some(translation) = self.translations.get_mut(*index) {
+                    if translation.proposed.who == args.user_id && matches!(translation.status, TranslationStatus::Proposed) {
+                        translation.status = TranslationStatus::Overidden;
+                        break;
+                    }
+                }
+            }
         }
 
         let new_index = self.translations.len();
 
         self.records
             .entry(tuple.clone())
-            .and_modify(|e| {
-                e.push(new_index);
-
-                if let Some(prev) = self
-                    .translations
-                    .iter_mut()
-                    .rev()
-                    .find(|t| t.proposed.who == args.user_id && matches!(t.status, TranslationStatus::Proposed))
-                {
-                    prev.status = TranslationStatus::Overidden;
-                }
-            })
+            .and_modify(|e| e.push(new_index))
             .or_insert(vec![new_index]);
 
         self.translations.push(Translation {
