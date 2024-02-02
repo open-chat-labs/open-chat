@@ -2,15 +2,10 @@ use crate::exchanges::Exchange;
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
 use icdex_client::ICDexClient;
-use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
 use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Order, TokenInfo};
 
 #[async_trait]
 impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + Sync> Exchange for ICDexClient<M, C> {
-    fn exchange_id(&self) -> ExchangeId {
-        ICDEX_EXCHANGE_ID
-    }
-
     fn quote_token(&self) -> &TokenInfo {
         self.quote_token()
     }
