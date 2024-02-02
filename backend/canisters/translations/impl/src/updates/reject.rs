@@ -16,9 +16,11 @@ async fn reject(args: Args) -> Response {
         Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
-    mutate_state(|state| match state.data.translations.reject(args.id, user_id, now) {
-        RejectResponse::Success => Success,
-        RejectResponse::NotProposed => NotProposed,
-        RejectResponse::NotFound => NotFound,
-    })
+    mutate_state(
+        |state| match state.data.translations.reject(args.id, args.reason, user_id, now) {
+            RejectResponse::Success => Success,
+            RejectResponse::NotProposed => NotProposed,
+            RejectResponse::NotFound => NotFound,
+        },
+    )
 }

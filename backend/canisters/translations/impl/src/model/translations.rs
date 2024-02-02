@@ -1,7 +1,10 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use translations_canister::proposed::{CandidateTranslation, Record};
+use translations_canister::{
+    proposed::{CandidateTranslation, Record},
+    reject::RejectReason,
+};
 use types::{TimestampMillis, UserId};
 use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
@@ -90,13 +93,13 @@ impl Translations {
         })
     }
 
-    pub fn reject(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> RejectResponse {
+    pub fn reject(&mut self, id: u64, reason: RejectReason, user_id: UserId, now: TimestampMillis) -> RejectResponse {
         if let Some(translation) = self.translations.get_mut(id as usize) {
             if !matches!(translation.status, TranslationStatus::Proposed) {
                 RejectResponse::NotProposed
             } else {
                 let attribution = Attribution { who: user_id, when: now };
-                translation.status = TranslationStatus::Rejected(RejectedStatus { attribution });
+                translation.status = TranslationStatus::Rejected(RejectedStatus { attribution, reason });
                 RejectResponse::Success
             }
         } else {
@@ -273,6 +276,7 @@ pub struct ApprovedStatus {
 #[derive(Serialize, Deserialize)]
 pub struct RejectedStatus {
     pub attribution: Attribution,
+    pub reason: RejectReason,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -369,7 +373,7 @@ mod tests {
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
         translations.approve(0, user_id(USER3), 2);
-        translations.reject(1, user_id(USER3), 3);
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
 
         let results = translations.proposed();
 
@@ -428,7 +432,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.reject(0, user_id(USER3), 2);
+        translations.reject(0, RejectReason::IncorrectMeaning, user_id(USER3), 2);
 
         let results = translations.pending_deployment();
 
