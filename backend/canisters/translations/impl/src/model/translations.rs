@@ -7,6 +7,7 @@ use types::{TimestampMillis, UserId};
 pub struct Translations {
     translations: Vec<Translation>,
     records: HashMap<(String, String), Vec<usize>>,
+    last_deployed: TimestampMillis,
 }
 
 impl Translations {
@@ -116,6 +117,8 @@ impl Translations {
                 }
             }
         }
+
+        self.last_deployed = now;
     }
 
     pub fn proposed(&self) -> Vec<Record> {
@@ -404,6 +407,27 @@ mod tests {
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].candidates.len(), 1);
         assert_eq!(results[0].candidates[0].id, 1);
+    }
+
+    #[test]
+    fn same_user_approved_twice_return_previously_approved() {
+        let mut translations = Translations::default();
+        let mut args = test_proposal_1();
+
+        translations.propose(args.clone());
+        if let ApproveResponse::Success(result) = translations.approve(0, user_id(USER3), 1) {
+            assert!(!result.previously_approved);
+        } else {
+            panic!("ApproveSuccess expected");
+        }
+
+        args.value = "abcdef".to_string();
+        translations.propose(args);
+        if let ApproveResponse::Success(result) = translations.approve(1, user_id(USER3), 3) {
+            assert!(result.previously_approved);
+        } else {
+            panic!("ApproveSuccess expected");
+        }
     }
 
     fn user_id(text: &str) -> UserId {
