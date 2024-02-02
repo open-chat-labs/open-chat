@@ -1,10 +1,12 @@
 use crate::guards::caller_is_deployment_operator;
+use crate::model::translations::DecisionSummary;
 use crate::mutate_state;
 use crate::RuntimeState;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use translations_canister::mark_deployed::{Response::*, *};
 use user_index_canister::c2c_send_openchat_bot_messages;
+use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
 #[update(guard = "caller_is_deployment_operator")]
 #[trace]
@@ -26,7 +28,14 @@ fn mark_deployed_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn notify_translators_of_decisions(state: &mut RuntimeState) {
     let since = state.data.user_notifications_last_sent;
 
-    let messages = state.data.translations.build_notifications(since);
+    let summaries = state.data.translations.collate_decision_summaries(since);
+    let messages: Vec<_> = summaries
+        .into_iter()
+        .map(|(user_id, summary)| Message {
+            text: build_message_text(summary),
+            recipient: user_id,
+        })
+        .collect();
 
     let payload = c2c_send_openchat_bot_messages::Args { messages };
     state.data.fire_and_forget_handler.send(
@@ -36,4 +45,20 @@ fn notify_translators_of_decisions(state: &mut RuntimeState) {
     );
 
     state.data.user_notifications_last_sent = state.env.now();
+}
+
+fn build_message_text(summary: DecisionSummary) -> String {
+    let DecisionSummary {
+        approved,
+        rejected,
+        deployed,
+        newly_approved: paid,
+    } = summary;
+    format!(
+        "Round-up of recent translation decisions:
+        Approved: {approved}
+        Rejected: {rejected}
+        Applied: {deployed}
+        CHAT earned: {paid}"
+    )
 }

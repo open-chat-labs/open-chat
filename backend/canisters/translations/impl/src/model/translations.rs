@@ -6,7 +6,6 @@ use translations_canister::{
     reject::RejectReason,
 };
 use types::{TimestampMillis, UserId};
-use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Translations {
@@ -54,7 +53,7 @@ impl Translations {
             value: args.value,
             proposed: Attribution {
                 who: args.user_id,
-                when: args.now,
+                when: args.when,
             },
             status: TranslationStatus::Proposed,
         });
@@ -169,7 +168,7 @@ impl Translations {
             .collect()
     }
 
-    pub fn build_notifications(&self, since: TimestampMillis) -> Vec<Message> {
+    pub fn collate_decision_summaries(&self, since: TimestampMillis) -> HashMap<UserId, DecisionSummary> {
         self.translations
             .iter()
             .filter(|t| match &t.status {
@@ -180,46 +179,34 @@ impl Translations {
             })
             .group_by(|t| t.proposed.who)
             .into_iter()
-            .map(|(recipient, group)| Message {
-                recipient,
-                text: Translations::build_notification(group.collect()),
-            })
+            .map(|(recipient, group)| (recipient, Translations::collate_decision_summary(group.collect())))
             .collect()
     }
 
-    fn build_notification(translations: Vec<&Translation>) -> String {
-        let mut approved = 0_u32;
-        let mut rejected = 0_u32;
-        let mut deployed = 0_u32;
-        let mut paid = 0_u32;
+    fn collate_decision_summary(translations: Vec<&Translation>) -> DecisionSummary {
+        let mut summary = DecisionSummary::default();
 
         for transaction in translations {
             match &transaction.status {
                 TranslationStatus::Approved(s) => {
-                    approved += 1;
+                    summary.approved += 1;
                     if !s.previously_approved {
-                        paid += 1;
+                        summary.newly_approved += 1;
                     }
                 }
-                TranslationStatus::Rejected(_) => rejected += 1,
+                TranslationStatus::Rejected(_) => summary.rejected += 1,
                 TranslationStatus::Deployed(s) => {
-                    deployed += 1;
-                    approved += 1;
+                    summary.deployed += 1;
+                    summary.approved += 1;
                     if !s.approved.previously_approved {
-                        paid += 1;
+                        summary.newly_approved += 1;
                     }
                 }
                 _ => (),
             }
         }
 
-        format!(
-            "Round-up of recent translation decisions:
-Approved: {approved}
-Rejected: {rejected}
-Applied: {deployed}
-CHAT earned: {paid}"
-        )
+        summary
     }
 
     fn find_most_recent_approved_or_deployed(&self, indexes: &[usize]) -> Option<&Translation> {
@@ -245,7 +232,7 @@ pub struct ProposeArgs {
     pub key: String,
     pub value: String,
     pub user_id: UserId,
-    pub now: TimestampMillis,
+    pub when: TimestampMillis,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -308,6 +295,14 @@ pub enum RejectResponse {
     NotFound,
 }
 
+#[derive(Default)]
+pub struct DecisionSummary {
+    pub approved: u32,
+    pub rejected: u32,
+    pub deployed: u32,
+    pub newly_approved: u32,
+}
+
 #[cfg(test)]
 mod tests {
     use candid::Principal;
@@ -357,7 +352,7 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, user_id(USER3), 2);
+        translations.approve(0, user_id(USER3), 3);
 
         let results = translations.proposed();
 
@@ -372,8 +367,8 @@ mod tests {
 
         translations.propose(test_proposal_1());
         translations.propose(test_proposal_2());
-        translations.approve(0, user_id(USER3), 2);
-        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.approve(0, user_id(USER3), 3);
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 4);
 
         let results = translations.proposed();
 
@@ -505,6 +500,35 @@ mod tests {
         }
     }
 
+    #[test]
+    fn collate_decision_summaries_expected() {
+        let mut translations = Translations::default();
+
+        translations.propose(test_proposal_1());
+        translations.propose(test_proposal_2());
+        translations.approve(0, user_id(USER3), 2);
+        translations.reject(1, RejectReason::IncorrectMeaning, user_id(USER3), 3);
+        translations.mark_deployed(3, 4);
+
+        let results = translations.collate_decision_summaries(0);
+
+        assert_eq!(results.len(), 2);
+
+        let user_id_1 = user_id(USER1);
+        let summary_1 = results.get(&user_id_1).unwrap();
+        assert_eq!(summary_1.approved, 1);
+        assert_eq!(summary_1.rejected, 0);
+        assert_eq!(summary_1.deployed, 1);
+        assert_eq!(summary_1.newly_approved, 1);
+
+        let user_id_2 = user_id(USER2);
+        let summary_2 = results.get(&user_id_2).unwrap();
+        assert_eq!(summary_2.approved, 0);
+        assert_eq!(summary_2.rejected, 1);
+        assert_eq!(summary_2.deployed, 0);
+        assert_eq!(summary_2.newly_approved, 0);
+    }
+
     fn user_id(text: &str) -> UserId {
         Principal::from_text(text).unwrap().into()
     }
@@ -515,7 +539,7 @@ mod tests {
             key: "abc.def".to_string(),
             value: "xyz".to_string(),
             user_id: user_id(USER1),
-            now: 0,
+            when: 1,
         }
     }
 
@@ -525,7 +549,7 @@ mod tests {
             key: "abc.def".to_string(),
             value: "ghi".to_string(),
             user_id: user_id(USER2),
-            now: 1,
+            when: 2,
         }
     }
 }
