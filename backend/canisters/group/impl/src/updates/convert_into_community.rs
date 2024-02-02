@@ -36,7 +36,8 @@ async fn convert_into_community(args: Args) -> Response {
     match group_index_canister_c2c_client::c2c_convert_group_into_community(group_index_canister_id, &c2c_args).await {
         Ok(group_index_canister::c2c_convert_group_into_community::Response::Success(community_id)) => {
             mutate_state(|state| {
-                state.data.community_being_imported_into = Some(CommunityBeingImportedInto::Existing(community_id))
+                state.data.community_being_imported_into = Some(CommunityBeingImportedInto::Existing(community_id));
+                state.transfer_prizes_to_community(community_id);
             });
             Success(SuccessResult {
                 community_id,

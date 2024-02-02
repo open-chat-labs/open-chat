@@ -255,7 +255,7 @@ impl RuntimeState {
             ChatFrozen
         } else {
             self.data.community_being_imported_into = Some(community);
-            let serialized = msgpack::serialize_then_unwrap(&self.data.chat);
+            let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
             self.data.serialized_chat_state = Some(ByteBuf::from(serialized));
 
@@ -268,6 +268,31 @@ impl RuntimeState {
 
             Success(total_bytes)
         }
+    }
+
+    pub fn transfer_prizes_to_community(&mut self, community_id: CommunityId) {
+        let now = self.env.now();
+        let max_prize_message_length = 7 * DAY_IN_MS;
+        let pending_prize_messages = self
+            .data
+            .chat
+            .events
+            .pending_prize_messages(now.saturating_sub(max_prize_message_length));
+
+        for (message_id, prize_message) in pending_prize_messages {
+            let remaining: u128 = prize_message.prizes_remaining.iter().map(|p| p.e8s() as u128).sum();
+            let fee = prize_message.transaction.fee();
+            self.data.pending_payments_queue.push(PendingPayment {
+                amount: remaining.saturating_sub(fee),
+                fee,
+                ledger_canister: prize_message.transaction.ledger_canister_id(),
+                recipient: PaymentRecipient::Account(Principal::from(community_id).into()),
+                reason: PendingPaymentReason::TransferPrizeToCommunity,
+            });
+            self.data.chat.events.reduce_final_prize_by_transfer_fee(message_id);
+        }
+
+        jobs::make_pending_payments::start_job_if_required(self);
     }
 
     pub fn run_event_expiry_job(&mut self) {
