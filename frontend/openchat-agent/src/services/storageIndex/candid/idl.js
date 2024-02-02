@@ -60,15 +60,6 @@ export const idlFactory = ({ IDL }) => {
     'bucket' : CanisterId,
   });
   const SetBucketFullResponse = IDL.Variant({ 'Success' : IDL.Null });
-  const UpdateUserIdArgs = IDL.Record({
-    'old_user_id' : UserId,
-    'new_user_id' : UserId,
-  });
-  const UpdateUserIdResponse = IDL.Variant({
-    'UserIdAlreadyExists' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
   const UserArgs = IDL.Record({});
   const UserRecord = IDL.Record({
     'byte_limit' : IDL.Nat64,
@@ -106,7 +97,6 @@ export const idlFactory = ({ IDL }) => {
         [SetBucketFullResponse],
         [],
       ),
-    'update_user_id' : IDL.Func([UpdateUserIdArgs], [UpdateUserIdResponse], []),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
   });
 };

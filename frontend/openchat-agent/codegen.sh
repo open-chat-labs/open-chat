@@ -62,6 +62,10 @@ didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t js > ./src/service
 didc bind ./src/services/icpcoins/candid/can.did -t ts > ./src/services/icpcoins/candid/types.d.ts
 didc bind ./src/services/icpcoins/candid/can.did -t js > ./src/services/icpcoins/candid/idl.js
 
+didc bind ../../backend/canisters/translations/api/can.did -t ts > ./src/services/translations/candid/types.d.ts
+didc bind ../../backend/canisters/translations/api/can.did -t js > ./src/services/translations/candid/idl.js
+
+
 SEARCH='const Notification'
 REPLACE='import { IDL } from "@dfinity\/candid"\n\nexport const Notification'
 cargo run --bin notification_candid_gen > notification.did

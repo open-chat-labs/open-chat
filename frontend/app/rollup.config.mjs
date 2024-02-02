@@ -42,6 +42,7 @@ if (dfxNetwork) {
 
     if (fs.existsSync(canisterPath)) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
+        process.env.TRANSLATIONS_CANISTER = canisters.translations[dfxNetwork];
         process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
@@ -51,6 +52,7 @@ if (dfxNetwork) {
         process.env.REGISTRY_CANISTER = canisters.registry[dfxNetwork];
         process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
 
+        console.log("TranslationsCanisterId: ", process.env.TRANSLATIONS_CANISTER);
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
@@ -233,6 +235,7 @@ export default {
             "process.env.IC_URL": maybeStringify(process.env.IC_URL),
             "process.env.II_DERIVATION_ORIGIN": maybeStringify(process.env.II_DERIVATION_ORIGIN),
             "process.env.USER_INDEX_CANISTER": JSON.stringify(process.env.USER_INDEX_CANISTER),
+            "process.env.TRANSLATIONS_CANISTER": JSON.stringify(process.env.TRANSLATIONS_CANISTER),
             "process.env.GROUP_INDEX_CANISTER": JSON.stringify(process.env.GROUP_INDEX_CANISTER),
             "process.env.NOTIFICATIONS_CANISTER": JSON.stringify(
                 process.env.NOTIFICATIONS_CANISTER,

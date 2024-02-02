@@ -28,6 +28,12 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
+export interface ApproveArgs { 'id' : bigint }
+export type ApproveResponse = { 'NotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'NotProposed' : null } |
+  { 'InternalError' : string };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -52,6 +58,12 @@ export interface BuildVersion {
   'major' : number,
   'minor' : number,
   'patch' : number,
+}
+export interface CandidateTranslation {
+  'id' : bigint,
+  'value' : string,
+  'proposed_at' : TimestampMillis,
+  'proposed_by' : UserId,
 }
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
@@ -155,39 +167,6 @@ export interface ChatEventWrapper {
   'correlation_id' : bigint,
   'expires_at' : [] | [TimestampMillis],
 }
-export interface ChatEventsArgs { 'requests' : Array<ChatEventsArgsInner> }
-export interface ChatEventsArgsInner {
-  'context' : EventsContext,
-  'args' : {
-      'Page' : {
-        'max_messages' : number,
-        'max_events' : number,
-        'ascending' : boolean,
-        'start_index' : EventIndex,
-      }
-    } |
-    { 'ByIndex' : { 'events' : Uint32Array | number[] } } |
-    {
-      'Window' : {
-        'mid_point' : MessageIndex,
-        'max_messages' : number,
-        'max_events' : number,
-      }
-    },
-  'latest_known_update' : [] | [TimestampMillis],
-}
-export type ChatEventsResponse = {
-    'Success' : {
-      'responses' : Array<ChatEventsResponseInner>,
-      'timestamp' : TimestampMillis,
-    }
-  };
-export type ChatEventsResponseInner = {
-    'ReplicaNotUpToDate' : TimestampMillis
-  } |
-  { 'NotFound' : null } |
-  { 'Success' : EventsSuccessResult } |
-  { 'InternalError' : string };
 export type ChatId = CanisterId;
 export interface ChatMetrics {
   'prize_winner_messages' : bigint,
@@ -485,9 +464,6 @@ export type DocumentUpdate = { 'NoChange' : null } |
 export type Duration = bigint;
 export type EmptyArgs = {};
 export type EventIndex = number;
-export type EventsContext = { 'Group' : [ChatId, [] | [MessageIndex]] } |
-  { 'Channel' : [CommunityId, ChannelId, [] | [MessageIndex]] } |
-  { 'Direct' : UserId };
 export interface EventsSuccessResult {
   'expired_message_ranges' : Array<[MessageIndex, MessageIndex]>,
   'chat_last_updated' : TimestampMillis,
@@ -550,12 +526,6 @@ export interface GovernanceProposalsSubtype {
   'is_nns' : boolean,
   'governance_canister_id' : CanisterId,
 }
-export interface GroupAndCommunitySummaryUpdatesArgs {
-  'requests' : Array<SummaryUpdatesArgs>,
-}
-export type GroupAndCommunitySummaryUpdatesResponse = {
-    'Success' : Array<SummaryUpdatesResponse>
-  };
 export interface GroupCanisterGroupChatSummary {
   'is_public' : boolean,
   'metrics' : ChatMetrics,
@@ -908,101 +878,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export interface InviteUsersToChannelArgs {
-  'channel_id' : ChannelId,
-  'community_id' : CommunityId,
-  'user_ids' : Array<UserId>,
-}
-export interface InviteUsersToChannelFailed { 'failed_users' : Array<UserId> }
-export interface InviteUsersToChannelPartialSuccess {
-  'failed_users' : Array<UserId>,
-}
-export type InviteUsersToChannelResponse = {
-    'Failed' : InviteUsersToChannelFailed
-  } |
-  { 'UserNotInChannel' : null } |
-  { 'PartialSuccess' : InviteUsersToChannelPartialSuccess } |
-  { 'ChannelNotFound' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : string } |
-  { 'TooManyInvites' : number };
-export interface InviteUsersToCommunityArgs {
-  'community_id' : CommunityId,
-  'user_ids' : Array<UserId>,
-}
-export type InviteUsersToCommunityResponse = { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserNotInCommunity' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : string } |
-  { 'TooManyInvites' : number };
-export interface InviteUsersToGroupArgs {
-  'user_ids' : Array<UserId>,
-  'group_id' : ChatId,
-  'correlation_id' : bigint,
-}
-export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'TooManyInvites' : number };
-export interface JoinChannelArgs {
-  'channel_id' : ChannelId,
-  'community_id' : CommunityId,
-  'invite_code' : [] | [bigint],
-}
-export type JoinChannelResponse = { 'NotInvited' : null } |
-  { 'AlreadyInChannel' : CommunityCanisterChannelSummary } |
-  { 'SuccessJoinedCommunity' : CommunityCanisterCommunitySummary } |
-  { 'CommunityNotFound' : null } |
-  { 'GateCheckFailed' : GateCheckFailedReason } |
-  { 'MemberLimitReached' : number } |
-  { 'ChannelNotFound' : null } |
-  { 'Success' : CommunityCanisterChannelSummary } |
-  { 'CommunityNotPublic' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'InternalError' : string } |
-  { 'UserBlocked' : null };
-export interface JoinCommunityArgs {
-  'community_id' : CommunityId,
-  'invite_code' : [] | [bigint],
-}
-export type JoinCommunityResponse = { 'NotInvited' : null } |
-  { 'CommunityNotFound' : null } |
-  { 'GateCheckFailed' : GateCheckFailedReason } |
-  { 'MemberLimitReached' : number } |
-  { 'Success' : CommunityCanisterCommunitySummary } |
-  { 'CommunityNotPublic' : null } |
-  { 'UserSuspended' : null } |
-  { 'CommunityFrozen' : null } |
-  { 'AlreadyInCommunity' : CommunityCanisterCommunitySummary } |
-  { 'InternalError' : string } |
-  { 'UserBlocked' : null };
-export interface JoinGroupArgs {
-  'invite_code' : [] | [bigint],
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type JoinGroupResponse = { 'NotInvited' : null } |
-  { 'Blocked' : null } |
-  { 'GroupNotFound' : null } |
-  { 'GroupNotPublic' : null } |
-  { 'AlreadyInGroup' : null } |
-  { 'GateCheckFailed' : GateCheckFailedReason } |
-  { 'ChatFrozen' : null } |
-  { 'Success' : GroupCanisterGroupChatSummary } |
-  { 'UserSuspended' : null } |
-  { 'ParticipantLimitReached' : number } |
-  { 'AlreadyInGroupV2' : GroupCanisterGroupChatSummary } |
-  { 'InternalError' : string };
+export interface MarkDeployedArgs { 'latest_approval' : TimestampMillis }
+export type MarkDeployedResponse = { 'Success' : null };
 export interface MembersAddedToDefaultChannel { 'count' : number }
 export type Memo = Uint8Array | number[];
 export interface Mention {
@@ -1304,6 +1181,13 @@ export interface PaymentGate {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
+export type PendingDeploymentResponse = {
+    'Success' : PendingDeploymentSuccessResult
+  };
+export interface PendingDeploymentSuccessResult {
+  'latest_approval' : TimestampMillis,
+  'translations' : Array<Translation>,
+}
 export type PermissionRole = { 'None' : null } |
   { 'Moderators' : null } |
   { 'Owner' : null } |
@@ -1377,6 +1261,20 @@ export type ProposalRewardStatus = { 'ReadyToSettle' : null } |
   { 'AcceptVotes' : null } |
   { 'Unspecified' : null } |
   { 'Settled' : null };
+export interface ProposeArgs {
+  'key' : string,
+  'value' : string,
+  'locale' : string,
+}
+export type ProposeResponse = { 'AlreadyProposed' : null } |
+  { 'Success' : bigint } |
+  { 'InvalidArgs' : string } |
+  { 'InternalError' : string } |
+  { 'UserNotFound' : null };
+export type ProposedResponse = { 'NotAuthorized' : null } |
+  { 'Success' : ProposedSuccessResult } |
+  { 'InternalError' : string };
+export interface ProposedSuccessResult { 'records' : Array<Record> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
@@ -1403,37 +1301,23 @@ export interface PushEventResult {
   'expires_at' : [] | [TimestampMillis],
 }
 export type Reaction = string;
-export interface RegisterUserArgs {
-  'username' : string,
-  'public_key' : Uint8Array | number[],
-  'referral_code' : [] | [string],
+export interface Record {
+  'key' : string,
+  'locale' : string,
+  'deployment_count' : number,
+  'candidates' : Array<CandidateTranslation>,
 }
-export type RegisterUserResponse = { 'UsernameTooShort' : number } |
-  { 'UsernameInvalid' : null } |
-  { 'AlreadyRegistered' : null } |
-  { 'UserLimitReached' : null } |
-  { 'UsernameTooLong' : number } |
-  { 'Success' : { 'icp_account' : AccountIdentifier, 'user_id' : UserId } } |
-  { 'PublicKeyInvalid' : string } |
-  { 'ReferralCodeAlreadyClaimed' : null } |
-  { 'ReferralCodeExpired' : null } |
-  { 'InternalError' : string } |
-  { 'ReferralCodeInvalid' : null } |
-  { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
+export interface RejectArgs { 'id' : bigint }
+export type RejectResponse = { 'NotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'NotProposed' : null } |
+  { 'InternalError' : string };
 export interface ReplyContext {
   'chat_if_other' : [] | [[Chat, [] | [MessageIndex]]],
   'event_index' : EventIndex,
-}
-export type ReportMessageResponse = { 'Success' : null } |
-  { 'InternalError' : string };
-export interface ReportMessageV2Args {
-  'notes' : [] | [string],
-  'chat_id' : MultiUserChat,
-  'reason_code' : number,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface ReportedMessage {
   'count' : number,
@@ -1500,21 +1384,6 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export interface SummaryUpdatesArgs {
-  'updates_since' : [] | [TimestampMillis],
-  'canister_id' : CanisterId,
-  'invite_code' : [] | [bigint],
-  'is_community' : boolean,
-}
-export type SummaryUpdatesResponse = {
-    'SuccessCommunity' : CommunityCanisterCommunitySummary
-  } |
-  { 'SuccessGroupUpdates' : GroupCanisterGroupChatSummaryUpdates } |
-  { 'SuccessCommunityUpdates' : CommunityCanisterCommunitySummaryUpdates } |
-  { 'NotFound' : null } |
-  { 'SuccessGroup' : GroupCanisterGroupChatSummary } |
-  { 'SuccessNoUpdates' : null } |
-  { 'InternalError' : string };
 export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
   { 'Accepted' : SwapStatusErrorAccepted } |
   { 'Cancelled' : SwapStatusErrorCancelled } |
@@ -1583,6 +1452,11 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface Translation {
+  'key' : string,
+  'value' : string,
+  'locale' : string,
+}
 export interface UpdatedRules {
   'new_version' : boolean,
   'text' : string,
@@ -1643,31 +1517,12 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'chat_events' : ActorMethod<[ChatEventsArgs], ChatEventsResponse>,
-  'group_and_community_summary_updates' : ActorMethod<
-    [GroupAndCommunitySummaryUpdatesArgs],
-    GroupAndCommunitySummaryUpdatesResponse
-  >,
-  'invite_users_to_channel' : ActorMethod<
-    [InviteUsersToChannelArgs],
-    InviteUsersToChannelResponse
-  >,
-  'invite_users_to_community' : ActorMethod<
-    [InviteUsersToCommunityArgs],
-    InviteUsersToCommunityResponse
-  >,
-  'invite_users_to_group' : ActorMethod<
-    [InviteUsersToGroupArgs],
-    InviteUsersToGroupResponse
-  >,
-  'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,
-  'join_community' : ActorMethod<[JoinCommunityArgs], JoinCommunityResponse>,
-  'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
-  'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
-  'report_message_v2' : ActorMethod<
-    [ReportMessageV2Args],
-    ReportMessageResponse
-  >,
+  'approve' : ActorMethod<[ApproveArgs], ApproveResponse>,
+  'mark_deployed' : ActorMethod<[MarkDeployedArgs], MarkDeployedResponse>,
+  'pending_deployment' : ActorMethod<[EmptyArgs], PendingDeploymentResponse>,
+  'propose' : ActorMethod<[ProposeArgs], ProposeResponse>,
+  'proposed' : ActorMethod<[EmptyArgs], ProposedResponse>,
+  'reject' : ActorMethod<[RejectArgs], RejectResponse>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

@@ -5,14 +5,15 @@ export const idlFactory = ({ IDL }) => {
   const CommunityId = CanisterId;
   const ChannelId = IDL.Nat;
   const UserId = CanisterId;
+  const EventsContext = IDL.Variant({
+    'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
+    'Channel' : IDL.Tuple(CommunityId, ChannelId, IDL.Opt(MessageIndex)),
+    'Direct' : UserId,
+  });
   const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
   const ChatEventsArgsInner = IDL.Record({
-    'context' : IDL.Variant({
-      'Group' : IDL.Tuple(ChatId, IDL.Opt(MessageIndex)),
-      'Channel' : IDL.Tuple(CommunityId, ChannelId, IDL.Opt(MessageIndex)),
-      'Direct' : UserId,
-    }),
+    'context' : EventsContext,
     'args' : IDL.Variant({
       'Page' : IDL.Record({
         'max_messages' : IDL.Nat32,
@@ -244,11 +245,13 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'created' : TimestampMillis,
     'action' : IDL.Nat64,
+    'minimum_yes_proportion_of_total' : IDL.Nat32,
     'last_updated' : TimestampMillis,
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
     'proposer' : SnsNeuronId,
+    'minimum_yes_proportion_of_exercised' : IDL.Nat32,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -469,7 +472,6 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
-    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
     'p2p_swap' : IDL.Opt(PermissionRole),
@@ -628,7 +630,10 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   const ChatEventsResponse = IDL.Variant({
-    'Success' : IDL.Vec(ChatEventsResponseInner),
+    'Success' : IDL.Record({
+      'responses' : IDL.Vec(ChatEventsResponseInner),
+      'timestamp' : TimestampMillis,
+    }),
   });
   const SummaryUpdatesArgs = IDL.Record({
     'updates_since' : IDL.Opt(TimestampMillis),
@@ -1008,7 +1013,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
   });
-  const TransferFromError = IDL.Variant({
+  const ICRC2_TransferFromError = IDL.Variant({
     'GenericError' : IDL.Record({
       'message' : IDL.Text,
       'error_code' : IDL.Nat,
@@ -1024,7 +1029,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
-    'PaymentFailed' : TransferFromError,
+    'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
