@@ -14,22 +14,20 @@ impl Translations {
     pub fn propose(&mut self, args: ProposeArgs) -> Option<u64> {
         let tuple = (args.locale.clone(), args.key.clone());
 
-        if let Some(indexes) = self.records.get(&tuple) {
-            // Loop backwards through translations until we reach the most recently deployed.
-            // If any of these translations matches the proposed value then don't add the translation.
-            for index in indexes.iter().rev() {
-                if let Some(translation) = self.translations.get(*index) {
-                    if translation.value == args.value {
-                        return None;
-                    }
-
-                    if matches!(translation.status, TranslationStatus::Deployed(_)) {
-                        break;
-                    }
-                }
+        // Loop backwards through translations until we reach the most recently deployed.
+        // If any of these translations matches the proposed value then don't add the translation.
+        for translation in self.record_iter(&tuple).rev() {
+            if translation.value == args.value {
+                return None;
             }
 
-            // If this user has a previous proposed translation for this record then mark it as `overidden`
+            if matches!(translation.status, TranslationStatus::Deployed(_)) {
+                break;
+            }
+        }
+
+        // If this user has a previous proposed translation for this record then mark it as `overidden`
+        if let Some(indexes) = self.records.get(&tuple) {
             for index in indexes.iter().rev() {
                 if let Some(translation) = self.translations.get_mut(*index) {
                     if translation.proposed.who == args.user_id && matches!(translation.status, TranslationStatus::Proposed) {
@@ -69,13 +67,10 @@ impl Translations {
 
                 let proposed_by = translation.proposed.who;
                 let tuple = (translation.locale.clone(), translation.key.clone());
-                let previously_approved = if let Some(indexes) = self.records.get(&tuple) {
-                    indexes.iter().filter_map(|index| self.translations.get(*index)).any(|t| {
-                        t.id != id && t.proposed.who == proposed_by && matches!(t.status, TranslationStatus::Approved(_))
-                    })
-                } else {
-                    false
-                };
+
+                let previously_approved = self
+                    .record_iter(&tuple)
+                    .any(|t| t.id != id && t.proposed.who == proposed_by && matches!(t.status, TranslationStatus::Approved(_)));
 
                 ApproveResponse::Success(ApproveSuccess {
                     proposed_by,
@@ -173,6 +168,16 @@ impl Translations {
             .rev()
             .filter_map(|index| self.translations.get(*index))
             .find(|t| matches!(t.status, TranslationStatus::Approved(_)) || matches!(t.status, TranslationStatus::Deployed(_)))
+    }
+
+    fn record_iter(&self, tuple_key: &(String, String)) -> impl DoubleEndedIterator<Item = &Translation> + '_ {
+        if let Some(indexes) = self.records.get(tuple_key) {
+            Some(indexes.iter().filter_map(|index| self.translations.get(*index)))
+        } else {
+            None
+        }
+        .into_iter()
+        .flatten()
     }
 }
 
