@@ -112,7 +112,7 @@ export const credentialIssuers: CredentialIssuer[] = [
     {
         name: "Employment Info Ltd",
         // origin: "https://v2yvn-myaaa-aaaad-aad4q-cai.icp0.io",
-        origin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io/",
+        origin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
         credentials: [
             { value: "VerifiedEmployee", name: "Is verified employee" },
             // { value: "SomeOther", name: "Some other thing" },
