@@ -171,13 +171,11 @@ impl Translations {
     }
 
     fn record_iter(&self, tuple_key: &(String, String)) -> impl DoubleEndedIterator<Item = &Translation> + '_ {
-        if let Some(indexes) = self.records.get(tuple_key) {
-            Some(indexes.iter().filter_map(|index| self.translations.get(*index)))
-        } else {
-            None
-        }
-        .into_iter()
-        .flatten()
+        self.records
+            .get(tuple_key)
+            .map(|indexes| indexes.iter().filter_map(|index| self.translations.get(*index)))
+            .into_iter()
+            .flatten()
     }
 }
 
