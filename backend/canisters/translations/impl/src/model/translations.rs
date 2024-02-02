@@ -1,13 +1,14 @@
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use translations_canister::proposed::{CandidateTranslation, Record};
 use types::{TimestampMillis, UserId};
+use user_index_canister::c2c_send_openchat_bot_messages::Message;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Translations {
     translations: Vec<Translation>,
     records: HashMap<(String, String), Vec<usize>>,
-    last_deployed: TimestampMillis,
 }
 
 impl Translations {
@@ -15,7 +16,8 @@ impl Translations {
         let tuple = (args.locale.clone(), args.key.clone());
 
         // Loop backwards through translations until we reach the most recently deployed.
-        // If any of these translations matches the proposed value then don't add the translation.
+        // If any of these translations matches the proposed value, including the deployed transaction,
+        // then don't add the translation.
         for translation in self.record_iter(&tuple).rev() {
             if translation.value == args.value {
                 return None;
@@ -58,28 +60,34 @@ impl Translations {
     }
 
     pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
-        if let Some(translation) = self.translations.get_mut(id as usize) {
+        let translation = if let Some(translation) = self.translations.get(id as usize) {
             if !matches!(translation.status, TranslationStatus::Proposed) {
-                ApproveResponse::NotProposed
+                return ApproveResponse::NotProposed;
             } else {
-                let attribution = Attribution { who: user_id, when: now };
-                translation.status = TranslationStatus::Approved(attribution);
-
-                let proposed_by = translation.proposed.who;
-                let tuple = (translation.locale.clone(), translation.key.clone());
-
-                let previously_approved = self
-                    .record_iter(&tuple)
-                    .any(|t| t.id != id && t.proposed.who == proposed_by && matches!(t.status, TranslationStatus::Approved(_)));
-
-                ApproveResponse::Success(ApproveSuccess {
-                    proposed_by,
-                    previously_approved,
-                })
+                translation
             }
         } else {
-            ApproveResponse::NotFound
-        }
+            return ApproveResponse::NotFound;
+        };
+
+        let proposed_by = translation.proposed.who;
+        let tuple = (translation.locale.clone(), translation.key.clone());
+
+        let previously_approved = self
+            .record_iter(&tuple)
+            .any(|t| t.id != id && t.proposed.who == proposed_by && matches!(t.status, TranslationStatus::Approved(_)));
+
+        let attribution = Attribution { who: user_id, when: now };
+
+        self.translations.get_mut(id as usize).unwrap().status = TranslationStatus::Approved(ApprovedStatus {
+            attribution,
+            previously_approved,
+        });
+
+        ApproveResponse::Success(ApproveSuccess {
+            proposed_by,
+            previously_approved,
+        })
     }
 
     pub fn reject(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> RejectResponse {
@@ -88,7 +96,7 @@ impl Translations {
                 RejectResponse::NotProposed
             } else {
                 let attribution = Attribution { who: user_id, when: now };
-                translation.status = TranslationStatus::Rejected(attribution);
+                translation.status = TranslationStatus::Rejected(RejectedStatus { attribution });
                 RejectResponse::Success
             }
         } else {
@@ -99,21 +107,17 @@ impl Translations {
     pub fn mark_deployed(&mut self, latest_approval: TimestampMillis, now: TimestampMillis) {
         for indexes in self.records.values() {
             if let Some(t) = self.find_most_recent_approved_or_deployed(indexes) {
-                if let TranslationStatus::Approved(attribution) = t.status {
-                    if attribution.when <= latest_approval {
+                if let TranslationStatus::Approved(approved) = &t.status {
+                    if approved.attribution.when <= latest_approval {
                         let index = t.id as usize;
+                        let approved = approved.clone();
                         if let Some(translation) = self.translations.get_mut(index) {
-                            translation.status = TranslationStatus::Deployed(DeployedStatus {
-                                approved: attribution,
-                                deployed: now,
-                            })
+                            translation.status = TranslationStatus::Deployed(DeployedStatus { approved, deployed: now })
                         }
                     }
                 }
             }
         }
-
-        self.last_deployed = now;
     }
 
     pub fn proposed(&self) -> Vec<Record> {
@@ -162,6 +166,59 @@ impl Translations {
             .collect()
     }
 
+    pub fn build_notifications(&self, since: TimestampMillis) -> Vec<Message> {
+        self.translations
+            .iter()
+            .filter(|t| match &t.status {
+                TranslationStatus::Approved(s) => s.attribution.when > since,
+                TranslationStatus::Rejected(s) => s.attribution.when > since,
+                TranslationStatus::Deployed(s) => s.deployed > since,
+                _ => false,
+            })
+            .group_by(|t| t.proposed.who)
+            .into_iter()
+            .map(|(recipient, group)| Message {
+                recipient,
+                text: Translations::build_notification(group.collect()),
+            })
+            .collect()
+    }
+
+    fn build_notification(translations: Vec<&Translation>) -> String {
+        let mut approved = 0_u32;
+        let mut rejected = 0_u32;
+        let mut deployed = 0_u32;
+        let mut paid = 0_u32;
+
+        for transaction in translations {
+            match &transaction.status {
+                TranslationStatus::Approved(s) => {
+                    approved += 1;
+                    if !s.previously_approved {
+                        paid += 1;
+                    }
+                }
+                TranslationStatus::Rejected(_) => rejected += 1,
+                TranslationStatus::Deployed(s) => {
+                    deployed += 1;
+                    approved += 1;
+                    if !s.approved.previously_approved {
+                        paid += 1;
+                    }
+                }
+                _ => (),
+            }
+        }
+
+        format!(
+            "Round-up of recent translation decisions:
+Approved: {approved}
+Rejected: {rejected}
+Applied: {deployed}
+CHAT earned: {paid}"
+        )
+    }
+
     fn find_most_recent_approved_or_deployed(&self, indexes: &[usize]) -> Option<&Translation> {
         indexes
             .iter()
@@ -202,14 +259,25 @@ pub struct Translation {
 pub enum TranslationStatus {
     Proposed,
     Overidden,
-    Approved(Attribution),
-    Rejected(Attribution),
+    Approved(ApprovedStatus),
+    Rejected(RejectedStatus),
     Deployed(DeployedStatus),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ApprovedStatus {
+    pub attribution: Attribution,
+    pub previously_approved: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RejectedStatus {
+    pub attribution: Attribution,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct DeployedStatus {
-    pub approved: Attribution,
+    pub approved: ApprovedStatus,
     pub deployed: TimestampMillis,
 }
 

@@ -1,5 +1,6 @@
 use candid::Principal;
 use canister_state_macros::canister_state;
+use fire_and_forget_handler::FireAndForgetHandler;
 use model::{pending_payments_queue::PendingPaymentsQueue, translations::Translations};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -58,6 +59,8 @@ struct Data {
     pub rng_seed: [u8; 32],
     pub translations: Translations,
     pub pending_payments_queue: PendingPaymentsQueue,
+    pub fire_and_forget_handler: FireAndForgetHandler,
+    pub user_notifications_last_sent: TimestampMillis,
     pub test_mode: bool,
 }
 
@@ -75,6 +78,8 @@ impl Data {
             rng_seed: [0; 32],
             translations: Translations::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
+            user_notifications_last_sent: 0,
             test_mode,
         }
     }

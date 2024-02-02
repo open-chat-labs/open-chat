@@ -4,6 +4,7 @@ use crate::RuntimeState;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use translations_canister::mark_deployed::{Response::*, *};
+use user_index_canister::c2c_send_openchat_bot_messages;
 
 #[update(guard = "caller_is_deployment_operator")]
 #[trace]
@@ -13,5 +14,26 @@ fn mark_deployed(args: Args) -> Response {
 
 fn mark_deployed_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.translations.mark_deployed(args.latest_approval, state.env.now());
+
+    notify_translators_of_decisions(state);
+
     Success
+}
+
+// The notifications are sent asynchronously. We assume the user notifications (OpenChatBot messages)
+// will all be sent before `mark_deployed` is next called otherwise the users will be notified of the same decisions.
+// Alternatively we could mark each translation when we call build_notifications.
+fn notify_translators_of_decisions(state: &mut RuntimeState) {
+    let since = state.data.user_notifications_last_sent;
+
+    let messages = state.data.translations.build_notifications(since);
+
+    let payload = c2c_send_openchat_bot_messages::Args { messages };
+    state.data.fire_and_forget_handler.send(
+        state.data.user_index_canister_id,
+        "c2c_send_openchat_bot_messages_msgpack".to_string(),
+        msgpack::serialize_then_unwrap(payload),
+    );
+
+    state.data.user_notifications_last_sent = state.env.now();
 }
