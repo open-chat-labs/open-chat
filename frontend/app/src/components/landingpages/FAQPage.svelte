@@ -46,12 +46,23 @@
             </div>
             <div class="body">
                 <Markdown text={$_(`faq.${q}_a`)} />
+                {#if q === "translation"}
+                    <img
+                        class="translation"
+                        src={"/assets/screenshots/translation_correction.png"} />
+                {/if}
             </div>
         </CollapsibleCard>
     {/each}
 </div>
 
 <style lang="scss">
+    .translation {
+        display: block;
+        margin-top: $sp3;
+        max-width: 450px;
+        width: 100%;
+    }
     .faq {
         text-align: left;
         @include lp-content-padding();

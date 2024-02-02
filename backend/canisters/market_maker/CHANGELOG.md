@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `ICDex_V2` so that we can run both while making the switch ([#5313](https://github.com/open-chat-labs/open-chat/pull/5313))
+
+### Changed
+
+- Copy config from ICDex over to ICDex_V2 ([#5316](https://github.com/open-chat-labs/open-chat/pull/5316))
+
 ## [[2.0.1038](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1038-market_maker)] - 2024-01-31
 
 ### Changed

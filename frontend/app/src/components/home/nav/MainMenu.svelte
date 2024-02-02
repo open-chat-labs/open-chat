@@ -84,6 +84,13 @@
         <Security size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">Guidelines</span>
     </MenuItem>
+    {#if admin}
+        <MenuItem separator />
+        <MenuItem on:click={() => page("/admin")}>
+            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{"Admin"}</span>
+        </MenuItem>
+    {/if}
     <MenuItem separator />
     {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
@@ -94,14 +101,6 @@
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
             <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
-        </MenuItem>
-    {/if}
-
-    {#if admin}
-        <MenuItem separator />
-        <MenuItem on:click={() => page("/admin")}>
-            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{"Admin"}</span>
         </MenuItem>
     {/if}
 </Menu>

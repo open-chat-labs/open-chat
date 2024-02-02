@@ -14,6 +14,7 @@ export const allQuestions = [
     "info",
     "shortcuts",
     "content",
+    "translation",
 ] as const;
 
 type QuestionsType = typeof allQuestions;

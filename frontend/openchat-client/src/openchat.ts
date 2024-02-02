@@ -360,8 +360,6 @@ import type {
     Level,
     VersionedRules,
     DiamondMembershipStatus,
-    TranslationCorrections,
-    TranslationCorrection,
     Success,
     Failure,
     AcceptP2PSwapResponse,
@@ -369,7 +367,6 @@ import type {
     CommunityDetailsResponse,
     GroupChatDetailsResponse,
     CandidateTranslations,
-    ProposedResponse,
     ProposeResponse,
 } from "openchat-shared";
 import {

@@ -42,7 +42,7 @@
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
-    import { i18nKey, setLocale, supportedLanguages } from "../../../i18n/i18n";
+    import { editmode, i18nKey, setLocale, supportedLanguages } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
@@ -113,6 +113,7 @@
         (bioDirty || usernameDirty || displayNameDirty) &&
         !saving &&
         !readonly;
+    $: canEditTranslations = !$locale?.startsWith("en");
 
     onMount(() => {
         if (!$anonUser) {
@@ -352,6 +353,15 @@
                         <option value={lang.code}>{lang.name}</option>
                     {/each}
                 </Select>
+
+                {#if canEditTranslations}
+                    <Toggle
+                        id={"enter-send"}
+                        small
+                        on:change={() => editmode.set(!$editmode)}
+                        label={i18nKey("toggleTranslationEditMode")}
+                        checked={$editmode} />
+                {/if}
 
                 <div class="para">
                     <Legend label={i18nKey("theme.title")} />

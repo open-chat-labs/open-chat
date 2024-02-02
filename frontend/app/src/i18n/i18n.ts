@@ -1,12 +1,7 @@
 import { register, init, locale, getLocaleFromNavigator, _ } from "svelte-i18n";
 import { get, writable } from "svelte/store";
 import { configKeys } from "../utils/config";
-import {
-    createLsBoolStore,
-    type InterpolationValues,
-    type Level,
-    type MessageFormatter,
-} from "openchat-client";
+import { type InterpolationValues, type Level, type MessageFormatter } from "openchat-client";
 
 export const translationCodes: Record<string, string> = {
     cn: "zh-cn",
@@ -146,9 +141,7 @@ export function interpolate(
     }
 }
 
-//TODO - not sure how this will be triggered yet
-export const editmode = createLsBoolStore("openchat_label_edit_mode", false);
-
+export const editmode = writable<boolean>(false);
 export const editingLabel = writable<ResourceKey | undefined>(undefined);
 
 export type ResourceKey = {

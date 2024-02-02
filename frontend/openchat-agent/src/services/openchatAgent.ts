@@ -184,8 +184,6 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
-    TranslationCorrections,
-    TranslationCorrection,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
 } from "openchat-shared";

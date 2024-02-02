@@ -6,7 +6,7 @@ export type TranslationCorrection = {
     value: string;
     proposedBy: string;
     proposedAt: number;
-    approved: boolean;
+    status: "pending" | "approved" | "rejected" | "deployed";
 };
 
 export type Translation = {
