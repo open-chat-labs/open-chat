@@ -12,7 +12,6 @@ import type {
     DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
-    DirectChatEvent,
     DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
@@ -21,7 +20,6 @@ import type {
     FreezeGroupResponse,
     GroupChatDetails,
     GroupChatDetailsResponse,
-    GroupChatEvent,
     GroupChatSummary,
     IndexRange,
     InviteCodeResponse,
@@ -1133,10 +1131,7 @@ export type WorkerResponseInner =
     | UserSummary[]
     | CheckUsernameResponse
     | EventWrapper<Message>
-    | EventsResponse<DirectChatEvent>
-    | EventsResponse<GroupChatEvent>
-    | EventsResponse<DirectChatEvent>
-    | EventsResponse<GroupChatEvent>
+    | EventsResponse<ChatEvent>
     | Record<string, number>
     | GroupChatDetailsResponse
     | GroupChatDetails
@@ -1712,11 +1707,11 @@ export type WorkerResult<T> = T extends PinMessage
     : T extends DeclineChannelInvitation
     ? DeclineInvitationResponse
     : T extends ChannelEvents
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelEventsByIndex
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelEventsWindow
-    ? EventsResponse<GroupChatEvent>
+    ? EventsResponse<ChatEvent>
     : T extends ChannelMessagesByMessageIndex
     ? EventsResponse<Message>
     : T extends RemoveCommunityMember

@@ -857,7 +857,8 @@
         "benefits": "Lợi ích của kim cương",
         "message": "Cho tôi biết về tư cách thành viên Diamond",
         "lifetimeMessage": "Bạn có tư cách thành viên Kim cương trọn đời.",
-        "lifetime": "Cả đời"
+        "lifetime": "Cả đời",
+        "p2pSwap": "Thực hiện/chấp nhận hoán đổi p2p"
     },
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "promoteTo": "Quảng cáo lên {role}",

@@ -1,13 +1,11 @@
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
-use market_maker_canister::ExchangeId;
 use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, MarketState, Order, TokenInfo};
 
 pub mod icdex;
 
 #[async_trait]
 pub trait Exchange: Send + Sync {
-    fn exchange_id(&self) -> ExchangeId;
     fn quote_token(&self) -> &TokenInfo;
     fn base_token(&self) -> &TokenInfo;
     async fn latest_price(&self) -> CallResult<u64>;

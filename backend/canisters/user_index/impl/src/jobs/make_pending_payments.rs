@@ -88,8 +88,9 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
 fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
     let user_id = pending_payment.recipient_account.owner.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
+    let amount_formatted = amount.to_string().trim_end_matches('0').to_string();
     let symbol = pending_payment.currency.token_symbol();
-    let mut amount_text = format!("{} {}", amount, symbol);
+    let mut amount_text = format!("{amount_formatted} {symbol}");
 
     if matches!(pending_payment.currency, Cryptocurrency::CHAT) {
         let link = format!(

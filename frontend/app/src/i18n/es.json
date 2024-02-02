@@ -858,7 +858,8 @@
         "benefits": "Beneficios del diamante",
         "message": "Cuéntame sobre la membresía Diamante",
         "lifetimeMessage": "Tienes membresía Diamond vitalicia.",
-        "lifetime": "Toda la vida"
+        "lifetime": "Toda la vida",
+        "p2pSwap": "Hacer/aceptar intercambios p2p"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",

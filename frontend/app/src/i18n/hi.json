@@ -972,7 +972,8 @@
         "notifications": "सूचनाएं",
         "freeNotifications": "आईओएस, एंड्रॉइड और डेस्कटॉप",
         "diamondNotifications": "आईओएस, एंड्रॉइड और डेस्कटॉप",
-        "createCommunities": "समुदाय बनाएं"
+        "createCommunities": "समुदाय बनाएं",
+        "p2pSwap": "पी2पी स्वैप बनाएं/स्वीकार करें"
     },
     "promoteTo": "{role} पर प्रचार करें",
     "demoteTo": "{role} पर अवनत करें",

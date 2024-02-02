@@ -5,9 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `ICDex_V2` so that we can run both while making the switch ([#5313](https://github.com/open-chat-labs/open-chat/pull/5313))
+
+### Changed
+
+- Copy config from ICDex over to ICDex_V2 ([#5316](https://github.com/open-chat-labs/open-chat/pull/5316))
+
+## [[2.0.1038](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1038-market_maker)] - 2024-01-31
+
 ### Changed
 
 - Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+- Filter out orders which have 0 amount remaining ([#5301](https://github.com/open-chat-labs/open-chat/pull/5301))
+- Increase page size when retrieving orders ([#5302](https://github.com/open-chat-labs/open-chat/pull/5302))
 
 ## [[2.0.999](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.999-market_maker)] - 2024-01-05
 

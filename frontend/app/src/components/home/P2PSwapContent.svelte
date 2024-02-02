@@ -11,7 +11,7 @@
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import SpinningToken from "../icons/SpinningToken.svelte";
@@ -21,8 +21,10 @@
     import Markdown from "./Markdown.svelte";
     import AcceptP2PSwapModal from "./AcceptP2PSwapModal.svelte";
     import Translatable from "../Translatable.svelte";
+    import { calculateDollarAmount } from "../../utils/exchange";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let content: P2PSwapContent;
     export let messageContext: MessageContext;
@@ -54,6 +56,18 @@
     $: fromAmount = client.formatTokens(content.token0Amount, content.token0.decimals);
     $: toAmount = client.formatTokens(content.token1Amount, content.token1.decimals);
     $: buttonDisabled = content.status.kind !== "p2p_swap_open" || reply || pinned;
+    $: isDiamond = client.isDiamond;
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
+    $: fromAmountInUsd = calculateDollarAmount(
+        content.token0Amount,
+        $exchangeRatesLookup[fromDetails.symbol.toLowerCase()]?.toUSD,
+        fromDetails.decimals,
+    );
+    $: toAmountInUsd = calculateDollarAmount(
+        content.token1Amount,
+        $exchangeRatesLookup[toDetails.symbol.toLowerCase()]?.toUSD,
+        toDetails.decimals,
+    );
 
     $: {
         if (content.status.kind === "p2p_swap_open") {
@@ -109,7 +123,11 @@
 
     function onAcceptOrCancel(e: MouseEvent) {
         if (e.isTrusted && !buttonDisabled) {
-            confirming = true;
+            if (!me && !$isDiamond) {
+                dispatch("upgrade");
+            } else {
+                confirming = true;
+            }
         }
     }
 
@@ -209,14 +227,20 @@
         <div class="coins">
             <div class="coin">
                 <SpinningToken logo={fromDetails.logo} spin={false} size="medium" />
-                <div class="amount">{fromAmount} {content.token0.symbol}</div>
+                <div class="amount">
+                    <div>{fromAmount} {content.token0.symbol}</div>
+                    <div class="dollar">({fromAmountInUsd} USD)</div>
+                </div>
             </div>
 
             <div class="swap-icon"><SwapIcon size={"2.5em"} /></div>
 
             <div class="coin">
                 <SpinningToken logo={toDetails.logo} spin={false} size="medium" />
-                <div class="amount">{toAmount} {content.token1.symbol}</div>
+                <div class="amount">
+                    <div>{toAmount} {content.token1.symbol}</div>
+                    <div class="dollar">({toAmountInUsd} USD)</div>
+                </div>
             </div>
         </div>
     </div>
@@ -316,6 +340,10 @@
     .amount {
         @include font(bold, normal, fs-80);
         text-align: center;
+
+        .dollar {
+            @include font(light, normal, fs-60);
+        }
     }
 
     .swap-icon {

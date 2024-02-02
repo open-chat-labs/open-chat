@@ -60,7 +60,6 @@ import type {
     DeleteMessageResponse,
     DexId,
     DiamondMembershipFees,
-    DirectChatEvent,
     DirectChatSummary,
     DirectChatSummaryUpdates,
     DisableInviteCodeResponse,
@@ -70,7 +69,6 @@ import type {
     EventWrapper,
     ExchangeTokenSwapArgs,
     GroupChatDetailsResponse,
-    GroupChatEvent,
     GroupChatSummary,
     GroupInvite,
     Rules,
@@ -705,7 +703,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEventsWindow(
@@ -774,7 +772,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEvents(
@@ -796,7 +794,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.userClient.chatEventsByIndex(
@@ -816,7 +814,7 @@ export class OpenChatAgent extends EventTarget {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).eventsWindow(
@@ -859,7 +857,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).events(
@@ -882,7 +880,7 @@ export class OpenChatAgent extends EventTarget {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEvents(
@@ -941,7 +939,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.communityClient(chatId.communityId).eventsByIndex(
@@ -961,7 +959,7 @@ export class OpenChatAgent extends EventTarget {
         threadRootMessageIndex: number | undefined,
         // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<GroupChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         return this.rehydrateEventResponse(
             chatId,
             this.getGroupClient(chatId.groupId).chatEventsByIndex(
