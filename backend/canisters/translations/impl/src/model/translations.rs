@@ -13,10 +13,10 @@ impl Translations {
     pub fn propose(&mut self, args: ProposeArgs) -> Option<u64> {
         let tuple = (args.locale.clone(), args.key.clone());
 
-        if let Some(ids) = self.records.get(&tuple) {
+        if let Some(indexes) = self.records.get(&tuple) {
             // Loop backwards through translations until we reach the most recently deployed.
             // If any of these translations matches the proposed value then don't add the translation.
-            for index in ids.iter().rev() {
+            for index in indexes.iter().rev() {
                 if let Some(translation) = self.translations.get(*index) {
                     if translation.value == args.value {
                         return None;
@@ -29,7 +29,7 @@ impl Translations {
             }
 
             // If this user has a previous proposed translation for this record then mark it as `overidden`
-            for index in ids.iter().rev() {
+            for index in indexes.iter().rev() {
                 if let Some(translation) = self.translations.get_mut(*index) {
                     if translation.proposed.who == args.user_id && matches!(translation.status, TranslationStatus::Proposed) {
                         translation.status = TranslationStatus::Overidden;
@@ -65,7 +65,21 @@ impl Translations {
             } else {
                 let attribution = Attribution { who: user_id, when: now };
                 translation.status = TranslationStatus::Approved(attribution);
-                ApproveResponse::Success(translation.proposed.who)
+
+                let proposed_by = translation.proposed.who;
+                let tuple = (translation.locale.clone(), translation.key.clone());
+                let previously_approved = if let Some(indexes) = self.records.get(&tuple) {
+                    indexes.iter().filter_map(|index| self.translations.get(*index)).any(|t| {
+                        t.id != id && t.proposed.who == proposed_by && matches!(t.status, TranslationStatus::Approved(_))
+                    })
+                } else {
+                    false
+                };
+
+                ApproveResponse::Success(ApproveSuccess {
+                    proposed_by,
+                    previously_approved,
+                })
             }
         } else {
             ApproveResponse::NotFound
@@ -87,8 +101,8 @@ impl Translations {
     }
 
     pub fn mark_deployed(&mut self, latest_approval: TimestampMillis, now: TimestampMillis) {
-        for ids in self.records.values() {
-            if let Some(t) = self.find_most_recent_approved_or_deployed(ids) {
+        for indexes in self.records.values() {
+            if let Some(t) = self.find_most_recent_approved_or_deployed(indexes) {
                 if let TranslationStatus::Approved(attribution) = t.status {
                     if attribution.when <= latest_approval {
                         let index = t.id as usize;
@@ -107,15 +121,15 @@ impl Translations {
     pub fn proposed(&self) -> Vec<Record> {
         self.records
             .iter()
-            .filter_map(|((locale, key), ids)| {
+            .filter_map(|((locale, key), indexes)| {
                 let mut deployment_count: u32 = 0;
                 let mut candidates: Vec<CandidateTranslation> = Vec::new();
 
-                for id in ids {
-                    if let Some(translation) = self.translations.get(*id) {
+                for index in indexes {
+                    if let Some(translation) = self.translations.get(*index) {
                         match translation.status {
                             TranslationStatus::Proposed => candidates.push(CandidateTranslation {
-                                id: *id as u64,
+                                id: *index as u64,
                                 value: translation.value.clone(),
                                 proposed_by: translation.proposed.who,
                                 proposed_at: translation.proposed.when,
@@ -143,17 +157,18 @@ impl Translations {
     pub fn pending_deployment(&self) -> Vec<&Translation> {
         self.records
             .values()
-            .filter_map(|ids| match self.find_most_recent_approved_or_deployed(ids) {
+            .filter_map(|indexes| match self.find_most_recent_approved_or_deployed(indexes) {
                 Some(t) if matches!(t.status, TranslationStatus::Approved(_)) => Some(t),
                 _ => None,
             })
             .collect()
     }
 
-    fn find_most_recent_approved_or_deployed(&self, ids: &[usize]) -> Option<&Translation> {
-        ids.iter()
+    fn find_most_recent_approved_or_deployed(&self, indexes: &[usize]) -> Option<&Translation> {
+        indexes
+            .iter()
             .rev()
-            .filter_map(|id| self.translations.get(*id))
+            .filter_map(|index| self.translations.get(*index))
             .find(|t| matches!(t.status, TranslationStatus::Approved(_)) || matches!(t.status, TranslationStatus::Deployed(_)))
     }
 }
@@ -199,9 +214,14 @@ pub struct Attribution {
 }
 
 pub enum ApproveResponse {
-    Success(UserId),
+    Success(ApproveSuccess),
     NotProposed,
     NotFound,
+}
+
+pub struct ApproveSuccess {
+    pub proposed_by: UserId,
+    pub previously_approved: bool,
 }
 
 pub enum RejectResponse {
