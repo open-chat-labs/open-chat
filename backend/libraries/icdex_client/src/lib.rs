@@ -132,12 +132,12 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
             None,
         );
 
-        match icdex_canister_c2c_client::trade(self.dex_canister_id, args).await?.0 {
+        match icdex_canister_c2c_client::trade(self.dex_canister_id, args.clone()).await?.0 {
             MakeOrderResponse::Ok(_) => {
                 (self.on_order_made)(order);
                 Ok(())
             }
-            MakeOrderResponse::Err(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+            MakeOrderResponse::Err(e) => Err((RejectionCode::Unknown, format!("Args: {args:?}. Error: {e:?}"))),
         }
     }
 

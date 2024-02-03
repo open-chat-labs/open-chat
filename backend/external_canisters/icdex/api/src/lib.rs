@@ -8,13 +8,13 @@ mod updates;
 pub use queries::*;
 pub use updates::*;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub enum OrderQuantity {
     Buy(Nat, Nat),
     Sell(Nat),
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct OrderPrice {
     pub price: Nat,
     pub quantity: OrderQuantity,
@@ -51,7 +51,7 @@ pub enum MakeOrderErrorCode {
     UndefinedError,
 }
 
-#[derive(CandidType, Serialize)]
+#[derive(CandidType, Serialize, Clone, Debug)]
 pub enum ICDexOrderType {
     #[serde(rename = "LMT")]
     Limit,
