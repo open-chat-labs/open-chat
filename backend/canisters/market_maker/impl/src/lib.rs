@@ -152,7 +152,7 @@ pub struct CanisterIds {
     pub chat_ledger: CanisterId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Config {
     enabled: bool,
     price_increment: u64,
