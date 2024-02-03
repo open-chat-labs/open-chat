@@ -254,6 +254,9 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
+            if let Some(community_id) = community.community_id() {
+                self.transfer_prizes_to_community(community_id);
+            }
             self.data.community_being_imported_into = Some(community);
             let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
