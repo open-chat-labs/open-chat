@@ -280,10 +280,16 @@ impl RuntimeState {
             .pending_prize_messages(now.saturating_sub(max_prize_message_length));
 
         for (message_id, prize_message) in pending_prize_messages {
-            let remaining: u128 = prize_message.prizes_remaining.iter().map(|p| p.e8s() as u128).sum();
             let fee = prize_message.transaction.fee();
+            let amount: u128 = prize_message
+                .prizes_remaining
+                .iter()
+                .map(|p| p.e8s() as u128 + fee)
+                .sum::<u128>()
+                .saturating_sub(fee);
+
             self.data.pending_payments_queue.push(PendingPayment {
-                amount: remaining.saturating_sub(fee),
+                amount,
                 fee,
                 ledger_canister: prize_message.transaction.ledger_canister_id(),
                 recipient: PaymentRecipient::Account(Principal::from(community_id).into()),
