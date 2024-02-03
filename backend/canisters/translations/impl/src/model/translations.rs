@@ -177,9 +177,10 @@ impl Translations {
                 TranslationStatus::Deployed(s) => s.deployed > since,
                 _ => false,
             })
-            .group_by(|t| t.proposed.who)
+            .map(|t| (t.proposed.who, t))
+            .into_group_map()
             .into_iter()
-            .map(|(recipient, group)| (recipient, Translations::collate_decision_summary(group.collect())))
+            .map(|(recipient, group)| (recipient, Translations::collate_decision_summary(group)))
             .collect()
     }
 
