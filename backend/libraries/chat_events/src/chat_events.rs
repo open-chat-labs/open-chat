@@ -699,6 +699,41 @@ impl ChatEvents {
         UnreservePrizeResult::MessageNotFound
     }
 
+    pub fn pending_prize_messages(&self, date_cutoff: TimestampMillis) -> Vec<(MessageId, PrizeContentInternal)> {
+        self.main
+            .iter(None, false, EventIndex::default())
+            .filter_map(|e| e.as_event())
+            .take_while(|e| e.timestamp > date_cutoff)
+            .filter_map(|e| e.event.as_message())
+            .filter_map(|m| {
+                if let MessageContentInternal::Prize(p) = &m.content {
+                    Some((m.message_id, p.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    pub fn reduce_final_prize_by_transfer_fee(&mut self, message_id: MessageId) -> bool {
+        if let Some(prize_content) = self
+            .main
+            .get_event_mut(message_id.into(), EventIndex::default())
+            .and_then(|e| e.event.as_message_mut())
+            .and_then(|m| if let MessageContentInternal::Prize(p) = &mut m.content { Some(p) } else { None })
+        {
+            if !prize_content.prizes_remaining.is_empty() {
+                let last = prize_content.prizes_remaining.remove(0);
+                prize_content.prizes_remaining.insert(
+                    0,
+                    Tokens::from_e8s(last.e8s().saturating_sub(prize_content.transaction.fee() as u64)),
+                );
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn get_p2p_swap(
         &self,
         thread_root_message_index: Option<MessageIndex>,
