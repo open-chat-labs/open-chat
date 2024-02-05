@@ -31,8 +31,6 @@ pub enum Event {
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
     UserPrincipalUpdated(UpdateUserPrincipalArgs),
-    // Post release - remove this
-    DiamondMembershipExpiryDate(UserId, TimestampMillis),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
