@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Log request params when there is an error ([#5320](https://github.com/open-chat-labs/open-chat/pull/5320))
+
+## [[2.0.1043](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1043-market_maker)] - 2024-02-02
+
+### Changed
+
+- Log any errors that occur while running the market maker ([#5318](https://github.com/open-chat-labs/open-chat/pull/5318))
+
+## [[2.0.1042](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1042-market_maker)] - 2024-02-02
+
 ### Added
 
 - Add `ICDex_V2` so that we can run both while making the switch ([#5313](https://github.com/open-chat-labs/open-chat/pull/5313))

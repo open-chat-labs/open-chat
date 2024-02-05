@@ -7,7 +7,7 @@ use std::cmp::{max, min, Reverse};
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 use utils::time::MINUTE_IN_MS;
 
@@ -47,7 +47,9 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchan
 
 async fn run_async(exchanges: Vec<(ExchangeId, Box<dyn Exchange>, Config)>) {
     futures::future::join_all(exchanges.into_iter().map(|(id, e, c)| async move {
-        let _ = run_single(id, e, c).await;
+        if let Err(error) = run_single(id, e, c).await {
+            error!(exchange_id = %id, ?error, "Error running market maker");
+        }
         mark_market_maker_complete(&id);
     }))
     .await;

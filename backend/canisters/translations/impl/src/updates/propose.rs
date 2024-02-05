@@ -38,7 +38,7 @@ async fn propose(args: Args) -> Response {
             key: args.key,
             value: args.value,
             user_id,
-            now,
+            when: now,
         }) {
             Some(id) => Success(id),
             None => AlreadyProposed,

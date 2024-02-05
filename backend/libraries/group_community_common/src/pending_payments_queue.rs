@@ -41,4 +41,5 @@ pub enum PaymentRecipient {
 #[derive(Serialize, Deserialize, Clone, Copy)]
 pub enum PendingPaymentReason {
     AccessGate,
+    TransferToCommunityBeingImportedInto,
 }
