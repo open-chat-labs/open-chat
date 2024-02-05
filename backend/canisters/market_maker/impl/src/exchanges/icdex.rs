@@ -2,7 +2,6 @@ use crate::exchanges::Exchange;
 use crate::read_state;
 use async_trait::async_trait;
 use ic_cdk::api::call::CallResult;
-use icdex_canister::accountConfig::Mode;
 use icdex_canister::deposit::Token0OrToken1;
 use icdex_client::ICDexClient;
 use icrc_ledger_types::icrc1::account::Account;
