@@ -43,6 +43,10 @@ impl<M: Fn(MakeOrderRequest) + Send + Sync, C: Fn(CancelOrderRequest) + Send + S
         }
         Ok(())
     }
+
+    async fn account_balances(&self) -> CallResult<Vec<(CanisterId, u128)>> {
+        self.account_balances().await
+    }
 }
 
 pub async fn deposit_funds() {

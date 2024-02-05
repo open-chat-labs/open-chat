@@ -1,8 +1,9 @@
 #![allow(non_snake_case)]
-use canister_client::generate_candid_c2c_call_tuple_args;
+use canister_client::{generate_candid_c2c_call, generate_candid_c2c_call_tuple_args};
 use icdex_canister::*;
 
 // Queries
+generate_candid_c2c_call!(accountBalance);
 generate_candid_c2c_call_tuple_args!(getTxAccount);
 generate_candid_c2c_call_tuple_args!(level10);
 generate_candid_c2c_call_tuple_args!(pending);
