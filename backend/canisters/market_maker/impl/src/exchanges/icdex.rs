@@ -81,7 +81,7 @@ pub async fn deposit_funds() {
                 chat_ledger_canister_id,
                 &TransferArg {
                     from_subaccount: None,
-                    to: to.clone(),
+                    to,
                     fee: None,
                     created_at_time: None,
                     memo: None,
