@@ -5568,6 +5568,12 @@ export class OpenChat extends OpenChatAgentWorker {
         return community.localUserIndex;
     }
 
+    // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
+    // This is just so that we have the option to look at it in the UI to check for layout problems
+    previewTranslationCorrection(key: string, value: string): void {
+        applyTranslationCorrection("en-GB", key, value);
+    }
+
     proposeTranslationCorrection(
         locale: string,
         key: string,

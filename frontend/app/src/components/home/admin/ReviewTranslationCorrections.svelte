@@ -77,10 +77,7 @@
     }
 
     function previewCorrection(correction: TranslationCorrection) {
-        // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
-        // This is just so that we have the option to look at it in the UI to check for layout problems
-        // client.previewTranslationCorrection({ ...correction, locale: "en" });
-        console.log("preview: ", correction);
+        client.previewTranslationCorrection(correction.key, correction.value);
     }
 
     function verifyCorrection(correction: TranslationCorrection) {
