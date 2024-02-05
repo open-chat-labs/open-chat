@@ -26,7 +26,7 @@ fn c2c_start_import_into_community_impl(args: Args, state: &mut RuntimeState) ->
     }
 
     match state.start_importing_into_community(CommunityBeingImportedInto::Existing(args.community_id)) {
-        StartImportIntoCommunityResult::Success(total_bytes) => Success(total_bytes),
+        StartImportIntoCommunityResult::Success(result) => Success(result.total_bytes),
         StartImportIntoCommunityResult::AlreadyImportingToAnotherCommunity => AlreadyImportingToAnotherCommunity,
         StartImportIntoCommunityResult::ChatFrozen => ChatFrozen,
     }

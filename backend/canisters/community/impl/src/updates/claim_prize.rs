@@ -21,7 +21,7 @@ async fn claim_prize(args: Args) -> Response {
     };
 
     // Transfer the prize to the winner
-    let result = process_transaction(prepare_result.transaction, prepare_result.group).await;
+    let result = process_transaction(prepare_result.transaction, prepare_result.this_canister_id).await;
 
     match result {
         Ok(completed_transaction) => {
@@ -45,7 +45,7 @@ async fn claim_prize(args: Args) -> Response {
 
 struct PrepareResult {
     pub transaction: PendingCryptoTransaction,
-    pub group: CanisterId,
+    pub this_canister_id: CanisterId,
     pub user_id: UserId,
 }
 
@@ -96,7 +96,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, Some(&MEMO_PRIZE_CLAIM), now_nanos);
 
     Ok(PrepareResult {
-        group: state.env.canister_id(),
+        this_canister_id: state.env.canister_id(),
         transaction,
         user_id,
     })

@@ -17,6 +17,7 @@ generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_invites);
 generate_update_call!(change_role);
+generate_update_call!(claim_prize);
 generate_update_call!(create_channel);
 generate_update_call!(create_user_group);
 generate_update_call!(delete_messages);
@@ -393,6 +394,26 @@ pub mod happy_path {
         match response {
             community_canister::cancel_invites::Response::Success => {}
             response => panic!("'cancel_invites' error: {response:?}"),
+        }
+    }
+
+    pub fn claim_prize(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        message_id: MessageId,
+    ) {
+        let response = super::claim_prize(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::claim_prize::Args { channel_id, message_id },
+        );
+
+        match response {
+            community_canister::claim_prize::Response::Success => {}
+            response => panic!("'claim_prize' error: {response:?}"),
         }
     }
 }

@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use group_canister::convert_into_community::{Response::*, *};
 use ic_cdk_macros::update;
 use rand::Rng;
+use std::collections::HashMap;
 use types::{CanisterId, UserId};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
@@ -28,15 +29,19 @@ async fn convert_into_community(args: Args) -> Response {
         _ => return NotAuthorized,
     }
 
-    let c2c_args = match mutate_state(|state| start_import(caller, user_id, args, state)) {
-        Ok(args) => args,
+    let StartImportResult {
+        c2c_args,
+        transfers_required,
+    } = match mutate_state(|state| start_import(caller, user_id, args, state)) {
+        Ok(ok) => ok,
         Err(response) => return response,
     };
 
     match group_index_canister_c2c_client::c2c_convert_group_into_community(group_index_canister_id, &c2c_args).await {
         Ok(group_index_canister::c2c_convert_group_into_community::Response::Success(community_id)) => {
             mutate_state(|state| {
-                state.data.community_being_imported_into = Some(CommunityBeingImportedInto::Existing(community_id))
+                state.data.community_being_imported_into = Some(CommunityBeingImportedInto::Existing(community_id));
+                state.transfer_funds_to_community_being_imported_into(community_id, &transfers_required);
             });
             Success(SuccessResult {
                 community_id,
@@ -79,15 +84,20 @@ fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
+struct StartImportResult {
+    c2c_args: group_index_canister::c2c_convert_group_into_community::Args,
+    transfers_required: HashMap<CanisterId, (u128, u128)>,
+}
+
 fn start_import(
     caller: Principal,
     user_id: UserId,
     args: Args,
     state: &mut RuntimeState,
-) -> Result<group_index_canister::c2c_convert_group_into_community::Args, Response> {
+) -> Result<StartImportResult, Response> {
     match state.start_importing_into_community(CommunityBeingImportedInto::New) {
-        StartImportIntoCommunityResult::Success(total_bytes) => {
-            Ok(group_index_canister::c2c_convert_group_into_community::Args {
+        StartImportIntoCommunityResult::Success(result) => {
+            let c2c_args = group_index_canister::c2c_convert_group_into_community::Args {
                 channel_id: state.env.rng().gen(),
                 user_id,
                 user_principal: caller,
@@ -99,7 +109,12 @@ fn start_import(
                 gate: state.data.chat.gate.value.clone(),
                 primary_language: args.primary_language.unwrap_or_else(|| "en".to_string()),
                 history_visible_to_new_joiners: args.history_visible_to_new_joiners,
-                total_bytes,
+                total_bytes: result.total_bytes,
+            };
+
+            Ok(StartImportResult {
+                c2c_args,
+                transfers_required: result.transfers_required,
             })
         }
         StartImportIntoCommunityResult::AlreadyImportingToAnotherCommunity => Err(AlreadyImportingToAnotherCommunity),
