@@ -7,6 +7,7 @@ pub mod c2c_notify_events;
 pub mod c2c_notify_low_balance;
 pub mod c2c_register_bot;
 pub mod c2c_report_message;
+pub mod c2c_send_openchat_bot_messages;
 pub mod c2c_set_avatar;
 pub mod c2c_suspend_users;
 pub mod c2c_update_user_principal;

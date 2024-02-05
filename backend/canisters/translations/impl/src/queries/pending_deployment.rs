@@ -17,7 +17,7 @@ fn pending_deployment_impl(state: &RuntimeState) -> Response {
     let latest_approval = pending
         .iter()
         .filter_map(|t| match &t.status {
-            TranslationStatus::Approved(a) => Some(a.when),
+            TranslationStatus::Approved(s) => Some(s.attribution.when),
             _ => None,
         })
         .max()
