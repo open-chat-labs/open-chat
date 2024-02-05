@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1048](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1048-market_maker)] - 2024-02-05
+
+### Changed
+
+- Switch ICDex over to using `Pool` mode ([#5325](https://github.com/open-chat-labs/open-chat/pull/5325))
+- Get token balances by querying `accountBalance` ([#5326](https://github.com/open-chat-labs/open-chat/pull/5326))
+
+## [[2.0.1044](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1044-market_maker)] - 2024-02-03
+
 ### Changed
 
 - Log request params when there is an error ([#5320](https://github.com/open-chat-labs/open-chat/pull/5320))

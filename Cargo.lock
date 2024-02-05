@@ -3757,6 +3757,8 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icdex_canister",
+ "icdex_canister_c2c_client",
  "icdex_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",

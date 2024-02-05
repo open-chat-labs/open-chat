@@ -697,7 +697,6 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
-    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
     'p2p_swap' : IDL.Opt(PermissionRole),
