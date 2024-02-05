@@ -19,8 +19,10 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
+use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
+use types::SNS_FEE_SHARE_PERCENT;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Empty, EventIndex,
     FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupMembership, GroupPermissions, GroupSubtype, MessageIndex,
@@ -76,6 +78,10 @@ impl RuntimeState {
         self.env.caller() == self.data.local_group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn is_caller_community_being_imported_into(&self) -> bool {
         if let Some(community_id) = self
             .data
@@ -118,7 +124,7 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (amount_available * 4 / 5) / owner_count;
+        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
         let amount = owner_share.saturating_sub(gate.fee);
         if amount > 0 {
             for owner in owners {
@@ -180,6 +186,7 @@ impl RuntimeState {
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
+            local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated: chat.last_updated(Some(member.user_id)),
             name: chat.name.value.clone(),
             description: chat.description.value.clone(),
@@ -248,9 +255,15 @@ impl RuntimeState {
         } else if self.data.is_frozen() {
             ChatFrozen
         } else {
-            self.data.community_being_imported_into = Some(community);
-            let serialized = msgpack::serialize_then_unwrap(&self.data.chat);
+            let transfers_required = self.prepare_transfers_for_import_into_community();
+            let serialized = serialize_then_unwrap(&self.data.chat);
             let total_bytes = serialized.len() as u64;
+
+            if let Some(community_id) = community.community_id() {
+                self.transfer_funds_to_community_being_imported_into(community_id, &transfers_required);
+            }
+
+            self.data.community_being_imported_into = Some(community);
             self.data.serialized_chat_state = Some(ByteBuf::from(serialized));
 
             freeze_group_impl(
@@ -260,8 +273,59 @@ impl RuntimeState {
                 self,
             );
 
-            Success(total_bytes)
+            Success(StartImportIntoCommunityResultSuccess {
+                total_bytes,
+                transfers_required,
+            })
         }
+    }
+
+    pub fn prepare_transfers_for_import_into_community(&mut self) -> HashMap<CanisterId, (u128, u128)> {
+        let now = self.env.now();
+        let max_prize_message_length = 7 * DAY_IN_MS;
+        let pending_prize_messages = self
+            .data
+            .chat
+            .events
+            .pending_prize_messages(now.saturating_sub(max_prize_message_length));
+
+        let mut transfers_required = HashMap::new();
+
+        for (message_id, prize_message) in pending_prize_messages {
+            let ledger = prize_message.transaction.ledger_canister_id();
+            let fee = prize_message.transaction.fee();
+            let amount: u128 = prize_message.prizes_remaining.iter().map(|p| p.e8s() as u128 + fee).sum();
+
+            match transfers_required.entry(ledger) {
+                Vacant(e) => {
+                    e.insert((amount.saturating_sub(fee), fee));
+                    self.data.chat.events.reduce_final_prize_by_transfer_fee(message_id);
+                }
+                Occupied(e) => {
+                    let (total, _) = e.into_mut();
+                    *total += amount;
+                }
+            }
+        }
+
+        transfers_required
+    }
+
+    fn transfer_funds_to_community_being_imported_into(
+        &mut self,
+        community_id: CommunityId,
+        transfers: &HashMap<CanisterId, (u128, u128)>,
+    ) {
+        for (&ledger_canister, &(amount, fee)) in transfers.iter() {
+            self.data.pending_payments_queue.push(PendingPayment {
+                amount,
+                fee,
+                ledger_canister,
+                recipient: PaymentRecipient::Account(Principal::from(community_id).into()),
+                reason: PendingPaymentReason::TransferToCommunityBeingImportedInto,
+            });
+        }
+        jobs::make_pending_payments::start_job_if_required(self);
     }
 
     pub fn run_event_expiry_job(&mut self) {
@@ -332,6 +396,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
+                escrow_canister_id: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -348,6 +413,7 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
@@ -361,11 +427,8 @@ struct Data {
     pub community_being_imported_into: Option<CommunityBeingImportedInto>,
     pub serialized_chat_state: Option<ByteBuf>,
     pub next_event_expiry: Option<TimestampMillis>,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
-    #[serde(default)]
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub total_payment_receipts: PaymentReceipts,
 }
 
@@ -394,6 +457,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
         gate: Option<AccessGate>,
@@ -423,6 +487,7 @@ impl Data {
             local_user_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
@@ -614,11 +679,17 @@ pub struct CanisterIds {
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub icp_ledger: CanisterId,
 }
 
 pub enum StartImportIntoCommunityResult {
-    Success(u64),
+    Success(StartImportIntoCommunityResultSuccess),
     AlreadyImportingToAnotherCommunity,
     ChatFrozen,
+}
+
+pub struct StartImportIntoCommunityResultSuccess {
+    pub total_bytes: u64,
+    pub transfers_required: HashMap<CanisterId, (u128, u128)>,
 }

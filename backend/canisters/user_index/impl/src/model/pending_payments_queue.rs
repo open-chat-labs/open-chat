@@ -1,4 +1,4 @@
-use candid::Principal;
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use types::{Cryptocurrency, TimestampNanos};
@@ -27,7 +27,7 @@ pub struct PendingPayment {
     pub amount: u64,
     pub currency: Cryptocurrency,
     pub timestamp: TimestampNanos,
-    pub recipient: Principal,
+    pub recipient_account: Account,
     pub memo: [u8; 32],
     pub reason: PendingPaymentReason,
 }
@@ -35,5 +35,7 @@ pub struct PendingPayment {
 #[derive(Serialize, Deserialize, Clone)]
 pub enum PendingPaymentReason {
     Treasury,
+    TopUpNeuron,
+    Burn,
     ReferralReward,
 }

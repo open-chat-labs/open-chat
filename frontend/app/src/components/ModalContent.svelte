@@ -9,12 +9,15 @@
     import { mobileWidth } from "../stores/screenDimensions";
     import { menuStore } from "../stores/menu";
     import { currentTheme } from "../theme/themes";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
     export let fill: boolean = false;
     export let large: boolean = false;
     export let hideHeader: boolean = false;
+    export let hideBody: boolean = false;
     export let hideFooter: boolean = false;
     export let compactFooter: boolean = false;
     export let fadeDuration = 100;
@@ -64,7 +67,7 @@
             if ($rtlStore) {
                 let right = Math.min(
                     window.innerWidth - alignTo.left + 8,
-                    window.innerWidth - modalRect.width - 10
+                    window.innerWidth - modalRect.width - 10,
                 );
                 style += `right: ${right}px;`;
             } else {
@@ -91,8 +94,7 @@
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
-    class:fit_to_content={fitToContent}
-    on:click|stopPropagation>
+    class:fit_to_content={fitToContent}>
     {#if !hideHeader}
         <div class="header">
             <h4>
@@ -107,14 +109,16 @@
             {/if}
         </div>
     {/if}
-    <div class="body" class:fill>
-        <slot name="body" />
-    </div>
+    {#if !hideBody}
+        <div class="body" class:fill>
+            <slot name="body" />
+        </div>
+    {/if}
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
                 <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
-                    {$_("close")}
+                    <Translatable resourceKey={i18nKey("close")} />
                 </Button>
             </slot>
         </div>

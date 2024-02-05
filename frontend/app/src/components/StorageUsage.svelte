@@ -1,8 +1,9 @@
 <script lang="ts">
     import Progress from "./Progress.svelte";
-    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import { i18nKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     $: percentageStorageRemaining = client.percentageStorageRemaining;
@@ -15,10 +16,11 @@
 {#if $storageStore.byteLimit > 0}
     <div class="row">
         <span class="current">
-            {$_("currentUsage")}
+            <Translatable resourceKey={i18nKey("currentUsage")} />
         </span>
         <span class="left">
-            {$_("percLeft", { values: { perc: $percentageStorageRemaining } })}
+            <Translatable
+                resourceKey={i18nKey("percLeft", { perc: $percentageStorageRemaining })} />
         </span>
     </div>
     <div class="storage-progress">
@@ -26,12 +28,11 @@
     </div>
     <div class="row used">
         <span class="usage">
-            {$_("storageUsed", {
-                values: {
+            <Translatable
+                resourceKey={i18nKey("storageUsed", {
                     used: $storageInGb.gbUsed.toFixed(2),
                     limit: $storageInGb.gbLimit.toFixed(1),
-                },
-            })}
+                })} />
         </span>
     </div>
 {/if}

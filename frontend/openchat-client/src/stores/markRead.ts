@@ -15,7 +15,7 @@ import {
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import type { OpenChat } from "../openchat";
-import { networkStatus } from "./network";
+import { offlineStore } from "./network";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -417,8 +417,8 @@ export function startMessagesReadTracker(api: OpenChat): void {
     if (networkUnsub !== undefined) {
         networkUnsub();
     }
-    networkUnsub = networkStatus.subscribe((status) => {
-        if (status === "offline") {
+    networkUnsub = offlineStore.subscribe((offline) => {
+        if (offline) {
             messagesRead.stop();
         } else {
             messagesRead.start(api);

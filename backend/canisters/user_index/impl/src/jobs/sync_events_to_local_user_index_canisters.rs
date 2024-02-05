@@ -11,26 +11,38 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none()
-        && !state.data.user_index_event_sync_queue.is_empty()
-        && !state.data.user_index_event_sync_queue.sync_in_progress()
-    {
+    if TIMER_ID.get().is_none() && !state.data.user_index_event_sync_queue.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'sync_events_to_local_user_index_canisters' job started");
         true
     } else {
         false
     }
 }
 
-pub fn run() {
-    if let Some(batch) = mutate_state(|state| state.data.user_index_event_sync_queue.try_start_batch()) {
+pub(crate) fn try_run_now(state: &mut RuntimeState) -> bool {
+    if let Some(batch) = next_batch(state) {
+        if let Some(timer_id) = TIMER_ID.take() {
+            ic_cdk_timers::clear_timer(timer_id);
+        }
         ic_cdk::spawn(process_batch(batch));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'sync_events_to_local_user_index_canisters' job stopped");
+        true
+    } else {
+        false
     }
+}
+
+fn run() {
+    trace!("'sync_events_to_local_user_index_canisters' job running");
+    TIMER_ID.set(None);
+
+    if let Some(batch) = mutate_state(next_batch) {
+        ic_cdk::spawn(process_batch(batch));
+    }
+}
+
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<LocalUserIndexEvent>)>> {
+    state.data.user_index_event_sync_queue.try_start_batch()
 }
 
 async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {

@@ -38,8 +38,8 @@
         onClose();
     }
 
-    function onClick() {
-        if (dismissible) {
+    function onMousedown(ev: MouseEvent) {
+        if (dismissible && ev.target === ref) {
             onClose();
         }
     }
@@ -63,7 +63,7 @@
         class="overlay"
         class:align-bottom={alignBottomOnMobile}
         class:align-left={alignLeft}
-        on:click={onClick}>
+        on:mousedown={onMousedown}>
         <slot />
     </div>
 </div>

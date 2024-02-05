@@ -1,7 +1,7 @@
 use crate::user_groups::UserGroupSummary;
 use crate::{
-    AccessGate, ChannelId, ChatMetrics, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, CommunityId,
-    CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, OptionUpdate, TimestampMillis,
+    AccessGate, CanisterId, ChannelId, ChatMetrics, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates,
+    CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, OptionUpdate, TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityCanisterCommunitySummary {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,

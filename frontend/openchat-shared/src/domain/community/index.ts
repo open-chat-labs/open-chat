@@ -28,6 +28,7 @@ import type {
     ChatNotFound,
     CommunityFrozen,
     Failure,
+    InternalError,
     NotAuthorised,
     Offline,
     Success,
@@ -73,6 +74,7 @@ export type CommunitySummary = AccessControlled &
         channels: ChannelSummary[]; // TODO - this might be better as a ChatMap - but that would have some serialisation complications
         primaryLanguage: string;
         userGroups: Map<number, UserGroupSummary>;
+        localUserIndex: string;
     };
 
 export type DefaultChannel = {
@@ -124,6 +126,7 @@ export type AddMembersToChannelResponse =
     | UserNotInCommunity
     | UserSuspended
     | CommunityFrozen
+    | InternalError
     | Offline;
 
 export type BlockCommunityUserResponse = Success | Failure | Offline;

@@ -1,11 +1,12 @@
 <script lang="ts">
+    import type { ResourceKey } from "../i18n/i18n";
     import Checkbox from "./Checkbox.svelte";
-    import { _ } from "svelte-i18n";
+    import Translatable from "./Translatable.svelte";
 
     export let checked: boolean = false;
     export let disabled: boolean = false;
     export let waiting: boolean = false;
-    export let label: string | undefined = undefined;
+    export let label: ResourceKey | undefined = undefined;
     export let id: string;
     export let small: boolean = false;
     export let bigGap: boolean = false;
@@ -17,7 +18,7 @@
     </div>
     {#if label !== undefined}
         <div class="label" class:disabled>
-            {label}
+            <Translatable resourceKey={label} />
         </div>
     {/if}
 </div>

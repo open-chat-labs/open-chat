@@ -11,6 +11,7 @@ pub use queries::*;
 pub use updates::*;
 
 pub const ICDEX_EXCHANGE_ID: ExchangeId = ExchangeId::new(1);
+pub const ICDEX_EXCHANGE_V2_ID: ExchangeId = ExchangeId::new(2);
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ExchangeInfo {

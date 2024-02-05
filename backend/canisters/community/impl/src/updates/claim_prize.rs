@@ -6,10 +6,8 @@ use community_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
-use types::{
-    CanisterId, ChannelMessageNotification, CompletedCryptoTransaction, Notification, PendingCryptoTransaction, UserId,
-};
-use utils::consts::{MEMO_PRIZE_CLAIM, OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
+use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
+use utils::consts::MEMO_PRIZE_CLAIM;
 
 #[update]
 #[trace]
@@ -23,7 +21,7 @@ async fn claim_prize(args: Args) -> Response {
     };
 
     // Transfer the prize to the winner
-    let result = process_transaction(prepare_result.transaction, prepare_result.group).await;
+    let result = process_transaction(prepare_result.transaction, prepare_result.this_canister_id).await;
 
     match result {
         Ok(completed_transaction) => {
@@ -47,7 +45,7 @@ async fn claim_prize(args: Args) -> Response {
 
 struct PrepareResult {
     pub transaction: PendingCryptoTransaction,
-    pub group: CanisterId,
+    pub this_canister_id: CanisterId,
     pub user_id: UserId,
 }
 
@@ -98,7 +96,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     let transaction = create_pending_transaction(token, ledger, amount, fee, user_id, Some(&MEMO_PRIZE_CLAIM), now_nanos);
 
     Ok(PrepareResult {
-        group: state.env.canister_id(),
+        this_canister_id: state.env.canister_id(),
         transaction,
         user_id,
     })
@@ -117,37 +115,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .events
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
-        chat_events::ClaimPrizeResult::Success(message_event) => {
-            // Send a notification to group participants
-            let notification_recipients = channel
-                .chat
-                .members
-                .iter()
-                .filter(|m| !m.notifications_muted.value && !m.suspended.value)
-                .map(|m| m.user_id)
-                .collect();
-            let content = &message_event.event.content;
-
-            let notification = Notification::ChannelMessage(ChannelMessageNotification {
-                community_id: state.env.canister_id().into(),
-                channel_id: args.channel_id,
-                thread_root_message_index: None,
-                message_index: message_event.event.message_index,
-                event_index: message_event.index,
-                community_name: state.data.name.clone(),
-                channel_name: channel.chat.name.value.clone(),
-                sender: OPENCHAT_BOT_USER_ID,
-                sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                sender_display_name: None,
-                message_type: content.message_type(),
-                message_text: content.notification_text(&[], &[]),
-                image_url: content.notification_image_url(),
-                community_avatar_id: state.data.avatar.as_ref().map(|d| d.id),
-                channel_avatar_id: channel.chat.avatar.as_ref().map(|d| d.id),
-                crypto_transfer: None,
-            });
-            state.push_notification(notification_recipients, notification);
-
+        chat_events::ClaimPrizeResult::Success(..) => {
             handle_activity_notification(state);
             None
         }

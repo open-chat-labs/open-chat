@@ -2,10 +2,11 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{MessageContent, MessageId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub message_id: MessageId,
     pub content: MessageContent,
+    #[serde(default)]
     pub correlation_id: u64,
 }
 

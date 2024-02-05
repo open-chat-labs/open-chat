@@ -3,7 +3,6 @@
     import CommunityDetails from "./CommunityDetails.svelte";
     import { type OpenChat, defaultChatRules } from "openchat-client";
     import CommunityDetailsHeader from "./CommunityDetailsHeader.svelte";
-    import { pushRightPanelHistory } from "../../../../stores/rightPanel";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");
@@ -16,20 +15,11 @@
         $selectedCommunity !== undefined && client.canDeleteCommunity($selectedCommunity.id);
     $: canEdit = $selectedCommunity !== undefined && client.canEditCommunity($selectedCommunity.id);
     $: canInvite = $selectedCommunity !== undefined && client.canInviteUsers($selectedCommunity.id);
-
-    function showChannels() {
-        if ($selectedCommunity) {
-            pushRightPanelHistory({
-                kind: "community_channels",
-            });
-        }
-    }
 </script>
 
 {#if $selectedCommunity}
     <CommunityDetailsHeader
         on:editCommunity
-        on:showChannels={showChannels}
         community={$selectedCommunity}
         {canEdit}
         level={"community"} />

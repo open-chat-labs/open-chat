@@ -25,7 +25,6 @@ pub struct TokenDetails {
     pub info_url: String,
     pub how_to_buy_url: String,
     pub transaction_url_format: String,
-    #[serde(default)]
     pub supported_standards: Vec<String>,
     pub added: TimestampMillis,
     pub last_updated: TimestampMillis,
@@ -75,6 +74,12 @@ impl From<&NervousSystemDetails> for NervousSystemSummary {
             submitting_proposals_enabled: value.submitting_proposals_enabled,
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MessageFilterSummary {
+    pub id: u64,
+    pub regex: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

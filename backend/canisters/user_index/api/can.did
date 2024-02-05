@@ -24,6 +24,7 @@ type SetDisplayNameArgs = record {
 
 type SetDisplayNameResponse = variant {
     Success;
+    Unauthorized;
     UserNotFound;
     DisplayNameInvalid;
     DisplayNameTooShort : nat16;
@@ -53,9 +54,11 @@ type CurrentUserResponse = variant {
         icp_account : AccountIdentifier;
         referrals : vec UserId;
         is_platform_moderator : bool;
+        is_platform_operator : bool;
         suspension_details : opt SuspensionDetails;
         is_suspected_bot : bool;
         diamond_membership_details : opt DiamondMembershipDetails;
+        diamond_membership_status : DiamondMembershipStatusFull;
         moderation_flags_enabled : nat32;
     };
     UserNotFound;
@@ -90,25 +93,12 @@ type UserResponse = variant {
     UserNotFound;
 };
 
-type UsersArgs = record {
-    user_groups : vec record {
-        users : vec UserId;
-        updated_since : TimestampMillis;
-    };
-};
-
-type UsersResponse = variant {
-    Success : record {
-        users : vec PartialUserSummary;
-        timestamp : TimestampMillis;
-    };
-};
-
 type UsersV2Args = record {
     user_groups : vec record {
         users : vec UserId;
         updated_since : TimestampMillis;
     };
+    users_suspended_since : opt TimestampMillis;
 };
 
 type UsersV2Response = variant {
@@ -136,6 +126,7 @@ type DiamondMembershipFeesResponse = variant {
         one_month : nat64;
         three_months : nat64;
         one_year : nat64;
+        lifetime : nat64;
     };
 };
 
@@ -181,6 +172,7 @@ type AssignPlatformModeratorsGroupArgs = record {
 
 type AssignPlatformModeratorsGroupResponse = variant {
     Success;
+    AlreadySet : ChatId;
 };
 
 type PlatformModeratorsResponse = variant {
@@ -209,6 +201,16 @@ type SuspectedBotsArgs = record {
 type SuspectedBotsResponse = variant {
     Success : record {
         users : vec UserId;
+    };
+};
+
+type ReportedMessagesArgs = record {
+    user_id : opt UserId;
+};
+
+type ReportedMessagesResponse = variant {
+    Success : record {
+        json : text;
     };
 };
 
@@ -251,10 +253,7 @@ type PayForDiamondMembershipArgs = record {
 
 type PayForDiamondMembershipResponse = variant {
     Success : DiamondMembershipDetails;
-    CannotExtend : record {
-        diamond_membership_expires_at : TimestampMillis;
-        can_extend_at : TimestampMillis;
-    };
+    AlreadyLifetimeDiamondMember;
     CurrencyNotSupported;
     PriceMismatch;
     PaymentAlreadyInProgress;
@@ -262,6 +261,17 @@ type PayForDiamondMembershipResponse = variant {
     InsufficientFunds : nat64; // Returns the account balance in e8s
     TransferFailed : text;
     InternalError : text;
+};
+
+type UpdateDiamondMembershipSubscriptionArgs = record {
+    pay_in_chat : opt bool;
+    subscription : opt DiamondMembershipSubscription;
+};
+
+type UpdateDiamondMembershipSubscriptionResponse = variant {
+    Success;
+    NotDiamondMember;
+    AlreadyLifetimeDiamondMember;
 };
 
 type ReferralMetricsResponse = variant {
@@ -310,6 +320,25 @@ type SetUserUpgradeConcurrencyResponse = variant {
     Success;
 };
 
+type SetDiamondMembershipFeesArgs = record {
+    fees : record {
+        chat_fees : DiamondMembershipFeesByDuration;
+        icp_fees : DiamondMembershipFeesByDuration;
+    };
+};
+
+type DiamondMembershipFeesByDuration = record {
+    one_month : nat64;
+    three_months : nat64;
+    one_year : nat64;
+    lifetime : nat64;
+};
+
+type SetDiamondMembershipFeesResponse = variant {
+    Success;
+    Invalid;
+};
+
 type AddReferralCodesArgs = record {
     referral_type : ReferralType;
     codes : vec text;
@@ -347,7 +376,6 @@ service : {
     user : (UserArgs) -> (UserResponse) query;
 
     // Gets some users by id
-    users : (UsersArgs) -> (UsersResponse) query;
     users_v2 : (UsersV2Args) -> (UsersV2Response) query;
 
     // Search for users matching some query
@@ -360,6 +388,7 @@ service : {
     mark_suspected_bot : (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     pay_for_diamond_membership : (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    update_diamond_membership_subscription : (UpdateDiamondMembershipSubscriptionArgs) -> (UpdateDiamondMembershipSubscriptionResponse);
     referral_metrics : (EmptyArgs) -> (ReferralMetricsResponse) query;
     referral_leaderboard : (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
 
@@ -379,9 +408,11 @@ service : {
     suspend_user : (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user : (UnsuspendUserArgs) -> (UnsuspendUserResponse);
     suspected_bots : (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+    reported_messages : (ReportedMessagesArgs) -> (ReportedMessagesResponse) query;
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency : (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
+    set_diamond_membership_fees : (SetDiamondMembershipFeesArgs) -> (SetDiamondMembershipFeesResponse);
 
     // Only callable by OC dev team dfx identity
     add_referral_codes : (AddReferralCodesArgs) -> (AddReferralCodesResponse);

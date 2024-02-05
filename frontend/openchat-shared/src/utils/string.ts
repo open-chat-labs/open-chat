@@ -29,3 +29,12 @@ export function isAccountIdentifierValid(text: string): boolean {
 export function isHexString(text: string): boolean {
     return HEX_REGEX.test(text);
 }
+
+export function isUrl(text: string): boolean {
+    try {
+        new URL(text);
+        return true;
+    } catch {
+        return false;
+    }
+}

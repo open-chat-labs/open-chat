@@ -11,12 +11,13 @@ use utils::env::Environment;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
     let mut data = Data::new(
         args.governance_principals.into_iter().collect(),
         args.proposals_bot_canister_id,
+        args.user_index_canister_id,
         args.sns_wasm_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,

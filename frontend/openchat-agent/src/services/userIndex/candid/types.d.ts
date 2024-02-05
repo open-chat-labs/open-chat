@@ -1,13 +1,20 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'TokenBalance' : TokenBalanceGate } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
 export type AccessorId = Principal;
+export interface Account {
+  'owner' : Principal,
+  'subaccount' : [] | [Subaccount],
+}
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddPlatformModeratorArgs { 'user_id' : UserId }
 export type AddPlatformModeratorResponse = {
@@ -34,8 +41,30 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
+export interface ApproveArgs {
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+  'expected_allowance' : [] | [bigint],
+  'expires_at' : [] | [bigint],
+  'spender' : Account,
+}
+export type ApproveError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'Expired' : { 'ledger_time' : bigint } } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface AssignPlatformModeratorsGroupArgs { 'group_id' : ChatId }
-export type AssignPlatformModeratorsGroupResponse = { 'Success' : null };
+export type AssignPlatformModeratorsGroupResponse = { 'AlreadySet' : ChatId } |
+  { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -72,6 +101,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -254,6 +284,7 @@ export interface CommunityCanisterCommunitySummary {
   'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -349,6 +380,8 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
+      'is_platform_operator' : boolean,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
@@ -383,21 +416,41 @@ export interface DeletedContent {
   'deleted_by' : UserId,
 }
 export interface DiamondMembershipDetails {
-  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'pay_in_chat' : boolean,
+  'subscription' : DiamondMembershipSubscription,
+  'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
+}
+export interface DiamondMembershipFeesByDuration {
+  'one_year' : bigint,
+  'lifetime' : bigint,
+  'one_month' : bigint,
+  'three_months' : bigint,
 }
 export type DiamondMembershipFeesResponse = {
     'Success' : Array<
       {
         'one_year' : bigint,
         'token' : Cryptocurrency,
+        'lifetime' : bigint,
         'one_month' : bigint,
         'three_months' : bigint,
       }
     >
   };
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
+export type DiamondMembershipStatus = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
+export type DiamondMembershipSubscription = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'Disabled' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
@@ -476,6 +529,7 @@ export type DocumentIdUpdate = { 'NoChange' : null } |
 export type DocumentUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Document };
+export type Duration = bigint;
 export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsSuccessResult {
@@ -519,6 +573,8 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
+  { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -558,6 +614,7 @@ export interface GroupCanisterGroupChatSummary {
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
   'membership' : [] | [GroupMembership],
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -630,6 +687,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -664,6 +722,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -857,6 +916,7 @@ export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
   { 'Custom' : CustomMessageContent } |
@@ -872,6 +932,7 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContentInitial } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
   { 'Custom' : CustomMessageContent } |
@@ -911,8 +972,10 @@ export interface MessagePermissions {
   'crypto' : [] | [PermissionRole],
   'giphy' : [] | [PermissionRole],
   'default' : PermissionRole,
+  'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
+  'p2p_swap' : [] | [PermissionRole],
 }
 export interface MessagePinned {
   'pinned_by' : UserId,
@@ -987,6 +1050,7 @@ export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
   'status' : ProposalDecisionStatus,
+  'payload_text_rendering' : [] | [string],
   'tally' : Tally,
   'title' : string,
   'created' : TimestampMillis,
@@ -1055,20 +1119,52 @@ export interface OptionalMessagePermissions {
   'giphy' : PermissionRoleUpdate,
   'custom_deleted' : Array<string>,
   'default' : [] | [PermissionRole],
+  'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
+  'p2p_swap' : PermissionRoleUpdate,
 }
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
-export interface PartialUserSummary {
-  'username' : [] | [string],
-  'diamond_member' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'avatar_id' : [] | [bigint],
-  'suspended' : boolean,
+export interface P2PSwapAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
 }
+export interface P2PSwapCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface P2PSwapCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface P2PSwapContent {
+  'status' : P2PSwapStatus,
+  'token0_txn_in' : bigint,
+  'swap_id' : number,
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_at' : TimestampMillis,
+}
+export interface P2PSwapContentInitial {
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_in' : Milliseconds,
+}
+export type P2PSwapExpired = P2PSwapCancelled;
+export interface P2PSwapReserved { 'reserved_by' : UserId }
+export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
+  { 'Open' : null } |
+  { 'Accepted' : P2PSwapAccepted } |
+  { 'Cancelled' : P2PSwapCancelled } |
+  { 'Completed' : P2PSwapCompleted } |
+  { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1099,17 +1195,17 @@ export type PayForDiamondMembershipResponse = {
   } |
   { 'CurrencyNotSupported' : null } |
   { 'Success' : DiamondMembershipDetails } |
+  { 'AlreadyLifetimeDiamondMember' : null } |
   { 'PriceMismatch' : null } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
-  {
-    'CannotExtend' : {
-      'can_extend_at' : TimestampMillis,
-      'diamond_membership_expires_at' : TimestampMillis,
-    }
-  } |
   { 'UserNotFound' : null } |
   { 'InsufficientFunds' : bigint };
+export interface PaymentGate {
+  'fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
+}
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
 export type PermissionRole = { 'None' : null } |
@@ -1142,6 +1238,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1203,6 +1300,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -1269,6 +1367,16 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
+export interface ReportedMessagesArgs { 'user_id' : [] | [UserId] }
+export type ReportedMessagesResponse = { 'Success' : { 'json' : string } };
+export type ReserveP2PSwapResult = { 'Success' : ReserveP2PSwapSuccess } |
+  { 'SwapNotFound' : null } |
+  { 'Failure' : P2PSwapStatus };
+export interface ReserveP2PSwapSuccess {
+  'created' : TimestampMillis,
+  'content' : P2PSwapContent,
+  'created_by' : UserId,
+}
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1293,10 +1401,19 @@ export interface SelectedGroupUpdates {
   'latest_event_index' : EventIndex,
   'blocked_users_added' : Array<UserId>,
 }
+export interface SetDiamondMembershipFeesArgs {
+  'fees' : {
+    'icp_fees' : DiamondMembershipFeesByDuration,
+    'chat_fees' : DiamondMembershipFeesByDuration,
+  },
+}
+export type SetDiamondMembershipFeesResponse = { 'Invalid' : null } |
+  { 'Success' : null };
 export interface SetDisplayNameArgs { 'display_name' : [] | [string] }
 export type SetDisplayNameResponse = { 'DisplayNameInvalid' : null } |
   { 'Success' : null } |
   { 'DisplayNameTooLong' : number } |
+  { 'Unauthorized' : null } |
   { 'DisplayNameTooShort' : number } |
   { 'UserNotFound' : null };
 export interface SetModerationFlagsArgs { 'moderation_flags_enabled' : number }
@@ -1331,6 +1448,7 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
+export type Subaccount = Uint8Array | number[];
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -1358,6 +1476,24 @@ export interface SuspensionDetails {
   'suspended_by' : UserId,
   'reason' : string,
 }
+export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
+  { 'Accepted' : SwapStatusErrorAccepted } |
+  { 'Cancelled' : SwapStatusErrorCancelled } |
+  { 'Completed' : SwapStatusErrorCompleted } |
+  { 'Expired' : SwapStatusErrorExpired };
+export interface SwapStatusErrorAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1387,21 +1523,79 @@ export interface ThreadSyncDetails {
   'latest_event' : [] | [EventIndex],
   'latest_message' : [] | [MessageIndex],
 }
+export type Timestamp = bigint;
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface TokenBalanceGate {
+  'min_balance' : bigint,
+  'ledger_canister_id' : CanisterId,
+}
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
+export interface TransferArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Subaccount],
+  'created_at_time' : [] | [Timestamp],
+  'amount' : bigint,
+}
+export type TransferError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface TransferFromArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'spender_subaccount' : [] | [Uint8Array | number[]],
+  'from' : Account,
+  'memo' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+}
+export type TransferFromError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface UnsuspendUserArgs { 'user_id' : UserId }
 export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'UserNotFound' : null };
+export interface UpdateDiamondMembershipSubscriptionArgs {
+  'pay_in_chat' : [] | [boolean],
+  'subscription' : [] | [DiamondMembershipSubscription],
+}
+export type UpdateDiamondMembershipSubscriptionResponse = {
+    'NotDiamondMember' : null
+  } |
+  { 'Success' : null } |
+  { 'AlreadyLifetimeDiamondMember' : null };
 export interface UpdatedRules {
   'new_version' : boolean,
   'text' : string,
@@ -1425,16 +1619,12 @@ export type UserResponse = { 'Success' : UserSummary } |
 export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatus,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
   'avatar_id' : [] | [bigint],
   'suspended' : boolean,
-}
-export interface UsersArgs {
-  'user_groups' : Array<
-    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
-  >,
 }
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
@@ -1444,12 +1634,6 @@ export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
-export type UsersResponse = {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'users' : Array<PartialUserSummary>,
-    }
-  };
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1458,10 +1642,15 @@ export interface UsersV2Args {
   'user_groups' : Array<
     { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
   >,
+  'users_suspended_since' : [] | [TimestampMillis],
 }
 export type UsersV2Response = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
+export type Value = { 'Int' : bigint } |
+  { 'Nat' : bigint } |
+  { 'Blob' : Uint8Array | number[] } |
+  { 'Text' : string };
 export interface VerifiedCredentialGate {
   'credential' : string,
   'issuer' : string,
@@ -1536,7 +1725,15 @@ export interface _SERVICE {
     [RemovePlatformOperatorArgs],
     RemovePlatformOperatorResponse
   >,
+  'reported_messages' : ActorMethod<
+    [ReportedMessagesArgs],
+    ReportedMessagesResponse
+  >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'set_diamond_membership_fees' : ActorMethod<
+    [SetDiamondMembershipFeesArgs],
+    SetDiamondMembershipFeesResponse
+  >,
   'set_display_name' : ActorMethod<
     [SetDisplayNameArgs],
     SetDisplayNameResponse
@@ -1553,11 +1750,14 @@ export interface _SERVICE {
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
+  'update_diamond_membership_subscription' : ActorMethod<
+    [UpdateDiamondMembershipSubscriptionArgs],
+    UpdateDiamondMembershipSubscriptionResponse
+  >,
   'user' : ActorMethod<[UserArgs], UserResponse>,
   'user_registration_canister' : ActorMethod<
     [EmptyArgs],
     UserRegistrationCanisterResponse
   >,
-  'users' : ActorMethod<[UsersArgs], UsersResponse>,
   'users_v2' : ActorMethod<[UsersV2Args], UsersV2Response>,
 }

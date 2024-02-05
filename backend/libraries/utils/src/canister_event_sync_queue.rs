@@ -97,6 +97,23 @@ impl<T> CanisterEventSyncQueue<T> {
         }
     }
 
+    pub fn try_start_for_canister(&mut self, canister_id: CanisterId) -> Option<Vec<T>> {
+        if self.sync_in_progress {
+            return None;
+        }
+
+        if let Some((events, has_more_events)) = self.take_events(canister_id) {
+            self.queue.retain(|c| *c != canister_id);
+            self.sync_in_progress = true;
+            if has_more_events {
+                self.queue.push_back(canister_id);
+            }
+            Some(events)
+        } else {
+            None
+        }
+    }
+
     pub fn mark_batch_completed(&mut self) {
         self.sync_in_progress = false;
     }

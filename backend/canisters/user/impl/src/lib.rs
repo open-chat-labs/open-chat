@@ -1,10 +1,10 @@
-use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::communities::Communities;
 use crate::model::community::Community;
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chat::GroupChat;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
+use crate::model::p2p_swaps::P2PSwaps;
 use crate::model::token_swaps::TokenSwaps;
 use crate::timer_job_types::{RemoveExpiredEventsJob, TimerJob};
 use candid::Principal;
@@ -23,14 +23,15 @@ use types::{
     BuildVersion, CanisterId, Chat, ChatId, ChatMetrics, CommunityId, Cryptocurrency, Cycles, Document, Notification,
     TimestampMillis, Timestamped, UserId,
 };
-use user_canister::NamedAccount;
+use user_canister::{NamedAccount, UserCanisterEvent};
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
 mod governance_clients;
-mod group_summaries;
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -78,14 +79,18 @@ impl RuntimeState {
         self.env.caller() == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.group_chats.get(&caller.into()).is_some()
+        self.data.group_chats.exists(&caller.into())
     }
 
     pub fn is_caller_known_community_canister(&self) -> bool {
         let caller = self.env.caller();
-        self.data.communities.get(&caller.into()).is_some()
+        self.data.communities.exists(&caller.into())
     }
 
     pub fn push_notification(&mut self, recipient: UserId, notification: Notification) {
@@ -121,6 +126,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_user_canister_event(&mut self, canister_id: CanisterId, event: UserCanisterEvent) {
+        self.data.user_canister_events_queue.push(canister_id, event);
+        jobs::push_user_canister_events::try_run_now_for_canister(self, canister_id);
+    }
+
     pub fn metrics(&self) -> Metrics {
         Metrics {
             memory_used: utils::memory::used(),
@@ -140,6 +150,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
+                escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -159,6 +170,7 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
@@ -166,11 +178,9 @@ struct Data {
     pub username: Timestamped<String>,
     pub display_name: Timestamped<Option<String>>,
     pub bio: Timestamped<String>,
-    pub cached_group_summaries: Option<CachedGroupSummaries>,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
-    pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
@@ -178,9 +188,9 @@ struct Data {
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub saved_crypto_accounts: Vec<NamedAccount>,
     pub next_event_expiry: Option<TimestampMillis>,
-    #[serde(default)]
     pub token_swaps: TokenSwaps,
-    #[serde(default)]
+    pub p2p_swaps: P2PSwaps,
+    pub user_canister_events_queue: CanisterEventSyncQueue<UserCanisterEvent>,
     pub rng_seed: [u8; 32],
 }
 
@@ -193,8 +203,8 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
         username: String,
-        display_name: Option<String>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
@@ -210,18 +220,17 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             proposals_bot_canister_id,
+            escrow_canister_id,
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
             username: Timestamped::new(username, now),
-            display_name: Timestamped::new(display_name, now),
+            display_name: Timestamped::default(),
             bio: Timestamped::new("".to_string(), now),
-            cached_group_summaries: None,
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
-            pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
@@ -230,6 +239,8 @@ impl Data {
             saved_crypto_accounts: Vec::new(),
             next_event_expiry: None,
             token_swaps: TokenSwaps::default(),
+            p2p_swaps: P2PSwaps::default(),
+            user_canister_events_queue: CanisterEventSyncQueue::default(),
             rng_seed: [0; 32],
         }
     }
@@ -253,11 +264,6 @@ impl Data {
     pub fn remove_group(&mut self, chat_id: ChatId, now: TimestampMillis) -> Option<GroupChat> {
         self.favourite_chats.remove(&Chat::Group(chat_id), now);
         self.hot_group_exclusions.add(chat_id, None, now);
-
-        if let Some(cached_groups) = &mut self.cached_group_summaries {
-            cached_groups.remove_group(&chat_id);
-        }
-
         self.group_chats.remove(chat_id, now)
     }
 
@@ -297,5 +303,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

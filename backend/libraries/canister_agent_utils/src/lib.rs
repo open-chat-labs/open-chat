@@ -1,5 +1,5 @@
 use candid::{CandidType, Principal};
-use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
+use ic_agent::agent::http_transport::reqwest_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;
@@ -14,8 +14,10 @@ use types::{BuildVersion, CanisterId, CanisterWasm};
 pub enum CanisterName {
     Community,
     CyclesDispenser,
+    Escrow,
     Group,
     GroupIndex,
+    Identity,
     LocalGroupIndex,
     LocalUserIndex,
     MarketMaker,
@@ -27,6 +29,7 @@ pub enum CanisterName {
     Registry,
     StorageBucket,
     StorageIndex,
+    Translations,
     User,
     UserIndex,
 }
@@ -38,8 +41,10 @@ impl FromStr for CanisterName {
         match s {
             "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
+            "escrow" => Ok(CanisterName::Escrow),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
+            "identity" => Ok(CanisterName::Identity),
             "local_group_index" => Ok(CanisterName::LocalGroupIndex),
             "local_user_index" => Ok(CanisterName::LocalUserIndex),
             "market_maker" => Ok(CanisterName::MarketMaker),
@@ -51,6 +56,7 @@ impl FromStr for CanisterName {
             "registry" => Ok(CanisterName::Registry),
             "storage_bucket" => Ok(CanisterName::StorageBucket),
             "storage_index" => Ok(CanisterName::StorageIndex),
+            "translations" => Ok(CanisterName::Translations),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
@@ -63,8 +69,10 @@ impl Display for CanisterName {
         let name = match self {
             CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
+            CanisterName::Escrow => "escrow",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
+            CanisterName::Identity => "identity",
             CanisterName::LocalGroupIndex => "local_group_index",
             CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::MarketMaker => "market_maker",
@@ -76,6 +84,7 @@ impl Display for CanisterName {
             CanisterName::Registry => "registry",
             CanisterName::StorageBucket => "storage_bucket",
             CanisterName::StorageIndex => "storage_index",
+            CanisterName::Translations => "translations",
             CanisterName::User => "user",
             CanisterName::UserIndex => "user_index",
         };
@@ -92,6 +101,7 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+    pub identity: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub storage_index: CanisterId,
@@ -99,6 +109,8 @@ pub struct CanisterIds {
     pub registry: CanisterId,
     pub market_maker: CanisterId,
     pub neuron_controller: CanisterId,
+    pub escrow: CanisterId,
+    pub translations: CanisterId,
     pub nns_root: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_internet_identity: CanisterId,

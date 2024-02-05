@@ -1,7 +1,6 @@
 <script lang="ts">
     import { locale } from "svelte-i18n";
-    import { setLocale, supportedLanguages } from "../../i18n/i18n";
-    import { _ } from "svelte-i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "../../i18n/i18n";
     import Toast from "../Toast.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UsernameInput from "../UsernameInput.svelte";
@@ -15,7 +14,7 @@
     import Legend from "../Legend.svelte";
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import DisplayNameInput from "../DisplayNameInput.svelte";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -29,14 +28,11 @@
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
     let usernameStore: Writable<string | undefined> = writable(undefined);
-    let displayNameStore: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
     let showGuidelines = false;
     let username = "";
     let usernameValid = false;
-    let displayName: string | undefined = undefined;
-    let displayNameValid = false;
     let checkingUsername: boolean;
     let badCode = false;
 
@@ -51,17 +47,15 @@
     }
 
     function register() {
-        if (usernameValid && displayNameValid) {
+        if (usernameValid) {
             usernameStore.set(username);
-            displayNameStore.set(displayName);
-            // TODO: Ask user for a display name
-            registerUser(username, displayName);
+            registerUser(username);
         }
     }
 
-    function registerUser(username: string, displayName: string | undefined): void {
+    function registerUser(username: string): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username, displayName).then((resp) => {
+        client.registerUser(username).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
             if (resp.kind === "username_taken") {
@@ -72,12 +66,6 @@
                 error.set("register.usernameTooLong");
             } else if (resp.kind === "username_invalid") {
                 error.set("register.usernameInvalid");
-            } else if (resp.kind === "display_name_too_short") {
-                error.set("register.displayNameTooShort");
-            } else if (resp.kind === "display_name_too_long") {
-                error.set("register.displayNameTooLong");
-            } else if (resp.kind === "display_name_invalid") {
-                error.set("register.displayNameInvalid");
             } else if (resp.kind === "user_limit_reached") {
                 error.set("register.userLimitReached");
             } else if (resp.kind === "internal_error") {
@@ -96,15 +84,16 @@
                 createdUser = {
                     kind: "created_user",
                     username,
-                    displayName,
+                    displayName: undefined,
                     cryptoAccount: resp.icpAccount,
                     userId: resp.userId,
                     canisterUpgradeStatus: "not_required",
                     referrals: [],
                     isPlatformModerator: false,
+                    isPlatformOperator: false,
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
-                    diamondMembership: undefined,
+                    diamondStatus: { kind: "inactive" },
                     moderationFlagsEnabled: 0,
                 };
                 dispatch("createdUser", createdUser);
@@ -138,30 +127,32 @@
         <div class="subtitle">
             <div class="logo" />
             {#if closed}
-                <h4>{$_("register.closedTitle")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.closedTitle")} /></h4>
             {:else if badCode}
-                <h4>{$_("register.invalidCode")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.invalidCode")} /></h4>
             {:else}
-                <h4>{$_("register.title")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.title")} /></h4>
             {/if}
         </div>
     </div>
     <div class="body" slot="body">
         {#if closed}
             <div class="closed">
-                <h4>{$_("register.closed")}</h4>
+                <h4><Translatable resourceKey={i18nKey("register.closed")} /></h4>
             </div>
         {:else if badCode}
             <div class="bad-code">
                 <img class="shirt" src="/assets/miami/miami_shirt.png" alt="Miami shirt" />
                 <div class="message">
-                    <h4 class="invalid">{$_("register.referralCodeInvalid")}</h4>
-                    <p>{$_("register.doYouWantToProceed")}</p>
+                    <h4 class="invalid">
+                        <Translatable resourceKey={i18nKey("register.referralCodeInvalid")} />
+                    </h4>
+                    <p><Translatable resourceKey={i18nKey("register.doYouWantToProceed")} /></p>
                 </div>
             </div>
         {:else}
             <form class="username-wrapper" on:submit|preventDefault={register}>
-                <Legend label={$_("username")} rules={$_("usernameRules")} />
+                <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
                 <UsernameInput
                     {client}
                     disabled={busy}
@@ -170,41 +161,36 @@
                     bind:usernameValid
                     bind:checking={checkingUsername}
                     bind:error={$error} />
-
-                <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
-                <DisplayNameInput
-                    {client}
-                    originalDisplayName={$displayNameStore}
-                    disabled={busy}
-                    bind:displayName
-                    bind:displayNameValid />
             </form>
 
             {#if $error}
-                <ErrorMessage>{$_($error)}</ErrorMessage>
+                <ErrorMessage><Translatable resourceKey={i18nKey($error)} /></ErrorMessage>
             {/if}
             <div on:click={() => (showGuidelines = true)} class="smallprint">
-                {$_("register.disclaimer")}
+                <Translatable resourceKey={i18nKey("register.disclaimer")} />
             </div>
         {/if}
     </div>
     <div class="footer" slot="footer">
         {#if closed}
-            <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+            <Button on:click={() => client.logout()}
+                ><Translatable resourceKey={i18nKey("close")} /></Button>
         {:else if badCode}
             <ButtonGroup>
-                <Button secondary on:click={clearCodeAndLogout}>{$_("cancel")}</Button>
+                <Button secondary on:click={clearCodeAndLogout}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     loading={checkingUsername || busy}
-                    disabled={!usernameValid || !displayNameValid || busy}
-                    on:click={clearCodeAndRegister}>{$_("register.proceed")}</Button>
+                    disabled={!usernameValid || busy}
+                    on:click={clearCodeAndRegister}
+                    ><Translatable resourceKey={i18nKey("register.proceed")} /></Button>
             </ButtonGroup>
         {:else}
             <Button
                 loading={checkingUsername || busy}
-                disabled={!usernameValid || !displayNameValid || busy}
+                disabled={!usernameValid || busy}
                 on:click={register}>
-                {$_("register.createUser")}
+                <Translatable resourceKey={i18nKey("register.createUser")} />
             </Button>
         {/if}
     </div>
@@ -215,7 +201,7 @@
     role="button"
     href="/"
     on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
-    {$_("logout")}
+    <Translatable resourceKey={i18nKey("logout")} />
 </a>
 
 <div class="lang">

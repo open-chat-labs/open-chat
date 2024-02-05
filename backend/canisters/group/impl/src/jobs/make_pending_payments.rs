@@ -1,16 +1,14 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use group_community_common::{PaymentRecipient, PendingPayment, PendingPaymentReason};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::BlockIndex;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
-use icrc_ledger_types::icrc1::{account::Account, transfer::Memo};
-use ledger_utils::convert_to_subaccount;
+use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
-use types::{CanisterId, Cryptocurrency, TimestampNanos};
-use utils::consts::{MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
+use types::{CanisterId, TimestampNanos};
+use utils::consts::{MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -18,9 +16,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_payments_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'make_pending_payments' job started");
         true
     } else {
         false
@@ -28,28 +25,21 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'make_pending_payments' job running");
+    TIMER_ID.set(None);
+
     let (pending_payment, now_nanos) = mutate_state(|state| (state.data.pending_payments_queue.pop(), state.env.now_nanos()));
 
     if let Some(pending_payment) = pending_payment {
         ic_cdk::spawn(process_payment(pending_payment, now_nanos));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'make_pending_payments' job stopped");
+        read_state(start_job_if_required);
     }
 }
 
 async fn process_payment(pending_payment: PendingPayment, now_nanos: TimestampNanos) {
     let to = match pending_payment.recipient {
-        PaymentRecipient::Treasury => {
-            if pending_payment.ledger_canister == Cryptocurrency::CHAT.ledger_canister_id().unwrap() {
-                Account {
-                    owner: SNS_GOVERNANCE_CANISTER_ID,
-                    subaccount: Some(convert_to_subaccount(&SNS_GOVERNANCE_CANISTER_ID).0),
-                }
-            } else {
-                SNS_GOVERNANCE_CANISTER_ID.into()
-            }
-        }
+        // Note in the case of CHAT this will cause the tokens to be burned
+        PaymentRecipient::Treasury => SNS_GOVERNANCE_CANISTER_ID.into(),
         PaymentRecipient::Member(user_id) => Principal::from(user_id).into(),
         PaymentRecipient::Account(account) => account,
     };
@@ -104,6 +94,7 @@ async fn make_payment(ledger_canister: CanisterId, transfer_args: TransferArg) -
 
 fn memo(reason: PendingPaymentReason) -> Memo {
     match reason {
-        PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().try_into().unwrap(),
+        PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().into(),
+        PendingPaymentReason::TransferToCommunityBeingImportedInto => MEMO_GROUP_IMPORT_INTO_COMMUNITY.to_vec().into(),
     }
 }

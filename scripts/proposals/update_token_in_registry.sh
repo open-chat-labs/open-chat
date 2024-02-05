@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Extract the args or use defaults
 LEDGER_CANISTER_ID=$1

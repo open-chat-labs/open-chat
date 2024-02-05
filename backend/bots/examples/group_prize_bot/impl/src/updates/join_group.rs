@@ -32,11 +32,15 @@ async fn join_group(args: Args) -> Response {
 }
 
 async fn lookup_local_user_index(group: CanisterId) -> Result<CanisterId, Response> {
-    let c2c_args = group_canister::local_user_index::Args {};
-    match group_canister_c2c_client::local_user_index(group, &c2c_args).await {
-        Ok(group_canister::local_user_index::Response::Success(canister_id)) => Ok(canister_id),
+    let c2c_args = group_canister::public_summary::Args { invite_code: None };
+    match group_canister_c2c_client::public_summary(group, &c2c_args).await {
+        Ok(group_canister::public_summary::Response::Success(result)) => Ok(result.summary.local_user_index_canister_id),
+        Ok(_) => {
+            error!(%group, "Group not public");
+            Err(GroupNotFound)
+        }
         Err(error) => {
-            error!(?error, ?group, "Group not found");
+            error!(?error, %group, "Group not found");
             Err(GroupNotFound)
         }
     }

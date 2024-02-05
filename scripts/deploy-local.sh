@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
 # Deploys everything needed to test OpenChat locally (OpenChat, OpenStorage and the NNS canisters)
 
 IDENTITY=${1:-default}
-WASM_SRC=${2:-latest} # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
+WASM_SRC=${2:-latest} # WASM_SRC is either empty, "build", "latest", "local", "prod" the commit Id or the release version
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -28,6 +28,7 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_user_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 local_group_index
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 notifications
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 identity
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 online_users
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 proposals_bot
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 storage_index
@@ -35,6 +36,8 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 registry
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 market_maker
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 neuron_controller
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 escrow
+dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 translations
 
 # Install the OpenChat canisters
 ./scripts/deploy.sh local \
@@ -49,3 +52,5 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
     $NNS_SNS_WASM_CANISTER_ID \
     $NNS_INDEX_CANISTER_ID \
     true \
+
+./scripts/deploy-test-ledger.sh $IDENTITY

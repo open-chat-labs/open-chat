@@ -1,11 +1,10 @@
 <script lang="ts">
     import { sineIn } from "svelte/easing";
     import Close from "svelte-material-icons/Close.svelte";
-    import { _ } from "svelte-i18n";
-
     import { fly } from "svelte/transition";
     import { toastStore, ToastType } from "../stores/toast";
     import { iconSize } from "../stores/iconSize";
+    import Translatable from "./Translatable.svelte";
 </script>
 
 {#if $toastStore}
@@ -14,7 +13,7 @@
             class="message"
             class:failure={$toastStore.type === ToastType.Failure}
             class:success={$toastStore.type === ToastType.Success}>
-            <div class="text">{$_($toastStore.text, $toastStore.args)}</div>
+            <div class="text"><Translatable resourceKey={$toastStore.resourceKey} /></div>
             {#if $toastStore.type === ToastType.Failure}
                 <div class="close" on:click={toastStore.hideToast}>
                     <Close size={$iconSize} color={"var(--button-txt)"} />

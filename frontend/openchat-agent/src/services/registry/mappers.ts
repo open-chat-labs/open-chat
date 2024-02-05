@@ -17,6 +17,8 @@ export function updatesResponse(candid: ApiUpdatesResponse): RegistryUpdatesResp
                     tokens.map((t) => tokenDetails(t)),
                 ) ?? [],
             nervousSystemSummary: candid.Success.nervous_system_details.map(nervousSystemSummary),
+            messageFiltersAdded: candid.Success.message_filters_added,
+            messageFiltersRemoved: Array.from(candid.Success.message_filters_removed),
         };
     }
     if ("SuccessNoUpdates" in candid) {
@@ -38,6 +40,7 @@ function tokenDetails(candid: ApiTokenDetails): CryptocurrencyDetails {
         infoUrl: candid.info_url,
         howToBuyUrl: candid.how_to_buy_url,
         transactionUrlFormat: candid.transaction_url_format,
+        supportedStandards: candid.supported_standards,
         added: candid.added,
         lastUpdated: candid.last_updated,
     };

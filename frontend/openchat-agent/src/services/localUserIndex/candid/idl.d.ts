@@ -2,6 +2,7 @@ import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
     RegisterUserResponse,
+    GroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary,
     JoinGroupResponse,
     InviteUsersToGroupResponse,
@@ -17,6 +18,7 @@ import {
 export {
     _SERVICE as LocalUserIndexService,
     RegisterUserResponse as ApiRegisterUserResponse,
+    GroupAndCommunitySummaryUpdatesResponse as ApiGroupAndCommunitySummaryUpdatesResponse,
     GroupCanisterGroupChatSummary as ApiGroupCanisterGroupChatSummary,
     JoinGroupResponse as ApiJoinGroupResponse,
     GateCheckFailedReason as ApiGateCheckFailedReason,

@@ -1,9 +1,23 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface AcceptP2PSwapArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type AcceptP2PSwapResponse = { 'ChatNotFound' : null } |
+  { 'Success' : AcceptSwapSuccess } |
+  { 'UserSuspended' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null } |
+  { 'InternalError' : string } |
+  { 'InsufficientFunds' : null };
+export interface AcceptSwapSuccess { 'token1_txn_in' : bigint }
 export type AccessGate = { 'VerifiedCredential' : VerifiedCredentialGate } |
   { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
+  { 'TokenBalance' : TokenBalanceGate } |
+  { 'DiamondMember' : null } |
+  { 'Payment' : PaymentGate };
 export type AccessGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : AccessGate };
@@ -67,7 +81,7 @@ export type ApproveError = {
 export interface ApproveTransferArgs {
   'ledger_canister_id' : CanisterId,
   'amount' : bigint,
-  'expires_at' : [] | [Milliseconds],
+  'expires_in' : [] | [Milliseconds],
   'spender' : Account,
 }
 export type ApproveTransferResponse = { 'ApproveError' : ApproveError } |
@@ -119,6 +133,14 @@ export interface CachedGroupChatSummaries {
 }
 export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
 export type CancelMessageReminderResponse = { 'Success' : null };
+export interface CancelP2PSwapArgs {
+  'user_id' : UserId,
+  'message_id' : MessageId,
+}
+export type CancelP2PSwapResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null } |
+  { 'StatusError' : SwapStatusError } |
+  { 'SwapNotFound' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -130,6 +152,7 @@ export interface CanisterWasm {
 export type ChannelId = bigint;
 export interface ChannelMatch {
   'id' : ChannelId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -330,6 +353,7 @@ export interface CommunityCanisterCommunitySummary {
   'user_groups' : Array<UserGroup>,
   'avatar_id' : [] | [bigint],
   'membership' : [] | [CommunityMembership],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'banner_id' : [] | [bigint],
@@ -506,6 +530,12 @@ export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
   { 'UserSuspended' : null } |
   { 'CommunityFrozen' : null } |
   { 'InternalError' : string };
+export interface DeleteDirectChatArgs {
+  'block_user' : boolean,
+  'user_id' : UserId,
+}
+export type DeleteDirectChatResponse = { 'ChatNotFound' : null } |
+  { 'Success' : null };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -533,14 +563,26 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'content' : MessageContent } } |
-  { 'MessageHardDeleted' : null } |
-  { 'MessageNotDeleted' : null };
+  { 'MessageHardDeleted' : null };
 export interface DiamondMembershipDetails {
-  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'pay_in_chat' : boolean,
+  'subscription' : DiamondMembershipSubscription,
+  'recurring' : [] | [DiamondMembershipSubscription],
   'expires_at' : TimestampMillis,
 }
 export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'Lifetime' : null } |
   { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
+export type DiamondMembershipStatus = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : null };
+export type DiamondMembershipStatusFull = { 'Inactive' : null } |
+  { 'Lifetime' : null } |
+  { 'Active' : DiamondMembershipDetails };
+export type DiamondMembershipSubscription = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'Disabled' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatSummary {
@@ -583,6 +625,7 @@ export interface DirectChatsUpdates {
   'added' : Array<DirectChatSummary>,
   'pinned' : [] | [Array<ChatId>],
   'updated' : Array<DirectChatSummaryUpdates>,
+  'removed' : Array<ChatId>,
 }
 export interface DirectMessageNotification {
   'image_url' : [] | [string],
@@ -718,6 +761,8 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'PaymentFailed' : TransferFromError } |
+  { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
   { 'NoSnsNeuronsWithRequiredStakeFound' : null };
@@ -757,6 +802,7 @@ export interface GroupCanisterGroupChatSummary {
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
   'membership' : [] | [GroupMembership],
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -829,6 +875,7 @@ export interface GroupChatSummary {
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'rules_accepted' : boolean,
+  'local_user_index_canister_id' : CanisterId,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -874,6 +921,7 @@ export interface GroupInviteCodeChanged {
 }
 export interface GroupMatch {
   'id' : ChatId,
+  'subtype' : [] | [GroupSubtype],
   'gate' : [] | [AccessGate],
   'name' : string,
   'description' : string,
@@ -1036,7 +1084,6 @@ export interface IndexedNotification {
 }
 export interface InitUserPrincipalMigrationArgs { 'new_principal' : Principal }
 export type InitUserPrincipalMigrationResponse = { 'Success' : null };
-export interface InitialStateArgs { 'disable_cache' : [] | [boolean] }
 export type InitialStateResponse = {
     'Success' : {
       'communities' : CommunitiesInitial,
@@ -1046,6 +1093,8 @@ export type InitialStateResponse = {
       'avatar_id' : [] | [bigint],
       'direct_chats' : DirectChatsInitial,
       'timestamp' : TimestampMillis,
+      'local_user_index_canister_id' : CanisterId,
+      'suspended' : boolean,
     }
   };
 export type InvalidPollReason = { 'DuplicateOptions' : null } |
@@ -1113,6 +1162,7 @@ export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
   { 'Custom' : CustomMessageContent } |
@@ -1128,6 +1178,7 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
+  { 'P2PSwap' : P2PSwapContentInitial } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
   { 'Custom' : CustomMessageContent } |
@@ -1167,8 +1218,10 @@ export interface MessagePermissions {
   'crypto' : [] | [PermissionRole],
   'giphy' : [] | [PermissionRole],
   'default' : PermissionRole,
+  'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
+  'p2p_swap' : [] | [PermissionRole],
 }
 export interface MessagePinned {
   'pinned_by' : UserId,
@@ -1263,6 +1316,7 @@ export interface NnsProposal {
   'id' : ProposalId,
   'url' : string,
   'status' : ProposalDecisionStatus,
+  'payload_text_rendering' : [] | [string],
   'tally' : Tally,
   'title' : string,
   'created' : TimestampMillis,
@@ -1332,20 +1386,52 @@ export interface OptionalMessagePermissions {
   'giphy' : PermissionRoleUpdate,
   'custom_deleted' : Array<string>,
   'default' : [] | [PermissionRole],
+  'p2p_trade' : PermissionRoleUpdate,
   'image' : PermissionRoleUpdate,
   'prize' : PermissionRoleUpdate,
+  'p2p_swap' : PermissionRoleUpdate,
 }
 export type OptionalMessagePermissionsUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : OptionalMessagePermissions };
-export interface PartialUserSummary {
-  'username' : [] | [string],
-  'diamond_member' : boolean,
-  'user_id' : UserId,
-  'is_bot' : boolean,
-  'avatar_id' : [] | [bigint],
-  'suspended' : boolean,
+export interface P2PSwapAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
 }
+export interface P2PSwapCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface P2PSwapCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface P2PSwapContent {
+  'status' : P2PSwapStatus,
+  'token0_txn_in' : bigint,
+  'swap_id' : number,
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_at' : TimestampMillis,
+}
+export interface P2PSwapContentInitial {
+  'token0_amount' : bigint,
+  'token0' : TokenInfo,
+  'token1' : TokenInfo,
+  'caption' : [] | [string],
+  'token1_amount' : bigint,
+  'expires_in' : Milliseconds,
+}
+export type P2PSwapExpired = P2PSwapCancelled;
+export interface P2PSwapReserved { 'reserved_by' : UserId }
+export type P2PSwapStatus = { 'Reserved' : P2PSwapReserved } |
+  { 'Open' : null } |
+  { 'Accepted' : P2PSwapAccepted } |
+  { 'Cancelled' : P2PSwapCancelled } |
+  { 'Completed' : P2PSwapCompleted } |
+  { 'Expired' : P2PSwapExpired };
 export interface Participant {
   'role' : GroupRole,
   'user_id' : UserId,
@@ -1364,6 +1450,11 @@ export interface ParticipantsAdded {
 export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
+}
+export interface PaymentGate {
+  'fee' : bigint,
+  'ledger_canister_id' : CanisterId,
+  'amount' : bigint,
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'ICRC1' : Icrc1PendingCryptoTransaction };
@@ -1392,6 +1483,7 @@ export interface PollConfig {
   'show_votes_before_end_date' : boolean,
   'end_date' : [] | [TimestampMillis],
   'anonymous' : boolean,
+  'allow_user_to_change_vote' : boolean,
   'options' : Array<string>,
 }
 export interface PollContent {
@@ -1485,6 +1577,7 @@ export interface PublicGroupSummary {
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'local_user_index_canister_id' : CanisterId,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'history_visible_to_new_joiners' : boolean,
@@ -1544,6 +1637,14 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
+export type ReserveP2PSwapResult = { 'Success' : ReserveP2PSwapSuccess } |
+  { 'SwapNotFound' : null } |
+  { 'Failure' : P2PSwapStatus };
+export interface ReserveP2PSwapSuccess {
+  'created' : TimestampMillis,
+  'content' : P2PSwapContent,
+  'created_by' : UserId,
+}
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
@@ -1581,6 +1682,7 @@ export interface SelectedGroupUpdates {
   'blocked_users_added' : Array<UserId>,
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1592,6 +1694,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     }
   } |
   { 'TransferCannotBeZero' : null } |
+  { 'DuplicateMessageId' : null } |
   {
     'Success' : {
       'timestamp' : TimestampMillis,
@@ -1612,6 +1715,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'RecipientNotFound' : null };
 export interface SendMessageV2Args {
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'recipient' : UserId,
   'forwarding' : boolean,
   'correlation_id' : bigint,
@@ -1624,6 +1728,7 @@ export interface SendMessageWithTransferToChannelArgs {
   'channel_rules_accepted' : [] | [Version],
   'community_id' : CommunityId,
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'community_rules_accepted' : [] | [Version],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
@@ -1633,8 +1738,10 @@ export interface SendMessageWithTransferToChannelArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToChannelResponse = {
-    'TextTooLong' : number
+    'Retrying' : [string, CompletedCryptoTransaction]
   } |
+  { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   { 'UserNotInChannel' : CompletedCryptoTransaction } |
   { 'ChannelNotFound' : CompletedCryptoTransaction } |
   { 'TransferCannotBeZero' : null } |
@@ -1655,11 +1762,11 @@ export type SendMessageWithTransferToChannelResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SendMessageWithTransferToGroupArgs {
   'content' : MessageContentInitial,
+  'message_filter_failed' : [] | [bigint],
   'mentioned' : Array<User>,
   'sender_display_name' : [] | [string],
   'group_id' : ChatId,
@@ -1671,8 +1778,10 @@ export interface SendMessageWithTransferToGroupArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageWithTransferToGroupResponse = {
-    'TextTooLong' : number
+    'Retrying' : [string, CompletedCryptoTransaction]
   } |
+  { 'TextTooLong' : number } |
+  { 'P2PSwapSetUpFailed' : string } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
@@ -1690,7 +1799,6 @@ export type SendMessageWithTransferToGroupResponse = {
   { 'InvalidRequest' : string } |
   { 'TransferCannotBeToSelf' : null } |
   { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'RulesNotAccepted' : null } |
   { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SetAvatarArgs { 'avatar' : [] | [Document] }
@@ -1770,6 +1878,37 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
+export type SwapStatusError = { 'Reserved' : SwapStatusErrorReserved } |
+  { 'Accepted' : SwapStatusErrorAccepted } |
+  { 'Cancelled' : SwapStatusErrorCancelled } |
+  { 'Completed' : SwapStatusErrorCompleted } |
+  { 'Expired' : SwapStatusErrorExpired };
+export interface SwapStatusErrorAccepted {
+  'accepted_by' : UserId,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorCancelled { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorCompleted {
+  'accepted_by' : UserId,
+  'token1_txn_out' : bigint,
+  'token0_txn_out' : bigint,
+  'token1_txn_in' : bigint,
+}
+export interface SwapStatusErrorExpired { 'token0_txn_out' : [] | [bigint] }
+export interface SwapStatusErrorReserved { 'reserved_by' : UserId }
+export interface SwapTokensArgs {
+  'input_amount' : bigint,
+  'min_output_amount' : bigint,
+  'swap_id' : bigint,
+  'input_token' : TokenInfo,
+  'exchange_args' : {
+      'ICPSwap' : { 'zero_for_one' : boolean, 'swap_canister_id' : CanisterId }
+    },
+  'output_token' : TokenInfo,
+}
+export type SwapTokensResponse = { 'SwapFailed' : null } |
+  { 'Success' : { 'amount_out' : bigint } } |
+  { 'InternalError' : string };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1811,6 +1950,7 @@ export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToSome' : TimestampMillis };
 export interface TipMessageArgs {
   'fee' : bigint,
+  'decimals' : number,
   'token' : Cryptocurrency,
   'chat' : Chat,
   'recipient' : UserId,
@@ -1831,6 +1971,32 @@ export type TipMessageResponse = { 'Retrying' : string } |
   { 'TransferFailed' : string } |
   { 'InternalError' : [string, CompletedCryptoTransaction] } |
   { 'CannotTipSelf' : null };
+export interface TokenBalanceGate {
+  'min_balance' : bigint,
+  'ledger_canister_id' : CanisterId,
+}
+export interface TokenInfo {
+  'fee' : bigint,
+  'decimals' : number,
+  'token' : Cryptocurrency,
+  'ledger' : CanisterId,
+}
+export interface TokenSwapStatusArgs { 'swap_id' : bigint }
+export type TokenSwapStatusResponse = { 'NotFound' : null } |
+  {
+    'Success' : {
+      'started' : TimestampMillis,
+      'deposit_account' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'amount_swapped' : [] | [
+        { 'Ok' : { 'Ok' : bigint } | { 'Err' : string } } |
+          { 'Err' : string }
+      ],
+      'success' : [] | [boolean],
+      'notify_dex' : [] | [{ 'Ok' : null } | { 'Err' : string }],
+      'transfer' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+      'withdraw_from_dex' : [] | [{ 'Ok' : bigint } | { 'Err' : string }],
+    }
+  };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1910,6 +2076,7 @@ export type UpdatesResponse = {
       'avatar_id' : DocumentIdUpdate,
       'direct_chats' : DirectChatsUpdates,
       'timestamp' : TimestampMillis,
+      'suspended' : [] | [boolean],
     }
   } |
   { 'SuccessNoUpdates' : null };
@@ -1932,6 +2099,7 @@ export interface UserCanisterCommunitySummary {
   'community_id' : CommunityId,
   'channels' : Array<UserCanisterChannelSummary>,
   'pinned' : Array<ChannelId>,
+  'local_user_index_canister_id' : CanisterId,
   'index' : number,
   'archived' : boolean,
 }
@@ -1943,6 +2111,7 @@ export interface UserCanisterCommunitySummaryUpdates {
   'archived' : [] | [boolean],
 }
 export interface UserCanisterGroupChatSummary {
+  'local_user_index_canister_id' : CanisterId,
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
@@ -1965,6 +2134,7 @@ export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
+  'diamond_membership_status' : DiamondMembershipStatus,
   'user_id' : UserId,
   'is_bot' : boolean,
   'display_name' : [] | [string],
@@ -2013,6 +2183,7 @@ export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
+  'accept_p2p_swap' : ActorMethod<[AcceptP2PSwapArgs], AcceptP2PSwapResponse>,
   'add_hot_group_exclusions' : ActorMethod<
     [AddHotGroupExclusionsArgs],
     AddHotGroupExclusionsResponse
@@ -2032,6 +2203,7 @@ export interface _SERVICE {
     [CancelMessageReminderArgs],
     CancelMessageReminderResponse
   >,
+  'cancel_p2p_swap' : ActorMethod<[CancelP2PSwapArgs], CancelP2PSwapResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_community' : ActorMethod<
     [CreateCommunityArgs],
@@ -2041,6 +2213,10 @@ export interface _SERVICE {
   'delete_community' : ActorMethod<
     [DeleteCommunityArgs],
     DeleteCommunityResponse
+  >,
+  'delete_direct_chat' : ActorMethod<
+    [DeleteDirectChatArgs],
+    DeleteDirectChatResponse
   >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
@@ -2057,7 +2233,7 @@ export interface _SERVICE {
     [InitUserPrincipalMigrationArgs],
     InitUserPrincipalMigrationResponse
   >,
-  'initial_state' : ActorMethod<[InitialStateArgs], InitialStateResponse>,
+  'initial_state' : ActorMethod<[EmptyArgs], InitialStateResponse>,
   'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'manage_favourite_chats' : ActorMethod<
@@ -2111,7 +2287,12 @@ export interface _SERVICE {
     SetMessageReminderResponse
   >,
   'submit_proposal' : ActorMethod<[SubmitProposalArgs], SubmitProposalResponse>,
+  'swap_tokens' : ActorMethod<[SwapTokensArgs], SwapTokensResponse>,
   'tip_message' : ActorMethod<[TipMessageArgs], TipMessageResponse>,
+  'token_swap_status' : ActorMethod<
+    [TokenSwapStatusArgs],
+    TokenSwapStatusResponse
+  >,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

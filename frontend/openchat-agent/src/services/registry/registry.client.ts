@@ -30,4 +30,24 @@ export class RegistryClient extends CandidService {
         };
         return this.handleQueryResponse(() => this.service.updates(args), updatesResponse);
     }
+
+    addMessageFilter(regex: string): Promise<boolean> {
+        return this.handleResponse(
+            this.service.add_message_filter({ regex }), 
+            (resp) => {
+                if ("Success" in resp) {
+                    console.log(`New message filter id: ${resp.Success}`);
+                    return true;
+                } else {
+                    console.debug("Error calling add_message_filter", resp);
+                    return false;
+                }
+            });
+    }
+
+    removeMessageFilter(id: bigint): Promise<boolean> {
+        return this.handleResponse(
+            this.service.remove_message_filter({ id }), 
+            (resp) => "Success" in resp);        
+    }
 }

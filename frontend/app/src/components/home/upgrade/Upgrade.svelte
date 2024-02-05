@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Overlay from "../../Overlay.svelte";
     import ModalContent from "../../ModalContent.svelte";
     import Features from "./Features.svelte";
@@ -8,9 +7,13 @@
     import { LEDGER_CANISTER_ICP } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import Diamond from "../../icons/Diamond.svelte";
+    import CryptoSelector from "../CryptoSelector.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    const ledger: string = LEDGER_CANISTER_ICP;
+    let ledger: string = LEDGER_CANISTER_ICP;
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
@@ -43,20 +46,25 @@
 </script>
 
 <Overlay>
-    <ModalContent overflows hideFooter fill>
+    <ModalContent overflows={step === "features"} hideFooter fill>
         <div class="header" slot="header">
             {#if !confirming && !confirmed}
                 <div class="title">
+                    <Diamond size={"1em"} show={"blue"} />
                     {#if step === "features"}
                         {#if $canExtendDiamond}
-                            {$_("upgrade.extend")}
+                            <Translatable resourceKey={i18nKey("upgrade.extend")} />
                         {:else if $isDiamond}
-                            {$_("upgrade.benefits")}
+                            <Translatable resourceKey={i18nKey("upgrade.benefits")} />
                         {:else}
-                            {$_("upgrade.featuresTitle")}
+                            <Translatable resourceKey={i18nKey("upgrade.featuresTitle")} />
                         {/if}
                     {:else if step === "payment"}
-                        {$_("upgrade.paymentTitle")}
+                        <div>
+                            <CryptoSelector
+                                bind:ledger
+                                filter={(t) => ["chat", "icp"].includes(t.symbol.toLowerCase())} />
+                        </div>
                     {/if}
                 </div>
                 {#if step === "payment"}
@@ -84,6 +92,7 @@
                     bind:confirmed
                     bind:confirming
                     bind:refreshingBalance
+                    {ledger}
                     {error}
                     accountBalance={Number(tokenDetails.balance)}
                     on:cancel
@@ -104,5 +113,11 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+    }
+
+    .title {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
     }
 </style>

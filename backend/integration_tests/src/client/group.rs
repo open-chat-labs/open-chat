@@ -12,8 +12,10 @@ generate_query_call!(summary);
 generate_query_call!(summary_updates);
 
 // Updates
+generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
+generate_update_call!(cancel_p2p_swap);
 generate_update_call!(change_role);
 generate_update_call!(claim_prize);
 generate_update_call!(convert_into_community);
@@ -63,6 +65,7 @@ pub mod happy_path {
                 mentioned: Vec::new(),
                 forwarding: false,
                 rules_accepted: None,
+                message_filter_failed: None,
                 correlation_id: 0,
             },
         );
@@ -146,6 +149,37 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::events::Args {
                 thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            group_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_window' error: {response:?}"),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn thread_events(
+        env: &PocketIc,
+        sender: &User,
+        group_chat_id: ChatId,
+        thread_root_message_index: MessageIndex,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::events::Args {
+                thread_root_message_index: Some(thread_root_message_index),
                 start_index,
                 ascending,
                 max_messages,

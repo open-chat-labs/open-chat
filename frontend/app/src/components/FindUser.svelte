@@ -11,6 +11,9 @@
     import { iconSize } from "../stores/iconSize";
     import type { OpenChat } from "openchat-client";
     import FilteredUsername from "./FilteredUsername.svelte";
+    import Diamond from "./icons/Diamond.svelte";
+    import { i18nKey } from "../i18n/i18n";
+    import { translatable } from "../actions/translatable";
 
     const client = getContext<OpenChat>("client");
 
@@ -55,7 +58,7 @@
             searching = true;
             userLookup(value)
                 .then((u) => (users = u))
-                .catch((_err) => toastStore.showFailureToast("userSearchFailed"))
+                .catch((_err) => toastStore.showFailureToast(i18nKey("userSearchFailed")))
                 .finally(() => (searching = false));
         }, 350);
     }
@@ -78,6 +81,7 @@
         disabled={!enabled}
         type="text"
         on:input={onInput}
+        use:translatable={{ key: i18nKey("searchForUsername") }}
         placeholder={$_("searchForUsername")} />
     {#if searching}
         <span class="loading" />
@@ -105,11 +109,12 @@
                         size={AvatarSize.Default} />
                 </span>
                 <div class="details">
-                    <h4 class:diamond={user.diamond}>
+                    <h4>
                         <FilteredUsername
                             {searchTerm}
                             me={user.userId === $createdUser.userId}
                             username={user.displayName ?? user.username} />
+                        <Diamond status={user.diamondStatus} />
                     </h4>
                     <div class="username">
                         <FilteredUsername {searchTerm} username={"@" + user.username} />
@@ -172,7 +177,9 @@
         color: var(--txt);
         padding: $sp4;
         margin: 0 0 $sp3 0;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         cursor: pointer;
         gap: 12px;
 
@@ -194,10 +201,6 @@
         display: flex;
         flex-direction: column;
         padding: 0 5px;
-
-        .diamond {
-            @include diamond();
-        }
 
         .username {
             font-weight: 200;

@@ -1,12 +1,11 @@
 <script lang="ts">
-    import type { CryptocurrencyDetails, OpenChat } from "openchat-client";
-    import { dollarExchangeRates } from "openchat-client";
+    import type { EnhancedTokenDetails, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
-    import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ArrowRightBoldCircle from "svelte-material-icons/ArrowRightBoldCircle.svelte";
     import ArrowLeftBoldCircle from "svelte-material-icons/ArrowLeftBoldCircle.svelte";
+    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import ViewList from "svelte-material-icons/ViewList.svelte";
     import { _ } from "svelte-i18n";
     import ErrorMessage from "../../ErrorMessage.svelte";
@@ -15,29 +14,58 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import AccountTransactions from "./AccountTransactions.svelte";
-
-    type TransactionsFor = {
-        ledger: string;
-        urlFormat: string;
-    };
+    import Overlay from "../../Overlay.svelte";
+    import SwapCrypto from "./SwapCrypto.svelte";
+    import SendCrypto from "./SendCrypto.svelte";
+    import ReceiveCrypto from "./ReceiveCrypto.svelte";
+    import MultiToggle from "../../MultiToggle.svelte";
+    import { sum } from "../../../utils/math";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
-    const defaultTokens = ["CHAT", "ICP", "ckBTC"];
 
     export let showZeroBalance = false;
     export let zeroCount = 0;
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "receive";
+    let manageMode: "none" | "send" | "receive" | "swap" | "transactions";
     let selectedLedger: string | undefined = undefined;
-    let transactionsFor: TransactionsFor | undefined = undefined;
+    let transactionsFormat: string;
+    let conversionOptions = [
+        { id: "none", label: $_("cryptoAccount.tokens") },
+        { id: "usd", label: "USD" },
+        { id: "icp", label: "ICP" },
+        { id: "btc", label: "BTC" },
+        { id: "eth", label: "ETH" },
+    ];
+    let selectedConversion: "none" | "usd" | "icp" | "btc" | "eth" = "none";
+    let swappableTokensPromise = client.swappableTokens();
 
-    $: cryptoLookup = client.cryptoLookup;
-    $: cryptoBalance = client.cryptoBalance;
-    $: accounts = buildAccountsList($cryptoLookup, $cryptoBalance);
+    $: accountsSorted = client.cryptoTokensSorted;
+    $: nervousSystemLookup = client.nervousSystemLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
+    $: snsLedgers = new Set<string>(
+        Object.values($nervousSystemLookup)
+            .filter((ns) => !ns.isNns)
+            .map((ns) => ns.ledgerCanisterId),
+    );
+    $: total =
+        selectedConversion === "none"
+            ? ""
+            : calculateTotal($cryptoLookup, selectedConversion)
 
     $: {
-        zeroCount = accounts.filter((a) => a.zero).length;
+        zeroCount = $accountsSorted.filter((a) => a.zero).length;
+    }
+
+    function calculateTotal(lookup: Record<string, EnhancedTokenDetails>, conversion: "usd" | "icp" | "btc" | "eth"): string {
+        switch (conversion) {
+            case "usd": return sum(Object.values(lookup).map((c) => c.dollarBalance)).toFixed(2);
+            case "icp": return sum(Object.values(lookup).map((c) => c.icpBalance)).toFixed(3);
+            case "btc": return sum(Object.values(lookup).map((c) => c.btcBalance)).toFixed(6);
+            case "eth": return sum(Object.values(lookup).map((c) => c.ethBalance)).toFixed(6);
+        }
     }
 
     function onBalanceRefreshed() {
@@ -62,70 +90,45 @@
         manageMode = "send";
     }
 
-    function buildAccountsList(
-        cryptoLookup: Record<string, CryptocurrencyDetails>,
-        cryptoBalance: Record<string, bigint>
-    ) {
-        const accounts = Object.values(cryptoLookup).map((t) => {
-            const balance = cryptoBalance[t.ledger] ?? BigInt(0);
-            const xr = dollarExchangeRates[t.symbol.toLowerCase()];
-            const dollarBalance = xr > 0 ? Number(balance) / xr : 0;
-            const zero = balance === BigInt(0) && !defaultTokens.includes(t.symbol);
-            return {
-                key: t.ledger,
-                ledger: t.ledger,
-                symbol: t.symbol,
-                balance,
-                logo: t.logo,
-                dollarBalance,
-                zero,
-                urlFormat: t.transactionUrlFormat,
-            };
-        });
+    function showSwap(ledger: string) {
+        selectedLedger = ledger;
+        manageMode = "swap";
+    }
 
-        accounts.sort((a, b) => {
-            // Sort by $ balance
-            // Then by whether token is a default
-            // Then by default precedence
-            // Then alphabetically by symbol
-            if (a.dollarBalance < b.dollarBalance) {
-                return 1;
-            } else if (a.dollarBalance > b.dollarBalance) {
-                return -1;
-            } else {
-                const defA = defaultTokens.indexOf(a.symbol);
-                const defB = defaultTokens.indexOf(b.symbol);
-
-                if (defA >= 0 && defB >= 0) {
-                    return defA < defB ? 1 : -1;
-                } else if (defA >= 0) {
-                    return 1;
-                } else if (defB >= 0) {
-                    return -1;
-                } else {
-                    return a.symbol.localeCompare(b.symbol);
-                }
-            }
-        });
-
-        return accounts;
+    function showTransactions(token: { ledger: string; urlFormat: string }) {
+        selectedLedger = token.ledger;
+        transactionsFormat = token.urlFormat;
+        manageMode = "transactions";
     }
 </script>
 
 {#if manageMode !== "none" && selectedLedger !== undefined}
-    <ManageCryptoAccount
-        mode={manageMode}
-        bind:ledger={selectedLedger}
-        on:close={hideManageModal} />
+    <Overlay
+        dismissible={manageMode === "receive" || manageMode === "transactions"}
+        on:close={hideManageModal}>
+        {#if manageMode === "receive"}
+            <ReceiveCrypto ledger={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "send"}
+            <SendCrypto ledger={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "swap"}
+            <SwapCrypto bind:ledgerIn={selectedLedger} on:close={hideManageModal} />
+        {:else if manageMode === "transactions"}
+            <AccountTransactions
+                ledger={selectedLedger}
+                on:close={hideManageModal}
+                urlFormat={transactionsFormat} />
+        {/if}
+    </Overlay>
 {/if}
 
 <table>
     <tr>
-        <th class="token-header">{$_("cryptoAccount.token")}</th>
-        <th class="balance-header">{$_("cryptoAccount.shortBalanceLabel")}</th>
-        <th />
+        <th class="token-header"><Translatable resourceKey={i18nKey("cryptoAccount.token")} /></th>
+        <th class="balance-header" colspan="2">
+            <MultiToggle options={conversionOptions} bind:selected={selectedConversion} />
+        </th>
     </tr>
-    {#each accounts as token}
+    {#each $accountsSorted as token}
         <tr class:hidden={token.zero && !showZeroBalance}>
             <td width="99%">
                 <div class="token">
@@ -139,10 +142,11 @@
                 <BalanceWithRefresh
                     ledger={token.ledger}
                     value={token.balance}
+                    conversion={selectedConversion}
                     on:refreshed={onBalanceRefreshed}
                     on:error={onBalanceRefreshError} />
             </td>
-            <td>
+            <td class="manage-col">
                 <div class="manage">
                     <MenuIcon position="bottom" align="end">
                         <span slot="icon" class="wallet-menu">
@@ -153,27 +157,51 @@
                         </span>
                         <span slot="menu">
                             <Menu>
-                                <MenuItem on:click={() => showSend(token.key)}>
+                                <MenuItem on:click={() => showSend(token.ledger)}>
                                     <ArrowRightBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.send")}</div>
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("cryptoAccount.send")} />
+                                    </div>
                                 </MenuItem>
-                                <MenuItem on:click={() => showReceive(token.key)}>
+                                <MenuItem on:click={() => showReceive(token.ledger)}>
                                     <ArrowLeftBoldCircle
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("cryptoAccount.receive")}</div>
+                                    <div slot="text">
+                                        <Translatable
+                                            resourceKey={i18nKey("cryptoAccount.receive")} />
+                                    </div>
                                 </MenuItem>
-                                {#if !["ckbtc", "icp"].includes(token.symbol.toLowerCase())}
-                                    <MenuItem on:click={() => (transactionsFor = token)}>
+                                {#await swappableTokensPromise then swappableTokens}
+                                    {#if swappableTokens.has(token.ledger)}
+                                        <MenuItem on:click={() => showSwap(token.ledger)}>
+                                            <SwapIcon
+                                                size={$iconSize}
+                                                color={"var(--icon-inverted-txt)"}
+                                                slot="icon" />
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("cryptoAccount.swap")} />
+                                            </div>
+                                        </MenuItem>
+                                    {/if}
+                                {/await}
+                                {#if snsLedgers.has(token.ledger)}
+                                    <MenuItem on:click={() => showTransactions(token)}>
                                         <ViewList
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("cryptoAccount.transactions")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "cryptoAccount.transactions",
+                                                )} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                             </Menu>
@@ -183,17 +211,22 @@
             </td>
         </tr>
     {/each}
+    {#if selectedConversion !== "none"}
+        <tr class="total">
+            <td>
+                <div class="token">
+                    <div class="icon"></div>
+                    <Translatable resourceKey={i18nKey("cryptoAccount.total")} />
+                </div>
+            </td>
+            <td class="total">{total}</td>
+            <td></td>
+        </tr>
+    {/if}
 </table>
 
 {#if balanceError !== undefined}
     <ErrorMessage>{balanceError}</ErrorMessage>
-{/if}
-
-{#if transactionsFor !== undefined}
-    <AccountTransactions
-        on:close={() => (transactionsFor = undefined)}
-        ledger={transactionsFor.ledger}
-        urlFormat={transactionsFor.urlFormat} />
 {/if}
 
 <style lang="scss">
@@ -219,26 +252,40 @@
         th {
             @include font(book, normal, fs-70);
             padding-bottom: $sp4;
-            font-weight: 700;
 
             &.token-header {
+                font-weight: 700;
                 text-align: left;
             }
 
             &.balance-header {
-                padding-right: 28px;
-                text-align: right;
+                @include font-size(fs-60);
+                text-transform: uppercase;
             }
         }
 
         td {
             vertical-align: middle;
             padding-bottom: $sp3;
+
+            &.manage-col {
+                width: 0;
+            }
+
+            &.total {
+                @include font(bold, normal, fs-100, 22);
+                padding-right: 30px;
+                text-align: right;
+            }
         }
 
-        .transactions {
-            cursor: pointer;
-            padding: 0 $sp2 0 0;
+        tr.total {
+            color: var(--txt-light);
+
+            td {
+                padding-top: $sp3;
+                border-top: solid 1px var(--bd);
+            }
         }
 
         .token {

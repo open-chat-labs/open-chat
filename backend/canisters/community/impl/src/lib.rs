@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::cell::RefCell;
 use std::ops::Deref;
+use types::SNS_FEE_SHARE_PERCENT;
 use types::{
     AccessGate, BuildVersion, CanisterId, ChannelId, ChatMetrics, CommunityCanisterCommunitySummary, CommunityMembership,
     CommunityPermissions, CommunityRole, Cryptocurrency, Cycles, Document, Empty, FrozenGroupInfo, Milliseconds, Notification,
@@ -75,6 +76,10 @@ impl RuntimeState {
         self.env.caller() == self.data.proposals_bot_user_id.into()
     }
 
+    pub fn is_caller_escrow_canister(&self) -> bool {
+        self.env.caller() == self.data.escrow_canister_id
+    }
+
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
         if !recipients.is_empty() {
             let args = c2c_push_notification::Args {
@@ -103,7 +108,7 @@ impl RuntimeState {
             .collect();
 
         let owner_count = owners.len() as u128;
-        let owner_share = (amount_available * 4 / 5) / owner_count;
+        let owner_share = (amount_available * (100 - SNS_FEE_SHARE_PERCENT) / 100) / owner_count;
         let amount = owner_share.saturating_sub(gate.fee);
         if amount > 0 {
             for owner in owners {
@@ -181,6 +186,7 @@ impl RuntimeState {
 
         CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
+            local_user_index_canister_id: self.data.local_user_index_canister_id,
             last_updated,
             name: data.name.clone(),
             description: data.description.clone(),
@@ -244,6 +250,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
+                escrow: self.data.escrow_canister_id,
                 icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id().unwrap(),
             },
         }
@@ -271,6 +278,7 @@ struct Data {
     local_group_index_canister_id: CanisterId,
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
+    escrow_canister_id: CanisterId,
     date_created: TimestampMillis,
     members: CommunityMembers,
     channels: Channels,
@@ -288,11 +296,8 @@ struct Data {
     next_event_expiry: Option<TimestampMillis>,
     test_mode: bool,
     cached_chat_metrics: Timestamped<ChatMetrics>,
-    #[serde(default)]
     rng_seed: [u8; 32],
-    #[serde(default)]
     pub pending_payments_queue: PendingPaymentsQueue,
-    #[serde(default)]
     pub total_payment_receipts: PaymentReceipts,
 }
 
@@ -315,6 +320,7 @@ impl Data {
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         gate: Option<AccessGate>,
         default_channels: Vec<(ChannelId, String)>,
         default_channel_rules: Option<Rules>,
@@ -342,6 +348,7 @@ impl Data {
             local_group_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             date_created: now,
             members,
             channels,
@@ -388,15 +395,6 @@ impl Data {
         self.cached_chat_metrics = Timestamped::new(metrics.hydrate(), now);
     }
 
-    pub fn check_rules(&self, member: &CommunityMemberInternal) -> bool {
-        !self.rules.enabled
-            || member.is_bot
-            || (member
-                .rules_accepted
-                .as_ref()
-                .map_or(false, |accepted| accepted.value >= self.rules.text.version))
-    }
-
     pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
         let wasm_version = WASM_VERSION.with_borrow(|v| **v);
         let instructions_count = ic_cdk::api::instruction_counter();
@@ -424,6 +422,14 @@ impl Data {
         .into_iter()
         .max()
         .unwrap()
+    }
+
+    pub fn has_payment_gate(&self) -> bool {
+        self.gate
+            .value
+            .as_ref()
+            .map(|g| matches!(g, AccessGate::Payment(_)))
+            .unwrap_or_default()
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -471,5 +477,6 @@ pub struct CanisterIds {
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow: CanisterId,
     pub icp_ledger: CanisterId,
 }

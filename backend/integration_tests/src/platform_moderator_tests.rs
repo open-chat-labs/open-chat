@@ -121,17 +121,17 @@ fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Pr
     );
 
     let group_name = random_string();
+    let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
 
-    let moderators_group = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
-
-    client::user_index::assign_platform_moderators_group(
+    let moderators_group = match client::user_index::assign_platform_moderators_group(
         env,
         controller,
         canister_ids.user_index,
-        &user_index_canister::assign_platform_moderators_group::Args {
-            group_id: moderators_group,
-        },
-    );
+        &user_index_canister::assign_platform_moderators_group::Args { group_id },
+    ) {
+        user_index_canister::assign_platform_moderators_group::Response::Success => group_id,
+        user_index_canister::assign_platform_moderators_group::Response::AlreadySet(id) => id,
+    };
 
     TestData {
         user1,

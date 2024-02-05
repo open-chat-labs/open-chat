@@ -273,6 +273,7 @@ impl MessageInternal {
                 incr(&mut metrics.message_reminders);
             }
             MessageContentInternal::ReportedMessage(_) => {}
+            MessageContentInternal::P2PSwap(_) => incr(&mut metrics.p2p_swaps),
             MessageContentInternal::Custom(_) => {
                 incr(&mut metrics.custom_type_messages);
             }
@@ -530,6 +531,8 @@ pub struct ChatMetricsInternal {
     pub reported_messages: u64,
     #[serde(rename = "mr", default, skip_serializing_if = "is_default")]
     pub message_reminders: u64,
+    #[serde(rename = "p2p", default, skip_serializing_if = "is_default")]
+    pub p2p_swaps: u64,
     #[serde(rename = "cu", default, skip_serializing_if = "is_default")]
     pub custom_type_messages: u64,
     #[serde(rename = "la")]

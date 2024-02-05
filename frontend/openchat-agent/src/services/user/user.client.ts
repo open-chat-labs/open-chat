@@ -12,60 +12,67 @@ import type {
     UserService,
 } from "./candid/idl";
 import { idlFactory } from "./candid/idl";
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type ChatEvent,
-    type EventsSuccessResult,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ThreadRead,
-    type ManageFavouritesResponse,
-    type CommunityIdentifier,
-    type LeaveCommunityResponse,
-    type DeleteCommunityResponse,
-    type ChannelIdentifier,
-    type Rules,
-    type TipMessageResponse,
-    type NamedAccount,
-    type SaveCryptoAccountResponse,
-    type CandidateProposal,
-    type SubmitProposalResponse,
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
+    CommunitySummary,
+    CreateCommunityResponse,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ThreadRead,
+    ManageFavouritesResponse,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
+    ChannelIdentifier,
+    Rules,
+    TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
+    CryptocurrencyDetails,
+    ExchangeTokenSwapArgs,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    ApproveTransferResponse,
+    MessageContext,
+    PendingCryptocurrencyTransfer,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -87,7 +94,6 @@ import {
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
-    migrateUserPrincipal,
     archiveChatResponse,
     deletedMessageResponse,
     setMessageReminderResponse,
@@ -101,8 +107,10 @@ import {
     proposalToSubmit,
     submitProposalResponse,
     reportMessageResponse,
+    swapTokensResponse,
+    tokenSwapStatusResponse,
+    approveTransferResponse,
 } from "./mappers";
-import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
     type Database,
     getCachedEvents,
@@ -129,14 +137,15 @@ import {
     deleteGroupResponse,
     apiChatIdentifier,
     apiToken,
+    acceptP2PSwapResponse,
+    cancelP2PSwapResponse,
 } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
-import type { MessageContext } from "openchat-shared";
-import type { PendingCryptocurrencyTransfer } from "openchat-shared";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "openchat-shared";
 
 export class UserClient extends CandidService {
     private userService: UserService;
@@ -164,11 +173,11 @@ export class UserClient extends CandidService {
         return new UserClient(identity, userId, config, db);
     }
 
-    private setCachedEvents<T extends ChatEvent>(
+    private setCachedEvents(
         chatId: ChatIdentifier,
-        resp: EventsResponse<T>,
+        resp: EventsResponse<ChatEvent>,
         threadRootMessageIndex?: number,
-    ): EventsResponse<T> {
+    ): EventsResponse<ChatEvent> {
         setCachedEvents(this.db, chatId, resp, threadRootMessageIndex).catch((err) =>
             this.config.logger.error("Error writing cached group events", err),
         );
@@ -177,10 +186,10 @@ export class UserClient extends CandidService {
 
     private handleMissingEvents(
         chatId: DirectChatIdentifier,
-        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        [cachedEvents, missing]: [EventsSuccessResult<ChatEvent>, Set<number>],
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         if (missing.size === 0) {
             return Promise.resolve(cachedEvents);
         } else {
@@ -222,7 +231,7 @@ export class UserClient extends CandidService {
 
     getInitialState(): Promise<InitialStateResponse> {
         const args = {
-            disable_cache: apiOptional(identity, false),
+            disable_cache: apiOptional(identity, true),
         };
         return this.handleQueryResponse(
             () => this.userService.initial_state(args),
@@ -334,8 +343,8 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return getCachedEventsByIndex<DirectChatEvent>(this.db, eventIndexes, {
+    ): Promise<EventsResponse<ChatEvent>> {
+        return getCachedEventsByIndex(this.db, eventIndexes, {
             chatId,
             threadRootMessageIndex,
         }).then((res) =>
@@ -348,7 +357,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
@@ -368,14 +377,13 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing, totalMiss] =
-            await getCachedEventsWindowByMessageIndex<DirectChatEvent>(
-                this.db,
-                eventIndexRange,
-                { chatId },
-                messageIndex,
-            );
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindowByMessageIndex(
+            this.db,
+            eventIndexRange,
+            { chatId },
+            messageIndex,
+        );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
             console.log(
@@ -400,7 +408,7 @@ export class UserClient extends CandidService {
         chatId: DirectChatIdentifier,
         messageIndex: number,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const thread_root_message_index: [] = [];
         const args = {
             thread_root_message_index,
@@ -425,8 +433,8 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
+    ): Promise<EventsResponse<ChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents(
             this.db,
             eventIndexRange,
             { chatId, threadRootMessageIndex },
@@ -461,7 +469,7 @@ export class UserClient extends CandidService {
         ascending: boolean,
         threadRootMessageIndex: number | undefined,
         latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(chatId.userId),
@@ -527,10 +535,11 @@ export class UserClient extends CandidService {
     sendMessage(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
-        return this.sendMessageToBackend(chatId, event, threadRootMessageIndex)
+        return this.sendMessageToBackend(chatId, event, messageFilterFailed, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -548,6 +557,7 @@ export class UserClient extends CandidService {
     sendMessageToBackend(
         chatId: DirectChatIdentifier,
         event: EventWrapper<Message>,
+        messageFilterFailed: bigint | undefined,
         threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
@@ -567,6 +577,7 @@ export class UserClient extends CandidService {
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                message_filter_failed: apiOptional(identity, messageFilterFailed),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
@@ -577,11 +588,12 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToGroup(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToGroupToBackend(
@@ -591,6 +603,7 @@ export class UserClient extends CandidService {
             event,
             threadRootMessageIndex,
             rulesAccepted,
+            messageFilterFailed,
         )
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
@@ -601,11 +614,12 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToGroupToBackend(
         groupId: GroupChatIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         rulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -622,6 +636,7 @@ export class UserClient extends CandidService {
                 (replyContext) => apiReplyContextArgs(groupId, replyContext),
                 event.event.repliesTo,
             ),
+            message_filter_failed: apiOptional(identity, messageFilterFailed),
             correlation_id: generateUint64(),
         };
         return this.handleResponse(
@@ -649,12 +664,13 @@ export class UserClient extends CandidService {
 
     sendMessageWithTransferToChannel(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
         return this.sendMessageWithTransferToChannelToBackend(
@@ -665,6 +681,7 @@ export class UserClient extends CandidService {
             threadRootMessageIndex,
             communityRulesAccepted,
             channelRulesAccepted,
+            messageFilterFailed,
         )
             .then(setCachedMessageFromSendResponse(this.db, id, event, threadRootMessageIndex))
             .catch((err) => {
@@ -675,12 +692,13 @@ export class UserClient extends CandidService {
 
     private sendMessageWithTransferToChannelToBackend(
         id: ChannelIdentifier,
-        recipientId: string,
+        recipientId: string | undefined,
         sender: CreatedUser,
         event: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         communityRulesAccepted: number | undefined,
         channelRulesAccepted: number | undefined,
+        messageFilterFailed: bigint | undefined,
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiMessageContent(event.event.content);
 
@@ -699,6 +717,7 @@ export class UserClient extends CandidService {
             ),
             community_rules_accepted: apiOptional(identity, communityRulesAccepted),
             channel_rules_accepted: apiOptional(identity, channelRulesAccepted),
+            message_filter_failed: apiOptional(identity, messageFilterFailed),
         };
         return this.handleResponse(
             this.userService.send_message_with_transfer_to_channel(req),
@@ -819,12 +838,14 @@ export class UserClient extends CandidService {
         messageContext: MessageContext,
         messageId: bigint,
         transfer: PendingCryptocurrencyTransfer,
+        decimals: number,
     ): Promise<TipMessageResponse> {
         return this.handleResponse(
             this.userService.tip_message({
                 chat: apiChatIdentifier(messageContext.chatId),
                 message_id: messageId,
                 fee: transfer.feeE8s ?? 0n,
+                decimals,
                 token: apiToken(transfer.token),
                 recipient: Principal.fromText(transfer.recipient),
                 ledger: Principal.fromText(transfer.ledger),
@@ -1056,22 +1077,6 @@ export class UserClient extends CandidService {
         );
     }
 
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
-        return this.handleResponse(
-            this.userService.init_user_principal_migration({
-                new_principal: Principal.fromText(newPrincipal),
-            }),
-            toVoid,
-        );
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
-        return this.handleResponse(
-            this.userService.migrate_user_principal({}),
-            migrateUserPrincipal,
-        );
-    }
-
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
         return this.handleResponse(
             this.userService.deleted_message({
@@ -1154,6 +1159,103 @@ export class UserClient extends CandidService {
                 delete: deleteMessage,
             }),
             reportMessageResponse,
+        );
+    }
+
+    swapTokens(
+        swapId: bigint,
+        inputToken: CryptocurrencyDetails,
+        outputToken: CryptocurrencyDetails,
+        amountIn: bigint,
+        minAmountOut: bigint,
+        exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<SwapTokensResponse> {
+        return this.handleResponse(
+            this.userService.swap_tokens({
+                swap_id: swapId,
+                input_token: {
+                    token: apiToken(inputToken.symbol),
+                    ledger: Principal.fromText(inputToken.ledger),
+                    decimals: inputToken.decimals,
+                    fee: inputToken.transferFee,
+                },
+                output_token: {
+                    token: apiToken(outputToken.symbol),
+                    ledger: Principal.fromText(outputToken.ledger),
+                    decimals: outputToken.decimals,
+                    fee: outputToken.transferFee,
+                },
+                input_amount: amountIn,
+                exchange_args: {
+                    ICPSwap: {
+                        swap_canister_id: Principal.fromText(exchangeArgs.swapCanisterId),
+                        zero_for_one: exchangeArgs.zeroForOne,
+                    },
+                },
+                min_output_amount: minAmountOut,
+            }),
+            swapTokensResponse,
+        );
+    }
+
+    tokenSwapStatus(swapId: bigint): Promise<TokenSwapStatusResponse> {
+        const args = {
+            swap_id: swapId,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.token_swap_status(args),
+            tokenSwapStatusResponse,
+            args,
+        );
+    }
+
+    approveTransfer(
+        spender: string,
+        ledger: string,
+        amount: bigint,
+        expiresIn: bigint | undefined,
+    ): Promise<ApproveTransferResponse> {
+        return this.handleResponse(
+            this.userService.approve_transfer({
+                spender: {
+                    owner: Principal.fromText(spender),
+                    subaccount: [],
+                },
+                ledger_canister_id: Principal.fromText(ledger),
+                amount,
+                expires_in: apiOptional(identity, expiresIn),
+            }),
+            approveTransferResponse,
+        );
+    }
+
+    deleteDirectChat(userId: string, blockUser: boolean): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.delete_direct_chat({
+                user_id: Principal.fromText(userId),
+                block_user: blockUser,
+            }),
+            (resp) => "Success" in resp,
+        );
+    }
+
+    acceptP2PSwap(userId: string, messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.accept_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            acceptP2PSwapResponse,
+        );
+    }
+
+    cancelP2PSwap(userId: string, messageId: bigint): Promise<CancelP2PSwapResponse> {
+        return this.handleResponse(
+            this.userService.cancel_p2p_swap({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            cancelP2PSwapResponse,
         );
     }
 }

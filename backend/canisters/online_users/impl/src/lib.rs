@@ -54,7 +54,6 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }

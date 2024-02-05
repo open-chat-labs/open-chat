@@ -49,34 +49,39 @@ export function toMonthString(date: Date, locale: string): string {
     return date.toLocaleDateString(locale, { month: "long" });
 }
 
-export function toDayOfWeekString(date: Date): string {
-    return date.toLocaleDateString(undefined, { weekday: "long" });
+export function toDayOfWeekString(date: Date, locale: string): string {
+    return date.toLocaleDateString(locale, { weekday: "long" });
 }
 
-export function toDateString(date: Date): string {
-    return date.toLocaleDateString();
+export function toDateString(date: Date, locale: string): string {
+    return date.toLocaleDateString(locale);
 }
 
-export function toDatetimeString(date: Date): string {
-    return `${date.toLocaleDateString()} ${toShortTimeString(date)}`;
+export function toDatetimeString(date: Date, locale: string): string {
+    return `${date.toLocaleDateString(locale)} ${toShortTimeString(date, locale)}`;
 }
 
-export function toLongDateString(date: Date): string {
-    const weekday = date.toLocaleDateString("en", { weekday: "long" });
+export function toLongDateString(date: Date, locale: string): string {
+    const weekday = date.toLocaleDateString(locale, { weekday: "long" });
     const dayOfMonth = date.getDate();
-    const month = date.toLocaleDateString(undefined, { month: "short" });
+    const month = date.toLocaleDateString(locale, { month: "short" });
     const ordinal = getOrdinal(dayOfMonth);
     const year = date.getFullYear();
 
     return `${weekday} ${dayOfMonth}${ordinal} ${month} ${year}`;
 }
 
-export function toShortTimeString(date: Date): string {
-    return date.toLocaleTimeString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
+const shortTimeFormatters: Record<string, Intl.DateTimeFormat> = {};
+
+export function toShortTimeString(date: Date, locale: string): string {
+    if (shortTimeFormatters[locale] === undefined) {
+        shortTimeFormatters[locale] = new Intl.DateTimeFormat(locale, {
+            hour: "2-digit",
+            minute: "2-digit",
+            hourCycle: "h23",
+        });
+    }
+    return shortTimeFormatters[locale].format(date);
 }
 
 function getOrdinal(n: number): string {
@@ -89,8 +94,9 @@ export function formatMessageDate(
     timestamp: bigint,
     today: string,
     yesterday: string,
+    locale: string,
     timeIfToday = false,
-    short = false
+    short = false,
 ): string {
     if (timestamp === 0n) return "";
 
@@ -98,7 +104,7 @@ export function formatMessageDate(
 
     const startOfToday = getStartOfToday();
     if (date >= startOfToday) {
-        return timeIfToday ? toShortTimeString(date) : today;
+        return timeIfToday ? toShortTimeString(date, locale) : today;
     }
     const startOfYesterday = addDays(startOfToday, -1);
     if (date >= startOfYesterday) {
@@ -106,8 +112,8 @@ export function formatMessageDate(
     }
     const useDayNameOnly = date >= addDays(startOfToday, -6);
     return useDayNameOnly
-        ? toDayOfWeekString(date)
+        ? toDayOfWeekString(date, locale)
         : short
-        ? toDateString(date)
-        : toLongDateString(date);
+          ? toDateString(date, locale)
+          : toLongDateString(date, locale);
 }

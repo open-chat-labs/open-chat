@@ -1,6 +1,5 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import Panel from "../../Panel.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
@@ -17,16 +16,18 @@
         emptyCombinedUnreadCounts,
     } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import { _ } from "svelte-i18n";
+    import { communityListScrollTop } from "../../../stores/scrollPos";
     import { pathParams } from "../../../routes";
     import page from "page";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onDestroy, onMount, tick } from "svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
     import { flip } from "svelte/animate";
     import { type DndEvent, dndzone } from "svelte-dnd-action";
     import { isTouchDevice } from "../../../utils/devices";
+    import { rtlStore } from "../../../stores/rtl";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -48,6 +49,7 @@
     $: selectedCommunityId = $selectedCommunity?.id.communityId;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
+    let scrollingSection: HTMLElement;
 
     // we don't want drag n drop to monkey around with the key
     type CommunityItem = CommunitySummary & { _id: string };
@@ -55,7 +57,13 @@
     let dragging = false;
 
     onMount(() => {
-        return communities.subscribe(initCommunitiesList);
+        const unsub = communities.subscribe(initCommunitiesList);
+        tick().then(() => (scrollingSection.scrollTop = $communityListScrollTop ?? 0));
+        return unsub;
+    });
+
+    onDestroy(() => {
+        communityListScrollTop.set(scrollingSection?.scrollTop);
     });
 
     function initCommunitiesList(communities: CommunitySummary[]) {
@@ -130,9 +138,9 @@
 
 <svelte:body on:click={closeIfOpen} />
 
-<Panel nav>
+<section class="nav" class:open={$navOpen} class:rtl={$rtlStore}>
     <div class="top">
-        <LeftNavItem separator label={$_("communities.mainMenu")}>
+        <LeftNavItem separator label={i18nKey("communities.mainMenu")}>
             <div class="hover logo">
                 <MenuIcon position="right" align="start" gutter={20}>
                     <span slot="icon">
@@ -148,14 +156,14 @@
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.title")} on:click={viewProfile}>
+            <LeftNavItem label={i18nKey("profile.title")} on:click={viewProfile}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
             </LeftNavItem>
         {/if}
 
         <LeftNavItem
             selected={$chatListScope.kind === "direct_chat" && !communityExplorer}
-            label={$_("communities.directChats")}
+            label={i18nKey("communities.directChats")}
             disabled={$anonUser}
             unread={$unreadDirectCounts.chats}
             on:click={directChats}>
@@ -166,7 +174,7 @@
 
         <LeftNavItem
             selected={$chatListScope.kind === "group_chat" && !communityExplorer}
-            label={$_("communities.groupChats")}
+            label={i18nKey("communities.groupChats")}
             unread={client.mergeCombinedUnreadCounts($unreadGroupCounts)}
             on:click={groupChats}>
             <div class="hover direct">
@@ -178,7 +186,7 @@
             selected={$chatListScope.kind === "favourite" && !communityExplorer}
             separator
             disabled={$anonUser}
-            label={$_("communities.favourites")}
+            label={i18nKey("communities.favourites")}
             unread={client.mergeCombinedUnreadCounts($unreadFavouriteCounts)}
             on:click={favouriteChats}>
             <div class="hover favs">
@@ -194,6 +202,7 @@
             dropTargetStyle: { outline: "var(--accent) solid 2px" },
             dragDisabled: isTouchDevice,
         }}
+        bind:this={scrollingSection}
         on:consider={handleDndConsider}
         on:finalize={handleDndFinalize}
         class="middle">
@@ -205,9 +214,9 @@
                         !communityExplorer}
                     unread={client.mergeCombinedUnreadCounts(
                         $unreadCommunityChannelCounts.get(community.id) ??
-                            emptyCombinedUnreadCounts()
+                            emptyCombinedUnreadCounts(),
                     )}
-                    label={community.name}
+                    label={i18nKey(community.name)}
                     on:click={() => selectCommunity(community)}>
                     <Avatar
                         selected={community.id.communityId === selectedCommunityId &&
@@ -223,19 +232,19 @@
     <div class="bottom">
         <LeftNavItem
             selected={communityExplorer}
-            label={$_("communities.explore")}
+            label={i18nKey("communities.explore")}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
-        <LeftNavItem label={$navOpen ? $_("collapse") : $_("expand")}>
+        <LeftNavItem label={$navOpen ? i18nKey("collapse") : i18nKey("expand")}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
                 <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
     </div>
-</Panel>
+</section>
 
 <style lang="scss">
     :global(.hover svg path) {
@@ -269,6 +278,42 @@
     $size: toRem(48);
     $mobile-size: toRem(40);
 
+    .nav {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: toRem(80);
+        overflow-x: hidden;
+        height: 100%;
+        background: var(--panel-nav-bg);
+        padding: $sp2 0;
+        border-right: var(--bw) solid var(--bd);
+        @include z-index("left-nav");
+        transition: width 250ms ease-in-out;
+        overflow: auto;
+        overflow-x: hidden;
+
+        &.rtl {
+            border-right: none;
+            border-left: var(--bw) solid var(--bd);
+        }
+
+        @include mobile() {
+            width: toRem(60);
+            padding: $sp1 0;
+        }
+
+        &.open {
+            width: toRem(350);
+            box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
+
+            @include mobile() {
+                width: toRem(300);
+            }
+        }
+    }
+
     .top,
     .bottom,
     .middle {
@@ -296,7 +341,7 @@
         width: $size;
         height: $size;
         border: 1px solid transparent;
-        border-radius: 50%;
+        border-radius: var(--nav-icon-rd);
         background: var(--icon-hv);
         display: flex;
         align-items: center;

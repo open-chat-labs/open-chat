@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Pass in DFX identity name, website version and network name
 # eg './deploy-website-testnet.sh openchat 2.0.305 small06'

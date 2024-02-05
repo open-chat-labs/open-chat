@@ -15,21 +15,24 @@ fn set_display_name(args: Args) -> Response {
 
 fn set_display_name_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-
-    if let Some(display_name) = args.display_name.as_ref() {
-        match validate_display_name(display_name) {
-            Ok(_) => {}
-            Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
-            Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
-            Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
-        };
-    }
-
     if let Some(user) = state.data.users.get_by_principal(&caller) {
+        if let Some(display_name) = args.display_name.as_ref() {
+            match validate_display_name(display_name) {
+                Ok(_) => {}
+                Err(UsernameValidationError::TooShort(s)) => return DisplayNameTooShort(s.min_length as u16),
+                Err(UsernameValidationError::TooLong(l)) => return DisplayNameTooLong(l.max_length as u16),
+                Err(UsernameValidationError::Invalid) => return DisplayNameInvalid,
+            };
+        }
+
+        let now = state.env.now();
+        if !user.diamond_membership_details.is_active(now) && user.display_name.is_none() {
+            return Unauthorized;
+        }
+
         let mut user_to_update = user.clone();
         user_to_update.display_name = args.display_name.clone();
         let user_id = user.user_id;
-        let now = state.env.now();
         match state.data.users.update(user_to_update, now) {
             UpdateUserResult::Success => {
                 state.push_event_to_local_user_index(

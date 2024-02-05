@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { NamedAccount } from "openchat-client";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "../../../stores/iconSize";
@@ -7,6 +6,8 @@
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let accounts: NamedAccount[];
     export let targetAccount: string;
@@ -38,7 +39,7 @@
 
 <div role="combobox" tabindex="0" class="selected" on:click|stopPropagation={showMenu}>
     <div class="name">
-        {selectedName ?? $_("tokenTransfer.chooseAddress")}
+        <Translatable resourceKey={i18nKey(selectedName ?? "tokenTransfer.chooseAddress")} />
     </div>
     <div class="icon">
         <MenuIcon bind:this={menuIcon} position={$mobileWidth ? "top" : "bottom"} align={"end"}>
@@ -88,7 +89,7 @@
         display: flex;
         flex-direction: column;
         @include font(book, normal, fs-80);
-        font-family: "Roboto", sans-serif;
+        font-family: var(--font);
 
         .name {
             color: var(--primary);

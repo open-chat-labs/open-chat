@@ -5,6 +5,108 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
+- Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
+## [[2.0.1032](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1032-user)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
+### Changed
+
+- Use message queue to send events between user canisters ([#5234](https://github.com/open-chat-labs/open-chat/pull/5234))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+### Fixed
+
+- Fix input amount display in p2p swaps ([#5223](https://github.com/open-chat-labs/open-chat/pull/5223))
+- Fix syncing of P2P swap status updates between user canisters ([#5230](https://github.com/open-chat-labs/open-chat/pull/5230))
+
+## [[2.0.1013](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1013-user)] - 2024-01-18
+
+### Added
+
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Implement p2p trades in direct chats ([#5168](https://github.com/open-chat-labs/open-chat/pull/5168))
+- Add message queues for pushing updates between user canisters ([#5172](https://github.com/open-chat-labs/open-chat/pull/5172))
+- Push p2p swap status changes between user canisters ([#5187](https://github.com/open-chat-labs/open-chat/pull/5187))
+- Notify user canisters when p2p swaps complete ([#5191](https://github.com/open-chat-labs/open-chat/pull/5191))
+- Cancel p2p swap if message is deleted ([#5192](https://github.com/open-chat-labs/open-chat/pull/5192))
+- Add timer job to set p2p swap status to `Expired` ([#5195](https://github.com/open-chat-labs/open-chat/pull/5195))
+- Implement `cancel_p2p_swap` ([#5197](https://github.com/open-chat-labs/open-chat/pull/5197))
+
+### Changed
+
+- Add `local_user_index_canister_id` to `initial_state` response ([#5083](https://github.com/open-chat-labs/open-chat/pull/5083))
+- Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
+- Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
+- Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
+- Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+- Only use transaction index for p2p swaps and drop usage of hash ([#5203](https://github.com/open-chat-labs/open-chat/pull/5203))
+- Set group/community canister as an additional admin on p2p swaps ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
+- Validate against duplicate messageId before making transfer ([#5212](https://github.com/open-chat-labs/open-chat/pull/5212))
+
+### Removed
+
+- Remove group summary cache ([#5067](https://github.com/open-chat-labs/open-chat/pull/5067))
+
+### Fixed
+
+- Fix bug where `cancel_job` would fail to find the job to cancel ([#5148](https://github.com/open-chat-labs/open-chat/pull/5148))
+- Retry failed Windoge98 withdrawals using correct fee ([#5177](https://github.com/open-chat-labs/open-chat/pull/5177))
+
+## [[2.0.989](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.989-user)] - 2023-12-20
+
+### Added
+
+- Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+
+### Changed
+
+- Log error if any steps during a swap fail ([#4972](https://github.com/open-chat-labs/open-chat/pull/4972))
+- Expose logs of swaps ([#4980](https://github.com/open-chat-labs/open-chat/pull/4980))
+- Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
+- Retry sending messages with crypto transfers to groups & channels ([#5051](https://github.com/open-chat-labs/open-chat/pull/5051))
+- Switch over to using `c2c_send_message_v2` ([#5054](https://github.com/open-chat-labs/open-chat/pull/5054))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.963](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.963-user)] - 2023-12-05
+
+### Changed
+
+- When swapping tokens take fee out of amount passed in ([#4934](https://github.com/open-chat-labs/open-chat/pull/4934))
+
+### Fixed
+
+- A few fixes for swapping tokens ([#4937](https://github.com/open-chat-labs/open-chat/pull/4937))
+
+## [[2.0.961](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.961-user)] - 2023-12-05
+
+### Added
+
+- Support getting batches of chat events via LocalUserIndex ([#4848](https://github.com/open-chat-labs/open-chat/pull/4848))
+- Add `c2c_send_messages_v2` which uses MessageContentInternal ([#4902](https://github.com/open-chat-labs/open-chat/pull/4902))
+
+### Changed
+
+- In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+- Switch to `c2c_send_message` when sending messages c2c to groups or channels ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
+- Remove `display_name` from `init` args ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
+- Handle case where swap fails due to slippage ([#4924](https://github.com/open-chat-labs/open-chat/pull/4924))
+
+## [[2.0.947](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.947-user)] - 2023-11-24
+
 ### Added
 
 - Support paying in CHAT for Diamond membership ([#4748](https://github.com/open-chat-labs/open-chat/pull/4748))

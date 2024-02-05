@@ -39,7 +39,10 @@ export const layoutStore: Readable<Layout> = derived(
             const showLeft = !showMiddle && !showRight;
             const showNav =
                 !$disableLeftNav &&
-                (showLeft || ($pathParams.kind === "communities_route" && !showRight));
+                (showLeft ||
+                    (($pathParams.kind === "communities_route" ||
+                        $pathParams.kind === "admin_route") &&
+                        !showRight));
             return {
                 showNav,
                 showMiddle,
@@ -50,7 +53,8 @@ export const layoutStore: Readable<Layout> = derived(
         } else {
             const showRight = $rightPanelHistory.length > 0 || $fullWidth;
             const floatRight = !$fullWidth;
-            const showLeft = $pathParams.kind !== "communities_route";
+            const showLeft =
+                $pathParams.kind !== "communities_route" && $pathParams.kind !== "admin_route";
 
             return {
                 showNav: !$disableLeftNav,
@@ -65,3 +69,27 @@ export const layoutStore: Readable<Layout> = derived(
         }
     },
 );
+
+export function numberFromLocalStorage(key: string): number | undefined {
+    const val = localStorage.getItem(key);
+    return val ? Number(val) : undefined;
+}
+
+function createPanelWidthStore(key: string) {
+    const val = localStorage.getItem(key);
+    const store = writable<number | undefined>(val ? Number(val) : undefined);
+    return {
+        subscribe: store.subscribe,
+        set: (val: number | undefined): void => {
+            store.set(val);
+            if (val === undefined) {
+                localStorage.removeItem(key);
+            } else {
+                localStorage.setItem(key, val.toString());
+            }
+        },
+        update: store.update,
+    };
+}
+
+export const rightPanelWidth = createPanelWidthStore("openchat_right_panel_width");

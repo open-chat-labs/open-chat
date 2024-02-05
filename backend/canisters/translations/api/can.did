@@ -1,0 +1,102 @@
+import "../../../libraries/types/can.did";
+
+type ProposeArgs = record {
+    locale : text;
+    key : text;
+    value : text;
+};
+
+type ProposeResponse = variant {
+    Success : nat64;
+    AlreadyProposed;
+    UserNotFound;
+    InvalidArgs : text;
+    InternalError : text;
+};
+
+type ApproveArgs = record {
+    id : nat64;
+};
+
+type ApproveResponse = variant {
+    Success;
+    NotProposed;
+    NotFound;
+    NotAuthorized;
+    InternalError : text;
+};
+
+type RejectArgs = record {
+    id : nat64;
+    reason : RejectReason;
+};
+
+type RejectReason = variant {
+    TooLong;
+    IncorrectMeaning;
+};
+
+type RejectResponse = variant {
+    Success;
+    NotProposed;
+    NotFound;
+    NotAuthorized;
+    InternalError : text;
+};
+
+type MarkDeployedArgs = record {
+    latest_approval : TimestampMillis;
+};
+
+type MarkDeployedResponse = variant {
+    Success;
+};
+
+type ProposedResponse = variant {
+    Success : ProposedSuccessResult;
+    NotAuthorized;
+    InternalError : text;
+};
+
+type ProposedSuccessResult = record {
+    records : vec Record;
+};
+
+type Record = record {
+    locale : text;
+    key : text;
+    candidates : vec CandidateTranslation;
+    deployment_count : nat32;
+};
+
+type CandidateTranslation = record {
+    id : nat64;
+    value : text;
+    proposed_by : UserId;
+    proposed_at : TimestampMillis;
+};
+
+type PendingDeploymentResponse = variant {
+    Success : PendingDeploymentSuccessResult;
+};
+
+type PendingDeploymentSuccessResult = record {
+    latest_approval : TimestampMillis;
+    translations : vec Translation;
+};
+
+type Translation = record {
+    locale : text;
+    key : text;
+    value : text;
+};
+
+service : {
+    propose : (ProposeArgs) -> (ProposeResponse);
+    approve : (ApproveArgs) -> (ApproveResponse);
+    reject : (RejectArgs) -> (RejectResponse);
+    mark_deployed : (MarkDeployedArgs) -> (MarkDeployedResponse);
+
+    proposed : (EmptyArgs) -> (ProposedResponse) query;
+    pending_deployment : (EmptyArgs) -> (PendingDeploymentResponse) query;
+};

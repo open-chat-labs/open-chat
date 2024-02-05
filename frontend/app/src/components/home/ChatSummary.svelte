@@ -1,7 +1,13 @@
 <script lang="ts">
     import { AvatarSize, OpenChat, chatIdentifiersEqual } from "openchat-client";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
-    import type { UserLookup, ChatSummary, TypersByKey, CommunitySummary } from "openchat-client";
+    import type {
+        UserLookup,
+        ChatSummary,
+        TypersByKey,
+        CommunitySummary,
+        DiamondMembershipStatus,
+    } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import DotsVertical from "svelte-material-icons/DotsVertical.svelte";
     import Heart from "svelte-material-icons/Heart.svelte";
@@ -33,8 +39,10 @@
     import { toastStore } from "../../stores/toast";
     import { routeForScope, pathParams } from "../../routes";
     import page from "page";
-    import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
+    import Diamond from "../icons/Diamond.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -66,14 +74,15 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     fav,
                     eventsTTL: undefined,
@@ -81,13 +90,14 @@
             default:
                 return {
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     fav,
                     eventsTTL: chatSummary.eventsTTL,
@@ -98,7 +108,7 @@
     function getUnreadMentionCount(chat: ChatSummary): number {
         if (chat.kind === "direct_chat") return 0;
         return chat.membership.mentions.filter(
-            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId)
+            (m) => !client.isMessageRead({ chatId: chat.id }, m.messageIndex, m.messageId),
         ).length;
     }
 
@@ -107,7 +117,13 @@
             return "";
         }
 
-        if (chatSummary.latestMessage === undefined || chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) {
+        if (
+            (chatSummary.latestMessage !== undefined &&
+                chatSummary.eventsTtlLastUpdated > chatSummary.latestMessage.timestamp) ||
+            (chatSummary.latestMessage === undefined &&
+                chatSummary.eventsTTL !== undefined &&
+                chatSummary.membership.role !== "none")
+        ) {
             return chatSummary.eventsTTL !== undefined
                 ? $_("disappearingMessages.timeUpdated", {
                       values: {
@@ -117,9 +133,13 @@
                 : $_("disappearingMessages.disabled");
         }
 
+        if (chatSummary.latestMessage === undefined) {
+            return "";
+        }
+
         const latestMessageText = client.getContentAsText(
             $_,
-            chatSummary.latestMessage.event.content
+            chatSummary.latestMessage.event.content,
         );
 
         if (chatSummary.kind === "direct_chat") {
@@ -130,7 +150,7 @@
             users,
             chatSummary.latestMessage.event.sender,
             chatSummary.latestMessage.event.sender === userId,
-            false
+            false,
         );
 
         return `${user}: ${latestMessageText}`;
@@ -144,7 +164,7 @@
     function updateUnreadCounts(chatSummary: ChatSummary) {
         unreadMessages = client.unreadMessageCount(
             chatSummary.id,
-            chatSummary.latestMessage?.event.messageIndex
+            chatSummary.latestMessage?.event.messageIndex,
         );
         unreadMentions = getUnreadMentionCount(chatSummary);
 
@@ -215,7 +235,7 @@
     function pinChat() {
         client.pinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("pinChat.failed");
+                toastStore.showFailureToast(i18nKey("pinChat.failed"));
             }
         });
     }
@@ -223,7 +243,7 @@
     function unpinChat() {
         client.unpinChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("pinChat.unpinFailed");
+                toastStore.showFailureToast(i18nKey("pinChat.unpinFailed"));
             }
         });
     }
@@ -236,7 +256,7 @@
         client.markAllRead(chatSummary);
         client.archiveChat(chatSummary.id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("archiveChatFailed");
+                toastStore.showFailureToast(i18nKey("archiveChatFailed"));
             }
         });
         if (chatSummary.id === $selectedChatId) {
@@ -270,10 +290,14 @@
     }
 
     $: displayDate = client.getDisplayDate(chatSummary);
-    $: selectedCommunity = client.selectedCommunity;
+    $: communities = client.communities;
+    $: community =
+        chatSummary.kind === "channel"
+            ? $communities.get({ kind: "community", communityId: chatSummary.id.communityId })
+            : undefined;
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them.userId);
     $: readonly = client.isChatReadOnly(chatSummary.id);
-    $: canDelete = getCanDelete(chatSummary, $selectedCommunity);
+    $: canDelete = getCanDelete(chatSummary, community);
     $: pinned = client.pinned($chatListScope.kind, chatSummary.id);
     $: muted = chatSummary.membership.notificationsMuted;
 
@@ -324,7 +348,16 @@
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">
-                <h4 class="chat-name">{chat.name}</h4>
+                <div class="chat-name">
+                    <h4>
+                        {#if community !== undefined && $chatListScope.kind === "favourite"}
+                            <span>{community.name}</span>
+                            <span>{">"}</span>
+                        {/if}
+                        <span>{chat.name}</span>
+                    </h4>
+                    <Diamond status={chat.diamondStatus} />
+                </div>
             </div>
             <div class="chat-msg">
                 {#if chat.typing !== undefined}
@@ -393,7 +426,10 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {$_("communities.addToFavourites")}
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "communities.addToFavourites",
+                                                )} />
                                         </div>
                                     </MenuItem>
                                 {:else}
@@ -403,7 +439,10 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {$_("communities.removeFromFavourites")}
+                                            <Translatable
+                                                resourceKey={i18nKey(
+                                                    "communities.removeFromFavourites",
+                                                )} />
                                         </div>
                                     </MenuItem>
                                 {/if}
@@ -413,7 +452,10 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("pinChat.menuItem")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("pinChat.menuItem")} />
+                                        </div>
                                     </MenuItem>
                                 {:else}
                                     <MenuItem on:click={unpinChat}>
@@ -421,7 +463,10 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("pinChat.unpinMenuItem")}</div>
+                                        <div slot="text">
+                                            <Translatable
+                                                resourceKey={i18nKey("pinChat.unpinMenuItem")} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if notificationsSupported}
@@ -431,7 +476,10 @@
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("unmuteNotifications")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("unmuteNotifications")} />
+                                            </div>
                                         </MenuItem>
                                     {:else}
                                         <MenuItem on:click={() => toggleMuteNotifications(true)}>
@@ -439,7 +487,10 @@
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <div slot="text">{$_("muteNotifications")}</div>
+                                            <div slot="text">
+                                                <Translatable
+                                                    resourceKey={i18nKey("muteNotifications")} />
+                                            </div>
                                         </MenuItem>
                                     {/if}
                                 {/if}
@@ -449,7 +500,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("unarchiveChat")}</div>
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("unarchiveChat")} />
+                                        </div>
                                     </MenuItem>
                                 {:else}
                                     <MenuItem on:click={archiveChat}>
@@ -457,7 +510,9 @@
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <div slot="text">{$_("archiveChat")}</div>
+                                        <div slot="text">
+                                            <Translatable resourceKey={i18nKey("archiveChat")} />
+                                        </div>
                                     </MenuItem>
                                 {/if}
                                 {#if chatSummary.kind !== "direct_chat" && client.canLeaveGroup(chatSummary.id)}
@@ -467,10 +522,14 @@
                                             color={"var(--menu-warn)"}
                                             slot="icon" />
                                         <div slot="text">
-                                            {interpolateLevel(
-                                                "leaveGroup",
-                                                chatSummary.level,
-                                                true
+                                            {interpolate(
+                                                $_,
+                                                i18nKey(
+                                                    "leaveGroup",
+                                                    undefined,
+                                                    chatSummary.level,
+                                                    true,
+                                                ),
                                             )}
                                         </div>
                                     </MenuItem>
@@ -482,7 +541,9 @@
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("markAllRead")}</div>
+                                    <div slot="text">
+                                        <Translatable resourceKey={i18nKey("markAllRead")} />
+                                    </div>
                                 </MenuItem>
                             </Menu>
                         </div>
@@ -539,7 +600,9 @@
         padding: $sp4;
         margin-bottom: 0;
         cursor: pointer;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         user-select: none;
 
         @include mobile() {
@@ -572,7 +635,9 @@
 
         .menu-icon {
             width: 0;
-            transition: width 200ms ease-in-out, opacity 200ms;
+            transition:
+                width 200ms ease-in-out,
+                opacity 200ms;
             height: 0;
             opacity: 0;
             position: relative;
@@ -644,7 +709,16 @@
             margin-bottom: $sp1;
 
             .chat-name {
-                @include font(medium, normal, fs-100);
+                h4 {
+                    @include font(medium, normal, fs-100);
+                    display: flex;
+                    flex-direction: row;
+                    gap: $sp2;
+                }
+
+                display: flex;
+                align-items: center;
+                gap: $sp2;
 
                 @include ellipsis();
                 flex: auto;

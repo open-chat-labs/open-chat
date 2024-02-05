@@ -12,7 +12,8 @@
     import { getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
     import AccessGateIcon from "../../AccessGateIcon.svelte";
-    import { supportedLanguagesByCode } from "../../../../i18n/i18n";
+    import { i18nKey, supportedLanguagesByCode } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -33,13 +34,13 @@
     function serialiseFlags(flags: number) {
         const f: string[] = [supportedLanguagesByCode[language]?.name];
         if (client.hasModerationFlag(flags, ModerationFlags.Adult)) {
-            f.push(`${$_("communities.adult")}`);
+            f.push("communities.adult");
         }
         if (client.hasModerationFlag(flags, ModerationFlags.Offensive)) {
-            f.push(`${$_("communities.offensive")}`);
+            f.push("communities.offensive");
         }
         if (client.hasModerationFlag(flags, ModerationFlags.UnderReview)) {
-            f.push(`${$_("communities.underReview")}`);
+            f.push("communities.underReview");
         }
         return f;
     }
@@ -79,7 +80,7 @@
                 </div>
                 <div class="footer-row flags">
                     {#each flagsArray as flag}
-                        <div class="flag">{flag}</div>
+                        <div class="flag"><Translatable resourceKey={i18nKey(flag)} /></div>
                     {/each}
                 </div>
             </div>

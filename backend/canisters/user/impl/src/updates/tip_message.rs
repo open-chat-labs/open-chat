@@ -8,6 +8,7 @@ use ic_cdk_macros::update;
 use serde::Serialize;
 use types::{icrc1, CanisterId, Chat, ChatId, CommunityId, EventIndex, PendingCryptoTransaction, TimestampNanos, UserId};
 use user_canister::tip_message::{Response::*, *};
+use user_canister::UserCanisterEvent;
 use utils::consts::MEMO_TIP;
 
 #[update(guard = "caller_is_owner")]
@@ -36,7 +37,7 @@ async fn tip_message(args: Args) -> Response {
 
     match prepare_result {
         PrepareResult::Direct(tip_message_args) => {
-            mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals.unwrap_or(8), state))
+            mutate_state(|state| tip_direct_chat_message(tip_message_args, args.decimals, state))
         }
         PrepareResult::Group(group_id, c2c_args) => {
             use group_canister::c2c_tip_message::Response;
@@ -92,7 +93,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
     } else {
         let now_nanos = state.env.now_nanos();
         match args.chat {
-            Chat::Direct(chat_id) if state.data.direct_chats.has(&chat_id) => Ok((
+            Chat::Direct(chat_id) if state.data.direct_chats.exists(&chat_id) => Ok((
                 PrepareResult::Direct(TipMessageArgs {
                     user_id: my_user_id,
                     recipient: args.recipient,
@@ -105,7 +106,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                 }),
                 now_nanos,
             )),
-            Chat::Group(group_id) if state.data.group_chats.has(&group_id) => Ok((
+            Chat::Group(group_id) if state.data.group_chats.exists(&group_id) => Ok((
                 PrepareResult::Group(
                     group_id,
                     group_canister::c2c_tip_message::Args {
@@ -115,14 +116,14 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
-                        decimals: args.decimals.unwrap_or(8),
+                        decimals: args.decimals,
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },
                 ),
                 now_nanos,
             )),
-            Chat::Channel(community_id, channel_id) if state.data.communities.has(&community_id) => Ok((
+            Chat::Channel(community_id, channel_id) if state.data.communities.exists(&community_id) => Ok((
                 PrepareResult::Channel(
                     community_id,
                     community_canister::c2c_tip_message::Args {
@@ -133,7 +134,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<(PrepareResult, Timestam
                         ledger: args.ledger,
                         token: args.token.clone(),
                         amount: args.amount,
-                        decimals: args.decimals.unwrap_or(8),
+                        decimals: args.decimals,
                         username: state.data.username.value.clone(),
                         display_name: state.data.display_name.value.clone(),
                     },
@@ -149,18 +150,20 @@ fn tip_direct_chat_message(args: TipMessageArgs, decimals: u8, state: &mut Runti
     if let Some(chat) = state.data.direct_chats.get_mut(&args.recipient.into()) {
         match chat.events.tip_message(args.clone(), EventIndex::default()) {
             TipMessageResult::Success => {
-                let c2c_args = user_canister::c2c_tip_message::Args {
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id: args.message_id,
-                    ledger: args.ledger,
-                    token: args.token,
-                    amount: args.amount,
-                    decimals,
-                    username: state.data.username.value.clone(),
-                    display_name: state.data.display_name.value.clone(),
-                    user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
-                };
-                fire_and_forget_c2c_tip_message(args.recipient.into(), &c2c_args, state);
+                state.push_user_canister_event(
+                    args.recipient.into(),
+                    UserCanisterEvent::TipMessage(Box::new(user_canister::c2c_tip_message::Args {
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id: args.message_id,
+                        ledger: args.ledger,
+                        token: args.token,
+                        amount: args.amount,
+                        decimals,
+                        username: state.data.username.value.clone(),
+                        display_name: state.data.display_name.value.clone(),
+                        user_avatar_id: state.data.avatar.value.as_ref().map(|a| a.id),
+                    })),
+                );
                 Success
             }
             TipMessageResult::MessageNotFound => MessageNotFound,

@@ -14,6 +14,8 @@
     import { createEventDispatcher, getContext } from "svelte";
     import type { ChatIdentifier, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let chatId: ChatIdentifier;
     export let messageId: bigint;
@@ -27,13 +29,13 @@
     let busy = false;
     let selectedReasonIndex = -1;
     let reasons = [
-        $_("report.pleaseSelect"),
-        $_("report.threat"),
-        $_("report.child"),
-        $_("report.nonConsensual"),
-        $_("report.selfHarm"),
-        $_("report.violence"),
-        $_("report.scam"),
+        "report.pleaseSelect",
+        "report.threat",
+        "report.child",
+        "report.nonConsensual",
+        "report.selfHarm",
+        "report.violence",
+        "report.scam",
     ];
 
     $: valid = selectedReasonIndex > -1;
@@ -48,9 +50,9 @@
             .reportMessage(chatId, threadRootMessageIndex, messageId, canDelete && deleteMessage)
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("report.success");
+                    toastStore.showSuccessToast(i18nKey("report.success"));
                 } else {
-                    toastStore.showFailureToast("report.failure");
+                    toastStore.showFailureToast(i18nKey("report.failure"));
                 }
             });
     }
@@ -60,14 +62,15 @@
     <ModalContent on:close closeIcon>
         <span class="header" slot="header">
             <Flag size={$iconSize} color={"var(--error)"} />
-            <h1>{$_("report.title")}</h1>
+            <h1><Translatable resourceKey={i18nKey("report.title")} /></h1>
         </span>
         <span slot="body">
             <div class="reason">
-                <Legend label={$_("report.reason")} />
+                <Legend label={i18nKey("report.reason")} />
                 <Select bind:value={selectedReasonIndex}>
                     {#each reasons as reason, i}
-                        <option disabled={i === 0} value={i - 1}>{reason}</option>
+                        <option disabled={i === 0} value={i - 1}
+                            ><Translatable resourceKey={i18nKey(reason)} /></option>
                     {/each}
                 </Select>
             </div>
@@ -75,7 +78,7 @@
                 <div class="delete">
                     <Checkbox
                         id={"delete_message"}
-                        label={$_("report.deleteMessage")}
+                        label={i18nKey("report.deleteMessage")}
                         bind:checked={deleteMessage} />
                 </div>
             {/if}
@@ -92,13 +95,15 @@
                     secondary
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={() => dispatch("close")}>{$_("cancel")}</Button>
+                    on:click={() => dispatch("close")}
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 <Button
                     disabled={busy || !valid}
                     loading={busy}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
-                    on:click={createReport}>{$_("report.menu")}</Button>
+                    on:click={createReport}
+                    ><Translatable resourceKey={i18nKey("report.menu")} /></Button>
             </ButtonGroup>
         </span>
     </ModalContent>

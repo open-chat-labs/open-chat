@@ -2,10 +2,11 @@ use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
 use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
+use chat_events::{MessageContentInternal, MessageReminderCreatedContentInternal};
 use ic_cdk_macros::update;
 use rand::RngCore;
-use types::{FieldTooLongResult, MessageContent, MessageReminderCreatedContent};
-use user_canister::c2c_send_messages::C2CReplyContext;
+use types::FieldTooLongResult;
+use user_canister::c2c_send_messages_v2::C2CReplyContext;
 use user_canister::set_message_reminder_v2::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
@@ -39,7 +40,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
     let reminder_id = state.env.rng().next_u64();
 
     let reminder_created_message_index = openchat_bot::send_message_with_reply(
-        MessageContent::MessageReminderCreated(MessageReminderCreatedContent {
+        MessageContentInternal::MessageReminderCreated(MessageReminderCreatedContentInternal {
             reminder_id,
             remind_at: args.remind_at,
             notes: args.notes.clone(),

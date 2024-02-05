@@ -6,7 +6,6 @@
     import Toast from "../Toast.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
-    import RightPanel from "./RightPanel.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import EditCommunity from "./communities/edit/Edit.svelte";
     import type {
@@ -30,6 +29,7 @@
         ChannelIdentifier,
         UpdatedRules,
         CredentialGate,
+        PaymentGate,
     } from "openchat-client";
     import {
         ChatsUpdated,
@@ -42,10 +42,10 @@
         nullMembership,
         routeForChatIdentifier,
         routeForMessage,
+        UserSuspensionChanged,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
-    import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
     import { pathParams, routeForScope } from "../../routes";
@@ -82,13 +82,17 @@
     import LeftNav from "./nav/LeftNav.svelte";
     import MakeProposalModal from "./MakeProposalModal.svelte";
     import { createCandidateCommunity } from "../../stores/community";
-    import { interpolateLevel } from "../../utils/i18n";
     import Convert from "./communities/Convert.svelte";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import Register from "../register/Register.svelte";
     import LoggingInModal from "./LoggingInModal.svelte";
     import AnonFooter from "./AnonFooter.svelte";
     import OfflineFooter from "../OfflineFooter.svelte";
+    import ApproveJoiningPaymentModal from "./ApproveJoiningPaymentModal.svelte";
+    import RightPanel from "./RightPanelWrapper.svelte";
+    import EditLabel from "../EditLabel.svelte";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import NotFound from "../NotFound.svelte";
 
     type ViewProfileConfig = {
         userId: string;
@@ -127,13 +131,13 @@
         kind: "delete";
         chatId: MultiUserChatIdentifier;
         level: Level;
-        doubleCheck: { challenge: string; response: string };
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     type ConfirmDeleteCommunityEvent = {
         kind: "delete_community";
         communityId: CommunityIdentifier;
-        doubleCheck: { challenge: string; response: string };
+        doubleCheck: { challenge: ResourceKey; response: ResourceKey };
     };
 
     enum ModalType {
@@ -145,11 +149,13 @@
         Wallet,
         GateCheckFailed,
         VerifyCredential,
+        ApproveJoinPayment,
         HallOfFame,
         EditCommunity,
         MakeProposal,
         Registering,
         LoggingIn,
+        NotFound,
     }
 
     let modal = ModalType.None;
@@ -157,6 +163,9 @@
     let joining: MultiUserChat | undefined = undefined;
     let credentialCheck:
         | { group: MultiUserChat; gate: CredentialGate; select: boolean }
+        | undefined = undefined;
+    let joinPaymentDetails:
+        | { group: MultiUserChat; gate: PaymentGate; select: boolean }
         | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
@@ -173,12 +182,11 @@
     $: selectedChatStore = client.selectedChatStore;
     $: selectedChatId = client.selectedChatId;
     $: chatsInitialised = client.chatsInitialised;
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
     $: chatListScope = client.chatListScope;
     $: currentCommunityRules = client.currentCommunityRules;
-    $: globalUnreadCount = client.globalUnreadCount;
     $: communities = client.communities;
     $: selectedMultiUserChat =
         $selectedChatStore?.kind === "group_chat" || $selectedChatStore?.kind === "channel"
@@ -189,7 +197,7 @@
             ? selectedMultiUserChat.subtype?.governanceCanisterId
             : undefined;
     $: nervousSystem = client.tryGetNervousSystem(governanceCanisterId);
-    $: networkStatus = client.networkStatus;
+    $: offlineStore = client.offlineStore;
 
     $: {
         if ($identityState.kind === "registering") {
@@ -202,11 +210,6 @@
             console.log("We are now logged in so we are closing the register modal");
             modal = ModalType.None;
         }
-    }
-
-    $: {
-        const merged = client.mergeCombinedUnreadCounts($globalUnreadCount);
-        document.title = merged.unmuted > 0 ? `OpenChat (${merged.unmuted})` : "OpenChat";
     }
 
     $: {
@@ -236,7 +239,7 @@
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
             if (ev.detail) {
-                toastStore.showFailureToast("errorSendingMessage");
+                toastStore.showFailureToast(i18nKey("errorSendingMessage"));
             }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
@@ -250,7 +253,7 @@
                             chatId: notification.chatId,
                         },
                         notification.messageIndex,
-                        undefined
+                        undefined,
                     );
                 }
 
@@ -258,13 +261,16 @@
             });
         } else if (ev instanceof SelectedChatInvalid) {
             page.replace(routeForScope(client.getDefaultScope()));
+        } else if (ev instanceof UserSuspensionChanged) {
+            // The latest suspension details will be picked up on reload when user_index::current_user is called
+            window.location.reload();
         }
     }
 
     async function newChatSelected(
         chatId: ChatIdentifier,
         messageIndex?: number,
-        threadMessageIndex?: number
+        threadMessageIndex?: number,
     ): Promise<void> {
         let chat = $chatSummariesStore.get(chatId);
 
@@ -276,8 +282,8 @@
                 page.redirect(
                     routeForChatIdentifier(
                         $chatListScope.communityId === undefined ? "group_chat" : "community",
-                        chatId
-                    )
+                        chatId,
+                    ),
                 );
                 return;
             }
@@ -302,23 +308,23 @@
                                         chatId: preview.location,
                                         threadRootMessageIndex: messageIndex,
                                     },
-                                    threadMessageIndex
-                                )
+                                    threadMessageIndex,
+                                ),
                             );
                         } else {
                             page.replace(
                                 routeForMessage(
                                     "community",
                                     { chatId: preview.location },
-                                    messageIndex
-                                )
+                                    messageIndex,
+                                ),
                             );
                         }
                     } else {
                         page.replace(routeForChatIdentifier($chatListScope.kind, preview.location));
                     }
                 } else if (preview.kind === "failure") {
-                    page.replace(routeForScope(client.getDefaultScope()));
+                    modal = ModalType.NotFound;
                     return;
                 }
             }
@@ -343,7 +349,7 @@
     async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
         if (!currentChatMessages && retries < 5) {
             window.requestAnimationFrame(() =>
-                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1)
+                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1),
             );
         } else {
             currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
@@ -416,7 +422,7 @@
                     newChatSelected(
                         pathParams.chatId,
                         pathParams.messageIndex,
-                        pathParams.threadMessageIndex
+                        pathParams.threadMessageIndex,
                     );
                 } else {
                     // if the chat in the url is *the same* as the selected chat
@@ -514,6 +520,7 @@
         candidateCommunity = undefined;
         joining = undefined;
         credentialCheck = undefined;
+        joinPaymentDetails = undefined;
     }
 
     function closeNoAccess() {
@@ -528,23 +535,25 @@
     function unarchiveChat(chatId: ChatIdentifier) {
         client.unarchiveChat(chatId).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("unarchiveChatFailed");
+                toastStore.showFailureToast(i18nKey("unarchiveChatFailed"));
             }
         });
     }
 
-    function getConfirmMessage(confirmActionEvent: ConfirmActionEvent | undefined): string {
-        if (confirmActionEvent === undefined) return "";
+    function getConfirmMessage(
+        confirmActionEvent: ConfirmActionEvent | undefined,
+    ): ResourceKey | undefined {
+        if (confirmActionEvent === undefined) return undefined;
 
         switch (confirmActionEvent.kind) {
             case "leave":
-                return interpolateLevel("confirmLeaveGroup", confirmActionEvent.level, true);
+                return i18nKey("confirmLeaveGroup", undefined, confirmActionEvent.level, true);
             case "leave_community":
-                return $_("communities.leaveMessage");
+                return i18nKey("communities.leaveMessage");
             case "delete_community":
-                return $_("communities.deleteMessage");
+                return i18nKey("communities.deleteMessage");
             case "delete":
-                return interpolateLevel("irreversible", confirmActionEvent.level, true);
+                return i18nKey("irreversible", undefined, confirmActionEvent.level, true);
         }
     }
 
@@ -574,7 +583,7 @@
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.level).then(
                     (_) => {
                         rightPanelHistory.set([]);
-                    }
+                    },
                 );
             default:
                 return Promise.reject();
@@ -589,9 +598,9 @@
         }
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
-                toastStore.showSuccessToast(interpolateLevel("deleteGroupSuccess", level));
+                toastStore.showSuccessToast(i18nKey("deleteGroupSuccess", undefined, level));
             } else {
-                toastStore.showFailureToast(interpolateLevel("deleteGroupFailure", level, true));
+                toastStore.showFailureToast(i18nKey("deleteGroupFailure", undefined, level, true));
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
             }
         });
@@ -602,7 +611,7 @@
 
         client.deleteCommunity(id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("communities.errors.deleteFailed");
+                toastStore.showFailureToast(i18nKey("communities.errors.deleteFailed"));
                 page(`/community/${id.communityId}`);
             }
         });
@@ -615,7 +624,7 @@
 
         client.leaveCommunity(id).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("communities.errors.leaveFailed");
+                toastStore.showFailureToast(i18nKey("communities.errors.leaveFailed"));
                 page(`/community/${id.communityId}`);
             }
         });
@@ -629,10 +638,10 @@
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
-                    toastStore.showFailureToast(interpolateLevel("ownerCantLeave", level, true));
+                    toastStore.showFailureToast(i18nKey("ownerCantLeave", undefined, level, true));
                 } else {
                     toastStore.showFailureToast(
-                        interpolateLevel("failedToLeaveGroup", level, true)
+                        i18nKey("failedToLeaveGroup", undefined, level, true),
                     );
                 }
                 page(routeForChatIdentifier($chatListScope.kind, chatId));
@@ -676,8 +685,8 @@
         });
 
         const chatId = chat?.id ?? { kind: "direct_chat", userId: ev.detail.sender.userId };
-        currentChatDraftMessage.setTextContent(chatId, "");
-        currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
+        draftMessagesStore.setTextContent({ chatId }, "");
+        draftMessagesStore.setReplyingTo({ chatId }, ev.detail);
         if (chat) {
             page(routeForChatIdentifier($chatListScope.kind, chatId));
         } else {
@@ -752,7 +761,7 @@
     }
 
     async function joinGroup(
-        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>
+        ev: CustomEvent<{ group: MultiUserChat; select: boolean }>,
     ): Promise<void> {
         if ($anonUser) {
             client.identityState.set({ kind: "logging_in" });
@@ -770,15 +779,26 @@
         }
     }
 
+    function onJoined() {
+        if (joinPaymentDetails?.select) {
+            page(routeForChatIdentifier($chatListScope.kind, joinPaymentDetails.group.id));
+        }
+        closeModal();
+    }
+
     async function doJoinGroup(
         group: MultiUserChat,
         select: boolean,
-        credential: string | undefined
+        credential: string | undefined,
     ): Promise<void> {
         joining = group;
         if (group.gate.kind === "credential_gate" && credential === undefined) {
             credentialCheck = { group, select, gate: group.gate };
             modal = ModalType.VerifyCredential;
+            return Promise.resolve();
+        } else if (group.gate.kind === "payment_gate") {
+            joinPaymentDetails = { group, select, gate: group.gate };
+            modal = ModalType.ApproveJoinPayment;
             return Promise.resolve();
         } else if (group.kind === "channel") {
             const community = client.getCommunityForChannel(group.id);
@@ -786,19 +806,24 @@
                 credentialCheck = { group, select, gate: community.gate };
                 modal = ModalType.VerifyCredential;
                 return Promise.resolve();
+            } else if (community?.gate.kind === "payment_gate") {
+                joinPaymentDetails = { group, select, gate: community.gate };
+                modal = ModalType.ApproveJoinPayment;
+                return Promise.resolve();
             }
         }
+
         return client
             .joinGroup(group, credential)
             .then((resp) => {
                 if (resp === "blocked") {
-                    toastStore.showFailureToast("youreBlocked");
+                    toastStore.showFailureToast(i18nKey("youreBlocked"));
                     joining = undefined;
                 } else if (resp === "gate_check_failed") {
                     modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
                     toastStore.showFailureToast(
-                        interpolateLevel("joinGroupFailed", group.level, true)
+                        i18nKey("joinGroupFailed", undefined, group.level, true),
                     );
                     joining = undefined;
                 } else if (select) {
@@ -851,11 +876,11 @@
             text += shareUrl;
         }
 
-        currentChatDraftMessage.setTextContent(chatId, text);
+        draftMessagesStore.setTextContent({ chatId }, text);
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>
+        ev: CustomEvent<{ chatId: GroupChatIdentifier; isPublic: boolean; rules: Rules }>,
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", { ...rules, version: 0 });
@@ -871,7 +896,7 @@
                           kind: "group_details",
                       },
                   ]
-                : []
+                : [],
         );
     }
 
@@ -911,7 +936,10 @@
                 inviteUsers: "admin",
                 mentionAllMembers: "member",
                 reactToMessages: "member",
-                messagePermissions: { default: "member" },
+                messagePermissions: {
+                    default: "member",
+                    p2pSwap: "none",
+                },
                 threadPermissions: undefined,
             },
             rules: { ...defaultChatRules(level), newVersion: false },
@@ -955,27 +983,23 @@
         const op = ev.detail.mute ? "muted" : "unmuted";
         client.toggleMuteNotifications(ev.detail.chatId, ev.detail.mute).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("toggleMuteNotificationsFailed", {
-                    values: { operation: $_(op) },
-                });
+                toastStore.showFailureToast(
+                    i18nKey("toggleMuteNotificationsFailed", {
+                        operation: $_(op),
+                    }),
+                );
             }
         });
     }
 
     async function createDirectChat(chatId: DirectChatIdentifier): Promise<boolean> {
         if (!(await client.createDirectChat(chatId))) {
+            modal = ModalType.NotFound;
             return false;
         }
 
         page(routeForChatIdentifier("direct_chat", chatId));
         return true;
-    }
-
-    function closeRightPanel() {
-        if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
-            page.replace(removeQueryStringParam("open"));
-        }
-        rightPanelHistory.set([]);
     }
 
     function createCommunity() {
@@ -1016,7 +1040,7 @@
         chatWith(
             new CustomEvent("chatWith", {
                 detail: { kind: "direct_chat", userId: showProfileCard.userId },
-            })
+            }),
         );
         showProfileCard = undefined;
     }
@@ -1035,7 +1059,7 @@
         on:close={() => (showProfileCard = undefined)} />
 {/if}
 
-<main class:anon={$anonUser} class:offline={$networkStatus === "offline"}>
+<main class:anon={$anonUser} class:offline={$offlineStore}>
     {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
@@ -1088,49 +1112,27 @@
             on:convertGroupToCommunity={convertGroupToCommunity}
             on:createCommunity={createCommunity} />
     {/if}
-    {#if $layoutStore.rightPanel === "inline"}
-        <RightPanel
-            on:goToMessageIndex={goToMessageIndex}
-            on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteGroupUsers={showInviteGroupUsers}
-            on:showGroupMembers={showGroupMembers}
-            on:chatWith={chatWith}
-            on:upgrade={upgrade}
-            on:deleteGroup={triggerConfirm}
-            on:editGroup={editGroup}
-            on:editCommunity={editCommunity}
-            on:deleteCommunity={triggerConfirm}
-            on:newChannel={newChannel}
-            on:groupCreated={groupCreated} />
-    {/if}
+    <RightPanel
+        on:goToMessageIndex={goToMessageIndex}
+        on:replyPrivatelyTo={replyPrivatelyTo}
+        on:showInviteGroupUsers={showInviteGroupUsers}
+        on:showGroupMembers={showGroupMembers}
+        on:chatWith={chatWith}
+        on:upgrade={upgrade}
+        on:deleteGroup={triggerConfirm}
+        on:editGroup={editGroup}
+        on:editCommunity={editCommunity}
+        on:deleteCommunity={triggerConfirm}
+        on:newChannel={newChannel}
+        on:groupCreated={groupCreated} />
 </main>
 
 {#if $anonUser}
     <AnonFooter />
 {/if}
 
-{#if $networkStatus === "offline"}
+{#if $offlineStore}
     <OfflineFooter />
-{/if}
-
-{#if $layoutStore.rightPanel === "floating"}
-    <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
-        <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
-            <RightPanel
-                on:goToMessageIndex={goToMessageIndex}
-                on:replyPrivatelyTo={replyPrivatelyTo}
-                on:showInviteGroupUsers={showInviteGroupUsers}
-                on:showGroupMembers={showGroupMembers}
-                on:chatWith={chatWith}
-                on:upgrade={upgrade}
-                on:deleteGroup={triggerConfirm}
-                on:editGroup={editGroup}
-                on:editCommunity={editCommunity}
-                on:deleteCommunity={triggerConfirm}
-                on:newChannel={newChannel}
-                on:groupCreated={groupCreated} />
-        </div>
-    </Overlay>
 {/if}
 
 {#if confirmActionEvent !== undefined}
@@ -1153,6 +1155,7 @@
     <Overlay
         dismissible={modal !== ModalType.SelectChat &&
             modal !== ModalType.Wallet &&
+            modal !== ModalType.NotFound &&
             modal !== ModalType.MakeProposal}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
@@ -1162,6 +1165,8 @@
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NoAccess}
             <NoAccess on:close={closeNoAccess} />
+        {:else if modal === ModalType.NotFound}
+            <NotFound on:close={closeNoAccess} />
         {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.VerifyCredential && credentialCheck !== undefined}
@@ -1170,6 +1175,12 @@
                 on:close={closeModal}
                 on:credentialReceived={credentialReceived}
                 gate={credentialCheck.gate} />
+        {:else if modal === ModalType.ApproveJoinPayment && joinPaymentDetails !== undefined}
+            <ApproveJoiningPaymentModal
+                on:close={closeModal}
+                on:joined={onJoined}
+                group={joinPaymentDetails.group}
+                gate={joinPaymentDetails.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:upgrade={upgrade} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
@@ -1209,6 +1220,8 @@
 
 <Convert bind:group={convertGroup} />
 
+<EditLabel />
+
 <svelte:body on:profile-clicked={profileLinkClicked} />
 
 <style lang="scss">
@@ -1228,23 +1241,6 @@
         }
         &.offline {
             margin-bottom: toRem(40);
-        }
-    }
-
-    .right-wrapper {
-        position: absolute;
-        top: 0;
-        &:not(.rtl) {
-            right: 0;
-        }
-        &.rtl {
-            left: 0;
-        }
-        @include z-index("right-panel");
-        @include box-shadow(3);
-        @include mobile() {
-            width: 100%;
-            height: 100%;
         }
     }
 </style>

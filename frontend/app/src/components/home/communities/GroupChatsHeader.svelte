@@ -1,9 +1,10 @@
 <script lang="ts">
     import ForumOutline from "svelte-material-icons/ForumOutline.svelte";
-    import { _ } from "svelte-i18n";
     import SectionHeader from "../../SectionHeader.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import GroupChatsMenu from "./GroupChatsMenu.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 </script>
 
 <SectionHeader slim border={false}>
@@ -12,7 +13,9 @@
             <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="details">
-            <h4 class="name">{$_("communities.groupChats")}</h4>
+            <h4 class="name">
+                <Translatable resourceKey={i18nKey("communities.groupChats")} />
+            </h4>
         </div>
     </div>
     <span class="menu">

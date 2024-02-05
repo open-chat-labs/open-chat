@@ -20,6 +20,7 @@ generate_update_call!(remove_platform_moderator);
 generate_update_call!(set_display_name);
 generate_update_call!(set_username);
 generate_update_call!(suspend_user);
+generate_update_call!(update_diamond_membership_subscription);
 generate_update_call!(unsuspend_user);
 generate_update_call!(upgrade_local_user_index_canister_wasm);
 generate_update_call!(upgrade_user_canister_wasm);
@@ -28,7 +29,8 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, UserId, UserSummary,
+        CanisterId, CanisterWasm, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipFees,
+        DiamondMembershipPlanDuration, UserId, UserSummary,
     };
     use user_index_canister::users_v2::UserGroup;
 
@@ -76,16 +78,19 @@ pub mod happy_path {
         sender: Principal,
         canister_id: CanisterId,
         duration: DiamondMembershipPlanDuration,
+        pay_in_chat: bool,
         recurring: bool,
     ) -> DiamondMembershipDetails {
+        let fees = DiamondMembershipFees::default();
+
         let response = super::pay_for_diamond_membership(
             env,
             sender,
             canister_id,
             &user_index_canister::pay_for_diamond_membership::Args {
                 duration,
-                token: Cryptocurrency::InternetComputer,
-                expected_price_e8s: duration.icp_price_e8s(),
+                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
+                expected_price_e8s: if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) },
                 recurring,
             },
         );
@@ -103,6 +108,7 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::users_v2::Args {
                 user_groups: vec![UserGroup { users, updated_since: 0 }],
+                users_suspended_since: None,
             },
         );
 

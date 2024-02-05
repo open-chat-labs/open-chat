@@ -8,7 +8,7 @@
         "build:prod": "npm ci && dotenv -- turbo run build:prod --cache-dir .turbo",
         "build:prod_test": "npm ci && dotenv -- turbo run build:prod_test --cache-dir .turbo",
         "build:testnet": "npm ci && dotenv -- turbo run build:testnet --cache-dir .turbo",
-        "deploy:prod_test": "npm ci && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
+        "deploy:prod_test": "npm i && dotenv -- turbo run deploy:prod_test --cache-dir .turbo",
         "deploy:prod": "npm ci && dotenv -- turbo run deploy:prod --cache-dir .turbo",
         "deploy:testnet": "npm ci && dotenv -- turbo run deploy:testnet --cache-dir .turbo",
         "dev": "npm i && dotenv -- turbo run dev --cache-dir .turbo",
@@ -19,7 +19,7 @@
         "app",
         "openchat-agent",
         "openchat-client",
-        "openchat-push",
+        "openchat-service-worker",
         "openchat-shared",
         "openchat-worker"
     ],
@@ -57,5 +57,12 @@
         "rollup-styles": "^1.5.0",
         "ts-jest": "^29.1.1",
         "turbo": "^1.10.13"
+    },
+    "dependencies": {
+        "workbox-cacheable-response": "^7.0.0",
+        "workbox-expiration": "^7.0.0",
+        "workbox-recipes": "^7.0.0",
+        "workbox-routing": "^7.0.0",
+        "workbox-strategies": "^7.0.0"
     }
 }

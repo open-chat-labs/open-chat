@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type {
         AttachmentContent,
@@ -47,7 +46,7 @@
 
     $: canSendAny = client.canSendMessage(
         messageContext.chatId,
-        messageContext.threadRootMessageIndex !== undefined ? "thread" : "message"
+        messageContext.threadRootMessageIndex !== undefined ? "thread" : "message",
     );
 
     let showAcceptRulesModal = false;
@@ -71,7 +70,7 @@
             textContent: string | undefined;
             attachment: AttachmentContent | undefined;
             mentioned: User[];
-        }>
+        }>,
     ) {
         const { textContent, attachment, mentioned } = ev.detail;
         if (client.rulesNeedAccepting()) {
@@ -118,7 +117,7 @@
             accepted: boolean;
             chatRulesVersion: number | undefined;
             communityRulesVersion: number | undefined;
-        }>
+        }>,
     ) {
         if (sendMessageContext === undefined) {
             showAcceptRulesModal = false;
@@ -136,7 +135,7 @@
                         sendMessageContext.attachment,
                         sendMessageContext.mentioned,
                         chatRulesVersion,
-                        communityRulesVersion
+                        communityRulesVersion,
                     );
                     break;
                 }
@@ -148,7 +147,7 @@
                         sendMessageContext.mentioned,
                         false,
                         chatRulesVersion,
-                        communityRulesVersion
+                        communityRulesVersion,
                     );
                     break;
 
@@ -157,7 +156,7 @@
                         messageContext,
                         sendMessageContext.msg,
                         chatRulesVersion,
-                        communityRulesVersion
+                        communityRulesVersion,
                     );
                     break;
                 }
@@ -166,7 +165,7 @@
                         messageContext,
                         sendMessageContext.event,
                         chatRulesVersion,
-                        communityRulesVersion
+                        communityRulesVersion,
                     );
                     break;
                 }

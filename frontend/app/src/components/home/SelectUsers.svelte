@@ -2,8 +2,9 @@
     import FindUser from "../FindUser.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import UserPill from "../UserPill.svelte";
-    import { _ } from "svelte-i18n";
     import type { UserSummary } from "openchat-client";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let mode: "add" | "edit";
     export let selectedUsers: UserSummary[];
@@ -21,7 +22,7 @@
     </div>
 {/if}
 {#if error !== undefined}
-    <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
+    <ErrorMessage><Translatable resourceKey={i18nKey("errorSearchingForUser")} /></ErrorMessage>
 {/if}
 
 <div class="find-user">

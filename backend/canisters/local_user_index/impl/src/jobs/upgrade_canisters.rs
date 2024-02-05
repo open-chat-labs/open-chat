@@ -6,7 +6,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId, Cycles, CyclesTopUp, UserId};
 use utils::canister::{install, FailedUpgrade};
-use utils::consts::MIN_CYCLES_BALANCE;
+use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<user_canister::post_upgrade::Args>;
 
@@ -70,7 +70,7 @@ fn initialize_upgrade(canister_id: CanisterId, force: bool, state: &mut RuntimeS
     let user = state.data.local_users.get_mut(&user_id)?;
     let current_wasm_version = user.wasm_version;
     let user_canister_wasm = &state.data.user_canister_wasm_for_upgrades;
-    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
     if current_wasm_version == user_canister_wasm.version && !force {
         return None;

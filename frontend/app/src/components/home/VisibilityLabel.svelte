@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let isPublic: boolean;
 </script>
@@ -7,7 +8,7 @@
 <div class="visibility">
     <div class={`img ${isPublic ? "public" : "private"}`} />
     <div class="name">
-        {isPublic ? $_("access.public") : $_("access.private")}
+        <Translatable resourceKey={i18nKey(isPublic ? "access.public" : "access.private")} />
     </div>
 </div>
 

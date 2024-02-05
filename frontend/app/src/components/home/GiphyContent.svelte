@@ -6,8 +6,9 @@
     import ContentCaption from "./ContentCaption.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Button from "../Button.svelte";
-    import { _ } from "svelte-i18n";
     import { lowBandwidth } from "../../stores/settings";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let content: GiphyContent;
     export let fill: boolean;
@@ -42,7 +43,8 @@
             <div class="mask">
                 {#if !reply}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}>{$_("loadGif")}</Button>
+                        <Button on:click={() => (hidden = false)}
+                            ><Translatable resourceKey={i18nKey("loadGif")} /></Button>
                     </div>
                 {/if}
             </div>

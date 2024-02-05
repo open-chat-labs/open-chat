@@ -11,14 +11,9 @@ pub struct Args {
     pub ledger: CanisterId,
     pub token: Cryptocurrency,
     pub amount: u128,
-    #[serde(default = "eight")]
     pub decimals: u8,
     pub username: String,
     pub display_name: Option<String>,
-}
-
-fn eight() -> u8 {
-    8
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

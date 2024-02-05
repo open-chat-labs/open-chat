@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Extract the args
 GOVERNANCE_CANISTER_ID=$1

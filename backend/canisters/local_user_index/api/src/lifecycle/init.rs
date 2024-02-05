@@ -12,9 +12,11 @@ pub struct Args {
 
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub test_mode: bool,
 }

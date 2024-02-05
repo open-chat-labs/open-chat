@@ -1,14 +1,15 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { Confetti } from "svelte-confetti";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
-    export let para = $_("upgrade.congratulations");
+    export let para = i18nKey("upgrade.congratulations");
 </script>
 
 <div class="confirmed">
-    <h1>{$_("congratulations")}</h1>
+    <h1><Translatable resourceKey={i18nKey("congratulations")} /></h1>
     <p class="tada">🎉</p>
-    <p class="para">{para}</p>
+    <p class="para"><Translatable resourceKey={para} /></p>
     <div class="tada">
         <div class="confetti">
             <Confetti />

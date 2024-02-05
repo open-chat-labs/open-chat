@@ -78,6 +78,7 @@ const defaultGroupChat: GroupChatSummary = {
             },
         ],
     },
+    localUserIndex: "",
 };
 
 function createUser(userId: string, username: string): UserSummary {
@@ -88,7 +89,7 @@ function createUser(userId: string, username: string): UserSummary {
         displayName: undefined,
         updated: BigInt(0),
         suspended: false,
-        diamond: false,
+        diamondStatus: "inactive",
     };
 }
 

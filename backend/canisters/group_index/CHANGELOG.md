@@ -5,6 +5,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.1025](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1025-group_index)] - 2024-01-25
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Rename `service_principals` to `governance_principals` in init args ([#5251](https://github.com/open-chat-labs/open-chat/pull/5251))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1010](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1010-group_index)] - 2024-01-18
+
+### Added
+
+- Expose metrics of access gates on public groups and communities ([#5118](https://github.com/open-chat-labs/open-chat/pull/5118))
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+
+### Changed
+
+- Add `subtype` to group search results ([#5084](https://github.com/open-chat-labs/open-chat/pull/5084))
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+
+## [[2.0.979](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.979-group_index)] - 2023-12-19
+
+### Changed
+
+- Add `escrow_canister_id` to LocalGroupIndex canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.951](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.951-group_index)] - 2023-11-28
+
+### Changed
+
+- In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+
+## [[2.0.942](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.942-group_index)] - 2023-11-24
+
 ### Changed
 
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))

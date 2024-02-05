@@ -3,12 +3,14 @@
     import { getContext } from "svelte";
     import { now } from "../../../stores/time";
     import { _, locale } from "svelte-i18n";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
     export let extendBy: DiamondMembershipDuration | undefined = undefined;
 
-    $: diamondMembership = client.diamondMembership;
+    $: diamondStatus = client.diamondStatus;
     $: extendByMs = durationToMs(extendBy);
 
     let expiresIn: string | undefined = undefined;
@@ -16,29 +18,33 @@
     let extendTo: string | undefined = undefined;
 
     $: {
-        if ($diamondMembership !== undefined) {
-            const expiresAtMs = Number($diamondMembership.expiresAt);
+        if ($diamondStatus.kind === "active") {
             expiresIn = client.diamondExpiresIn($now, $locale);
-            expiresAt = client.toDateString(new Date(expiresAtMs));
 
-            if (extendByMs !== undefined) {
-                extendTo = client.toDateString(new Date(expiresAtMs + extendByMs));
+            if (extendBy !== "lifetime") {
+                const expiresAtMs = Number($diamondStatus.expiresAt);
+                expiresAt = client.toDateString(new Date(expiresAtMs));
+                if (extendByMs !== undefined) {
+                    extendTo = client.toDateString(new Date(expiresAtMs + extendByMs));
+                }
+            } else {
+                extendTo = $_("upgrade.lifetime");
             }
         }
     }
 
     function durationToMs(duration: DiamondMembershipDuration | undefined): number | undefined {
-        if (duration !== undefined) {
+        if (duration !== undefined && duration !== "lifetime") {
             return client.diamondDurationToMs(duration);
         }
         return undefined;
     }
 </script>
 
-{#if $diamondMembership !== undefined}
+{#if $diamondStatus.kind !== "inactive"}
     <p class="expiry">
         <span class="msg">
-            {$_("upgrade.expiryMessage", { values: { relative: expiresIn } })}
+            <Translatable resourceKey={i18nKey("upgrade.expiryMessage", { relative: expiresIn })} />
         </span>
         <span class="date">
             ({expiresAt}).
@@ -46,10 +52,10 @@
 
         {#if extendTo !== undefined}
             <span class="msg">
-                {$_("upgrade.extendTo", { values: { date: extendTo } })}
+                {$_("upgrade.extendTo")}
             </span>
             <span class="date">
-                {extendTo}
+                {extendTo}.
             </span>
         {/if}
     </p>

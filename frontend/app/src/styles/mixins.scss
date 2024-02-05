@@ -382,19 +382,19 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
 
 @mixin font-family($weight: book) {
     @if $weight == book {
-        font-family: "Roboto", sans-serif;
+        font-family: var(--font);
     }
 
     @if $weight == light {
-        font-family: "Roboto", sans-serif;
+        font-family: var(--font);
     }
 
     @if $weight == medium {
-        font-family: "Manrope", sans-serif;
+        font-family: var(--font-bold);
     }
 
     @if $weight == bold {
-        font-family: "Manrope", sans-serif;
+        font-family: var(--font-bold);
     }
 }
 
@@ -490,14 +490,6 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     white-space: $whitespace;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-@mixin diamond() {
-    &::after {
-        content: "💎";
-        margin-inline-start: 5px;
-        @include font-size(fs-80);
-    }
 }
 
 @mixin bullet_list() {

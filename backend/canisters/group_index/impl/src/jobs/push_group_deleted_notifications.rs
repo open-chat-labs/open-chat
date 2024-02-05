@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
@@ -14,9 +14,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && state.data.deleted_groups.notifications_pending() > 0 {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'push_group_deleted_notifications' job started");
         true
     } else {
         false
@@ -24,13 +23,14 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
+    trace!("'push_group_deleted_notifications' job running");
+    TIMER_ID.set(None);
+
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
             ic_cdk::spawn(push_notifications(batch));
+            read_state(start_job_if_required);
         }
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'push_group_deleted_notifications' job stopped");
     }
 }
 
@@ -71,6 +71,6 @@ async fn push_notification(user_id: UserId, deleted_group: DeletedGroupInfoInter
                 .mark_notification_failed(deleted_group.id, user_id, retry);
 
             start_job_if_required(state);
-        })
+        });
     }
 }

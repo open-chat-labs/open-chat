@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageIndex, UserId};
+use types::{CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, MessageContent, MessageIndex, UserId};
 
 mod lifecycle;
 mod queries;
@@ -24,7 +24,6 @@ pub struct UserRegistered {
     pub principal: Principal,
     pub user_id: UserId,
     pub username: String,
-    pub display_name: Option<String>,
     pub referred_by: Option<UserId>,
 }
 
@@ -32,6 +31,7 @@ pub struct UserRegistered {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
@@ -39,6 +39,7 @@ pub struct UserJoinedGroup {
 pub struct UserJoinedCommunityOrChannel {
     pub user_id: UserId,
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
 }
 

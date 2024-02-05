@@ -17,6 +17,7 @@ generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_invites);
 generate_update_call!(change_role);
+generate_update_call!(claim_prize);
 generate_update_call!(create_channel);
 generate_update_call!(create_user_group);
 generate_update_call!(delete_messages);
@@ -41,7 +42,7 @@ pub mod happy_path {
     use candid::Principal;
     use pocket_ic::PocketIc;
     use types::{
-        ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
+        AccessGate, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary,
         CommunityCanisterCommunitySummaryUpdates, CommunityId, CommunityRole, EventIndex, EventsResponse,
         MessageContentInitial, MessageId, MessageIndex, Rules, TextContent, TimestampMillis, UserId,
     };
@@ -68,6 +69,38 @@ pub mod happy_path {
                 permissions_v2: None,
                 events_ttl: None,
                 gate: None,
+            },
+        );
+
+        match response {
+            community_canister::create_channel::Response::Success(result) => result.channel_id,
+            response => panic!("'create_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn create_gated_channel(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        is_public: bool,
+        name: String,
+        gate: AccessGate,
+    ) -> ChannelId {
+        let response = super::create_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::create_channel::Args {
+                is_public,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                rules: Rules::default(),
+                subtype: None,
+                avatar: None,
+                history_visible_to_new_joiners: is_public,
+                permissions_v2: None,
+                events_ttl: None,
+                gate: Some(gate),
             },
         );
 
@@ -115,6 +148,7 @@ pub mod happy_path {
                 forwarding: false,
                 community_rules_accepted: None,
                 channel_rules_accepted: None,
+                message_filter_failed: None,
             },
         );
 
@@ -189,6 +223,38 @@ pub mod happy_path {
         match response {
             community_canister::create_user_group::Response::Success(r) => r.user_group_id,
             response => panic!("'create_user_group' error: {response:?}"),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn events(
+        env: &PocketIc,
+        sender: &User,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> EventsResponse {
+        let response = super::events(
+            env,
+            sender.principal,
+            community_id.into(),
+            &community_canister::events::Args {
+                channel_id,
+                thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_known_update: None,
+            },
+        );
+
+        match response {
+            community_canister::events_by_index::Response::Success(result) => result,
+            response => panic!("'events_by_index' error: {response:?}"),
         }
     }
 
@@ -328,6 +394,26 @@ pub mod happy_path {
         match response {
             community_canister::cancel_invites::Response::Success => {}
             response => panic!("'cancel_invites' error: {response:?}"),
+        }
+    }
+
+    pub fn claim_prize(
+        env: &mut PocketIc,
+        sender: Principal,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        message_id: MessageId,
+    ) {
+        let response = super::claim_prize(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::claim_prize::Args { channel_id, message_id },
+        );
+
+        match response {
+            community_canister::claim_prize::Response::Success => {}
+            response => panic!("'claim_prize' error: {response:?}"),
         }
     }
 }

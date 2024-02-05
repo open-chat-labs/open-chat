@@ -10,9 +10,11 @@ mod macros;
 
 pub mod community;
 pub mod cycles_dispenser;
+pub mod escrow;
 pub mod group;
 pub mod group_index;
 pub mod icrc1;
+pub mod identity;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -32,12 +34,8 @@ pub fn create_canister(env: &mut PocketIc, controller: Principal) -> CanisterId 
 }
 
 pub fn create_canister_with_id(env: &mut PocketIc, controller: Principal, canister_id: &str) -> CanisterId {
-    let canister_id = env
-        .create_canister_with_id(
-            Some(controller),
-            None,
-            Principal::from_text(canister_id).expect("Invalid canister ID"),
-        )
+    let canister_id = canister_id.try_into().expect("Invalid canister ID");
+    env.create_canister_with_id(Some(controller), None, canister_id)
         .expect("Create canister with ID failed");
     env.add_cycles(canister_id, INIT_CYCLES_BALANCE);
     canister_id
@@ -94,44 +92,20 @@ pub fn execute_update_no_response<P: CandidType>(
 
 pub fn register_diamond_user(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> User {
     let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
-
-    icrc1::happy_path::transfer(
-        env,
-        controller,
-        canister_ids.icp_ledger,
-        user.user_id.into(),
-        10_000_000_000u64,
-    );
-
-    user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
-        true,
-    );
-
-    tick_many(env, 3);
-
+    upgrade_user(&user, env, canister_ids, controller, DiamondMembershipPlanDuration::OneMonth);
     user
 }
 
-pub fn upgrade_user(user: &User, env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) {
-    icrc1::happy_path::transfer(
-        env,
-        controller,
-        canister_ids.icp_ledger,
-        user.user_id.into(),
-        1_000_000_000u64,
-    );
+pub fn upgrade_user(
+    user: &User,
+    env: &mut PocketIc,
+    canister_ids: &CanisterIds,
+    controller: Principal,
+    duration: DiamondMembershipPlanDuration,
+) {
+    icrc1::happy_path::transfer(env, controller, canister_ids.icp_ledger, user.user_id, 1_000_000_000);
 
-    user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
-        true,
-    );
+    user_index::happy_path::pay_for_diamond_membership(env, user.principal, canister_ids.user_index, duration, false, true);
 
     tick_many(env, 4);
 }
@@ -140,16 +114,5 @@ fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),
         WasmResult::Reject(error) => panic!("{error}"),
-    }
-}
-
-#[derive(CandidType)]
-struct StartStopArgs {
-    canister_id: CanisterId,
-}
-
-impl StartStopArgs {
-    fn new(canister_id: CanisterId) -> StartStopArgs {
-        StartStopArgs { canister_id }
     }
 }

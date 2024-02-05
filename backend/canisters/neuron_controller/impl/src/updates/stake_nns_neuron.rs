@@ -36,10 +36,10 @@ async fn stake_nns_neuron(_args: Args) -> Response {
                 owner: nns_governance_canister_id,
                 subaccount: Some(subaccount),
             },
-            fee: Some(10_000.into()),
+            fee: Some(10_000u32.into()),
             created_at_time: None,
             memo: Some(nonce.into()),
-            amount: 100_000_000.into(), // 1 ICP
+            amount: 100_000_000u32.into(), // 1 ICP
         },
     )
     .await

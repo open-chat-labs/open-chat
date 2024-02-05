@@ -9,6 +9,7 @@ import {
     anonymousUser,
 } from "openchat-shared";
 import { derived, writable } from "svelte/store";
+import { createSetStore } from "./setStore";
 
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
@@ -22,7 +23,7 @@ export const openChatBotUser: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
-    diamond: false,
+    diamondStatus: "inactive",
 };
 
 export const anonymousUserSummary: UserSummary = {
@@ -33,7 +34,7 @@ export const anonymousUserSummary: UserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: ANON_AVATAR_URL,
-    diamond: false,
+    diamondStatus: "inactive",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -49,7 +50,7 @@ export function proposalsBotUser(userId: string): UserSummary {
         updated: BigInt(0),
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
-        diamond: false,
+        diamondStatus: "inactive",
     };
 }
 
@@ -63,6 +64,8 @@ const allUsers = derived([specialUsers, normalUsers], ([$specialUsers, $normalUs
     }, $normalUsers);
 });
 
+export const suspendedUsers = createSetStore(writable(new Set<string>()));
+
 export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup {
     lookup[user.userId] = { ...user };
     return lookup;
@@ -70,18 +73,30 @@ export function overwriteUser(lookup: UserLookup, user: UserSummary): UserLookup
 
 export const userStore = {
     subscribe: allUsers.subscribe,
-    set: (users: UserLookup): void => normalUsers.set(users),
+    set: (users: UserLookup): void => {
+        normalUsers.set(users);
+        const [suspended, _] = partitionSuspendedUsers(Object.values(users));
+        suspendedUsers.set(new Set(suspended));
+    },
     add: (user: UserSummary): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
             return overwriteUser(clone, user);
         });
+        if (user.suspended) {
+            suspendedUsers.add(user.userId);
+        } else {
+            suspendedUsers.delete(user.userId);
+        }
     },
     addMany: (newUsers: UserSummary[]): void => {
         normalUsers.update((users) => {
             const clone = { ...users };
             return newUsers.reduce((lookup, user) => overwriteUser(lookup, user), clone);
         });
+        const [suspended, notSuspended] = partitionSuspendedUsers(newUsers);
+        suspendedUsers.addMany(suspended);
+        suspendedUsers.deleteMany(notSuspended);
     },
     setUpdated: (userIds: string[], timestamp: bigint): void => {
         normalUsers.update((users) => {
@@ -97,6 +112,9 @@ export const userStore = {
 };
 
 export const currentUser = writable<CreatedUser>(anonymousUser());
+
+export const currentUserIdStore = derived(currentUser, ($currentUser) => $currentUser.userId);
+
 export const anonUser = derived(
     currentUser,
     ($currentUser) => $currentUser.userId === ANON_USER_ID,
@@ -109,3 +127,24 @@ export const platformModerator = derived(
     currentUser,
     ($currentUser) => $currentUser.isPlatformModerator,
 );
+
+export const platformOperator = derived(currentUser, ($currentUser) => {
+    if (process.env.NODE_ENV === "production") {
+        return $currentUser.isPlatformOperator;
+    } else {
+        return true;
+    }
+});
+
+function partitionSuspendedUsers(users: UserSummary[]): [string[], string[]] {
+    const suspended = [];
+    const notSuspended = [];
+    for (const user of users) {
+        if (user.suspended) {
+            suspended.push(user.userId);
+        } else {
+            notSuspended.push(user.userId);
+        }
+    }
+    return [suspended, notSuspended];
+}

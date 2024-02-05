@@ -1,12 +1,10 @@
 import type {
     ApiEventsResponse,
-    ApiDirectChatEventWrapper,
     ApiSendMessageResponse,
     ApiBlockUserResponse,
     ApiUnblockUserResponse,
     ApiMarkReadResponse,
     ApiSetAvatarResponse,
-    ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
     ApiSearchDirectChatResponse,
@@ -22,7 +20,6 @@ import type {
     ApiPinChatResponse,
     ApiUnpinChatResponse,
     ApiThreadSyncDetails,
-    ApiMigrateUserPrincipalResponse,
     ApiDirectChatSummary,
     ApiGroupChatSummary,
     ApiUserCanisterGroupChatSummary,
@@ -61,11 +58,13 @@ import type {
     ApiSavedCryptoAccountsResponse,
     ApiSaveCryptoAccountResponse,
     ApiSubmitProposalResponse,
+    ApiSwapTokensResponse,
+    ApiTokenSwapStatusResponse,
+    ApiApproveTransferResponse,
 } from "./candid/idl";
 import type {
     EventsResponse,
-    EventWrapper,
-    DirectChatEvent,
+    ChatEvent,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -88,7 +87,6 @@ import type {
     PublicProfile,
     ArchiveChatResponse,
     MessageMatch,
-    MigrateUserPrincipalResponse,
     PinChatResponse,
     SearchDirectChatResponse,
     SetBioResponse,
@@ -122,6 +120,10 @@ import type {
     CandidateProposal,
     CandidateProposalAction,
     SubmitProposalResponse,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    Result,
+    ApproveTransferResponse,
 } from "openchat-shared";
 import { nullMembership, CommonResponses, UnsupportedValueError } from "openchat-shared";
 import {
@@ -142,8 +144,7 @@ import {
     messageContent,
     apiOptional,
     messageEvent,
-    expiredEventsRange,
-    expiredMessagesRange,
+    eventsSuccessResponse,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
@@ -338,7 +339,7 @@ export function archiveChatResponse(candid: ApiArchiveUnarchiveChatsResponse): A
 export function sendMessageWithTransferToChannelResponse(
     candid: ApiSendMessageWithTransferToChannelResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -346,8 +347,8 @@ export function sendMessageWithTransferToChannelResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToChannel failed with", candid);
@@ -358,7 +359,7 @@ export function sendMessageWithTransferToChannelResponse(
 export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
-    recipient: string,
+    recipient: string | undefined,
 ): SendMessageResponse {
     if ("Success" in candid) {
         return {
@@ -366,8 +367,8 @@ export function sendMessageWithTransferToGroupResponse(
             timestamp: candid.Success.timestamp,
             messageIndex: candid.Success.message_index,
             eventIndex: candid.Success.event_index,
-            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient),
             expiresAt: optional(candid.Success.expires_at, Number),
+            transfer: completedCryptoTransfer(candid.Success.transfer, sender, recipient ?? ""),
         };
     } else {
         console.warn("SendMessageWithTransferToGroup failed with", candid);
@@ -435,8 +436,17 @@ export function sendMessageResponse(
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
     }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("P2PSwapSetUpFailed" in candid) {
+        return { kind: "p2p_swap_setup_failed", text: candid.P2PSwapSetUpFailed };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
+    }
+    if ("DuplicateMessageId" in candid) {
+        return { kind: "duplicate_message_id" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
 }
@@ -459,16 +469,11 @@ export async function getEventsResponse(
     candid: ApiEventsResponse,
     chatId: DirectChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<DirectChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.events.map(event),
-            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return eventsSuccessResponse(candid.Success);
     }
     if ("ChatNotFound" in candid) {
         return "events_failed";
@@ -482,36 +487,6 @@ export async function getEventsResponse(
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
-}
-
-function event(candid: ApiDirectChatEventWrapper): EventWrapper<DirectChatEvent> {
-    return {
-        event: directChatEvent(candid.event),
-        index: candid.index,
-        timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, Number),
-    };
-}
-
-function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
-    if ("Message" in candid) {
-        return message(candid.Message);
-    }
-
-    if ("DirectChatCreated" in candid) {
-        return {
-            kind: "direct_chat_created",
-        };
-    }
-
-    if ("Empty" in candid) {
-        return {
-            kind: "empty",
-        };
-    }
-
-    // todo - we know there are other event types that we are not dealing with yet
-    throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
 function cachedGroupChatSummaries(candid: ApiCachedGroupChatSummaries): CachedGroupChatSummaries {
@@ -573,6 +548,7 @@ function userCanisterCommunitySummary(
             channelId: p.toString(),
         })),
         archived: candid.archived,
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -617,6 +593,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
             avatarId: optional(result.avatar_id, identity),
             directChats: directChatsInitial(candid.Success.direct_chats),
             timestamp: result.timestamp,
+            suspended: result.suspended,
         };
     }
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -714,6 +691,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             groupChats: groupChatsUpdates(candid.Success.group_chats),
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
             directChats: directChatsUpdates(candid.Success.direct_chats),
+            suspended: optional(candid.Success.suspended, identity),
         };
     }
 
@@ -741,6 +719,7 @@ function userCanisterGroupSummary(
         ),
         archived: summary.archived,
         dateReadPinned: optional(summary.date_read_pinned, identity),
+        localUserIndex: summary.local_user_index_canister_id.toString(),
     };
 }
 
@@ -858,6 +837,7 @@ function groupChatSummary(candid: ApiGroupChatSummary): GroupChatSummary {
             archived: candid.archived,
             rulesAccepted: candid.rules_accepted,
         },
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -976,20 +956,6 @@ export function withdrawCryptoResponse(
         }
     }
     throw new Error("Unexpected ApiWithdrawCryptocurrencyResponse type received");
-}
-
-export function migrateUserPrincipal(
-    candid: ApiMigrateUserPrincipalResponse,
-): MigrateUserPrincipalResponse {
-    if ("Success" in candid) return "success";
-    if ("MigrationNotInitialized" in candid) return "migration_not_initialized";
-    if ("MigrationAlreadyInProgress" in candid) return "migration_already_in_progress";
-    if ("PrincipalAlreadyInUse" in candid) return "principal_already_in_use";
-    if ("InternalError" in candid) return "internal_error";
-    throw new UnsupportedValueError(
-        "Unexpected ApiMigrateUserPrincipalResponse type received",
-        candid,
-    );
 }
 
 function formatIcrc1Account(candid: ApiIcrc1Account): string {
@@ -1124,4 +1090,90 @@ export function submitProposalResponse(candid: ApiSubmitProposalResponse): Submi
 
 export function reportMessageResponse(candid: ReportMessageResponse): boolean {
     return "Success" in candid || "AlreadyReported" in candid;
+}
+
+export function swapTokensResponse(candid: ApiSwapTokensResponse): SwapTokensResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            amountOut: candid.Success.amount_out,
+        };
+    }
+    if ("SwapFailed" in candid) {
+        return {
+            kind: "swap_failed",
+        };
+    }
+    if ("InternalError" in candid) {
+        return {
+            kind: "internal_error",
+            error: candid.InternalError,
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiSwapTokensResponse type received", candid);
+}
+
+export function tokenSwapStatusResponse(
+    candid: ApiTokenSwapStatusResponse,
+): TokenSwapStatusResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            started: candid.Success.started,
+            depositAccount: optional(candid.Success.deposit_account, result),
+            transfer: optional(candid.Success.transfer, result),
+            notifyDex: optional(candid.Success.notify_dex, result),
+            amountSwapped: optional(candid.Success.amount_swapped, resultOfResult),
+            withdrawnFromDex: optional(candid.Success.withdraw_from_dex, result),
+        };
+    }
+    if ("NotFound" in candid) {
+        return {
+            kind: "not_found",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiTokenSwapStatusResponse type received", candid);
+}
+
+function result<T>(candid: { Ok: T } | { Err: string }): Result<T> {
+    if ("Ok" in candid) {
+        return {
+            kind: "ok",
+            value: candid.Ok,
+        };
+    }
+    return {
+        kind: "error",
+        error: candid.Err,
+    };
+}
+
+function resultOfResult<T>(
+    candid: { Ok: { Ok: T } | { Err: string } } | { Err: string },
+): Result<Result<T>> {
+    if ("Ok" in candid) {
+        return {
+            kind: "ok",
+            value: result(candid.Ok),
+        };
+    }
+    return {
+        kind: "error",
+        error: candid.Err,
+    };
+}
+
+export function approveTransferResponse(
+    candid: ApiApproveTransferResponse,
+): ApproveTransferResponse {
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error", error: candid.InternalError };
+    }
+    if ("ApproveError" in candid) {
+        return { kind: "approve_error", error: JSON.stringify(candid.ApproveError) };
+    }
+    throw new UnsupportedValueError("Unexpected ApiApproveTransferResponse type received", candid);
 }

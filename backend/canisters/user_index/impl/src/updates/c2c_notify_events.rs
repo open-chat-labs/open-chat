@@ -31,21 +31,14 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
     let caller: CanisterId = state.env.caller();
 
     match event {
-        Event::UserRegistered(ev) => process_new_user(
-            ev.principal,
-            ev.username,
-            ev.display_name,
-            ev.user_id,
-            ev.referred_by,
-            caller,
-            state,
-        ),
+        Event::UserRegistered(ev) => process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state),
         Event::UserJoinedGroup(ev) => {
             state.push_event_to_local_user_index(
                 ev.user_id,
                 LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
                     chat_id: ev.chat_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     latest_message_index: ev.latest_message_index,
                 }),
             );
@@ -56,6 +49,7 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 LocalUserIndexEvent::UserJoinedCommunityOrChannel(UserJoinedCommunityOrChannel {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
+                    local_user_index_canister_id: ev.local_user_index_canister_id,
                     channels: ev.channels,
                 }),
             );
@@ -87,7 +81,6 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
 fn process_new_user(
     caller: Principal,
     username: String,
-    display_name: Option<String>,
     user_id: UserId,
     referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
@@ -104,15 +97,10 @@ fn process_new_user(
         }
     };
 
-    state.data.users.register(
-        caller,
-        user_id,
-        username.clone(),
-        display_name.clone(),
-        now,
-        referred_by,
-        false,
-    );
+    state
+        .data
+        .users
+        .register(caller, user_id, username.clone(), now, referred_by, false);
 
     state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
@@ -151,8 +139,12 @@ You can change your username at any time by clicking \"Profile settings\" from t
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
+    if state.data.test_mode {
+        state.data.legacy_principals_sync_queue.push_back(caller);
+    }
 
-    crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
+    crate::jobs::sync_users_to_storage_index::try_run_now(state);
+    crate::jobs::sync_legacy_user_principals::try_run_now(state);
 
     if let Some(referrer) = referred_by {
         state.data.user_referral_leaderboards.add_referral(referrer, now);

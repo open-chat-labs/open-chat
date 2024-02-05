@@ -31,6 +31,7 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = olive;
     base.accent = olive;
+    base.panel.nav.bg = veryDarkCyan;
     base.panel.left.bg = hexPercent(darkCyan, 40);
     base.panel.right.modal = veryDarkCyan;
     base.modal.bd = base.bd;

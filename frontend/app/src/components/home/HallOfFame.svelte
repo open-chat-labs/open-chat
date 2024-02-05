@@ -3,7 +3,7 @@
     import ModalContent from "../ModalContent.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
-    import { _, locale } from "svelte-i18n";
+    import { _ } from "svelte-i18n";
     import { E8S_PER_TOKEN, type OpenChat, type ReferralStats } from "openchat-client";
     import { now500 } from "../../stores/time";
     import { mobileWidth } from "../../stores/screenDimensions";
@@ -36,8 +36,8 @@
     let year = date.getUTCFullYear();
     let lastMonth = month == 1 ? 12 : month - 1;
     let lastMonthYear = month == 1 ? year - 1 : year;
-    $: monthText = buildMonthText(month, $locale);
-    $: lastMonthText = buildMonthText(lastMonth, $locale);
+    $: monthText = buildMonthText(month);
+    $: lastMonthText = buildMonthText(lastMonth);
 
     onMount(() => {
         if (bodyElement) {
@@ -54,8 +54,8 @@
         getData();
     });
 
-    function buildMonthText(month: number, locale: string | null | undefined): string {
-        return client.toMonthString(new Date(2000, month - 1), locale || "en");
+    function buildMonthText(month: number): string {
+        return client.toMonthString(new Date(2000, month - 1));
     }
 
     function dummyData() {

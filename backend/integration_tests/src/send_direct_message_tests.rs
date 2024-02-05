@@ -42,6 +42,7 @@ fn empty_message_fails() {
         content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
+        message_filter_failed: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
@@ -63,15 +64,16 @@ fn text_too_long_fails() {
         thread_root_message_index: None,
         message_id: random_message_id(),
         content: MessageContentInitial::Text(TextContent {
-            text: (0..5001).map(|_| '1').collect(),
+            text: (0..10001).map(|_| '1').collect(),
         }),
         replies_to: None,
         forwarding: false,
+        message_filter_failed: None,
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message_v2::Response::TextTooLong(5000)) {
-        panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
+    if !matches!(response, user_canister::send_message_v2::Response::TextTooLong(10000)) {
+        panic!("SendMessage was expected to return TextTooLong(10000) but did not: {response:?}");
     }
 }
 

@@ -1,4 +1,5 @@
 import type {
+    GroupAndCommunitySummaryUpdatesResponse,
     InviteUsersResponse,
     JoinCommunityResponse,
     JoinGroupResponse,
@@ -6,6 +7,7 @@ import type {
 } from "openchat-shared";
 import { CommonResponses, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiGroupAndCommunitySummaryUpdatesResponse,
     ApiInviteUsersResponse,
     ApiInviteUsersToChannelResponse,
     ApiJoinChannelResponse,
@@ -18,10 +20,61 @@ import {
     communitySummary,
     gateCheckFailedReason,
 } from "../common/chatMappers";
+import { groupChatSummary, groupChatSummaryUpdates } from "../group/mappers";
+import { communitySummaryUpdates } from "../community/mappers";
+
+export function groupAndCommunitySummaryUpdates(
+    candid: ApiGroupAndCommunitySummaryUpdatesResponse,
+): GroupAndCommunitySummaryUpdatesResponse[] {
+    const results: GroupAndCommunitySummaryUpdatesResponse[] = [];
+    for (const result of candid.Success) {
+        if ("SuccessNoUpdates" in result) {
+            results.push({
+                kind: "no_updates",
+            });
+        } else if ("SuccessGroup" in result) {
+            results.push({
+                kind: "group",
+                value: groupChatSummary(result.SuccessGroup),
+            });
+        } else if ("SuccessGroupUpdates" in result) {
+            results.push({
+                kind: "group_updates",
+                value: groupChatSummaryUpdates(result.SuccessGroupUpdates),
+            });
+        } else if ("SuccessCommunity" in result) {
+            results.push({
+                kind: "community",
+                value: communitySummary(result.SuccessCommunity),
+            });
+        } else if ("SuccessCommunityUpdates" in result) {
+            results.push({
+                kind: "community_updates",
+                value: communitySummaryUpdates(result.SuccessCommunityUpdates),
+            });
+        } else if ("NotFound" in result) {
+            results.push({
+                kind: "not_found",
+            });
+        } else if ("InternalError" in result) {
+            results.push({
+                kind: "error",
+                error: result.InternalError,
+            });
+        } else {
+            throw new UnsupportedValueError(
+                "Unexpected ApiSummaryUpdatesResponse type received",
+                result,
+            );
+        }
+    }
+
+    return results;
+}
 
 export function joinChannelResponse(
     candid: ApiJoinChannelResponse,
-    communityId: string
+    communityId: string,
 ): JoinGroupResponse {
     if ("Success" in candid) {
         return { kind: "success", group: communityChannelSummary(candid.Success, communityId) };
@@ -66,15 +119,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("UsernameInvalid" in candid) {
         return { kind: "username_invalid" };
     }
-    if ("DisplayNameTooShort" in candid) {
-        return { kind: "display_name_too_short" };
-    }
-    if ("DisplayNameTooLong" in candid) {
-        return { kind: "display_name_too_long" };
-    }
-    if ("DisplayNameInvalid" in candid) {
-        return { kind: "display_name_invalid" };
-    }
     if ("AlreadyRegistered" in candid) {
         return { kind: "already_registered" };
     }
@@ -107,7 +151,7 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
 }
 
 export function inviteUsersResponse(
-    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse
+    candid: ApiInviteUsersResponse | ApiInviteUsersToChannelResponse,
 ): InviteUsersResponse {
     if ("Success" in candid) {
         return "success";

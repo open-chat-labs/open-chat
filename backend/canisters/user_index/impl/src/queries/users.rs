@@ -1,5 +1,6 @@
 use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
+use std::collections::HashSet;
 use user_index_canister::users_v2::{Response::*, *};
 
 #[query]
@@ -10,18 +11,35 @@ fn users_v2(args: Args) -> Response {
 fn users_impl(args: Args, state: &RuntimeState) -> Response {
     let now = state.env.now();
 
-    let users = args
-        .user_groups
-        .into_iter()
-        .flat_map(|g| {
-            let updated_since = g.updated_since;
-            g.users
+    let mut user_ids = HashSet::new();
+    let mut users = Vec::new();
+
+    for group in args.user_groups {
+        let updated_since = group.updated_since;
+        users.extend(
+            group
+                .users
                 .into_iter()
-                .filter_map(|user_id| state.data.users.get_by_user_id(&user_id))
+                .filter_map(|u| state.data.users.get_by_user_id(&u))
                 .filter(move |u| u.date_updated > updated_since)
-                .map(|u| u.to_summary(now))
-        })
-        .collect();
+                .filter(|u| user_ids.insert(u.user_id))
+                .map(|u| u.to_summary(now)),
+        );
+    }
+
+    if let Some(ts) = args.users_suspended_since {
+        users.extend(
+            state
+                .data
+                .users
+                .iter_suspended_or_unsuspended_users(ts)
+                .rev()
+                .take(100)
+                .filter(|u| user_ids.insert(*u))
+                .filter_map(|u| state.data.users.get_by_user_id(&u))
+                .map(|u| u.to_summary(now)),
+        );
+    }
 
     Success(Result { users, timestamp: now })
 }
@@ -82,6 +100,7 @@ mod tests {
                 users: vec![user_id1, user_id3],
                 updated_since: 0,
             }],
+            users_suspended_since: None,
         };
 
         let Success(result) = users_impl(args, &state);
@@ -144,6 +163,7 @@ mod tests {
                 users: vec![user_id1, user_id3],
                 updated_since: now - 1500,
             }],
+            users_suspended_since: None,
         };
 
         let Success(result) = users_impl(args, &state);

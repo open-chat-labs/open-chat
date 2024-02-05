@@ -19,11 +19,15 @@ import {
     SuspensionDetails,
     SuspensionAction,
     DiamondMembershipDetails,
+    DiamondMembershipFeesResponse,
     DiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse,
     ReferralLeaderboardResponse,
     ReferralStats,
     SetModerationFlagsResponse,
+    DiamondMembershipStatus,
+    DiamondMembershipStatusFull,
+    DiamondMembershipSubscription
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -45,11 +49,15 @@ export {
     SuspensionDetails as ApiSuspensionDetails,
     SuspensionAction as ApiSuspensionAction,
     DiamondMembershipDetails as ApiDiamondMembershipDetails,
+    DiamondMembershipFeesResponse as ApiDiamondMembershipFeesResponse,
     DiamondMembershipPlanDuration as ApiDiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse as ApiPayForDiamondMembershipResponse,
     ReferralLeaderboardResponse as ApiReferralLeaderboardResponse,
     ReferralStats as ApiReferralStats,
     SetModerationFlagsResponse as ApiSetModerationFlagsResponse,
+    DiamondMembershipStatus as ApiDiamondMembershipStatus,
+    DiamondMembershipStatusFull as ApiDiamondMembershipStatusFull,
+    DiamondMembershipSubscription as ApiDiamondMembershipSubscription
 };
 
 export const idlFactory: IDL.InterfaceFactory;

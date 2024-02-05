@@ -22,14 +22,15 @@ fn accept_if_valid(state: &RuntimeState) {
         | "set_display_name"
         | "set_moderation_flags"
         | "set_username"
-        | "mark_suspected_bot" => {
+        | "mark_suspected_bot"
+        | "update_diamond_membership_subscription" => {
             let caller = state.env.caller();
             let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
         "add_referral_codes" => state.is_caller_dev_team_dfx_principal(),
         "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
-        "set_user_upgrade_concurrency" => state.is_caller_platform_operator(),
+        "set_user_upgrade_concurrency" | "set_diamond_membership_fees" => state.is_caller_platform_operator(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"
@@ -41,7 +42,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "suspected_bots" => state.is_caller_governance_principal(),
-        "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" | "modclub_callback" => true,
+        "create_challenge" | "modclub_callback" => true,
         _ => false,
     };
 

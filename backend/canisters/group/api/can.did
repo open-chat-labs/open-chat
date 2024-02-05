@@ -10,6 +10,7 @@ type SendMessageV2Args = record {
     mentioned : vec User;
     forwarding : bool;
     rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -97,6 +98,35 @@ type RegisterPollVoteResponse = variant {
     UserSuspended;
     ChatFrozen;
     UserCannotChangeVote;
+};
+
+type AcceptP2PSwapArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
+    InsufficientFunds;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    UserNotInGroup;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    UserNotInGroup;
+    ChatFrozen;
 };
 
 type AddReactionArgs = record {
@@ -470,7 +500,6 @@ type DeletedMessageResponse = variant {
     CallerNotInGroup;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
@@ -628,6 +657,8 @@ service : {
     delete_messages : (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages : (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote : (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction : (RemoveReactionArgs) -> (RemoveReactionResponse);
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);

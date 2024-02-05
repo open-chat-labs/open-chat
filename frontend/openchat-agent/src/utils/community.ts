@@ -4,7 +4,6 @@ import type {
     CommunitySummary,
     CommunitySummaryResponse,
     UserCanisterCommunitySummary,
-    CommunitySummaryUpdatesResponse,
     ChannelSummary,
     UserCanisterChannelSummaryUpdates,
     CommunityCanisterChannelSummaryUpdates,
@@ -147,6 +146,7 @@ export function mergeCommunityUpdates(
                 c?.userGroups ?? [],
                 c?.userGroupsDeleted ?? new Set(),
             ),
+            localUserIndex: community.localUserIndex,
         };
     });
 }
@@ -266,11 +266,5 @@ function mergeThreads(
 export function isSuccessfulCommunitySummaryResponse(
     response: CommunitySummaryResponse,
 ): response is CommunitySummary {
-    return "id" in response;
-}
-
-export function isSuccessfulCommunitySummaryUpdatesResponse(
-    response: CommunitySummaryUpdatesResponse,
-): response is CommunityCanisterCommunitySummaryUpdates {
     return "id" in response;
 }

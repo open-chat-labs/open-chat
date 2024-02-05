@@ -1,6 +1,5 @@
 <script lang="ts">
     import Overlay from "./Overlay.svelte";
-    import { _ } from "svelte-i18n";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -8,6 +7,8 @@
     import Cropper from "svelte-easy-crop";
     import type { CropData } from "svelte-easy-crop";
     import ChooseImage from "./icons/ChooseImage.svelte";
+    import { i18nKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
     const dispatch = createEventDispatcher();
 
     export let image: string | null | undefined;
@@ -97,7 +98,7 @@
                 0,
                 0,
                 SAVE_DIMS.width,
-                SAVE_DIMS.height
+                SAVE_DIMS.height,
             );
 
         canvas.toBlob(async (blob: Blob | null) => {
@@ -134,8 +135,9 @@
             <span slot="footer">
                 <ButtonGroup>
                     <Button tiny secondary on:click={() => (showModal = false)}
-                        >{$_("cancel")}</Button>
-                    <Button tiny on:click={cropImage}>{$_("apply")}</Button>
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
+                    <Button tiny on:click={cropImage}
+                        ><Translatable resourceKey={i18nKey("apply")} /></Button>
                 </ButtonGroup>
             </span>
         </ModalContent>
@@ -206,7 +208,7 @@
     }
 
     .photo-icon {
-        border-radius: 50%;
+        border-radius: var(--avatar-rd);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -233,7 +235,7 @@
             width: 100%;
             height: 100%;
             background-size: cover;
-            border-radius: 50%;
+            border-radius: var(--avatar-rd);
         }
     }
 </style>

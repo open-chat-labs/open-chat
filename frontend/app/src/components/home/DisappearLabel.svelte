@@ -1,10 +1,12 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
     import CameraTimer from "svelte-material-icons/CameraTimer.svelte";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import { _ } from "svelte-i18n";
 
     const client = getContext<OpenChat>("client");
     export let ttl: bigint;
@@ -19,9 +21,10 @@
     </div>
     <div let:position let:align slot="tooltip">
         <TooltipPopup {position} {align} textLength={100} longestWord={10}>
-            {$_("disappearingMessages.summary", {
-                values: { duration: client.formatDuration(Number(ttl)) },
-            })}
+            <Translatable
+                resourceKey={i18nKey("disappearingMessages.summary", {
+                    duration: client.formatDuration(Number(ttl)),
+                })} />
         </TooltipPopup>
     </div>
 </TooltipWrapper>

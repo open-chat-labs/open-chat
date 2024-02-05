@@ -1,15 +1,16 @@
 <script lang="ts">
+    import { fade } from "svelte/transition";
     import { tweened } from "svelte/motion";
     import { quadOut } from "svelte/easing";
     import Button from "../Button.svelte";
+    import TokenInput from "./TokenInput.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import type {
-        CryptocurrencyDetails,
+        EnhancedTokenDetails,
         Message,
         OpenChat,
         PendingCryptocurrencyTransfer,
     } from "openchat-client";
-    import { dollarExchangeRates } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -20,6 +21,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
     import TipButton from "./TipButton.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -39,38 +42,63 @@
     let dollarOpacity = tweened(0);
     let dollarScale = tweened(0);
     let centAmount = 0;
+    let showCustomTip = false;
+    let validAmount: boolean = false;
+    let draftAmount = 0n;
 
     $: user = client.user;
     $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoLookup = client.cryptoLookup;
+    $: exchangeRatesLookup = client.exchangeRatesLookupStore;
     $: tokenDetails = $cryptoLookup[ledger];
-    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
-    $: exchangeRate = dollarExchangeRates[tokenDetails.symbol.toLowerCase()] ?? 0;
-    $: draftAmount = calculateAmount(centAmount, exchangeRate);
-    $: displayDraftAmount = client.formatTokens(draftAmount, 0, tokenDetails.decimals);
-    $: displayFee = client.formatTokens(tokenDetails.transferFee, 0, tokenDetails.decimals);
+    $: cryptoBalance = $cryptoBalanceStore[ledger] ?? 0n;
+    $: exchangeRate = to2SigFigs(
+        $exchangeRatesLookup[tokenDetails.symbol.toLowerCase()]?.toUSD ?? 0,
+    );
+    $: displayDraftAmount = client.formatTokens(draftAmount, tokenDetails.decimals);
+    $: displayFee = client.formatTokens(tokenDetails.transferFee, tokenDetails.decimals);
     $: remainingBalance =
-        draftAmount > BigInt(0)
-            ? cryptoBalance - draftAmount - tokenDetails.transferFee
-            : cryptoBalance;
-    $: valid = exchangeRate > 0 && draftAmount > 0n && error === undefined && !tokenChanging;
+        draftAmount > 0n ? cryptoBalance - draftAmount - tokenDetails.transferFee : cryptoBalance;
+    $: valid =
+        exchangeRate > 0 &&
+        draftAmount > 0n &&
+        remainingBalance >= 0n &&
+        error === undefined &&
+        !tokenChanging;
     $: zero = cryptoBalance <= tokenDetails.transferFee && !tokenChanging;
+    $: transferFees = tokenDetails.transferFee;
 
     $: {
         if (ledger !== undefined) {
             // reset when ledger changes
             centAmount = 0;
             tokenChanging = true;
+            draftAmount = 0n;
         }
+    }
+
+    $: {
+        centAmount = calculateCentAmount(draftAmount, exchangeRate);
     }
 
     function amountLabel(n: Increment): string {
         return `$${(n / 100).toFixed(2)}`;
     }
 
+    function calculateCentAmount(e8s: bigint, exchangeRate: number): number {
+        const tokens = Number(e8s) / Math.pow(10, tokenDetails.decimals);
+        const dollar = tokens * exchangeRate;
+        const cents = dollar * 100;
+        return Math.round(cents);
+    }
+
+    function to2SigFigs(num: number): number {
+        return parseFloat(num.toPrecision(2));
+    }
+
     function calculateAmount(centAmount: number, exchangeRate: number): bigint {
-        const e8s = (centAmount / 100) * exchangeRate * Math.pow(10, tokenDetails.decimals);
+        const e8s = ((centAmount / 100) * Math.pow(10, tokenDetails.decimals)) / exchangeRate;
         return BigInt(Math.round(e8s));
     }
 
@@ -86,7 +114,7 @@
             recipient: msg.sender,
             amountE8s: draftAmount,
             feeE8s: tokenDetails.transferFee,
-            createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
+            createdAtNanos: BigInt(Date.now()) * 1_000_000n,
         };
         dispatch("send", transfer);
         lastCryptoSent.set(ledger);
@@ -111,10 +139,10 @@
         toppingUp = false;
         tokenChanging = false;
         if (remainingBalance < 0) {
-            remainingBalance = BigInt(0);
+            remainingBalance = 0n;
             draftAmount = cryptoBalance - tokenDetails.transferFee;
             if (draftAmount < 0) {
-                draftAmount = BigInt(0);
+                draftAmount = 0n;
             }
         }
     }
@@ -125,7 +153,7 @@
             dollar.style.setProperty("opacity", `${$dollarOpacity}`);
             dollar.style.setProperty(
                 "transform",
-                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`
+                `scale(${$dollarScale}) rotate(${$dollarScale}turn)`,
             );
         }
     }
@@ -158,10 +186,15 @@
     function clickAmount(e: MouseEvent, increment: Increment) {
         bounceMoneyMouthFrom(e.target as HTMLElement);
         centAmount += increment;
+        draftAmount = calculateAmount(centAmount, exchangeRate);
     }
 
-    function hasExchangeRate(token: CryptocurrencyDetails): boolean {
-        return dollarExchangeRates[token.symbol.toLowerCase()] !== undefined;
+    function hasExchangeRate(token: EnhancedTokenDetails): boolean {
+        return $exchangeRatesLookup[token.symbol.toLowerCase()] !== undefined;
+    }
+
+    function maxAmount(balance: bigint): bigint {
+        return balance - transferFees;
     }
 
     onMount(() => {
@@ -183,7 +216,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("tip.title")}</div>
+                    <div><Translatable resourceKey={i18nKey("tip.title")} /></div>
                     <div>
                         <CryptoSelector bind:ledger filter={hasExchangeRate} />
                     </div>
@@ -194,7 +227,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 bind:refreshing
@@ -207,32 +240,36 @@
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
                         <p>
-                            {$_("tokenTransfer.zeroBalance", {
-                                values: { token: tokenDetails.symbol },
-                            })}
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: tokenDetails.symbol,
+                                })} />
                         </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a
                         rel="noreferrer"
                         class="how-to"
                         href={tokenDetails.howToBuyUrl}
                         target="_blank">
-                        {$_("howToBuyToken", { values: { token: tokenDetails.symbol } })}
+                        <Translatable
+                            resourceKey={i18nKey("howToBuyToken", {
+                                token: tokenDetails.symbol,
+                            })} />
                     </a>
                 {:else}
                     <div class="amounts">
                         {#each increments as increment}
                             <TipButton
-                                label={$_(amountLabel(increment))}
+                                label={i18nKey(amountLabel(increment))}
                                 on:click={(e) => clickAmount(e, increment)}
-                                disabled={exchangeRate === undefined ||
+                                disabled={exchangeRate === 0 ||
                                     calculateAmount(centAmount + increment, exchangeRate) >
                                         cryptoBalance - tokenDetails.transferFee} />
                         {/each}
                     </div>
-                    <div class="message">
-                        {#if exchangeRate !== undefined}
+                    <div in:fade|local={{ duration: 300 }} class="message">
+                        {#if exchangeRate > 0}
                             {#if draftAmount > 0}
                                 <div class="summary">
                                     <div class="dollar-amount">
@@ -243,27 +280,51 @@
                                         {tokenDetails.symbol}
                                     </div>
                                     <div class="fee">
-                                        {$_("tip.plusFee", {
-                                            values: {
+                                        <Translatable
+                                            resourceKey={i18nKey("tip.plusFee", {
                                                 fee: displayFee,
                                                 token: tokenDetails.symbol,
-                                            },
-                                        })}
+                                            })} />
                                     </div>
                                 </div>
                             {:else}
                                 <div class="summary">
-                                    {$_("tip.advice")}
+                                    <Translatable resourceKey={i18nKey("tip.advice")} />
                                 </div>
                             {/if}
                         {:else}
                             <ErrorMessage
-                                >{$_("tip.noExchangeRate", {
-                                    values: { token: tokenDetails.symbol },
-                                })}</ErrorMessage>
+                                ><Translatable
+                                    resourceKey={i18nKey("tip.noExchangeRate", {
+                                        token: tokenDetails.symbol,
+                                    })} /></ErrorMessage>
                         {/if}
                         {#if error}
                             <ErrorMessage>{$_(error)}</ErrorMessage>
+                        {/if}
+                    </div>
+                    <div class="custom-tip">
+                        {#if !showCustomTip}
+                            <a
+                                role="button"
+                                tabindex="0"
+                                on:click={() => (showCustomTip = true)}
+                                class="options"
+                                in:fade|local={{ duration: 500 }}
+                                class:expanded={showCustomTip}>
+                                <Translatable resourceKey={i18nKey("tip.showCustom")} />
+                            </a>
+                        {/if}
+
+                        {#if showCustomTip}
+                            <div in:fade|local={{ duration: 500 }} class="custom-tip-amount">
+                                <TokenInput
+                                    {ledger}
+                                    {transferFees}
+                                    bind:valid={validAmount}
+                                    maxAmount={maxAmount(cryptoBalance)}
+                                    bind:amount={draftAmount} />
+                            </div>
                         {/if}
                     </div>
                 {/if}
@@ -272,20 +333,21 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={send}>{$_("tokenTransfer.send")}</Button>
+                        on:click={send}
+                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
             </ButtonGroup>
         </span>
@@ -362,5 +424,15 @@
 
     .how-to {
         margin-top: $sp4;
+    }
+
+    .custom-tip {
+        text-align: center;
+        margin-bottom: $sp3;
+        @include font(light, normal, fs-80);
+
+        .custom-tip-amount {
+            padding: $sp3 $sp4;
+        }
     }
 </style>

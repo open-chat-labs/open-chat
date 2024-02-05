@@ -86,4 +86,4 @@ jobs:
       - name: Build canister wasms
         run: ./scripts/generate-all-canister-wasms.sh
       - name: Run integration tests
-        run: ./scripts/run-integration-tests.sh false
+        run: ./scripts/run-integration-tests.sh local

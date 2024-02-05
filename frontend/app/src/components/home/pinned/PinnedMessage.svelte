@@ -12,6 +12,7 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { createEventDispatcher, getContext } from "svelte";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import IntersectionObserver from "../IntersectionObserver.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,7 +38,7 @@
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: { userId: sender.userId, chatButton: !me, inGlobalContext: false },
                 bubbles: true,
-            })
+            }),
         );
     }
 
@@ -56,41 +57,49 @@
             userId={sender.userId}
             size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
-    <div
-        class="message-bubble"
-        class:fill={fill && !deleted}
-        class:me
-        class:deleted
-        class:crypto
-        class:rtl={$rtlStore}>
-        {#if !deleted}
-            <div class="sender" class:fill class:rtl={$rtlStore}>
-                <Link underline={"never"} on:click={openUserProfile}>
-                    <h4 class="username" class:fill class:crypto>{username}</h4>
-                </Link>
-            </div>
-        {/if}
-        {#if msg.repliesTo !== undefined && !deleted}
-            {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                <RepliesTo messageId={msg.messageId} readonly {chatId} repliesTo={msg.repliesTo} />
-            {:else}
-                <UnresolvedReply />
+    <IntersectionObserver let:intersecting>
+        <div
+            class="message-bubble"
+            class:fill={fill && !deleted}
+            class:me
+            class:deleted
+            class:crypto
+            class:rtl={$rtlStore}>
+            {#if !deleted}
+                <div class="sender" class:fill class:rtl={$rtlStore}>
+                    <Link underline={"never"} on:click={openUserProfile}>
+                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                    </Link>
+                </div>
             {/if}
-        {/if}
+            {#if msg.repliesTo !== undefined && !deleted}
+                {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                    <RepliesTo
+                        {intersecting}
+                        readonly
+                        {chatId}
+                        repliesTo={msg.repliesTo} />
+                {:else}
+                    <UnresolvedReply />
+                {/if}
+            {/if}
 
-        <ChatMessageContent
-            readonly
-            pinned
-            {senderId}
-            {fill}
-            {chatId}
-            edited={msg.edited}
-            messageIndex={msg.messageIndex}
-            messageId={msg.messageId}
-            {me}
-            myUserId={user.userId}
-            content={msg.content} />
-    </div>
+            <ChatMessageContent
+                readonly
+                pinned
+                {senderId}
+                {fill}
+                failed={false}
+                messageContext={{ chatId }}
+                edited={msg.edited}
+                messageIndex={msg.messageIndex}
+                messageId={msg.messageId}
+                {me}
+                {intersecting}
+                myUserId={user.userId}
+                content={msg.content} />
+        </div>
+    </IntersectionObserver>
 </div>
 
 <style lang="scss">
@@ -143,8 +152,11 @@
     .message-bubble {
         $radius: $sp3;
         $inner-radius: 4px;
-        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
-            border ease-in-out 300ms, transform ease-in-out 200ms;
+        transition:
+            box-shadow ease-in-out 200ms,
+            background-color ease-in-out 200ms,
+            border ease-in-out 300ms,
+            transform ease-in-out 200ms;
         position: relative;
         padding: 6px $sp3 6px $sp3;
         background-color: var(--currentChat-msg-bg);

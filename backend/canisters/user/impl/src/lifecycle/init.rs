@@ -3,6 +3,7 @@ use crate::{mutate_state, openchat_bot, Data};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use tracing::info;
+use types::MessageContentInitial;
 use user_canister::init::Args;
 use utils::env::Environment;
 
@@ -20,8 +21,8 @@ fn init(args: Args) {
         args.group_index_canister_id,
         args.notifications_canister_id,
         args.proposals_bot_canister_id,
+        args.escrow_canister_id,
         args.username,
-        args.display_name,
         args.test_mode,
         env.now(),
     );
@@ -30,7 +31,8 @@ fn init(args: Args) {
 
     mutate_state(|state| {
         for message in args.openchat_bot_messages {
-            openchat_bot::send_message(message, true, state);
+            let initial_content: MessageContentInitial = message.into();
+            openchat_bot::send_message(initial_content.try_into().unwrap(), true, state);
         }
     });
 

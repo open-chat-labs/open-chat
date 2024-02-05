@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import type { CredentialGate, Level, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import ModalContent from "../ModalContent.svelte";
     import Button from "../Button.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import ButtonGroup from "../ButtonGroup.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -36,24 +36,33 @@
 <ModalContent on:close>
     <div class="header" slot="header">
         <div class="credential">🔒️</div>
-        <div class="title">{$_("access.initiateCredentialCheck")}</div>
+        <div class="title">
+            <Translatable resourceKey={i18nKey("access.initiateCredentialCheck")} />
+        </div>
     </div>
     <div slot="body">
-        {interpolateLevel("access.credentialCheckMessage", level, true, {
-            credential: gate.credentialId,
-            issuer: gate.issuerOrigin,
-        })}
+        <Translatable
+            resourceKey={i18nKey(
+                "access.credentialCheckMessage",
+                {
+                    credential: gate.credentialId,
+                    issuer: gate.issuerOrigin,
+                },
+                level,
+                true,
+            )} />
         {#if failed}
             <ErrorMessage>
-                {$_("failed to verify the credential")}
+                <Translatable resourceKey={i18nKey("failed to verify the credential")} />
             </ErrorMessage>
         {/if}
     </div>
     <div slot="footer">
         <ButtonGroup>
-            <Button secondary on:click={() => dispatch("close")}>{$_("cancel")}</Button>
+            <Button secondary on:click={() => dispatch("close")}
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             <Button loading={verifying} disabled={verifying} on:click={verify}
-                >{$_("access.verify")}</Button>
+                ><Translatable resourceKey={i18nKey("access.verify")} /></Button>
         </ButtonGroup>
     </div>
 </ModalContent>

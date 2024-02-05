@@ -7,7 +7,8 @@ use ic_ledger_types::Tokens;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId,
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipFees, DiamondMembershipPlanDuration, MessageContent, Milliseconds,
+    TextContent, UserId,
 };
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -77,27 +78,37 @@ impl Job for TimerJob {
 
 impl Job for RecurringDiamondMembershipPayment {
     fn execute(self) {
-        if let Some(duration) = read_state(|state| {
+        if let Some((duration, pay_in_chat, fees)) = read_state(|state| {
             let now = state.env.now();
+            let fees = state.data.diamond_membership_fees.clone();
             state
                 .data
                 .users
                 .get_by_user_id(&self.user_id)
                 .map(|u| &u.diamond_membership_details)
                 .filter(|d| d.is_recurring_payment_due(now))
-                .and_then(|d| d.latest_duration())
+                .and_then(|d| {
+                    DiamondMembershipPlanDuration::try_from(d.subscription())
+                        .ok()
+                        .map(|duration| (duration, d.pay_in_chat(), fees))
+                })
         }) {
-            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration));
+            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration, fees, pay_in_chat));
         }
 
-        async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration) {
+        async fn pay_for_diamond_membership(
+            user_id: UserId,
+            duration: DiamondMembershipPlanDuration,
+            fees: DiamondMembershipFees,
+            pay_in_chat: bool,
+        ) {
             use user_index_canister::pay_for_diamond_membership::*;
 
-            let price_e8s = duration.icp_price_e8s();
+            let price_e8s = if pay_in_chat { fees.chat_price_e8s(duration) } else { fees.icp_price_e8s(duration) };
 
             let args = Args {
                 duration,
-                token: Cryptocurrency::InternetComputer,
+                token: if pay_in_chat { Cryptocurrency::CHAT } else { Cryptocurrency::InternetComputer },
                 expected_price_e8s: price_e8s,
                 recurring: true,
             };
@@ -251,6 +262,11 @@ impl Job for JoinUserToGroup {
                     correlation_id: 0,
                     is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
                     is_bot: u.is_bot,
+                    diamond_membership_expires_at: state
+                        .data
+                        .users
+                        .get_by_user_id(&self.user_id)
+                        .and_then(|u| u.diamond_membership_details.expires_at()),
                 })
         }) {
             ic_cdk::spawn(join_group(self.group_id, args, self.attempt));
@@ -266,6 +282,7 @@ impl Job for JoinUserToGroup {
                         LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                             user_id: args.user_id,
                             chat_id: group_id,
+                            local_user_index_canister_id: s.local_user_index_canister_id,
                             latest_message_index: s.latest_message.map(|m| m.event.message_index),
                         }),
                     )

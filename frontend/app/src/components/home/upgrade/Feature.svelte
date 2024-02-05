@@ -1,31 +1,33 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
+
     import MoreInfo from "./MoreInfo.svelte";
 
     export let comingSoon: boolean = false;
-    export let freeInfo: string | undefined = undefined;
-    export let diamondInfo: string | undefined = undefined;
+    export let freeInfo: ResourceKey | undefined = undefined;
+    export let diamondInfo: ResourceKey | undefined = undefined;
     export let landing: boolean = false;
 </script>
 
 <div class:landing class="title">
     <slot name="title" />
     {#if comingSoon}
-        <span class="soon">({$_("upgrade.comingSoon")})</span>
+        <span class="soon">(<Translatable resourceKey={i18nKey("upgrade.comingSoon")} />)</span>
     {/if}
 </div>
 <div class:landing class="feature free">
     <slot name="free" />
 
     {#if freeInfo !== undefined}
-        <MoreInfo>{freeInfo}</MoreInfo>
+        <MoreInfo><Translatable resourceKey={freeInfo} /></MoreInfo>
     {/if}
 </div>
 <div class:landing class="feature diamond">
     <slot name="diamond" />
 
     {#if diamondInfo !== undefined}
-        <MoreInfo>{diamondInfo}</MoreInfo>
+        <MoreInfo><Translatable resourceKey={diamondInfo} /></MoreInfo>
     {/if}
 </div>
 

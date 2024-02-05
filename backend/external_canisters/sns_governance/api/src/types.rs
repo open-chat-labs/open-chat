@@ -654,6 +654,15 @@ pub struct ProposalData {
     /// rewards. Prior to distribution of rewards, but after votes are no longer
     /// accepted, it is considered "ready to settle".
     pub reward_event_end_timestamp_seconds: Option<u64>,
+    /// Minimum "yes" votes needed for proposal adoption, as a fraction of the
+    /// total voting power. Example: 300 basis points represents a requirement that
+    /// 3% of the total voting power votes to adopt the proposal.
+    pub minimum_yes_proportion_of_total: Option<Percentage>,
+    /// Minimum "yes" votes needed for proposal adoption, as a fraction of the
+    /// exercised voting power. Example: 50_000 basis points represents a
+    /// requirement that 50% of the exercised voting power votes to adopt the
+    /// proposal.
+    pub minimum_yes_proportion_of_exercised: Option<Percentage>,
 }
 /// The nervous system's parameters, which are parameters that can be changed, via proposals,
 /// by each nervous system community.
@@ -2037,10 +2046,13 @@ impl ProposalData {
 }
 
 impl TryFrom<ProposalData> for types::Proposal {
-    type Error = &'static str;
+    type Error = String;
 
     fn try_from(value: ProposalData) -> Result<Self, Self::Error> {
-        types::SnsProposal::try_from(value).map(types::Proposal::SNS)
+        match types::SnsProposal::try_from(value) {
+            Ok(p) => Ok(types::Proposal::SNS(p)),
+            Err(s) => Err(s.to_string()),
+        }
     }
 }
 
@@ -2069,6 +2081,14 @@ impl TryFrom<ProposalData> for types::SnsProposal {
             tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
             deadline,
             payload_text_rendering: p.payload_text_rendering,
+            minimum_yes_proportion_of_total: p
+                .minimum_yes_proportion_of_total
+                .and_then(|p| p.basis_points.map(|b| b as u32))
+                .unwrap_or(300),
+            minimum_yes_proportion_of_exercised: p
+                .minimum_yes_proportion_of_exercised
+                .and_then(|p| p.basis_points.map(|b| b as u32))
+                .unwrap_or(5000),
             last_updated: now,
         })
     }
@@ -2083,4 +2103,9 @@ impl From<Tally> for types::Tally {
             timestamp: value.timestamp_seconds * 1000,
         }
     }
+}
+
+#[derive(candid::CandidType, candid::Deserialize, Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Percentage {
+    pub basis_points: Option<u64>,
 }

@@ -3,6 +3,7 @@
     import InformationOutline from "svelte-material-icons/InformationOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import AccountSettings from "svelte-material-icons/AccountSettingsOutline.svelte";
+    import CogOutline from "svelte-material-icons/CogOutline.svelte";
     import Home from "svelte-material-icons/Home.svelte";
     import Road from "svelte-material-icons/RoadVariant.svelte";
     import Note from "svelte-material-icons/NoteTextOutline.svelte";
@@ -13,38 +14,42 @@
     import Menu from "../../Menu.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import Login from "svelte-material-icons/Login.svelte";
-    import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: platformOperator = client.platformOperator;
     $: canExtendDiamond = client.canExtendDiamond;
     $: anonUser = client.anonUser;
+    $: admin = $platformOperator;
 </script>
 
 <Menu>
     {#if !$anonUser}
         <MenuItem on:click={() => dispatch("wallet")}>
             <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("wallet")}</span>
+            <span slot="text">
+                <Translatable resourceKey={i18nKey("wallet")} />
+            </span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("profile")}>
             <AccountSettings size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("profile.title")}</span>
+            <span slot="text"><Translatable resourceKey={i18nKey("profile.title")} /></span>
         </MenuItem>
         <MenuItem on:click={() => dispatch("upgrade")}>
-            <span class="diamond-icon" slot="icon">💎</span>
+            <span class="diamond-icon" slot="icon"></span>
             <span slot="text"
-                >{$canExtendDiamond ? $_("upgrade.extend") : $_("upgrade.diamond")}</span>
+                ><Translatable
+                    resourceKey={i18nKey(
+                        $canExtendDiamond ? "upgrade.extend" : "upgrade.diamond",
+                    )} /></span>
         </MenuItem>
-        <!-- <MenuItem on:click={() => dispatch("halloffame")}>
-        <span class="halloffame" slot="icon">👑</span>
-        <span slot="text">{$_("halloffame.menu")}</span>
-    </MenuItem> -->
         <MenuItem separator />
     {/if}
     <MenuItem on:click={() => page("/home")}>
@@ -83,12 +88,33 @@
     {#if !$anonUser}
         <MenuItem on:click={() => client.logout()}>
             <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("logout")}</span>
+            <span slot="text"><Translatable resourceKey={i18nKey("logout")} /></span>
         </MenuItem>
     {:else}
         <MenuItem on:click={() => client.identityState.set({ kind: "logging_in" })}>
             <Login size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-            <span slot="text">{$_("login")}</span>
+            <span slot="text"><Translatable resourceKey={i18nKey("login")} /></span>
+        </MenuItem>
+    {/if}
+
+    {#if admin}
+        <MenuItem separator />
+        <MenuItem on:click={() => page("/admin")}>
+            <CogOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{"Admin"}</span>
         </MenuItem>
     {/if}
 </Menu>
+
+<style lang="scss">
+    .diamond-icon {
+        background-image: url("/assets/diamond.svg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: 0 1px;
+        margin-inline-start: 3px;
+        display: inline-block;
+        width: 15px;
+        height: 15px;
+    }
+</style>

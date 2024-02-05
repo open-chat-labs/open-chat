@@ -2,8 +2,8 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
-    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UserId,
+    CanisterId, ChannelLatestMessageIndex, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent,
+    MessageIndex, PhoneNumber, ReferralType, SuspensionDuration, TimestampMillis, UpdateUserPrincipalArgs, UserId,
 };
 
 mod lifecycle;
@@ -30,6 +30,9 @@ pub enum Event {
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
     ReferralCodeAdded(ReferralCodeAdded),
+    UserPrincipalUpdated(UpdateUserPrincipalArgs),
+    // Post release - remove this
+    DiamondMembershipExpiryDate(UserId, TimestampMillis),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -98,6 +101,7 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub latest_message_index: Option<MessageIndex>,
 }
 
@@ -105,6 +109,7 @@ pub struct UserJoinedGroup {
 pub struct UserJoinedCommunityOrChannel {
     pub user_id: UserId,
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub channels: Vec<ChannelLatestMessageIndex>,
 }
 
@@ -140,4 +145,5 @@ pub struct GlobalUser {
     pub principal: Principal,
     pub is_bot: bool,
     pub is_platform_moderator: bool,
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
 }

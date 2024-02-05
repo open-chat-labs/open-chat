@@ -10,7 +10,7 @@ where
     T: ToHumanReadable,
     T::Target: Serialize,
 {
-    serde_json::to_string(&value.to_human_readable()).map_err(|e| format!("Serialization error: {e:?}"))
+    serde_json::to_string_pretty(&value.to_human_readable()).map_err(|e| format!("Serialization error: {e:?}"))
 }
 
 pub trait ToHumanReadable {

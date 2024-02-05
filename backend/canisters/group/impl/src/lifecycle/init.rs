@@ -32,6 +32,7 @@ fn init(args: Args) {
         args.local_user_index_canister_id,
         args.notifications_canister_id,
         args.proposals_bot_user_id,
+        args.escrow_canister_id,
         args.test_mode,
         args.permissions_v2,
         args.gate,

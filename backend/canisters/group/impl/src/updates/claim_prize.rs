@@ -6,8 +6,8 @@ use group_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
 use ledger_utils::{create_pending_transaction, process_transaction};
-use types::{CanisterId, CompletedCryptoTransaction, GroupMessageNotification, Notification, PendingCryptoTransaction, UserId};
-use utils::consts::{MEMO_PRIZE_CLAIM, OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
+use types::{CanisterId, CompletedCryptoTransaction, PendingCryptoTransaction, UserId};
+use utils::consts::MEMO_PRIZE_CLAIM;
 
 #[update]
 #[trace]
@@ -100,35 +100,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
         .events
         .claim_prize(args.message_id, winner, transaction, state.env.rng(), now)
     {
-        chat_events::ClaimPrizeResult::Success(message_event) => {
-            // Send a notification to group participants
-            let notification_recipients = state
-                .data
-                .chat
-                .members
-                .iter()
-                .filter(|m| !m.notifications_muted.value && !m.suspended.value)
-                .map(|m| m.user_id)
-                .collect();
-            let content = &message_event.event.content;
-
-            let notification = Notification::GroupMessage(GroupMessageNotification {
-                chat_id: state.env.canister_id().into(),
-                thread_root_message_index: None,
-                message_index: message_event.event.message_index,
-                event_index: message_event.index,
-                group_name: state.data.chat.name.value.clone(),
-                sender: OPENCHAT_BOT_USER_ID,
-                sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                sender_display_name: None,
-                message_type: content.message_type(),
-                message_text: content.notification_text(&[], &[]),
-                image_url: content.notification_image_url(),
-                group_avatar_id: state.data.chat.avatar.as_ref().map(|d| d.id),
-                crypto_transfer: None,
-            });
-            state.push_notification(notification_recipients, notification);
-
+        chat_events::ClaimPrizeResult::Success(..) => {
             handle_activity_notification(state);
             None
         }

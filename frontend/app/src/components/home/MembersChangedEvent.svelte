@@ -6,8 +6,8 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -27,13 +27,21 @@
         changed,
         $_("unknownUser"),
         $_("you"),
-        user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername
+        user ? client.compareIsNotYouThenUsername(user.userId) : client.compareUsername,
     );
 
-    $: text = interpolateLevel(resourceKey, level, true, {
-        changed: members,
-        changedBy: changedByStr,
-    });
+    $: text = interpolate(
+        $_,
+        i18nKey(
+            resourceKey,
+            {
+                changed: members,
+                changedBy: changedByStr,
+            },
+            level,
+            true,
+        ),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -2,10 +2,10 @@ use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
 use icdex_client::ICDexClient;
-use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
+use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use types::{
     AggregatedOrders, BuildVersion, CancelOrderRequest, CanisterId, Cryptocurrency, Cycles, MakeOrderRequest, TimestampMillis,
     Timestamped, TokenInfo,
@@ -38,25 +38,14 @@ impl RuntimeState {
 
     pub fn get_exchange_client(&self, exchange_id: ExchangeId) -> Option<Box<dyn Exchange>> {
         match exchange_id {
-            ICDEX_EXCHANGE_ID => Some(Box::new(ICDexClient::new(
-                self.env.canister_id(),
+            ICDEX_EXCHANGE_ID => Some(self.create_icdex_client(
+                ICDEX_EXCHANGE_ID,
                 CanisterId::from_text("3we4s-lyaaa-aaaak-aegrq-cai").unwrap(),
-                TokenInfo {
-                    token: Cryptocurrency::InternetComputer,
-                    ledger: self.data.icp_ledger_canister_id,
-                    decimals: 8,
-                    fee: 10_000,
-                },
-                TokenInfo {
-                    token: Cryptocurrency::CHAT,
-                    ledger: self.data.chat_ledger_canister_id,
-                    decimals: 8,
-                    fee: 100_000,
-                },
-                10_000_000,
-                |order| on_order_made(ICDEX_EXCHANGE_ID, order),
-                |order| on_order_cancelled(ICDEX_EXCHANGE_ID, order),
-            ))),
+            )),
+            ICDEX_EXCHANGE_V2_ID => Some(self.create_icdex_client(
+                ICDEX_EXCHANGE_V2_ID,
+                CanisterId::from_text("52ypw-riaaa-aaaar-qadjq-cai").unwrap(),
+            )),
             _ => None,
         }
     }
@@ -79,6 +68,28 @@ impl RuntimeState {
             },
         }
     }
+
+    fn create_icdex_client(&self, exchange_id: ExchangeId, dex_canister_id: CanisterId) -> Box<dyn Exchange> {
+        Box::new(ICDexClient::new(
+            self.env.canister_id(),
+            dex_canister_id,
+            TokenInfo {
+                token: Cryptocurrency::InternetComputer,
+                ledger: self.data.icp_ledger_canister_id,
+                decimals: 8,
+                fee: 10_000,
+            },
+            TokenInfo {
+                token: Cryptocurrency::CHAT,
+                ledger: self.data.chat_ledger_canister_id,
+                decimals: 8,
+                fee: 100_000,
+            },
+            10_000_000,
+            move |order| on_order_made(exchange_id, order),
+            move |order| on_order_cancelled(exchange_id, order),
+        ))
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -91,7 +102,7 @@ struct Data {
     pub orders_log: OrdersLog,
     pub my_open_orders: HashMap<ExchangeId, AggregatedOrders>,
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
-    #[serde(default)]
+    pub balance_history: VecDeque<CanisterBalances>,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -113,6 +124,7 @@ impl Data {
             orders_log: OrdersLog::default(),
             my_open_orders: HashMap::new(),
             market_makers_in_progress: HashMap::new(),
+            balance_history: VecDeque::new(),
             rng_seed: [0; 32],
             test_mode,
         }
@@ -140,7 +152,7 @@ pub struct CanisterIds {
     pub chat_ledger: CanisterId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Config {
     enabled: bool,
     price_increment: u64,
@@ -171,4 +183,10 @@ fn on_order_cancelled(exchange_id: ExchangeId, order: CancelOrderRequest) {
             state.data.orders_log.log_order_cancelled(exchange_id, order, now);
         })
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct CanisterBalances {
+    pub timestamp: TimestampMillis,
+    pub balances: BTreeMap<CanisterId, u128>,
 }

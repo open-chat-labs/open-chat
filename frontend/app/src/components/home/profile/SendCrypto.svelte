@@ -12,22 +12,32 @@
     import SaveAccount from "./SaveAccount.svelte";
     import AccountSelector from "./AccountSelector.svelte";
     import { isAccountIdentifierValid, isPrincipalValid } from "openchat-shared";
+    import ModalContent from "../../ModalContent.svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
+    import ButtonGroup from "../../ButtonGroup.svelte";
+    import Button from "../../Button.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ErrorMessage from "../../ErrorMessage.svelte";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let ledger: string;
-    export let amountToSend: bigint;
-    export let busy = false;
-    export let valid = false;
-    export let validAccountName = false;
-    export let capturingAccount = false;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    let error: ResourceKey | undefined = undefined;
+    let amountToSend: bigint;
+    let busy = false;
+    let valid = false;
+    let validAccountName = false;
+    let capturingAccount = false;
     let validAmount = false;
     let targetAccount: string = "";
     let scanner: Scanner;
     let accounts: NamedAccount[] = [];
     let saveAccountElement: SaveAccount;
+    let balanceWithRefresh: BalanceWithRefresh;
 
     $: user = client.user;
     $: cryptoBalanceStore = client.cryptoBalance;
@@ -46,16 +56,33 @@
     $: {
         valid = capturingAccount ? validAccountName : validSend;
     }
+    $: title = i18nKey("cryptoAccount.sendToken", { symbol });
+
+    $: remainingBalance =
+        amountToSend > BigInt(0) ? cryptoBalance - amountToSend - transferFees : cryptoBalance;
 
     onMount(async () => {
         accounts = await client.loadSavedCryptoAccounts();
     });
 
-    export function saveAccount() {
-        return saveAccountElement?.saveAccount();
+    function saveAccount() {
+        if (saveAccountElement !== undefined) {
+            saveAccountElement
+                .saveAccount()
+                .then((resp) => {
+                    if (resp.kind === "success") {
+                        dispatch("close");
+                    } else if (resp.kind === "name_taken") {
+                        error = i18nKey("tokenTransfer.accountNameTaken");
+                    } else {
+                        error = i18nKey("tokenTransfer.failedToSaveAccount");
+                    }
+                })
+                .finally(() => (busy = false));
+        }
     }
 
-    export function scan() {
+    function scan() {
         scanner?.scan();
     }
 
@@ -63,11 +90,12 @@
         return accounts.find((a) => a.account === account) === undefined;
     }
 
-    export function send() {
+    function send() {
         if (!valid) return;
 
         busy = true;
-        dispatch("error", undefined);
+        error = undefined;
+
         client
             .withdrawCryptocurrency({
                 kind: "pending",
@@ -81,10 +109,12 @@
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSend = BigInt(0);
-                    dispatch("refreshBalance");
-                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
-                        values: { symbol },
-                    });
+                    balanceWithRefresh.refresh();
+                    toastStore.showSuccessToast(
+                        i18nKey("cryptoAccount.sendSucceeded", {
+                            symbol,
+                        }),
+                    );
                     if (unknownAccount(targetAccount)) {
                         capturingAccount = true;
                     } else {
@@ -92,65 +122,132 @@
                         targetAccount = "";
                     }
                 } else {
-                    dispatch("error", "cryptoAccount.sendFailed");
+                    error = i18nKey("cryptoAccount.sendFailed", { symbol });
                     client.logMessage(`Unable to withdraw ${symbol}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
-                dispatch("error", "cryptoAccount.sendFailed");
+                error = i18nKey("cryptoAccount.sendFailed", { symbol });
                 client.logError(`Unable to withdraw ${symbol}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (busy = false));
     }
+
+    function onBalanceRefreshed() {
+        error = undefined;
+    }
+
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        error = i18nKey(ev.detail);
+    }
+
+    function onPrimaryClick() {
+        busy = true;
+        if (capturingAccount) {
+            saveAccount();
+        } else {
+            send();
+        }
+    }
 </script>
 
-{#if capturingAccount}
-    <SaveAccount
-        bind:this={saveAccountElement}
-        bind:valid={validAccountName}
-        account={targetAccount}
-        {accounts} />
-{:else}
-    <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
-
-    <div class="token-input">
-        <TokenInput
+<ModalContent>
+    <span class="header" slot="header">
+        <div class="main-title"><Translatable resourceKey={title} /></div>
+        <BalanceWithRefresh
+            bind:this={balanceWithRefresh}
             {ledger}
-            {transferFees}
-            maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
-            bind:valid={validAmount}
-            bind:amount={amountToSend} />
-    </div>
-    <div class="target">
-        <Input
-            bind:value={targetAccount}
-            countdown={false}
-            maxlength={100}
-            invalid={targetAccount.length > 0 && !targetAccountValid}
-            placeholder={$_("cryptoAccount.sendTarget")} />
+            value={remainingBalance}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
+            bold
+            on:refreshed={onBalanceRefreshed}
+            on:error={onBalanceRefreshError} />
+    </span>
+    <form class="body" slot="body">
+        {#if capturingAccount}
+            <SaveAccount
+                bind:this={saveAccountElement}
+                bind:valid={validAccountName}
+                account={targetAccount}
+                {accounts} />
+        {:else}
+            <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
-        <div class="qr" on:click={scan}>
-            <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
-        </div>
-    </div>
+            <div class="token-input">
+                <TokenInput
+                    {ledger}
+                    {transferFees}
+                    maxAmount={BigInt(Math.max(0, Number(cryptoBalance - transferFees)))}
+                    bind:valid={validAmount}
+                    bind:amount={amountToSend} />
+            </div>
+            <div class="target">
+                <Input
+                    bind:value={targetAccount}
+                    countdown={false}
+                    maxlength={100}
+                    invalid={targetAccount.length > 0 && !targetAccountValid}
+                    placeholder={i18nKey("cryptoAccount.sendTarget")} />
 
-    {#if accounts.length > 0}
-        <div class="accounts">
-            <AccountSelector bind:targetAccount {accounts} />
-        </div>
-    {/if}
-{/if}
+                <div class="qr" on:click={scan}>
+                    <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
+                </div>
+            </div>
+
+            {#if accounts.length > 0}
+                <div class="accounts">
+                    <AccountSelector bind:targetAccount {accounts} />
+                </div>
+            {/if}
+        {/if}
+
+        {#if error !== undefined}
+            <ErrorMessage>{error}</ErrorMessage>
+        {/if}
+    </form>
+    <span slot="footer">
+        <ButtonGroup>
+            <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                ><Translatable
+                    resourceKey={i18nKey(capturingAccount ? "noThanks" : "cancel")} /></Button>
+            <Button
+                disabled={busy || !valid}
+                loading={busy}
+                tiny={$mobileWidth}
+                on:click={onPrimaryClick}
+                ><Translatable
+                    resourceKey={i18nKey(
+                        capturingAccount ? "tokenTransfer.saveAccount" : "tokenTransfer.send",
+                    )} /></Button>
+        </ButtonGroup>
+    </span>
+</ModalContent>
 
 <style lang="scss">
     :global(.target .input-wrapper input) {
         padding-right: 40px;
     }
 
+    .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: $sp2;
+
+        .main-title {
+            flex: auto;
+        }
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+    }
+
     .token-input {
         margin-bottom: $sp3;
     }
+
     .target {
         margin-bottom: $sp3;
         position: relative;

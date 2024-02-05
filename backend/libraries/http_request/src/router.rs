@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use types::{ChannelId, FileId, TimestampMillis};
 
 pub enum Route {
@@ -9,14 +9,14 @@ pub enum Route {
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
     Metrics,
-    Other(String, String),
+    Other(String, HashMap<String, String>),
 }
 
 pub fn extract_route(path: &str) -> Route {
     let trimmed = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
 
     if trimmed.is_empty() {
-        return Route::Other("".to_string(), "".to_string());
+        return Route::Other("".to_string(), HashMap::default());
     }
 
     let (path, qs) = trimmed.split_once('?').unwrap_or((&trimmed, ""));
@@ -59,7 +59,14 @@ pub fn extract_route(path: &str) -> Route {
         _ => (),
     }
 
-    Route::Other(path.to_string(), qs.to_string())
+    Route::Other(path.to_string(), parse_query(qs))
+}
+
+fn parse_query(query: &str) -> HashMap<String, String> {
+    query
+        .split('&')
+        .filter_map(|s| s.split_once('=').map(|t| (t.0.to_string(), t.1.to_string())))
+        .collect()
 }
 
 #[cfg(test)]
@@ -90,7 +97,7 @@ mod tests {
         let route = extract_route("blah?abc=1");
         if let Route::Other(p, qs) = route {
             assert_eq!(&p, "blah");
-            assert_eq!(&qs, "abc=1");
+            assert_eq!(qs.get("abc").unwrap(), "1");
         } else {
             panic!();
         }

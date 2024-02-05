@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import {
         preferredDarkThemeName,
         preferredLightThemeName,
@@ -13,6 +12,8 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import Button from "../../Button.svelte";
     import ThemeButton from "./ThemeButton.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     type PartitionedThemes = {
         light: Theme[];
@@ -36,6 +37,8 @@
             }
             return p;
         }, partitionedThemes);
+        partitionedThemes.light.sort((a, b) => a.label.localeCompare(b.label));
+        partitionedThemes.dark.sort((a, b) => a.label.localeCompare(b.label));
     });
 
     function selectLightTheme(ev: CustomEvent<string>) {
@@ -50,11 +53,11 @@
 <div class="theme-buttons">
     <ButtonGroup nowrap align="fill">
         <Button on:click={() => themeType.set("system")} secondary={$themeType !== "system"}
-            >{$_("theme.system")}</Button>
+            ><Translatable resourceKey={i18nKey("theme.system")} /></Button>
         <Button on:click={() => themeType.set("light")} secondary={$themeType !== "light"}
-            >{$_("theme.light")}</Button>
+            ><Translatable resourceKey={i18nKey("theme.light")} /></Button>
         <Button on:click={() => themeType.set("dark")} secondary={$themeType !== "dark"}
-            >{$_("theme.dark")}</Button>
+            ><Translatable resourceKey={i18nKey("theme.dark")} /></Button>
     </ButtonGroup>
 </div>
 
@@ -62,13 +65,13 @@
     <ThemeButton
         align={"start"}
         on:select={selectLightTheme}
-        label={$_("theme.preferredLightTheme")}
+        label={i18nKey("theme.preferredLightTheme")}
         theme={$preferredLightTheme}
         otherThemes={partitionedThemes.light} />
     <ThemeButton
         align={"end"}
         on:select={selectDarkTheme}
-        label={$_("theme.preferredDarkTheme")}
+        label={i18nKey("theme.preferredDarkTheme")}
         theme={$preferredDarkTheme}
         otherThemes={partitionedThemes.dark} />
 </div>

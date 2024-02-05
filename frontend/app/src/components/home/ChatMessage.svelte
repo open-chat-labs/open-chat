@@ -27,6 +27,7 @@
     import ModalContent from "../ModalContent.svelte";
     import Typing from "../Typing.svelte";
     import RepliesTo from "./RepliesTo.svelte";
+    import Translatable from "../Translatable.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
@@ -53,6 +54,9 @@
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
     import { filterRightPanelHistory } from "../../stores/rightPanel";
     import { removeQueryStringParam } from "../../utils/urls";
+    import Diamond from "../icons/Diamond.svelte";
+    import IntersectionObserverComponent from "./IntersectionObserver.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -77,7 +81,7 @@
     export let readonly: boolean;
     export let pinned: boolean;
     export let canPin: boolean;
-    export let canBlockUser: boolean;
+    export let canBlockUsers: boolean;
     export let canDelete: boolean;
     export let canQuoteReply: boolean;
     export let canReact: boolean;
@@ -85,7 +89,7 @@
     export let editing: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
-    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
+    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let collapsed: boolean = false;
     export let threadRootMessage: Message | undefined;
 
@@ -98,7 +102,10 @@
     let multiUserChat = chatType === "group_chat" || chatType === "channel";
     let showEmojiPicker = false;
     let debug = false;
-    let crypto = msg.content.kind === "crypto_content" || msg.content.kind === "prize_content";
+    let crypto =
+        msg.content.kind === "crypto_content" ||
+        msg.content.kind === "prize_content" ||
+        msg.content.kind === "p2p_swap_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
@@ -118,7 +125,6 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
     $: mediaDimensions = extractDimensions(msg.content);
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
@@ -127,16 +133,25 @@
     $: msgUrl = `${routeForMessage($chatListScope.kind, { chatId }, msg.messageIndex)}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
-    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
-    $: inert = msg.content.kind === "deleted_content" || collapsed;
+    $: isP2PSwap = msg.content.kind === "p2p_swap_content";
+    $: isMemeFighter = msg.content.kind === "meme_fighter_content";
+    $: inert =
+        msg.content.kind === "deleted_content" ||
+        msg.content.kind === "blocked_content" ||
+        collapsed;
+    $: canEdit =
+        me && supportsEdit && !msg.deleted && !crypto && !poll && !isPrize && !isMemeFighter;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
+    $: showChatMenu = (!inert || canRevealDeleted || canRevealBlocked) && !readonly;
     $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
     $: communityMembers = client.currentCommunityMembers;
     $: senderDisplayName = client.getDisplayName(sender, $communityMembers);
     $: messageContext = { chatId, threadRootMessageIndex };
     $: tips = msg.tips ? Object.entries(msg.tips) : [];
+    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: canBlockUser = canBlockUsers && !$currentChatBlockedUsers.has(msg.sender);
+    $: canRevealBlocked = msg.content.kind === "blocked_content";
 
     onMount(() => {
         if (!readByMe) {
@@ -190,7 +205,7 @@
             messageIndex: msg.messageIndex,
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
-            sourceContext: { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex },
+            sourceContext: messageContext,
         };
     }
 
@@ -209,9 +224,9 @@
             .cancelMessageReminder(msg.messageId, { ...ev.detail, hidden: true })
             .then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("reminders.cancelSuccess");
+                    toastStore.showSuccessToast(i18nKey("reminders.cancelSuccess"));
                 } else {
-                    toastStore.showFailureToast("reminders.cancelFailure");
+                    toastStore.showFailureToast(i18nKey("reminders.cancelFailure"));
                 }
             });
     }
@@ -255,7 +270,7 @@
                     reaction,
                     user.username,
                     user.displayName,
-                    kind
+                    kind,
                 )
                 .then((success) => {
                     if (success && kind === "add") {
@@ -318,7 +333,7 @@
             messageWrapperWidth,
             msgBubblePaddingWidth,
             window.innerHeight,
-            maxWidthFraction
+            maxWidthFraction,
         );
         mediaCalculatedHeight = targetMediaDimensions.height;
         msgBubbleCalculatedWidth = targetMediaDimensions.width + msgBubblePaddingWidth;
@@ -329,7 +344,7 @@
             new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                 detail: { userId: msg.sender, chatButton: multiUserChat, inGlobalContext: false },
                 bubbles: true,
-            })
+            }),
         );
     }
 
@@ -343,18 +358,18 @@
                 msg.messageId,
                 msg.messageIndex,
                 ev.detail.answerIndex,
-                ev.detail.type
+                ev.detail.type,
             )
             .then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("poll.voteFailed");
+                    toastStore.showFailureToast(i18nKey("poll.voteFailed"));
                 }
             });
     }
 
-    function canShare(): boolean {
-        return canShareMessage(msg.content);
-    }
+    $: canShare = canShareMessage(msg.content);
+    $: canForward = client.canForward(msg.content);
+    $: canTranslate = (client.getMessageText(msg.content) ?? "").length > 0;
 
     function sendTip(ev: CustomEvent<PendingCryptocurrencyTransfer>) {
         tipping = undefined;
@@ -362,9 +377,17 @@
         const currentTip = (msg.tips[transfer.ledger] ?? {})[user.userId] ?? 0n;
         client.tipMessage(messageContext, msg.messageId, transfer, currentTip).then((resp) => {
             if (resp.kind !== "success") {
-                toastStore.showFailureToast("tip.failure");
+                toastStore.showFailureToast(i18nKey("tip.failure"));
             }
         });
+    }
+
+    function reportMessage() {
+        showReport = true;
+    }
+
+    function remindMe() {
+        showRemindMe = true;
     }
 </script>
 
@@ -379,7 +402,7 @@
         <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
-                    <h4>{$_("chooseReaction")}</h4>
+                    <h4><Translatable resourceKey={i18nKey("chooseReaction")} /></h4>
                     <span
                         title={$_("close")}
                         class="close-emoji"
@@ -415,236 +438,239 @@
 
 {#if expiresAt === undefined || percentageExpired < 100}
     <div out:fade|local={{ duration: 1000 }} class="message-wrapper" class:last>
-        <div
-            bind:this={msgElement}
-            class="message"
-            class:me
-            data-index={failed ? "" : msg.messageIndex}
-            data-id={failed ? "" : msg.messageId}
-            id={failed ? "" : `event-${eventIndex}`}>
-            {#if showAvatar}
-                <div class="avatar-col">
-                    {#if first}
-                        <div class="avatar" on:click={openUserProfile}>
-                            <Avatar
-                                url={client.userAvatarUrl(sender)}
-                                userId={msg.sender}
-                                size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
-                        </div>
-                    {/if}
-                </div>
-            {/if}
-
-            <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <IntersectionObserverComponent let:intersecting>
             <div
-                bind:this={msgBubbleElement}
-                style={`--max-width: ${maxWidthFraction * 100}%; ${
-                    msgBubbleCalculatedWidth !== undefined
-                        ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
-                        : undefined
-                }`}
-                on:dblclick={doubleClickMessage}
-                use:longpress={() => messageMenu?.showMenu()}
-                class="message-bubble"
-                class:focused
-                class:editing
-                class:fill={fill && !inert}
+                bind:this={msgElement}
+                class="message"
                 class:me
-                class:inert
-                class:collapsed
-                class:first
-                class:last
-                class:readByMe
-                class:crypto
-                class:failed
-                class:prizeWinner={isPrizeWinner}
-                class:proposal={isProposal && !inert}
-                class:thread={inThread}
-                class:rtl={$rtlStore}>
-                {#if first && !isProposal && !isPrize}
-                    <div class="sender" class:fill class:rtl={$rtlStore}>
-                        <Link underline={"never"} on:click={openUserProfile}>
-                            <h4
-                                class="username"
-                                class:fill
-                                class:crypto
-                                class:diamond={sender?.diamond}>
-                                {senderDisplayName}
-                            </h4>
-                        </Link>
-                        {#if senderTyping}
-                            <span class="typing">
-                                <Typing />
-                            </span>
+                data-index={failed ? "" : msg.messageIndex}
+                data-id={failed ? "" : msg.messageId}
+                id={failed ? "" : `event-${eventIndex}`}>
+                {#if showAvatar}
+                    <div class="avatar-col">
+                        {#if first}
+                            <div class="avatar" on:click={openUserProfile}>
+                                <Avatar
+                                    url={client.userAvatarUrl(sender)}
+                                    userId={msg.sender}
+                                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
+                            </div>
                         {/if}
                     </div>
                 {/if}
-                {#if msg.forwarded}
-                    <div class="forwarded">
-                        <div>
-                            <ForwardIcon
-                                size={$iconSize}
-                                color={me
-                                    ? "var(--currentChat-msg-me-muted)"
-                                    : "var(--currentChat-msg-muted)"} />
+
+                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                <div
+                    bind:this={msgBubbleElement}
+                    style={`--max-width: ${maxWidthFraction * 100}%; ${
+                        msgBubbleCalculatedWidth !== undefined
+                            ? `flex: 0 0 ${msgBubbleCalculatedWidth}px`
+                            : undefined
+                    }`}
+                    on:dblclick={doubleClickMessage}
+                    use:longpress={() => messageMenu?.showMenu()}
+                    class="message-bubble"
+                    class:focused
+                    class:editing
+                    class:fill={fill && !inert}
+                    class:me
+                    class:inert
+                    class:collapsed
+                    class:first
+                    class:last
+                    class:readByMe
+                    class:crypto
+                    class:failed
+                    class:p2pSwap={isP2PSwap}
+                    class:proposal={isProposal && !inert}
+                    class:thread={inThread}
+                    class:rtl={$rtlStore}>
+                    {#if first && !isProposal && !isPrize}
+                        <div class="sender" class:fill class:rtl={$rtlStore}>
+                            <Link underline={"never"} on:click={openUserProfile}>
+                                <h4 class="username" class:fill class:crypto>
+                                    {senderDisplayName}
+                                </h4>
+                                <Diamond status={sender?.diamondStatus} />
+                            </Link>
+                            {#if senderTyping}
+                                <span class="typing">
+                                    <Typing />
+                                </span>
+                            {/if}
                         </div>
-                        <div class="text">{"Forwarded"}</div>
-                    </div>
-                {/if}
-                {#if msg.repliesTo !== undefined && !inert}
-                    {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                        <RepliesTo
-                            messageId={msg.messageId}
-                            {readonly}
-                            {chatId}
-                            on:goToMessageIndex
-                            repliesTo={msg.repliesTo} />
-                    {:else}
-                        <UnresolvedReply />
                     {/if}
-                {/if}
+                    {#if msg.forwarded}
+                        <div class="forwarded">
+                            <div>
+                                <ForwardIcon
+                                    size={$iconSize}
+                                    color={me
+                                        ? "var(--currentChat-msg-me-muted)"
+                                        : "var(--currentChat-msg-muted)"} />
+                            </div>
+                            <div class="text">{"Forwarded"}</div>
+                        </div>
+                    {/if}
+                    {#if msg.repliesTo !== undefined && !inert}
+                        {#if msg.repliesTo.kind === "rehydrated_reply_context"}
+                            <RepliesTo
+                                {readonly}
+                                {chatId}
+                                {intersecting}
+                                on:goToMessageIndex
+                                repliesTo={msg.repliesTo} />
+                        {:else}
+                            <UnresolvedReply />
+                        {/if}
+                    {/if}
 
-                <ChatMessageContent
-                    senderId={msg.sender}
-                    {readonly}
-                    {fill}
-                    {me}
-                    {chatId}
-                    {collapsed}
-                    {undeleting}
-                    messageIndex={msg.messageIndex}
-                    messageId={msg.messageId}
-                    myUserId={user.userId}
-                    content={msg.content}
-                    edited={msg.edited}
-                    height={mediaCalculatedHeight}
-                    on:registerVote={registerVote}
-                    on:goToMessageIndex
-                    on:upgrade
-                    on:expandMessage />
-
-                {#if !inert && !isPrize}
-                    <TimeAndTicks
-                        {pinned}
+                    <ChatMessageContent
+                        senderId={msg.sender}
+                        {readonly}
                         {fill}
-                        {timestamp}
-                        {expiresAt}
-                        {percentageExpired}
                         {me}
-                        {confirmed}
-                        {failed}
-                        deleted={msg.deleted}
+                        {messageContext}
+                        {collapsed}
                         {undeleting}
-                        {readByThem}
-                        {crypto}
-                        {chatType}
-                        {dateFormatter} />
-                {/if}
-
-                {#if debug}
-                    <pre>EventIdx: {eventIndex}</pre>
-                    <pre>MsgIdx: {msg.messageIndex}</pre>
-                    <pre>MsgId: {msg.messageId}</pre>
-                    <pre>Confirmed: {confirmed}</pre>
-                    <pre>ReadByThem: {readByThem}</pre>
-                    <pre>ReadByUs: {readByMe}</pre>
-                    <pre>Pinned: {pinned}</pre>
-                    <pre>edited: {msg.edited}</pre>
-                    <pre>failed: {failed}</pre>
-                    <pre>timestamp: {timestamp}</pre>
-                    <pre>expiresAt: {expiresAt}</pre>
-                    <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
-                {/if}
-
-                {#if showChatMenu}
-                    <ChatMessageMenu
-                        bind:this={messageMenu}
-                        {chatId}
-                        {isProposal}
-                        inert={msg.deleted || collapsed}
-                        {publicGroup}
-                        {confirmed}
+                        {intersecting}
                         {failed}
-                        canShare={canShare()}
-                        {me}
-                        {canPin}
-                        {canTip}
-                        {pinned}
-                        {supportsReply}
-                        {canQuoteReply}
-                        {threadRootMessage}
-                        {canStartThread}
-                        {multiUserChat}
-                        {msg}
-                        canForward={client.canForward(msg.content)}
-                        {canBlockUser}
-                        {canEdit}
-                        {canDelete}
-                        {canUndelete}
-                        {canRevealDeleted}
-                        {crypto}
-                        translatable={(client.getMessageText(msg.content) ?? "").length > 0}
-                        {translated}
-                        on:collapseMessage
-                        on:forward
-                        on:reply={reply}
-                        on:retrySend
+                        messageIndex={msg.messageIndex}
+                        messageId={msg.messageId}
+                        myUserId={user.userId}
+                        content={msg.content}
+                        edited={msg.edited}
+                        height={mediaCalculatedHeight}
+                        on:removePreview
+                        on:registerVote={registerVote}
+                        on:goToMessageIndex
                         on:upgrade
-                        on:initiateThread
-                        on:deleteFailedMessage
-                        on:replyPrivately={replyPrivately}
-                        on:editMessage={editMessage}
-                        on:tipMessage={tipMessage}
-                        on:reportMessage={() => (showReport = true)}
-                        on:cancelReminder={cancelReminder}
-                        on:remindMe={() => (showRemindMe = true)} />
+                        on:expandMessage />
+
+                    {#if !inert && !isPrize}
+                        <TimeAndTicks
+                            {pinned}
+                            {fill}
+                            {timestamp}
+                            {expiresAt}
+                            {percentageExpired}
+                            {me}
+                            {confirmed}
+                            {failed}
+                            deleted={msg.deleted}
+                            {undeleting}
+                            {readByThem}
+                            {crypto}
+                            {chatType}
+                            {dateFormatter} />
+                    {/if}
+
+                    {#if debug}
+                        <pre>EventIdx: {eventIndex}</pre>
+                        <pre>MsgIdx: {msg.messageIndex}</pre>
+                        <pre>MsgId: {msg.messageId}</pre>
+                        <pre>Confirmed: {confirmed}</pre>
+                        <pre>ReadByThem: {readByThem}</pre>
+                        <pre>ReadByUs: {readByMe}</pre>
+                        <pre>Pinned: {pinned}</pre>
+                        <pre>edited: {msg.edited}</pre>
+                        <pre>failed: {failed}</pre>
+                        <pre>timestamp: {timestamp}</pre>
+                        <pre>expiresAt: {expiresAt}</pre>
+                        <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
+                    {/if}
+
+                    {#if showChatMenu && intersecting}
+                        <ChatMessageMenu
+                            bind:this={messageMenu}
+                            {chatId}
+                            {isProposal}
+                            {inert}
+                            {publicGroup}
+                            {confirmed}
+                            {failed}
+                            {canShare}
+                            {me}
+                            {canPin}
+                            {canTip}
+                            {pinned}
+                            {supportsReply}
+                            {canQuoteReply}
+                            {threadRootMessage}
+                            {canStartThread}
+                            {multiUserChat}
+                            {msg}
+                            {canForward}
+                            {canBlockUser}
+                            {canEdit}
+                            {canDelete}
+                            {canUndelete}
+                            {canRevealDeleted}
+                            {canRevealBlocked}
+                            {crypto}
+                            translatable={canTranslate}
+                            {translated}
+                            on:collapseMessage
+                            on:forward
+                            on:reply={reply}
+                            on:retrySend
+                            on:upgrade
+                            on:initiateThread
+                            on:deleteFailedMessage
+                            on:replyPrivately={replyPrivately}
+                            on:editMessage={editMessage}
+                            on:tipMessage={tipMessage}
+                            on:reportMessage={reportMessage}
+                            on:cancelReminder={cancelReminder}
+                            on:remindMe={remindMe} />
+                    {/if}
+                </div>
+
+                {#if !collapsed && !msg.deleted && canReact && !failed}
+                    <div class="actions">
+                        <div class="reaction" on:click={() => (showEmojiPicker = true)}>
+                            <HoverIcon>
+                                <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </div>
+                    </div>
                 {/if}
             </div>
 
-            {#if !collapsed && !msg.deleted && canReact && !failed}
-                <div class="actions">
-                    <div class="reaction" on:click={() => (showEmojiPicker = true)}>
-                        <HoverIcon>
-                            <EmoticonLolOutline size={$iconSize} color={"var(--icon-txt)"} />
-                        </HoverIcon>
-                    </div>
+            {#if threadSummary !== undefined && !inThread}
+                <ThreadSummary
+                    {chatId}
+                    threadRootMessageIndex={msg.messageIndex}
+                    selected={($pathParams.kind === "global_chat_selected_route" ||
+                        $pathParams.kind === "selected_channel_route") &&
+                        msg.messageIndex === $pathParams.messageIndex &&
+                        $pathParams.open}
+                    {threadSummary}
+                    indent={showAvatar}
+                    {me}
+                    url={msgUrl} />
+            {/if}
+
+            {#if msg.reactions.length > 0 && !inert}
+                <div class="message-reactions" class:me class:indent={showAvatar}>
+                    {#each msg.reactions as { reaction, userIds } (reaction)}
+                        <MessageReaction
+                            on:click={() => toggleReaction(reaction)}
+                            {reaction}
+                            {userIds}
+                            myUserId={user?.userId} />
+                    {/each}
                 </div>
             {/if}
-        </div>
 
-        {#if threadSummary !== undefined && !inThread}
-            <ThreadSummary
-                {chatId}
-                threadRootMessageIndex={msg.messageIndex}
-                selected={($pathParams.kind === "global_chat_selected_route" ||
-                    $pathParams.kind === "selected_channel_route") &&
-                    msg.messageIndex === $pathParams.messageIndex &&
-                    $pathParams.open}
-                {threadSummary}
-                indent={showAvatar}
-                {me}
-                url={msgUrl} />
-        {/if}
-
-        {#if msg.reactions.length > 0 && !inert}
-            <div class="message-reactions" class:me class:indent={showAvatar}>
-                {#each msg.reactions as { reaction, userIds } (reaction)}
-                    <MessageReaction
-                        on:click={() => toggleReaction(reaction)}
-                        {reaction}
-                        {userIds}
-                        myUserId={user?.userId} />
-                {/each}
-            </div>
-        {/if}
-
-        {#if tips.length > 0 && !inert}
-            <div class="tips" class:indent={showAvatar}>
-                {#each tips as [ledger, userTips]}
-                    <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
-                {/each}
-            </div>
-        {/if}
+            {#if tips.length > 0 && !inert}
+                <div class="tips" class:indent={showAvatar}>
+                    {#each tips as [ledger, userTips]}
+                        <TipThumbnail on:click={tipMessage} {canTip} {ledger} {userTips} />
+                    {/each}
+                </div>
+            {/if}
+        </IntersectionObserverComponent>
     </div>
 {/if}
 
@@ -792,8 +818,11 @@
     .message-bubble {
         $radius: var(--currentChat-msg-r1);
         $inner-radius: var(--currentChat-msg-r2);
-        transition: box-shadow ease-in-out 200ms, background-color ease-in-out 200ms,
-            border ease-in-out 300ms, transform ease-in-out 200ms;
+        transition:
+            box-shadow ease-in-out 200ms,
+            background-color ease-in-out 200ms,
+            border ease-in-out 300ms,
+            transform ease-in-out 200ms;
         position: relative;
         padding: toRem(8) toRem(12) toRem(8) toRem(12);
         background-color: var(--currentChat-msg-bg);
@@ -820,10 +849,6 @@
             &.fill,
             &.crypto {
                 color: #fff;
-            }
-
-            &.diamond {
-                @include diamond();
             }
         }
 
@@ -913,8 +938,8 @@
             background-color: var(--error);
         }
 
-        &.prizeWinner {
-            // background-color: var(--prize);
+        &.p2pSwap {
+            width: 350px;
         }
     }
 

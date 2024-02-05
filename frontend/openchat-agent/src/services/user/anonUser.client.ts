@@ -1,58 +1,64 @@
-import {
-    type InitialStateResponse,
-    type UpdatesResponse,
-    type EventsResponse,
-    type CandidateGroupChat,
-    type CreateGroupResponse,
-    type DeleteGroupResponse,
-    type DirectChatEvent,
-    type Message,
-    type SendMessageResponse,
-    type BlockUserResponse,
-    type UnblockUserResponse,
-    type LeaveGroupResponse,
-    type MarkReadResponse,
-    type IndexRange,
-    type AddRemoveReactionResponse,
-    type DeleteMessageResponse,
-    type UndeleteMessageResponse,
-    type EditMessageResponse,
-    type MarkReadRequest,
-    type WithdrawCryptocurrencyResponse,
-    type PendingCryptocurrencyWithdrawal,
-    type ArchiveChatResponse,
-    type BlobReference,
-    type CreatedUser,
-    type MigrateUserPrincipalResponse,
-    type PinChatResponse,
-    type PublicProfile,
-    type SearchDirectChatResponse,
-    type SetBioResponse,
-    type ToggleMuteNotificationResponse,
-    type UnpinChatResponse,
-    type DeletedDirectMessageResponse,
-    type EventWrapper,
-    type SetMessageReminderResponse,
-    type CommunitySummary,
-    type CreateCommunityResponse,
-    type ChatIdentifier,
-    type DirectChatIdentifier,
-    type GroupChatIdentifier,
-    type ManageFavouritesResponse,
-    type CommunityIdentifier,
-    type LeaveCommunityResponse,
-    type DeleteCommunityResponse,
-    type ChannelIdentifier,
-    type Rules,
-    type TipMessageResponse,
-    type NamedAccount,
-    type SaveCryptoAccountResponse,
-    type CandidateProposal,
-    type SubmitProposalResponse,
-    type MessageContext,
-    type PendingCryptocurrencyTransfer,
-    AnonymousOperationError,
+import type { CancelP2PSwapResponse } from "openchat-shared";
+import type { AcceptP2PSwapResponse } from "openchat-shared";
+import type {
+    InitialStateResponse,
+    UpdatesResponse,
+    EventsResponse,
+    CandidateGroupChat,
+    CreateGroupResponse,
+    DeleteGroupResponse,
+    ChatEvent,
+    Message,
+    SendMessageResponse,
+    BlockUserResponse,
+    UnblockUserResponse,
+    LeaveGroupResponse,
+    MarkReadResponse,
+    IndexRange,
+    AddRemoveReactionResponse,
+    DeleteMessageResponse,
+    UndeleteMessageResponse,
+    EditMessageResponse,
+    MarkReadRequest,
+    WithdrawCryptocurrencyResponse,
+    PendingCryptocurrencyWithdrawal,
+    ArchiveChatResponse,
+    BlobReference,
+    CreatedUser,
+    PinChatResponse,
+    PublicProfile,
+    SearchDirectChatResponse,
+    SetBioResponse,
+    ToggleMuteNotificationResponse,
+    UnpinChatResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
+    SetMessageReminderResponse,
+    CommunitySummary,
+    CreateCommunityResponse,
+    ChatIdentifier,
+    DirectChatIdentifier,
+    GroupChatIdentifier,
+    ManageFavouritesResponse,
+    CommunityIdentifier,
+    LeaveCommunityResponse,
+    DeleteCommunityResponse,
+    ChannelIdentifier,
+    Rules,
+    TipMessageResponse,
+    NamedAccount,
+    SaveCryptoAccountResponse,
+    CandidateProposal,
+    SubmitProposalResponse,
+    MessageContext,
+    PendingCryptocurrencyTransfer,
+    CryptocurrencyDetails,
+    ExchangeTokenSwapArgs,
+    SwapTokensResponse,
+    TokenSwapStatusResponse,
+    ApproveTransferResponse,
 } from "openchat-shared";
+import { AnonymousOperationError } from "openchat-shared";
 
 export class AnonUserClient {
     static create(): AnonUserClient {
@@ -89,6 +95,7 @@ export class AnonUserClient {
                 pinned: [],
             },
             timestamp: BigInt(Date.now()),
+            suspended: false,
         });
     }
 
@@ -124,7 +131,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -133,7 +140,7 @@ export class AnonUserClient {
         _chatId: DirectChatIdentifier,
         _messageIndex: number,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -144,7 +151,7 @@ export class AnonUserClient {
         _ascending: boolean,
         _threadRootMessageIndex: number | undefined,
         _latestKnownUpdate: bigint | undefined,
-    ): Promise<EventsResponse<DirectChatEvent>> {
+    ): Promise<EventsResponse<ChatEvent>> {
         throw new AnonymousOperationError();
     }
 
@@ -163,6 +170,7 @@ export class AnonUserClient {
     sendMessage(
         _chatId: DirectChatIdentifier,
         _event: EventWrapper<Message>,
+        _messageFilterFailed: bigint | undefined,
         _threadRootMessageIndex?: number,
     ): Promise<[SendMessageResponse, Message]> {
         throw new AnonymousOperationError();
@@ -178,7 +186,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToGroup(
         _groupId: GroupChatIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -197,7 +205,7 @@ export class AnonUserClient {
 
     sendMessageWithTransferToChannel(
         _id: ChannelIdentifier,
-        _recipientId: string,
+        _recipientId: string | undefined,
         _sender: CreatedUser,
         _event: EventWrapper<Message>,
         _threadRootMessageIndex: number | undefined,
@@ -322,14 +330,6 @@ export class AnonUserClient {
         throw new AnonymousOperationError();
     }
 
-    initUserPrincipalMigration(_newPrincipal: string): Promise<void> {
-        throw new AnonymousOperationError();
-    }
-
-    migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
-        throw new AnonymousOperationError();
-    }
-
     getDeletedMessage(_userId: string, _messageId: bigint): Promise<DeletedDirectMessageResponse> {
         throw new AnonymousOperationError();
     }
@@ -365,9 +365,45 @@ export class AnonUserClient {
 
     reportMessage(
         _chatId: DirectChatIdentifier,
-        _messageId: bigint, 
-        _deleteMessage: boolean
+        _messageId: bigint,
+        _deleteMessage: boolean,
     ): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    swapTokens(
+        _swapId: bigint,
+        _inputToken: CryptocurrencyDetails,
+        _outputToken: CryptocurrencyDetails,
+        _amountIn: bigint,
+        _minAmountOut: bigint,
+        _exchangeArgs: ExchangeTokenSwapArgs,
+    ): Promise<SwapTokensResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    tokenSwapStatus(_swapId: bigint): Promise<TokenSwapStatusResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    approveTransfer(
+        _spender: string,
+        _ledger: string,
+        _amount: bigint,
+        _expiresIn: bigint | undefined,
+    ): Promise<ApproveTransferResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    deleteDirectChat(_userId: string, _blockUser: boolean): Promise<boolean> {
+        throw new AnonymousOperationError();
+    }
+
+    acceptP2PSwap(_userId: string, _messageId: bigint): Promise<AcceptP2PSwapResponse> {
+        throw new AnonymousOperationError();
+    }
+
+    cancelP2PSwap(_userId: string, _messageId: bigint): Promise<CancelP2PSwapResponse> {
         throw new AnonymousOperationError();
     }
 }

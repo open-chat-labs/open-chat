@@ -8,9 +8,17 @@
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
   },
+  "escrow": {
+    "ic": "s4yi7-yiaaa-aaaar-qacpq-cai",
+    "ic_test": "tspqt-xaaaa-aaaal-qcnna-cai"
+  },
   "group_index": {
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
     "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
+  },
+  "identity": {
+    "ic": "6klfq-niaaa-aaaar-qadbq-cai",
+    "ic_test": "rejcv-jqaaa-aaaak-afj5q-cai"
   },
   "local_group_index": {
     "ic": "suaf3-hqaaa-aaaaf-bfyoa-cai",
@@ -74,6 +82,10 @@
   "storage_index": {
     "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
     "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai"
+  },
+  "translations": {
+    "ic": "lxq5i-mqaaa-aaaaf-bih7q-cai",
+    "ic_test": "lqr34-biaaa-aaaaf-bih7a-cai"
   },
   "user_index": {
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",

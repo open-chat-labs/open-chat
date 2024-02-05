@@ -6,18 +6,18 @@ use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextI
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::{
-    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial, MessageId,
-    MessageIndex, Notification, TimestampMillis, UserId,
+    CanisterId, DirectMessageNotification, EventWrapper, Message, MessageId, MessageIndex, Notification, TimestampMillis,
+    UserId,
 };
-use user_canister::c2c_send_messages::{Response::*, *};
+use user_canister::c2c_send_messages_v2::{Response::*, *};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_send_messages(args: Args) -> Response {
-    c2c_send_messages_impl(args).await
+async fn c2c_send_messages_v2(args: Args) -> Response {
+    c2c_send_messages_with_sender_check(args).await
 }
 
-async fn c2c_send_messages_impl(args: Args) -> Response {
+async fn c2c_send_messages_with_sender_check(args: Args) -> Response {
     run_regular_jobs();
 
     let sender_user_id = match read_state(get_sender_status) {
@@ -31,42 +31,38 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
         }
     };
 
-    mutate_state(|state| {
-        let now = state.env.now();
-        for message in args.messages {
-            // Messages sent c2c can be retried so the same messageId may be received multiple
-            // times, so here we skip any messages whose messageId already exists.
-            if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
-                if chat
-                    .events
-                    .main_events_reader()
-                    .message_internal(message.message_id.into())
-                    .is_some()
-                {
-                    continue;
-                }
+    mutate_state(|state| c2c_send_messages_impl(args, sender_user_id, state))
+}
+pub(crate) fn c2c_send_messages_impl(args: Args, sender_user_id: UserId, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    for message in args.messages {
+        // Messages sent c2c can be retried so the same messageId may be received multiple
+        // times, so here we skip any messages whose messageId already exists.
+        if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
+            if chat.events.contains_message_id(None, message.message_id) {
+                continue;
             }
-
-            handle_message_impl(
-                sender_user_id,
-                HandleMessageArgs {
-                    message_id: Some(message.message_id),
-                    sender_message_index: Some(message.sender_message_index),
-                    sender_name: args.sender_name.clone(),
-                    sender_display_name: args.sender_display_name.clone(),
-                    content: message.content,
-                    replies_to: message.replies_to,
-                    forwarding: message.forwarding,
-                    correlation_id: message.correlation_id,
-                    is_bot: false,
-                    sender_avatar_id: args.sender_avatar_id,
-                    now,
-                },
-                false,
-                state,
-            );
         }
-    });
+
+        handle_message_impl(
+            sender_user_id,
+            HandleMessageArgs {
+                message_id: Some(message.message_id),
+                sender_message_index: Some(message.sender_message_index),
+                sender_name: args.sender_name.clone(),
+                sender_display_name: args.sender_display_name.clone(),
+                content: message.content,
+                replies_to: message.replies_to,
+                forwarding: message.forwarding,
+                correlation_id: message.correlation_id,
+                is_bot: false,
+                sender_avatar_id: args.sender_avatar_id,
+                now,
+            },
+            message.message_filter_failed.is_some(),
+            state,
+        );
+    }
 
     Success
 }
@@ -90,7 +86,7 @@ async fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_direct_message(sender_user_id, false, now) {
+        if let Err(error) = message.content.validate_for_new_message(true, true, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -105,7 +101,7 @@ async fn c2c_handle_bot_messages(
                     sender_message_index: None,
                     sender_name: args.bot_name.clone(),
                     sender_display_name: args.bot_display_name.clone(),
-                    content: message.content.into(),
+                    content: message.content.try_into().unwrap(),
                     replies_to: None,
                     forwarding: false,
                     correlation_id: 0,
@@ -126,7 +122,7 @@ pub(crate) struct HandleMessageArgs {
     pub sender_message_index: Option<MessageIndex>,
     pub sender_name: String,
     pub sender_display_name: Option<String>,
-    pub content: MessageContent,
+    pub content: MessageContentInternal,
     pub replies_to: Option<C2CReplyContext>,
     pub forwarding: bool,
     pub correlation_id: u64,
@@ -135,13 +131,13 @@ pub(crate) struct HandleMessageArgs {
     pub now: TimestampMillis,
 }
 
-enum SenderStatus {
+pub(crate) enum SenderStatus {
     Ok(UserId),
     Blocked,
     UnknownUser(CanisterId, UserId),
 }
 
-fn get_sender_status(state: &RuntimeState) -> SenderStatus {
+pub(crate) fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     let sender = state.env.caller().into();
 
     if state.data.blocked_users.contains(&sender) {
@@ -153,7 +149,7 @@ fn get_sender_status(state: &RuntimeState) -> SenderStatus {
     }
 }
 
-async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
+pub(crate) async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: user_id.into(),
     };
@@ -175,21 +171,21 @@ pub(crate) fn handle_message_impl(
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, state);
-    let initial_content: MessageContentInitial = args.content.into();
-    let content = MessageContentInternal::from(initial_content);
-    let files = content.blob_references();
+    let files = args.content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id.unwrap_or_else(|| state.env.rng().gen()),
         sender,
-        content,
+        content: args.content,
         mentioned: Vec::new(),
         replies_to,
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,
         now: args.now,
     };
+
+    let message_id = push_message_args.message_id;
 
     let message_event =
         state
@@ -206,6 +202,8 @@ pub(crate) fn handle_message_impl(
     }
 
     register_timer_jobs(
+        sender.into(),
+        message_id,
         &message_event,
         files,
         is_next_event_to_expire,

@@ -13,8 +13,8 @@ use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
-use utils::text_validation::{validate_display_name, validate_username, UsernameValidationError};
+use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
+use utils::text_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
 
@@ -49,17 +49,7 @@ async fn register_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| {
-                commit(
-                    caller,
-                    user_id,
-                    args.username,
-                    args.display_name,
-                    wasm_version,
-                    referral_code,
-                    state,
-                )
-            });
+            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
@@ -91,7 +81,12 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
+    if let Err(error) = validate_public_key(
+        caller,
+        &args.public_key,
+        state.data.identity_canister_id,
+        state.data.internet_identity_canister_id,
+    ) {
         return Err(PublicKeyInvalid(error));
     }
 
@@ -121,15 +116,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
-    if let Some(display_name) = args.display_name.as_ref() {
-        match validate_display_name(display_name) {
-            Ok(_) => {}
-            Err(UsernameValidationError::TooShort(s)) => return Err(DisplayNameTooShort(s.min_length as u16)),
-            Err(UsernameValidationError::TooLong(l)) => return Err(DisplayNameTooLong(l.max_length as u16)),
-            Err(UsernameValidationError::Invalid) => return Err(DisplayNameInvalid),
-        };
-    }
-
     let openchat_bot_messages = if referral_code
         .as_ref()
         .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
@@ -152,7 +138,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
 
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
             return Err(CyclesBalanceTooLow);
         }
         cycles_required
@@ -169,9 +155,9 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response>
         local_user_index_canister_id: state.env.canister_id(),
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_canister_id: state.data.proposals_bot_canister_id,
+        escrow_canister_id: state.data.escrow_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
-        display_name: args.display_name.clone(),
         openchat_bot_messages,
         test_mode: state.data.test_mode,
     };
@@ -192,7 +178,6 @@ fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
-    display_name: Option<String>,
     wasm_version: BuildVersion,
     referral_code: Option<ReferralCode>,
     state: &mut RuntimeState,
@@ -205,7 +190,6 @@ fn commit(
         principal,
         user_id,
         username: username.clone(),
-        display_name: display_name.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
     })));
 
@@ -264,13 +248,18 @@ fn welcome_messages() -> Vec<String> {
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
 
-fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_canister_id: CanisterId) -> Result<(), String> {
+fn validate_public_key(
+    caller: Principal,
+    public_key: &[u8],
+    identity_canister_id: CanisterId,
+    internet_identity_canister_id: CanisterId,
+) -> Result<(), String> {
     let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
     let canister_id_length = key_info.subject_public_key.data[0];
 
     let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
-    if canister_id != internet_identity_canister_id {
-        return Err("PublicKey is not derived from the InternetIdentity canister".to_string());
+    if canister_id != identity_canister_id && canister_id != internet_identity_canister_id {
+        return Err("PublicKey is not derived from the Identity canister or the InternetIdentity canister".to_string());
     }
 
     let expected_caller = Principal::self_authenticating(public_key);

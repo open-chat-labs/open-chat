@@ -1,13 +1,8 @@
 import { writable, get } from "svelte/store";
 import { navOpen } from "./layout";
 import { mobileWidth } from "./screenDimensions";
-import {
-    type Alignment,
-    type Position,
-    boundsCheck,
-    centerOfScreen,
-    derivePosition,
-} from "../utils/alignment";
+import { type Alignment, type Position, centerOfScreen } from "../utils/alignment";
+import { reposition } from "../utils/position";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -17,6 +12,7 @@ document.body.appendChild(menuAnchor);
 
 function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     if (menu !== undefined) {
+        menu.style.removeProperty("--override-height");
         if (!menuAnchor) {
             // debug logging - will remove later
             console.error("trying to remove menu when menu anchor is null");
@@ -30,34 +26,33 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     return undefined;
 }
 
+function positionInCenter(menu: HTMLElement) {
+    const rect = menu.getBoundingClientRect();
+    const dim = centerOfScreen(rect);
+    menu.style.setProperty("left", `${dim.x}px`);
+    menu.style.setProperty("top", `${dim.y + window.scrollY}px`);
+}
+
 export const menuStore = {
     subscribe,
     position: (
-        triggerRect: DOMRect,
+        triggerEl: HTMLElement,
         centered: boolean,
         position: Position = "bottom",
-        align: Alignment = "center",
+        align: Alignment = "middle",
         gutter = 8,
     ): void =>
         update((menu) => {
             if (menu === undefined) return menu;
 
-            const elementRect = menu.getBoundingClientRect();
-
-            const dim =
-                centered && get(mobileWidth)
-                    ? centerOfScreen(elementRect)
-                    : boundsCheck(
-                          triggerRect,
-                          derivePosition(triggerRect, elementRect, position, align, gutter),
-                      );
-
-            menu.style.setProperty("left", `${dim.x}px`);
-
-            // for landing pages we need to offset based on the window scroll
-            // for the main app this will always be 0 so it's a no-op
-            menu.style.setProperty("top", `${dim.y + window.scrollY}px`);
-
+            if (centered && get(mobileWidth)) {
+                positionInCenter(menu);
+            } else {
+                reposition(triggerEl, menu, {
+                    position: `${position}-${align}`,
+                    margin: gutter,
+                });
+            }
             return menu;
         }),
     showMenu: (menu: HTMLElement): void =>

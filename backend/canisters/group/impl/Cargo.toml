@@ -18,6 +18,8 @@ canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 chat_events = { path = "../../../libraries/chat_events" }
+escrow_canister = { path = "../../escrow/api" }
+escrow_canister_c2c_client = { path = "../../escrow/c2c_client" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 gated_groups = { path = "../../../libraries/gated_groups" }

@@ -3,7 +3,6 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
-    import "../utils/i18n";
     import "../utils/scream";
     import { rtlStore } from "../stores/rtl";
     import { _, isLoading } from "svelte-i18n";
@@ -15,7 +14,7 @@
     import { currentTheme } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { OpenChat, SessionExpiryError, UserLoggedIn } from "openchat-client";
+    import { OpenChat, UserLoggedIn, type DiamondMembershipFees } from "openchat-client";
     import { type UpdateMarketMakerConfigArgs, inititaliseLogger } from "openchat-client";
     import {
         isCanisterUrl,
@@ -31,12 +30,14 @@
     import { overrideItemIdKeyNameBeforeInitialisingDndZones } from "svelte-dnd-action";
     import Witch from "./Witch.svelte";
     import Head from "./Head.svelte";
+    import { snowing } from "../stores/snow";
+    import Snow from "./Snow.svelte";
     overrideItemIdKeyNameBeforeInitialisingDndZones("_id");
 
     const logger = inititaliseLogger(
         process.env.ROLLBAR_ACCESS_TOKEN!,
         process.env.OPENCHAT_WEBSITE_VERSION!,
-        process.env.NODE_ENV!
+        process.env.NODE_ENV!,
     );
 
     function createOpenChatClient(): OpenChat {
@@ -97,13 +98,19 @@
             removeHotGroupExclusion,
             setCommunityModerationFlags,
             unfreezeGroup,
+            addMessageFilter,
+            removeMessageFilter,
+            reportedMessages,
         };
         (<any>window).platformOperator = {
             setGroupUpgradeConcurrency,
             setCommunityUpgradeConcurrency,
             setUserUpgradeConcurrency,
+            setDiamondMembershipFees,
             stakeNeuronForSubmittingProposals,
             updateMarketMakerConfig,
+            pauseEventLoop: () => client.pauseEventLoop(),
+            resumeEventLoop: () => client.resumeEventLoop(),
         };
 
         framed.set(window.self !== window.top);
@@ -176,18 +183,30 @@
         });
     }
 
+    function addMessageFilter(regex: string): void {
+        client.addMessageFilter(regex);
+    }
+
+    function removeMessageFilter(id: bigint): void {
+        client.removeMessageFilter(id);
+    }
+
+    function reportedMessages(userId?: string): void {
+        console.log(client.reportedMessages(userId));
+    }
+
     function deleteChannelMessage(
         communityId: string,
         channelId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number | undefined
+        threadRootMessageIndex?: number | undefined,
     ): void {
         client
             .deleteMessage(
                 { kind: "channel", communityId, channelId },
                 threadRootMessageIndex,
                 messageId,
-                true
+                true,
             )
             .then((success) => {
                 if (success) {
@@ -196,7 +215,7 @@
                         communityId,
                         channelId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 } else {
                     console.log(
@@ -204,7 +223,7 @@
                         communityId,
                         channelId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 }
             });
@@ -213,14 +232,14 @@
     function deleteMessage(
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number | undefined
+        threadRootMessageIndex?: number | undefined,
     ): void {
         client
             .deleteMessage(
                 { kind: "group_chat", groupId: chatId },
                 threadRootMessageIndex,
                 messageId,
-                true
+                true,
             )
             .then((success) => {
                 if (success) {
@@ -230,7 +249,7 @@
                         "Failed to delete message",
                         chatId,
                         messageId,
-                        threadRootMessageIndex
+                        threadRootMessageIndex,
                     );
                 }
             });
@@ -262,6 +281,16 @@
                 console.log("User upgrade concurrency set", value);
             } else {
                 console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
+    }
+
+    function setDiamondMembershipFees(fees: DiamondMembershipFees[]): void {
+        client.setDiamondMembershipFees(fees).then((success) => {
+            if (success) {
+                console.log("Diamond membership fees set", fees);
+            } else {
+                console.log("Failed to set diamond membership fees", fees);
             }
         });
     }
@@ -307,7 +336,11 @@
 
     function unhandledError(ev: Event) {
         logger?.error("Unhandled error: ", ev);
-        if (ev instanceof PromiseRejectionEvent && ev.reason instanceof SessionExpiryError) {
+        if (
+            ev instanceof PromiseRejectionEvent &&
+            (ev.reason?.name === "SessionExpiryError" ||
+                ev.reason?.name === "InvalidDelegationError")
+        ) {
             client.logout();
             ev.preventDefault();
         }
@@ -350,6 +383,10 @@
 {/if}
 
 <UpgradeBanner />
+
+{#if $snowing}
+    <Snow />
+{/if}
 
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />
@@ -540,18 +577,23 @@
         :root {
             --bg: #121212;
             --prize: #f79413;
+            --font-fallback: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
+                Ubuntu, Cantarell, "Helvetica Neue", sans-serif --font: "Roboto", sans-serif;
+            --font: "Roboto", sans-serif;
+            --font-bold: "Manrope", sans-serif;
         }
 
         body {
-            transition: background ease-in-out 300ms, color ease-in-out 150ms,
+            transition:
+                background ease-in-out 300ms,
+                color ease-in-out 150ms,
                 padding ease-in-out 150ms;
             background: var(--bg);
             color: var(--txt);
             margin: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
-                Cantarell, "Helvetica Neue", sans-serif;
-            font-family: "Roboto", sans-serif;
+            font-family: var(--font-fallback);
+            font-family: var(--font);
             font-weight: 400;
             font-size: toRem(16);
             line-height: 135%;
@@ -594,13 +636,13 @@
         h2,
         h3,
         h4 {
-            font-family: "Manrope", sans-serif;
+            font-family: var(--font-bold);
             font-weight: 700;
         }
 
         textarea {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu,
-                Cantarell, "Helvetica Neue", sans-serif;
+            font-family: var(--font-fallback);
+            font-family: var(--font);
         }
 
         a {
@@ -626,6 +668,11 @@
             top: -1000px;
             left: -1000px;
             @include z-index("dollar");
+        }
+
+        .is-translatable {
+            position: relative;
+            top: 4px;
         }
     }
 

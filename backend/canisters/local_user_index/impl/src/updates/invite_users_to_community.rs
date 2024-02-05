@@ -66,6 +66,6 @@ fn commit(
         state.push_oc_bot_message_to_user(user_id, message.clone());
     }
 
-    crate::jobs::sync_events_to_user_canisters::start_job_if_required(state);
-    crate::jobs::sync_events_to_user_index_canister::start_job_if_required(state);
+    crate::jobs::sync_events_to_user_canisters::try_run_now(state);
+    crate::jobs::sync_events_to_user_index_canister::try_run_now(state);
 }

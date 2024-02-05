@@ -11,7 +11,8 @@
     import { isTouchDevice } from "../../utils/devices";
     import { lowBandwidth } from "../../stores/settings";
     import Button from "../Button.svelte";
-    import { _ } from "svelte-i18n";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let content: ImageContent | MemeFighterContent;
     export let fill: boolean;
@@ -106,7 +107,8 @@
             <div class="mask">
                 {#if !reply && !draft}
                     <div class="reveal">
-                        <Button on:click={() => (hidden = false)}>{$_(normalised.loadMsg)}</Button>
+                        <Button on:click={() => (hidden = false)}
+                            ><Translatable resourceKey={i18nKey(normalised.loadMsg)} /></Button>
                     </div>
                 {/if}
             </div>

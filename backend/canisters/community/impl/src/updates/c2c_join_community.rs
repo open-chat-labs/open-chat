@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEventInternal;
 use crate::model::members::AddResult;
-use crate::updates::c2c_join_channel::join_channel_auto;
+use crate::updates::c2c_join_channel::join_channel_synchronously;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -32,7 +32,7 @@ pub(crate) async fn join_community(args: Args) -> Response {
     match mutate_state(|state| join_community_impl(&args, state)) {
         Ok(public_channel_ids) => {
             for c in public_channel_ids {
-                join_channel_auto(c, args.principal);
+                join_channel_synchronously(c, args.principal, args.diamond_membership_expires_at);
             }
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
@@ -65,10 +65,10 @@ fn is_permitted_to_join(args: &Args, state: &RuntimeState) -> Result<Option<Chec
     } else {
         Ok(state.data.gate.as_ref().map(|g| CheckGateArgs {
             gate: g.clone(),
-            user_index_canister: state.data.user_index_canister_id,
             user_id: args.user_id,
+            diamond_membership_expires_at: args.diamond_membership_expires_at,
             this_canister: state.env.canister_id(),
-            now_nanos: state.env.now_nanos(),
+            now: state.env.now(),
         }))
     }
 }

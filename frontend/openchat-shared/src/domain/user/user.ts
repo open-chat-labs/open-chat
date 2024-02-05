@@ -18,7 +18,7 @@ export type UserSummary = DataContent & {
     displayName: string | undefined;
     updated: bigint;
     suspended: boolean;
-    diamond: boolean;
+    diamondStatus: DiamondMembershipStatus["kind"];
 };
 
 export type UserGroupSummary = {
@@ -114,9 +114,10 @@ export function anonymousUser(): CreatedUser {
         canisterUpgradeStatus: "not_required",
         referrals: [],
         isPlatformModerator: false,
+        isPlatformOperator: false,
         suspensionDetails: undefined,
         isSuspectedBot: false,
-        diamondMembership: undefined,
+        diamondStatus: { kind: "inactive" },
         moderationFlagsEnabled: 0,
     };
 }
@@ -130,18 +131,27 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     referrals: string[];
     isPlatformModerator: boolean;
+    isPlatformOperator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
-    diamondMembership?: DiamondMembershipDetails;
+    diamondStatus: DiamondMembershipStatus;
     moderationFlagsEnabled: number;
 };
 
+export type DiamondMembershipStatus =
+    | { kind: "inactive" }
+    | { kind: "lifetime" }
+    | ({ kind: "active" } & DiamondMembershipDetails);
+
 export type DiamondMembershipDetails = {
-    recurring?: DiamondMembershipDuration;
+    payInChat: boolean;
+    subscription: DiamondMembershipSubscription;
     expiresAt: bigint;
 };
 
-export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year";
+export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year" | "lifetime";
+
+export type DiamondMembershipSubscription = "one_month" | "three_months" | "one_year" | "disabled";
 
 export type SuspensionDetails = {
     reason: string;
@@ -188,7 +198,8 @@ export type SetDisplayNameResponse =
     | "display_name_too_short"
     | "display_name_too_long"
     | "display_name_invalid"
-    | "offline";
+    | "offline"
+    | "unauthorized";
 
 export type InvalidCurrency = { kind: "invalid_currency" };
 
@@ -209,9 +220,6 @@ export type RegisterUserResponse =
     | { kind: "username_too_short" }
     | { kind: "username_too_long" }
     | { kind: "username_invalid" }
-    | { kind: "display_name_too_short" }
-    | { kind: "display_name_too_long" }
-    | { kind: "display_name_invalid" }
     | { kind: "public_key_invalid" }
     | { kind: "referral_code_invalid" }
     | { kind: "referral_code_already_claimed" }
@@ -225,14 +233,6 @@ export type UnpinChatResponse = "success" | "failure" | "offline";
 export type ArchiveChatResponse = "failure" | "success" | "offline";
 
 export type ManageFavouritesResponse = "success" | "failure" | "offline";
-
-export type MigrateUserPrincipalResponse =
-    | "success"
-    | "principal_already_in_use"
-    | "migration_already_in_progress"
-    | "internal_error"
-    | "migration_not_initialized"
-    | "offline";
 
 export type SuspendUserResponse =
     | "success"
@@ -251,13 +251,14 @@ export type UnsuspendUserResponse =
 export type PayForDiamondMembershipResponse =
     | { kind: "payment_already_in_progress" }
     | { kind: "currency_not_supported" }
-    | { kind: "success"; details: DiamondMembershipDetails }
+    | { kind: "success"; status: DiamondMembershipStatus }
     | { kind: "price_mismatch" }
     | { kind: "transfer_failed" }
     | { kind: "internal_error" }
     | { kind: "cannot_extend" }
     | { kind: "user_not_found" }
     | { kind: "insufficient_funds" }
+    | { kind: "already_lifetime_diamond_member" }
     | Offline;
 
 export type SetUserUpgradeConcurrencyResponse = "success" | "offline";
@@ -319,4 +320,51 @@ export type GovernanceCanisterNotSupported = {
 
 export type InsufficientPayment = {
     kind: "insufficient_payment";
+};
+
+export type SwapTokensResponse =
+    | {
+          kind: "success";
+          amountOut: bigint;
+      }
+    | {
+          kind: "swap_failed";
+      }
+    | InternalError;
+
+export type Result<T> =
+    | {
+          kind: "ok";
+          value: T;
+      }
+    | {
+          kind: "error";
+          error: string;
+      };
+
+export type TokenSwapStatusResponse =
+    | {
+          kind: "success";
+          started: bigint;
+          depositAccount?: Result<null>;
+          transfer?: Result<bigint>;
+          notifyDex?: Result<null>;
+          amountSwapped?: Result<Result<bigint>>;
+          withdrawnFromDex?: Result<bigint>;
+      }
+    | {
+          kind: "not_found";
+      };
+
+export type ApproveTransferResponse =
+    | Success
+    | { kind: "approve_error"; error: string }
+    | InternalError;
+
+export type DiamondMembershipFees = {
+    token: "CHAT" | "ICP";
+    oneMonth: bigint;
+    threeMonths: bigint;
+    oneYear: bigint;
+    lifetime: bigint;
 };

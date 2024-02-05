@@ -2,13 +2,14 @@
     import { cubicOut } from "svelte/easing";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { tweened } from "svelte/motion";
-    import { _ } from "svelte-i18n";
     import type { Metrics, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { writable } from "svelte/store";
     import { iconSize } from "../../stores/iconSize";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     export let stats: Metrics;
@@ -163,63 +164,57 @@
         <div class="text legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.textMessages.toLocaleString()}</span>{$_(
-                    "stats.textMessages"
-                )}
+                <span class="stat">{stats.textMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.textMessages")} />
             </div>
         </div>
         <div class="image legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.imageMessages.toLocaleString()}</span>{$_(
-                    "stats.imageMessages"
-                )}
+                <span class="stat">{stats.imageMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.imageMessages")} />
             </div>
         </div>
         <div class="video legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.videoMessages.toLocaleString()}</span>{$_(
-                    "stats.videoMessages"
-                )}
+                <span class="stat">{stats.videoMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.videoMessages")} />
             </div>
         </div>
         <div class="audio legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.audioMessages.toLocaleString()}</span>{$_(
-                    "stats.audioMessages"
-                )}
+                <span class="stat">{stats.audioMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.audioMessages")} />
             </div>
         </div>
         <div class="file legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.fileMessages.toLocaleString()}</span>{$_(
-                    "stats.fileMessages"
-                )}
+                <span class="stat">{stats.fileMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.fileMessages")} />
             </div>
         </div>
         <div class="poll legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.pollMessages")}
+                <span class="stat">{stats.polls.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.pollMessages")} />
             </div>
         </div>
         <div class="crypto legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{cryptoMessages.toLocaleString()}</span>{$_(
-                    "stats.cryptoTransfers"
-                )}
+                <span class="stat">{cryptoMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.cryptoTransfers")} />
             </div>
         </div>
         <div class="giphy legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.giphyMessages.toLocaleString()}</span>{$_(
-                    "stats.giphyMessages"
-                )}
+                <span class="stat">{stats.giphyMessages.toLocaleString()}</span><Translatable
+                    resourceKey={i18nKey("stats.giphyMessages")} />
             </div>
         </div>
     </div>
@@ -228,26 +223,26 @@
 <div class="other-stats">
     <div class="poll-votes">
         <span class="stat">{stats.pollVotes.toLocaleString()}</span>
-        {$_("stats.pollVotes")}
+        <Translatable resourceKey={i18nKey("stats.pollVotes")} />
     </div>
     <div class="replies">
         <span class="stat">{stats.replies.toLocaleString()}</span>
-        {$_("stats.replies")}
+        <Translatable resourceKey={i18nKey("stats.replies")} />
     </div>
     <div class="reactions">
         <span class="stat">{stats.reactions.toLocaleString()}</span>
-        {$_("stats.reactions")}
+        <Translatable resourceKey={i18nKey("stats.reactions")} />
     </div>
     <div class="deleted-messages">
         <span class="stat">{stats.deletedMessages.toLocaleString()}</span>
-        {$_("stats.deletedMessages")}
+        <Translatable resourceKey={i18nKey("stats.deletedMessages")} />
     </div>
     {#if showReported}
-        <TooltipWrapper position={"top"} align="center">
+        <TooltipWrapper position={"top"} align="middle">
             <div slot="target" class="reported-messages">
                 <span>
                     <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
-                    {$_("stats.reportedMessages")}
+                    <Translatable resourceKey={i18nKey("stats.reportedMessages")} />
                 </span>
                 <span class="icon">
                     <Flag size={$iconSize} color={"var(--accent)"} />
@@ -256,7 +251,7 @@
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align} textLength={100} longestWord={20}>
                     <div>
-                        {$_("stats.reportedMessagesInfo")}
+                        <Translatable resourceKey={i18nKey("stats.reportedMessagesInfo")} />
                     </div>
                 </TooltipPopup>
             </div>

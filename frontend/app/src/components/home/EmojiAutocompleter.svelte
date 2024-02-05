@@ -3,7 +3,6 @@
     import Menu from "../Menu.svelte";
     import VirtualList from "../VirtualList.svelte";
     import { createEventDispatcher } from "svelte";
-    import { _ } from "svelte-i18n";
     import { emojiDatabase } from "../../utils/emojis";
     import type { NativeEmoji } from "emoji-picker-element/shared";
     import { mobileWidth } from "../../stores/screenDimensions";

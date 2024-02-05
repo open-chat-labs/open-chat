@@ -1,14 +1,15 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { _ } from "svelte-i18n";
     import CloudOffOutline from "svelte-material-icons/CloudOffOutline.svelte";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 </script>
 
 <div transition:fade={{ duration: 250 }} role="button" tabindex="0" class="offline">
     <div class="icon">
         <CloudOffOutline size={"1.5em"} color={"currentColor"} />
     </div>
-    {$_("offlineMessage")}
+    <Translatable resourceKey={i18nKey("offlineMessage")} />
 </div>
 
 <style lang="scss">

@@ -1,6 +1,11 @@
 import { writable } from "svelte/store";
 import { createSetStore } from "./setStore";
-import { type EventWrapper, type Message, type MessageContext, MessageContextMap } from "openchat-shared";
+import {
+    type EventWrapper,
+    type Message,
+    type MessageContext,
+    MessageContextMap,
+} from "openchat-shared";
 
 export type UnconfirmedState = {
     messages: EventWrapper<Message>[];
@@ -28,7 +33,7 @@ function createUnconfirmedStore() {
                     return applyUpdateToState(
                         result,
                         key,
-                        removeWhere(messages, (m) => m.timestamp < oneMinuteAgo)
+                        removeWhere(messages, (m) => m.timestamp < oneMinuteAgo),
                     );
                 }, new MessageContextMap<UnconfirmedState>());
             });
@@ -37,7 +42,7 @@ function createUnconfirmedStore() {
 
     function removeWhere(
         messages: EventWrapper<Message>[],
-        predicate: (message: EventWrapper<Message>) => boolean
+        predicate: (message: EventWrapper<Message>) => boolean,
     ): EventWrapper<Message>[] {
         return messages.filter((m) => {
             if (predicate(m)) {
@@ -51,7 +56,7 @@ function createUnconfirmedStore() {
     function applyUpdateToState(
         state: UnconfirmedMessages,
         keyUpdated: MessageContext,
-        messages: EventWrapper<Message>[]
+        messages: EventWrapper<Message>[],
     ): UnconfirmedMessages {
         if (messages.length === 0) {
             state.delete(keyUpdated);
@@ -86,7 +91,7 @@ function createUnconfirmedStore() {
                 store.update((state) => {
                     const messages = removeWhere(
                         state.get(key)?.messages ?? [],
-                        (m) => m.event.messageId === messageId
+                        (m) => m.event.messageId === messageId,
                     );
                     return applyUpdateToState(state, key, messages);
                 });

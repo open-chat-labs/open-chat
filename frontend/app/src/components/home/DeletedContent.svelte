@@ -5,6 +5,8 @@
     import { OPENCHAT_BOT_USER_ID, type DeletedContent, type OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import Markdown from "./Markdown.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,9 +21,11 @@
 
 <div class="deleted">
     {#if undeleting}
-        {$_("undeletingMessage", {
-            values: { username, timestamp: timestampStr },
-        })}
+        <Translatable
+            resourceKey={i18nKey("undeletingMessage", {
+                username,
+                timestamp: timestampStr,
+            })} />
     {:else if content.deletedBy === OPENCHAT_BOT_USER_ID}
         <Markdown
             text={$_("messageDeletedByOpenChatBot", {
@@ -33,9 +37,11 @@
                 },
             })} />
     {:else}
-        {$_("messageDeleted", {
-            values: { username, timestamp: timestampStr },
-        })}
+        <Translatable
+            resourceKey={i18nKey("messageDeleted", {
+                username,
+                timestamp: timestampStr,
+            })} />
     {/if}
 </div>
 

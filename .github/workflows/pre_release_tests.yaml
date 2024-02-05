@@ -1,0 +1,33 @@
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'
+      - '!*-website'
+
+name: Run pre-release tests
+
+jobs:
+  run_tests:
+    name: Run pre-release tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for wasms to be built
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: master
+          check-name: "Push canister wasms"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download canister wasms
+        run: ./scripts/download-all-canister-wasms.sh $GITHUB_REF_NAME
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "build-debug"
+          save-if: "false"
+      - name: Run integration tests
+        run: ./scripts/run-integration-tests.sh local

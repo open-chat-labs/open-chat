@@ -17,7 +17,11 @@ members = [
     "backend/canisters/community/c2c_client",
     "backend/canisters/community/impl",
     "backend/canisters/cycles_dispenser/api",
+    "backend/canisters/cycles_dispenser/c2c_client",
     "backend/canisters/cycles_dispenser/impl",
+    "backend/canisters/escrow/api",
+    "backend/canisters/escrow/c2c_client",
+    "backend/canisters/escrow/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -26,6 +30,9 @@ members = [
     "backend/canisters/group_index/c2c_client",
     "backend/canisters/group_index/client",
     "backend/canisters/group_index/impl",
+    "backend/canisters/identity/api",
+    "backend/canisters/identity/c2c_client",
+    "backend/canisters/identity/impl",
     "backend/canisters/local_group_index/api",
     "backend/canisters/local_group_index/c2c_client",
     "backend/canisters/local_group_index/impl",
@@ -63,6 +70,8 @@ members = [
     "backend/canisters/storage_index/c2c_client",
     "backend/canisters/storage_index/client",
     "backend/canisters/storage_index/impl",
+    "backend/canisters/translations/api",
+    "backend/canisters/translations/impl",
     "backend/canisters/user/api",
     "backend/canisters/user/c2c_client",
     "backend/canisters/user/client",
@@ -71,6 +80,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/cmc/api",
+    "backend/external_canisters/cmc/c2c_client",
     "backend/external_canisters/icdex/api",
     "backend/external_canisters/icdex/c2c_client",
     "backend/external_canisters/icp_ledger/api",
@@ -140,29 +151,30 @@ aws-sdk-dynamodb = "0.35.0"
 aws-types = "0.57.1"
 base64 = "0.21.5"
 bitflags = { version = "2.4.1", features = ["serde"] }
-candid = "0.9.11"
+candid = "0.10.2"
+canister_sig_util = { git = "https://github.com/dfinity/internet-identity", rev = "f46da3bfefff638a844117606a4dea70b2dd4405" }
 ciborium = "0.2.1"
 clap = "4.4.8"
-dfx-core = { git = "https://github.com/dfinity/sdk", rev = "5f256854b1bdf77f2c83bfb039d68f46b1f791eb" }
+dfx-core = { git = "https://github.com/hpeebles/dfinity-sdk", rev = "d39dde0611fda8f30a6796b40b1dbb13a0541597" }
 dirs = "5.0.1"
 dotenv = "0.15.0"
 futures = "0.3.29"
-getrandom = "0.2.11"
+getrandom = { version = "0.2.11", features = ["custom"] }
 hex = "0.4.3"
-ic-agent = { version = "0.29.0", default-features = false }
-ic-cdk = "0.11.3"
-ic-cdk-macros = "0.7.0"
-ic-cdk-timers = "0.5.1"
-ic-ledger-types = "0.8.0"
-ic-stable-structures = "0.6.0"
-ic-transport-types = "0.29.0"
-ic-utils = "0.29.0"
-icrc-ledger-types = "0.1.4"
+ic-agent = "0.32.0"
+ic-cdk = "=0.12.0"
+ic-cdk-macros = "0.8.4"
+ic-cdk-timers = "0.6.0"
+ic-ledger-types = "0.9.0"
+ic-stable-structures = "0.6.2"
+ic-transport-types = "0.32.0"
+ic-utils = "0.32.0"
+icrc-ledger-types = "0.1.5"
 ic0 = "0.21.1"
 itertools = "0.11.0"
 lazy_static = "1.4.0"
 num-traits = "0.2.17"
-openssl = "0.10.59"
+openssl = "0.10.60"
 pocket-ic = "2.0.1"
 proc-macro2 = "1.0.69"
 pulldown-cmark = { version = "0.9.3", default-features = false }
@@ -201,5 +213,5 @@ codegen-units = 1
 debug = false
 
 [patch.crates-io]
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "cc49cf7e3e2f10a12182149b0964372a04c09f08" }
-ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "937aac129d0eba11fc8aef719a1da20b269b83c6" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "1833cb37ecfd6154cc9cc55b5de76329114e8c5f" }
+pocket-ic = { git = "https://github.com/dfinity/ic", rev = "a7862784e8da4a97a1d608fd5b3db365de41a2d7" }

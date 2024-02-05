@@ -7,9 +7,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
+## [[2.0.1027](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1027-proposals_bot)] - 2024-01-25
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1001](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1001-proposals_bot)] - 2024-01-05
+
+### Fixed
+
+- Fix deadline timestamp on NNS proposals ([#5136](https://github.com/open-chat-labs/open-chat/pull/5136))
+
+## [[2.0.998](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.998-proposals_bot)] - 2024-01-05
+
+### Added
+
+- Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+- Expose active user submitted proposals in metrics ([#5126](https://github.com/open-chat-labs/open-chat/pull/5126))
+
+### Fixed
+
+- Refund successful user submitted proposals that don't reach majority ([#5123](https://github.com/open-chat-labs/open-chat/pull/5123))
+- One time job to process finished user submitted proposals ([#5124](https://github.com/open-chat-labs/open-chat/pull/5124))
+
+## [[2.0.960](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.960-proposals_bot)] - 2023-12-05
+
+### Changed
+
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+- Switch to using `c2c_send_message` when pushing new proposals ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
 
 ## [[2.0.928](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.928-proposals_bot)] - 2023-11-06
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { i18nKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
     import { _ } from "svelte-i18n";
 
     export let me = false;
@@ -15,7 +17,7 @@
 </script>
 
 {#if me}
-    {$_("you")}
+    <Translatable resourceKey={i18nKey("you")} />
 {:else if index === -1}
     {name}
 {:else}

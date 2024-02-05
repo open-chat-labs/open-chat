@@ -2,13 +2,16 @@
 
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import { _ } from "svelte-i18n";
+    // import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
     import type { UserSummary } from "openchat-shared";
     import type { ProfileLinkClickedEvent } from "../../web-components/profileLink";
+    import Diamond from "../../icons/Diamond.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -32,7 +35,7 @@
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: { userId: user.userId, chatButton: !me, inGlobalContext: false },
                     bubbles: true,
-                })
+                }),
             );
         }
 
@@ -57,12 +60,13 @@
     </span>
     <div class="details">
         <div class="display-name">
-            <h4 class:diamond={user.diamond}>
+            <h4>
                 <FilteredUsername {searchTerm} username={displayName} {me} />
+                <Diamond status={user.diamondStatus} />
             </h4>
             {#if role !== undefined}
                 <span class="role">
-                    ({$_(role)})
+                    (<Translatable resourceKey={i18nKey(role)} />)
                 </span>
             {/if}
         </div>
@@ -79,7 +83,9 @@
         justify-content: center;
         align-items: center;
         padding: $sp4;
-        transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
+        transition:
+            background-color ease-in-out 100ms,
+            border-color ease-in-out 100ms;
         gap: 12px;
 
         &:not(.me) {
@@ -112,16 +118,18 @@
             flex: 1;
             align-items: center;
             @include ellipsis();
+
+            h4 {
+                display: flex;
+                align-items: center;
+                gap: $sp2;
+            }
         }
 
         .username {
             font-weight: 200;
             color: var(--txt-light);
         }
-    }
-
-    .diamond {
-        @include diamond();
     }
 
     .role {

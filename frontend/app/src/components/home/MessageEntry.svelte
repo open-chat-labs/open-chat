@@ -31,6 +31,10 @@
     import PreviewFooter from "./PreviewFooter.svelte";
     import { preferredDarkThemeName, themeType, currentThemeName } from "../../theme/themes";
     import { scream } from "../../utils/scream";
+    import { snowing } from "../../stores/snow";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import { translatable } from "../../actions/translatable";
 
     const client = getContext<OpenChat>("client");
 
@@ -67,7 +71,7 @@
     let emojiQuery: string | undefined;
     let messageEntryHeight: number;
     let messageActions: MessageActions;
-    let rangeToReplace: [number, number] | undefined = undefined;
+    let rangeToReplace: [Node, number, number] | undefined = undefined;
     let previousChatId = chat.id;
 
     // Update this to force a new textbox instance to be created
@@ -88,13 +92,16 @@
         (permittedMessages.get("text") ?? false) ||
         editingEvent !== undefined ||
         attachment !== undefined;
+    $: excessiveLinks = client.extractEnabledLinks(textContent ?? "").length > 5;
 
     $: {
         if (inp) {
             if (editingEvent && editingEvent.index !== previousEditingEvent?.index) {
                 if (editingEvent.event.content.kind === "text_content") {
                     inp.textContent = formatUserGroupMentions(
-                        formatUserMentions(editingEvent.event.content.text)
+                        formatUserMentions(
+                            client.stripLinkDisabledMarker(editingEvent.event.content.text),
+                        ),
                     );
                     selectedRange = undefined;
                     restoreSelection();
@@ -142,12 +149,12 @@
     }
 
     $: placeholder = !canEnterText
-        ? $_("sendTextDisabled")
+        ? i18nKey("sendTextDisabled")
         : attachment !== undefined
-        ? $_("enterCaption")
-        : dragging
-        ? $_("dropFile")
-        : $_("enterMessage");
+          ? i18nKey("enterCaption")
+          : dragging
+            ? i18nKey("dropFile")
+            : i18nKey("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -171,23 +178,26 @@
 
     function uptoCaret(
         inputContent: string | null,
-        fn: (slice: string, pos: number) => void
+        fn: (slice: string, node: Node, pos: number) => void,
     ): void {
         if (inputContent === null) return;
 
-        const pos = window.getSelection()?.anchorOffset;
-        if (pos === undefined) return;
+        const selection = window.getSelection();
+        if (selection === null) return;
+        const anchorNode = selection.anchorNode;
+        if (anchorNode?.textContent == null) return;
+        const text = anchorNode.textContent;
 
-        const slice = inputContent.slice(0, pos);
-        fn(slice, pos);
+        const slice = text.slice(0, selection.anchorOffset);
+        fn(slice, anchorNode, selection.anchorOffset);
     }
 
     function triggerEmojiLookup(inputContent: string | null): void {
-        uptoCaret(inputContent, (slice: string, pos: number) => {
+        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
             const matches = slice.match(emojiRegex);
             if (matches !== null) {
                 if (matches.index !== undefined) {
-                    rangeToReplace = [matches.index, pos];
+                    rangeToReplace = [node, matches.index, pos];
                     emojiQuery = matches[1].toLowerCase() || undefined;
                     showEmojiSearch = true;
                 }
@@ -200,11 +210,11 @@
 
     function triggerMentionLookup(inputContent: string | null): void {
         if (chat.kind === "direct_chat" || chat.memberCount <= 1) return;
-        uptoCaret(inputContent, (slice: string, pos: number) => {
+        uptoCaret(inputContent, (slice: string, node: Node, pos: number) => {
             const matches = slice.match(mentionRegex);
             if (matches !== null) {
                 if (matches.index !== undefined) {
-                    rangeToReplace = [matches.index, pos];
+                    rangeToReplace = [node, matches.index, pos];
                     mentionPrefix = matches[1].toLowerCase() || undefined;
                     showMentionPicker = true;
                 }
@@ -228,7 +238,7 @@
 
             typingTimer = window.setTimeout(
                 () => dispatch("stopTyping"),
-                MARK_TYPING_STOPPED_INTERVAL_MS
+                MARK_TYPING_STOPPED_INTERVAL_MS,
             );
         });
     }
@@ -266,9 +276,9 @@
     // replace anything of the form @username with @UserId(xyz) or @UserGroup(abc) where
     // xyz is the userId or abc is the user group id
     // if we can't find the user or user group just leave it as is
-    function expandMentions(text?: string): [string | undefined, User[]] {
+    function expandMentions(text: string): [string | undefined, User[]] {
         let mentionedMap = new Map<string, User>();
-        let expandedText = text?.replace(/@(\w+)/g, (match, p1) => {
+        let expandedText = text.replace(/@(\w+)/g, (match, p1) => {
             const userOrGroup = client.lookupUserForMention(p1, false);
             if (userOrGroup !== undefined) {
                 switch (userOrGroup.kind) {
@@ -314,6 +324,10 @@
                 document.body.classList.remove("witch");
             }, 2000);
             return false;
+        }
+
+        if (/snow|xmas|christmas|noel/.test(txt)) {
+            $snowing = true;
         }
 
         if (permittedMessages.get("poll") && /^\/poll$/.test(txt)) {
@@ -363,7 +377,7 @@
             if (tokenMatch && tokenMatch[2] !== undefined) {
                 const token = tokenMatch[1];
                 const tokenDetails = Object.values($cryptoLookup).find(
-                    (t) => t.symbol.toLowerCase() === token
+                    (t) => t.symbol.toLowerCase() === token,
                 );
                 if (tokenDetails !== undefined) {
                     dispatch("tokenTransfer", {
@@ -384,7 +398,7 @@
     }
 
     function sendMessage() {
-        const txt = inp.innerText?.trim();
+        const txt = inp.innerText?.trim() ?? "";
 
         if (!parseCommands(txt)) {
             dispatch("sendMessage", expandMentions(txt));
@@ -431,10 +445,10 @@
         sel?.addRange(range);
     }
 
-    function setCaretTo(pos: number) {
+    function setCaretTo(node: Node, pos: number) {
         const range = document.createRange();
-        range.selectNodeContents(inp);
-        range.setStart(inp.childNodes[0], pos);
+        range.selectNodeContents(node);
+        range.setStart(node, pos);
         range.collapse(true);
         const sel = window.getSelection();
         sel?.removeAllRanges();
@@ -449,18 +463,18 @@
     function replaceTextWith(replacement: string) {
         if (rangeToReplace === undefined) return;
 
-        const start = rangeToReplace[0];
+        const [node, start, end] = rangeToReplace;
 
-        const replaced = `${inp.textContent?.slice(
+        const replaced = `${node.textContent?.slice(
             0,
-            rangeToReplace[0]
-        )}${replacement} ${inp.textContent?.slice(rangeToReplace[1])}`;
-        inp.textContent = replaced;
+            start,
+        )}${replacement} ${node.textContent?.slice(end)}`;
+        node.textContent = replaced;
 
         dispatch("setTextContent", inp.textContent || undefined);
 
         tick().then(() => {
-            setCaretTo(start + replacement.length);
+            setCaretTo(node, start + replacement.length + 1);
         });
 
         rangeToReplace = undefined;
@@ -516,7 +530,8 @@
         <PreviewFooter {joining} {chat} on:joinGroup on:upgrade />
     {:else if !canSendAny}
         <div class="disabled">
-            {mode === "thread" ? $_("readOnlyThread") : $_("readOnlyChat")}
+            <Translatable
+                resourceKey={i18nKey(mode === "thread" ? "readOnlyThread" : "readOnlyChat")} />
         </div>
     {:else}
         {#if recording}
@@ -526,77 +541,92 @@
         {/if}
         {#if canEnterText}
             {#key textboxId}
-                <div
-                    data-gram="false"
-                    data-gramm_editor="false"
-                    data-enable-grammarly="false"
-                    tabindex={0}
-                    bind:this={inp}
-                    on:blur={saveSelection}
-                    class="textbox"
-                    class:recording
-                    class:dragging
-                    contenteditable
-                    on:paste
-                    {placeholder}
-                    spellcheck
-                    on:dragover={() => (dragging = true)}
-                    on:dragenter={() => (dragging = true)}
-                    on:dragleave={() => (dragging = false)}
-                    on:drop={onDrop}
-                    on:input={onInput}
-                    on:keypress={keyPress} />
+                <div class="container">
+                    {#if excessiveLinks}
+                        <div class="note">{$_("excessiveLinksNote")}</div>
+                    {/if}
+                    <div
+                        data-gram="false"
+                        data-gramm_editor="false"
+                        data-enable-grammarly="false"
+                        tabindex={0}
+                        bind:this={inp}
+                        on:blur={saveSelection}
+                        class="textbox"
+                        class:recording
+                        class:dragging
+                        contenteditable
+                        on:paste
+                        placeholder={interpolate($_, placeholder)}
+                        use:translatable={{
+                            key: placeholder,
+                            position: "absolute",
+                            right: 12,
+                            top: 12,
+                        }}
+                        spellcheck
+                        on:dragover={() => (dragging = true)}
+                        on:dragenter={() => (dragging = true)}
+                        on:dragleave={() => (dragging = false)}
+                        on:drop={onDrop}
+                        on:input={onInput}
+                        on:keypress={keyPress} />
+                </div>
             {/key}
         {:else}
             <div class="textbox light">
-                {placeholder}
+                <Translatable resourceKey={placeholder} />
             </div>
         {/if}
-        {#if editingEvent === undefined}
-            {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
-                <div class="record">
-                    <AudioAttacher
-                        mimeType={audioMimeType}
-                        bind:percentRecorded
-                        bind:recording
-                        bind:supported={audioSupported}
-                        on:audioCaptured />
-                </div>
-            {:else if canEnterText}
+
+        <div class="icons">
+            {#if editingEvent === undefined}
+                {#if permittedMessages.get("audio") && messageIsEmpty && audioMimeType !== undefined && audioSupported}
+                    <div class="record">
+                        <AudioAttacher
+                            mimeType={audioMimeType}
+                            bind:percentRecorded
+                            bind:recording
+                            bind:supported={audioSupported}
+                            on:audioCaptured />
+                    </div>
+                {:else if canEnterText}
+                    <div class="send" on:click={sendMessage}>
+                        <HoverIcon title={$_("sendMessage")}>
+                            <Send size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </div>
+                {/if}
+                <!-- we might need this if we are editing too -->
+                <MessageActions
+                    bind:this={messageActions}
+                    bind:messageAction
+                    {permittedMessages}
+                    {attachment}
+                    {mode}
+                    editing={editingEvent !== undefined}
+                    on:tokenTransfer
+                    on:createPrizeMessage
+                    on:createP2PSwapMessage
+                    on:attachGif
+                    on:makeMeme
+                    on:createPoll
+                    on:upgrade
+                    on:clearAttachment
+                    on:fileSelected />
+            {:else}
                 <div class="send" on:click={sendMessage}>
-                    <HoverIcon title={$_("sendMessage")}>
-                        <Send size={$iconSize} color={"var(--icon-txt)"} />
+                    <HoverIcon>
+                        <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div class="send" on:click={cancelEdit}>
+                    <HoverIcon>
+                        <Close size={$iconSize} color={"var(--button-txt)"} />
                     </HoverIcon>
                 </div>
             {/if}
-            <!-- we might need this if we are editing too -->
-            <MessageActions
-                bind:this={messageActions}
-                bind:messageAction
-                {permittedMessages}
-                {attachment}
-                {mode}
-                editing={editingEvent !== undefined}
-                on:tokenTransfer
-                on:createPrizeMessage
-                on:attachGif
-                on:makeMeme
-                on:createPoll
-                on:upgrade
-                on:clearAttachment
-                on:fileSelected />
-        {:else}
-            <div class="send" on:click={sendMessage}>
-                <HoverIcon>
-                    <ContentSaveEditOutline size={$iconSize} color={"var(--button-txt)"} />
-                </HoverIcon>
-            </div>
-            <div class="send" on:click={cancelEdit}>
-                <HoverIcon>
-                    <Close size={$iconSize} color={"var(--button-txt)"} />
-                </HoverIcon>
-            </div>
-        {/if}
+        </div>
     {/if}
 </div>
 
@@ -614,19 +644,29 @@
         &.editing {
             background-color: var(--button-bg);
         }
+
+        .icons {
+            display: flex;
+            align-self: flex-end;
+        }
     }
     .send {
         flex: 0 0 15px;
     }
-    .textbox {
-        flex: 1;
+
+    .container {
         margin: 0 $sp3;
+        flex: 1;
+        position: relative;
+    }
+
+    .textbox {
         padding: toRem(12) $sp4 $sp3 $sp4;
         background-color: var(--entry-input-bg);
         border-radius: var(--entry-input-rd);
         outline: none;
         border: 0;
-        max-height: 100px;
+        max-height: calc(var(--vh, 1vh) * 50);
         min-height: toRem(30);
         overflow-x: hidden;
         overflow-y: auto;
@@ -670,5 +710,10 @@
     .recording {
         padding: 0 $sp3;
         flex: auto;
+    }
+
+    .note {
+        @include font(book, normal, fs-70);
+        margin-bottom: $sp2;
     }
 </style>

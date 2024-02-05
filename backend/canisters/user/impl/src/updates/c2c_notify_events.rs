@@ -2,8 +2,8 @@ use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use types::Timestamped;
-use user_canister::c2c_notify_user_events::{Response::*, *};
+use types::{MessageContentInitial, Timestamped};
+use user_canister::c2c_notify_events::{Response::*, *};
 use user_canister::mark_read::ChannelMessagesRead;
 use user_canister::Event;
 
@@ -46,16 +46,23 @@ fn process_event(event: Event, state: &mut RuntimeState) {
             openchat_bot::send_user_suspended_message(&ev, state);
         }
         Event::OpenChatBotMessage(content) => {
-            openchat_bot::send_message(*content, false, state);
+            let initial_content: MessageContentInitial = (*content).into();
+            openchat_bot::send_message(initial_content.try_into().unwrap(), false, state);
         }
         Event::UserJoinedGroup(ev) => {
             let now = state.env.now();
-            state.data.group_chats.join(ev.chat_id, ev.latest_message_index, now);
+            state
+                .data
+                .group_chats
+                .join(ev.chat_id, ev.local_user_index_canister_id, ev.latest_message_index, now);
             state.data.hot_group_exclusions.remove(&ev.chat_id, now);
         }
         Event::UserJoinedCommunityOrChannel(ev) => {
             let now = state.env.now();
-            let (community, _) = state.data.communities.join(ev.community_id, now);
+            let (community, _) = state
+                .data
+                .communities
+                .join(ev.community_id, ev.local_user_index_canister_id, now);
             community.mark_read(
                 ev.channels
                     .into_iter()

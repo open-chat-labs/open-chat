@@ -9,14 +9,14 @@ use serde::{Deserialize, Serialize};
 use std::cmp::{max, min};
 use std::collections::{BTreeSet, HashSet};
 use types::{
-    AccessGate, AvatarChanged, ContentValidationError, CryptoTransaction, CustomPermission, Document, EventIndex,
-    EventOrExpiredRange, EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged,
-    GroupSubtype, GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message,
-    MessageContent, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned,
-    MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions,
-    PermissionsChanged, PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview,
-    TimestampMillis, Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
+    AccessGate, AvatarChanged, ContentValidationError, CustomPermission, Document, EventIndex, EventOrExpiredRange,
+    EventWrapper, EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated,
+    GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, HydratedMention, InvalidPollReason, MemberLeft, MembersRemoved, Message, MessageContent,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessagePermissions, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, OptionalMessagePermissions, PermissionsChanged,
+    PushEventResult, PushIfNotContains, Reaction, RoleChanged, Rules, SelectedGroupUpdates, ThreadPreview, TimestampMillis,
+    Timestamped, UpdatedRules, UserId, UsersBlocked, UsersInvited, Version, Versioned, VersionedRules,
 };
 use utils::document_validation::validate_avatar;
 use utils::text_validation::{
@@ -32,29 +32,23 @@ pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 pub use roles::*;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
-    #[serde(alias = "is_public_v2")]
     pub is_public: Timestamped<bool>,
-    #[serde(alias = "name_v2")]
     pub name: Timestamped<String>,
-    #[serde(alias = "description_v2")]
     pub description: Timestamped<String>,
-    #[serde(alias = "rules_v2")]
     pub rules: Timestamped<AccessRulesInternal>,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    #[serde(alias = "avatar_v2")]
     pub avatar: Timestamped<Option<Document>>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
     pub created_by: UserId,
     pub date_created: TimestampMillis,
-    #[serde(alias = "pinned_messages_v2")]
     pub pinned_messages: BTreeSet<(TimestampMillis, MessageIndex)>,
     pub pinned_messages_removed: BTreeSet<(TimestampMillis, MessageIndex)>,
-    #[serde(alias = "permissions_v2")]
     pub permissions: Timestamped<GroupPermissions>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
@@ -117,7 +111,7 @@ impl GroupChatCore {
     pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
         if let Some(user) = user_id.and_then(|u| self.members.get(&u)) {
             Some(user.min_visible_event_index())
-        } else if self.is_public.value {
+        } else if self.is_public.value && !self.has_payment_gate() {
             Some(self.min_visible_indexes_for_new_members.map(|(e, _)| e).unwrap_or_default())
         } else {
             None
@@ -445,7 +439,7 @@ impl GroupChatCore {
                             NotAuthorized
                         }
                     } else {
-                        MessageNotDeleted
+                        Success(Box::new(message.content.hydrate(Some(user_id))))
                     };
                 }
             }
@@ -517,9 +511,10 @@ impl GroupChatCore {
         Success(matches)
     }
 
-    pub fn send_message(
+    pub fn validate_and_send_message(
         &mut self,
         sender: UserId,
+        sender_is_bot: bool,
         thread_root_message_index: Option<MessageIndex>,
         message_id: MessageId,
         content: MessageContentInitial,
@@ -527,10 +522,184 @@ impl GroupChatCore {
         mentioned: Vec<UserId>,
         forwarding: bool,
         rules_accepted: Option<Version>,
+        suppressed: bool,
         proposals_bot_user_id: UserId,
         now: TimestampMillis,
     ) -> SendMessageResult {
         use SendMessageResult::*;
+
+        if let Err(error) = content.validate_for_new_message(false, sender_is_bot, forwarding, now) {
+            return match error {
+                ContentValidationError::Empty => MessageEmpty,
+                ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
+                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
+                ContentValidationError::TransferCannotBeZero => {
+                    unreachable!()
+                }
+                ContentValidationError::InvalidTypeForForwarding => {
+                    InvalidRequest("Cannot forward this type of message".to_string())
+                }
+                ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
+                ContentValidationError::Unauthorized => {
+                    InvalidRequest("User unauthorized to send messages of this type".to_string())
+                }
+            };
+        }
+
+        if let Ok(content_internal) = content.try_into() {
+            self.send_message(
+                sender,
+                thread_root_message_index,
+                message_id,
+                content_internal,
+                replies_to,
+                mentioned,
+                forwarding,
+                rules_accepted,
+                suppressed,
+                proposals_bot_user_id,
+                now,
+            )
+        } else {
+            InvalidRequest("Invalid message content type".to_string())
+        }
+    }
+
+    pub fn send_message(
+        &mut self,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        content: MessageContentInternal,
+        replies_to: Option<GroupReplyContext>,
+        mentioned: Vec<UserId>,
+        forwarding: bool,
+        rules_accepted: Option<Version>,
+        suppressed: bool,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> SendMessageResult {
+        use SendMessageResult::*;
+
+        let PrepareSendMessageSuccess {
+            min_visible_event_index,
+            mentions_disabled,
+            everyone_mentioned,
+        } = match self.prepare_send_message(
+            sender,
+            thread_root_message_index,
+            &content,
+            rules_accepted,
+            proposals_bot_user_id,
+            now,
+        ) {
+            PrepareSendMessageResult::Success(success) => success,
+            PrepareSendMessageResult::UserSuspended => return UserSuspended,
+            PrepareSendMessageResult::UserNotInGroup => return UserNotInGroup,
+            PrepareSendMessageResult::RulesNotAccepted => return RulesNotAccepted,
+            PrepareSendMessageResult::NotAuthorized => return NotAuthorized,
+        };
+
+        if let Some(root_message_index) = thread_root_message_index {
+            if !self
+                .events
+                .is_accessible(min_visible_event_index, None, root_message_index.into())
+            {
+                return ThreadMessageNotFound;
+            }
+        }
+
+        let user_being_replied_to = replies_to
+            .as_ref()
+            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
+
+        let push_message_args = PushMessageArgs {
+            sender,
+            thread_root_message_index,
+            message_id,
+            content,
+            mentioned: if !suppressed { mentioned.clone() } else { Vec::new() },
+            replies_to: replies_to.as_ref().map(|r| r.into()),
+            forwarded: forwarding,
+            correlation_id: 0,
+            now,
+        };
+
+        let message_event = self.events.push_message(push_message_args);
+        let message_index = message_event.event.message_index;
+
+        let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
+
+        let mut users_to_notify = HashSet::new();
+
+        if !suppressed {
+            let mut thread_followers: Option<Vec<UserId>> = None;
+
+            if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
+                self.events
+                    .visible_main_events_reader(min_visible_event_index)
+                    .message_internal(root_message_index.into())
+                    .cloned()
+            }) {
+                if thread_root_message.sender != sender {
+                    users_to_notify.insert(thread_root_message.sender);
+                }
+
+                if let Some(thread_summary) = thread_root_message.thread_summary {
+                    thread_followers = Some(thread_summary.participants_and_followers(false));
+
+                    let is_first_reply = thread_summary.reply_count == 1;
+                    if is_first_reply {
+                        mentions.insert(thread_root_message.sender);
+                    }
+                }
+
+                for user_id in mentions.iter().copied().chain([sender]) {
+                    self.members.add_thread(&user_id, thread_root_message.message_index);
+                }
+            }
+
+            for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
+                let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
+
+                if mentioned {
+                    // Mention this member
+                    member.mentions.add(thread_root_message_index, message_index, now);
+                }
+
+                let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
+
+                if mentioned || (notification_candidate && !member.notifications_muted.value) {
+                    // Notify this member
+                    users_to_notify.insert(member.user_id);
+                }
+            }
+        }
+
+        Success(SendMessageSuccess {
+            message_event,
+            users_to_notify: users_to_notify.into_iter().collect(),
+        })
+    }
+
+    fn prepare_send_message(
+        &mut self,
+        sender: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        content: &MessageContentInternal,
+        rules_accepted: Option<Version>,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> PrepareSendMessageResult {
+        use PrepareSendMessageResult::*;
+
+        if sender == OPENCHAT_BOT_USER_ID || sender == proposals_bot_user_id {
+            return Success(PrepareSendMessageSuccess {
+                min_visible_event_index: EventIndex::default(),
+                mentions_disabled: true,
+                everyone_mentioned: false,
+            });
+        }
 
         match self.members.get_mut(&sender) {
             Some(m) => {
@@ -550,128 +719,19 @@ impl GroupChatCore {
             return RulesNotAccepted;
         }
 
-        if let Err(error) = content.validate_for_new_group_message(member.user_id, forwarding, proposals_bot_user_id, now) {
-            return match error {
-                ContentValidationError::Empty => MessageEmpty,
-                ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
-                ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                ContentValidationError::TransferCannotBeZero => {
-                    unreachable!()
-                }
-                ContentValidationError::InvalidTypeForForwarding => {
-                    InvalidRequest("Cannot forward this type of message".to_string())
-                }
-                ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
-                ContentValidationError::UnauthorizedToSendProposalMessages => {
-                    InvalidRequest("User unauthorized to send proposal messages".to_string())
-                }
-                ContentValidationError::Unauthorized => {
-                    InvalidRequest("User unauthorized to send messages of this type".to_string())
-                }
-            };
-        }
-
-        if let Some(transfer) = match &content {
-            MessageContentInitial::Crypto(c) => Some(&c.transfer),
-            MessageContentInitial::Prize(c) => Some(&c.transfer),
-            _ => None,
-        } {
-            if !matches!(transfer, CryptoTransaction::Completed(_)) {
-                return InvalidRequest("The crypto transaction must be completed".to_string());
-            }
-        }
-
         let permissions = &self.permissions;
 
         if !member
             .role
-            .can_send_message(&content, thread_root_message_index.is_some(), permissions)
+            .can_send_message(content, thread_root_message_index.is_some(), permissions)
         {
             return NotAuthorized;
         }
 
-        if let Some(root_message_index) = thread_root_message_index {
-            if !self
-                .events
-                .is_accessible(member.min_visible_event_index(), None, root_message_index.into())
-            {
-                return ThreadMessageNotFound;
-            }
-        }
-
-        let min_visible_event_index = member.min_visible_event_index();
-        let user_being_replied_to = replies_to
-            .as_ref()
-            .and_then(|r| self.get_user_being_replied_to(r, min_visible_event_index, thread_root_message_index));
-
-        let everyone_mentioned = member.role.can_mention_everyone(permissions) && is_everyone_mentioned(&content);
-
-        let push_message_args = PushMessageArgs {
-            sender,
-            thread_root_message_index,
-            message_id,
-            content: content.into(),
-            mentioned: mentioned.clone(),
-            replies_to: replies_to.as_ref().map(|r| r.into()),
-            forwarded: forwarding,
-            correlation_id: 0,
-            now,
-        };
-
-        let message_event = self.events.push_message(push_message_args);
-        let message_index = message_event.event.message_index;
-
-        let mut mentions: HashSet<_> = mentioned.into_iter().chain(user_being_replied_to).collect();
-
-        let mut users_to_notify = HashSet::new();
-        let mut thread_followers: Option<Vec<UserId>> = None;
-
-        if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
-            self.events
-                .visible_main_events_reader(min_visible_event_index)
-                .message_internal(root_message_index.into())
-                .cloned()
-        }) {
-            if thread_root_message.sender != sender {
-                users_to_notify.insert(thread_root_message.sender);
-            }
-
-            if let Some(thread_summary) = thread_root_message.thread_summary {
-                thread_followers = Some(thread_summary.participants_and_followers(false));
-
-                let is_first_reply = thread_summary.reply_count == 1;
-                if is_first_reply {
-                    mentions.insert(thread_root_message.sender);
-                }
-            }
-
-            for user_id in mentions.iter().copied().chain([sender]) {
-                self.members.add_thread(&user_id, thread_root_message.message_index);
-            }
-        }
-
-        // Disable mentions for messages sent by the ProposalsBot
-        let mentions_disabled = sender == proposals_bot_user_id;
-
-        for member in self.members.iter_mut().filter(|m| !m.suspended.value && m.user_id != sender) {
-            let mentioned = !mentions_disabled && (everyone_mentioned || mentions.contains(&member.user_id));
-
-            if mentioned {
-                // Mention this member
-                member.mentions.add(thread_root_message_index, message_index, now);
-            }
-
-            let notification_candidate = thread_followers.as_ref().map_or(true, |ps| ps.contains(&member.user_id));
-
-            if mentioned || (notification_candidate && !member.notifications_muted.value) {
-                // Notify this member
-                users_to_notify.insert(member.user_id);
-            }
-        }
-
-        Success(SendMessageSuccess {
-            message_event,
-            users_to_notify: users_to_notify.into_iter().collect(),
+        Success(PrepareSendMessageSuccess {
+            min_visible_event_index: member.min_visible_event_index(),
+            mentions_disabled: false,
+            everyone_mentioned: member.role.can_mention_everyone(permissions) && is_everyone_mentioned(content),
         })
     }
 
@@ -1332,6 +1392,7 @@ impl GroupChatCore {
     ) -> UpdateSuccessResult {
         let mut result = UpdateSuccessResult {
             newly_public: false,
+            gate_update: OptionUpdate::NoChange,
             rules_version: None,
         };
 
@@ -1430,6 +1491,7 @@ impl GroupChatCore {
         if let Some(gate) = gate.expand() {
             if self.gate.value != gate {
                 self.gate = Timestamped::new(gate.clone(), now);
+                result.gate_update = OptionUpdate::from_update(gate.clone());
 
                 events.push_main_event(
                     ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
@@ -1616,6 +1678,7 @@ impl GroupChatCore {
             crypto: new.crypto.apply_to(old.crypto),
             giphy: new.giphy.apply_to(old.giphy),
             prize: new.prize.apply_to(old.prize),
+            p2p_swap: new.p2p_swap.apply_to(old.p2p_swap),
             custom: GroupChatCore::merge_custom_permissions(new.custom_updated, new.custom_deleted, old.custom),
         }
     }
@@ -1659,6 +1722,10 @@ impl GroupChatCore {
                 .collect(),
             total_replies: thread_events_reader.next_message_index().into(),
         })
+    }
+
+    pub fn has_payment_gate(&self) -> bool {
+        self.gate.value.as_ref().map(|g| g.is_payment_gate()).unwrap_or_default()
     }
 }
 
@@ -1796,6 +1863,7 @@ pub enum UpdateResult {
 
 pub struct UpdateSuccessResult {
     pub newly_public: bool,
+    pub gate_update: OptionUpdate<AccessGate>,
     pub rules_version: Option<Version>,
 }
 
@@ -1818,7 +1886,6 @@ pub enum DeletedMessageResult {
     UserNotInGroup,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 
@@ -1899,7 +1966,6 @@ pub struct SummaryUpdates {
 pub struct AccessRulesInternal {
     pub text: Versioned<String>,
     pub enabled: bool,
-    #[serde(default)]
     pub version_last_updated: TimestampMillis,
 }
 
@@ -1956,8 +2022,22 @@ lazy_static! {
     static ref EVERYONE_REGEX: Regex = Regex::new(r"(^|\W)(@everyone)($|\W)").unwrap();
 }
 
-fn is_everyone_mentioned(content: &MessageContentInitial) -> bool {
+fn is_everyone_mentioned(content: &MessageContentInternal) -> bool {
     content
         .text()
         .map_or(false, |text| text.contains("@everyone") && EVERYONE_REGEX.is_match(text))
+}
+
+enum PrepareSendMessageResult {
+    Success(PrepareSendMessageSuccess),
+    UserSuspended,
+    UserNotInGroup,
+    RulesNotAccepted,
+    NotAuthorized,
+}
+
+struct PrepareSendMessageSuccess {
+    min_visible_event_index: EventIndex,
+    mentions_disabled: bool,
+    everyone_mentioned: bool,
 }

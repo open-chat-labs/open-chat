@@ -1,11 +1,10 @@
 use crate::activity_notifications::extract_activity;
 use crate::model::channels::Channel;
 use crate::model::events::{CommunityEventInternal, GroupImportedInternal};
-use crate::model::groups_being_imported::NextBatchResult;
 use crate::model::members::AddResult;
 use crate::timer_job_types::{FinalizeGroupImportJob, ProcessGroupImportChannelMembersJob, TimerJob};
 use crate::updates::c2c_join_channel::join_channel_unchecked;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use group_canister::c2c_export_group::{Args, Response};
 use group_chat_core::GroupChatCore;
 use ic_cdk_timers::TimerId;
@@ -24,9 +23,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.groups_being_imported.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'import_groups' job started");
         true
     } else {
         false
@@ -34,25 +32,23 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    match mutate_state(next_batch) {
-        NextBatchResult::Success(groups) => ic_cdk::spawn(import_groups(groups)),
-        NextBatchResult::Continue => {}
-        NextBatchResult::Exit => {
-            if let Some(timer_id) = TIMER_ID.take() {
-                ic_cdk_timers::clear_timer(timer_id);
-                trace!("'import_groups' job stopped");
-            }
-        }
+    trace!("'import_groups' job running");
+    TIMER_ID.set(None);
+
+    let batch = mutate_state(next_batch);
+    if !batch.is_empty() {
+        ic_cdk::spawn(import_groups(batch));
     }
 }
 
-fn next_batch(state: &mut RuntimeState) -> NextBatchResult {
+fn next_batch(state: &mut RuntimeState) -> Vec<(ChatId, u64)> {
     let now = state.env.now();
     state.data.groups_being_imported.next_batch(now)
 }
 
 async fn import_groups(groups: Vec<(ChatId, u64)>) {
     futures::future::join_all(groups.into_iter().map(|(g, i)| import_group(g, i))).await;
+    read_state(start_job_if_required);
 }
 
 async fn import_group(group_id: ChatId, from: u64) {
@@ -94,8 +90,6 @@ async fn import_group(group_id: ChatId, from: u64) {
                         .data
                         .groups_being_imported
                         .mark_batch_failed(&group_id, format!("{error:?}"));
-
-                    start_job_if_required(state);
                 }
             });
         }
@@ -262,6 +256,7 @@ pub(crate) fn mark_import_complete(group_id: ChatId, channel_id: ChannelId) {
             "c2c_mark_group_import_complete_msgpack".to_string(),
             msgpack::serialize_then_unwrap(group_index_canister::c2c_mark_group_import_complete::Args {
                 community_name: state.data.name.clone(),
+                local_user_index_canister_id: state.data.local_user_index_canister_id,
                 channel: ChannelLatestMessageIndex {
                     channel_id,
                     latest_message_index: channel.chat.events.main_events_list().latest_message_index(),

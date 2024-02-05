@@ -24,7 +24,6 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
 }
 
@@ -37,6 +36,7 @@ impl DirectChatSummary {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
@@ -65,7 +65,6 @@ pub struct GroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
@@ -86,7 +85,6 @@ pub struct DirectChatSummaryUpdates {
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
 }
 
@@ -96,6 +94,7 @@ pub struct DirectChatSummaryUpdates {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PublicGroupSummary {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
@@ -110,7 +109,6 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
@@ -118,6 +116,7 @@ pub struct PublicGroupSummary {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterGroupChatSummary {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub name: String,
     pub description: String,
@@ -143,11 +142,9 @@ pub struct GroupCanisterGroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
     pub rules_accepted: bool,
-    #[serde(default)]
     pub membership: Option<GroupMembership>,
 }
 
@@ -192,6 +189,7 @@ impl GroupCanisterGroupChatSummary {
 
         GroupCanisterGroupChatSummary {
             chat_id: self.chat_id,
+            local_user_index_canister_id: self.local_user_index_canister_id,
             last_updated: updates.last_updated,
             name: updates.name.unwrap_or(self.name),
             description: updates.description.unwrap_or(self.description),
@@ -251,11 +249,9 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: Option<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
     pub rules_accepted: Option<bool>,
-    #[serde(default)]
     pub membership: Option<GroupMembershipUpdates>,
 }
 

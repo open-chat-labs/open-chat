@@ -22,6 +22,7 @@ pub struct Args {
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub gate: Option<AccessGate>,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,

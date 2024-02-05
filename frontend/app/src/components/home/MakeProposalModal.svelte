@@ -11,7 +11,7 @@
         type OpenChat,
         type Treasury,
     } from "openchat-client";
-    import { isPrincipalValid, isSubAccountValid } from "openchat-shared";
+    import { isPrincipalValid, isSubAccountValid, isUrl } from "openchat-shared";
     import { iconSize } from "../../stores/iconSize";
     import Button from "../Button.svelte";
     import Legend from "../Legend.svelte";
@@ -25,6 +25,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import AccountInfo from "./AccountInfo.svelte";
     import { createAddTokenPayload } from "../../utils/sns";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const MIN_TITLE_LENGTH = 3;
     const MAX_TITLE_LENGTH = 120;
@@ -55,7 +57,7 @@
         | "transfer_sns_funds"
         | "upgrade_sns_to_next_version"
         | "add_token" = "motion";
-    let message = "";
+    let message: ResourceKey | undefined = undefined;
     let error = true;
     let summaryContainerHeight = 0;
     let summaryHeight = 0;
@@ -88,6 +90,7 @@
     $: addTokenHowToBuyUrl = "";
     $: addTokenInfoUrl = "";
     $: addTokenTransactionUrlFormat = "";
+    $: addTokenLogo = "";
     $: valid =
         !insufficientFunds &&
         titleValid &&
@@ -102,7 +105,8 @@
             (selectedProposalType === "add_token" &&
                 isPrincipalValid(addTokenLedgerCanisterId) &&
                 addTokenHowToBuyUrl.length > 0 &&
-                addTokenTransactionUrlFormat.length > 0));
+                addTokenTransactionUrlFormat.length > 0 &&
+                isTokenLogoValid(addTokenLogo)));
     $: canSubmit =
         step === 2 ||
         (step === 1 &&
@@ -115,9 +119,9 @@
         }
     }
 
-    function defaultMessage(): string {
-        const cost = client.formatTokens(requiredFunds, 0, tokenDetails.decimals);
-        return $_("proposal.maker.message", { values: { cost, token: symbol } });
+    function defaultMessage(): ResourceKey {
+        const cost = client.formatTokens(requiredFunds, tokenDetails.decimals);
+        return i18nKey("proposal.maker.message", { cost, token: symbol });
     }
 
     function onClose() {
@@ -154,7 +158,7 @@
                 if (success) {
                     dispatch("close");
                 } else {
-                    message = $_("proposal.maker.unexpectedError");
+                    message = i18nKey("proposal.maker.unexpectedError");
                 }
             });
     }
@@ -186,7 +190,8 @@
                         addTokenLedgerCanisterId,
                         addTokenInfoUrl,
                         addTokenHowToBuyUrl,
-                        addTokenTransactionUrlFormat
+                        addTokenTransactionUrlFormat,
+                        addTokenLogo,
                     ),
                 };
             }
@@ -213,7 +218,7 @@
     }
 
     function onRefreshingBalanceFailed() {
-        message = "Failed to refresh balance";
+        message = i18nKey("Failed to refresh balance");
         error = true;
         refreshingBalance = false;
     }
@@ -221,12 +226,16 @@
     function wrappedSummary(summary: string) {
         const groupPath = routeForChatIdentifier(
             selectedMultiUserChat.kind === "group_chat" ? "group_chat" : "community",
-            selectedMultiUserChat.id
+            selectedMultiUserChat.id,
         );
 
         return `${summary}
 
 > Submitted by [@${$user.username}](https://oc.app/user/${$user.userId}) on [OpenChat](https://oc.app${groupPath})`;
+    }
+
+    function isTokenLogoValid(logo: string): boolean {
+        return logo.length === 0 || isUrl(logo);
     }
 </script>
 
@@ -237,7 +246,7 @@
             bind:this={balanceWithRefresh}
             {ledger}
             value={cryptoBalance}
-            label={$_("cryptoAccount.shortBalanceLabel")}
+            label={i18nKey("cryptoAccount.shortBalanceLabel")}
             bold
             on:click={onStartRefreshingBalance}
             on:refreshed={onRefreshingBalanceSuccess}
@@ -247,14 +256,14 @@
         <div class="sections" style={`left: -${left}px`}>
             <div class="topup hidden" class:visible={step === 0}>
                 <AccountInfo {ledger} user={$user} />
-                <p>{$_("tokenTransfer.makeDeposit")}</p>
+                <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: symbol } })}
+                    <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                 </a>
             </div>
             <div class="common hidden" class:visible={step === 1}>
                 <section class="type">
-                    <Legend label={$_("proposal.maker.type")} />
+                    <Legend label={i18nKey("proposal.maker.type")} />
                     <Select bind:value={selectedProposalType} margin={false}>
                         <option value={"motion"}>Motion</option>
                         <option value={"transfer_sns_funds"}>Transfer SNS funds</option>
@@ -266,7 +275,7 @@
                     </Select>
                 </section>
                 <section>
-                    <Legend label={$_("proposal.maker.title")} required />
+                    <Legend label={i18nKey("proposal.maker.title")} required />
                     <Input
                         autofocus
                         disabled={busy}
@@ -275,32 +284,36 @@
                         minlength={MIN_TITLE_LENGTH}
                         maxlength={MAX_TITLE_LENGTH}
                         countdown
-                        placeholder={$_("proposal.maker.enterTitle")} />
+                        placeholder={i18nKey("proposal.maker.enterTitle")} />
                 </section>
                 <section>
                     <Legend
-                        label={$_("proposal.maker.url")}
-                        rules={$_("proposal.maker.urlRules")} />
+                        label={i18nKey("proposal.maker.url")}
+                        rules={i18nKey("proposal.maker.urlRules")} />
                     <Input
                         disabled={busy}
                         invalid={!urlValid}
                         bind:value={url}
                         maxlength={MAX_URL_LENGTH}
                         countdown
-                        placeholder={$_("proposal.maker.enterUrl")} />
+                        placeholder={i18nKey("proposal.maker.enterUrl")} />
                 </section>
                 <section>
                     <div class="summary-heading">
                         <Legend
                             required
-                            label={$_("proposal.maker.summary")}
-                            rules={$_("proposal.maker.summaryRules")} />
+                            label={i18nKey("proposal.maker.summary")}
+                            rules={i18nKey("proposal.maker.summaryRules")} />
                         <div
                             role="switch"
                             tabindex="1"
                             class="preview"
                             on:click={() => (summaryPreview = !summaryPreview)}>
-                            <span class="text">{$_(summaryPreview ? "edit" : "preview")}</span>
+                            <span class="text"
+                                ><Translatable
+                                    resourceKey={i18nKey(
+                                        summaryPreview ? "edit" : "preview",
+                                    )} /></span>
                             <span class="icon">
                                 {#if summaryPreview}
                                     <PencilIcon size={$iconSize} viewBox="0 -3 24 24" />
@@ -327,7 +340,7 @@
                                 scroll
                                 minlength={MIN_SUMMARY_LENGTH}
                                 maxlength={MAX_SUMMARY_LENGTH}
-                                placeholder={$_("proposal.maker.enterSummary")} />
+                                placeholder={i18nKey("proposal.maker.enterSummary")} />
                         {/if}
                     </div>
                 </section>
@@ -336,12 +349,12 @@
                 {#if selectedProposalType === "transfer_sns_funds"}
                     <div>
                         <section>
-                            <Legend label={$_("proposal.maker.treasury")} required />
+                            <Legend label={i18nKey("proposal.maker.treasury")} required />
                             <Radio
                                 id="chat_treasury"
                                 group="treasury"
                                 value={symbol}
-                                label={symbol}
+                                label={i18nKey(symbol)}
                                 disabled={busy}
                                 checked={treasury === "SNS"}
                                 on:change={() => (treasury = "SNS")} />
@@ -349,35 +362,35 @@
                                 id="icp_treasury"
                                 group="treasury"
                                 value="ICP"
-                                label="ICP"
+                                label={i18nKey("ICP")}
                                 disabled={busy}
                                 checked={treasury === "ICP"}
                                 on:change={() => (treasury = "ICP")} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.recipientOwner")} required />
+                            <Legend label={i18nKey("proposal.maker.recipientOwner")} required />
                             <Input
                                 disabled={busy}
                                 invalid={recipientOwner.length > 0 && !recipientOwnerValid}
                                 maxlength={63}
                                 bind:value={recipientOwner}
-                                placeholder={$_("proposal.maker.enterRecipientOwner")} />
+                                placeholder={i18nKey("proposal.maker.enterRecipientOwner")} />
                         </section>
                         <section>
                             <Legend
-                                label={$_("proposal.maker.recipientSubaccount")}
-                                rules={$_("proposal.maker.recipientSubaccountRules")} />
+                                label={i18nKey("proposal.maker.recipientSubaccount")}
+                                rules={i18nKey("proposal.maker.recipientSubaccountRules")} />
                             <Input
                                 disabled={busy}
                                 invalid={!recipientSubaccountValid}
                                 maxlength={64}
                                 bind:value={recipientSubaccount}
-                                placeholder={$_("proposal.maker.enterRecipientSubaccount")} />
+                                placeholder={i18nKey("proposal.maker.enterRecipientSubaccount")} />
                         </section>
                         <section>
                             <Legend
-                                label={$_("proposal.maker.amount")}
-                                rules={$_("proposal.maker.amountRules", { values: { token } })}
+                                label={i18nKey("proposal.maker.amount")}
+                                rules={i18nKey("proposal.maker.amountRules", { token })}
                                 required />
                             <Input
                                 disabled={busy}
@@ -385,15 +398,15 @@
                                 minlength={1}
                                 maxlength={20}
                                 bind:value={amountText}
-                                placeholder={$_("proposal.maker.enterAmount", {
-                                    values: { token },
+                                placeholder={i18nKey("proposal.maker.enterAmount", {
+                                    token,
                                 })} />
                         </section>
                     </div>
                 {:else if selectedProposalType === "add_token"}
                     <div>
                         <section>
-                            <Legend label={$_("proposal.maker.ledgerCanisterId")} required />
+                            <Legend label={i18nKey("proposal.maker.ledgerCanisterId")} required />
                             <Input
                                 autofocus
                                 disabled={busy}
@@ -403,34 +416,48 @@
                                 minlength={CANISTER_ID_LENGTH}
                                 maxlength={CANISTER_ID_LENGTH}
                                 countdown
-                                placeholder={$_("proposal.maker.enterLedgerCanisterId")} />
+                                placeholder={i18nKey("2ouva-viaaa-aaaaq-aaamq-cai")} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.tokenInfoUrl")} required />
+                            <Legend label={i18nKey("proposal.maker.tokenInfoUrl")} required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenInfoUrl}
-                                placeholder={$_("proposal.maker.enterTokenInfoUrl")} />
+                                placeholder={i18nKey("https://token.com/info")} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.howToBuyUrl")} required />
+                            <Legend label={i18nKey("proposal.maker.howToBuyUrl")} required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenHowToBuyUrl}
-                                placeholder={$_("proposal.maker.enterHowToBuyUrl")} />
+                                placeholder={i18nKey("https://token.com/how-to-buy")} />
                         </section>
                         <section>
-                            <Legend label={$_("proposal.maker.transactionUrlFormat")} required />
+                            <Legend
+                                label={i18nKey("proposal.maker.transactionUrlFormat")}
+                                required />
                             <Input
                                 disabled={busy}
                                 minlength={1}
                                 maxlength={100}
                                 bind:value={addTokenTransactionUrlFormat}
-                                placeholder={$_("proposal.maker.enterTransactionUrlFormat")} />
+                                placeholder={i18nKey(
+                                    `https://token.com/transactions/{transaction_index}`,
+                                )} />
+                        </section>
+                        <section>
+                            <Legend label={i18nKey("proposal.maker.tokenLogo")} />
+                            <Input
+                                disabled={busy}
+                                invalid={!isTokenLogoValid(addTokenLogo)}
+                                minlength={0}
+                                maxlength={10000}
+                                bind:value={addTokenLogo}
+                                placeholder={i18nKey("data:image/svg+xml;base64,PHN2ZyB3aW...")} />
                         </section>
                     </div>
                 {/if}
@@ -438,7 +465,9 @@
         </div>
     </div>
     <span class="footer" slot="footer">
-        <p class="message" class:error>{message}</p>
+        {#if message !== undefined}
+            <p class="message" class:error><Translatable resourceKey={message} /></p>
+        {/if}
         <div class="group-buttons">
             <div class="back">
                 {#if step > 1 || (step == 1 && insufficientFunds)}
@@ -446,7 +475,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("group.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -463,7 +493,10 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={onClickPrimary}
-                    >{$_(step === 0 ? "refresh" : canSubmit ? "submit" : "group.next")}</Button>
+                    ><Translatable
+                        resourceKey={i18nKey(
+                            step === 0 ? "refresh" : canSubmit ? "submit" : "group.next",
+                        )} /></Button>
             </div>
         </div>
     </span>

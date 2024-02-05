@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { AvatarSize, type OpenChat, type TypersByKey } from "openchat-client";
+    import {
+        AvatarSize,
+        routeForChatIdentifier,
+        type OpenChat,
+        type TypersByKey,
+    } from "openchat-client";
+    import page from "page";
     import { mobileWidth } from "../../stores/screenDimensions";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -11,13 +17,16 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import type { ChatSummary } from "openchat-client";
+    import type { ChatSummary, DiamondMembershipStatus } from "openchat-client";
     import Typing from "../Typing.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { now } from "../../stores/time";
     import SuspendModal from "./SuspendModal.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import type { ProfileLinkClickedEvent } from "../web-components/profileLink";
+    import Diamond from "../icons/Diamond.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -37,6 +46,8 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: hasUserProfile = !isMultiUser && !isBot;
     $: selectedChatId = client.selectedChatId;
+    $: selectedCommunity = client.selectedCommunity;
+    $: chatListScope = client.chatListScope;
 
     function clearSelection() {
         dispatch("clearSelection");
@@ -61,14 +72,15 @@
             case "direct_chat":
                 const them = $userStore[chatSummary.them.userId];
                 return {
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     userId: chatSummary.them.userId,
                     typing: client.getTypingString(
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     username: "@" + them.username,
                     eventsTTL: undefined,
@@ -76,6 +88,7 @@
             default:
                 return {
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     userId: undefined,
                     username: undefined,
@@ -83,7 +96,7 @@
                         $_,
                         $userStore,
                         { chatId: chatSummary.id },
-                        typing
+                        typing,
                     ),
                     eventsTTL: chatSummary.eventsTTL,
                 };
@@ -96,8 +109,20 @@
                 new CustomEvent<ProfileLinkClickedEvent>("profile-clicked", {
                     detail: { userId, chatButton: false, inGlobalContext: false },
                     bubbles: true,
-                })
+                }),
             );
+        }
+    }
+
+    function navigateToCommunity() {
+        if ($selectedCommunity !== undefined) {
+            page(`/community/${$selectedCommunity.id.communityId}`);
+        }
+    }
+
+    function navigateToChannel() {
+        if ($selectedCommunity !== undefined) {
+            page(routeForChatIdentifier("community", selectedChatSummary.id));
         }
     }
 
@@ -131,15 +156,26 @@
             size={AvatarSize.Default} />
     </div>
     <div class="chat-details">
-        <div class="chat-name" title={chat.name}>
+        <div class="chat-name">
             {#if isMultiUser && !readonly}
-                <span on:click={showGroupDetails} class="group-details">
-                    {chat.name}
-                </span>
+                <div class="title">
+                    {#if $selectedCommunity !== undefined && $chatListScope.kind === "favourite"}
+                        <span on:click={navigateToCommunity} class="pointer">
+                            {$selectedCommunity.name}
+                        </span>
+                        <span>{">"}</span>
+                        <span on:click={navigateToChannel} class="pointer">
+                            {chat.name}
+                        </span>
+                    {:else}
+                        {chat.name}
+                    {/if}
+                </div>
             {:else if hasUserProfile}
                 <span on:click={openUserProfile} class="user-link">
                     {chat.name}
                 </span>
+                <Diamond status={chat.diamondStatus} />
                 <span class="username">{chat.username}</span>
             {:else}
                 {chat.name}
@@ -147,15 +183,16 @@
         </div>
         <div class="chat-subtext">
             {#if blocked}
-                {$_("blocked")}
+                <Translatable resourceKey={i18nKey("blocked")} />
             {:else if readonly}
                 <ChatSubtext chat={selectedChatSummary} />
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isMultiUser}
-                <div class="members" on:click={showGroupMembers}>
-                    <ChatSubtext chat={selectedChatSummary} />
-                </div>
+                <ChatSubtext
+                    chat={selectedChatSummary}
+                    clickableMembers
+                    on:membersClick={showGroupMembers} />
             {:else}
                 <ChatSubtext chat={selectedChatSummary} />
             {/if}
@@ -193,10 +230,6 @@
         @include font(book, normal, fs-80);
         @include ellipsis();
         color: var(--txt-light);
-
-        .members {
-            cursor: pointer;
-        }
     }
 
     .avatar {
@@ -207,7 +240,7 @@
         }
     }
 
-    .group-details {
+    .pointer {
         cursor: pointer;
     }
 
@@ -229,6 +262,12 @@
         flex: 1;
         overflow: auto;
         padding: 0 $sp2;
+    }
+
+    .title {
+        display: flex;
+        flex-direction: row;
+        gap: $sp3;
     }
 
     .back {

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -6,8 +6,10 @@ cd $SCRIPT_DIR/..
 
 ./scripts/generate-wasm.sh community
 ./scripts/generate-wasm.sh cycles_dispenser
+./scripts/generate-wasm.sh escrow
 ./scripts/generate-wasm.sh group
 ./scripts/generate-wasm.sh group_index
+./scripts/generate-wasm.sh identity
 ./scripts/generate-wasm.sh local_group_index
 ./scripts/generate-wasm.sh local_user_index
 ./scripts/generate-wasm.sh market_maker
@@ -20,5 +22,6 @@ cd $SCRIPT_DIR/..
 ./scripts/generate-wasm.sh registry
 ./scripts/generate-wasm.sh storage_bucket
 ./scripts/generate-wasm.sh storage_index
+./scripts/generate-wasm.sh translations
 ./scripts/generate-wasm.sh user
 ./scripts/generate-wasm.sh user_index

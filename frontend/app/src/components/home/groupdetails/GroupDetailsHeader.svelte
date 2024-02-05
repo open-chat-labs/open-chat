@@ -9,7 +9,8 @@
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import type { Level } from "openchat-client";
-    import { interpolateLevel } from "../../../utils/i18n";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let canEdit: boolean;
     export let level: Level;
@@ -35,13 +36,13 @@
         </HoverIcon>
     </span>
     {#if canEdit}
-        <span title={$_("group.edit", { values: { level }})} class="edit" on:click={editGroup}>
+        <span title={$_("group.edit", { values: { level } })} class="edit" on:click={editGroup}>
             <HoverIcon>
                 <PencilOutline size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
         </span>
     {/if}
-    <h4>{interpolateLevel("groupDetails", level)}</h4>
+    <h4><Translatable resourceKey={i18nKey("groupDetails", undefined, level)} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />

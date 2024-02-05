@@ -23,9 +23,11 @@ fn main() {
     generate_candid_method!(community, summary_updates, query);
     generate_candid_method!(community, thread_previews, query);
 
+    generate_candid_method!(community, accept_p2p_swap, update);
     generate_candid_method!(community, add_members_to_channel, update);
     generate_candid_method!(community, add_reaction, update);
     generate_candid_method!(community, block_user, update);
+    generate_candid_method!(community, cancel_p2p_swap, update);
     generate_candid_method!(community, change_channel_role, update);
     generate_candid_method!(community, change_role, update);
     generate_candid_method!(community, claim_prize, update);

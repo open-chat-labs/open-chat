@@ -29,12 +29,11 @@
     onDestroy(closeTooltip);
 
     async function showTooltip(): Promise<void> {
-        const rect = target.getBoundingClientRect();
         tooltipStore.show(tooltipContainer);
 
         await tick();
 
-        tooltipStore.position(rect, position, align, gutter);
+        tooltipStore.position(target.getDomElement(), position, align, gutter);
     }
 
     function closeTooltip() {

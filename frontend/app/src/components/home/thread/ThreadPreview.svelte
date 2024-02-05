@@ -18,6 +18,8 @@
     import Markdown from "../Markdown.svelte";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -34,13 +36,13 @@
     $: chat = $chatSummariesStore.get(thread.chatId) as MultiUserChat | undefined;
     $: muted = chat?.membership?.notificationsMuted || false;
     $: syncDetails = chat?.membership?.latestThreads?.find(
-        (t) => t.threadRootMessageIndex === threadRootMessageIndex
+        (t) => t.threadRootMessageIndex === threadRootMessageIndex,
     );
     $: unreadCount = syncDetails
         ? client.unreadThreadMessageCount(
               thread.chatId,
               threadRootMessageIndex,
-              syncDetails.latestMessageIndex
+              syncDetails.latestMessageIndex,
           )
         : 0;
     $: chatData = {
@@ -78,7 +80,7 @@
                 unreadCount = client.unreadThreadMessageCount(
                     thread.chatId,
                     threadRootMessageIndex,
-                    syncDetails.latestMessageIndex
+                    syncDetails.latestMessageIndex,
                 );
             }
         });
@@ -88,14 +90,17 @@
         page(
             `${routeForChatIdentifier($chatListScope.kind, thread.chatId)}/${
                 thread.rootMessage.event.messageIndex
-            }?open=true`
+            }?open=true`,
         );
     }
 </script>
 
 {#if chat !== undefined}
     <div class="wrapper">
-        <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
+        <CollapsibleCard
+            on:toggle={() => (open = !open)}
+            {open}
+            headerText={i18nKey("userInfoHeader")}>
             <div slot="titleSlot" class="header">
                 <div class="avatar">
                     <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
@@ -147,7 +152,7 @@
                             supportsEdit={false}
                             supportsReply={false}
                             canPin={false}
-                            canBlockUser={false}
+                            canBlockUsers={false}
                             canDelete={false}
                             canQuoteReply={false}
                             canReact={false}
@@ -157,14 +162,15 @@
                             eventIndex={thread.rootMessage.index}
                             timestamp={thread.rootMessage.timestamp}
                             expiresAt={thread.rootMessage.expiresAt}
-                            dateFormatter={client.toDatetimeString}
+                            dateFormatter={(date) => client.toDatetimeString(date)}
                             msg={thread.rootMessage.event} />
                     </div>
                     {#if missingMessages > 0}
                         <div class="separator">
-                            {$_("thread.moreMessages", {
-                                values: { number: missingMessages.toString() },
-                            })}
+                            <Translatable
+                                resourceKey={i18nKey("thread.moreMessages", {
+                                    number: missingMessages.toString(),
+                                })} />
                         </div>
                     {/if}
                     {#each grouped as userGroup}
@@ -190,7 +196,7 @@
                                 supportsEdit={false}
                                 supportsReply={false}
                                 canPin={false}
-                                canBlockUser={false}
+                                canBlockUsers={false}
                                 canDelete={false}
                                 canQuoteReply={false}
                                 canReact={false}
@@ -200,12 +206,13 @@
                                 eventIndex={evt.index}
                                 timestamp={evt.timestamp}
                                 expiresAt={evt.expiresAt}
-                                dateFormatter={client.toDatetimeString}
+                                dateFormatter={(date) => client.toDatetimeString(date)}
                                 msg={evt.event} />
                         {/each}
                     {/each}
                     <LinkButton underline="hover" on:click={selectThread}
-                        >{$_("thread.openThread")}&#8594;</LinkButton>
+                        ><Translatable
+                            resourceKey={i18nKey("thread.openThread")} />&#8594;</LinkButton>
                 </div>
             </IntersectionObserverComponent>
         </CollapsibleCard>

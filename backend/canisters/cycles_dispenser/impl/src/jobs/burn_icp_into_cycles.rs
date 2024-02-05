@@ -1,12 +1,8 @@
 use crate::{mutate_state, State};
-use candid::CandidType;
-use canister_client::make_c2c_call;
-use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tracing::{error, info};
-use types::{CanisterId, Cycles, TimestampMillis};
+use types::{CanisterId, TimestampMillis};
 use utils::canister_timers::run_now_then_interval;
 
 const INTERVAL: Duration = Duration::from_secs(300);
@@ -107,15 +103,12 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
 }
 
 async fn notify_cmc(notify_details: NotifyTopUpDetails) {
-    let response: CallResult<Result<Cycles, NotifyError>> = make_c2c_call(
+    let response = cycles_minting_canister_c2c_client::notify_top_up(
         notify_details.cmc,
-        "notify_top_up",
-        &NotifyTopUpArgs {
+        &cycles_minting_canister::notify_top_up::Args {
             block_index: notify_details.block_index,
             canister_id: notify_details.this_canister_id,
         },
-        candid::encode_one,
-        |r| candid::decode_one(r),
     )
     .await;
 
@@ -128,25 +121,4 @@ async fn notify_cmc(notify_details: NotifyTopUpDetails) {
             mutate_state(|state| state.data.cycles_top_up_pending_notification = Some(notify_details.block_index));
         }
     }
-}
-
-#[derive(CandidType)]
-struct NotifyTopUpArgs {
-    block_index: BlockIndex,
-    canister_id: CanisterId,
-}
-
-#[derive(Serialize, Deserialize, CandidType, Debug)]
-enum NotifyError {
-    Refunded {
-        reason: String,
-        block_index: Option<BlockIndex>,
-    },
-    InvalidTransaction(String),
-    TransactionTooOld(BlockIndex),
-    Processing,
-    Other {
-        error_code: u64,
-        error_message: String,
-    },
 }

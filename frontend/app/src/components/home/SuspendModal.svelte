@@ -8,6 +8,8 @@
     import Overlay from "../Overlay.svelte";
     import ErrorMessage from "../ErrorMessage.svelte";
     import TextArea from "../TextArea.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let userId: string;
 
@@ -34,26 +36,28 @@
 
 <Overlay dismissible on:close>
     <ModalContent on:close>
-        <div slot="header">{$_("suspendedUser")}</div>
+        <div slot="header"><Translatable resourceKey={i18nKey("suspendedUser")} /></div>
         <div slot="body">
             <TextArea
                 bind:value={reason}
                 autofocus
                 minlength={3}
                 maxlength={512}
-                placeholder={$_("reasonForSuspension")}>
+                placeholder={i18nKey("reasonForSuspension")}>
                 {#if showError}
-                    <ErrorMessage>{$_("failedToSuspendUser")}</ErrorMessage>
+                    <ErrorMessage
+                        ><Translatable
+                            resourceKey={i18nKey("failedToSuspendUser")} /></ErrorMessage>
                 {/if}
             </TextArea>
         </div>
         <div slot="footer">
             <ButtonGroup>
                 <Button on:click={onSuspend} loading={suspending} small>
-                    {$_("suspend")}
+                    <Translatable resourceKey={i18nKey("suspend")} />
                 </Button>
                 <Button on:click={() => dispatch("close")} disabled={suspending} small secondary>
-                    {$_("cancel")}
+                    <Translatable resourceKey={i18nKey("cancel")} />
                 </Button>
             </ButtonGroup>
         </div>

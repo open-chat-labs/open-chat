@@ -15,6 +15,7 @@ async fn join_community(args: Args) -> Response {
         invite_code: args.invite_code,
         is_platform_moderator: user_details.is_platform_moderator,
         is_bot: user_details.is_bot,
+        diamond_membership_expires_at: user_details.diamond_membership_expires_at,
     };
     match community_canister_c2c_client::c2c_join_community(args.community_id.into(), &c2c_args).await {
         Ok(response) => match response {

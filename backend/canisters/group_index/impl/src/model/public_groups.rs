@@ -85,6 +85,7 @@ impl PublicGroups {
     pub fn hydrate_cached_summary(&self, summary: CachedPublicGroupSummary) -> Option<PublicGroupSummary> {
         self.groups.get(&summary.chat_id).map(|group| PublicGroupSummary {
             chat_id: summary.chat_id,
+            local_user_index_canister_id: summary.local_user_index_canister_id,
             last_updated: summary.last_updated,
             name: group.name.clone(),
             description: group.description.clone(),
@@ -250,6 +251,10 @@ impl PublicGroupInfo {
     pub fn set_hotness_score(&mut self, hotness_score: u32) {
         self.hotness_score = hotness_score;
     }
+
+    pub fn gate(&self) -> Option<&AccessGate> {
+        self.gate.as_ref()
+    }
 }
 
 impl From<&PublicGroupInfo> for GroupMatch {
@@ -261,6 +266,7 @@ impl From<&PublicGroupInfo> for GroupMatch {
             avatar_id: group.avatar_id,
             member_count: group.activity.member_count,
             gate: group.gate.clone(),
+            subtype: group.subtype.clone(),
         }
     }
 }

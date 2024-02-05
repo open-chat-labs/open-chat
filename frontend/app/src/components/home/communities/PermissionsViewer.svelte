@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import Check from "svelte-material-icons/Check.svelte";
     import {
         type CommunityPermissionRole,
         type CommunityPermissions,
         communityRoles,
     } from "openchat-client";
+    import { i18nKey, type ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let permissions: CommunityPermissions;
     export let isPublic: boolean;
@@ -13,10 +14,10 @@
     type PermissionsByRole = Record<CommunityPermissionRole, Set<string>>;
     type PermissionsEntry = [keyof CommunityPermissions, CommunityPermissionRole];
 
-    const roleLabels: Record<CommunityPermissionRole, string> = {
-        owner: "permissions.ownerOnly",
-        admin: "permissions.ownerAndAdmins",
-        member: "permissions.allMembers",
+    const roleLabels: Record<CommunityPermissionRole, ResourceKey> = {
+        owner: i18nKey("permissions.ownerOnly"),
+        admin: i18nKey("permissions.ownerAndAdmins"),
+        member: i18nKey("permissions.allMembers"),
     };
 
     $: partitioned = partitionPermissions(permissions);
@@ -25,7 +26,7 @@
         return (Object.entries(permissions) as PermissionsEntry[]).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 if (key !== "inviteUsers" || !isPublic) {
-                    dict[val].add($_(`permissions.${key}`));
+                    dict[val].add(`permissions.${key}`);
                 }
                 return dict;
             },
@@ -33,7 +34,7 @@
                 admin: new Set(),
                 member: new Set(),
                 owner: new Set(),
-            } as PermissionsByRole
+            } as PermissionsByRole,
         );
     }
 </script>
@@ -42,12 +43,12 @@
     {#each communityRoles as role}
         {#if partitioned[role].size > 0}
             <li class="section">
-                <div class="who-can">{$_(roleLabels[role])}</div>
+                <div class="who-can"><Translatable resourceKey={roleLabels[role]} /></div>
                 <ul>
                     {#each [...partitioned[role]] as perm}
                         <li class="permission">
                             <Check size={"1em"} color={"limegreen"} />
-                            {perm}
+                            <Translatable resourceKey={i18nKey(perm)} />
                         </li>
                     {/each}
                 </ul>

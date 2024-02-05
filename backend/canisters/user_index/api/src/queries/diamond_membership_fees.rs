@@ -16,4 +16,5 @@ pub struct DiamondMembershipFees {
     pub one_month: u64,
     pub three_months: u64,
     pub one_year: u64,
+    pub lifetime: u64,
 }

@@ -70,7 +70,6 @@ struct Data {
     pub ledger_canister: CanisterId,
     pub cycles_minting_canister: CanisterId,
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }

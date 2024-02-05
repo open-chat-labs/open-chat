@@ -71,12 +71,21 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
     let deserializer = quote! { deserializer = #deserializer_name };
 
     let candid = if include_candid {
-        quote! { #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)] }
+        quote! {
+            #[ic_cdk_macros::#method_type(name = #name, #guard #manual_reply)]
+            #item
+        }
     } else {
         quote! {}
     };
-    let msgpack =
-        quote! { #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)] };
+
+    let mut msgpack_item = item.clone();
+    msgpack_item.sig.ident = Ident::new(&msgpack_name, Span::call_site());
+
+    let msgpack = quote! {
+        #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)]
+        #msgpack_item
+    };
 
     TokenStream::from(quote! {
         use msgpack::serialize_then_unwrap as #serializer_ident;
@@ -84,7 +93,6 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
 
         #candid
         #msgpack
-        #item
     })
 }
 
@@ -180,7 +188,7 @@ fn get_arg_names(signature: &Signature) -> Vec<Ident> {
 }
 
 fn get_validation_method_attribute(inputs: Vec<String>) -> ValidationMethodAttribute {
-    let service_name = inputs.get(0).unwrap().to_string();
+    let service_name = inputs.first().unwrap().to_string();
     let function_name = inputs.get(1).unwrap().to_string();
 
     ValidationMethodAttribute {

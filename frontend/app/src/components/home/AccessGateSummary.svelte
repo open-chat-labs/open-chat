@@ -1,25 +1,28 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
-    import { isSnsGate, type AccessGate } from "openchat-client";
+    import { isNeuronGate, type AccessGate, isPaymentGate } from "openchat-client";
     import AccessGateIcon from "./AccessGateIcon.svelte";
     import AccessGateParameters from "./AccessGateParameters.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let gate: AccessGate;
     export let showHeader = true;
     $: showDetails =
-        isSnsGate(gate) && (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
+        isPaymentGate(gate) ||
+        (isNeuronGate(gate) &&
+            (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined));
 </script>
 
 {#if gate.kind !== "no_gate"}
     <div class="wrapper">
         {#if showHeader}
-            <h4>{$_("access.gate")}</h4>
+            <h4><Translatable resourceKey={i18nKey("access.gate")} /></h4>
         {/if}
         <div class="gate" class:showDetails>
             <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
-                <p>{$_("access.diamondMember")}</p>
-            {:else if isSnsGate(gate) || gate.kind === "credential_gate"}
+                <p><Translatable resourceKey={i18nKey("access.diamondMember")} /></p>
+            {:else if isNeuronGate(gate) || gate.kind === "credential_gate" || isPaymentGate(gate)}
                 <AccessGateParameters {gate} />
             {/if}
         </div>

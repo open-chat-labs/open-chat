@@ -22,7 +22,6 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
                 DeletedMessageResult::UserNotInGroup => UserNotInChannel,
                 DeletedMessageResult::NotAuthorized => NotAuthorized,
                 DeletedMessageResult::MessageNotFound => MessageNotFound,
-                DeletedMessageResult::MessageNotDeleted => MessageNotDeleted,
                 DeletedMessageResult::MessageHardDeleted => MessageHardDeleted,
             }
         } else {

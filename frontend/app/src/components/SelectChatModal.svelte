@@ -6,6 +6,7 @@
         ChatSummary,
         CommunityIdentifier,
         CommunitySummary,
+        DiamondMembershipStatus,
         DirectChatSummary,
         GlobalState,
         MultiUserChat,
@@ -14,7 +15,6 @@
     import Avatar from "./Avatar.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import { AvatarSize, chatIdentifiersEqual } from "openchat-client";
-    import Panel from "./Panel.svelte";
     import { iconSize } from "../stores/iconSize";
     import HoverIcon from "./HoverIcon.svelte";
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
@@ -27,6 +27,9 @@
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Search from "./Search.svelte";
     import { compareBigints } from "../utils/bigints";
+    import Diamond from "./icons/Diamond.svelte";
+    import { i18nKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -42,6 +45,7 @@
         id: ChatIdentifier;
         userId: string | undefined;
         name: string;
+        diamondStatus: DiamondMembershipStatus["kind"];
         avatarUrl: string;
         description: string;
         username: string | undefined;
@@ -72,7 +76,7 @@
 
     $: {
         buildListOfTargets($globalState, $now, $selectedChatId, searchTermLower).then(
-            (t) => (targets = t)
+            (t) => (targets = t),
         );
     }
     $: noTargets = getNumberOfTargets(targets) === 0;
@@ -88,10 +92,10 @@
     async function targetsFromChatList(
         now: number,
         chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined
+        selectedChatId: ChatIdentifier | undefined,
     ): Promise<ShareChat[]> {
         return Promise.all(
-            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c))
+            filterChatSelection(chats, selectedChatId).map((c) => normaliseChatSummary(now, c)),
         );
     }
 
@@ -101,7 +105,7 @@
                 (c) =>
                     searchTerm === "" ||
                     c.name.toLowerCase().includes(searchTerm) ||
-                    c.username?.toLowerCase()?.includes(searchTerm)
+                    c.username?.toLowerCase()?.includes(searchTerm),
             )
             .sort((a, b) => compareBigints(b.lastUpdated, a.lastUpdated));
     }
@@ -125,7 +129,7 @@
         global: GlobalState,
         now: number,
         selectedChatId: ChatIdentifier | undefined,
-        searchTerm: string
+        searchTerm: string,
     ): Promise<ShareTo> {
         let targets: ShareTo = {
             directChats: [],
@@ -143,7 +147,7 @@
             const groupChats = await targetsFromChatList(now, group, selectedChatId);
             const favourites = await targetsFromChatList(now, favs, selectedChatId);
             const communities = await Promise.all(
-                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c))
+                global.communities.values().map((c) => normaliseCommunity(now, selectedChatId, c)),
             );
             return {
                 directChats: chatMatchesSearch(directChats, searchTerm),
@@ -158,10 +162,10 @@
     async function normaliseCommunity(
         now: number,
         selectedChatId: ChatIdentifier | undefined,
-        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary
+        { id, name, avatar, description, channels, lastUpdated }: CommunitySummary,
     ): Promise<ShareCommunity> {
         const normalisedChannels = await Promise.all(
-            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c))
+            filterChatSelection(channels, selectedChatId).map((c) => normaliseChatSummary(now, c)),
         );
         return {
             kind: "community",
@@ -183,7 +187,8 @@
                     kind: "chat",
                     id: chatSummary.id,
                     userId: chatSummary.them.userId,
-                    name: client.displayNameAndIcon(them),
+                    name: client.displayName(them),
+                    diamondStatus: them.diamondStatus,
                     avatarUrl: client.userAvatarUrl(them),
                     description,
                     username: "@" + them.username,
@@ -196,6 +201,7 @@
                     id: chatSummary.id,
                     userId: undefined,
                     name: chatSummary.name,
+                    diamondStatus: "inactive" as DiamondMembershipStatus["kind"],
                     avatarUrl: client.groupAvatarUrl(chatSummary),
                     description: buildGroupChatDescription(chatSummary),
                     username: undefined,
@@ -206,7 +212,7 @@
 
     async function buildDirectChatDescription(
         chat: DirectChatSummary,
-        now: number
+        now: number,
     ): Promise<string> {
         return client.getLastOnlineDate(chat.them.userId, now).then((lastOnline) => {
             if (lastOnline !== undefined && lastOnline !== 0) {
@@ -231,12 +237,12 @@
 
     function filterChatSelection(
         chats: ChatSummary[],
-        selectedChatId: ChatIdentifier | undefined
+        selectedChatId: ChatIdentifier | undefined,
     ): ChatSummary[] {
         return chats.filter(
             (c) =>
                 !chatIdentifiersEqual(selectedChatId, c.id) &&
-                client.canSendMessage(c.id, "message", "text")
+                client.canSendMessage(c.id, "message", "text"),
         );
     }
 
@@ -245,12 +251,12 @@
     }
 </script>
 
-<Panel right forceModal>
+<section>
     <SectionHeader border={false} gap>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>
-        <h4>{$_("sendTo")}</h4>
+        <h4><Translatable resourceKey={i18nKey("sendTo")} /></h4>
         <span
             role="button"
             tabindex="0"
@@ -263,10 +269,10 @@
         </span>
     </SectionHeader>
     <div class="search">
-        <Search searching={false} bind:searchTerm placeholder={"search"} />
+        <Search searching={false} bind:searchTerm placeholder={i18nKey("search")} />
     </div>
     {#if noTargets}
-        <div class="no-chats">{$_("noChatsAvailable")}</div>
+        <div class="no-chats"><Translatable resourceKey={i18nKey("noChatsAvailable")} /></div>
     {:else}
         <div class="selectable-chats">
             {#if targets.directChats.length > 0}
@@ -274,14 +280,14 @@
                     open={searchTerm !== ""}
                     first
                     transition={false}
-                    headerText={$_("communities.directChats")}>
+                    headerText={i18nKey("communities.directChats")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <MessageOutline size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.directChats")}
+                                <Translatable resourceKey={i18nKey("communities.directChats")} />
                             </h4>
                         </div>
                     </div>
@@ -300,6 +306,7 @@
                                     <span class="display-name">
                                         {target.name}
                                     </span>
+                                    <Diamond status={target.diamondStatus} />
                                     {#if target.username !== undefined}
                                         <span class="username">{target.username}</span>
                                     {/if}
@@ -314,14 +321,14 @@
                 <CollapsibleCard
                     transition={false}
                     open={searchTerm !== ""}
-                    headerText={$_("communities.groupChats")}>
+                    headerText={i18nKey("communities.groupChats")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <ForumOutline size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.groupChats")}
+                                <Translatable resourceKey={i18nKey("communities.groupChats")} />
                             </h4>
                         </div>
                     </div>
@@ -347,14 +354,14 @@
                 <CollapsibleCard
                     transition={false}
                     open={searchTerm !== ""}
-                    headerText={$_("communities.favourites")}>
+                    headerText={i18nKey("communities.favourites")}>
                     <div slot="titleSlot" class="card-header">
                         <div class="avatar">
                             <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
                         </div>
                         <div class="details">
                             <h4 class="title">
-                                {$_("communities.favourites")}
+                                <Translatable resourceKey={i18nKey("communities.favourites")} />
                             </h4>
                         </div>
                     </div>
@@ -381,7 +388,7 @@
                     <CollapsibleCard
                         transition={false}
                         open={searchTerm !== ""}
-                        headerText={community.name}>
+                        headerText={i18nKey(community.name)}>
                         <div slot="titleSlot" class="card-header">
                             <div class="avatar">
                                 <Avatar url={community.avatarUrl} size={AvatarSize.Default} />
@@ -413,7 +420,7 @@
             {/each}
         </div>
     {/if}
-</Panel>
+</section>
 
 <style lang="scss">
     :global(.selectable-chats .body) {
@@ -428,6 +435,19 @@
         flex: 1;
         margin: 0;
         margin-top: 2px;
+    }
+
+    section {
+        background: var(--panel-right-modal);
+        height: calc(var(--vh, 1vh) * 100);
+        position: relative;
+        width: 500px;
+        overflow: auto;
+        overflow-x: hidden;
+
+        @include mobile() {
+            width: 100%;
+        }
     }
 
     .no-chats {
@@ -500,6 +520,7 @@
             @include font(book, normal, fs-100);
 
             display: flex;
+            align-items: center;
             gap: $sp2;
 
             .username {

@@ -24,7 +24,6 @@ import {
     InviteCodeResponse,
     JoinChannelResponse,
     LeaveChannelResponse,
-    LocalUserIndexResponse,
     MakeChannelPrivateResponse,
     MessagesByMessageIndexResponse,
     OptionalCommunityPermissions,
@@ -75,6 +74,8 @@ import {
     FollowThreadResponse,
     UnfollowThreadResponse,
     ClaimPrizeResponse,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -101,7 +102,6 @@ export {
     InviteCodeResponse as ApiInviteCodeResponse,
     JoinChannelResponse as ApiJoinChannelResponse,
     LeaveChannelResponse as ApiLeaveChannelResponse,
-    LocalUserIndexResponse as ApiLocalUserIndexResponse,
     MakeChannelPrivateResponse as ApiMakeChannelPrivateResponse,
     MessagesByMessageIndexResponse as ApiMessagesByMessageIndexResponse,
     OptionalCommunityPermissions as ApiOptionalCommunityPermissions,
@@ -151,6 +151,8 @@ export {
     FollowThreadResponse as ApiFollowThreadResponse,
     UnfollowThreadResponse as ApiUnfollowThreadResponse,
     ClaimPrizeResponse as ApiClaimPrizeResponse,
+    AcceptP2PSwapResponse as ApiAcceptP2PSwapResponse,
+    CancelP2PSwapResponse as ApiCancelP2PSwapResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

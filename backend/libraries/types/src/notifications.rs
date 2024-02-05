@@ -6,9 +6,20 @@ use std::fmt::{Debug, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
 pub struct NotificationEnvelope {
+    #[serde(rename = "r", alias = "recipients")]
     pub recipients: Vec<UserId>,
+    #[serde(rename = "n", alias = "notification_bytes")]
     pub notification_bytes: ByteBuf,
+    #[serde(rename = "t", alias = "timestamp")]
     pub timestamp: TimestampMillis,
+}
+
+const CANISTER_PRINCIPAL_LEN: usize = 10;
+
+impl NotificationEnvelope {
+    pub fn approx_size(&self) -> usize {
+        CANISTER_PRINCIPAL_LEN * self.recipients.len() + self.notification_bytes.len() + 7
+    }
 }
 
 #[derive(CandidType, Serialize)]

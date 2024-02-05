@@ -14,6 +14,9 @@ import type {
     AccountTransaction,
     AttachmentContent,
     MessagePermission,
+    P2PSwapStatus,
+    AcceptP2PSwapResponse,
+    CancelP2PSwapResponse,
 } from "../domain";
 import { extractUserIdsFromMentions, UnsupportedValueError } from "../domain";
 import type { MessageFormatter } from "./i18n";
@@ -46,14 +49,14 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 ) {
                     userIds.add(e.event.repliesTo.senderId);
                     extractUserIdsFromMentions(
-                        getContentAsText(fakeFormatter, e.event.repliesTo.content, {}),
+                        getContentAsFormattedText(fakeFormatter, e.event.repliesTo.content, {}),
                     ).forEach((id) => userIds.add(id));
                 }
                 if (e.event.content.kind === "reported_message_content") {
                     e.event.content.reports.forEach((r) => userIds.add(r.reportedBy));
                 }
                 extractUserIdsFromMentions(
-                    getContentAsText(fakeFormatter, e.event.content, {}),
+                    getContentAsFormattedText(fakeFormatter, e.event.content, {}),
                 ).forEach((id) => userIds.add(id));
                 break;
             case "member_joined":
@@ -110,7 +113,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
     }, new Set<string>());
 }
 
-export function getContentAsText(
+export function getContentAsFormattedText(
     formatter: MessageFormatter,
     content: MessageContent,
     cryptoLookup: Record<string, CryptocurrencyDetails>,
@@ -133,7 +136,7 @@ export function getContentAsText(
             }),
             content.caption,
         );
-    } else if (content.kind === "deleted_content") {
+    } else if (content.kind === "deleted_content" || content.kind === "blocked_content") {
         text = "deleted message";
     } else if (content.kind === "placeholder_content") {
         text = "placeholder content";
@@ -143,6 +146,8 @@ export function getContentAsText(
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(formatter("giphyMessage"), content.caption);
+    } else if (content.kind === "p2p_swap_content" || content.kind === "p2p_swap_content_initial") {
+        text = captionedContent("p2p swap", content.caption);
     } else if (content.kind === "prize_content" || content.kind === "prize_content_initial") {
         text = captionedContent(formatter("prizeMessage"), content.caption);
     } else if (content.kind === "prize_winner_content") {
@@ -161,6 +166,16 @@ export function getContentAsText(
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
     return text.trim();
+}
+
+export function getContentAsText(content: MessageContent): string | undefined {
+    if ("text" in content) {
+        return content.text;
+    } else if ("caption" in content) {
+        return content.caption;
+    } else if (content.kind === "poll_content") {
+        return content.config.text;
+    }
 }
 
 function captionedContent(type: string, caption?: string): string {
@@ -307,5 +322,77 @@ export function contentTypeToPermission(contentType: AttachmentContent["kind"]):
             return "file";
         default:
             throw new UnsupportedValueError("Unknown attachment content type", contentType);
+    }
+}
+
+export function mapAcceptP2PSwapResponseToStatus(response: AcceptP2PSwapResponse, userId: string): P2PSwapStatus {
+    switch (response.kind) {
+        case "success": return { 
+            kind: "p2p_swap_accepted", 
+            acceptedBy: userId, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_reserved": return { 
+            kind: "p2p_swap_reserved", 
+            reservedBy: response.reservedBy 
+        };
+        case "already_accepted": return { 
+            kind: "p2p_swap_accepted",
+            acceptedBy: response.acceptedBy, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_completed": return { 
+            kind: "p2p_swap_completed",
+            acceptedBy: response.acceptedBy,
+            token1TxnIn: response.token1TxnIn,
+            token0TxnOut: response.token0TxnOut,
+            token1TxnOut: response.token1TxnOut,
+        };
+        case "swap_cancelled": return { 
+            kind: "p2p_swap_cancelled",
+            token0TxnOut: response.token0TxnOut,
+        };
+        case "swap_expired": return { 
+            kind: "p2p_swap_expired",
+            token0TxnOut: response.token0TxnOut,
+        };
+        default: return { 
+            kind: "p2p_swap_open" 
+        };
+    }
+}
+
+export function mapCancelP2PSwapResponseToStatus(response: CancelP2PSwapResponse): P2PSwapStatus {
+    switch (response.kind) {
+        case "success": return { 
+            kind: "p2p_swap_cancelled"
+        };
+        case "already_reserved": return { 
+            kind: "p2p_swap_reserved", 
+            reservedBy: response.reservedBy 
+        };
+        case "already_accepted": return { 
+            kind: "p2p_swap_accepted",
+            acceptedBy: response.acceptedBy, 
+            token1TxnIn: response.token1TxnIn 
+        };
+        case "already_completed": return { 
+            kind: "p2p_swap_completed",
+            acceptedBy: response.acceptedBy,
+            token1TxnIn: response.token1TxnIn,
+            token0TxnOut: response.token0TxnOut,
+            token1TxnOut: response.token1TxnOut,
+        };
+        case "swap_cancelled": return { 
+            kind: "p2p_swap_cancelled",
+            token0TxnOut: response.token0TxnOut,
+        };
+        case "swap_expired": return { 
+            kind: "p2p_swap_expired",
+            token0TxnOut: response.token0TxnOut,
+        };
+        default: return { 
+            kind: "p2p_swap_open" 
+        };
     }
 }

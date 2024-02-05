@@ -1,7 +1,8 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import { _ } from "svelte-i18n";
     import ModalPage from "../ModalPage.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let error = { message: "Unknown error" };
 </script>
@@ -9,8 +10,8 @@
 <ModalPage bgClass="error" minHeight="280px">
     <div class="content">
         <div>
-            <h1 class="title">{$_("unexpectedError")}</h1>
-            <p class="error-blurb">{$_("errorBlurb")}</p>
+            <h1 class="title"><Translatable resourceKey={i18nKey("unexpectedError")} /></h1>
+            <p class="error-blurb"><Translatable resourceKey={i18nKey("errorBlurb")} /></p>
         </div>
         <p class="error-message">{error.message}</p>
         <Button on:click={() => location.reload()}>Reload</Button>

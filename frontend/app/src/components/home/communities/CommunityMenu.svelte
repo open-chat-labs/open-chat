@@ -4,7 +4,6 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
-    import Pound from "svelte-material-icons/Pound.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
     import FileDocument from "svelte-material-icons/FileDocument.svelte";
     import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
@@ -12,11 +11,12 @@
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import Menu from "../../Menu.svelte";
-    import { _ } from "svelte-i18n";
     import MenuItem from "../../MenuItem.svelte";
     import type { CommunitySummary, OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { rightPanelHistory } from "../../../stores/rightPanel";
+    import { i18nKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -43,8 +43,8 @@
             kind: "delete_community",
             communityId: community.id,
             doubleCheck: {
-                challenge: $_("typeGroupName", { values: { name: community.name } }),
-                response: community.name,
+                challenge: i18nKey("typeGroupName", { name: community.name }),
+                response: i18nKey(community.name),
             },
         });
     }
@@ -65,14 +65,6 @@
         canInvite && rightPanelHistory.set([{ kind: "invite_community_users" }]);
     }
 
-    function showChannels() {
-        rightPanelHistory.set([
-            {
-                kind: "community_channels",
-            },
-        ]);
-    }
-
     function editCommunity() {
         canEdit && dispatch("editCommunity", community);
     }
@@ -88,11 +80,11 @@
         <Menu>
             <MenuItem on:click={communityDetails}>
                 <FileDocument size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <div slot="text">{$_("communities.details")}</div>
+                <div slot="text"><Translatable resourceKey={i18nKey("communities.details")} /></div>
             </MenuItem>
             <MenuItem on:click={showMembers}>
                 <AccountMultiple size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <div slot="text">{$_("communities.members")}</div>
+                <div slot="text"><Translatable resourceKey={i18nKey("communities.members")} /></div>
             </MenuItem>
             {#if canInvite}
                 <MenuItem on:click={invite}>
@@ -100,26 +92,27 @@
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
-                    <div slot="text">{$_("communities.invite")}</div>
+                    <div slot="text">
+                        <Translatable resourceKey={i18nKey("communities.invite")} />
+                    </div>
                 </MenuItem>
             {/if}
-            <MenuItem on:click={showChannels}>
-                <Pound size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                <span slot="text">{$_("communities.publicChannels")}</span>
-            </MenuItem>
             {#if canEdit}
                 <MenuItem on:click={editCommunity}>
                     <PencilOutline
                         size={$iconSize}
                         color={"var(--icon-inverted-txt)"}
                         slot="icon" />
-                    <div slot="text">{$_("communities.edit")}</div>
+                    <div slot="text">
+                        <Translatable resourceKey={i18nKey("communities.edit")} />
+                    </div>
                 </MenuItem>
             {/if}
             {#if canCreateChannel}
                 <MenuItem on:click={newChannel}>
                     <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                    <span slot="text">{$_("communities.createChannel")}</span>
+                    <span slot="text"
+                        ><Translatable resourceKey={i18nKey("communities.createChannel")} /></span>
                 </MenuItem>
             {/if}
             {#if member}
@@ -127,13 +120,17 @@
                 {#if canDelete}
                     <MenuItem warning on:click={deleteCommunity}>
                         <DeleteOutline size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">{$_("communities.delete")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("communities.delete")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if canLeave}
                     <MenuItem warning on:click={leaveCommunity}>
                         <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                        <div slot="text">{$_("communities.leave")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("communities.leave")} />
+                        </div>
                     </MenuItem>
                 {/if}
             {/if}

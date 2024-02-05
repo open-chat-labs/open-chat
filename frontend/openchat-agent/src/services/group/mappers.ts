@@ -1,7 +1,5 @@
 import type {
     ApiEventsResponse,
-    ApiEventWrapper,
-    ApiGroupChatEvent,
     ApiRemoveParticipantResponse,
     ApiSendMessageResponse,
     ApiRole,
@@ -24,16 +22,14 @@ import type {
     ApiMessagesByMessageIndexResponse as ApiCommunityMessagesByMessageIndexResponse,
 } from "../community/candid/idl";
 import type {
+    ChatEvent,
     EventsResponse,
-    EventWrapper,
-    GroupChatEvent,
     SendMessageResponse,
     RemoveMemberResponse,
     BlockUserResponse,
     UnblockUserResponse,
     MemberRole,
     Message,
-    GroupInviteCodeChange,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     GroupCanisterSummaryResponse,
@@ -56,13 +52,12 @@ import {
     accessGate,
     groupPermissions,
     memberRole,
-    message,
     groupSubtype,
     messageEvent,
     threadDetails,
     mention,
-    expiredEventsRange,
-    expiredMessagesRange,
+    eventsSuccessResponse,
+    messagesSuccessResponse,
 } from "../common/chatMappers";
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { apiOptionUpdate, identity, optional, optionUpdate } from "../../utils/mapping";
@@ -99,7 +94,9 @@ export function summaryResponse(
     );
 }
 
-function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
+export function groupChatSummary(
+    candid: ApiGroupCanisterGroupChatSummary,
+): GroupCanisterGroupChatSummary {
     return {
         id: { kind: "group_chat", groupId: candid.chat_id.toString() },
         lastUpdated: candid.last_updated,
@@ -131,6 +128,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         rulesAccepted: candid.rules_accepted,
         eventsTTL: optional(candid.events_ttl, identity),
         eventsTtlLastUpdated: candid.events_ttl_last_updated,
+        localUserIndex: candid.local_user_index_canister_id.toString(),
     };
 }
 
@@ -152,7 +150,7 @@ export function summaryUpdatesResponse(
     );
 }
 
-function groupChatSummaryUpdates(
+export function groupChatSummaryUpdates(
     candid: ApiGroupCanisterGroupChatSummaryUpdates,
 ): GroupCanisterGroupChatSummaryUpdates {
     return {
@@ -241,6 +239,8 @@ function apiOptionalMessagePermissions(
         crypto: apiOptionUpdate(apiPermissionRole, permissions.crypto),
         giphy: apiOptionUpdate(apiPermissionRole, permissions.giphy),
         prize: apiOptionUpdate(apiPermissionRole, permissions.prize),
+        p2p_swap: apiOptionUpdate(apiPermissionRole, permissions.p2pSwap),
+        p2p_trade: apiOptionUpdate(apiPermissionRole, undefined),
         custom_updated,
         custom_deleted,
     };
@@ -372,12 +372,7 @@ export async function getMessagesByMessageIndexResponse(
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.messages.map(messageEvent),
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return messagesSuccessResponse(candid.Success);
     }
     if (
         "CallerNotInGroup" in candid ||
@@ -407,16 +402,11 @@ export async function getEventsResponse(
     candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: ChatIdentifier,
     latestKnownUpdatePreRequest: bigint | undefined,
-): Promise<EventsResponse<GroupChatEvent>> {
+): Promise<EventsResponse<ChatEvent>> {
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.events.map(event),
-            expiredEventRanges: candid.Success.expired_event_ranges.map(expiredEventsRange),
-            expiredMessageRanges: candid.Success.expired_message_ranges.map(expiredMessagesRange),
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return eventsSuccessResponse(candid.Success);
     }
     if ("ReplicaNotUpToDateV2" in candid) {
         throw ReplicaNotUpToDateError.byTimestamp(
@@ -427,214 +417,6 @@ export async function getEventsResponse(
     }
     console.warn("GetGroupChatEvents failed with ", candid);
     return "events_failed";
-}
-
-function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
-    if ("Message" in candid) {
-        return message(candid.Message);
-    }
-    if ("GroupChatCreated" in candid) {
-        return {
-            kind: "group_chat_created",
-            name: candid.GroupChatCreated.name,
-            description: candid.GroupChatCreated.description,
-            created_by: candid.GroupChatCreated.created_by.toString(),
-        };
-    }
-    if ("DirectChatCreated" in candid) {
-        return {
-            kind: "direct_chat_created",
-        };
-    }
-    if ("ParticipantsAdded" in candid) {
-        return {
-            kind: "members_added",
-            userIds: candid.ParticipantsAdded.user_ids.map((p) => p.toString()),
-            addedBy: candid.ParticipantsAdded.added_by.toString(),
-        };
-    }
-    if ("UsersInvited" in candid) {
-        return {
-            kind: "users_invited",
-            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
-            invitedBy: candid.UsersInvited.invited_by.toString(),
-        };
-    }
-    if ("ParticipantJoined" in candid) {
-        return {
-            kind: "member_joined",
-            userId: candid.ParticipantJoined.user_id.toString(),
-        };
-    }
-    if ("ParticipantsRemoved" in candid) {
-        return {
-            kind: "members_removed",
-            userIds: candid.ParticipantsRemoved.user_ids.map((p) => p.toString()),
-            removedBy: candid.ParticipantsRemoved.removed_by.toString(),
-        };
-    }
-    if ("ParticipantLeft" in candid) {
-        return {
-            kind: "member_left",
-            userId: candid.ParticipantLeft.user_id.toString(),
-        };
-    }
-
-    if ("GroupNameChanged" in candid) {
-        return {
-            kind: "name_changed",
-            changedBy: candid.GroupNameChanged.changed_by.toString(),
-        };
-    }
-
-    if ("GroupDescriptionChanged" in candid) {
-        return {
-            kind: "desc_changed",
-            changedBy: candid.GroupDescriptionChanged.changed_by.toString(),
-        };
-    }
-
-    if ("GroupRulesChanged" in candid) {
-        return {
-            kind: "rules_changed",
-            enabled: candid.GroupRulesChanged.enabled,
-            enabledPrev: candid.GroupRulesChanged.prev_enabled,
-            changedBy: candid.GroupRulesChanged.changed_by.toString(),
-        };
-    }
-
-    if ("AvatarChanged" in candid) {
-        return {
-            kind: "avatar_changed",
-            changedBy: candid.AvatarChanged.changed_by.toString(),
-        };
-    }
-
-    if ("UsersBlocked" in candid) {
-        return {
-            kind: "users_blocked",
-            userIds: candid.UsersBlocked.user_ids.map((p) => p.toString()),
-            blockedBy: candid.UsersBlocked.blocked_by.toString(),
-        };
-    }
-
-    if ("UsersUnblocked" in candid) {
-        return {
-            kind: "users_unblocked",
-            userIds: candid.UsersUnblocked.user_ids.map((p) => p.toString()),
-            unblockedBy: candid.UsersUnblocked.unblocked_by.toString(),
-        };
-    }
-
-    if ("RoleChanged" in candid) {
-        return {
-            kind: "role_changed",
-            userIds: candid.RoleChanged.user_ids.map((p) => p.toString()),
-            changedBy: candid.RoleChanged.changed_by.toString(),
-            oldRole: memberRole(candid.RoleChanged.old_role),
-            newRole: memberRole(candid.RoleChanged.new_role),
-        };
-    }
-
-    if ("MessagePinned" in candid) {
-        return {
-            kind: "message_pinned",
-            pinnedBy: candid.MessagePinned.pinned_by.toString(),
-            messageIndex: candid.MessagePinned.message_index,
-        };
-    }
-
-    if ("MessageUnpinned" in candid) {
-        return {
-            kind: "message_unpinned",
-            unpinnedBy: candid.MessageUnpinned.unpinned_by.toString(),
-            messageIndex: candid.MessageUnpinned.message_index,
-        };
-    }
-
-    if ("PermissionsChanged" in candid) {
-        return {
-            kind: "permissions_changed",
-            oldPermissions: groupPermissions(candid.PermissionsChanged.old_permissions_v2),
-            newPermissions: groupPermissions(candid.PermissionsChanged.new_permissions_v2),
-            changedBy: candid.PermissionsChanged.changed_by.toString(),
-        };
-    }
-
-    if ("GroupVisibilityChanged" in candid) {
-        return {
-            kind: "group_visibility_changed",
-            nowPublic: candid.GroupVisibilityChanged.now_public,
-            changedBy: candid.GroupVisibilityChanged.changed_by.toString(),
-        };
-    }
-
-    if ("GroupInviteCodeChanged" in candid) {
-        let change: GroupInviteCodeChange = "disabled";
-        if ("Enabled" in candid.GroupInviteCodeChanged.change) {
-            change = "enabled";
-        } else if ("Reset" in candid.GroupInviteCodeChanged.change) {
-            change = "reset";
-        }
-
-        return {
-            kind: "group_invite_code_changed",
-            change,
-            changedBy: candid.GroupInviteCodeChanged.changed_by.toString(),
-        };
-    }
-
-    if ("ChatFrozen" in candid) {
-        return {
-            kind: "chat_frozen",
-            frozenBy: candid.ChatFrozen.frozen_by.toString(),
-            reason: optional(candid.ChatFrozen.reason, identity),
-        };
-    }
-
-    if ("ChatUnfrozen" in candid) {
-        return {
-            kind: "chat_unfrozen",
-            unfrozenBy: candid.ChatUnfrozen.unfrozen_by.toString(),
-        };
-    }
-
-    if ("EventsTimeToLiveUpdated" in candid) {
-        return {
-            kind: "events_ttl_updated",
-            updatedBy: candid.EventsTimeToLiveUpdated.updated_by.toString(),
-            newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity),
-        };
-    }
-
-    if ("GroupGateUpdated" in candid) {
-        return {
-            kind: "gate_updated",
-            updatedBy: candid.GroupGateUpdated.updated_by.toString(),
-        };
-    }
-
-    if ("MembersAddedToDefaultChannel" in candid) {
-        return {
-            kind: "members_added_to_default_channel",
-            count: candid.MembersAddedToDefaultChannel.count,
-        };
-    }
-
-    if ("Empty" in candid) {
-        return { kind: "empty" };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
-}
-
-function event(candid: ApiEventWrapper): EventWrapper<GroupChatEvent> {
-    return {
-        event: groupChatEvent(candid.event),
-        index: candid.index,
-        timestamp: candid.timestamp,
-        expiresAt: optional(candid.expires_at, Number),
-    };
 }
 
 export function convertToCommunityReponse(

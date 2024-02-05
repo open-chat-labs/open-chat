@@ -38,10 +38,11 @@
         statsSectionOpen,
         storageSectionOpen,
         userInfoOpen,
+        renderPreviews,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import Toggle from "../../Toggle.svelte";
-    import { setLocale, supportedLanguages } from "../../../i18n/i18n";
+    import { i18nKey, setLocale, supportedLanguages } from "../../../i18n/i18n";
     import { toastStore } from "../../../stores/toast";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
@@ -50,6 +51,7 @@
     import CommunityProfile from "./CommunityProfile.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
     import { menuCloser } from "../../../actions/closeMenu";
+    import Translatable from "../../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -95,6 +97,7 @@
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: isDiamond = client.isDiamond;
+    $: isLifetimeDiamond = client.isLifetimeDiamond;
     $: canExtendDiamond = client.canExtendDiamond;
     $: {
         setLocale(selectedLocale);
@@ -143,9 +146,9 @@
                         }
                     })
                     .catch((err) => {
-                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                         client.logError("Unable to save user bio: ", err);
-                    })
+                    }),
             );
         }
 
@@ -169,9 +172,9 @@
                         }
                     })
                     .catch((err) => {
-                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                         client.logError("Unable to save username: ", err);
-                    })
+                    }),
             );
         }
 
@@ -193,9 +196,9 @@
                         }
                     })
                     .catch((err) => {
-                        toastStore.showFailureToast($_("unableToSaveUserProfile"));
+                        toastStore.showFailureToast(i18nKey("unableToSaveUserProfile"));
                         client.logError("Unable to save display name: ", err);
-                    })
+                    }),
             );
         }
 
@@ -213,7 +216,7 @@
     function userAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>): void {
         client.setUserAvatar(ev.detail.data, ev.detail.url).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("avatarUpdateFailed");
+                toastStore.showFailureToast(i18nKey("avatarUpdateFailed"));
             }
         });
     }
@@ -224,13 +227,13 @@
 
     function onCopy() {
         navigator.clipboard.writeText(user.userId).then(() => {
-            toastStore.showSuccessToast("userIdCopiedToClipboard");
+            toastStore.showSuccessToast(i18nKey("userIdCopiedToClipboard"));
         });
     }
 </script>
 
 <SectionHeader border={false} flush shadow>
-    <h4 class="title">{$_("profile.title")}</h4>
+    <h4 class="title"><Translatable resourceKey={i18nKey("profile.title")} /></h4>
     <span title={$_("close")} class="close" on:click={closeProfile}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -246,7 +249,7 @@
             on:click={() => (view = "global")}
             class:selected={view === "global"}
             class="tab">
-            {$_("profile.global")}
+            <Translatable resourceKey={i18nKey("profile.global")} />
         </div>
         <div
             tabindex="0"
@@ -254,7 +257,7 @@
             on:click={() => (view = "communities")}
             class:selected={view === "communities"}
             class="tab">
-            {$_("communities.communityLabel")}
+            <Translatable resourceKey={i18nKey("communities.communityLabel")} />
         </div>
     </div>
 {/if}
@@ -265,7 +268,7 @@
             <CollapsibleCard
                 on:toggle={userInfoOpen.toggle}
                 open={$userInfoOpen}
-                headerText={$_("userInfoHeader")}>
+                headerText={i18nKey("userInfoHeader")}>
                 <div class="avatar">
                     {#if readonly}
                         <Avatar
@@ -281,12 +284,12 @@
                 </div>
                 {#if $anonUser}
                     <div class="guest">
-                        <p>{$_("guestUser")}</p>
+                        <p><Translatable resourceKey={i18nKey("guestUser")} /></p>
                         <Button on:click={() => identityState.set({ kind: "logging_in" })}
-                            >{$_("login")}</Button>
+                            ><Translatable resourceKey={i18nKey("login")} /></Button>
                     </div>
                 {:else}
-                    <Legend label={$_("username")} rules={$_("usernameRules")} />
+                    <Legend label={i18nKey("username")} rules={i18nKey("usernameRules")} />
                     <UsernameInput
                         {client}
                         {originalUsername}
@@ -296,30 +299,36 @@
                         bind:checking={checkingUsername}
                         bind:error={usernameError}>
                         {#if usernameError !== undefined}
-                            <ErrorMessage>{$_(usernameError)}</ErrorMessage>
+                            <ErrorMessage
+                                ><Translatable
+                                    resourceKey={i18nKey(usernameError)} /></ErrorMessage>
                         {/if}
                     </UsernameInput>
-                    <Legend label={$_("displayName")} rules={$_("displayNameRules")} />
+                    <Legend label={i18nKey("displayName")} rules={i18nKey("displayNameRules")} />
                     <DisplayNameInput
+                        on:upgrade
                         {client}
                         {originalDisplayName}
                         disabled={readonly}
                         bind:displayName
                         bind:displayNameValid>
                         {#if displayNameError !== undefined}
-                            <ErrorMessage>{$_(displayNameError)}</ErrorMessage>
+                            <ErrorMessage
+                                ><Translatable
+                                    resourceKey={i18nKey(displayNameError)} /></ErrorMessage>
                         {/if}
                     </DisplayNameInput>
-                    <Legend label={$_("bio")} rules={$_("supportsMarkdown")} />
+                    <Legend label={i18nKey("bio")} rules={i18nKey("supportsMarkdown")} />
                     <TextArea
                         rows={3}
                         bind:value={userbio}
                         invalid={false}
                         disabled={readonly}
                         maxlength={MAX_BIO_LENGTH}
-                        placeholder={$_("enterBio")}>
+                        placeholder={i18nKey("enterBio")}>
                         {#if bioError !== undefined}
-                            <ErrorMessage>{bioError}</ErrorMessage>
+                            <ErrorMessage
+                                ><Translatable resourceKey={i18nKey(bioError)} /></ErrorMessage>
                         {/if}
                     </TextArea>
                     <div class="full-width-btn">
@@ -327,7 +336,7 @@
                             loading={saving || checkingUsername}
                             disabled={!buttonEnabled}
                             fill
-                            small>{$_("update")}</Button>
+                            small><Translatable resourceKey={i18nKey("update")} /></Button>
                     </div>
                 {/if}
             </CollapsibleCard>
@@ -336,8 +345,8 @@
             <CollapsibleCard
                 on:toggle={appearanceSectionOpen.toggle}
                 open={$appearanceSectionOpen}
-                headerText={$_("appearance")}>
-                <Legend label={$_("preferredLanguage")} />
+                headerText={i18nKey("appearance")}>
+                <Legend label={i18nKey("preferredLanguage")} />
                 <Select bind:value={selectedLocale}>
                     {#each supportedLanguages as lang}
                         <option value={lang.code}>{lang.name}</option>
@@ -345,12 +354,12 @@
                 </Select>
 
                 <div class="para">
-                    <Legend label={$_("theme.title")} />
+                    <Legend label={i18nKey("theme.title")} />
                     <ThemeSelector />
                 </div>
 
                 <div class="para">
-                    <Legend label={$_("fontSize")} />
+                    <Legend label={i18nKey("fontSize")} />
                     <FontSize />
                 </div>
             </CollapsibleCard>
@@ -360,7 +369,7 @@
                 <CollapsibleCard
                     on:toggle={referralOpen.toggle}
                     open={$referralOpen}
-                    headerText={$_("referralHeader")}>
+                    headerText={i18nKey("referralHeader")}>
                     <ReferUsers />
                 </CollapsibleCard>
             </div>
@@ -368,18 +377,18 @@
                 <CollapsibleCard
                     on:toggle={chatsSectionOpen.toggle}
                     open={$chatsSectionOpen}
-                    headerText={$_("chats")}>
+                    headerText={i18nKey("chats")}>
                     <Toggle
                         id={"enter-send"}
                         small
                         on:change={() => enterSend.toggle()}
-                        label={$_("enterToSend")}
+                        label={i18nKey("enterToSend")}
                         checked={$enterSend} />
                     <Toggle
                         id={"dclick-reply"}
                         small
                         on:change={() => dclickReply.toggle()}
-                        label={$_(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
+                        label={i18nKey(isTouchDevice ? "doubleTapReply" : "doubleClickReply")}
                         checked={$dclickReply} />
                     {#if notificationsSupported}
                         <Toggle
@@ -388,41 +397,50 @@
                             disabled={$notificationStatus === "hard-denied"}
                             on:change={toggleNotifications}
                             label={$notificationStatus === "hard-denied"
-                                ? $_("notificationsDisabled")
-                                : $_("enableNotificationsMenu")}
+                                ? i18nKey("notificationsDisabled")
+                                : i18nKey("enableNotificationsMenu")}
                             checked={$notificationStatus === "granted"} />
                     {/if}
                     <Toggle
                         id={"low-bandwidth"}
                         small
                         on:change={() => lowBandwidth.toggle()}
-                        label={$_("lowBandwidth")}
+                        label={i18nKey("lowBandwidth")}
                         checked={$lowBandwidth} />
+                    <Toggle
+                        id={"render-previews"}
+                        disabled={$lowBandwidth}
+                        small
+                        on:change={() => renderPreviews.toggle()}
+                        label={i18nKey("renderPreviews")}
+                        checked={$renderPreviews && !$lowBandwidth} />
                 </CollapsibleCard>
             </div>
             <div class="restricted">
                 <CollapsibleCard
                     on:toggle={restrictedSectionOpen.toggle}
                     open={$restrictedSectionOpen}
-                    headerText={$_("restrictedContent")}>
-                    <p class="blurb">{$_("restrictedContentInfo")}</p>
+                    headerText={i18nKey("restrictedContent")}>
+                    <p class="blurb">
+                        <Translatable resourceKey={i18nKey("restrictedContentInfo")} />
+                    </p>
                     <Toggle
                         id={"offensive"}
                         small
                         on:change={() => toggleModerationFlag(ModerationFlags.Offensive)}
-                        label={$_("communities.offensive")}
+                        label={i18nKey("communities.offensive")}
                         checked={offensiveEnabled} />
                     <Toggle
                         id={"adult"}
                         small
                         on:change={() => toggleModerationFlag(ModerationFlags.Adult)}
-                        label={$_("communities.adult")}
+                        label={i18nKey("communities.adult")}
                         checked={adultEnabled} />
                     <Toggle
                         id={"underReview"}
                         small
                         on:change={() => toggleModerationFlag(ModerationFlags.UnderReview)}
-                        label={$_("communities.underReview")}
+                        label={i18nKey("communities.underReview")}
                         checked={underReviewEnabled} />
                 </CollapsibleCard>
             </div>
@@ -431,14 +449,17 @@
                     <CollapsibleCard
                         on:toggle={storageSectionOpen.toggle}
                         open={$storageSectionOpen}
-                        headerText={$_("upgrade.membership")}>
+                        headerText={i18nKey("upgrade.membership")}>
                         <StorageUsage />
 
                         {#if !$isDiamond}
                             <ButtonGroup align={"fill"}>
                                 <Button on:click={() => dispatch("upgrade")} small
-                                    >{$_("upgrade.button")}</Button>
+                                    ><Translatable
+                                        resourceKey={i18nKey("upgrade.button")} /></Button>
                             </ButtonGroup>
+                        {:else if $isLifetimeDiamond}
+                            <Translatable resourceKey={i18nKey("upgrade.lifetimeMessage")} />
                         {:else}
                             <Expiry />
                             <ButtonGroup align={"fill"}>
@@ -448,7 +469,9 @@
                                         : undefined}
                                     disabled={!$canExtendDiamond}
                                     on:click={() => dispatch("upgrade")}
-                                    small>{$_("upgrade.extend")}</Button>
+                                    small
+                                    ><Translatable
+                                        resourceKey={i18nKey("upgrade.extend")} /></Button>
                             </ButtonGroup>
                         {/if}
                     </CollapsibleCard>
@@ -458,7 +481,7 @@
                 <CollapsibleCard
                     on:toggle={statsSectionOpen.toggle}
                     open={$statsSectionOpen}
-                    headerText={$_("stats.userStats")}>
+                    headerText={i18nKey("stats.userStats")}>
                     <Stats showReported stats={$userMetrics} />
                 </CollapsibleCard>
             </div>
@@ -466,9 +489,9 @@
                 <CollapsibleCard
                     on:toggle={advancedSectionOpen.toggle}
                     open={$advancedSectionOpen}
-                    headerText={$_("advanced")}>
+                    headerText={i18nKey("advanced")}>
                     <div class="userid">
-                        <Legend label={$_("userId")} rules={$_("alsoCanisterId")} />
+                        <Legend label={i18nKey("userId")} rules={i18nKey("alsoCanisterId")} />
                         <div class="userid-txt">
                             <div>{user.userId}</div>
                             <div role="button" tabindex="0" on:click={onCopy} class="copy">
@@ -477,7 +500,7 @@
                         </div>
                     </div>
                     <div>
-                        <Legend label={$_("version")} rules={$_("websiteVersion")} />
+                        <Legend label={i18nKey("version")} rules={i18nKey("websiteVersion")} />
                         <div>{version}</div>
                     </div>
                 </CollapsibleCard>
@@ -486,16 +509,17 @@
     </form>
 {:else}
     <div class="community-selector">
-        <Legend label={$_("communities.communityLabel")} />
+        <Legend label={i18nKey("communities.communityLabel")} />
         <Select bind:value={selectedCommunityId}>
-            <option disabled selected value={""}>{$_("profile.selectCommunity")}</option>
+            <option disabled selected value={""}
+                ><Translatable resourceKey={i18nKey("profile.selectCommunity")} /></option>
             {#each $communitiesList.filter((s) => s.membership?.role !== "none") as community}
                 <option value={community.id.communityId}>{community.name}</option>
             {/each}
         </Select>
     </div>
     {#if selectedCommunity !== undefined}
-        <CommunityProfile community={selectedCommunity} />
+        <CommunityProfile on:upgrade community={selectedCommunity} />
     {/if}
 {/if}
 

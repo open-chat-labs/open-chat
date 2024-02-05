@@ -11,13 +11,9 @@ thread_local! {
 }
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
-    if TIMER_ID.get().is_none()
-        && (!state.data.notifications_index_event_sync_queue.is_empty()
-            || state.data.notifications_index_event_sync_queue.sync_in_progress())
-    {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+    if TIMER_ID.get().is_none() && !state.data.notifications_index_event_sync_queue.is_empty() {
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'sync_notifications_canisters' job started");
         true
     } else {
         false
@@ -25,13 +21,13 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'sync_notifications_canisters' job running");
+    TIMER_ID.set(None);
+
     if let Some(batch) = mutate_state(next_batch) {
         if !batch.is_empty() {
             ic_cdk::spawn(process_batch(batch));
         }
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'sync_notifications_canisters' job stopped");
     }
 }
 
@@ -47,7 +43,10 @@ async fn process_batch(batch: Vec<(CanisterId, Vec<NotificationsIndexEvent>)>) {
 
     futures::future::join_all(futures).await;
 
-    mutate_state(|state| state.data.notifications_index_event_sync_queue.mark_batch_completed());
+    mutate_state(|state| {
+        state.data.notifications_index_event_sync_queue.mark_batch_completed();
+        start_job_if_required(state);
+    });
 }
 
 async fn sync_events(canister_id: CanisterId, events: Vec<NotificationsIndexEvent>) {

@@ -1,16 +1,44 @@
-<script lang="ts" context="module">
-    import { waitAll } from "openchat-client";
-    import { createEventDispatcher, onMount } from "svelte";
+<script lang="ts">
+    import { createEventDispatcher, getContext } from "svelte";
+    import { eventListScrolling } from "../../stores/scrollPos";
+    import type { OpenChat } from "openchat-client";
 
-    export type LinkInfo = {
+    type LinkInfo = {
+        url: string;
         title: string | null | undefined;
         description: string | null | undefined;
         image: string | null | undefined;
     };
 
-    export async function loadPreviews(links: string[]): Promise<LinkInfo[]> {
-        const res = await waitAll(links.map(loadPreview));
-        return res.success;
+    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
+
+    export let url: string;
+    export let intersecting: boolean;
+    export let rendered = false;
+
+    let previewWrapper: HTMLElement;
+    let previewPromise: Promise<LinkInfo> | undefined = undefined;
+
+    $: offlineStore = client.offlineStore;
+
+    $: {
+        if (intersecting && !$eventListScrolling && !rendered && !$offlineStore) {
+            // make sure we only actually *load* the preview once
+            previewPromise = previewPromise ?? loadPreview(url);
+            previewPromise.then((preview) => {
+                if (
+                    preview.title !== undefined ||
+                    preview.description !== undefined ||
+                    preview.image !== undefined
+                ) {
+                    if (intersecting && !$eventListScrolling) {
+                        rendered = true;
+                        dispatch("rendered", url);
+                    }
+                }
+            });
+        }
     }
 
     async function loadPreview(url: string): Promise<LinkInfo> {
@@ -29,73 +57,52 @@
         const image = doc.querySelector('meta[property="og:image"]')?.getAttribute("content");
 
         return {
+            url,
             title,
             description,
             image: image ? new URL(image, url).toString() : undefined,
         };
     }
-</script>
-
-<script lang="ts">
-    const dispatch = createEventDispatcher();
-
-    export let previews: (LinkInfo | undefined)[] = [];
-    export let me: boolean;
-
-    let previewsWrapper: HTMLElement;
-    let numberOfImagesLoaded = 0;
-    let imageCount = 0;
 
     function imageLoaded() {
-        numberOfImagesLoaded += 1;
-        if (numberOfImagesLoaded >= imageCount && previewsWrapper) {
-            dispatch("rendered", previewsWrapper);
-        }
+        dispatch("imageLoaded", previewWrapper);
     }
-
-    onMount(() => {
-        imageCount = previews.reduce((count, p) => {
-            return p?.image ? count + 1 : count;
-        }, 0);
-    });
 </script>
 
-<div bind:this={previewsWrapper}>
-    {#each previews as preview}
-        {#if preview?.title !== undefined || preview?.description !== undefined || preview?.image !== undefined}
-            <div class="preview" class:me>
+{#if rendered}
+    {#await previewPromise then preview}
+        {#if preview !== undefined}
+            <div bind:this={previewWrapper}>
                 {#if preview.title}
-                    <h3 class="title">{preview.title}</h3>
+                    <a class="title" href={preview.url} target="_blank">{preview.title}</a>
                 {/if}
                 {#if preview.description}
                     <p class="desc">{preview.description}</p>
                 {/if}
                 {#if preview.image}
-                    <img
-                        on:load={imageLoaded}
-                        on:error={imageLoaded}
-                        class="image"
-                        src={preview.image}
-                        alt="link preview image" />
+                    <a href={preview.url} target="_blank">
+                        <img
+                            on:load={imageLoaded}
+                            on:error={imageLoaded}
+                            class="image"
+                            src={preview.image}
+                            alt="link preview image" />
+                    </a>
                 {/if}
             </div>
         {/if}
-    {/each}
-</div>
+    {/await}
+{/if}
 
 <style lang="scss">
-    .preview {
-        margin-top: $sp4;
-        border-top: 1px solid var(--currentChat-msg-separator);
-
-        &.me {
-            border-color: var(--currentChat-msg-me-separator);
-        }
-    }
-
     .title {
         @include font(bold, normal, fs-120);
-        margin: $sp3 0 $sp2 0;
+        margin: $sp3 0 $sp3 0;
+        display: block;
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
     .desc {
         margin-bottom: $sp3;

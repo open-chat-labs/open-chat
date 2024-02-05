@@ -30,7 +30,8 @@
     import { rtlStore } from "../../stores/rtl";
     import HeartMinus from "../icons/HeartMinus.svelte";
     import HeartPlus from "../icons/HeartPlus.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -124,9 +125,9 @@
         if (selectedChatSummary.kind === "direct_chat") {
             client.blockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("blockUserSucceeded");
+                    toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
                 } else {
-                    toastStore.showFailureToast("blockUserFailed");
+                    toastStore.showFailureToast(i18nKey("blockUserFailed"));
                 }
             });
         }
@@ -136,9 +137,9 @@
         if (selectedChatSummary.kind === "direct_chat") {
             client.unblockUserFromDirectChat(selectedChatSummary.them.userId).then((success) => {
                 if (success) {
-                    toastStore.showSuccessToast("unblockUserSucceeded");
+                    toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
                 } else {
-                    toastStore.showFailureToast("unblockUserFailed");
+                    toastStore.showFailureToast(i18nKey("unblockUserFailed"));
                 }
             });
         }
@@ -177,7 +178,7 @@
         if (selectedChatSummary.id.kind === "group_chat") {
             client.freezeGroup(selectedChatSummary.id, undefined).then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("failedToFreezeGroup");
+                    toastStore.showFailureToast(i18nKey("failedToFreezeGroup"));
                 }
             });
         }
@@ -187,7 +188,7 @@
         if (selectedChatSummary.id.kind === "group_chat") {
             client.unfreezeGroup(selectedChatSummary.id).then((success) => {
                 if (!success) {
-                    toastStore.showFailureToast("failedToUnfreezeGroup");
+                    toastStore.showFailureToast(i18nKey("failedToUnfreezeGroup"));
                 }
             });
         }
@@ -200,9 +201,9 @@
     function unsuspendUser() {
         client.unsuspendUser(userId).then((success) => {
             if (success) {
-                toastStore.showSuccessToast("unsuspendedUser");
+                toastStore.showSuccessToast(i18nKey("unsuspendedUser"));
             } else {
-                toastStore.showFailureToast("failedToUnsuspendUser");
+                toastStore.showFailureToast(i18nKey("failedToUnsuspendUser"));
             }
         });
     }
@@ -243,7 +244,11 @@
 
     {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
         <span on:click={showGroupDetails}>
-            <HoverIcon title={interpolateLevel("groupDetails", selectedChatSummary.level)}>
+            <HoverIcon
+                title={interpolate(
+                    $_,
+                    i18nKey("groupDetails", undefined, selectedChatSummary.level),
+                )}>
                 <FileDocument
                     size={$iconSize}
                     color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
@@ -259,7 +264,10 @@
         {#if client.canInviteUsers(selectedChatSummary.id)}
             <span on:click={showInviteGroupUsers}>
                 <HoverIcon
-                    title={interpolateLevel("group.inviteUsers", selectedChatSummary.level, true)}>
+                    title={interpolate(
+                        $_,
+                        i18nKey("group.inviteUsers", undefined, selectedChatSummary.level, true),
+                    )}>
                     <AccountMultiplePlus
                         size={$iconSize}
                         color={inviteMembersSelected
@@ -283,14 +291,15 @@
                     <MenuItem on:click={addToFavourites}>
                         <HeartPlus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
-                            {$_("communities.addToFavourites")}
+                            <Translatable resourceKey={i18nKey("communities.addToFavourites")} />
                         </div>
                     </MenuItem>
                 {:else}
                     <MenuItem on:click={removeFromFavourites}>
                         <HeartMinus size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                         <div slot="text">
-                            {$_("communities.removeFromFavourites")}
+                            <Translatable
+                                resourceKey={i18nKey("communities.removeFromFavourites")} />
                         </div>
                     </MenuItem>
                 {/if}
@@ -298,12 +307,14 @@
                     {#if $isProposalGroup}
                         <MenuItem on:click={showProposalFilters}>
                             <Tune size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">{$_("proposal.filter")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("proposal.filter")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     <MenuItem on:click={searchChat}>
                         <Magnify size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("searchChat")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("searchChat")} /></div>
                     </MenuItem>
                 {/if}
                 {#if selectedChatSummary.kind === "group_chat" || selectedChatSummary.kind === "channel"}
@@ -316,7 +327,9 @@
                                         ? "var(--icon-selected)"
                                         : "var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("showPinned")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("showPinned")} />
+                                </div>
                             </MenuItem>
                         {/if}
                         <MenuItem on:click={showGroupDetails}>
@@ -325,7 +338,12 @@
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
                             <div slot="text">
-                                {interpolateLevel("groupDetails", selectedChatSummary.level)}
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "groupDetails",
+                                        undefined,
+                                        selectedChatSummary.level,
+                                    )} />
                             </div>
                         </MenuItem>
                         <MenuItem on:click={showGroupMembers}>
@@ -333,7 +351,7 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("members")}</div>
+                            <div slot="text"><Translatable resourceKey={i18nKey("members")} /></div>
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.id)}
                             <MenuItem on:click={showInviteGroupUsers}>
@@ -342,11 +360,13 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {interpolateLevel(
-                                        "group.inviteUsers",
-                                        selectedChatSummary.level,
-                                        true
-                                    )}
+                                    <Translatable
+                                        resourceKey={i18nKey(
+                                            "group.inviteUsers",
+                                            undefined,
+                                            selectedChatSummary.level,
+                                            true,
+                                        )} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -359,7 +379,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("unmuteNotifications")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("unmuteNotifications")} />
+                                </div>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={() => toggleMuteNotifications(true)}>
@@ -367,7 +389,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("muteNotifications")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("muteNotifications")} />
+                                </div>
                             </MenuItem>
                         {/if}
                     {/if}
@@ -378,7 +402,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("proposal.makeProposal")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("proposal.makeProposal")} />
+                            </div>
                         </MenuItem>
                     {/if}
 
@@ -386,7 +412,9 @@
                         {#if client.isFrozen(selectedChatSummary.id)}
                             <MenuItem warning on:click={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
-                                <div slot="text">{$_("unfreezeGroup")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("unfreezeGroup")} />
+                                </div>
                             </MenuItem>
                         {:else}
                             <MenuItem warning on:click={freezeGroup}>
@@ -394,7 +422,9 @@
                                     size={$iconSize}
                                     color={"var(--menu-warn"}
                                     slot="icon" />
-                                <div slot="text">{$_("freezeGroup")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("freezeGroup")} />
+                                </div>
                             </MenuItem>
                         {/if}
                     {/if}
@@ -403,7 +433,13 @@
                         <MenuItem warning on:click={leaveGroup}>
                             <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">
-                                {interpolateLevel("leaveGroup", selectedChatSummary.level, true)}
+                                <Translatable
+                                    resourceKey={i18nKey(
+                                        "leaveGroup",
+                                        undefined,
+                                        selectedChatSummary.level,
+                                        true,
+                                    )} />
                             </div>
                         </MenuItem>
                     {/if}
@@ -413,13 +449,17 @@
                                 size={$iconSize}
                                 color={"var(--menu-warn)"}
                                 slot="icon" />
-                            <div slot="text">{$_("communities.convert")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("communities.convert")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if canImportToCommunity}
                         <MenuItem warning on:click={importToCommunity}>
                             <Import size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
-                            <div slot="text">{$_("communities.import")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("communities.import")} />
+                            </div>
                         </MenuItem>
                     {/if}
                 {/if}
@@ -427,7 +467,9 @@
                     {#if hasPinned}
                         <MenuItem on:click={showPinned}>
                             <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">{$_("showPinned")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("showPinned")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if notificationsSupported}
@@ -437,7 +479,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("unmuteNotifications")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("unmuteNotifications")} />
+                                </div>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={() => toggleMuteNotifications(true)}>
@@ -445,7 +489,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("muteNotifications")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("muteNotifications")} />
+                                </div>
                             </MenuItem>
                         {/if}
                     {/if}
@@ -455,7 +501,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("unblockUser")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("unblockUser")} />
+                            </div>
                         </MenuItem>
                     {:else}
                         <MenuItem on:click={blockUser}>
@@ -463,7 +511,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("blockUser")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if $platformModerator}
@@ -473,7 +523,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("unsuspendUser")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("unsuspendUser")} />
+                                </div>
                             </MenuItem>
                         {:else}
                             <MenuItem on:click={onSuspendUser}>
@@ -481,7 +533,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("suspendUser")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("suspendUser")} />
+                                </div>
                             </MenuItem>
                         {/if}
                     {/if}

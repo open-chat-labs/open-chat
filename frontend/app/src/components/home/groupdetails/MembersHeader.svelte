@@ -8,7 +8,8 @@
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import type { Level } from "openchat-client";
-    import { interpolateLevel } from "../../../utils/i18n";
+    import { i18nKey, interpolate } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
     export let closeIcon: "close" | "back";
     export let canInvite: boolean;
@@ -27,7 +28,7 @@
 <SectionHeader gap border={false}>
     {#if canInvite}
         <span
-            title={interpolateLevel("group.inviteUsers", level, true)}
+            title={interpolate($_, i18nKey("group.inviteUsers", undefined, level, true))}
             class="add"
             on:click={showInviteUsers}>
             <HoverIcon>
@@ -35,7 +36,7 @@
             </HoverIcon>
         </span>
     {/if}
-    <h4>{interpolateLevel("membersHeader", level)}</h4>
+    <h4><Translatable resourceKey={i18nKey("membersHeader", undefined, level)} /></h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             {#if closeIcon === "close"}

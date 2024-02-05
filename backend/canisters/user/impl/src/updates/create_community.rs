@@ -36,7 +36,7 @@ async fn create_community(mut args: Args) -> Response {
     {
         Ok(response) => match response {
             c2c_create_community::Response::Success(r) => {
-                mutate_state(|state| commit(r.community_id, state));
+                mutate_state(|state| commit(r.community_id, r.local_user_index_canister_id, state));
                 Success(SuccessResult {
                     community_id: r.community_id,
                 })
@@ -133,7 +133,7 @@ fn default_channels_valid(default_channels: &Vec<String>) -> bool {
     true
 }
 
-fn commit(community_id: CommunityId, state: &mut RuntimeState) {
+fn commit(community_id: CommunityId, local_user_index_canister_id: CanisterId, state: &mut RuntimeState) {
     let now = state.env.now();
-    state.data.communities.create(community_id, now);
+    state.data.communities.create(community_id, local_user_index_canister_id, now);
 }

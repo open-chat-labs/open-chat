@@ -1,5 +1,5 @@
-use crate::jobs::top_up_sns_canisters::get_sns_canisters_summary::CanisterSummary;
 use crate::read_state;
+use sns_root_canister::get_sns_canisters_summary::CanisterSummary;
 use std::time::Duration;
 use types::{CanisterId, Cycles, Empty};
 use utils::canister::deposit_cycles;
@@ -19,7 +19,7 @@ fn run() {
 }
 
 async fn run_async(canister_id: CanisterId) {
-    if let Ok(response) = get_sns_canisters_summary(canister_id, &Empty {}).await {
+    if let Ok(response) = sns_root_canister_c2c_client::get_sns_canisters_summary(canister_id, &Empty {}).await {
         let to_top_up: Vec<_> = vec![
             response.root,
             response.governance,
@@ -48,35 +48,4 @@ fn requires_top_up(summary: &CanisterSummary) -> bool {
     let cycles: Cycles = summary.status.as_ref().unwrap().cycles.0.clone().try_into().unwrap();
 
     cycles < 100 * T
-}
-
-canister_client::generate_candid_c2c_call!(get_sns_canisters_summary);
-
-pub mod get_sns_canisters_summary {
-    use candid::{CandidType, Nat, Principal};
-    use serde::Deserialize;
-    use types::Empty;
-
-    pub type Args = Empty;
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct Response {
-        pub root: Option<CanisterSummary>,
-        pub governance: Option<CanisterSummary>,
-        pub ledger: Option<CanisterSummary>,
-        pub swap: Option<CanisterSummary>,
-        pub archives: Vec<CanisterSummary>,
-        pub index: Option<CanisterSummary>,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct CanisterSummary {
-        pub canister_id: Option<Principal>,
-        pub status: Option<CanisterStatusResult>,
-    }
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct CanisterStatusResult {
-        pub cycles: Nat,
-    }
 }

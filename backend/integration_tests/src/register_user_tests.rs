@@ -46,7 +46,6 @@ fn register_user_with_duplicate_username_appends_suffix() {
             canister_ids.local_user_index,
             &local_user_index_canister::register_user::Args {
                 username: username.clone(),
-                display_name: None,
                 referral_code: None,
                 public_key,
             },

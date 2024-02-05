@@ -1,11 +1,12 @@
 use crate::model::group_chat::{GroupChat, GroupMessagesRead};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChannelId, CommunityId, TimestampMillis, Timestamped};
+use types::{CanisterId, ChannelId, CommunityId, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize)]
 pub struct Community {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
     pub date_joined: TimestampMillis,
     pub channels: HashMap<ChannelId, Channel>,
     pub index: Timestamped<u32>,
@@ -16,9 +17,15 @@ pub struct Community {
 }
 
 impl Community {
-    pub fn new(community_id: CommunityId, index: u32, now: TimestampMillis) -> Community {
+    pub fn new(
+        community_id: CommunityId,
+        local_user_index_canister_id: CanisterId,
+        index: u32,
+        now: TimestampMillis,
+    ) -> Community {
         Community {
             community_id,
+            local_user_index_canister_id,
             date_joined: now,
             channels: HashMap::new(),
             index: Timestamped::new(index, now),
@@ -76,6 +83,7 @@ impl Community {
     pub fn to_summary(&self) -> user_canister::CommunitySummary {
         user_canister::CommunitySummary {
             community_id: self.community_id,
+            local_user_index_canister_id: self.local_user_index_canister_id,
             channels: self
                 .channels
                 .values()

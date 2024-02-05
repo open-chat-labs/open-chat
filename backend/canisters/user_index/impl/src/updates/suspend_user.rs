@@ -94,7 +94,7 @@ fn commit(
     state
         .data
         .users
-        .suspend_user(&user_id, duration, reason.clone(), suspended_by, now);
+        .suspend_user(user_id, duration, reason.clone(), suspended_by, now);
 
     // If the user is only suspended for a specified duration, schedule them to be unsuspended
     if let Some(ms) = duration {

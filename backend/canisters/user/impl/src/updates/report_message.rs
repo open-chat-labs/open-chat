@@ -49,6 +49,7 @@ fn build_c2c_args(args: &Args, state: &RuntimeState) -> Result<(c2c_report_messa
                     thread_root_message_index: None,
                     message,
                     already_deleted: args.delete,
+                    is_public: false,
                 },
                 state.data.user_index_canister_id,
             ))

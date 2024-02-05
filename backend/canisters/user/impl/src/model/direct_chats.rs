@@ -10,7 +10,6 @@ pub struct DirectChats {
     direct_chats: HashMap<ChatId, DirectChat>,
     pinned: Timestamped<Vec<ChatId>>,
     metrics: ChatMetricsInternal,
-    #[serde(default)]
     chats_removed: BTreeSet<(TimestampMillis, ChatId)>,
 }
 
@@ -112,7 +111,7 @@ impl DirectChats {
         &self.metrics
     }
 
-    pub fn has(&self, chat_id: &ChatId) -> bool {
+    pub fn exists(&self, chat_id: &ChatId) -> bool {
         self.direct_chats.contains_key(chat_id)
     }
 

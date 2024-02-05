@@ -25,7 +25,7 @@
     $: unreadCount = client.unreadThreadMessageCount(
         chatId,
         threadRootMessageIndex,
-        lastMessageIndex
+        lastMessageIndex,
     );
 
     onMount(() => {
@@ -33,7 +33,7 @@
             unreadCount = client.unreadThreadMessageCount(
                 chatId,
                 threadRootMessageIndex,
-                lastMessageIndex
+                lastMessageIndex,
             );
         });
     });
@@ -72,7 +72,7 @@
                                           $_("today"),
                                           $_("yesterday"),
                                           true,
-                                          true
+                                          true,
                                       ),
                                   },
                               }),

@@ -10,13 +10,14 @@ use utils::cycles::init_cycles_dispenser_client;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
     let data = Data::new(
         args.governance_principals,
         args.nns_governance_canister_id,
         args.nns_ledger_canister_id,
+        args.cycles_minting_canister_id,
         args.cycles_dispenser_canister_id,
         args.test_mode,
     );

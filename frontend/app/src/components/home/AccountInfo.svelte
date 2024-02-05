@@ -8,6 +8,8 @@
     import { ICP_SYMBOL } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
     import { getContext } from "svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -33,11 +35,13 @@
     function copy() {
         copyToClipboard(account).then((success) => {
             if (success) {
-                toastStore.showSuccessToast("copiedToClipboard");
+                toastStore.showSuccessToast(i18nKey("copiedToClipboard"));
             } else {
-                toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account },
-                });
+                toastStore.showFailureToast(
+                    i18nKey("failedToCopyToClipboard", {
+                        account,
+                    }),
+                );
             }
         });
     }
@@ -46,7 +50,7 @@
 <div class="account-info">
     <QRCode {fullWidthOnMobile} text={account} size={qrSize} logo={tokenDetails.logo} {border} />
     <p class="your-account" class:centered>
-        {$_("tokenTransfer.yourAccount", { values: { token: symbol } })}
+        <Translatable resourceKey={i18nKey("tokenTransfer.yourAccount", { token: symbol })} />
     </p>
     <div class="receiver" class:centered>
         <div class="account">

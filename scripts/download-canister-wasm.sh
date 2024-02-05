@@ -1,18 +1,31 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
-WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" or the commit Id
+WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" the commit Id or the release version
 
-if [[ -z "$WASM_SRC" || $WASM_SRC = "latest" ]]
+if [[ -z $WASM_SRC ]] || [[ $WASM_SRC == "latest" ]]
 then
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
-elif [ $WASM_SRC = "prod" ]
+elif [[ $WASM_SRC == "prod" ]] || [[ $WASM_SRC =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]
 then
-  COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
+  if [[ $WASM_SRC == "prod" ]]
+  then
+    CANISTER_TAG_ID=$(git tag -l --sort=-version:refname "*-$CANISTER_NAME" | head -n 1)
+  else
+    CANISTER_TAG_ID=$(./scripts/get-canister-version.sh $CANISTER_NAME $WASM_SRC)
+  fi
+
+  if [[ -z $CANISTER_TAG_ID ]]
+  then
+    # If the canister has not been released yet then download the latest version
+    COMMIT_ID=$(git rev-parse HEAD)
+  else
+    COMMIT_ID=$(git rev-list $CANISTER_TAG_ID -1)
+  fi
 else
   COMMIT_ID=$WASM_SRC
 fi

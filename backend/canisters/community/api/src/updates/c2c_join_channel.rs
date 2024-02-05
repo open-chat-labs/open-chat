@@ -1,6 +1,9 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, GateCheckFailedReason, UserId};
+use types::{
+    ChannelId, CommunityCanisterChannelSummary, CommunityCanisterCommunitySummary, GateCheckFailedReason, TimestampMillis,
+    UserId,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,6 +13,7 @@ pub struct Args {
     pub invite_code: Option<u64>,
     pub is_platform_moderator: bool,
     pub is_bot: bool,
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

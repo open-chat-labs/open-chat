@@ -38,7 +38,11 @@ pub fn setup_new_env() -> TestEnv {
         ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
     }
 
-    let mut env = PocketIcBuilder::new().with_nns_subnet().with_application_subnet().build();
+    let mut env = PocketIcBuilder::new()
+        .with_nns_subnet()
+        .with_sns_subnet()
+        .with_application_subnet()
+        .build();
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -56,15 +60,27 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let cycles_minting_canister_id = create_canister_with_id(env, controller, "rkp4c-7iaaa-aaaaa-aaaca-cai");
     let sns_wasm_canister_id = create_canister_with_id(env, controller, "qaa6y-5yaaa-aaaaa-aaafa-cai");
     let nns_index_canister_id = create_canister_with_id(env, controller, "qhbym-qaaaa-aaaaa-aaafq-cai");
+    let chat_ledger_canister_id = install_icrc_ledger(
+        env,
+        controller,
+        "OpenChat".to_string(),
+        "CHAT".to_string(),
+        100000,
+        Some("2ouva-viaaa-aaaaq-aaamq-cai"),
+        Vec::new(),
+    );
 
     let user_index_canister_id = create_canister(env, controller);
     let group_index_canister_id = create_canister(env, controller);
     let notifications_index_canister_id = create_canister(env, controller);
+    let identity_canister_id = create_canister(env, controller);
     let online_users_canister_id = create_canister(env, controller);
     let proposals_bot_canister_id = create_canister(env, controller);
     let storage_index_canister_id = create_canister(env, controller);
     let cycles_dispenser_canister_id = create_canister(env, controller);
     let registry_canister_id = create_canister(env, controller);
+    let escrow_canister_id = create_canister(env, controller);
+    let translations_canister_id = create_canister(env, controller);
 
     let local_user_index_canister_id = create_canister(env, user_index_canister_id);
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
@@ -73,9 +89,11 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
+    let escrow_canister_wasm = wasms::ESCROW.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
+    let identity_canister_wasm = wasms::IDENTITY.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
@@ -86,19 +104,24 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     let sns_wasm_canister_wasm = wasms::SNS_WASM.clone();
     let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
     let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
+    let translations_canister_wasm = wasms::TRANSLATIONS.clone();
     let user_canister_wasm = wasms::USER.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
 
     let user_index_init_args = user_index_canister::init::Args {
-        service_principals: vec![controller],
+        governance_principals: vec![controller],
         user_canister_wasm: CanisterWasm::default(),
         local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id,
         notifications_index_canister_id,
+        identity_canister_id,
         proposals_bot_canister_id,
         cycles_dispenser_canister_id,
         storage_index_canister_id,
+        escrow_canister_id,
+        nns_governance_canister_id,
         internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
+        translations_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -111,13 +134,14 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let group_index_init_args = group_index_canister::init::Args {
-        service_principals: vec![controller],
+        governance_principals: vec![controller],
         group_canister_wasm: CanisterWasm::default(),
         community_canister_wasm: CanisterWasm::default(),
         local_group_index_canister_wasm: CanisterWasm::default(),
         user_index_canister_id,
         cycles_dispenser_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
+        escrow_canister_id,
         wasm_version: BuildVersion::min(),
         test_mode: true,
     };
@@ -130,7 +154,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let notifications_index_init_args = notifications_index_canister::init::Args {
-        service_principals: vec![controller],
+        governance_principals: vec![controller],
         push_service_principals: vec![controller],
         user_index_canister_id,
         authorizers: vec![user_index_canister_id, group_index_canister_id],
@@ -145,6 +169,36 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         notifications_index_canister_id,
         notifications_index_canister_wasm,
         notifications_index_init_args,
+    );
+
+    let identity_init_args = identity_canister::init::Args {
+        governance_principals: vec![controller],
+        user_index_canister_id,
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        identity_canister_id,
+        identity_canister_wasm,
+        identity_init_args,
+    );
+
+    let translations_init_args = translations_canister::init::Args {
+        user_index_canister_id,
+        deployment_operators: vec![controller],
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        controller,
+        translations_canister_id,
+        translations_canister_wasm,
+        translations_init_args,
     );
 
     let online_users_init_args = online_users_canister::init::Args {
@@ -230,6 +284,7 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
     );
 
     let registry_init_args = registry_canister::init::Args {
+        user_index_canister_id,
         governance_principals: vec![controller],
         proposals_bot_canister_id,
         nns_ledger_canister_id,
@@ -248,6 +303,13 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         registry_canister_wasm,
         registry_init_args,
     );
+
+    let escrow_init_args = escrow_canister::init::Args {
+        cycles_dispenser_canister_id,
+        wasm_version: BuildVersion::min(),
+        test_mode: true,
+    };
+    install_canister(env, controller, escrow_canister_id, escrow_canister_wasm, escrow_init_args);
 
     client::user_index::happy_path::upgrade_user_canister_wasm(env, controller, user_index_canister_id, user_canister_wasm);
     client::user_index::happy_path::upgrade_local_user_index_canister_wasm(
@@ -357,22 +419,27 @@ fn install_canisters(env: &mut PocketIc, controller: Principal) -> CanisterIds {
         local_user_index: local_user_index_canister_id,
         local_group_index: local_group_index_canister_id,
         notifications: notifications_canister_id,
+        identity: identity_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         storage_index: storage_index_canister_id,
         cycles_dispenser: cycles_dispenser_canister_id,
         registry: registry_canister_id,
+        escrow: escrow_canister_id,
         icp_ledger: nns_ledger_canister_id,
+        chat_ledger: chat_ledger_canister_id,
         cycles_minting_canister: cycles_minting_canister_id,
+        translations: translations_canister_id,
     }
 }
 
-pub fn install_icrc1_ledger(
+pub fn install_icrc_ledger(
     env: &mut PocketIc,
     controller: Principal,
     token_name: String,
     token_symbol: String,
     transfer_fee: u64,
+    canister_id: Option<&str>,
     initial_balances: Vec<(Account, u64)>,
 ) -> CanisterId {
     #[derive(CandidType)]
@@ -412,7 +479,11 @@ pub fn install_icrc1_ledger(
         },
     });
 
-    let canister_id = create_canister(env, controller);
+    let canister_id = if let Some(id) = canister_id {
+        create_canister_with_id(env, controller, id)
+    } else {
+        create_canister(env, controller)
+    };
     install_canister(env, controller, canister_id, wasms::ICRC_LEDGER.clone(), args);
 
     canister_id

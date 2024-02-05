@@ -14,6 +14,7 @@ async fn main() {
         local_user_index: opts.local_user_index,
         local_group_index: opts.local_group_index,
         notifications: opts.notifications,
+        identity: opts.identity,
         online_users: opts.online_users,
         proposals_bot: opts.proposals_bot,
         storage_index: opts.storage_index,
@@ -21,6 +22,8 @@ async fn main() {
         registry: opts.registry,
         market_maker: opts.market_maker,
         neuron_controller: opts.neuron_controller,
+        escrow: opts.escrow,
+        translations: opts.translations,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -65,6 +68,9 @@ struct Opts {
     notifications: CanisterId,
 
     #[arg(long)]
+    identity: CanisterId,
+
+    #[arg(long)]
     online_users: CanisterId,
 
     #[arg(long)]
@@ -84,6 +90,12 @@ struct Opts {
 
     #[arg(long)]
     neuron_controller: CanisterId,
+
+    #[arg(long)]
+    escrow: CanisterId,
+
+    #[arg(long)]
+    translations: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,

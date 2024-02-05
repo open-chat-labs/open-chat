@@ -92,6 +92,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
+                escrow_canister_id: self.data.escrow_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
         }
@@ -114,6 +115,7 @@ struct Data {
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
@@ -121,7 +123,6 @@ struct Data {
     pub group_upgrade_concurrency: u32,
     pub max_concurrent_community_upgrades: u32,
     pub community_upgrade_concurrency: u32,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
@@ -136,6 +137,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -152,6 +154,7 @@ impl Data {
             notifications_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             groups_requiring_upgrade: CanistersRequiringUpgrade::default(),
             communities_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -201,5 +204,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
+    pub escrow_canister_id: CanisterId,
     pub cycles_dispenser: CanisterId,
 }

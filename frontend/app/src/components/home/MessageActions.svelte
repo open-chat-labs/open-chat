@@ -4,8 +4,8 @@
     import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import Smiley from "./Smiley.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import Gift from "svelte-material-icons/GiftOutline.svelte";
+    import SwapIcon from "svelte-material-icons/SwapHorizontal.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import MemeFighter from "../icons/MemeFighter.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
@@ -27,10 +27,12 @@
 
     let drawOpen = false;
 
-    $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
-    $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
+    $: useDrawer = !editing;
+    $: narrow = mode == "thread" || $mobileWidth;
+    $: showActions = !useDrawer || drawOpen;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
-    $: supportedActions = buildListOfActions(permittedMessages, messageAction);
+    $: supportedActions = buildListOfActions(permittedMessages, messageAction, narrow);
+    $: showClose = drawOpen || attachment !== undefined || messageAction === "emoji";
 
     export function close() {
         drawOpen = false;
@@ -38,17 +40,6 @@
             dispatch("clearAttachment");
         }
         messageAction = undefined;
-    }
-
-    function toggleAction(action: MessageAction) {
-        if (messageAction === action) {
-            messageAction = undefined;
-            if (attachment !== undefined) {
-                dispatch("clearAttachment");
-            }
-        } else {
-            messageAction = action;
-        }
     }
 
     function createTokenTransfer() {
@@ -61,12 +52,21 @@
         drawOpen = false;
     }
 
-    function toggleEmojiPicker() {
-        toggleAction("emoji");
+    function createP2PSwapMessage() {
+        dispatch("createP2PSwapMessage");
+        drawOpen = false;
+    }
+
+    function openEmojiPicker() {
+        messageAction = "emoji";
+    }
+
+    function openFilePicker() {
+        messageAction = "file";
     }
 
     function toggleDraw() {
-        if (drawOpen || attachment !== undefined) {
+        if (showClose) {
             close();
         } else {
             drawOpen = true;
@@ -88,50 +88,55 @@
         drawOpen = false;
     }
 
+    function cssValues(index: number): string {
+        return `--top: ${top(index)}px; --transition-delay: ${delay(index)}ms`;
+    }
+
     function buildListOfActions(
         permissions: Map<MessagePermission, boolean>,
-        messageAction: MessageAction
-    ): Map<string, number> {
-        const actions = new Map<string, number>();
-        if (permissions.get("text") || messageAction === "file") {
-            actions.set("emoji", actions.size);
-        }
-        if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
-            actions.set("attach", actions.size);
+        messageAction: MessageAction,
+        includeAll: boolean,
+    ): Map<string, string> {
+        let index = -1;
+        const actions = new Map<string, string>();
+        if (includeAll) {
+            if (permissions.get("text") || messageAction === "file") {
+                actions.set("emoji", cssValues(++index));
+            }
+            if (permissions.get("file") || permissions.get("image") || permissions.get("video")) {
+                actions.set("attach", cssValues(++index));
+            }
         }
         if (permissions.get("crypto")) {
-            actions.set("crypto", actions.size);
+            actions.set("crypto", cssValues(++index));
         }
         if (permissions.get("giphy")) {
-            actions.set("giphy", actions.size);
+            actions.set("giphy", cssValues(++index));
         }
         if (permissions.get("memeFighter")) {
-            actions.set("meme", actions.size);
+            actions.set("meme", cssValues(++index));
         }
         if (permissions.get("poll")) {
-            actions.set("poll", actions.size);
+            actions.set("poll", cssValues(++index));
         }
         if (permissions.get("prize")) {
-            actions.set("prize", actions.size);
+            actions.set("prize", cssValues(++index));
+        }
+        if (permissions.get("p2pSwap")) {
+            actions.set("swap", cssValues(++index));
         }
         return actions;
     }
 
-    function cssVars(key: string): string {
-        return `--top: ${top(supportedActions.get(key))}px; --transition-delay: ${delay(
-            supportedActions.get(key)
-        )}ms`;
-    }
-
     function top(i: number | undefined): number {
         if (i === undefined) return 0;
-        return -75 - i * 45;
+        return -55 - i * 45;
     }
 
     function delay(i: number | undefined): number {
         if (i === undefined) return 0;
         const increment = 50;
-        const total = supportedActions.size * increment;
+        const total = i * increment;
         return total - (i + 1) * increment;
     }
 </script>
@@ -143,9 +148,25 @@
         }
     }} />
 
+{#if !narrow}
+    {#if permittedMessages.get("text") || messageAction === "file"}
+        <div class="emoji" on:click|stopPropagation={openEmojiPicker}>
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </div>
+    {/if}
+
+    {#if !editing && (permittedMessages.get("file") || permittedMessages.get("image") || permittedMessages.get("video"))}
+        <div class="attach">
+            <FileAttacher on:fileSelected on:open={openFilePicker} />
+        </div>
+    {/if}
+{/if}
+
 {#if useDrawer}
     <div class="open-draw" on:click|stopPropagation={toggleDraw}>
-        {#if drawOpen || attachment !== undefined}
+        {#if showClose}
             <HoverIcon>
                 <TrayRemove size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>
@@ -160,33 +181,23 @@
 <div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     {#if supportedActions.has("emoji")}
         <div
-            style={`${cssVars("emoji")}`}
+            style={`${supportedActions.get("emoji")}`}
             class="emoji"
-            on:click|stopPropagation={toggleEmojiPicker}>
-            {#if messageAction === "emoji"}
-                <HoverIcon title={$_("close")}>
-                    <Close size={$iconSize} color={iconColour} />
-                </HoverIcon>
-            {:else}
-                <HoverIcon title={$_("pickEmoji")}>
-                    <Smiley color={iconColour} />
-                </HoverIcon>
-            {/if}
+            on:click|stopPropagation={openEmojiPicker}>
+            <HoverIcon title={$_("pickEmoji")}>
+                <Smiley color={iconColour} />
+            </HoverIcon>
         </div>
     {/if}
     {#if !editing}
         {#if supportedActions.has("attach")}
-            <div class="attach" style={`${cssVars("attach")}`}>
-                <FileAttacher
-                    open={attachment !== undefined}
-                    on:fileSelected
-                    on:open={() => (messageAction = "file")}
-                    on:close={close} />
+            <div style={`${supportedActions.get("attach")}`} class="attach">
+                <FileAttacher on:fileSelected on:open={openFilePicker} />
             </div>
         {/if}
         {#if supportedActions.has("crypto")}
             <div
-                style={`${cssVars("crypto")}`}
+                style={`${supportedActions.get("crypto")}`}
                 class="send-icp"
                 on:click|stopPropagation={createTokenTransfer}>
                 <HoverIcon title={"Send Crypto"}>
@@ -195,21 +206,30 @@
             </div>
         {/if}
         {#if supportedActions.has("giphy")}
-            <div style={`${cssVars("giphy")}`} class="gif" on:click|stopPropagation={sendGif}>
+            <div
+                style={`${supportedActions.get("giphy")}`}
+                class="gif"
+                on:click|stopPropagation={sendGif}>
                 <HoverIcon title={"Attach gif"}>
                     <StickerEmoji size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("meme")}
-            <div style={`${cssVars("meme")}`} class="meme" on:click|stopPropagation={makeMeme}>
+            <div
+                style={`${supportedActions.get("meme")}`}
+                class="meme"
+                on:click|stopPropagation={makeMeme}>
                 <HoverIcon title={"Meme Fighter"}>
                     <MemeFighter size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
         {#if supportedActions.has("poll")}
-            <div style={`${cssVars("poll")}`} class="poll" on:click|stopPropagation={createPoll}>
+            <div
+                style={`${supportedActions.get("poll")}`}
+                class="poll"
+                on:click|stopPropagation={createPoll}>
                 <HoverIcon title={$_("poll.create")}>
                     <Poll size={$iconSize} color={"var(--icon-txt)"} />
                 </HoverIcon>
@@ -217,11 +237,21 @@
         {/if}
         {#if supportedActions.has("prize")}
             <div
-                style={`${cssVars("prize")}`}
+                style={`${supportedActions.get("prize")}`}
                 class="prize"
                 on:click|stopPropagation={createPrizeMessage}>
                 <HoverIcon title={"Create prize"}>
                     <Gift size={$iconSize} color={iconColour} />
+                </HoverIcon>
+            </div>
+        {/if}
+        {#if supportedActions.has("swap")}
+            <div
+                style={`${supportedActions.get("swap")}`}
+                class="swap"
+                on:click|stopPropagation={createP2PSwapMessage}>
+                <HoverIcon title={$_("p2pSwap.builderTitle")}>
+                    <SwapIcon size={$iconSize} color={iconColour} />
                 </HoverIcon>
             </div>
         {/if}
@@ -253,6 +283,7 @@
     .meme,
     .poll,
     .prize,
+    .swap,
     .send-icp {
         flex: 0 0 15px;
     }
@@ -279,12 +310,15 @@
             .meme,
             .send-icp,
             .prize,
+            .swap,
             .poll {
                 top: -18px;
                 left: toRem(-44);
                 opacity: 0;
                 position: absolute;
-                transition: top 200ms ease-in, opacity 200ms ease-in;
+                transition:
+                    top 200ms ease-in,
+                    opacity 200ms ease-in;
                 @include z-index("action-list");
             }
 
@@ -295,6 +329,7 @@
                 .meme,
                 .send-icp,
                 .prize,
+                .swap,
                 .poll {
                     left: unset;
                     right: toRem(-44);
@@ -311,6 +346,7 @@
                 .gif,
                 .meme,
                 .poll,
+                .swap,
                 .prize {
                     top: var(--top);
                     transition-delay: var(--transition-delay);

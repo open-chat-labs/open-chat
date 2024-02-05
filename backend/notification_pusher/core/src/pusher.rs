@@ -1,7 +1,10 @@
 use crate::Notification;
 use async_channel::{Receiver, Sender};
+use std::collections::{BinaryHeap, HashMap};
+use std::sync::{Arc, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::{error, info};
-use types::{Error, UserId};
+use types::{Error, TimestampMillis, UserId};
 use web_push::{
     ContentEncoding, HyperWebPushClient, PartialVapidSignatureBuilder, SubscriptionInfo, Urgency, VapidSignature,
     VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
@@ -14,6 +17,7 @@ pub struct Pusher {
     web_push_client: HyperWebPushClient,
     sig_builder: PartialVapidSignatureBuilder,
     subscriptions_to_remove_sender: Sender<(UserId, String)>,
+    invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
 }
 
 impl Pusher {
@@ -21,17 +25,24 @@ impl Pusher {
         receiver: Receiver<Notification>,
         vapid_private_pem: &str,
         subscriptions_to_remove_sender: Sender<(UserId, String)>,
+        invalid_subscriptions: Arc<RwLock<HashMap<String, TimestampMillis>>>,
     ) -> Self {
         Self {
             receiver,
             web_push_client: HyperWebPushClient::new(),
             sig_builder: VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes()).unwrap(),
             subscriptions_to_remove_sender,
+            invalid_subscriptions,
         }
     }
 
     pub async fn run(self) {
         while let Ok(notification) = self.receiver.recv().await {
+            if let Ok(map) = self.invalid_subscriptions.read() {
+                if map.contains_key(&notification.subscription_info.endpoint) {
+                    continue;
+                }
+            }
             if let Err(error) = self.push_notification(&notification).await {
                 let bytes = notification.payload.len();
                 error!(
@@ -56,6 +67,15 @@ impl Pusher {
                         let _ = self
                             .subscriptions_to_remove_sender
                             .try_send((notification.recipient, subscription.keys.p256dh.clone()));
+
+                        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() as u64;
+
+                        if let Ok(mut map) = self.invalid_subscriptions.write() {
+                            if map.len() > 10000 {
+                                prune_invalid_subscriptions(&mut map);
+                            }
+                            map.insert(subscription.endpoint.clone(), timestamp);
+                        }
 
                         info!(
                             ?error,
@@ -93,6 +113,29 @@ fn build_web_push_message(
     message_builder.build()
 }
 
+// Prunes the oldest 1000 subscriptions
+fn prune_invalid_subscriptions(map: &mut HashMap<String, TimestampMillis>) {
+    let mut heap = BinaryHeap::with_capacity(1000);
+
+    let mut iter = map.iter();
+    for (subscription, timestamp) in iter.by_ref().take(1000) {
+        heap.push((*timestamp, subscription.clone()));
+    }
+
+    for (subscription, timestamp) in iter {
+        if let Some((greatest_timestamp, _)) = heap.peek() {
+            if *timestamp < *greatest_timestamp {
+                heap.pop();
+                heap.push((*timestamp, subscription.clone()));
+            }
+        }
+    }
+
+    for (_, subscription) in heap {
+        map.remove(&subscription);
+    }
+}
+
 #[derive(Debug)]
 #[allow(dead_code)]
 struct SubscriptionInfoDebug<'a> {
@@ -108,5 +151,21 @@ impl<'a> From<&'a SubscriptionInfo> for SubscriptionInfoDebug<'a> {
             p256dh_len: s.keys.p256dh.len(),
             auth_len: s.keys.auth.len(),
         }
+    }
+}
+
+#[test]
+fn oldest_subscriptions_are_pruned() {
+    let mut map = HashMap::new();
+    for i in 0..10000 {
+        map.insert(i.to_string(), i);
+    }
+
+    prune_invalid_subscriptions(&mut map);
+
+    assert_eq!(map.len(), 9000);
+
+    for i in 0..10000 {
+        assert_eq!(map.contains_key(i.to_string().as_str()), i >= 1000, "{i}");
     }
 }

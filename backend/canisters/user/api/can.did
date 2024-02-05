@@ -7,6 +7,7 @@ type SendMessageV2Args = record {
     content : MessageContentInitial;
     replies_to : opt ReplyContext;
     forwarding : bool;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -35,6 +36,8 @@ type SendMessageResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PSwapSetUpFailed : text;
+    DuplicateMessageId;
     UserSuspended;
     InternalError : text;
 };
@@ -142,7 +145,7 @@ type ApproveTransferArgs = record {
 
 type ApproveTransferResponse = variant {
     Success;
-    ApproveError : ApproveError;
+    ApproveError : ICRC2_ApproveError;
     InternalError : text;
 };
 
@@ -164,14 +167,8 @@ type SwapTokensResponse = variant {
     Success : record {
         amount_out : nat;
     };
+    SwapFailed;
     InternalError : text;
-};
-
-type TokenInfo = record {
-    token : Cryptocurrency;
-    ledger : CanisterId;
-    decimals : nat8;
-    fee: nat;
 };
 
 type TokenSwapStatusArgs = record {
@@ -180,31 +177,60 @@ type TokenSwapStatusArgs = record {
 
 type TokenSwapStatusResponse = variant {
     Success : record {
-        status : record {
-            started : TimestampMillis;
-            deposit_account : opt variant {
-                Ok : Account;
-                Err : text;
-            };
-            transfer : opt variant {
-                Ok : nat64;
-                Err : text;
-            };
-            notified_dex : opt variant {
-                Ok;
-                Err : text;
-            };
-            amount_swapped : opt variant {
+        started : TimestampMillis;
+        deposit_account : opt variant {
+            Ok;
+            Err : text;
+        };
+        transfer : opt variant {
+            Ok : nat64;
+            Err : text;
+        };
+        notify_dex : opt variant {
+            Ok;
+            Err : text;
+        };
+        amount_swapped : opt variant {
+            Ok : variant {
                 Ok : nat;
                 Err : text;
             };
-            withdrawn_from_dex : opt variant {
-                Ok;
-                Err : text;
-            };
+            Err : text;
         };
+        withdraw_from_dex : opt variant {
+            Ok : nat;
+            Err : text;
+        };
+        success : opt bool;
     };
     NotFound;
+};
+
+type AcceptP2PSwapArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
+    InsufficientFunds;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChatNotFound;
+    UserSuspended;
+    InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    user_id : UserId;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChatNotFound;
 };
 
 type TipMessageArgs = record {
@@ -216,7 +242,7 @@ type TipMessageArgs = record {
     token : Cryptocurrency;
     amount : nat;
     fee : nat;
-    decimals : opt nat8;
+    decimals : nat8;
 };
 
 type TipMessageResponse = variant {
@@ -530,6 +556,7 @@ type SendMessageWithTransferToChannelArgs = record {
     mentioned : vec User;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
 };
 
 type SendMessageWithTransferToChannelResponse = variant {
@@ -550,11 +577,12 @@ type SendMessageWithTransferToChannelResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     CommunityFrozen;
     RulesNotAccepted;
     CommunityRulesNotAccepted;
-    InternalError : record { text; CompletedCryptoTransaction };
+    Retrying : record { text; CompletedCryptoTransaction };
 };
 
 type SendMessageWithTransferToGroupArgs = record {
@@ -567,6 +595,7 @@ type SendMessageWithTransferToGroupArgs = record {
     replies_to : opt GroupReplyContext;
     mentioned : vec User;
     rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
     correlation_id : nat64;
 };
 
@@ -586,10 +615,11 @@ type SendMessageWithTransferToGroupResponse = variant {
     TransferFailed : text;
     TransferCannotBeZero;
     TransferCannotBeToSelf;
+    P2PSwapSetUpFailed : text;
     UserSuspended;
     ChatFrozen;
     RulesNotAccepted;
-    InternalError : record { text; CompletedCryptoTransaction };
+    Retrying : record { text; CompletedCryptoTransaction };
 };
 
 type WithdrawCryptoArgs = record {
@@ -718,28 +748,6 @@ type SubmitProposalResponse = variant {
     InternalError : text;
 };
 
-type InitUserPrincipalMigrationArgs = record {
-    new_principal : principal;
-};
-
-type InitUserPrincipalMigrationResponse = variant {
-    Success;
-};
-
-type MigrateUserPrincipalArgs = record {};
-
-type MigrateUserPrincipalResponse = variant {
-    Success;
-    MigrationNotInitialized;
-    MigrationAlreadyInProgress;
-    PrincipalAlreadyInUse;
-    InternalError : text;
-};
-
-type InitialStateArgs = record {
-    disable_cache : opt bool;
-};
-
 type InitialStateResponse = variant {
     Success : record {
         timestamp : TimestampMillis;
@@ -750,6 +758,7 @@ type InitialStateResponse = variant {
         avatar_id : opt nat;
         blocked_users : vec UserId;
         suspended : bool;
+        local_user_index_canister_id : CanisterId;
     };
 };
 
@@ -825,6 +834,7 @@ type FavouriteChatsUpdates = record {
 
 type UserCanisterGroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     read_by_me_up_to : opt MessageIndex;
     threads_read : vec record { MessageIndex; MessageIndex };
     archived : bool;
@@ -841,6 +851,7 @@ type UserCanisterGroupChatSummaryUpdates = record {
 
 type UserCanisterCommunitySummary = record {
     community_id : CommunityId;
+    local_user_index_canister_id : CanisterId;
     channels : vec UserCanisterChannelSummary;
     index : nat32;
     archived : bool;
@@ -987,7 +998,6 @@ type DeletedMessageResponse = variant {
     ChatNotFound;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
@@ -1030,9 +1040,8 @@ service : {
     report_message : (ReportMessageArgs) -> (ReportMessageResponse);
     approve_transfer : (ApproveTransferArgs) -> (ApproveTransferResponse);
     swap_tokens : (SwapTokensArgs) -> (SwapTokensResponse);
-
-    init_user_principal_migration : (InitUserPrincipalMigrationArgs) -> (InitUserPrincipalMigrationResponse);
-    migrate_user_principal : (MigrateUserPrincipalArgs) -> (MigrateUserPrincipalResponse);
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
 
     events : (EventsArgs) -> (EventsResponse) query;
     events_by_index : (EventsByIndexArgs) -> (EventsResponse) query;
@@ -1040,7 +1049,7 @@ service : {
     messages_by_message_index : (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     deleted_message : (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
-    initial_state : (InitialStateArgs) -> (InitialStateResponse) query;
+    initial_state : (EmptyArgs) -> (InitialStateResponse) query;
     updates : (UpdatesArgs) -> (UpdatesResponse) query;
     search_messages : (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     bio : (BioArgs) -> (BioResponse) query;

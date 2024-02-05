@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 use user_canister::mark_read::ThreadRead;
 use utils::time::HOUR_IN_MS;
 use utils::timestamped_map::TimestampedMap;
@@ -8,6 +8,7 @@ use utils::timestamped_map::TimestampedMap;
 #[derive(Serialize, Deserialize)]
 pub struct GroupChat {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub date_joined: TimestampMillis,
     pub messages_read: GroupMessagesRead,
     pub last_changed_for_my_data: TimestampMillis,
@@ -15,9 +16,15 @@ pub struct GroupChat {
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
+    pub fn new(
+        chat_id: ChatId,
+        local_user_index_canister_id: CanisterId,
+        read_up_to: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> GroupChat {
         GroupChat {
             chat_id,
+            local_user_index_canister_id,
             date_joined: now,
             messages_read: GroupMessagesRead {
                 read_by_me_up_to: Timestamped::new(read_up_to, now),
@@ -56,6 +63,7 @@ impl GroupChat {
     pub fn to_summary(&self) -> user_canister::GroupChatSummary {
         user_canister::GroupChatSummary {
             chat_id: self.chat_id,
+            local_user_index_canister_id: self.local_user_index_canister_id,
             read_by_me_up_to: self.messages_read.read_by_me_up_to.value,
             threads_read: self.messages_read.threads_read.iter().map(|(k, v)| (*k, v.value)).collect(),
             archived: self.archived.value,

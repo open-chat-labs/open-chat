@@ -4,16 +4,14 @@ import type {
     ChatSpecificState,
     ChatSummary,
     DirectChatSummary,
-    EnhancedReplyContext,
     EventWrapper,
-    Message,
     ThreadSyncDetails,
     ChatIdentifier,
     DirectChatIdentifier,
     MultiUserChat,
     ChatListScope,
-    AttachmentContent,
     ExpiredEventsRange,
+    MessageContext,
 } from "openchat-shared";
 import {
     compareChats,
@@ -22,7 +20,7 @@ import {
     ChatMap,
     nullMembership,
     chatIdentifiersEqual,
-    isAttachmentContent,
+    messageContextsEqual,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, type Readable, writable, type Writable } from "svelte/store";
@@ -35,13 +33,12 @@ import {
     mergeChatMetrics,
     mergeLocalSummaryUpdates,
 } from "../utils/chat";
-import { currentUser, userStore } from "./user";
+import { currentUser, currentUserIdStore, suspendedUsers } from "./user";
 import DRange from "drange";
 import { snsFunctions } from "./snsFunctions";
 import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredProposals";
 import { createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
-import type { DraftMessage } from "./draftMessageFactory";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
@@ -57,11 +54,118 @@ import {
 import { createDerivedPropStore } from "./derived";
 import { messagesRead } from "./markRead";
 import { safeWritable } from "./safeWritable";
-import { communityPreviewsStore } from "./community";
+import { communityPreviewsStore, currentCommunityBlockedUsers } from "./community";
 import { translationStore } from "./translation";
+import { messageFiltersStore } from "./messageFilters";
+import { draftMessagesStore } from "./draftMessages";
 
 let currentScope: ChatListScope = { kind: "direct_chat" };
 chatListScopeStore.subscribe((s) => (currentScope = s));
+
+export const selectedMessageContext = safeWritable<MessageContext | undefined>(
+    undefined,
+    messageContextsEqual,
+);
+
+export const selectedThreadRootMessageIndex = derived(selectedMessageContext, ($messageContext) => {
+    return $messageContext?.threadRootMessageIndex;
+});
+
+export const selectedChatId = derived(selectedMessageContext, ($messageContext) => {
+    return $messageContext?.chatId;
+});
+
+export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
+    selectedChatId,
+    () => ({
+        members: [],
+        blockedUsers: new Set<string>(),
+        invitedUsers: new Set<string>(),
+        pinnedMessages: new Set<number>(),
+        rules: emptyRules(),
+        userIds: new Set<string>(),
+        userGroupKeys: new Set<string>(),
+        confirmedEventIndexesLoaded: new DRange(),
+        serverEvents: [],
+        expandedDeletedMessages: new Set(),
+        expiredEventRanges: new DRange(),
+    }),
+);
+
+const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
+    chatStateStore,
+    "serverEvents",
+    () => [],
+);
+
+export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
+    chatStateStore,
+    "userIds",
+    () => new Set<string>(),
+);
+
+export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focusMessageIndex">(
+    chatStateStore,
+    "focusMessageIndex",
+    () => undefined,
+);
+
+export const focusThreadMessageIndex = createDerivedPropStore<
+    ChatSpecificState,
+    "focusThreadMessageIndex"
+>(chatStateStore, "focusThreadMessageIndex", () => undefined);
+
+export const expandedDeletedMessages = createDerivedPropStore<
+    ChatSpecificState,
+    "expandedDeletedMessages"
+>(chatStateStore, "expandedDeletedMessages", () => new Set());
+
+export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
+    chatStateStore,
+    "userGroupKeys",
+    () => new Set<string>(),
+);
+
+export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
+    chatStateStore,
+    "rules",
+    () => undefined,
+);
+
+export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
+    chatStateStore,
+    "members",
+    () => [],
+);
+
+export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
+    chatStateStore,
+    "blockedUsers",
+    () => new Set<string>(),
+    setsAreEqual,
+);
+export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
+    chatStateStore,
+    "invitedUsers",
+    () => new Set<string>(),
+    setsAreEqual,
+);
+export const currentChatPinnedMessages = createDerivedPropStore<
+    ChatSpecificState,
+    "pinnedMessages"
+>(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
+
+export const expiredEventRangesStore = createDerivedPropStore<
+    ChatSpecificState,
+    "expiredEventRanges"
+>(chatStateStore, "expiredEventRanges", () => new DRange());
+
+const currentChatBlockedOrSuspendedUsers = derived(
+    [currentChatBlockedUsers, currentCommunityBlockedUsers, suspendedUsers],
+    ([chatBlocked, communityBlocked, suspended]) => {
+        return new Set<string>([...chatBlocked, ...communityBlocked, ...suspended]);
+    },
+);
 
 export const myServerChatSummariesStore = derived(
     [globalStateStore, chatListScopeStore],
@@ -154,8 +258,21 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
         currentUser,
         localMessageUpdates,
         translationStore,
+        currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
-    ([summaries, localSummaryUpdates, unconfirmed, currentUser, localUpdates, translations]) => {
+    ([
+        summaries,
+        localSummaryUpdates,
+        unconfirmed,
+        currentUser,
+        localUpdates,
+        translations,
+        blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
+    ]) => {
         const mergedSummaries = mergeLocalSummaryUpdates(
             currentScope,
             summaries,
@@ -174,6 +291,9 @@ export const chatSummariesStore: Readable<ChatMap<ChatSummary>> = derived(
                         unconfirmed,
                         localUpdates,
                         translations,
+                        blockedOrSuspendedUsers,
+                        $currentUserId,
+                        $messageFilters,
                     ),
                 );
                 return result;
@@ -206,26 +326,6 @@ export const userMetrics = derived([allServerChats], ([$chats]) => {
         .reduce(mergeChatMetrics, emptyChatMetrics());
 });
 
-export const selectedChatId = safeWritable<ChatIdentifier | undefined>(
-    undefined,
-    chatIdentifiersEqual,
-);
-export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
-export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
-    return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
-});
-export const selectedMessageContext = derived(
-    [selectedChatId, selectedThreadRootMessageIndex],
-    ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
-        if ($selectedChatId !== undefined) {
-            return {
-                chatId: $selectedChatId,
-                threadRootMessageIndex: $selectedThreadRootMessageIndex,
-            };
-        }
-        return undefined;
-    },
-);
 export const chatsLoading = writable(true);
 export const chatsInitialised = writable(false);
 
@@ -329,7 +429,7 @@ export const proposalTopicsStore = derived(
                     [10, "Node Provider Rewards"],
                     [12, "Subnet Replica Version Management"],
                     [13, "Replica Version Management"],
-                    [14, "SNS & CommunityFund"],
+                    [14, "SNS & Neurons' Fund"],
                 ]);
             } else {
                 const snsFunctionsMap = $snsFunctions.get(
@@ -357,23 +457,6 @@ export const numberOfThreadsStore = derived([threadsByChatStore], ([threads]) =>
     countThreads(threads),
 );
 
-export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>(
-    selectedChatId,
-    () => ({
-        members: [],
-        blockedUsers: new Set<string>(),
-        invitedUsers: new Set<string>(),
-        pinnedMessages: new Set<number>(),
-        rules: emptyRules(),
-        userIds: new Set<string>(),
-        userGroupKeys: new Set<string>(),
-        confirmedEventIndexesLoaded: new DRange(),
-        serverEvents: [],
-        expandedDeletedMessages: new Set(),
-        expiredEventRanges: new DRange(),
-    }),
-);
-
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 export const threadEvents = derived(
     [
@@ -384,6 +467,9 @@ export const threadEvents = derived(
         failedMessagesStore,
         proposalTallies,
         translationStore,
+        currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
     ([
         $serverEvents,
@@ -393,6 +479,9 @@ export const threadEvents = derived(
         $failedMessages,
         $proposalTallies,
         $translationStore,
+        $blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
     ]) => {
         if ($messageContext === undefined || $messageContext.threadRootMessageIndex === undefined)
             return [];
@@ -408,42 +497,11 @@ export const threadEvents = derived(
             new DRange(),
             $proposalTallies,
             $translationStore,
+            $blockedOrSuspendedUsers,
+            $currentUserId,
+            $messageFilters,
         );
     },
-);
-
-const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
-    chatStateStore,
-    "serverEvents",
-    () => [],
-);
-
-export const currentChatUserIds = createDerivedPropStore<ChatSpecificState, "userIds">(
-    chatStateStore,
-    "userIds",
-    () => new Set<string>(),
-);
-
-export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focusMessageIndex">(
-    chatStateStore,
-    "focusMessageIndex",
-    () => undefined,
-);
-
-export const focusThreadMessageIndex = createDerivedPropStore<
-    ChatSpecificState,
-    "focusThreadMessageIndex"
->(chatStateStore, "focusThreadMessageIndex", () => undefined);
-
-export const expandedDeletedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "expandedDeletedMessages"
->(chatStateStore, "expandedDeletedMessages", () => new Set());
-
-export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGroupKeys">(
-    chatStateStore,
-    "userGroupKeys",
-    () => new Set<string>(),
 );
 
 export const confirmedThreadEventIndexesLoadedStore = derived(
@@ -454,40 +512,6 @@ export const confirmedThreadEventIndexesLoadedStore = derived(
         return ranges;
     },
 );
-
-export const currentChatRules = createDerivedPropStore<ChatSpecificState, "rules">(
-    chatStateStore,
-    "rules",
-    () => undefined,
-);
-
-export const currentChatMembers = createDerivedPropStore<ChatSpecificState, "members">(
-    chatStateStore,
-    "members",
-    () => [],
-);
-
-export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
-    chatStateStore,
-    "blockedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
-    chatStateStore,
-    "invitedUsers",
-    () => new Set<string>(),
-    setsAreEqual,
-);
-export const currentChatPinnedMessages = createDerivedPropStore<
-    ChatSpecificState,
-    "pinnedMessages"
->(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
-
-export const expiredEventRangesStore = createDerivedPropStore<
-    ChatSpecificState,
-    "expiredEventRanges"
->(chatStateStore, "expiredEventRanges", () => new DRange());
 
 const confirmedEventIndexesLoadedStore = derived(
     [serverEventsStore, expiredEventRangesStore],
@@ -564,11 +588,11 @@ export function setSelectedChat(
 
 export function clearSelectedChat(newSelectedChatId?: ChatIdentifier): void {
     filteredProposalsStore.set(undefined);
-    selectedChatId.update((chatId) => {
-        if (chatId !== undefined) {
-            chatStateStore.clear(chatId);
+    selectedMessageContext.update((context) => {
+        if (context !== undefined) {
+            chatStateStore.clear(context.chatId);
         }
-        return newSelectedChatId;
+        return newSelectedChatId ? { chatId: newSelectedChatId } : undefined;
     });
 }
 
@@ -627,6 +651,9 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         failedMessagesStore,
         proposalTallies,
         translationStore,
+        currentChatBlockedOrSuspendedUsers,
+        currentUserIdStore,
+        messageFiltersStore,
     ],
     ([
         $serverEventsForSelectedChat,
@@ -636,6 +663,9 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         $failedMessages,
         $proposalTallies,
         $translationStore,
+        $blockedOrSuspendedUsers,
+        $currentUserId,
+        $messageFilters,
     ]) => {
         const chatId = get(selectedChatId) ?? { kind: "group_chat", groupId: "" };
         const failedForChat = $failedMessages.get({ chatId });
@@ -649,6 +679,9 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
             $expiredEventRanges,
             $proposalTallies,
             $translationStore,
+            $blockedOrSuspendedUsers,
+            $currentUserId,
+            $messageFilters,
         );
     },
 );
@@ -696,40 +729,13 @@ export function clearServerEvents(id: ChatIdentifier): void {
     chatStateStore.setProp(id, "expiredEventRanges", new DRange());
 }
 
-/**
- * You might think that this belongs in the chatStateStore, but this needs to persist across chat selection boundary
- * so it has a different scope.
- */
-const draftMessages = createChatSpecificObjectStore<DraftMessage>(selectedChatId, () => ({}));
-
-export const currentChatDraftMessage = {
-    ...draftMessages,
-    setTextContent: (id: ChatIdentifier, textContent: string | undefined): void =>
-        draftMessages.setProp(id, "textContent", textContent),
-    setAttachment: (id: ChatIdentifier, attachment: AttachmentContent | undefined): void =>
-        draftMessages.setProp(id, "attachment", attachment),
-    setReplyingTo: (id: ChatIdentifier, replyingTo: EnhancedReplyContext | undefined): void =>
-        draftMessages.setProp(id, "replyingTo", replyingTo),
-    setEditing: (id: ChatIdentifier, editingEvent: EventWrapper<Message>): void => {
-        const users = get(userStore);
-        const updated = {
-            editingEvent,
-            attachment: isAttachmentContent(editingEvent.event.content)
-                ? editingEvent.event.content
-                : undefined,
-            replyingTo:
-                editingEvent.event.repliesTo &&
-                editingEvent.event.repliesTo.kind === "rehydrated_reply_context"
-                    ? {
-                          ...editingEvent.event.repliesTo,
-                          content: editingEvent.event.content,
-                          sender: users[editingEvent.event.sender],
-                      }
-                    : undefined,
-        };
-        draftMessages.update(id, (d) => ({ ...d, ...updated }));
+export const currentChatDraftMessage = derived(
+    [draftMessagesStore, selectedChatId],
+    ([draftMessages, chatId]) => {
+        return chatId !== undefined ? draftMessages.get({ chatId }) ?? {} : {};
     },
-};
+);
+
 export const currentChatTextContent = createDerivedPropStore(
     currentChatDraftMessage,
     "textContent",

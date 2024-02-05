@@ -6,7 +6,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{BuildVersion, CanisterId};
 use utils::canister::{install, FailedUpgrade};
-use utils::consts::MIN_CYCLES_BALANCE;
+use utils::consts::min_cycles_balance;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<notifications_canister::post_upgrade::Args>;
 
@@ -76,7 +76,7 @@ fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
     };
 
     let new_wasm = state.data.notifications_canister_wasm_for_upgrades.clone();
-    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > min_cycles_balance(state.data.test_mode);
 
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,
@@ -120,4 +120,5 @@ fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: B
         from_version,
         to_version,
     });
+    start_job_if_required(state);
 }

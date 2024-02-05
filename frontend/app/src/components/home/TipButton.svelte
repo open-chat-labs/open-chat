@@ -1,8 +1,10 @@
 <script lang="ts">
     import { spring } from "svelte/motion";
+    import type { ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     export let disabled = false;
-    export let label: string;
+    export let label: ResourceKey;
 
     let buttonScale = spring(1);
 
@@ -18,7 +20,7 @@
     {disabled}
     on:click|preventDefault
     class="amount">
-    {label}
+    <Translatable resourceKey={label} />
 </button>
 
 <style lang="scss">
@@ -27,7 +29,9 @@
         border-radius: $sp3;
         padding: $sp4;
         border: 1px solid var(--bd);
-        transition: background 250ms ease-in-out, color 250ms ease-in-out;
+        transition:
+            background 250ms ease-in-out,
+            color 250ms ease-in-out;
         text-align: center;
         cursor: pointer;
         height: $size;

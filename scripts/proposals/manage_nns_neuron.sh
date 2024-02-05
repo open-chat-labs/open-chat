@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")
@@ -14,13 +14,13 @@ FUNCTION_ID=8001
 # Submit the proposal
 ./make_custom_function_proposal.sh $FUNCTION_ID "$TITLE" "$SUMMARY" "$URL" "$ARGS"
 
-// -- Manage neuron commands --
+# -- Manage neuron commands --
 
-// Add Hotkey
-// ARGS="(record { neuron_id = 17682165960669268263:nat64; command = variant { Configure = record { operation = opt variant { AddHotKey = record { new_hot_key = principal \"tktqu-nyaaa-aaaar-qackq-cai\" } } } } })"
+# Add Hotkey
+# ARGS="(record { neuron_id = 17682165960669268263:nat64; command = variant { Configure = record { operation = opt variant { AddHotKey = record { new_hot_key = principal \"tktqu-nyaaa-aaaar-qackq-cai\" } } } } })"
 
-// Follow
-// ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Follow = record { topic = 14:int32; followees = vec { record { id = 17682165960669268263:nat64 } } } } })"
+# Follow
+# ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Follow = record { topic = 14:int32; followees = vec { record { id = 17682165960669268263:nat64 } } } } })"
 
-// Increase Dissolve Delay
-// ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Configure = record { operation = opt variant { IncreaseDissolveDelay = record { additional_dissolve_delay_seconds = 15778800:nat32 } } } } })"
+# Increase Dissolve Delay
+# ARGS="(record { neuron_id = 15574844586067538603:nat64; command = variant { Configure = record { operation = opt variant { IncreaseDissolveDelay = record { additional_dissolve_delay_seconds = 15778800:nat32 } } } } })"

@@ -12,7 +12,7 @@ pub struct Args {
     pub token: Cryptocurrency,
     pub amount: u128,
     pub fee: u128,
-    pub decimals: Option<u8>,
+    pub decimals: u8,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -13,12 +13,12 @@ use types::{
 };
 use utils::env::Environment;
 
-mod governance_clients;
 mod guards;
 mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
+mod proposals;
 mod queries;
 mod timer_job_types;
 mod updates;
@@ -79,7 +79,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub registry_synced_up_to: TimestampMillis,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
@@ -137,6 +136,7 @@ pub struct NervousSystemMetrics {
     pub latest_failed_proposals_update: Option<TimestampMillis>,
     pub queued_proposals: Vec<ProposalId>,
     pub active_proposals: Vec<ProposalId>,
+    pub active_user_submitted_proposals: Vec<ProposalId>,
     pub neuron_for_submitting_proposals: Option<String>,
     pub neuron_for_submitting_proposals_dissolve_delay: Milliseconds,
     pub transaction_fee: u64,
@@ -161,7 +161,7 @@ fn generate_message_id(governance_canister_id: CanisterId, proposal_id: Proposal
     hash.update(b"proposals_bot");
     hash.update(governance_canister_id.as_slice());
     hash.update(proposal_id.to_ne_bytes());
-    let array32: [u8; 32] = hash.finalize().try_into().unwrap();
+    let array32: [u8; 32] = hash.finalize().into();
     let array16: [u8; 16] = array32[..16].try_into().unwrap();
     u128::from_ne_bytes(array16).into()
 }

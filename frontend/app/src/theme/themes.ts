@@ -10,6 +10,7 @@ import { getTheme as getTokyoNightTheme } from "./community/tokyonight";
 import { getTheme as getSolarizedDarkTheme } from "./community/solarizeddark";
 import { getTheme as getHalloweenTheme } from "./community/halloween";
 import { getTheme as getSignalsTheme } from "./community/signals";
+import { getTheme as getWindoge98Theme } from "./community/windoge98";
 import type { Theme, Themes } from "./types";
 import { deepMerge } from "./merge";
 
@@ -24,6 +25,7 @@ export const communityThemes = [
     getMatteBlackGoldTheme(cloneTheme(dark)),
     getBarbieTheme(cloneTheme(defaultTheme)),
     getTokyoNightTheme(cloneTheme(dark)),
+    getWindoge98Theme(cloneTheme(defaultTheme)),
     getSolarizedDarkTheme(cloneTheme(dark)),
     getHalloweenTheme(cloneTheme(dark)),
     getSignalsTheme(cloneTheme(defaultTheme)),
@@ -122,8 +124,19 @@ export const currentThemeName = derived(
     },
 );
 
+function loadFont(theme: Theme): void {
+    if (theme.fontUrl) {
+        const link = document.createElement("link");
+        link.setAttribute("rel", "stylesheet");
+        link.setAttribute("type", "text/css");
+        link.setAttribute("href", theme.fontUrl);
+        document.getElementsByTagName("head")[0].appendChild(link);
+    }
+}
+
 export const currentTheme = derived(currentThemeName, (name) => {
     const theme = themes[name];
+    loadFont(theme);
     writeCssVars("--", theme);
     return theme;
 });

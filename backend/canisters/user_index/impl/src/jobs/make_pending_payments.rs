@@ -1,9 +1,8 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
+use crate::{read_state, LocalUserIndexEvent};
 use ic_cdk_timers::TimerId;
 use ic_ledger_types::{BlockIndex, Tokens};
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
@@ -19,9 +18,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.pending_payments_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'make_pending_payments' job started");
         true
     } else {
         false
@@ -29,43 +27,48 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
+    trace!("'make_pending_payments' job running");
+    TIMER_ID.set(None);
+
     if let Some(pending_payment) = mutate_state(|state| state.data.pending_payments_queue.pop()) {
         ic_cdk::spawn(process_payment(pending_payment));
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'make_pending_payments' job stopped");
     }
+    read_state(start_job_if_required);
 }
 
 async fn process_payment(pending_payment: PendingPayment) {
     let reason = pending_payment.reason.clone();
-    match make_payment(&pending_payment).await {
-        Ok(block_index) => {
-            if matches!(reason, PendingPaymentReason::ReferralReward) {
-                mutate_state(|state| inform_referrer(&pending_payment, block_index, state));
-            }
-        }
-        Err(retry) => {
-            if retry {
-                mutate_state(|state| {
+    let result = make_payment(&pending_payment).await;
+
+    mutate_state(|state| {
+        match result {
+            Ok(block_index) => match reason {
+                PendingPaymentReason::ReferralReward => {
+                    inform_referrer(&pending_payment, block_index, state);
+                }
+                PendingPaymentReason::TopUpNeuron => {
+                    state.data.refresh_nns_neuron();
+                }
+                _ => {}
+            },
+            Err(retry) => {
+                if retry {
                     state.data.pending_payments_queue.push(pending_payment);
-                    start_job_if_required(state);
-                });
+                }
             }
         }
-    }
+        start_job_if_required(state);
+    });
 }
 
 // Error response contains a boolean stating if the transfer should be retried
 async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
-    let to = Account::from(pending_payment.recipient);
-
     let args = TransferArg {
         from_subaccount: None,
-        to,
+        to: pending_payment.recipient_account,
         fee: None,
         created_at_time: Some(pending_payment.timestamp),
-        memo: Some(pending_payment.memo.to_vec().try_into().unwrap()),
+        memo: Some(pending_payment.memo.to_vec().into()),
         amount: pending_payment.amount.into(),
     };
 
@@ -83,10 +86,11 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
 }
 
 fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
-    let user_id = pending_payment.recipient.into();
+    let user_id = pending_payment.recipient_account.owner.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
+    let amount_formatted = amount.to_string().trim_end_matches('0').to_string();
     let symbol = pending_payment.currency.token_symbol();
-    let mut amount_text = format!("{} {}", amount, symbol);
+    let mut amount_text = format!("{amount_formatted} {symbol}");
 
     if matches!(pending_payment.currency, Cryptocurrency::CHAT) {
         let link = format!(

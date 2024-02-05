@@ -7,7 +7,7 @@ use crate::model::private_groups::PrivateGroups;
 use crate::model::public_communities::PublicCommunities;
 use crate::model::public_group_and_community_names::PublicGroupAndCommunityNames;
 use crate::model::public_groups::PublicGroups;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canister_state_macros::canister_state;
 use fire_and_forget_handler::FireAndForgetHandler;
 use model::local_group_index_map::LocalGroupIndexMap;
@@ -15,8 +15,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis,
-    Timestamped, UserId,
+    AccessGate, BuildVersion, CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -91,6 +91,8 @@ impl RuntimeState {
             community_deleted_notifications_pending: self.data.deleted_communities.notifications_pending() as u64,
             frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             frozen_communities: self.data.cached_metrics.frozen_communities.clone(),
+            public_group_gates: self.data.cached_metrics.public_group_gates.clone(),
+            public_community_gates: self.data.cached_metrics.public_community_gates.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -103,6 +105,7 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                escrow_canister_id: self.data.escrow_canister_id,
             },
         }
     }
@@ -125,6 +128,7 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
+    pub escrow_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -132,7 +136,6 @@ struct Data {
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
 }
 
@@ -146,6 +149,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        escrow_canister_id: CanisterId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -164,6 +168,7 @@ impl Data {
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
+            escrow_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -190,17 +195,15 @@ impl Data {
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
-        // Throttle to once every 5 minutes
-        if now < self.cached_metrics.last_run + FIVE_MINUTES_IN_MS {
-            return;
-        }
-
         let deleted_group_metrics = self.deleted_groups.metrics();
+        let deleted_community_metrics = self.deleted_communities.metrics();
 
         let mut cached_metrics = CachedMetrics {
             last_run: now,
             deleted_public_groups: deleted_group_metrics.public,
             deleted_private_groups: deleted_group_metrics.private,
+            deleted_public_communities: deleted_community_metrics.public,
+            deleted_private_communities: deleted_community_metrics.private,
             ..Default::default()
         };
 
@@ -211,6 +214,9 @@ impl Data {
             if public_group.is_frozen() {
                 cached_metrics.frozen_groups.push(public_group.id());
             }
+            if let Some(gate) = public_group.gate() {
+                cached_metrics.public_group_gates.add(gate);
+            }
         }
 
         for private_group in self.private_groups.iter() {
@@ -219,6 +225,27 @@ impl Data {
             }
             if private_group.is_frozen() {
                 cached_metrics.frozen_groups.push(private_group.id());
+            }
+        }
+
+        for public_community in self.public_communities.iter() {
+            if public_community.has_been_active_since(now) {
+                cached_metrics.active_public_communities += 1;
+            }
+            if public_community.is_frozen() {
+                cached_metrics.frozen_communities.push(public_community.id());
+            }
+            if let Some(gate) = public_community.gate() {
+                cached_metrics.public_community_gates.add(gate);
+            }
+        }
+
+        for private_community in self.private_communities.iter() {
+            if private_community.has_been_active_since(now) {
+                cached_metrics.active_private_groups += 1;
+            }
+            if private_community.is_frozen() {
+                cached_metrics.frozen_communities.push(private_community.id());
             }
         }
 
@@ -245,6 +272,7 @@ impl Default for Data {
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
+            escrow_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
@@ -281,7 +309,9 @@ pub struct Metrics {
     pub group_deleted_notifications_pending: u64,
     pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
-    pub frozen_communities: Vec<ChatId>,
+    pub frozen_communities: Vec<CommunityId>,
+    pub public_group_gates: AccessGateMetrics,
+    pub public_community_gates: AccessGateMetrics,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -292,7 +322,7 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct CachedMetrics {
     pub last_run: TimestampMillis,
     pub active_public_groups: u64,
@@ -304,7 +334,9 @@ pub struct CachedMetrics {
     pub deleted_public_communities: u64,
     pub deleted_private_communities: u64,
     pub frozen_groups: Vec<ChatId>,
-    pub frozen_communities: Vec<ChatId>,
+    pub frozen_communities: Vec<CommunityId>,
+    pub public_group_gates: AccessGateMetrics,
+    pub public_community_gates: AccessGateMetrics,
 }
 
 #[derive(Serialize, Debug)]
@@ -312,4 +344,26 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub escrow_canister_id: CanisterId,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct AccessGateMetrics {
+    pub diamond_membership: u32,
+    pub verified_credential: u32,
+    pub sns_neuron: u32,
+    pub payment: u32,
+    pub token_balance: u32,
+}
+
+impl AccessGateMetrics {
+    pub fn add(&mut self, gate: &AccessGate) {
+        match gate {
+            AccessGate::DiamondMember => self.diamond_membership += 1,
+            AccessGate::VerifiedCredential(_) => self.verified_credential += 1,
+            AccessGate::SnsNeuron(_) => self.sns_neuron += 1,
+            AccessGate::Payment(_) => self.payment += 1,
+            AccessGate::TokenBalance(_) => self.token_balance += 1,
+        }
+    }
 }

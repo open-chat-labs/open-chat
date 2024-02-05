@@ -1,4 +1,5 @@
 use crate::client::icrc1::happy_path::balance_of;
+use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
 use crate::utils::{now_millis, now_nanos, tick_many};
@@ -9,6 +10,7 @@ use ledger_utils::create_pending_transaction;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use types::{
     CanisterId, ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent,
     MessageContentInitial, OptionUpdate, PrizeContentInitial, TextContent, UpdatedRules, Version,
@@ -48,8 +50,9 @@ fn send_text_in_channel() {
     }
 }
 
-#[test]
-fn send_crypto_in_channel() {
+#[test_case(false)]
+#[test_case(true)]
+fn send_crypto_in_channel(with_c2c_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -64,6 +67,10 @@ fn send_crypto_in_channel() {
         community_id,
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
+
+    if with_c2c_error {
+        stop_canister(env, canister_ids.local_group_index, community_id.into());
+    }
 
     let send_message_result = client::user::send_message_with_transfer_to_channel(
         env,
@@ -93,17 +100,41 @@ fn send_crypto_in_channel() {
             mentioned: Vec::new(),
             community_rules_accepted: None,
             channel_rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
-    if matches!(
-        send_message_result,
-        user_canister::send_message_with_transfer_to_channel::Response::Success(_)
-    ) {
-        let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
-        assert_eq!(user2_balance, 10000);
+    if with_c2c_error {
+        assert!(matches!(
+            send_message_result,
+            user_canister::send_message_with_transfer_to_channel::Response::Retrying(..)
+        ));
     } else {
-        panic!("{send_message_result:?}")
+        assert!(matches!(
+            send_message_result,
+            user_canister::send_message_with_transfer_to_channel::Response::Success(_)
+        ));
+    }
+
+    let user2_balance = balance_of(env, canister_ids.icp_ledger, user2.user_id);
+    assert_eq!(user2_balance, 10000);
+
+    if with_c2c_error {
+        env.advance_time(Duration::from_secs(10));
+        start_canister(env, canister_ids.local_group_index, community_id.into());
+        env.tick();
+    }
+
+    let event = client::community::happy_path::events(env, &user2, community_id, channel_id, 0.into(), true, 10, 10)
+        .events
+        .pop()
+        .unwrap()
+        .event;
+
+    if let ChatEvent::Message(m) = event {
+        assert!(matches!(m.content, MessageContent::Crypto(_)));
+    } else {
+        panic!("{event:?}");
     }
 }
 
@@ -124,7 +155,7 @@ fn send_prize_in_channel() {
         channel_id,
     } = init_test_data(env, canister_ids, *controller);
 
-    let inital_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
+    let initial_user1_balance = balance_of(env, canister_ids.icp_ledger, user1.canister());
     let fee = 10000;
     let prizes = vec![Tokens::from_e8s(100000)];
     let total = prizes.iter().map(|t| (t.e8s() as u128) + fee).sum::<u128>();
@@ -160,6 +191,7 @@ fn send_prize_in_channel() {
             mentioned: Vec::new(),
             community_rules_accepted: None,
             channel_rules_accepted: None,
+            message_filter_failed: None,
         },
     );
 
@@ -167,19 +199,19 @@ fn send_prize_in_channel() {
         send_message_result,
         user_canister::send_message_with_transfer_to_channel::Response::Success(_)
     ) {
-        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
-        assert_eq!(user1_balance_after_sending_prize, inital_user1_balance - total - fee);
+        let user1_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, user1.canister());
+        assert_eq!(user1_balance_after_sending_prize, initial_user1_balance - total - fee);
 
-        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_sending_prize = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
         assert_eq!(community_balance_after_sending_prize, total);
 
         env.advance_time(Duration::from_secs(2));
         tick_many(env, 5);
 
-        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister()) as u128;
-        assert_eq!(user1_balance_after_refund, inital_user1_balance - 2 * fee);
+        let user1_balance_after_refund = balance_of(env, canister_ids.icp_ledger, user1.canister());
+        assert_eq!(user1_balance_after_refund, initial_user1_balance - 2 * fee);
 
-        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, community_id.into()) as u128;
+        let community_balance_after_refund = balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
         assert_eq!(community_balance_after_refund, 0);
     } else {
         panic!("{send_message_result:?}")
@@ -656,6 +688,7 @@ fn send_dummy_message_with_rules(
             forwarding: false,
             community_rules_accepted,
             channel_rules_accepted,
+            message_filter_failed: None,
         },
     )
 }

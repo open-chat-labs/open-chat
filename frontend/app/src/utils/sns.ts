@@ -8,6 +8,7 @@ export function createAddTokenPayload(
     infoUrl: string,
     howToBuyUrl: string,
     transactionUrlFormat: string,
+    logo: string | undefined,
 ): Uint8Array {
     return new Uint8Array(
         IDL.encode(
@@ -25,7 +26,7 @@ export function createAddTokenPayload(
                 {
                     how_to_buy_url: howToBuyUrl,
                     info_url: infoUrl,
-                    logo: [],
+                    logo: logo !== undefined && logo.length > 0 ? [logo] : [],
                     token_standard: { icrc1: null },
                     ledger_canister_id: Principal.fromText(ledgerCanisterId),
                     transaction_url_format: transactionUrlFormat,

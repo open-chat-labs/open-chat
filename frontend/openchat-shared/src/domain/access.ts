@@ -2,15 +2,14 @@ import type { Level } from "./structure";
 
 export type AccessGate =
     | NoGate
-    | SNSAccessGate
+    | NeuronGate
+    | PaymentGate
     | DiamondGate
-    | NnsNeuronGate
     | NftGate
-    | CredentialGate;
+    | CredentialGate
+    | TokenBalanceGate;
 
 export type NoGate = { kind: "no_gate" };
-
-export type NnsNeuronGate = { kind: "nns_gate" };
 
 export type NftGate = { kind: "nft_gate" };
 
@@ -21,15 +20,32 @@ export type CredentialGate = {
     credentialId: string;
 };
 
-export type SNSAccessGate = {
-    kind: "sns_gate";
+export type NeuronGate = {
+    kind: "neuron_gate";
     governanceCanister: string;
     minStakeE8s?: number;
     minDissolveDelay?: number;
 };
 
-export function isSnsGate(gate: AccessGate): gate is SNSAccessGate {
-    return gate.kind === "sns_gate";
+export type PaymentGate = {
+    kind: "payment_gate";
+    ledgerCanister: string;
+    amount: bigint;
+    fee: bigint;
+};
+
+export type TokenBalanceGate = {
+    kind: "token_balance_gate";
+    ledgerCanister: string;
+    minBalance: bigint;
+};
+
+export function isNeuronGate(gate: AccessGate): gate is NeuronGate {
+    return gate.kind === "neuron_gate";
+}
+
+export function isPaymentGate(gate: AccessGate): gate is PaymentGate {
+    return gate.kind === "payment_gate";
 }
 
 export type DiamondGate = { kind: "diamond_gate" };

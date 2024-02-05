@@ -18,6 +18,8 @@
     import VirtualList from "../../../VirtualList.svelte";
     import Markdown from "../../Markdown.svelte";
     import Legend from "../../../Legend.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -68,14 +70,16 @@
                     cancel();
                 } else {
                     if (resp.kind === "name_taken") {
-                        toastStore.showFailureToast($_("communities.errors.userGroupNameTaken"));
+                        toastStore.showFailureToast(
+                            i18nKey("communities.errors.userGroupNameTaken"),
+                        );
                     } else {
                         toastStore.showFailureToast(
-                            $_(
+                            i18nKey(
                                 `communities.errors.${
                                     creating ? "createGroupFailed" : "updateGroupFailed"
-                                }`
-                            )
+                                }`,
+                            ),
                         );
                     }
                 }
@@ -133,7 +137,9 @@
 <div class="user-group">
     {#if canManageUserGroups}
         <div class="header">
-            <Legend label={$_("communities.userGroupName")} rules={$_("communities.noSpaces")} />
+            <Legend
+                label={i18nKey("communities.userGroupName")}
+                rules={i18nKey("communities.noSpaces")} />
             <Input
                 bind:value={userGroup.name}
                 minlength={MIN_LENGTH}
@@ -142,7 +148,7 @@
                 countdown
                 invalid={nameDirty && !nameValid}
                 on:blur={autoCorrect}
-                placeholder={$_("communities.enterUserGroupName")} />
+                placeholder={i18nKey("communities.enterUserGroupName")} />
         </div>
         <div class="search">
             <Search
@@ -150,7 +156,7 @@
                 fill
                 searching={false}
                 bind:searchTerm
-                placeholder={"searchUsersPlaceholder"} />
+                placeholder={i18nKey("searchUsersPlaceholder")} />
         </div>
         {#if matchedUsers.length > 0}
             <div style={`height: ${matchedUsers.length * 80}px`} class="searched-users">
@@ -173,7 +179,7 @@
     <div class="users">
         <div class="legend" class:readonly={!canManageUserGroups}>
             {#if canManageUserGroups}
-                {$_("communities.userGroupMembers")}
+                <Translatable resourceKey={i18nKey("communities.userGroupMembers")} />
             {:else}
                 <Markdown
                     text={$_("communities.namedUserGroupMembers", {
@@ -196,10 +202,11 @@
 
     <div class="buttons">
         <ButtonGroup align="fill">
-            <Button on:click={cancel} secondary>{$_("cancel")}</Button>
+            <Button on:click={cancel} secondary
+                ><Translatable resourceKey={i18nKey("cancel")} /></Button>
             {#if canManageUserGroups}
                 <Button on:click={save} disabled={!dirty || !valid || saving} loading={saving}
-                    >{$_("save")}</Button>
+                    ><Translatable resourceKey={i18nKey("save")} /></Button>
             {/if}
         </ButtonGroup>
     </div>

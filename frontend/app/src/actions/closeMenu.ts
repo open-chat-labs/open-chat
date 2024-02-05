@@ -6,7 +6,7 @@ function hideMenu() {
 }
 
 export function menuCloser(node: HTMLElement) {
-    menuStore.subscribe((menu) => {
+    const unsub = menuStore.subscribe((menu) => {
         if (menu !== undefined) {
             node.addEventListener("scroll", hideMenu);
         } else {
@@ -17,6 +17,7 @@ export function menuCloser(node: HTMLElement) {
     return {
         destroy() {
             node.removeEventListener("scroll", hideMenu);
+            unsub();
         },
     };
 }

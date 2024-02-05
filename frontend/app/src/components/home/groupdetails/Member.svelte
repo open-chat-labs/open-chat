@@ -16,6 +16,8 @@
     import type { FullMember } from "openchat-client";
     import type { MemberRole } from "openchat-shared";
     import User from "./User.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -89,7 +91,8 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("promoteTo", { values: { role: ownerText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("promoteTo", { role: ownerText })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -100,7 +103,8 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("promoteTo", { values: { role: adminText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("promoteTo", { role: adminText })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -111,7 +115,8 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("demoteTo", { values: { role: adminText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("demoteTo", { role: adminText })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -122,7 +127,10 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("promoteTo", { values: { role: moderatorText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("promoteTo", {
+                                            role: moderatorText,
+                                        })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -133,7 +141,10 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("demoteTo", { values: { role: moderatorText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("demoteTo", {
+                                            role: moderatorText,
+                                        })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -144,7 +155,8 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">
-                                    {$_("demoteTo", { values: { role: memberText } })}
+                                    <Translatable
+                                        resourceKey={i18nKey("demoteTo", { role: memberText })} />
                                 </div>
                             </MenuItem>
                         {/if}
@@ -154,7 +166,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("blockUser")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("blockUser")} />
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canRemoveMember}
@@ -163,7 +177,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("remove")}</div>
+                                <div slot="text">
+                                    <Translatable resourceKey={i18nKey("remove")} />
+                                </div>
                             </MenuItem>
                         {/if}
                     </Menu>

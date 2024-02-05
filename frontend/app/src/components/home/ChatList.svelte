@@ -6,6 +6,7 @@
     import ChatSummary from "./ChatSummary.svelte";
     import { _ } from "svelte-i18n";
     import {
+        type ChatListScope,
         type ChatSummary as ChatSummaryType,
         type GroupMatch,
         type UserSummary,
@@ -13,21 +14,19 @@
         type GroupSearchResponse,
         routeForChatIdentifier,
         chatIdentifiersEqual,
-        type ChannelMatch,
         emptyCombinedUnreadCounts,
+        chatIdentifierToString,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
+    import { afterUpdate, beforeUpdate, createEventDispatcher, getContext, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
     import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import { chatListScroll } from "../../stores/scrollPos";
     import Button from "../Button.svelte";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { exploreGroupsDismissed } from "../../stores/settings";
-    import { rightPanelHistory } from "../../stores/rightPanel";
     import GroupChatsHeader from "./communities/GroupChatsHeader.svelte";
     import DirectChatsHeader from "./communities/DirectChatsHeader.svelte";
     import FavouriteChatsHeader from "./communities/FavouriteChatsHeader.svelte";
@@ -36,18 +35,22 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import FilteredUsername from "../FilteredUsername.svelte";
     import ChatListSectionButton from "./ChatListSectionButton.svelte";
+    import Diamond from "../icons/Diamond.svelte";
+    import BrowseChannels from "./communities/details/BrowseChannels.svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    let channelSearchResults: Promise<ChannelMatch[]> | undefined = undefined;
     let searchTerm: string = "";
     let searchResultsAvailable: boolean = false;
+    let chatsScrollTop: number = 0;
+    let previousScope: ChatListScope | undefined = undefined;
+    let previousView: "chats" | "threads" = "chats";
 
     const dispatch = createEventDispatcher();
-
-    let view: "chats" | "threads" = "chats";
 
     $: createdUser = client.user;
     $: selectedChatId = client.selectedChatId;
@@ -66,11 +69,12 @@
         ($chatListScope.kind === "none" || $chatListScope.kind === "group_chat") &&
         !$exploreGroupsDismissed &&
         !searchResultsAvailable;
-    $: showBrowseChannnels = $chatListScope.kind === "community" && !searchResultsAvailable;
+    $: showBrowseChannnels = $chatListScope.kind === "community";
     $: unreadDirectCounts = client.unreadDirectCounts;
     $: unreadGroupCounts = client.unreadGroupCounts;
     $: unreadFavouriteCounts = client.unreadFavouriteCounts;
     $: unreadCommunityChannelCounts = client.unreadCommunityChannelCounts;
+    $: view = "chats" as "chats" | "threads";
 
     let unreadCounts = emptyCombinedUnreadCounts();
     $: {
@@ -99,8 +103,7 @@
     }
 
     $: {
-        // need to make sure that we reset the view each time the chat list scope changes
-        if ($chatListScope) {
+        if (view === "threads" && searchTerm !== "") {
             view = "chats";
         }
     }
@@ -142,7 +145,6 @@
 
     function chatWith(userId: string): void {
         dispatch("chatWith", { kind: "direct_chat", userId });
-        closeSearch();
     }
 
     /**
@@ -151,59 +153,50 @@
      */
     function selectGroup({ chatId }: GroupMatch): void {
         page(routeForChatIdentifier($chatListScope.kind, chatId));
-        closeSearch();
-    }
-
-    function selectChannel({ id }: ChannelMatch): void {
-        page(routeForChatIdentifier($chatListScope.kind, id));
-        closeSearch();
-    }
-
-    function closeSearch() {
-        dispatch("searchEntered", "");
+        searchTerm = "";
     }
 
     function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
-        chatScrollTop = chatListElement.scrollTop;
         const url = routeForChatIdentifier($chatListScope.kind, ev.detail.id);
         page(url);
-        closeSearch();
+        searchTerm = "";
     }
 
     let chatListElement: HTMLElement;
-    let chatScrollTop = 0;
 
-    onMount(() => {
-        tick().then(() => {
-            if (chatListElement) {
-                chatListElement.scrollTop = $chatListScroll;
-            }
-        });
-
-        return () => {
-            chatListScroll.set(chatScrollTop);
-        };
+    beforeUpdate(() => {
+        if (previousScope === $chatListScope && view !== "chats" && previousView === "chats") {
+            chatsScrollTop = chatListElement.scrollTop;
+        }
     });
 
-    function onSearchEntered(ev: CustomEvent<unknown>) {
-        setView("chats");
-        dispatch("searchEntered", ev.detail);
-    }
+    afterUpdate(() => {
+        if (previousScope !== $chatListScope) {
+            onScopeChanged();
+        } else if (previousView !== view) {
+            onViewChanged();
+        }
+    });
 
     function setView(v: "chats" | "threads"): void {
         view = v;
-        chatListElement.scrollTop = 0;
-        chatListScroll.set(0);
+
+        if (view === "threads") {
+            searchTerm = "";
+        }
     }
 
-    function showChannels() {
-        if ($chatListScope.kind === "community") {
-            rightPanelHistory.set([
-                {
-                    kind: "community_channels",
-                },
-            ]);
-        }
+    function onScopeChanged() {
+        previousScope = $chatListScope;
+        view = "chats";
+        chatsScrollTop = 0;
+        onViewChanged();
+    }
+
+    function onViewChanged() {
+        previousView = view;
+        const scrollTop = view === "chats" ? chatsScrollTop : 0;
+        tick().then(() => (chatListElement.scrollTop = scrollTop));
     }
 </script>
 
@@ -227,22 +220,20 @@
     <ChatListSearch
         bind:userSearchResults
         bind:groupSearchResults
-        bind:channelSearchResults
         bind:searchResultsAvailable
-        bind:searchTerm
-        on:searchEntered={onSearchEntered} />
+        bind:searchTerm />
 
     {#if $numberOfThreadsStore > 0}
         <div class="section-selector">
             <ChatListSectionButton
                 on:click={() => setView("chats")}
                 unread={unreadCounts.chats}
-                title={$_("chats")}
+                title={i18nKey("chats")}
                 selected={view === "chats"} />
             <ChatListSectionButton
                 unread={unreadCounts.threads}
                 on:click={() => setView("threads")}
-                title={$_("thread.previewTitle")}
+                title={i18nKey("thread.previewTitle")}
                 selected={view === "threads"} />
         </div>
     {/if}
@@ -253,9 +244,11 @@
         {:else}
             <div class="chat-summaries">
                 {#if searchResultsAvailable && chats.length > 0}
-                    <h3 class="search-subtitle">{$_("yourChats")}</h3>
+                    <h3 class="search-subtitle">
+                        <Translatable resourceKey={i18nKey("yourChats")} />
+                    </h3>
                 {/if}
-                {#each chats as chatSummary}
+                {#each chats as chatSummary (chatIdentifierToString(chatSummary.id))}
                     <ChatSummary
                         {chatSummary}
                         selected={chatIdentifiersEqual($selectedChatId, chatSummary.id)}
@@ -266,44 +259,24 @@
                         on:toggleMuteNotifications />
                 {/each}
 
-                {#if channelSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await channelSearchResults then resp}
-                            {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("communities.otherChannels")}</h3>
-                                {#each resp as channel, i (channel.id.channelId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.groupAvatarUrl(channel.avatar)}
-                                        on:click={() => selectChannel(channel)}>
-                                        <h4 class="search-item-title">
-                                            {channel.name}
-                                        </h4>
-                                        <p title={channel.description} class="search-item-desc">
-                                            {channel.description}
-                                        </p>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
-
                 {#if userSearchResults !== undefined}
                     <div class="search-matches">
                         {#await userSearchResults then resp}
                             {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("users")}</h3>
+                                <h3 class="search-subtitle">
+                                    <Translatable resourceKey={i18nKey("users")} />
+                                </h3>
                                 {#each resp as user, i (user.userId)}
                                     <SearchResult
                                         index={i}
                                         avatarUrl={client.userAvatarUrl(user)}
                                         on:click={() => chatWith(user.userId)}>
                                         <div class="user-result">
-                                            <h4 class:diamond={user.diamond}>
+                                            <h4>
                                                 <FilteredUsername
                                                     {searchTerm}
                                                     username={user.displayName ?? user.username} />
+                                                <Diamond status={user.diamondStatus} />
                                             </h4>
                                             <div class="username">
                                                 <FilteredUsername
@@ -321,7 +294,9 @@
                     <div class="search-matches">
                         {#await groupSearchResults then resp}
                             {#if resp.kind === "success" && resp.matches.length > 0}
-                                <h3 class="search-subtitle">{$_("publicGroups")}</h3>
+                                <h3 class="search-subtitle">
+                                    <Translatable resourceKey={i18nKey("publicGroups")} />
+                                </h3>
                                 {#each resp.matches as group, i (group.chatId.groupId)}
                                     <SearchResult
                                         index={i}
@@ -345,17 +320,16 @@
                     <div class="disc">
                         <Compass size={$iconSize} color={"var(--icon-txt)"} />
                     </div>
-                    <div class="label">{$_("exploreGroups")}</div>
+                    <div class="label">
+                        <Translatable resourceKey={i18nKey("exploreGroups")} />
+                    </div>
                     <div on:click={() => exploreGroupsDismissed.set(true)} class="close">
                         <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
                     </div>
                 </div>
             {/if}
             {#if showBrowseChannnels}
-                <div class="browse-channels" on:click={showChannels}>
-                    <div class="disc hash">#</div>
-                    <div class="label">{$_("communities.browseChannels")}</div>
-                </div>
+                <BrowseChannels {searchTerm} />
             {/if}
         {/if}
     </div>
@@ -365,12 +339,14 @@
             <div class="join">
                 <ButtonGroup align="center">
                     <Button secondary small on:click={cancelPreview}>
-                        {$_("leave")}
+                        <Translatable resourceKey={i18nKey("leave")} />
                     </Button>
                     <Button
                         loading={joiningCommunity}
                         disabled={joiningCommunity}
-                        on:click={joinCommunity}>{$_("communities.joinCommunity")}</Button>
+                        on:click={joinCommunity}
+                        ><Translatable
+                            resourceKey={i18nKey("communities.joinCommunity")} /></Button>
                 </ButtonGroup>
             </div>
         </PreviewWrapper>
@@ -428,8 +404,7 @@
         @include ellipsis();
     }
 
-    .explore-groups,
-    .browse-channels {
+    .explore-groups {
         position: relative;
         display: flex;
         align-items: center;
@@ -459,10 +434,6 @@
             width: toRem(48);
             background-color: var(--icon-hv);
             border-radius: 50%;
-
-            &.hash {
-                @include font-size(fs-120);
-            }
         }
     }
 
@@ -470,10 +441,6 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-
-        .diamond {
-            @include diamond();
-        }
 
         .username {
             font-weight: 200;

@@ -14,11 +14,11 @@ impl SwapClient for ICPSwapClient {
         self.deposit(amount).await.map(|_| ())
     }
 
-    async fn swap(&self, amount: u128, min_amount_out: u128) -> CallResult<u128> {
+    async fn swap(&self, amount: u128, min_amount_out: u128) -> CallResult<Result<u128, String>> {
         self.swap(amount, min_amount_out).await
     }
 
-    async fn withdraw(&self, amount: u128) -> CallResult<u128> {
-        self.withdraw(amount).await
+    async fn withdraw(&self, successful_swap: bool, amount: u128) -> CallResult<u128> {
+        self.withdraw(successful_swap, amount).await
     }
 }

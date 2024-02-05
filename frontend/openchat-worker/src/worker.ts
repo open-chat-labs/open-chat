@@ -67,10 +67,7 @@ function handleAgentEvent(ev: Event): void {
 
 const sendError = (correlationId: string, payload?: unknown) => {
     return (error: unknown) => {
-        logger?.error("WORKER: sending error: ", error);
-        if (payload !== undefined) {
-            console.error("WORKER: error caused by payload: ", payload);
-        }
+        logger?.error("WORKER: error caused by payload: ", error, payload);
         postMessage({
             kind: "worker_error",
             correlationId,
@@ -301,22 +298,6 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
-            case "migrateUserPrincipal":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.migrateUserPrincipal(payload.userId),
-                );
-                break;
-
-            case "initUserPrincipalMigration":
-                executeThenReply(
-                    payload,
-                    correlationId,
-                    agent.initUserPrincipalMigration(payload.newPrincipal).then(() => undefined),
-                );
-                break;
-
             case "getUserStorageLimits":
                 executeThenReply(payload, correlationId, agent.getUserStorageLimits());
                 break;
@@ -393,7 +374,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinGroup(payload.chatId, payload.credential),
+                    agent.joinGroup(payload.chatId, payload.localUserIndex, payload.credential),
                 );
                 break;
 
@@ -401,7 +382,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.joinCommunity(payload.id, payload.credential),
+                    agent.joinCommunity(payload.id, payload.localUserIndex, payload.credential),
                 );
                 break;
 
@@ -553,6 +534,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.event,
                         payload.rulesAccepted,
                         payload.communityRulesAccepted,
+                        payload.messageFilterFailed,
                     ),
                 );
                 break;
@@ -569,7 +551,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.registerUser(payload.username, payload.displayName, payload.referralCode),
+                    agent.registerUser(payload.username, payload.referralCode),
                 );
                 break;
 
@@ -601,7 +583,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsers(payload.chatId, payload.userIds),
+                    agent.inviteUsers(payload.chatId, payload.localUserIndex, payload.userIds),
                 );
                 break;
 
@@ -609,7 +591,11 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.inviteUsersToCommunity(payload.id, payload.userIds),
+                    agent.inviteUsersToCommunity(
+                        payload.id,
+                        payload.localUserIndex,
+                        payload.userIds,
+                    ),
                 );
                 break;
 
@@ -856,6 +842,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 );
                 break;
 
+            case "addMessageFilter":
+                executeThenReply(payload, correlationId, agent.addMessageFilter(payload.regex));
+                break;
+
+            case "removeMessageFilter":
+                executeThenReply(payload, correlationId, agent.removeMessageFilter(payload.id));
+                break;
+
             case "suspendUser":
                 executeThenReply(
                     payload,
@@ -897,6 +891,14 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.setUserUpgradeConcurrency(payload.value),
+                );
+                break;
+
+            case "setDiamondMembershipFees":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setDiamondMembershipFees(payload.fees),
                 );
                 break;
 
@@ -993,6 +995,19 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.threadRootMessageIndex,
                         payload.messageId,
                         payload.deleteMessage,
+                    ),
+                );
+                break;
+
+            case "approveTransfer":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTransfer(
+                        payload.spender,
+                        payload.ledger,
+                        payload.amount,
+                        payload.expiresIn,
                     ),
                 );
                 break;
@@ -1229,7 +1244,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 break;
 
             case "updateRegistry":
-                executeThenReply(payload, correlationId, agent.getRegistry());
+                streamReplies(payload, correlationId, agent.getRegistry());
                 break;
 
             case "setCommunityIndexes":
@@ -1327,6 +1342,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                         payload.messageContext,
                         payload.messageId,
                         payload.transfer,
+                        payload.decimals,
                     ),
                 );
                 break;
@@ -1344,6 +1360,121 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     payload,
                     correlationId,
                     agent.userClient.saveCryptoAccount(payload.namedAccount),
+                );
+                break;
+
+            case "canSwap":
+                executeThenReply(payload, correlationId, agent.canSwap(payload.tokenLedgers));
+                break;
+
+            case "getTokenSwaps":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getTokenSwaps(payload.inputTokenLedger, payload.outputTokenLedgers),
+                );
+                break;
+
+            case "getTokenSwapQuotes":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.getTokenSwapQuotes(
+                        payload.inputTokenLedger,
+                        payload.outputTokenLedger,
+                        payload.amountIn,
+                    ),
+                );
+                break;
+
+            case "swapTokens":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.swapTokens(
+                        payload.swapId,
+                        payload.inputTokenDetails,
+                        payload.outputTokenDetails,
+                        payload.amountIn,
+                        payload.minAmountOut,
+                        payload.dex,
+                    ),
+                );
+                break;
+
+            case "tokenSwapStatus":
+                executeThenReply(payload, correlationId, agent.tokenSwapStatus(payload.swapId));
+                break;
+
+            case "deleteDirectChat":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.deleteDirectChat(payload.userId, payload.blockUser),
+                );
+                break;
+
+            case "diamondMembershipFees":
+                executeThenReply(payload, correlationId, agent.diamondMembershipFees());
+                break;
+
+            case "reportedMessages":
+                executeThenReply(payload, correlationId, agent.reportedMessages(payload.userId));
+                break;
+
+            case "exchangeRates":
+                executeThenReply(payload, correlationId, agent.exchangeRates());
+                break;
+
+            case "setTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.setTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "approveTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.approveTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "rejectTranslationCorrection":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.rejectTranslationCorrection(payload.correction),
+                );
+                break;
+
+            case "getTranslationCorrections":
+                executeThenReply(payload, correlationId, agent.getTranslationCorrections());
+                break;
+
+            case "acceptP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.acceptP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
+                );
+                break;
+
+            case "cancelP2PSwap":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.cancelP2PSwap(
+                        payload.chatId,
+                        payload.threadRootMessageIndex,
+                        payload.messageId,
+                    ),
                 );
                 break;
 

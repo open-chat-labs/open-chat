@@ -1,0 +1,21 @@
+// This is a trimmed down version of the full candid file which can be found here -
+// https://dashboard.internetcomputer.org/canister/ne2vj-6yaaa-aaaag-qb3ia-cai
+
+type QuoteArgs = record {
+  amountIn: text;
+  amountOutMinimum: text;
+  zeroForOne: bool;
+};
+type QuoteResponse = variant {
+  err: Error;
+  ok: nat;
+};
+type Error = variant {
+  CommonError;
+  InsufficientFunds;
+  InternalError: text;
+  UnsupportedToken: text;
+};
+service : {
+  quoteForAll: (QuoteArgs) -> (QuoteResponse) query;
+}

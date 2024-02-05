@@ -51,47 +51,71 @@ function validateInput(value: string, powTenPerWhole: number): [string | undefin
     return ["", BigInt(0)];
 }
 
-function parseBigInt(value: string): bigint | undefined {
+export function parseBigInt(value: string): bigint | undefined {
     if (value.length === 0) return BigInt(0);
     return integerRegex.test(value) ? BigInt(value) : undefined;
 }
 
 export function formatTokens(
     amount: bigint,
-    minDecimals: number,
     powTenPerWhole: number,
-    decimalSeparatorOverride?: string
+    decimalSeparatorOverride?: string,
+    fullPrecision = false,
 ): string {
     if (amount < 0) {
         amount = BigInt(0);
     }
-    return format(amount, minDecimals, powTenPerWhole, decimalSeparatorOverride);
+    return format(amount, powTenPerWhole, decimalSeparatorOverride, fullPrecision);
 }
 
 function format(
     units: bigint,
-    minDecimals: number,
     powTenPerWhole: number,
-    decimalSeparatorOverride?: string
+    decimalSeparatorOverride: string | undefined,
+    fullPrecision: boolean
 ): string {
+    // This is a bespoke notion of significant figures!
+    const maxSignificantFigures = 6;
+
+    // 1. Always show the full integral part of the number
+    // 2. If the integral part >= 6 digits then remove the fractional part
+    // 3. Otherwise if there is an integral part the max total number of digits (integral + fractional) = 6
+    // 4. If there is no integral part then the max number of significant figures = 6
+    // 5. Pad the fractional part with up to 2 '0's trying to keep the total number of digits <= 6
+
     const unitsPerWhole = BigInt(Math.pow(10, powTenPerWhole));
     const decimalSeparator = decimalSeparatorOverride ?? getDecimalSeparator(get(locale));
     const integral = units / unitsPerWhole;
     const integralString = integral.toString();
-
     const fractional = units % unitsPerWhole;
+
     let fractionalString = fractional.toString().padStart(powTenPerWhole, "0");
 
-    let countToTrim = 0;
-    while (
-        fractionalString.length - countToTrim > minDecimals &&
-        fractionalString[fractionalString.length - 1 - countToTrim] === "0"
-    ) {
-        countToTrim++;
+    if (!fullPrecision) {
+        if (integral > 0) {
+            const maxFractionalDecimalPlaces = Math.max(maxSignificantFigures - integralString.length, 0);
+            if (fractionalString.length > maxFractionalDecimalPlaces) {
+                fractionalString = fractionalString.substring(0, maxFractionalDecimalPlaces);
+            }
+
+        } else {
+            const significantFigures = fractionalString.replace(/^0+/, '').length;
+            if (significantFigures > maxSignificantFigures) {
+                const indexToRemove = maxSignificantFigures + fractionalString.length - significantFigures
+                fractionalString = fractionalString.substring(0, indexToRemove);
+            }
+        }
     }
 
-    if (countToTrim > 0) {
-        fractionalString = fractionalString.substr(0, fractionalString.length - countToTrim);
+    // Remove trailing zeros leaving 0, 1, or 2 depending on how many integral digits we have already
+    const minDecimalPlaces = Math.max(0, Math.min(2, maxSignificantFigures - integralString.length));
+
+    for (let i = fractionalString.length - 1; i >= minDecimalPlaces; i--) {
+        if (fractionalString[i] === '0') {
+            fractionalString = fractionalString.slice(0, -1);
+        } else {
+            break;
+        }
     }
 
     return fractionalString.length > 0

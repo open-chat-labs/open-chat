@@ -70,6 +70,12 @@ export class SelectedChatInvalid extends Event {
     }
 }
 
+export class UserSuspensionChanged extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
 export class ThreadSelected extends CustomEvent<{
     initiating: boolean;
     threadRootEvent: EventWrapper<Message>;

@@ -24,6 +24,19 @@ pub struct TokenInfo {
     pub fee: u128,
 }
 
+impl TryFrom<Cryptocurrency> for TokenInfo {
+    type Error = ();
+
+    fn try_from(value: Cryptocurrency) -> Result<Self, Self::Error> {
+        Ok(TokenInfo {
+            ledger: value.ledger_canister_id().ok_or(())?,
+            decimals: value.decimals().ok_or(())?,
+            fee: value.fee().ok_or(())?,
+            token: value,
+        })
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum OrderType {
     Bid,

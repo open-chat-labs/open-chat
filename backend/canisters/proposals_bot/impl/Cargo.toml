@@ -16,6 +16,7 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { path = "../../../libraries/canister_state_macros" }
 canister_timer_jobs = { path = "../../../libraries/canister_timer_jobs" }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../../community/api" }
 community_canister_c2c_client = { path = "../../community/c2c_client" }
 fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
@@ -35,6 +36,8 @@ icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 msgpack = { path = "../../../libraries/msgpack" }
+nns_governance_canister = { path = "../../../external_canisters/nns_governance/api" }
+nns_governance_canister_c2c_client = { path = "../../../external_canisters/nns_governance/c2c_client" }
 proposals_bot_canister = { path = "../api" }
 rand = { workspace = true }
 registry_canister = { path = "../../../canisters/registry/api" }

@@ -1,13 +1,13 @@
 <script lang="ts">
     import Button from "../Button.svelte";
-    import { _ } from "svelte-i18n";
     import page from "page";
     import { getContext } from "svelte";
     import type { ChatListScope, OpenChat } from "openchat-client";
-    import { pushRightPanelHistory } from "../../stores/rightPanel";
     import CommunityCard from "./communities/explore/CommunityCard.svelte";
     import PreviewWrapper from "./communities/PreviewWrapper.svelte";
     import { routeForScope } from "../../routes";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -21,14 +21,6 @@
         if ($selectedCommunity) {
             client.removeCommunity($selectedCommunity.id);
             page(routeForScope(client.getDefaultScope()));
-        }
-    }
-
-    function showChannels() {
-        if ($chatListScope.kind === "community") {
-            pushRightPanelHistory({
-                kind: "community_channels",
-            });
         }
     }
 
@@ -67,21 +59,23 @@
                 <Button
                     loading={joiningCommunity}
                     disabled={joiningCommunity}
-                    on:click={joinCommunity}>{$_("communities.joinCommunity")}</Button>
+                    on:click={joinCommunity}
+                    ><Translatable resourceKey={i18nKey("communities.joinCommunity")} /></Button>
                 <Button secondary small on:click={cancelPreview}>
-                    {$_("leave")}
+                    <Translatable resourceKey={i18nKey("leave")} />
                 </Button>
             </div>
         </PreviewWrapper>
     </div>
 {:else}
     <div class="wrapper">
-        <h2 class="title">{$_(title)}</h2>
-        <p class="subtitle">{$_(message)}</p>
+        <h2 class="title"><Translatable resourceKey={i18nKey(title)} /></h2>
+        <p class="subtitle"><Translatable resourceKey={i18nKey(message)} /></p>
         {#if $chatListScope.kind === "community"}
-            <Button on:click={showChannels}>{$_("communities.browseChannels")}</Button>
+            <Button><Translatable resourceKey={i18nKey("communities.browseChannels")} /></Button>
         {:else if $chatListScope.kind === "group_chat"}
-            <Button on:click={() => page("/groups")}>{$_("discoverMoreGroups")}</Button>
+            <Button on:click={() => page("/groups")}
+                ><Translatable resourceKey={i18nKey("discoverMoreGroups")} /></Button>
         {/if}
     </div>
 {/if}

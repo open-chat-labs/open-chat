@@ -15,7 +15,6 @@ pub enum Response {
     ChatNotFound,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 

@@ -7,7 +7,6 @@
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
-    import { _ } from "svelte-i18n";
     import type { ChatType, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import { currentTheme } from "../../theme/themes";
@@ -26,7 +25,7 @@
     export let fill: boolean;
     export let pinned: boolean;
     export let crypto: boolean;
-    export let dateFormatter: (date: Date) => string = client.toShortTimeString;
+    export let dateFormatter: (date: Date) => string = (date) => client.toShortTimeString(date);
     export let deleted: boolean;
     export let undeleting: boolean;
 

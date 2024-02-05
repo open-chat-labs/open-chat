@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Extract the args
 TITLE=$1

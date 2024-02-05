@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import { fontSizeScale, setFontScale } from "../../../stores/fontSize";
     import Range from "../../Range.svelte";
 </script>

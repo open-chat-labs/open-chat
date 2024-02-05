@@ -39,3 +39,11 @@ pub fn caller_is_proposals_bot() -> Result<(), String> {
         Err("Caller is not the proposals_bot".to_string())
     }
 }
+
+pub fn caller_is_escrow_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_escrow_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the escrow canister".to_string())
+    }
+}

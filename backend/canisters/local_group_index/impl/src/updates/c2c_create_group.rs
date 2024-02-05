@@ -7,7 +7,7 @@ use local_group_index_canister::c2c_create_group::{Response::*, *};
 use types::{BuildVersion, CanisterId, CanisterWasm, ChatId, Cycles};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
+use utils::consts::{min_cycles_balance, CREATE_CANISTER_CYCLES_FEE};
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
@@ -31,7 +31,10 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
             mutate_state(|state| commit(chat_id, wasm_version, state));
-            Success(SuccessResult { chat_id })
+            Success(SuccessResult {
+                chat_id,
+                local_user_index_canister_id: prepare_ok.local_user_index_canister_id,
+            })
         }
         Err(error) => {
             let mut canister_id = None;
@@ -46,6 +49,7 @@ async fn c2c_create_group(args: Args) -> Response {
 
 struct PrepareOk {
     canister_id: Option<CanisterId>,
+    local_user_index_canister_id: CanisterId,
     canister_wasm: CanisterWasm,
     cycles_to_use: Cycles,
     init_canister_args: InitGroupCanisterArgs,
@@ -54,7 +58,7 @@ struct PrepareOk {
 fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+        if !utils::cycles::can_spend_cycles(cycles_required, min_cycles_balance(state.data.test_mode)) {
             return Err(CyclesBalanceTooLow);
         }
         cycles_required
@@ -64,6 +68,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
 
     let canister_id = state.data.canister_pool.pop();
     let canister_wasm = state.data.group_canister_wasm_for_new_canisters.clone();
+    let local_user_index_canister_id = state.data.local_user_index_canister_id;
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -80,9 +85,10 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         group_index_canister_id: state.data.group_index_canister_id,
         local_group_index_canister_id: state.env.canister_id(),
         user_index_canister_id: state.data.user_index_canister_id,
-        local_user_index_canister_id: state.data.local_user_index_canister_id,
+        local_user_index_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
+        escrow_canister_id: state.data.escrow_canister_id,
         avatar: args.avatar,
         gate: args.gate,
         wasm_version: canister_wasm.version,
@@ -91,6 +97,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
 
     Ok(PrepareOk {
         canister_id,
+        local_user_index_canister_id,
         canister_wasm,
         cycles_to_use,
         init_canister_args,

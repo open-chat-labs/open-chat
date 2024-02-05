@@ -19,7 +19,6 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
             let deleted_by = message.deleted_by.as_ref().map(|d| d.deleted_by);
 
             match deleted_by {
-                None => MessageNotDeleted,
                 Some(u) if u != my_user_id => NotAuthorized,
                 _ => {
                     if matches!(message.content, MessageContentInternal::Deleted(_)) {

@@ -70,14 +70,14 @@
         background-color: var(--avatar-bg);
         background-position: center;
         background-size: cover;
-        border-radius: 50%;
+        border-radius: var(--avatar-rd);
     }
 
     .avatar {
         position: relative;
         margin: 0 auto;
         transition: box-shadow 200ms ease-in-out;
-        border-radius: 50%;
+        border-radius: var(--avatar-rd);
 
         &.tiny {
             width: toRem(20);

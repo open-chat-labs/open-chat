@@ -20,7 +20,7 @@ fn icp_is_burned_into_cycles() {
         *controller,
         canister_ids.icp_ledger,
         canister_ids.cycles_dispenser,
-        1_000_000_000_000u64,
+        1_000_000_000_000,
     );
 
     let icp_balance_e8s = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);

@@ -46,6 +46,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         disabledTxt: txtLow,
         primary,
         code: "#f36D28",
+        font: '"Roboto", sans-serif',
+        "font-bold": '"Manrope", sans-serif',
 
         unread: {
             mute: "rgba(255,255,255,0.2)",
@@ -136,6 +138,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
                 bg: chatPanelDark,
             },
 
+            nav: {
+                bg: backgroundBlack,
+            },
+
             right: {
                 bg: chatPanelDark,
                 modal: backgroundBlack,
@@ -145,6 +151,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         avatar: {
             bg: "rgba(255, 255, 255,25%)",
             sh: "none",
+            rd: "50%",
         },
 
         chatSearch: {
@@ -278,6 +285,10 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         toggle: {
             bg: dark45,
+            rd: {
+                track: "18px",
+                thumb: "50%",
+            },
         },
 
         thread: {
@@ -304,6 +315,12 @@ export function darkTheme(defaultTheme: Theme): Theme {
         card: {
             rd: "8px",
             sh: "none",
+        },
+
+        nav: {
+            icon: {
+                rd: "50%",
+            },
         },
 
         landing: {

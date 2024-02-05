@@ -1,6 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{AccessGate, CommunityId, CommunityPermissions, Document, Rules, SourceGroup, UserId};
+use types::{AccessGate, CanisterId, CommunityId, CommunityPermissions, Document, Rules, SourceGroup, UserId};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -30,4 +30,5 @@ pub enum Response {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
     pub community_id: CommunityId,
+    pub local_user_index_canister_id: CanisterId,
 }

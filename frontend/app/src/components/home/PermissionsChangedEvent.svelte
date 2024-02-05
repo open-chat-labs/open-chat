@@ -5,8 +5,8 @@
     import type { OpenChat, UserSummary, PermissionsChanged, Level } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import { buildDisplayName } from "../../utils/user";
+    import { i18nKey, interpolate } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -19,9 +19,17 @@
     $: me = event.changedBy === user?.userId;
     $: changedByStr = buildDisplayName($userStore, event.changedBy, me);
 
-    $: text = interpolateLevel("permissionsChangedBy", level, true, {
-        changedBy: changedByStr,
-    });
+    $: text = interpolate(
+        $_,
+        i18nKey(
+            "permissionsChangedBy",
+            {
+                changedBy: changedByStr,
+            },
+            level,
+            true,
+        ),
+    );
 </script>
 
 <NonMessageEvent {text} {timestamp} />

@@ -1,6 +1,5 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import { _ } from "svelte-i18n";
     import { rtlStore } from "../../../stores/rtl";
     import { AvatarSize, type CommunitySummary, type OpenChat } from "openchat-client";
     import SectionHeader from "../../SectionHeader.svelte";
@@ -8,6 +7,8 @@
     import { getContext } from "svelte";
     import VisibilityLabel from "../VisibilityLabel.svelte";
     import { pushRightPanelHistory } from "../../../stores/rightPanel";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +38,7 @@
                 <VisibilityLabel isPublic={community.public} />
                 <div class="members">
                     <span class="num">{community.memberCount.toLocaleString()}</span>
-                    {$_("members")}
+                    <Translatable resourceKey={i18nKey("members")} />
                 </div>
             </div>
         </div>

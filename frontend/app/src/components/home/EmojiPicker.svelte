@@ -24,7 +24,6 @@
 <style lang="scss">
     emoji-picker {
         width: 100%;
-        --num-columns: 24;
         --emoji-padding: 0.3rem;
         --emoji-size: 1.8rem;
         --background: transparent;
@@ -35,16 +34,8 @@
         --input-border-color: var(--bd);
         --input-padding: 8px 16px;
 
-        @include size-below(xxl) {
-            --num-columns: 17 !important;
-        }
+        --num-columns: 12 !important;
 
-        @include size-below(xl) {
-            --num-columns: 15 !important;
-        }
-        @include size-below(md) {
-            --num-columns: 12 !important;
-        }
         @include size-below(sm) {
             --num-columns: 11 !important;
         }
@@ -55,19 +46,8 @@
             --num-columns: 7 !important;
         }
 
-        &.reaction,
         &.thread {
-            --num-columns: 12 !important;
-
-            @include size-below(sm) {
-                --num-columns: 11 !important;
-            }
-            @include size-below(xs) {
-                --num-columns: 9 !important;
-            }
-            @include size-below(xxs) {
-                --num-columns: 7 !important;
-            }
+            --num-columns: 10 !important;
         }
     }
 </style>

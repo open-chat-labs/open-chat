@@ -124,6 +124,12 @@
                     >Do not use OpenChat to promote, coordinate, or execute financial scams.</strong>
                 Promoting a particular crypto token or NFT does not break this rule in general.
             </li>
+
+            <li>
+                <strong>Do not persistently send spam messages.</strong>
+                This includes repeatedly sending the same or meaningless messages, either in the same
+                chat or across multiple chats.
+            </li>
         </ul>
     </div>
 </CollapsibleCard>

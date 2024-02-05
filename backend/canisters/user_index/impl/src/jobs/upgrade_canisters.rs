@@ -118,4 +118,5 @@ fn on_failure(canister_id: CanisterId, from_version: BuildVersion, to_version: B
         from_version,
         to_version,
     });
+    start_job_if_required(state);
 }

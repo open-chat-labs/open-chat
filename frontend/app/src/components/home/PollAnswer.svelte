@@ -31,7 +31,7 @@
     function buildPollUsernames(
         userStore: UserLookup,
         voters: string[] | undefined,
-        myUserId: string | undefined
+        myUserId: string | undefined,
     ): string | undefined {
         if (voters === undefined || voters.length === 0 || !showVotes) return undefined;
         return client.buildUsernameList($_, new Set(voters), myUserId, userStore);
@@ -68,7 +68,7 @@
     }
 </script>
 
-<TooltipWrapper bind:longPressed position={"right"} align={"center"} enable={showVotes}>
+<TooltipWrapper bind:longPressed position={"right"} align={"middle"} enable={showVotes}>
     <div slot="target" class:readonly class="answer-text" class:finished on:click={onClick}>
         <Progress bg={"button"} {percent}>
             <div class="label">

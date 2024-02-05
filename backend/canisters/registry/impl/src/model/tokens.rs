@@ -9,12 +9,6 @@ pub struct Tokens {
 }
 
 impl Tokens {
-    pub fn rename_block_index_to_transaction_index(&mut self) {
-        for token in self.tokens.iter_mut() {
-            token.transaction_url_format = token.transaction_url_format.replace("block_index", "transaction_index");
-        }
-    }
-
     #[allow(clippy::too_many_arguments)]
     pub fn add(
         &mut self,
@@ -27,6 +21,7 @@ impl Tokens {
         info_url: String,
         how_to_buy_url: String,
         transaction_url_format: String,
+        supported_standards: Vec<String>,
         now: TimestampMillis,
     ) -> bool {
         if self.exists(ledger_canister_id) {
@@ -44,7 +39,7 @@ impl Tokens {
                 transaction_url_format,
                 added: now,
                 last_updated: now,
-                supported_standards: Vec::new(),
+                supported_standards,
             });
             self.last_updated = now;
             true
@@ -87,6 +82,16 @@ impl Tokens {
         if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
             if token.supported_standards != supported_standards {
                 token.supported_standards = supported_standards;
+                token.last_updated = now;
+            }
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn set_fee(&mut self, ledger_canister_id: CanisterId, fee: u128, now: TimestampMillis) {
+        if let Some(token) = self.tokens.iter_mut().find(|t| t.ledger_canister_id == ledger_canister_id) {
+            if token.fee != fee {
+                token.fee = fee;
                 token.last_updated = now;
             }
         }

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Pass in the dfx identity name
 # eg './upgrade-canister-prod-test.sh openchat user_index 1.0.0'
@@ -6,7 +6,7 @@
 IDENTITY=$1
 CANISTER_NAME=$2
 VERSION=$3
-WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
+WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", "prod" the commit Id or the release version
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

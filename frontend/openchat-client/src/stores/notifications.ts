@@ -3,6 +3,7 @@ import { derived, writable } from "svelte/store";
 import type { NotificationStatus } from "openchat-shared";
 import { createLsBoolStore } from "./localStorageSetting";
 import { configKeys } from "../utils/config";
+import { anonUser } from "./user";
 
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -45,7 +46,7 @@ function permissionStateToNotificationPermission(perm: PermissionState): Notific
 }
 
 function permissionToStatus(
-    permission: NotificationPermission | "pending-init"
+    permission: NotificationPermission | "pending-init",
 ): NotificationStatus {
     switch (permission) {
         case "pending-init":
@@ -60,16 +61,16 @@ function permissionToStatus(
 }
 
 export const notificationStatus = derived(
-    [softDisabledStore, browserPermissionStore],
-    ([softDisabled, browserPermission]) => {
-        if (!notificationsSupported) {
+    [softDisabledStore, browserPermissionStore, anonUser],
+    ([softDisabled, browserPermission, isAnonUser]) => {
+        if (!notificationsSupported || isAnonUser) {
             return "unsupported";
         }
         if (softDisabled) {
             return "soft-denied";
         }
         return permissionToStatus(browserPermission);
-    }
+    },
 );
 
 export async function askForNotificationPermission(): Promise<NotificationPermission> {

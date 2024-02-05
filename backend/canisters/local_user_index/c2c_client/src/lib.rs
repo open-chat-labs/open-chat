@@ -5,8 +5,10 @@ use types::CanisterId;
 
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
+generate_c2c_call!(c2c_diamond_membership_expiry_dates);
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(c2c_user_principals);
+generate_c2c_call!(chat_events);
 
 // Updates
 generate_c2c_call!(c2c_notify_low_balance);

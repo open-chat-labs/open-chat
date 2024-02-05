@@ -1,16 +1,28 @@
 <script lang="ts">
+    type Size = "large" | "medium" | "small" | "tiny";
+
     export let logo: string;
     export let mirror: boolean = true;
-    export let size: "large" | "small" | "tiny" = "large";
+    export let size: Size = "large";
     export let spin = true;
 
     let middle = new Array(9);
+
+    function coinSize(size: Size): string {
+        switch (size) {
+            case "large":
+                return "6rem";
+            case "medium":
+                return "5rem";
+            case "small":
+                return "3.5rem";
+            case "tiny":
+                return "2.2rem";
+        }
+    }
 </script>
 
-<div
-    class={`purse ${size}`}
-    class:mirror
-    style="--size: {size === 'large' ? '6rem' : size === 'small' ? '3.5rem' : '2.2rem'}">
+<div class={`purse ${size}`} class:mirror style="--size: {coinSize(size)}">
     <div class="coin" class:spin>
         <div class:flip={!spin} class="back face">
             <div style={`background-image: url(${logo})`} class="inner" />

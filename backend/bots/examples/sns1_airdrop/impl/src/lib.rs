@@ -54,7 +54,6 @@ struct Data {
     pub principals: HashSet<Principal>,
     pub avatar: Timestamped<Option<Document>>,
     pub completed: bool,
-    #[serde(default)]
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }

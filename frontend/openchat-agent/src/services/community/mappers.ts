@@ -41,7 +41,6 @@ import type {
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeRoleResponse,
-    ApiLocalUserIndexResponse,
     ApiMessagesByMessageIndexResponse,
     ApiRemoveMemberResponse,
     ApiRemoveMemberFromChannelResponse,
@@ -91,6 +90,7 @@ import {
     mention,
     messageContent,
     messageEvent,
+    messagesSuccessResponse,
     threadDetails,
     userGroup,
 } from "../common/chatMappers";
@@ -133,6 +133,9 @@ export function addMembersToChannelResponse(
     }
     if ("CommunityFrozen" in candid) {
         return CommonResponses.communityFrozen();
+    }
+    if ("InternalError" in candid) {
+        return CommonResponses.internalError();
     }
     throw new UnsupportedValueError(
         "Unexpected ApiAddMembersToChannelResponse type received",
@@ -177,6 +180,14 @@ function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFaile
     if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
         return "min_stake_not_met";
     }
+    if ("PaymentFailed" in candid) {
+        console.warn("PaymentFailed: ", candid);
+        return "payment_failed";
+    }
+    if ("InsufficientBalance" in candid) {
+        return "insufficient_balance";
+    }
+
     throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }
 
@@ -211,10 +222,6 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     }
 }
 
-export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): string {
-    return candid.Success.toString();
-}
-
 export async function messagesByMessageIndexResponse(
     principal: Principal,
     candid: ApiMessagesByMessageIndexResponse,
@@ -224,12 +231,7 @@ export async function messagesByMessageIndexResponse(
     if ("Success" in candid) {
         await ensureReplicaIsUpToDate(principal, chatId, candid.Success.chat_last_updated);
 
-        return {
-            events: candid.Success.messages.map(messageEvent),
-            expiredEventRanges: [],
-            expiredMessageRanges: [],
-            latestEventIndex: candid.Success.latest_event_index,
-        };
+        return messagesSuccessResponse(candid.Success);
     }
     if (
         "CallerNotInGroup" in candid ||

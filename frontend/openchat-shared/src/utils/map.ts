@@ -11,7 +11,7 @@ export class SafeMap<K, V> {
     protected constructor(
         private toString: (key: K) => string,
         private fromString: (key: string) => K,
-        protected _map: Map<string, V> = new Map<string, V>()
+        protected _map: Map<string, V> = new Map<string, V>(),
     ) {}
 
     merge(other: SafeMap<K, V>): SafeMap<K, V> {
@@ -26,10 +26,13 @@ export class SafeMap<K, V> {
             .filter(([k, v]) => {
                 return fn(v, k);
             })
-            .reduce((agg, [k, v]) => {
-                agg.set(k, v);
-                return agg;
-            }, new SafeMap<K, V>(this.toString, this.fromString));
+            .reduce(
+                (agg, [k, v]) => {
+                    agg.set(k, v);
+                    return agg;
+                },
+                new SafeMap<K, V>(this.toString, this.fromString),
+            );
     }
 
     clone(): SafeMap<K, V> {
@@ -61,6 +64,7 @@ export class SafeMap<K, V> {
     }
 
     delete(key: K): boolean {
+        if (this._map.size === 0) return false;
         return this._map.delete(this.toString(key));
     }
     forEach(callbackfn: (value: V, key: K) => void): void {
@@ -94,7 +98,7 @@ export class ChatMap<V> extends SafeMap<ChatIdentifier, V> {
         super(
             (k: ChatIdentifier) => JSON.stringify(k),
             (k: string) => JSON.parse(k) as ChatIdentifier,
-            _map
+            _map,
         );
     }
 
@@ -119,7 +123,7 @@ export class MessageContextMap<V> extends SafeMap<MessageContext, V> {
         super(
             (k: MessageContext) => JSON.stringify(k),
             (k: string) => JSON.parse(k) as MessageContext,
-            _map
+            _map,
         );
     }
 
@@ -132,7 +136,7 @@ export class CommunityMap<V> extends SafeMap<CommunityIdentifier, V> {
     constructor() {
         super(
             (k: CommunityIdentifier) => k.communityId,
-            (k: string) => ({ kind: "community", communityId: k })
+            (k: string) => ({ kind: "community", communityId: k }),
         );
     }
 
@@ -148,8 +152,8 @@ export class MessageMap<V> extends SafeMap<bigint, V> {
     constructor(entries?: readonly (readonly [bigint, V])[] | undefined) {
         super(
             (k: bigint) => k.toString(),
-            (k: string) => BigInt(k)
-        )
+            (k: string) => BigInt(k),
+        );
 
         if (entries !== undefined) {
             for (const [k, v] of entries) {
@@ -157,4 +161,13 @@ export class MessageMap<V> extends SafeMap<bigint, V> {
             }
         }
     }
+}
+
+export function getOrAdd<K, V>(map: Map<K, V>, key: K, value: V): V {
+    const existing = map.get(key);
+    if (existing !== undefined) {
+        return existing;
+    }
+    map.set(key, value);
+    return value;
 }

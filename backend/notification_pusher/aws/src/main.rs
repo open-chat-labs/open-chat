@@ -40,7 +40,7 @@ async fn main() -> Result<(), Error> {
         notifications_canister_ids,
         dynamodb_index_store,
         vapid_private_pem,
-        5,
+        10,
     )
     .await;
 

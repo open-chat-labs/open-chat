@@ -3,8 +3,9 @@
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import QRCode from "../QRCode.svelte";
     import type { OpenChat } from "openchat-client";
-    import { _ } from "svelte-i18n";
     import { toastStore } from "../../stores/toast";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     $: user = client.user;
@@ -13,15 +14,15 @@
 
     function onCopy() {
         navigator.clipboard.writeText(link).then(
-            () => toastStore.showSuccessToast("linkCopiedToClipboard"),
-            () => toastStore.showFailureToast("failedToCopyLinkToClipboard")
+            () => toastStore.showSuccessToast(i18nKey("linkCopiedToClipboard")),
+            () => toastStore.showFailureToast(i18nKey("failedToCopyLinkToClipboard")),
         );
     }
 </script>
 
 <div class="container">
     <div on:click={onCopy} class="link">
-        <div>{$_("tapForReferralLink")}</div>
+        <div><Translatable resourceKey={i18nKey("tapForReferralLink")} /></div>
         <CopyIcon size={"1em"} color={"var(--icon-txt)"} />
     </div>
     <QRCode text={link} size="larger" fullWidthOnMobile />

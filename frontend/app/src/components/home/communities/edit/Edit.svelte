@@ -23,9 +23,10 @@
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
     import { toastStore } from "../../../../stores/toast";
-    import { interpolateLevel } from "../../../../utils/i18n";
     import page from "page";
     import AreYouSure from "../../../AreYouSure.svelte";
+    import { i18nKey } from "../../../../i18n/i18n";
+    import Translatable from "../../../Translatable.svelte";
 
     export let original: CommunitySummary = createCandidateCommunity("", 0);
     export let originalRules: Rules;
@@ -38,18 +39,19 @@
     let step = 0;
     let busy = false;
     let confirming = false;
-    let candidate = original;
+    let candidate = structuredClone(original);
     let candidateRules = { ...originalRules, newVersion: false };
     let members: CandidateMember[] = [];
     let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
     let channelsValid = true;
     let detailsValid = true;
     let rulesValid = true;
-    $: steps = getSteps(editing, detailsValid, channelsValid, rulesValid);
+    let visibilityValid = true;
+    $: steps = getSteps(editing, detailsValid, visibilityValid, channelsValid, rulesValid);
     $: canEditPermissions = !editing || client.canChangeCommunityPermissions(candidate.id);
     $: permissionsDirty = client.haveCommunityPermissionsChanged(
         original.permissions,
-        candidate.permissions
+        candidate.permissions,
     );
     $: rulesDirty =
         editing &&
@@ -66,17 +68,18 @@
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
-    $: valid = detailsValid && channelsValid && rulesValid;
+    $: valid = detailsValid && channelsValid && rulesValid && visibilityValid;
 
     function getSteps(
         editing: boolean,
         detailsValid: boolean,
+        visibilityValid: boolean,
         channelsValid: boolean,
-        rulesValid: boolean
+        rulesValid: boolean,
     ) {
         let steps = [
             { labelKey: "communities.details", valid: detailsValid },
-            { labelKey: "communities.visibility", valid: true },
+            { labelKey: "communities.visibility", valid: visibilityValid },
             { labelKey: "communities.rules", valid: rulesValid },
             { labelKey: "permissions.permissions", valid: true },
         ];
@@ -112,7 +115,7 @@
         return client
             .inviteUsersToCommunity(
                 { kind: "community", communityId },
-                members.map((m) => m.user.userId)
+                members.map((m) => m.user.userId),
             )
             .then((resp) => {
                 if (resp !== "success") {
@@ -153,14 +156,14 @@
                     bannerDirty ? candidate.banner.blobData : undefined,
                     gateDirty ? candidate.gate : undefined,
                     candidate.public !== original.public ? candidate.public : undefined,
-                    languageDirty ? candidate.primaryLanguage : undefined
+                    languageDirty ? candidate.primaryLanguage : undefined,
                 )
                 .then((success: boolean) => {
                     if (success) {
-                        toastStore.showSuccessToast("communities.saved");
+                        toastStore.showSuccessToast(i18nKey("communities.saved"));
                         dispatch("close");
                     } else {
-                        toastStore.showFailureToast("communities.errors.saveFailed");
+                        toastStore.showFailureToast(i18nKey("communities.errors.saveFailed"));
                     }
                 })
                 .finally(() => (busy = false));
@@ -169,22 +172,22 @@
                 .createCommunity(
                     candidate,
                     candidateRules,
-                    channels.map((c) => c.name)
+                    channels.map((c) => c.name),
                 )
                 .then((response) => {
                     if (response.kind === "success") {
                         return optionallyInviteUsers(response.id)
                             .then(() => {
-                                toastStore.showSuccessToast("communities.created");
+                                toastStore.showSuccessToast(i18nKey("communities.created"));
                                 dispatch("close");
                                 page(`/community/${response.id}`);
                             })
                             .catch((_err) => {
-                                toastStore.showFailureToast("inviteUsersFailed");
+                                toastStore.showFailureToast(i18nKey("inviteUsersFailed"));
                                 step = 0;
                             });
                     } else {
-                        toastStore.showFailureToast(`communities.errors.${response.kind}`);
+                        toastStore.showFailureToast(i18nKey(`communities.errors.${response.kind}`));
                     }
                 })
                 .finally(() => (busy = false));
@@ -194,13 +197,13 @@
 
 {#if confirming}
     <AreYouSure
-        message={interpolateLevel("confirmMakeGroupPrivate", candidate.level, true)}
+        message={i18nKey("confirmMakeGroupPrivate", undefined, candidate.level, true)}
         action={save} />
 {/if}
 
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">
-        {editing ? $_("communities.edit") : $_("communities.create")}
+        <Translatable resourceKey={i18nKey(editing ? "communities.edit" : "communities.create")} />
     </div>
     <div class="body" slot="body">
         <StageHeader {steps} enabled on:step={changeStep} {step} />
@@ -213,6 +216,7 @@
                     <VisibilityControl
                         canEditDisappearingMessages={false}
                         bind:candidate
+                        bind:valid={visibilityValid}
                         {original}
                         {editing}
                         history={false} />
@@ -254,7 +258,8 @@
                         disabled={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => (step = step - 1)}>{$_("communities.back")}</Button>
+                        on:click={() => (step = step - 1)}
+                        ><Translatable resourceKey={i18nKey("communities.back")} /></Button>
                 {/if}
             </div>
             <div class="actions">
@@ -263,22 +268,28 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => dispatch("close")}
-                    secondary>{$_("cancel")}</Button>
+                    secondary><Translatable resourceKey={i18nKey("cancel")} /></Button>
 
                 {#if editing}
                     <Button
-                        disabled={!dirty || busy}
+                        disabled={!dirty || busy || !valid}
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{interpolateLevel("group.update", "community", true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.update",
+                                undefined,
+                                "community",
+                                true,
+                            )} /></Button>
                 {:else if step < steps.length - 1}
                     <Button
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => (step = step + 1)}>
-                        {$_("communities.next")}
+                        <Translatable resourceKey={i18nKey("communities.next")} />
                     </Button>
                 {:else}
                     <Button
@@ -287,7 +298,13 @@
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
                         on:click={() => save()}
-                        >{interpolateLevel("group.create", "community", true)}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                "group.create",
+                                undefined,
+                                "community",
+                                true,
+                            )} /></Button>
                 {/if}
             </div>
         </div>

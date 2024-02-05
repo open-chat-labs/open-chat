@@ -35,7 +35,7 @@ async fn create_group(mut args: Args) -> Response {
     {
         Ok(response) => match response {
             c2c_create_group::Response::Success(r) => {
-                mutate_state(|state| commit(r.chat_id, state));
+                mutate_state(|state| commit(r.chat_id, r.local_user_index_canister_id, state));
                 Success(SuccessResult { chat_id: r.chat_id })
             }
             c2c_create_group::Response::NameTaken => NameTaken,
@@ -108,7 +108,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
     }
 }
 
-fn commit(chat_id: ChatId, state: &mut RuntimeState) {
+fn commit(chat_id: ChatId, local_user_index_canister_id: CanisterId, state: &mut RuntimeState) {
     let now = state.env.now();
-    state.data.group_chats.create(chat_id, now);
+    state.data.group_chats.create(chat_id, local_user_index_canister_id, now);
 }

@@ -7,6 +7,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+- Split `sns_root` into its own package within `external_canisters` ([#5266](https://github.com/open-chat-labs/open-chat/pull/5266))
+
+## [[2.0.1017](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1017-cycles_dispenser)] - 2024-01-19
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
+## [[2.0.980](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.980-cycles_dispenser)] - 2023-12-19
+
+### Changed
+
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))

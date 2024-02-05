@@ -8,12 +8,6 @@ pub struct GroupsBeingImported {
     groups: HashMap<ChatId, GroupBeingImported>,
 }
 
-pub enum NextBatchResult {
-    Success(Vec<(ChatId, u64)>),
-    Continue,
-    Exit,
-}
-
 impl GroupsBeingImported {
     pub fn add(
         &mut self,
@@ -37,23 +31,15 @@ impl GroupsBeingImported {
         self.groups.contains_key(group_id)
     }
 
-    pub fn next_batch(&mut self, now: TimestampMillis) -> NextBatchResult {
-        if self.groups.is_empty() {
-            NextBatchResult::Exit
-        } else {
-            let mut batch = Vec::new();
-            for (chat_id, group) in self.groups.iter_mut().filter(|(_, g)| !g.is_complete()) {
-                if group.current_batch_started.is_none() {
-                    group.current_batch_started = Some(now);
-                    batch.push((*chat_id, group.bytes.len() as u64));
-                }
-            }
-            if batch.is_empty() {
-                NextBatchResult::Continue
-            } else {
-                NextBatchResult::Success(batch)
+    pub fn next_batch(&mut self, now: TimestampMillis) -> Vec<(ChatId, u64)> {
+        let mut batch = Vec::new();
+        for (chat_id, group) in self.groups.iter_mut().filter(|(_, g)| !g.is_complete()) {
+            if group.current_batch_started.is_none() {
+                group.current_batch_started = Some(now);
+                batch.push((*chat_id, group.bytes.len() as u64));
             }
         }
+        batch
     }
 
     // Returns true if the group bytes have all been imported, else false

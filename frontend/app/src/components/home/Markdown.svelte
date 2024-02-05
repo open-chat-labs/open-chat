@@ -46,10 +46,7 @@
 
     function replaceEveryone(text: string): string {
         if (!text.includes("@everyone")) return text;
-        return text.replace(
-            /(^|\W)(@everyone)($|\W)/gm,
-            "$1[**$2**](?everyone)$3"
-        );
+        return text.replace(/(^|\W)(@everyone)($|\W)/gm, "$1[**$2**](?everyone)$3");
     }
 
     function replaceDatetimes(text: string): string {
@@ -60,7 +57,10 @@
 
     $: {
         let parsed = replaceEveryone(
-            replaceUserGroupIds(replaceUserIds(replaceDatetimes(text)), $userGroups)
+            replaceUserGroupIds(
+                replaceUserIds(replaceDatetimes(client.stripLinkDisabledMarker(text))),
+                $userGroups,
+            ),
         );
         try {
             if (inline) {

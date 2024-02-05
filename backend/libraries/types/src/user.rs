@@ -1,5 +1,6 @@
 use crate::CanisterId;
 use candid::{CandidType, Principal};
+use icrc_ledger_types::icrc1::account::Account;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 
@@ -21,6 +22,15 @@ impl From<Principal> for UserId {
 impl From<UserId> for CanisterId {
     fn from(user_id: UserId) -> Self {
         user_id.0
+    }
+}
+
+impl From<UserId> for Account {
+    fn from(value: UserId) -> Self {
+        Account {
+            owner: Principal::from(value),
+            subaccount: None,
+        }
     }
 }
 

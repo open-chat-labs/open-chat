@@ -92,7 +92,7 @@ if (production && !process.env.USERGEEK_APIKEY) {
 if (production && !process.env.METERED_APIKEY) {
     throw Error("METERED_APIKEY environment variable not set");
 }
-const WEBPUSH_SERVICE_WORKER_PATH = "/_/raw/push_sw.js";
+const SERVICE_WORKER_PATH = `/service_worker.js?v=${version}`;
 
 console.log("BUILD_ENV", build_env);
 console.log("ENV", env);
@@ -157,7 +157,7 @@ function clean() {
 
 // Put external dependencies into their own bundle so that they get cached separately
 function manualChunks(id) {
-    if (id.includes("node_modules") || id.includes("vendor-")) {
+    if (id.includes("node_modules")) {
         return "vendor";
     }
 }
@@ -170,7 +170,9 @@ function watchExternalFiles() {
     return {
         name: "watch-external-files",
         buildStart() {
-            this.addWatchFile(path.resolve(dirname, "../openchat-push/lib/push_sw.js"));
+            this.addWatchFile(
+                path.resolve(dirname, "../openchat-service-worker/lib/service_worker.js"),
+            );
             this.addWatchFile(path.resolve(dirname, "../openchat-worker/lib/worker.js"));
         },
     };
@@ -252,7 +254,7 @@ export default {
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY,
             ),
-            "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
+            "process.env.SERVICE_WORKER_PATH": SERVICE_WORKER_PATH,
         }),
 
         html({
@@ -362,7 +364,7 @@ export default {
 
         production && filesize(),
 
-        // Pull in the worker and push_sw
+        // Pull in the worker and service worker
         copy({
             targets: [
                 {
@@ -370,28 +372,11 @@ export default {
                     dest: "build",
                 },
                 {
-                    src: "../openchat-push/lib/*",
-                    dest: "build/_/raw",
-                    transform: transformSourceMappingUrl,
+                    src: "../openchat-service-worker/lib/*",
+                    dest: "build",
                 },
             ],
             hook: "generateBundle",
-        }),
-
-        // Copy source maps to '_/raw' so that they can be loaded without going through the certifying service worker
-        copy({
-            targets: [
-                {
-                    src: "build/*.map",
-                    dest: "build/_/raw",
-                },
-                {
-                    src: "build/*.js",
-                    dest: "build",
-                    transform: transformSourceMappingUrl,
-                },
-            ],
-            hook: "writeBundle",
         }),
     ],
     watch: {

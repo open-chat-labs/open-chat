@@ -27,6 +27,12 @@ function qs(ctx: PageJS.Context): URLSearchParams {
     return new URLSearchParams(ctx.querystring);
 }
 
+export function adminRoute(_ctx: PageJS.Context): RouteParams {
+    return {
+        kind: "admin_route",
+    };
+}
+
 export function communitesRoute(_ctx: PageJS.Context): RouteParams {
     return {
         kind: "communities_route",
@@ -237,7 +243,8 @@ export type RouteParams =
     | SelectedChannelRoute
     | ShareRoute
     | NotFound
-    | HotGroupsRoute;
+    | HotGroupsRoute
+    | AdminRoute;
 
 type RouteCommon = { scope: ChatListScope };
 
@@ -289,6 +296,10 @@ export type SelectedChannelRoute = RouteCommon & {
 
 export type CommunitiesRoute = {
     kind: "communities_route";
+};
+
+export type AdminRoute = {
+    kind: "admin_route";
 };
 
 export type ShareRoute = {

@@ -3,7 +3,9 @@ use crate::model::events::CommunityEventInternal;
 use crate::model::members::CommunityMemberInternal;
 use crate::RuntimeState;
 use crate::{read_state, Data};
+use candid::Principal;
 use canister_api_macros::query_msgpack;
+use community_canister::c2c_summary_updates::{Args as C2CArgs, Response as C2CResponse};
 use community_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use types::{
@@ -13,18 +15,28 @@ use types::{
 
 #[query]
 fn summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args, state))
+    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, None, state))
 }
 
 #[query_msgpack]
-fn c2c_summary_updates(args: Args) -> Response {
-    read_state(|state| summary_updates_impl(args, state))
+fn c2c_summary_updates(args: C2CArgs) -> C2CResponse {
+    read_state(|state| summary_updates_impl(args.updates_since, args.invite_code, args.on_behalf_of, state))
 }
 
-fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
-    let caller = state.env.caller();
+fn summary_updates_impl(
+    updates_since: TimestampMillis,
+    invite_code: Option<u64>,
+    on_behalf_of: Option<Principal>,
+    state: &RuntimeState,
+) -> Response {
+    let caller = if let Some(principal) = on_behalf_of {
+        assert!(state.is_caller_local_user_index());
+        principal
+    } else {
+        state.env.caller()
+    };
 
-    if !state.data.is_accessible(caller, args.invite_code) {
+    if !state.data.is_accessible(caller, invite_code) {
         return PrivateCommunity;
     }
 
@@ -36,10 +48,10 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .channels
             .iter()
             .filter_map(|c| state.data.channels.get(c))
-            .filter(|c| c.last_updated(Some(m.user_id)) > args.updates_since)
+            .filter(|c| c.last_updated(Some(m.user_id)) > updates_since)
             .collect();
 
-        let channels_removed = m.channels_removed_since(args.updates_since);
+        let channels_removed = m.channels_removed_since(updates_since);
 
         (channels_with_updates, channels_removed)
     } else {
@@ -48,7 +60,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .channels
             .public_channels()
             .into_iter()
-            .filter(|c| c.last_updated(None) > args.updates_since)
+            .filter(|c| c.last_updated(None) > updates_since)
             .collect();
 
         (channels_with_updates, Vec::new())
@@ -56,14 +68,14 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     if channels_with_updates.is_empty()
         && channels_removed.is_empty()
-        && state.data.events.latest_event_timestamp() <= args.updates_since
-        && state.data.members.user_groups_last_updated() <= args.updates_since
-        && member_last_updated <= args.updates_since
+        && state.data.events.latest_event_timestamp() <= updates_since
+        && state.data.members.user_groups_last_updated() <= updates_since
+        && member_last_updated <= updates_since
     {
         return SuccessNoUpdates;
     }
 
-    let updates_from_events = process_events(args.updates_since, member, &state.data);
+    let updates_from_events = process_events(updates_since, member, &state.data);
 
     let mut channels_added = Vec::new();
     let mut channels_updated = Vec::new();
@@ -72,14 +84,14 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let is_community_member = member.is_some();
 
     for channel in channels_with_updates {
-        if channel.date_imported.map_or(false, |ts| ts > args.updates_since) {
+        if channel.date_imported.map_or(false, |ts| ts > updates_since) {
             if let Some(summary) = channel.summary(user_id, is_community_member, state.data.is_public, &state.data.members) {
                 channels_added.push(summary);
             }
         } else {
             match channel.summary_updates(
                 user_id,
-                args.updates_since,
+                updates_since,
                 is_community_member,
                 state.data.is_public,
                 &state.data.members,
@@ -95,11 +107,11 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
         rules_accepted: m
             .rules_accepted
             .as_ref()
-            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > args.updates_since)
+            .filter(|accepted| updates_from_events.rules_changed || accepted.timestamp > updates_since)
             .map(|accepted| accepted.value >= state.data.rules.text.version),
         display_name: m
             .display_name()
-            .if_set_after(args.updates_since)
+            .if_set_after(updates_since)
             .map_or(OptionUpdate::NoChange, |display_name| match display_name {
                 Some(display_name) => OptionUpdate::SetToSome(display_name.clone()),
                 None => OptionUpdate::SetToNone,
@@ -139,11 +151,11 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
             .data
             .members
             .iter_user_groups()
-            .filter(|u| u.last_updated() > args.updates_since)
+            .filter(|u| u.last_updated() > updates_since)
             .map(|u| u.into())
             .collect(),
-        user_groups_deleted: state.data.members.user_groups_deleted_since(args.updates_since),
-        metrics: state.data.cached_chat_metrics.if_set_after(args.updates_since).cloned(),
+        user_groups_deleted: state.data.members.user_groups_deleted_since(updates_since),
+        metrics: state.data.cached_chat_metrics.if_set_after(updates_since).cloned(),
     })
 }
 

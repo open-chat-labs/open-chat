@@ -61,7 +61,7 @@ pub fn generate_candid_method_no_args(input: TokenStream) -> TokenStream {
 }
 
 fn get_method_attribute(inputs: Vec<String>) -> MethodAttribute {
-    let first_arg = inputs.get(0).unwrap();
+    let first_arg = inputs.first().unwrap();
     let second_arg = inputs.get(1).unwrap();
     let third_arg = inputs.get(2).unwrap();
 

@@ -1,5 +1,8 @@
 <script lang="ts">
-    export let items: string[];
+    import type { ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
+
+    export let items: ResourceKey[];
     export let selected = 0;
     export let underline = false;
 </script>
@@ -13,7 +16,7 @@
                 on:click={() => (selected = i)}
                 class:selected={selected === i}
                 class="tab">
-                {item}
+                <Translatable resourceKey={item} />
             </div>
         {/each}
     </div>

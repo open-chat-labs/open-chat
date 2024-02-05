@@ -1,10 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
 VERSION=$1
-SUMMARY_PATH=$2
+CHANGELOG_PATH=$2
 
 TITLE="Upgrade Notifications canisters to $VERSION"
-SUMMARY=`cat $SUMMARY_PATH`
+CHANGELOG=`cat $CHANGELOG_PATH`
 FUNCTION_ID=3000
 CANISTER_NAME=notifications
 
@@ -14,4 +14,4 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 # Submit the proposal
-./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$SUMMARY"
+./make_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER_NAME "$VERSION" "$TITLE" "$CHANGELOG"

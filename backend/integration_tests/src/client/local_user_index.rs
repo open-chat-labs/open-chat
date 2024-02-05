@@ -1,7 +1,9 @@
-use crate::generate_update_call;
+use crate::{generate_query_call, generate_update_call};
 use local_user_index_canister::*;
 
 // Queries
+generate_query_call!(chat_events);
+generate_query_call!(group_and_community_summary_updates);
 
 // Updates
 generate_update_call!(invite_users_to_channel);
@@ -19,7 +21,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use pocket_ic::PocketIc;
-    use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId};
+    use types::{CanisterId, ChannelId, ChatId, CommunityCanisterCommunitySummary, CommunityId, UserId};
 
     pub fn register_user(env: &mut PocketIc, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -34,9 +36,8 @@ pub mod happy_path {
             canister_id,
             &local_user_index_canister::register_user::Args {
                 username: principal_to_username(principal),
-                display_name: None,
                 referral_code,
-                public_key,
+                public_key: public_key.clone(),
             },
         );
 
@@ -46,6 +47,7 @@ pub mod happy_path {
             local_user_index_canister::register_user::Response::Success(res) => User {
                 principal,
                 user_id: res.user_id,
+                public_key,
             },
             response => panic!("'register_user' error: {response:?}"),
         }
@@ -165,7 +167,7 @@ pub mod happy_path {
         sender: Principal,
         local_user_index_canister_id: CanisterId,
         community_id: CommunityId,
-    ) {
+    ) -> CommunityCanisterCommunitySummary {
         let response = super::join_community(
             env,
             sender,
@@ -177,7 +179,7 @@ pub mod happy_path {
         );
 
         match response {
-            local_user_index_canister::join_community::Response::Success(_) => {}
+            local_user_index_canister::join_community::Response::Success(result) => *result,
             response => panic!("'join_community' error: {response:?}"),
         }
     }

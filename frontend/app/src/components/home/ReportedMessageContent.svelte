@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { i18nKey } from "../../i18n/i18n";
     import Legend from "../Legend.svelte";
     import TextArea from "../TextArea.svelte";
     import Markdown from "./Markdown.svelte";
@@ -35,7 +36,7 @@
 <div class="report">
     <p class="msg"><Markdown text={message} /></p>
     {#if report.notes !== undefined && report.notes.length > 0}
-        <Legend label={"Notes"} />
+        <Legend label={i18nKey("Notes")} />
         <TextArea disabled rows={2} bind:value={report.notes} />
     {/if}
 </div>

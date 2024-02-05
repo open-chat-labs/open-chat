@@ -223,6 +223,12 @@ impl CommunityMembers {
         self.display_names_last_updated
     }
 
+    pub fn update_user_principal(&mut self, old_principal: Principal, new_principal: Principal) {
+        if let Some(user_id) = self.principal_to_user_id_map.remove(&old_principal) {
+            self.principal_to_user_id_map.insert(new_principal, user_id);
+        }
+    }
+
     pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
         if let Some(member) = self.members.get_mut(user_id) {
             member.channels.insert(channel_id);
@@ -342,6 +348,7 @@ pub struct CommunityMemberInternal {
 impl CommunityMemberInternal {
     pub fn leave(&mut self, channel_id: ChannelId, now: TimestampMillis) {
         if self.channels.remove(&channel_id) {
+            self.channels_removed.retain(|c| c.value != channel_id);
             self.channels_removed.push(Timestamped::new(channel_id, now));
         }
     }

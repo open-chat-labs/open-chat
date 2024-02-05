@@ -5,6 +5,7 @@ import {
     type LocalReaction,
     type MessageContent,
     type ThreadSummary,
+    type P2PSwapStatus,
 } from "openchat-shared";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
@@ -36,11 +37,22 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
             revealedContent: content,
         }));
     }
+    markBlockedMessageRevealed(messageId: bigint): void {
+        this.applyUpdate(messageId, (_) => ({
+            hiddenMessageRevealed: true,
+        }));
+    }
     markContentEdited(messageId: bigint, content: MessageContent): void {
-        this.applyUpdate(messageId, (_) => ({ editedContent: content }));
+        this.applyUpdate(messageId, (_) => ({ editedContent: content, linkRemoved: false }));
     }
     revertEditedContent(messageId: bigint): void {
-        this.applyUpdate(messageId, (_) => ({ editedContent: undefined }));
+        this.applyUpdate(messageId, (_) => ({ editedContent: undefined, linkRemoved: false }));
+    }
+    markLinkRemoved(messageId: bigint, content: MessageContent): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: content, linkRemoved: true }));
+    }
+    revertLinkRemoved(messageId: bigint): void {
+        this.applyUpdate(messageId, (_) => ({ editedContent: undefined, linkRemoved: false }));
     }
     markReaction(messageId: bigint, reaction: LocalReaction): void {
         this.applyUpdate(messageId, (updates) => ({
@@ -75,12 +87,18 @@ export class LocalMessageUpdatesStore extends LocalUpdatesStore<bigint, LocalMes
     markPrizeClaimed(messageId: bigint, userId: string): void {
         this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
     }
+    setP2PSwapStatus(messageId: bigint, status: P2PSwapStatus): void {
+        this.applyUpdate(messageId, (_) => ({ p2pSwapStatus: status }));
+    }
     markPollVote(messageId: bigint, vote: LocalPollVote): void {
         this.applyUpdate(messageId, (updates) => ({
             pollVotes: [...(updates?.pollVotes ?? []), vote],
         }));
     }
-    markThreadSummaryUpdated(threadRootMessageId: bigint, summaryUpdates: Partial<ThreadSummary>): void {
+    markThreadSummaryUpdated(
+        threadRootMessageId: bigint,
+        summaryUpdates: Partial<ThreadSummary>,
+    ): void {
         this.applyUpdate(threadRootMessageId, (updates) => {
             return {
                 threadSummary:

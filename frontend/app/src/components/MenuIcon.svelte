@@ -6,7 +6,7 @@
 
     export let centered = false;
     export let position: Position = "bottom";
-    export let align: Alignment = "center";
+    export let align: Alignment = "middle";
     export let gutter = 8;
 
     let menu: HTMLElement;
@@ -20,12 +20,11 @@
         if ($menuStore === contextMenu) {
             menuStore.hideMenu();
         } else {
-            const rect = menu.getBoundingClientRect();
             menuStore.showMenu(contextMenu);
 
             await tick();
 
-            menuStore.position(rect, centered, position, align, gutter);
+            menuStore.position(menu, centered, position, align, gutter);
         }
     }
 
@@ -57,7 +56,7 @@
     }
 
     .menu {
-        position: absolute;
+        position: fixed;
         @include z-index("popup-menu");
     }
 

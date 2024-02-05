@@ -5,6 +5,7 @@ use community_canister::add_members_to_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
 use ic_cdk_macros::update;
+use std::collections::HashMap;
 use std::iter::zip;
 use types::{
     AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification,
@@ -26,16 +27,34 @@ async fn add_members_to_channel(args: Args) -> Response {
     let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
 
     if let Some(gate) = prepare_result.gate {
+        let diamond_membership_expiry_dates: HashMap<_, _> = if matches!(gate, AccessGate::DiamondMember) {
+            match local_user_index_canister_c2c_client::c2c_diamond_membership_expiry_dates(
+                prepare_result.local_user_index_canister_id,
+                &local_user_index_canister::c2c_diamond_membership_expiry_dates::Args {
+                    user_ids: prepare_result.users_to_add.clone(),
+                },
+            )
+            .await
+            {
+                Ok(local_user_index_canister::c2c_diamond_membership_expiry_dates::Response::Success(expiry_dates)) => {
+                    expiry_dates
+                }
+                Err(error) => return InternalError(format!("{error:?}")),
+            }
+        } else {
+            HashMap::new()
+        };
+
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
             .map(|user_id| {
                 check_if_passes_gate(CheckGateArgs {
                     gate: gate.clone(),
-                    user_index_canister: prepare_result.user_index_canister,
                     user_id: *user_id,
+                    diamond_membership_expires_at: diamond_membership_expiry_dates.get(user_id).copied(),
                     this_canister: prepare_result.this_canister,
-                    now_nanos: prepare_result.now_nanos,
+                    now: prepare_result.now_nanos,
                 })
             })
             .collect();
@@ -78,7 +97,7 @@ struct PrepareResult {
     users_to_add: Vec<UserId>,
     users_already_in_channel: Vec<UserId>,
     gate: Option<AccessGate>,
-    user_index_canister: CanisterId,
+    local_user_index_canister_id: CanisterId,
     is_bot: bool,
     member_display_name: Option<String>,
     this_canister: CanisterId,
@@ -120,7 +139,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     users_to_add,
                     users_already_in_channel,
                     gate: channel.chat.gate.as_ref().cloned(),
-                    user_index_canister: state.data.user_index_canister_id,
+                    local_user_index_canister_id: state.data.local_user_index_canister_id,
                     is_bot: member.is_bot,
                     member_display_name: member.display_name().value.clone(),
                     this_canister: state.env.canister_id(),

@@ -2,6 +2,7 @@ use crate::guards::caller_is_governance_principal;
 use crate::mutate_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
+use futures::try_join;
 use ic_cdk::api::call::RejectionCode;
 use icrc_ledger_types::icrc::generic_metadata_value::MetadataValue;
 use registry_canister::add_token::{Response::*, *};
@@ -55,22 +56,23 @@ async fn add_token_impl(
         }
     };
 
-    match futures::future::try_join5(
+    match try_join!(
         icrc_ledger_canister_c2c_client::icrc1_name(ledger_canister_id),
         icrc_ledger_canister_c2c_client::icrc1_symbol(ledger_canister_id),
         icrc_ledger_canister_c2c_client::icrc1_decimals(ledger_canister_id),
         icrc_ledger_canister_c2c_client::icrc1_fee(ledger_canister_id),
+        icrc_ledger_canister_c2c_client::icrc1_supported_standards(ledger_canister_id),
         get_logo(logo, ledger_canister_id, nervous_system.as_ref().map(|ns| ns.logo.clone())),
-    )
-    .await
-    {
+    ) {
         Ok((.., logo)) if logo.is_none() => {
             let error = "Failed to find logo for token";
             error!(%ledger_canister_id, error);
             InternalError(error.to_string())
         }
-        Ok((name, symbol, decimals, fee, logo)) => mutate_state(|state| {
+        Ok((name, symbol, decimals, fee, standards, logo)) => mutate_state(|state| {
             let now = state.env.now();
+            let standards = standards.into_iter().map(|r| r.name).collect();
+
             if let Some(ns) = nervous_system {
                 state.data.nervous_systems.add(ns, now);
             }
@@ -84,6 +86,7 @@ async fn add_token_impl(
                 info_url,
                 how_to_buy_url,
                 transaction_url_format,
+                standards,
                 now,
             ) {
                 info!(name, %ledger_canister_id, "Token added");

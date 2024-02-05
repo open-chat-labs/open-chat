@@ -3,10 +3,11 @@
     import { mobileWidth } from "../../../stores/screenDimensions";
     import ModalContent from "../../ModalContent.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import { _ } from "svelte-i18n";
     import Accounts from "./Accounts.svelte";
     import Button from "../../Button.svelte";
     import LinkButton from "../../LinkButton.svelte";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -17,7 +18,7 @@
 <ModalContent closeIcon on:close>
     <div class="header" slot="header">
         <Wallet size={"1.2em"} color={"var(--txt)"} />
-        {$_("wallet")}
+        <Translatable resourceKey={i18nKey("wallet")} />
     </div>
     <div slot="body">
         <Accounts bind:showZeroBalance bind:zeroCount />
@@ -30,15 +31,16 @@
                         light
                         underline={"hover"}
                         on:click={() => (showZeroBalance = !showZeroBalance)}
-                        >{$_(
-                            showZeroBalance
-                                ? "cryptoAccount.hideZeroBalance"
-                                : "cryptoAccount.showZeroBalance"
-                        )}</LinkButton>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                showZeroBalance
+                                    ? "cryptoAccount.hideZeroBalance"
+                                    : "cryptoAccount.showZeroBalance",
+                            )} /></LinkButton>
                 {/if}
             </div>
             <Button on:click={() => dispatch("close")} small={!$mobileWidth} tiny={$mobileWidth}>
-                {$_("close")}
+                <Translatable resourceKey={i18nKey("close")} />
             </Button>
         </div>
     </div>

@@ -14,6 +14,8 @@
         GiphySearchResponse,
         GiphyContent,
     } from "openchat-client";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -40,8 +42,8 @@
         selectedGif === undefined
             ? undefined
             : $mobileWidth
-            ? { ...selectedGif.images.downsized_large }
-            : { ...selectedGif.images.original };
+              ? { ...selectedGif.images.downsized_large }
+              : { ...selectedGif.images.original };
 
     const TRENDING_API_URL = `https://api.giphy.com/v1/gifs/trending?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}`;
     const SEARCH_API_URL = `https://api.giphy.com/v1/gifs/search?api_key=${process.env.GIPHY_APIKEY}&limit=${pageSize}&q=`;
@@ -60,7 +62,7 @@
             PagedGIFObject & { top: number; left: number; calculatedHeight: number }
         >,
         row: number,
-        col: number
+        col: number,
     ): number {
         let height = 0;
         for (let i = 0; i < row; i++) {
@@ -79,7 +81,7 @@
             PagedGIFObject & { top: number; left: number; calculatedHeight: number }
         >,
         gif: PagedGIFObject,
-        i: number
+        i: number,
     ): Record<string, PagedGIFObject & { top: number; left: number; calculatedHeight: number }> {
         const col = i % numCols;
         const row = Math.floor(i / numCols);
@@ -190,7 +192,7 @@
                 Math.abs(
                     containerElement.scrollHeight -
                         containerElement.clientHeight -
-                        containerElement.scrollTop
+                        containerElement.scrollTop,
                 ) < 200
             ) {
                 nextPage();
@@ -204,7 +206,7 @@
         <ModalContent large bind:actualWidth={modalWidth}>
             <div class="header" slot="header">
                 <div class="title">
-                    {$_("sendGif")}
+                    <Translatable resourceKey={i18nKey("sendGif")} />
                 </div>
                 <div class="gif-search">
                     <Input
@@ -212,7 +214,7 @@
                         type={"text"}
                         autofocus
                         countdown
-                        placeholder={$_("search")}
+                        placeholder={i18nKey("search")}
                         on:change={onChange}
                         value={searchTerm} />
                 </div>
@@ -250,7 +252,7 @@
                         type={"text"}
                         autofocus={false}
                         countdown
-                        placeholder={$_("tokenTransfer.messagePlaceholder")}
+                        placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                         bind:value={message} />
                 </div>
             </form>
@@ -258,14 +260,15 @@
                 {#if selectedGif !== undefined}
                     <span class="close">
                         <Link underline={"always"} on:click={clearSelectedGif}>
-                            {$_("backToResults")}
+                            <Translatable resourceKey={i18nKey("backToResults")} />
                         </Link>
                     </span>
                 {/if}
                 <ButtonGroup align={$mobileWidth ? "center" : "end"}>
                     <Button tiny disabled={selectedGif === undefined} on:click={send}
-                        >{$_("send")}</Button>
-                    <Button tiny secondary on:click={() => (open = false)}>{$_("cancel")}</Button>
+                        ><Translatable resourceKey={i18nKey("send")} /></Button>
+                    <Button tiny secondary on:click={() => (open = false)}
+                        ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 </ButtonGroup>
             </span>
         </ModalContent>

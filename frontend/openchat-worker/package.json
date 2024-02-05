@@ -6,15 +6,16 @@
     "scripts": {
         "build": "rollup -c",
         "dev": "rollup -cw",
+        "wait": "npm run clean && wait-on lib/worker.js",
+        "clean": "rm -f lib/worker.js",
         "typecheck": "tsc --noEmit",
-        "wait": "rm -f lib/worker.js && wait-on lib/worker.js",
         "lint": "eslint ./src --fix",
         "codegen": "sh ./codegen.sh"
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^0.19.2",
-        "@dfinity/auth-client": "^0.19.2",
+        "@dfinity/agent": "^0.20.2",
+        "@dfinity/auth-client": "^0.20.2",
         "openchat-shared": "*",
         "openchat-agent": "*"
     },
@@ -23,7 +24,6 @@
         "@typescript-eslint/parser": "^6.4.0",
         "eslint-config-prettier": "^9.0.0",
         "eslint-plugin-prettier": "^5.0.0",
-        "process": "^0.11.10",
         "ts-loader": "^9.4.4",
         "typescript": "^5.1.6",
         "wait-on": "^7.0.1"

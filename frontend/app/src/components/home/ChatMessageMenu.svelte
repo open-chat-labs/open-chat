@@ -25,7 +25,7 @@
     import HoverIcon from "../HoverIcon.svelte";
     import Bitcoin from "../icons/Bitcoin.svelte";
     import { _, locale } from "svelte-i18n";
-    import { translationCodes } from "../../i18n/i18n";
+    import { i18nKey, translationCodes } from "../../i18n/i18n";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
@@ -40,6 +40,7 @@
     import { now } from "../../stores/time";
     import { copyToClipboard } from "../../utils/urls";
     import { isTouchDevice } from "../../utils/devices";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -64,6 +65,7 @@
     export let canDelete: boolean;
     export let canUndelete: boolean;
     export let canRevealDeleted: boolean;
+    export let canRevealBlocked: boolean;
     export let translatable: boolean;
     export let translated: boolean;
     export let crypto: boolean;
@@ -103,9 +105,9 @@
         if (!canBlockUser || chatId.kind !== "group_chat") return;
         client.blockUser(chatId, msg.sender).then((success) => {
             if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("blockUserFailed");
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
             }
         });
     }
@@ -130,7 +132,7 @@
             $user.userId,
             msg.sender === $user.userId,
             msg,
-            $cryptoLookup
+            $cryptoLookup,
         );
     }
 
@@ -146,7 +148,7 @@
         if (!canPin || inThread || chatId.kind === "direct_chat") return;
         client.pinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("pinMessageFailed");
+                toastStore.showFailureToast(i18nKey("pinMessageFailed"));
             }
         });
     }
@@ -155,7 +157,7 @@
         if (!canPin || inThread || chatId.kind === "direct_chat") return;
         client.unpinMessage(chatId, msg.messageIndex).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("unpinMessageFailed");
+                toastStore.showFailureToast(i18nKey("unpinMessageFailed"));
             }
         });
     }
@@ -190,14 +192,17 @@
         if (!canUndelete) return;
         client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
             if (!success) {
-                toastStore.showFailureToast("undeleteMessageFailed");
+                toastStore.showFailureToast(i18nKey("undeleteMessageFailed"));
             }
         });
     }
 
     function revealDeletedMessage() {
-        if (!canRevealDeleted) return;
-        client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
+        if (canRevealDeleted) {
+            client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
+        } else if (canRevealBlocked) {
+            client.revealBlockedMessage(msg.messageId);
+        }
     }
 
     function untranslateMessage() {
@@ -231,7 +236,7 @@
                 }
             })
             .catch((_err) => {
-                toastStore.showFailureToast("unableToTranslate");
+                toastStore.showFailureToast(i18nKey("unableToTranslate"));
             });
     }
 
@@ -244,9 +249,9 @@
         client.followThread(chatId, rootMessage, follow).then((success) => {
             if (!success) {
                 if (follow) {
-                    toastStore.showFailureToast("followThreadFailed");
+                    toastStore.showFailureToast(i18nKey("followThreadFailed"));
                 } else {
-                    toastStore.showFailureToast("unfollowThreadFailed");
+                    toastStore.showFailureToast(i18nKey("unfollowThreadFailed"));
                 }
             }
         });
@@ -268,7 +273,9 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("proposal.collapse")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("proposal.collapse")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && !inert && !failed}
@@ -278,7 +285,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("followThread")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("followThread")} />
+                            </div>
                         </MenuItem>
                     {:else if canUnfollow}
                         <MenuItem on:click={() => followThread(false)}>
@@ -286,7 +295,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("unfollowThread")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("unfollowThread")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if publicGroup && canShare}
@@ -295,7 +306,7 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("share")}</div>
+                            <div slot="text"><Translatable resourceKey={i18nKey("share")} /></div>
                         </MenuItem>
                     {/if}
                     <MenuItem on:click={copyMessageUrl}>
@@ -303,7 +314,9 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("copyMessageUrl")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("copyMessageUrl")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if isTouchDevice}
@@ -312,19 +325,23 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("copy")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("copy")} /></div>
                     </MenuItem>
                 {/if}
                 {#if canRemind && confirmed && !inert && !failed}
                     <MenuItem on:click={remindMe}>
                         <span class="emojicon" slot="icon">⏰</span>
-                        <div slot="text">{$_("reminders.menu")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("reminders.menu")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if canCancelRemind && confirmed && !inert && !failed}
                     <MenuItem on:click={cancelReminder}>
                         <span class="emojicon" slot="icon">⏰</span>
-                        <div slot="text">{$_("reminders.cancel")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("reminders.cancel")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}
@@ -334,12 +351,16 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("unpinMessage")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("unpinMessage")} />
+                            </div>
                         </MenuItem>
                     {:else}
                         <MenuItem on:click={pinMessage}>
                             <Pin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                            <div slot="text">{$_("pinMessage")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("pinMessage")} />
+                            </div>
                         </MenuItem>
                     {/if}
                 {/if}
@@ -350,13 +371,17 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("quoteReply")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("quoteReply")} />
+                            </div>
                         </MenuItem>
                     {/if}
                     {#if !inThread && canStartThread}
                         <MenuItem on:click={initiateThread}>
                             <span class="emojicon" slot="icon">🧵</span>
-                            <div slot="text">{$_("thread.menu")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("thread.menu")} />
+                            </div>
                         </MenuItem>
                     {/if}
                 {/if}
@@ -366,7 +391,7 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("forward")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("forward")} /></div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && multiUserChat && !inThread && !me && !isProposal && !inert && !failed}
@@ -375,7 +400,9 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("replyPrivately")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("replyPrivately")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if !me && translatable && !failed}
@@ -385,7 +412,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("untranslateMessage")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("untranslateMessage")} />
+                            </div>
                         </MenuItem>
                     {:else}
                         <MenuItem on:click={translateMessage}>
@@ -393,7 +422,9 @@
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
                                 slot="icon" />
-                            <div slot="text">{$_("translateMessage")}</div>
+                            <div slot="text">
+                                <Translatable resourceKey={i18nKey("translateMessage")} />
+                            </div>
                         </MenuItem>
                     {/if}
                 {/if}
@@ -403,7 +434,7 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("editMessage")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("editMessage")} /></div>
                     </MenuItem>
                 {/if}
                 {#if canTip}
@@ -411,14 +442,14 @@
                         on:click={() =>
                             dispatch("tipMessage", $lastCryptoSent ?? LEDGER_CANISTER_ICP)}>
                         <Bitcoin size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("tip.menu")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("tip.menu")} /></div>
                     </MenuItem>
                 {/if}
                 <MenuItem separator />
                 {#if confirmed && multiUserChat && !me && canBlockUser && !failed}
                     <MenuItem on:click={blockUser}>
                         <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("blockUser")}</div>
+                        <div slot="text"><Translatable resourceKey={i18nKey("blockUser")} /></div>
                     </MenuItem>
                 {/if}
                 {#if (canDelete || me) && !inert}
@@ -429,9 +460,9 @@
                             slot="icon" />
                         <div slot="text">
                             {#if multiUserChat || me}
-                                {$_("deleteMessage")}
+                                <Translatable resourceKey={i18nKey("deleteMessage")} />
                             {:else}
-                                {$_("deleteMessageForMe")}
+                                <Translatable resourceKey={i18nKey("deleteMessageForMe")} />
                             {/if}
                         </div>
                     </MenuItem>
@@ -440,14 +471,16 @@
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">
-                            {$_("report.menu")}
+                            <Translatable resourceKey={i18nKey("report.menu")} />
                         </div>
                     </MenuItem>
                 {/if}
-                {#if canRevealDeleted}
+                {#if canRevealDeleted || canRevealBlocked}
                     <MenuItem on:click={revealDeletedMessage}>
                         <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("revealDeletedMessage")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("revealDeletedMessage")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if canUndelete}
@@ -456,14 +489,16 @@
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
-                        <div slot="text">{$_("undeleteMessage")}</div>
+                        <div slot="text">
+                            <Translatable resourceKey={i18nKey("undeleteMessage")} />
+                        </div>
                     </MenuItem>
                 {/if}
                 {#if failed}
                     <MenuItem on:click={retrySend}>
                         <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">
-                            {$_("retryMessage")}
+                            <Translatable resourceKey={i18nKey("retryMessage")} />
                         </div>
                     </MenuItem>
                 {/if}

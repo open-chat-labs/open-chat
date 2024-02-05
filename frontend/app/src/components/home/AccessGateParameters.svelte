@@ -1,56 +1,81 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import {
         OpenChat,
         type CredentialGate,
-        type SNSAccessGate,
+        type NeuronGate,
+        type PaymentGate,
     } from "openchat-client";
     import { getContext } from "svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
-    export let gate: SNSAccessGate | CredentialGate;
-    $: tokenDetails = client.getTokenDetailsForSnsAccessGate(gate);
+    export let gate: NeuronGate | CredentialGate | PaymentGate;
+    $: tokenDetails = client.getTokenDetailsForAccessGate(gate);
 </script>
 
 {#if gate.kind === "credential_gate"}
     <div class="detail">
         <div>
-            {$_("access.credential")}
+            <Translatable resourceKey={i18nKey("access.credential")} />
         </div>
         <div class="params">
             <div>
-                {`${$_("access.credentialParamIssuer", {
-                    values: { issuer: gate.issuerOrigin },
-                })}`}
+                <Translatable
+                    resourceKey={i18nKey("access.credentialParamIssuer", {
+                        issuer: gate.issuerOrigin,
+                    })} />
             </div>
             <div>
-                {`${$_("access.credentialParamCredential", {
-                    values: { credential: gate.credentialId },
-                })}`}
+                <Translatable
+                    resourceKey={i18nKey("access.credentialParamCredential", {
+                        credential: gate.credentialId,
+                    })} />
             </div>
         </div>
     </div>
-{:else}
+{:else if gate.kind === "payment_gate" && tokenDetails !== undefined}
     <div class="detail">
         <div>
-            {$_("access.snsHolder", {
-                values: tokenDetails ? { token: tokenDetails.symbol } : undefined,
-            })}
+            <Translatable
+                resourceKey={i18nKey("access.tokenPayment", { token: tokenDetails.symbol })} />
+        </div>
+        <div class="params">
+            <div>
+                <Translatable
+                    resourceKey={i18nKey("access.amountN", {
+                        n: client.formatTokens(gate.amount, tokenDetails.decimals),
+                    })} />
+            </div>
+        </div>
+    </div>
+{:else if gate.kind === "neuron_gate" && tokenDetails !== undefined}
+    <div class="detail">
+        <div>
+            <Translatable
+                resourceKey={i18nKey("access.tokenNeuronHolder", {
+                    token: tokenDetails.symbol,
+                })} />
         </div>
         <div class="params">
             {#if gate.minDissolveDelay}
                 <div>
-                    {`${$_("access.minDissolveDelayN", {
-                        values: { n: gate.minDissolveDelay / (24 * 60 * 60 * 1000) },
-                    })}`}
+                    <Translatable
+                        resourceKey={i18nKey("access.minDissolveDelayN", {
+                            n: gate.minDissolveDelay / (24 * 60 * 60 * 1000),
+                        })} />
                 </div>
             {/if}
             {#if gate.minStakeE8s}
                 <div>
-                    {`${$_("access.minStakeN", {
-                        values: { n: client.formatTokens(BigInt(gate.minStakeE8s), 0, tokenDetails?.decimals ?? 8) },
-                    })}`}
+                    <Translatable
+                        resourceKey={i18nKey("access.minStakeN", {
+                            n: client.formatTokens(
+                                BigInt(gate.minStakeE8s),
+                                tokenDetails?.decimals ?? 8,
+                            ),
+                        })} />
                 </div>
             {/if}
         </div>

@@ -12,8 +12,6 @@ import type {
     GroupCanisterGroupChatSummaryUpdates,
     UserCanisterGroupChatSummary,
     UserCanisterGroupChatSummaryUpdates,
-    GroupCanisterSummaryResponse,
-    GroupCanisterSummaryUpdatesResponse,
     GroupCanisterThreadDetails,
     UpdatedEvent,
     Metrics,
@@ -23,12 +21,18 @@ import type {
     ChannelIdentifier,
     UserGroupDetails,
 } from "openchat-shared";
-import { ChatMap, applyOptionUpdate, bigIntMax, mapOptionUpdate } from "openchat-shared";
+import {
+    ChatMap,
+    applyOptionUpdate,
+    bigIntMax,
+    mapOptionUpdate,
+    OPENCHAT_BOT_AVATAR_URL,
+    OPENCHAT_BOT_USER_ID,
+} from "openchat-shared";
 import { toRecord } from "./list";
 import { identity } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -264,6 +268,7 @@ export function mergeGroupChatUpdates(
                 archived: u?.archived ?? c.membership.archived,
                 rulesAccepted: g?.rulesAccepted ?? c.membership.rulesAccepted,
             },
+            localUserIndex: c.localUserIndex,
         };
     });
 }
@@ -317,6 +322,7 @@ export function mergeGroupChats(
                 archived: u?.archived ?? false,
                 rulesAccepted: g.rulesAccepted,
             },
+            localUserIndex: g.localUserIndex,
         };
     });
 }
@@ -345,18 +351,6 @@ function mergeThreads(
             ? { ...t, readUpTo: readUpToUpdate }
             : t;
     });
-}
-
-export function isSuccessfulGroupSummaryResponse(
-    response: GroupCanisterSummaryResponse,
-): response is GroupCanisterGroupChatSummary {
-    return "id" in response;
-}
-
-export function isSuccessfulGroupSummaryUpdatesResponse(
-    response: GroupCanisterSummaryUpdatesResponse,
-): response is GroupCanisterGroupChatSummaryUpdates {
-    return "id" in response;
 }
 
 export function getUpdatedEvents(
@@ -401,8 +395,8 @@ export function buildUserAvatarUrl(pattern: string, userId: string, avatarId?: b
     return avatarId !== undefined
         ? buildBlobUrl(pattern, userId, avatarId, "avatar")
         : userId === OPENCHAT_BOT_USER_ID
-        ? OPENCHAT_BOT_AVATAR_URL
-        : buildIdenticonUrl(userId);
+          ? OPENCHAT_BOT_AVATAR_URL
+          : buildIdenticonUrl(userId);
 }
 
 function buildIdenticonUrl(userId: string): string {

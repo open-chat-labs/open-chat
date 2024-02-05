@@ -16,7 +16,7 @@ mod model;
 mod queries;
 mod updates;
 
-const DATA_LIMIT_BYTES: u64 = 1 << 34; // 16GB
+const DATA_LIMIT_BYTES: u64 = 1 << 36; // 64GB
 const MAX_BLOB_SIZE_BYTES: u64 = 100 * (1 << 20); // 100MB
 const MAX_EVENTS_TO_SYNC_PER_BATCH: usize = 1000;
 
@@ -77,7 +77,6 @@ struct Data {
     index_sync_state: IndexSyncState,
     created: TimestampMillis,
     freezing_limit: Timestamped<Option<Cycles>>,
-    #[serde(default)]
     rng_seed: [u8; 32],
     test_mode: bool,
 }

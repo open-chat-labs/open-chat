@@ -2,13 +2,12 @@
     import { getContext, onMount } from "svelte";
     import Search from "../Search.svelte";
     import type {
-        ChannelMatch,
         ChatListScope,
-        CommunityIdentifier,
         GroupSearchResponse,
         OpenChat,
         UserSummary,
     } from "openchat-client";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -16,7 +15,6 @@
     export let searchResultsAvailable: boolean = false;
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
-    export let channelSearchResults: Promise<ChannelMatch[]> | undefined = undefined;
 
     let searching: boolean = false;
 
@@ -27,28 +25,32 @@
         return chatListScope.subscribe((_) => clearSearch());
     });
 
-    function getPlaceholder(scope: ChatListScope["kind"]): string {
+    $: {
+        if (searchTerm === "") {
+            searching = false;
+            searchResultsAvailable = false;
+            groupSearchResults = undefined;
+            userSearchResults = undefined;
+        }
+    }
+
+    function getPlaceholder(scope: ChatListScope["kind"]): ResourceKey {
         switch (scope) {
             case "community":
-                return "searchChannelsPlaceholder";
+                return i18nKey("searchChannelsPlaceholder");
             case "group_chat":
-                return "searchGroupsPlaceholder";
+                return i18nKey("searchGroupsPlaceholder");
             case "direct_chat":
-                return "searchUsersPlaceholder";
+                return i18nKey("searchUsersPlaceholder");
             case "favourite":
-                return "searchFavouritesPlaceholder";
+                return i18nKey("searchFavouritesPlaceholder");
             case "none":
-                return "searchPlaceholder";
+                return i18nKey("searchPlaceholder");
         }
     }
 
     function clearSearch() {
         searchTerm = "";
-        searching = false;
-        searchResultsAvailable = false;
-        groupSearchResults = undefined;
-        userSearchResults = undefined;
-        channelSearchResults = undefined;
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -69,8 +71,6 @@
                     case "direct_chat":
                         userSearch(term);
                         break;
-                    case "community":
-                        channelSearch($chatListScope.id, term);
                 }
             } catch (err) {
                 console.warn("search failed with: ", err);
@@ -99,13 +99,6 @@
     async function groupSearch(term: string) {
         groupSearchResults = client.searchGroups(term, 10);
         await groupSearchResults.then(postSearch);
-    }
-
-    async function channelSearch(id: CommunityIdentifier, term: string) {
-        channelSearchResults = client
-            .exploreChannels(id, term, 0, 10)
-            .then((res) => (res.kind === "success" ? res.matches : []));
-        await channelSearchResults.then(postSearch);
     }
 
     async function legacySearch(term: string) {

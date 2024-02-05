@@ -5,12 +5,15 @@
 
     import { createEventDispatcher } from "svelte";
     import Arrow from "./Arrow.svelte";
+    import type { ResourceKey } from "../i18n/i18n";
+    import Translatable from "./Translatable.svelte";
 
     const dispatch = createEventDispatcher();
-    export let headerText: string = "";
+    export let headerText: ResourceKey | undefined = undefined;
     export let open = true;
     export let first = false;
     export let transition = true;
+    export let fill = false;
 
     function toggle() {
         open = !open;
@@ -19,10 +22,14 @@
     }
 </script>
 
-<div class="card" class:first>
-    <div class="header" class:open on:click={toggle}>
+<div class="card" class:first class:open>
+    <div class="header" class:open on:click={toggle} class:fill>
         <slot name="titleSlot">
-            <div>{headerText}</div>
+            {#if headerText !== undefined}
+                <div>
+                    <Translatable resourceKey={headerText} />
+                </div>
+            {/if}
         </slot>
 
         <div class="arrow" class:rtl={$rtlStore}>
@@ -75,6 +82,11 @@
         &.open {
             color: var(--txt);
         }
+
+        &.fill {
+            padding-left: $sp4;
+            padding-right: $sp4;
+        }
     }
 
     .arrow {
@@ -84,10 +96,10 @@
     }
 
     .body {
-        padding: $sp4 0;
+        padding-bottom: $sp4;
 
         @include mobile() {
-            padding: $sp3 0;
+            padding-bottom: $sp3;
         }
 
         &.static {

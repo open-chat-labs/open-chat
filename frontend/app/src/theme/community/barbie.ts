@@ -36,6 +36,7 @@ export function getTheme(base: Theme): Theme {
     base.collapsible.closed.header.txt = txt;
     base.collapsible.open.header.arrow = white;
     base.accent = barbieYellow;
+    base.panel.nav.bg = pink3;
     base.panel.left.bg = pink3;
     base.panel.right.modal = "#e1349a";
     base.modal.bd = base.bd;

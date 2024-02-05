@@ -70,6 +70,7 @@
     let messageReadTimers: Record<number, number> = {};
 
     $: user = client.user;
+    $: userId = $user.userId;
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -283,7 +284,7 @@
     async function afterSendMessage(context: MessageContext, event: EventWrapper<Message>) {
         if (context.threadRootMessageIndex !== undefined && threadRootEvent !== undefined) {
             const summary = {
-                participantIds: new Set<string>([$user.userId]),
+                participantIds: new Set<string>([userId]),
                 numberOfReplies: event.event.messageIndex + 1,
                 latestEventIndex: event.index,
                 latestEventTimestamp: event.timestamp,
@@ -395,7 +396,7 @@
     }
 
     function isReadByMe(_store: unknown, evt: EventWrapper<ChatEventType>): boolean {
-        if (readonly) return true;
+        if (readonly || (evt.event.kind === "message" && evt.event.sender === userId)) return true;
 
         if (evt.event.kind === "message" || evt.event.kind === "aggregate_common_events") {
             let messageIndex =

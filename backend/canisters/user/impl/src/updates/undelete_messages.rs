@@ -3,9 +3,9 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
 use ic_cdk_macros::update;
-use types::{CanisterId, EventIndex, MessageId};
-use user_canister::c2c_undelete_messages;
+use types::EventIndex;
 use user_canister::undelete_messages::{Response::*, *};
+use user_canister::{c2c_undelete_messages, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
@@ -47,23 +47,17 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
             .collect();
 
         if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
-            ic_cdk::spawn(undelete_on_recipients_canister(
+            state.push_user_canister_event(
                 args.user_id.into(),
-                deleted,
-                args.correlation_id,
-            ));
+                UserCanisterEvent::UndeleteMessages(Box::new(c2c_undelete_messages::Args {
+                    message_ids: deleted,
+                    correlation_id: args.correlation_id,
+                })),
+            );
         }
 
         Success(SuccessResult { messages })
     } else {
         ChatNotFound
     }
-}
-
-async fn undelete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>, correlation_id: u64) {
-    let args = c2c_undelete_messages::Args {
-        message_ids,
-        correlation_id,
-    };
-    let _ = user_canister_c2c_client::c2c_undelete_messages(canister_id, &args).await;
 }

@@ -12,7 +12,7 @@ const CANISTER_POOL_TARGET_SIZE: u16 = 20;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-    init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
+    init_cycles_dispenser_client(args.cycles_dispenser_canister_id, args.test_mode);
 
     let env = init_env([0; 32]);
     let canister_pool_target_size = if args.test_mode { 3_u16 } else { CANISTER_POOL_TARGET_SIZE };
@@ -21,9 +21,11 @@ fn init(args: Args) {
         args.user_canister_wasm,
         args.user_index_canister_id,
         args.group_index_canister_id,
+        args.identity_canister_id,
         args.notifications_canister_id,
         args.proposals_bot_canister_id,
         args.cycles_dispenser_canister_id,
+        args.escrow_canister_id,
         args.internet_identity_canister_id,
         canister_pool_target_size,
         args.test_mode,

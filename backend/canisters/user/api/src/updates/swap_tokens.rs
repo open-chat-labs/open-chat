@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CanisterId, TokenInfo};
+use types::{CanisterId, ExchangeId, TokenInfo};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -17,6 +17,14 @@ pub enum ExchangeArgs {
     ICPSwap(ICPSwapArgs),
 }
 
+impl ExchangeArgs {
+    pub fn exchange_id(&self) -> ExchangeId {
+        match self {
+            ExchangeArgs::ICPSwap(_) => ExchangeId::ICPSwap,
+        }
+    }
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ICPSwapArgs {
     pub swap_canister_id: CanisterId,
@@ -26,6 +34,7 @@ pub struct ICPSwapArgs {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
+    SwapFailed,
     InternalError(String),
 }
 

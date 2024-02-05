@@ -1,10 +1,5 @@
 <script lang="ts">
-    import type {
-        EnhancedReplyContext,
-        CreatedUser,
-        OpenChat,
-        ChatIdentifier,
-    } from "openchat-client";
+    import type { EnhancedReplyContext, CreatedUser, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { createEventDispatcher, getContext } from "svelte";
@@ -19,7 +14,6 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
-    export let chatId: ChatIdentifier;
 
     $: me = replyingTo.sender?.userId === user?.userId;
 
@@ -48,9 +42,11 @@
     </h4>
     <ChatMessageContent
         {readonly}
-        {chatId}
+        messageContext={replyingTo.sourceContext}
         fill={false}
+        failed={false}
         {me}
+        intersecting={true}
         messageId={replyingTo.messageId}
         messageIndex={replyingTo.messageIndex}
         senderId={replyingTo.senderId}
@@ -75,6 +71,8 @@
         background-color: var(--currentChat-msg-bg);
         color: var(--currentChat-msg-txt);
         position: relative;
+        @include nice-scrollbar();
+        max-height: 150px;
 
         .close-icon {
             position: absolute;

@@ -18,7 +18,7 @@ const renderer = {
             }
         }
 
-        return `<a href=${href} ${title && `title=${title}`} ${target}>${text}</a>`;
+        return `<a href="${href}" ${title && `title="${title}"`} ${target}>${text}</a>`;
     },
 };
 

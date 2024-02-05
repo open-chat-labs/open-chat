@@ -1,5 +1,6 @@
 <script lang="ts">
     import Button from "../Button.svelte";
+    import Diamond from "../icons/Diamond.svelte";
     import type { ChatIdentifier, OpenChat, PrizeContent } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
@@ -11,6 +12,8 @@
     import SpinningToken from "../icons/SpinningToken.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,7 +27,7 @@
     $: cryptoLookup = client.cryptoLookup;
     $: logo =
         Object.values($cryptoLookup).find(
-            (t) => t.symbol.toLowerCase() === content.token.toLowerCase()
+            (t) => t.symbol.toLowerCase() === content.token.toLowerCase(),
         )?.logo ?? "";
     $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
@@ -50,7 +53,7 @@
                 .claimPrize(chatId, messageId)
                 .then((success) => {
                     if (!success) {
-                        toastStore.showFailureToast("prizes.claimFailed");
+                        toastStore.showFailureToast(i18nKey("prizes.claimFailed"));
                     }
                 })
                 .finally(() => claimsStore.delete(messageId));
@@ -60,15 +63,18 @@
 
 <div class={`prize ${content.token}`}>
     <div class="top">
-        <div class:diamond={content.diamondOnly} class="countdown" class:rtl={$rtlStore}>
+        <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
             <span>
                 {#if allClaimed && !finished}
-                    {$_("prizes.allClaimed")}
+                    <Translatable resourceKey={i18nKey("prizes.allClaimed")} />
                 {:else}
                     {timeRemaining}
                 {/if}
             </span>
+            {#if content.diamondOnly}
+                <Diamond y={0} size={"1em"} />
+            {/if}
         </div>
         <div class="prize-coin">
             <SpinningToken {logo} />
@@ -81,11 +87,11 @@
             </div>
         {/if}
         {#if !me}
-            <div class="click">{$_("prizes.click")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.click")} /></div>
         {:else if finished}
-            <div class="click">{$_("prizes.prizeFinished")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.prizeFinished")} /></div>
         {:else}
-            <div class="click">{$_("prizes.live")}</div>
+            <div class="click"><Translatable resourceKey={i18nKey("prizes.live")} /></div>
         {/if}
         <div class="progress" bind:clientWidth={progressWidth}>
             <div
@@ -108,13 +114,16 @@
             {#if !me}
                 <ButtonGroup align="fill">
                     <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
-                        >{claimedByYou
-                            ? $_("prizes.claimed")
-                            : finished
-                            ? $_("prizes.finished")
-                            : allClaimed
-                            ? $_("prizes.allClaimed")
-                            : $_("prizes.claim")}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                claimedByYou
+                                    ? "prizes.claimed"
+                                    : finished
+                                      ? "prizes.finished"
+                                      : allClaimed
+                                        ? "prizes.allClaimed"
+                                        : "prizes.claim",
+                            )} /></Button>
                 </ButtonGroup>
             {/if}
         </div>
@@ -160,6 +169,7 @@
         gap: $sp2;
         align-items: center;
         border-radius: var(--rd);
+        color: white;
         top: 10px;
         left: 10px;
         background-color: rgba(0, 0, 0, 0.3);
@@ -169,10 +179,6 @@
         &.rtl {
             left: unset;
             right: 10px;
-        }
-
-        &.diamond::after {
-            content: "💎";
         }
     }
 
@@ -195,7 +201,6 @@
     .click,
     .caption {
         @include font(book, normal, fs-80);
-        color: var(--txt);
         margin-bottom: $sp4;
     }
 

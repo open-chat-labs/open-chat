@@ -36,7 +36,7 @@
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let canPin: boolean;
-    export let canBlockUser: boolean;
+    export let canBlockUsers: boolean;
     export let canDelete: boolean;
     export let canSendAny: boolean;
     export let canReact: boolean;
@@ -55,7 +55,7 @@
     $: unconfirmed = client.unconfirmed;
     $: failedMessagesStore = client.failedMessagesStore;
     $: userGroupKeys = client.userGroupKeys;
-    $: currentChatDraftMessage = client.currentChatDraftMessage;
+    $: draftMessagesStore = client.draftMessagesStore;
     $: focusMessageIndex = client.focusMessageIndex;
     $: chatStateStore = client.chatStateStore;
     $: chatListScope = client.chatListScope;
@@ -90,7 +90,7 @@
     }
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
-        currentChatDraftMessage.setEditing(chat.id, ev.detail);
+        draftMessagesStore.setEditing({ chatId: chat.id }, ev.detail);
     }
 
     function eventKey(e: EventWrapper<ChatEventType>): string {
@@ -136,18 +136,18 @@
         $user.userId,
         $expandedDeletedMessages,
         reverseScroll,
-        groupInner(filteredProposals)
+        groupInner(filteredProposals),
     );
 
     $: privateCommunityPreview =
         $selectedCommunity !== undefined &&
-        !$selectedCommunity.public &&
-        $selectedCommunity.membership.role === "none";
+        $selectedCommunity.membership.role === "none" &&
+        (!$selectedCommunity.public || $selectedCommunity.gate.kind === "payment_gate");
 
     $: privateChatPreview =
         (chat.kind === "group_chat" || chat.kind === "channel") &&
         chat.membership.role === "none" &&
-        !chat.public;
+        (!chat.public || chat.gate.kind === "payment_gate");
 
     $: privatePreview = privateCommunityPreview || privateChatPreview;
     $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
@@ -177,7 +177,7 @@
     function isReadByThem(
         chat: ChatSummary,
         readByThem: Set<bigint>,
-        evt: EventWrapper<ChatEventType>
+        evt: EventWrapper<ChatEventType>,
     ): boolean {
         if (evt.event.kind === "message") {
             const confirmedRead = client.messageIsReadByThem(chat.id, evt.event.messageIndex);
@@ -199,7 +199,7 @@
 
     function isCollapsed(
         ew: EventWrapper<ChatEventType>,
-        filteredProposals: FilteredProposals | undefined
+        filteredProposals: FilteredProposals | undefined,
     ): boolean {
         return ew.event.kind === "message" && isCollpasedProposal(ew.event, filteredProposals);
     }
@@ -222,7 +222,7 @@
     function inSameGroup(
         a: EventWrapper<ChatEventType>,
         b: EventWrapper<ChatEventType>,
-        filteredProposals: FilteredProposals | undefined
+        filteredProposals: FilteredProposals | undefined,
     ): boolean {
         if (a.event.kind === "message" && b.event.kind === "message") {
             const aKind = a.event.content.kind;
@@ -241,7 +241,7 @@
 
     function isCollpasedProposal(
         message: Message,
-        filteredProposals: FilteredProposals | undefined
+        filteredProposals: FilteredProposals | undefined,
     ): boolean {
         if (message.content.kind !== "proposal_content") return false;
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
@@ -249,7 +249,7 @@
 
     function shouldShowAvatar(
         chat: ChatSummary,
-        earliestLoadedEventIndex: number | undefined
+        earliestLoadedEventIndex: number | undefined,
     ): boolean {
         // If this is an empty chat, show the avatar
         if (isEmptyChat) {
@@ -332,7 +332,7 @@
                         last={reverseScroll ? i === 0 : i + 1 === innerGroup.length}
                         {readonly}
                         {canPin}
-                        {canBlockUser}
+                        {canBlockUsers}
                         {canDelete}
                         {canSendAny}
                         {canReact}
@@ -349,6 +349,7 @@
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
+                        on:removePreview
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}

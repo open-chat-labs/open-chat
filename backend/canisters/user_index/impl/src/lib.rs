@@ -1,23 +1,28 @@
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
-use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_principal_updates_queue::UserPrincipalUpdatesQueue;
 use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use fire_and_forget_handler::FireAndForgetHandler;
+use icrc_ledger_types::icrc1::account::{Account, Subaccount};
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_modclub_submissions_queue::{PendingModclubSubmission, PendingModclubSubmissionsQueue};
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use model::reported_messages::{ReportedMessages, ReportingMetrics};
+use nns_governance_canister::types::manage_neuron::claim_or_refresh::By;
+use nns_governance_canister::types::manage_neuron::{ClaimOrRefresh, Command};
+use nns_governance_canister::types::{Empty, ManageNeuron, NeuronId};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use types::{
-    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId,
+    BuildVersion, CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, DiamondMembershipFees, Milliseconds,
+    TimestampMillis, Timestamped, UserId,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -82,6 +87,16 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_translations_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.translations_canister_id
+    }
+
+    pub fn is_caller_identity_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.identity_canister_id
+    }
+
     pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -120,7 +135,7 @@ impl RuntimeState {
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
-            jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+            jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
         }
     }
 
@@ -130,7 +145,7 @@ impl RuntimeState {
                 self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
-        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+        jobs::sync_events_to_local_user_index_canisters::try_run_now(self);
     }
 
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
@@ -171,11 +186,16 @@ impl RuntimeState {
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             platform_moderators_group: self.data.platform_moderators_group,
+            nns_8_year_neuron: self.data.nns_8_year_neuron.clone(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
+                identity: self.data.identity_canister_id,
                 proposals_bot: self.data.proposals_bot_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                storage_index: self.data.storage_index_canister_id,
+                escrow: self.data.escrow_canister_id,
+                translations: self.data.translations_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
@@ -193,14 +213,21 @@ struct Data {
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
+    pub identity_canister_id: CanisterId,
     pub proposals_bot_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
+    pub escrow_canister_id: CanisterId,
+    #[serde(default = "translations_canister_id")]
+    pub translations_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
-    pub user_principal_migration_queue: UserPrincipalMigrationQueue,
+    #[serde(default)]
+    pub user_principal_updates_queue: UserPrincipalUpdatesQueue,
+    #[serde(default)]
+    pub legacy_principals_sync_queue: VecDeque<Principal>,
     pub pending_payments_queue: PendingPaymentsQueue,
     pub pending_modclub_submissions_queue: PendingModclubSubmissionsQueue,
     pub platform_moderators: HashSet<UserId>,
@@ -211,13 +238,21 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
+    pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
     pub reported_messages: ReportedMessages,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    #[serde(default)]
+    pub nns_8_year_neuron: Option<NnsNeuron>,
     pub rng_seed: [u8; 32],
+    pub diamond_membership_fees: DiamondMembershipFees,
+    #[serde(default)]
+    pub legacy_principals_synced: bool,
+}
+
+fn translations_canister_id() -> CanisterId {
+    Principal::from_text("lxq5i-mqaaa-aaaaf-bih7q-cai").unwrap()
 }
 
 impl Data {
@@ -228,10 +263,14 @@ impl Data {
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
+        identity_canister_id: CanisterId,
         proposals_bot_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
+        escrow_canister_id: CanisterId,
+        nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
+        translations_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -242,14 +281,18 @@ impl Data {
             local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
             group_index_canister_id,
             notifications_index_canister_id,
+            identity_canister_id,
             proposals_bot_canister_id,
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id,
+            escrow_canister_id,
+            translations_canister_id,
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -260,12 +303,16 @@ impl Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            nns_governance_canister_id,
             internet_identity_canister_id,
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
+            nns_8_year_neuron: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
             rng_seed: [0; 32],
+            diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         };
 
         // Register the ProposalsBot
@@ -273,13 +320,39 @@ impl Data {
             proposals_bot_canister_id,
             proposals_bot_canister_id.into(),
             "ProposalsBot".to_string(),
-            None,
             0,
             None,
             true,
         );
 
         data
+    }
+
+    pub fn nns_neuron_account(&self) -> Option<Account> {
+        self.nns_8_year_neuron.as_ref().map(|n| Account {
+            owner: self.nns_governance_canister_id,
+            subaccount: Some(n.subaccount),
+        })
+    }
+
+    pub fn refresh_nns_neuron(&self) {
+        if let Some(neuron_id) = self.nns_8_year_neuron.as_ref().map(|n| n.neuron_id) {
+            ic_cdk::spawn(refresh_nns_neuron_inner(self.nns_governance_canister_id, neuron_id));
+        }
+
+        async fn refresh_nns_neuron_inner(nns_governance_canister_id: CanisterId, neuron_id: u64) {
+            let _ = nns_governance_canister_c2c_client::manage_neuron(
+                nns_governance_canister_id,
+                &ManageNeuron {
+                    id: Some(NeuronId { id: neuron_id }),
+                    neuron_id_or_subaccount: None,
+                    command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+                        by: Some(By::NeuronIdOrSubaccount(Empty {})),
+                    })),
+                },
+            )
+            .await;
+        }
     }
 }
 
@@ -294,14 +367,18 @@ impl Default for Data {
             local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
+            identity_canister_id: Principal::anonymous(),
             proposals_bot_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id: Principal::anonymous(),
+            escrow_canister_id: Principal::anonymous(),
+            translations_canister_id: Principal::anonymous(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
+            legacy_principals_sync_queue: VecDeque::default(),
             pending_payments_queue: PendingPaymentsQueue::default(),
             pending_modclub_submissions_queue: PendingModclubSubmissionsQueue::default(),
             platform_moderators: HashSet::new(),
@@ -312,12 +389,16 @@ impl Default for Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            nns_governance_canister_id: Principal::anonymous(),
             internet_identity_canister_id: Principal::anonymous(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
             reported_messages: ReportedMessages::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            nns_8_year_neuron: None,
             rng_seed: [0; 32],
+            diamond_membership_fees: DiamondMembershipFees::default(),
+            legacy_principals_synced: false,
         }
     }
 }
@@ -345,6 +426,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub platform_moderators_group: Option<ChatId>,
+    pub nns_8_year_neuron: Option<NnsNeuron>,
     pub canister_ids: CanisterIds,
     pub pending_modclub_submissions: usize,
     pub reporting_metrics: ReportingMetrics,
@@ -359,6 +441,7 @@ pub struct DiamondMembershipMetrics {
 #[derive(Serialize, Debug, Default)]
 pub struct DiamondMembershipUserMetrics {
     pub total: u64,
+    pub lifetime: u64,
     pub recurring: u64,
 }
 
@@ -370,11 +453,21 @@ pub struct DiamondMembershipPaymentMetrics {
     pub recurring_payments_failed_due_to_insufficient_funds: u64,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NnsNeuron {
+    pub neuron_id: u64,
+    pub subaccount: Subaccount,
+}
+
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
+    pub identity: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub storage_index: CanisterId,
+    pub escrow: CanisterId,
     pub internet_identity: CanisterId,
+    pub translations: CanisterId,
 }

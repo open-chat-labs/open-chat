@@ -1,14 +1,13 @@
-use crate::governance_clients::common::WrappedProposalId;
-use crate::governance_clients::nns::ListProposalInfo;
 use crate::jobs::update_proposals;
-use crate::{generate_message_id, governance_clients, mutate_state, RuntimeState};
+use crate::{mutate_state, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_timers::TimerId;
+use nns_governance_canister::types::ListProposalInfo;
 use sns_governance_canister::types::ListProposals;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, ProposalDecisionStatus, ProposalId, ProposalRewardStatus, ProposalUpdate, TimestampMillis};
+use types::{CanisterId, Proposal, ProposalId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -16,9 +15,8 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.get().is_none() && !state.data.finished_proposals_to_process.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
+        let timer_id = ic_cdk_timers::set_timer(Duration::ZERO, run);
         TIMER_ID.set(Some(timer_id));
-        trace!("'update_finished_proposals' job started");
         true
     } else {
         false
@@ -26,6 +24,9 @@ pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
 }
 
 fn run() {
+    trace!("'update_finished_proposals' job started");
+    TIMER_ID.set(None);
+
     mutate_state(run_impl);
 }
 
@@ -33,21 +34,18 @@ fn run_impl(state: &mut RuntimeState) {
     if let Some((governance_canister_id, proposal_id)) = state.data.finished_proposals_to_process.pop_front() {
         if state.data.nervous_systems.exists(&governance_canister_id) {
             let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
-            let now = state.env.now();
 
-            ic_cdk::spawn(process_proposal(governance_canister_id, proposal_id, is_nns, now));
+            ic_cdk::spawn(process_proposal(governance_canister_id, proposal_id, is_nns));
         }
-    } else if let Some(timer_id) = TIMER_ID.take() {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'update_finished_proposals' job stopped");
     }
+    start_job_if_required(state);
 }
 
-async fn process_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, is_nns: bool, now: TimestampMillis) {
+async fn process_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, is_nns: bool) {
     let response = if is_nns {
         get_nns_proposal(governance_canister_id, proposal_id).await
     } else {
-        get_sns_proposal(governance_canister_id, proposal_id, now).await
+        get_sns_proposal(governance_canister_id, proposal_id).await
     };
 
     match response {
@@ -55,7 +53,7 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
             state
                 .data
                 .nervous_systems
-                .queue_proposal_to_update(governance_canister_id, proposal);
+                .process_finished_proposal(&governance_canister_id, proposal);
 
             update_proposals::start_job_if_required(state);
         }),
@@ -73,31 +71,22 @@ async fn process_proposal(governance_canister_id: CanisterId, proposal_id: Propo
     }
 }
 
-async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<ProposalUpdate>> {
-    let response = governance_clients::nns::list_proposals(
+async fn get_nns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<Proposal>> {
+    let response = nns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposalInfo {
             limit: 1,
-            before_proposal: Some(WrappedProposalId { id: proposal_id + 1 }),
+            before_proposal: Some(nns_governance_canister::types::ProposalId { id: proposal_id + 1 }),
             ..Default::default()
         },
     )
-    .await?;
+    .await?
+    .proposal_info;
 
-    Ok(response.into_iter().next().map(|p| ProposalUpdate {
-        message_id: generate_message_id(governance_canister_id, proposal_id),
-        status: ProposalDecisionStatus::try_from(p.status).ok(),
-        reward_status: ProposalRewardStatus::try_from(p.reward_status).ok(),
-        latest_tally: p.latest_tally.map(|t| t.into()),
-        deadline: None,
-    }))
+    Ok(response.into_iter().next().and_then(|p| p.try_into().ok()))
 }
 
-async fn get_sns_proposal(
-    governance_canister_id: CanisterId,
-    proposal_id: ProposalId,
-    now: TimestampMillis,
-) -> CallResult<Option<ProposalUpdate>> {
+async fn get_sns_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId) -> CallResult<Option<Proposal>> {
     let response = sns_governance_canister_c2c_client::list_proposals(
         governance_canister_id,
         &ListProposals {
@@ -109,11 +98,5 @@ async fn get_sns_proposal(
     .await?
     .proposals;
 
-    Ok(response.into_iter().next().map(|p| ProposalUpdate {
-        message_id: generate_message_id(governance_canister_id, proposal_id),
-        status: Some(p.status()),
-        reward_status: Some(p.reward_status(now)),
-        latest_tally: p.latest_tally.map(|t| t.into()),
-        deadline: None,
-    }))
+    Ok(response.into_iter().next().and_then(|p| p.try_into().ok()))
 }

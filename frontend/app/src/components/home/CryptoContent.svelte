@@ -5,6 +5,8 @@
     import type { CryptocurrencyContent, OpenChat } from "openchat-client";
     import Markdown from "./Markdown.svelte";
     import { getContext } from "svelte";
+    import Translatable from "../Translatable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -37,7 +39,7 @@
         </div>
     </div>
 {:else}
-    <div class="unexpected">{$_("tokenTransfer.unexpected")}</div>
+    <div class="unexpected"><Translatable resourceKey={i18nKey("tokenTransfer.unexpected")} /></div>
 {/if}
 
 {#if content.caption !== undefined}

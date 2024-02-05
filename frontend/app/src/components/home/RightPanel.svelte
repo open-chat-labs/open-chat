@@ -1,5 +1,4 @@
 <script lang="ts">
-    import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
@@ -31,15 +30,20 @@
     import page from "page";
     import { compareRoles } from "openchat-client";
     import CommunityDetails from "./communities/details/CommunitySummary.svelte";
-    import CommunityChannels from "./communities/details/CommunityChannels.svelte";
-    import { interpolateLevel } from "../../utils/i18n";
     import AcceptRulesWrapper from "./AcceptRulesWrapper.svelte";
+    import { currentTheme } from "../../theme/themes";
+    import Resizable from "../Resizable.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
     let invitingUsers = false;
+    let section: HTMLElement;
+    let resized = false;
+    let resizing = false;
+    let resizedWidth = "7";
 
     $: currentUser = client.user;
     $: selectedChatId = client.selectedChatId;
@@ -67,7 +71,7 @@
     }
 
     function onChangeGroupRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
+        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
     ): void {
         if (
             $selectedChatId !== undefined &&
@@ -79,7 +83,7 @@
     }
 
     function onChangeCommunityRole(
-        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
+        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>,
     ): void {
         if ($selectedCommunity !== undefined) {
             const { userId, newRole, oldRole } = ev.detail;
@@ -113,11 +117,11 @@
                     case "success":
                         popRightPanelHistory();
                         if ($multiUserChat?.public ?? false) {
-                            toastStore.showSuccessToast("communities.usersInvited");
+                            toastStore.showSuccessToast(i18nKey("communities.usersInvited"));
                         }
                         break;
                     default:
-                        toastStore.showFailureToast("communities.errors.inviteUsers");
+                        toastStore.showFailureToast(i18nKey("communities.errors.inviteUsers"));
                         break;
                 }
             });
@@ -142,16 +146,17 @@
                         case "success":
                             popRightPanelHistory();
                             if ($multiUserChat?.public ?? false) {
-                                toastStore.showSuccessToast("group.usersInvited");
+                                toastStore.showSuccessToast(i18nKey("group.usersInvited"));
                             }
                             break;
                         default:
                             toastStore.showFailureToast(
-                                interpolateLevel(
+                                i18nKey(
                                     "group.inviteUsersFailed",
+                                    undefined,
                                     $multiUserChat.level,
-                                    true
-                                )
+                                    true,
+                                ),
                             );
                             break;
                     }
@@ -159,7 +164,7 @@
                 .catch((err) => {
                     client.logError("InviteUsersFailed", err);
                     toastStore.showFailureToast(
-                        interpolateLevel("group.inviteUsersFailed", $multiUserChat.level, true)
+                        i18nKey("group.inviteUsersFailed", undefined, $multiUserChat.level, true),
                     );
                 });
 
@@ -192,7 +197,7 @@
 
     function findMessage(
         events: EventWrapper<ChatEvent>[],
-        messageId: bigint
+        messageId: bigint,
     ): EventWrapper<Message> | undefined {
         return events.find((e) => {
             return e.event.kind === "message" && e.event.messageId === messageId;
@@ -203,15 +208,15 @@
         chatId: MultiUserChatIdentifier,
         userId: string,
         newRole: MemberRole,
-        oldRole: MemberRole
+        oldRole: MemberRole,
     ): Promise<void> {
         // Call backend to changeRole
         return client.changeRole(chatId, userId, newRole, oldRole).then((success) => {
             if (!success) {
                 const roleText = $_(newRole);
                 const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
-                    values: { role: roleText },
+                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
+                    role: roleText,
                 });
                 toastStore.showFailureToast(message);
             }
@@ -222,14 +227,14 @@
         id: CommunityIdentifier,
         userId: string,
         newRole: MemberRole,
-        oldRole: MemberRole
+        oldRole: MemberRole,
     ) {
         return client.changeCommunityRole(id, userId, newRole, oldRole).then((success) => {
             if (!success) {
                 const roleText = $_(newRole);
                 const promotion = compareRoles(newRole, oldRole) > 0;
-                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
-                    values: { role: roleText },
+                const message = i18nKey(promotion ? "promoteFailed" : "demoteFailed", {
+                    role: roleText,
                 });
                 toastStore.showFailureToast(message);
             }
@@ -241,12 +246,12 @@
             .removeCommunityMember(id, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    toastStore.showFailureToast("removeMemberFailed");
+                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
             .catch((err) => {
                 client.logError("Unable to remove member", err);
-                toastStore.showFailureToast("removeMemberFailed");
+                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
             });
     }
 
@@ -255,12 +260,12 @@
             .removeMember(chatId, userId)
             .then((resp) => {
                 if (resp !== "success") {
-                    toastStore.showFailureToast("removeMemberFailed");
+                    toastStore.showFailureToast(i18nKey("removeMemberFailed"));
                 }
             })
             .catch((err) => {
                 client.logError("Unable to remove member", err);
-                toastStore.showFailureToast("removeMemberFailed");
+                toastStore.showFailureToast(i18nKey("removeMemberFailed"));
             });
     }
 
@@ -271,9 +276,9 @@
         ) {
             const success = await client.blockUser($selectedChatId, ev.detail.userId);
             if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("blockUserFailed");
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
             }
         }
     }
@@ -282,12 +287,12 @@
         if ($selectedCommunity !== undefined) {
             const success = await client.blockCommunityUser(
                 $selectedCommunity.id,
-                ev.detail.userId
+                ev.detail.userId,
             );
             if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("blockUserFailed");
+                toastStore.showFailureToast(i18nKey("blockUserFailed"));
             }
         }
     }
@@ -299,9 +304,9 @@
         ) {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
             if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("unblockUserFailed");
+                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
             }
         }
     }
@@ -310,12 +315,12 @@
         if ($selectedCommunity !== undefined) {
             const success = await client.unblockCommunityUser(
                 $selectedCommunity.id,
-                ev.detail.userId
+                ev.detail.userId,
             );
             if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
+                toastStore.showSuccessToast(i18nKey("unblockUserSucceeded"));
             } else {
-                toastStore.showFailureToast("unblockUserFailed");
+                toastStore.showFailureToast(i18nKey("unblockUserFailed"));
             }
         }
     }
@@ -339,12 +344,19 @@
         lastState.kind === "invite_community_users"
             ? "community"
             : $selectedChat?.kind === "channel"
-            ? "channel"
-            : "group"
+              ? "channel"
+              : "group"
     ) as Level;
 </script>
 
-<Panel right {empty}>
+<section
+    bind:this={section}
+    class:modal
+    class:resized
+    class:resizing
+    style={`--resized-width: ${resizedWidth}`}
+    class:halloween={$currentTheme.name === "halloween"}
+    class:empty>
     {#if lastState.kind === "group_details" && $selectedChatId !== undefined && $multiUserChat !== undefined}
         <GroupDetails
             chat={$multiUserChat}
@@ -439,11 +451,83 @@
         </AcceptRulesWrapper>
     {:else if lastState.kind === "proposal_filters" && $selectedChat !== undefined}
         <ProposalGroupFilters selectedChat={$selectedChat} on:close={popRightPanelHistory} />
-    {:else if lastState.kind === "community_channels"}
-        <CommunityChannels on:newChannel />
     {:else if lastState.kind === "community_details"}
         <CommunityDetails on:deleteCommunity on:editCommunity />
     {:else if lastState.kind === "community_filters"}
         <CommunityFilters on:close={popRightPanelHistory} />
     {/if}
-</Panel>
+
+    <Resizable {modal} {section} bind:resizedWidth bind:resized bind:resizing />
+</section>
+
+<style lang="scss">
+    :global(body.witch section.right.empty) {
+        background: var(--panel-right-bg);
+    }
+
+    section {
+        overflow: auto;
+        overflow-x: hidden;
+        flex: 7;
+        display: flex;
+        flex-direction: column;
+
+        border-left: var(--bw) solid var(--bd);
+        background: var(--panel-right-bg);
+        max-width: 500px;
+        position: relative;
+
+        @include size-above(xxl) {
+            flex: 5;
+        }
+
+        &.resizing {
+            user-select: none;
+        }
+
+        &:not(.modal).resized {
+            flex: 0 0 var(--resized-width);
+        }
+
+        &.modal {
+            background: var(--panel-right-modal);
+            @include fullHeight();
+            min-width: 500px;
+
+            &.resized {
+                width: var(--resized-width);
+                @include mobile() {
+                    width: 100%;
+                }
+            }
+
+            @include mobile() {
+                min-width: unset;
+            }
+        }
+
+        &.resized {
+            max-width: none;
+        }
+
+        @include mobile() {
+            background: var(--panel-right-modal);
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            max-width: none;
+            border-left: none;
+        }
+
+        &.empty {
+            background: transparent;
+        }
+
+        &.halloween::after {
+            @include cobweb();
+            bottom: 0;
+            right: 0;
+            transform: scaleY(-1);
+        }
+    }
+</style>

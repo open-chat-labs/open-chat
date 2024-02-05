@@ -7,6 +7,7 @@
         PrizeContentInitial,
         MessageContext,
     } from "openchat-client";
+    import { bigIntMax } from "openchat-client";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -23,6 +24,9 @@
     import EqualDistribution from "../icons/EqualDistribution.svelte";
     import RandomDistribution from "../icons/RandomDistribution.svelte";
     import TextArea from "../TextArea.svelte";
+    import NumberInput from "../NumberInput.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const ONE_HOUR = 1000 * 60 * 60;
     const ONE_DAY = ONE_HOUR * 24;
@@ -43,6 +47,7 @@
     let diamondOnly = true;
 
     $: user = client.user;
+    $: lastCryptoSent = client.lastCryptoSent;
     $: cryptoBalanceStore = client.cryptoBalance;
     $: cryptoBalance = $cryptoBalanceStore[ledger] ?? BigInt(0);
     let refreshing = false;
@@ -57,11 +62,12 @@
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
     $: transferFees = tokenDetails.transferFee;
-    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners);
+    $: totalFees = transferFees + transferFees * BigInt(numberOfWinners ?? 0);
     $: multiUserChat = chat.kind === "group_chat" || chat.kind === "channel";
     $: remainingBalance =
-        draftAmount > BigInt(0) ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
-    $: minAmount = BigInt(100) * BigInt(numberOfWinners) * transferFees;
+        draftAmount > 0n ? cryptoBalance - draftAmount - totalFees : cryptoBalance;
+    $: minAmount = 10n * BigInt(numberOfWinners ?? 0) * transferFees;
+    $: maxAmount = bigIntMax(cryptoBalance - totalFees, BigInt(0));
     $: valid = error === undefined && tokenInputState === "ok" && !tokenChanging;
     $: zero = cryptoBalance <= transferFees && !tokenChanging;
 
@@ -69,7 +75,7 @@
         if (tokenInputState === "too_low") {
             error = $_("minimumAmount", {
                 values: {
-                    amount: client.formatTokens(minAmount, 0, tokenDetails.decimals),
+                    amount: client.formatTokens(minAmount, tokenDetails.decimals),
                     symbol,
                 },
             });
@@ -80,10 +86,6 @@
 
     function reset() {
         balanceWithRefresh.refresh();
-    }
-
-    function maxAmount(balance: bigint): bigint {
-        return balance - transferFees;
     }
 
     function recipientFromContext({ chatId }: MessageContext) {
@@ -110,9 +112,8 @@
     }
 
     function send() {
-        // const fees = BigInt(numberOfWinners) * tokenDetails.transferFee;
         const prizes = generatePrizes();
-        const prizeFees = transferFees * BigInt(numberOfWinners);
+        const prizeFees = transferFees * BigInt(numberOfWinners ?? 0);
         const content: PrizeContentInitial = {
             kind: "prize_content_initial",
             caption: message === "" ? undefined : message,
@@ -130,6 +131,7 @@
             prizes,
         };
         dispatch("sendMessageWithContent", { content });
+        lastCryptoSent.set(ledger);
         dispatch("close");
     }
 
@@ -161,6 +163,8 @@
     }
 
     function generatePrizes(): bigint[] {
+        if (!numberOfWinners) return [];
+
         const share = Math.round(Number(draftAmount) / numberOfWinners);
         switch (distribution) {
             case "equal":
@@ -210,7 +214,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("prizes.title")}</div>
+                    <div><Translatable resourceKey={i18nKey("prizes.title")} /></div>
                     <div>
                         <CryptoSelector bind:ledger />
                     </div>
@@ -221,7 +225,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 on:refreshed={onBalanceRefreshed}
@@ -232,11 +236,16 @@
                 {#if zero || toppingUp}
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: symbol,
+                                })} />
+                        </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol } })}
+                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                     </a>
                 {:else}
                     <div class="transfer">
@@ -247,25 +256,35 @@
                             bind:state={tokenInputState}
                             transferFees={totalFees}
                             {minAmount}
-                            maxAmount={maxAmount(cryptoBalance)}
+                            {maxAmount}
                             bind:amount={draftAmount} />
                     </div>
                     <div class="message">
-                        <Legend label={$_("tokenTransfer.message")} />
+                        <Legend label={i18nKey("tokenTransfer.message")} />
                         <TextArea
                             maxlength={200}
                             rows={3}
                             autofocus={false}
-                            placeholder={$_("tokenTransfer.messagePlaceholder")}
+                            placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                             bind:value={message} />
                     </div>
                     <div class="winners">
                         <Legend
-                            label={$_("prizes.numberOfWinners")}
-                            rules={numberOfWinners.toString()} />
-                        <Range min={1} max={100} bind:value={numberOfWinners} />
+                            label={i18nKey("prizes.numberOfWinners")}
+                            rules={i18nKey(numberOfWinners?.toString())} />
+                        <div class="pickers">
+                            <Range fat min={1} max={1000} bind:value={numberOfWinners} />
+                            <div class="num-picker">
+                                <NumberInput
+                                    align={"right"}
+                                    defaultValue={20}
+                                    min={1}
+                                    max={1000}
+                                    bind:value={numberOfWinners} />
+                            </div>
+                        </div>
                     </div>
-                    <Legend label={$_("prizes.distribution")} />
+                    <Legend label={i18nKey("prizes.distribution")} />
                     <div class="distributions">
                         <div
                             role="button"
@@ -275,7 +294,9 @@
                             <div class:selected={distribution === "random"} class="dist-icon">
                                 <RandomDistribution size={"100%"} color={"var(--icon-txt)"} />
                             </div>
-                            <div class="dist-label">{$_("prizes.randomDistribution")}</div>
+                            <div class="dist-label">
+                                <Translatable resourceKey={i18nKey("prizes.randomDistribution")} />
+                            </div>
                         </div>
                         <div
                             role="button"
@@ -285,35 +306,37 @@
                             <div class:selected={distribution === "equal"} class="dist-icon">
                                 <EqualDistribution size={"100%"} color={"var(--icon-txt)"} />
                             </div>
-                            <div class="dist-label">{$_("prizes.equalDistribution")}</div>
+                            <div class="dist-label">
+                                <Translatable resourceKey={i18nKey("prizes.equalDistribution")} />
+                            </div>
                         </div>
                     </div>
                     <div class="config">
                         <div class="duration">
-                            <Legend label={$_("prizes.duration")} />
+                            <Legend label={i18nKey("prizes.duration")} />
                             {#each durations as d}
                                 <Radio
                                     on:change={() => (selectedDuration = d)}
                                     value={d}
                                     checked={selectedDuration === d}
                                     id={`duration_${d}`}
-                                    label={$_(`poll.${d}`)}
+                                    label={i18nKey(`poll.${d}`)}
                                     group={"prize_duration"} />
                             {/each}
                         </div>
                         <div class="restrictions">
-                            <Legend label={$_("prizes.whoCanWin")} />
+                            <Legend label={i18nKey("prizes.whoCanWin")} />
                             <Radio
                                 on:change={() => (diamondOnly = true)}
                                 checked={diamondOnly}
                                 id={`restricted_diamond`}
-                                label={$_(`prizes.onlyDiamond`)}
+                                label={i18nKey(`prizes.onlyDiamond`)}
                                 group={"prize_restriction"} />
                             <Radio
                                 on:change={() => (diamondOnly = false)}
                                 checked={!diamondOnly}
                                 id={`restricted_anyone`}
-                                label={$_(`prizes.anyone`)}
+                                label={i18nKey(`prizes.anyone`)}
                                 group={"prize_restriction"} />
                         </div>
                     </div>
@@ -326,20 +349,21 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
-                        on:click={send}>{$_("tokenTransfer.send")}</Button>
+                        on:click={send}
+                        ><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></Button>
                 {/if}
             </ButtonGroup>
         </span>
@@ -416,6 +440,16 @@
         .restrictions,
         .duration {
             flex: 1;
+        }
+    }
+
+    .pickers {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+
+        .num-picker {
+            flex: 0 0 80px;
         }
     }
 </style>

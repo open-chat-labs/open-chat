@@ -9,9 +9,11 @@ generate_query_call!(saved_crypto_accounts);
 generate_query_call!(updates);
 
 // Updates
+generate_update_call!(accept_p2p_swap);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(cancel_message_reminder);
+generate_update_call!(cancel_p2p_swap);
 generate_update_call!(create_community);
 generate_update_call!(create_group);
 generate_update_call!(delete_community);
@@ -60,6 +62,7 @@ pub mod happy_path {
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
+                message_filter_failed: None,
                 correlation_id: 0,
             },
         );
@@ -154,7 +157,7 @@ pub mod happy_path {
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::initial_state::Args { disable_cache: None },
+            &user_canister::initial_state::Args {},
         );
 
         let user_canister::initial_state::Response::Success(result) = response;
@@ -276,7 +279,7 @@ pub mod happy_path {
                 ledger,
                 amount,
                 fee: token.fee().unwrap(),
-                decimals: token.decimals(),
+                decimals: token.decimals().unwrap(),
                 token,
             },
         );

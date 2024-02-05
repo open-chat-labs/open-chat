@@ -1,11 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Chat, ChatId, DirectChatSummary, GroupChatSummary, TimestampMillis, UserId};
+use types::{CanisterId, Chat, ChatId, DirectChatSummary, Empty, GroupChatSummary, TimestampMillis, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub disable_cache: Option<bool>,
-}
+pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -22,6 +19,7 @@ pub struct SuccessResult {
     pub avatar_id: Option<u128>,
     pub blocked_users: Vec<UserId>,
     pub suspended: bool,
+    pub local_user_index_canister_id: CanisterId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -1,12 +1,15 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
+    import { translatable } from "../actions/translatable";
+    import { interpolate, type ResourceKey } from "../i18n/i18n";
 
     export let disabled: boolean = false;
     export let invalid: boolean = false;
     export let value: string | number = "";
     export let autofocus: boolean = false;
-    export let placeholder: string = "";
+    export let placeholder: ResourceKey | undefined = undefined;
     export let type: "text" | "number" = "text";
     export let minlength: number = 0;
     export let maxlength: number = Number.MAX_VALUE;
@@ -60,7 +63,8 @@
         {type}
         {minlength}
         {maxlength}
-        {placeholder}
+        placeholder={placeholder !== undefined ? interpolate($_, placeholder) : ""}
+        use:translatable={{ key: placeholder, position: "absolute", right: 30, top: 12 }}
         on:input={handleInput}
         on:keydown={keyDown}
         on:blur

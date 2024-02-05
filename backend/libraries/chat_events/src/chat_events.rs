@@ -13,11 +13,12 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    CanisterId, Chat, CompletedCryptoTransaction, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention,
-    Mention, Message, MessageContentInitial, MessageId, MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat,
-    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, TimestampMillis,
-    TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
+    AcceptP2PSwapResult, CancelP2PSwapResult, CanisterId, Chat, CompleteP2PSwapResult, CompletedCryptoTransaction,
+    Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated, GroupCanisterThreadDetails,
+    GroupCreated, GroupFrozen, GroupUnfrozen, Hash, HydratedMention, Mention, Message, MessageContentInitial, MessageId,
+    MessageIndex, MessageMatch, MessageReport, Milliseconds, MultiUserChat, P2PSwapAccepted, P2PSwapContent, P2PSwapStatus,
+    PendingCryptoTransaction, PollVotes, ProposalUpdate, PushEventResult, Reaction, RegisterVoteResult, ReserveP2PSwapResult,
+    ReserveP2PSwapSuccess, TimestampMillis, TimestampNanos, Timestamped, Tips, UserId, VoteOperation,
 };
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -163,19 +164,30 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    message.content = args.content.into();
-                    message.last_updated = Some(args.now);
-                    message.last_edited = Some(args.now);
-                    self.last_updated_timestamps
-                        .mark_updated(args.thread_root_message_index, event_index, args.now);
+                    let existing_text = message.content.text();
+                    let new_text = args.content.text();
 
-                    add_to_metrics(
-                        &mut self.metrics,
-                        &mut self.per_user_metrics,
-                        args.sender,
-                        |m| incr(&mut m.edits),
-                        args.now,
-                    );
+                    if new_text != existing_text {
+                        let edited = new_text.map(|t| t.replace("#LINK_REMOVED", ""))
+                            != existing_text.map(|t| t.replace("#LINK_REMOVED", ""));
+
+                        message.content = args.content.try_into().unwrap();
+                        message.last_updated = Some(args.now);
+
+                        if edited {
+                            message.last_edited = Some(args.now);
+                            add_to_metrics(
+                                &mut self.metrics,
+                                &mut self.per_user_metrics,
+                                args.sender,
+                                |m| incr(&mut m.edits),
+                                args.now,
+                            );
+                        }
+
+                        self.last_updated_timestamps
+                            .mark_updated(args.thread_root_message_index, event_index, args.now);
+                    }
 
                     return EditMessageResult::Success;
                 }
@@ -637,7 +649,7 @@ impl ChatEvents {
                     // Push a PrizeWinnerContent message to the group from the OpenChatBot
                     let message_event = self.push_message(PushMessageArgs {
                         sender: OPENCHAT_BOT_USER_ID,
-                        thread_root_message_index: None,
+                        thread_root_message_index: Some(message_index),
                         message_id: rng.gen(),
                         content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
                             winner,
@@ -651,7 +663,7 @@ impl ChatEvents {
                         now,
                     });
 
-                    ClaimPrizeResult::Success(message_event)
+                    ClaimPrizeResult::Success(message_index, message_event)
                 } else {
                     ClaimPrizeResult::ReservationNotFound
                 };
@@ -685,6 +697,213 @@ impl ChatEvents {
         }
 
         UnreservePrizeResult::MessageNotFound
+    }
+
+    pub fn pending_prize_messages(&self, date_cutoff: TimestampMillis) -> Vec<(MessageId, PrizeContentInternal)> {
+        self.main
+            .iter(None, false, EventIndex::default())
+            .filter_map(|e| e.as_event())
+            .take_while(|e| e.timestamp > date_cutoff)
+            .filter_map(|e| e.event.as_message())
+            .filter_map(|m| {
+                if let MessageContentInternal::Prize(p) = &m.content {
+                    Some((m.message_id, p.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
+    pub fn reduce_final_prize_by_transfer_fee(&mut self, message_id: MessageId) -> bool {
+        if let Some(prize_content) = self
+            .main
+            .get_event_mut(message_id.into(), EventIndex::default())
+            .and_then(|e| e.event.as_message_mut())
+            .and_then(|m| if let MessageContentInternal::Prize(p) = &mut m.content { Some(p) } else { None })
+        {
+            if !prize_content.prizes_remaining.is_empty() {
+                let last = prize_content.prizes_remaining.remove(0);
+                prize_content.prizes_remaining.insert(
+                    0,
+                    Tokens::from_e8s(last.e8s().saturating_sub(prize_content.transaction.fee() as u64)),
+                );
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn get_p2p_swap(
+        &self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+    ) -> Option<&P2PSwapContent> {
+        self.message_internal(min_visible_event_index, thread_root_message_index, message_id.into())
+            .and_then(|(m, _)| if let MessageContentInternal::P2PSwap(p) = &m.content { Some(p) } else { None })
+    }
+
+    pub fn reserve_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+        now: TimestampMillis,
+    ) -> ReserveP2PSwapResult {
+        if let Some(event) = self
+            .events_list_mut(min_visible_event_index, thread_root_message_index)
+            .and_then(|l| l.get_event_mut(message_id.into(), min_visible_event_index))
+        {
+            if let Some(message) = event.event.as_message_mut() {
+                if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                    return if content.reserve(user_id, now) {
+                        ReserveP2PSwapResult::Success(ReserveP2PSwapSuccess {
+                            content: content.clone(),
+                            created: event.timestamp,
+                            created_by: message.sender,
+                        })
+                    } else {
+                        ReserveP2PSwapResult::Failure(content.status.clone())
+                    };
+                }
+            }
+        }
+        ReserveP2PSwapResult::SwapNotFound
+    }
+
+    pub fn accept_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        token1_txn_in: u64,
+        now: TimestampMillis,
+    ) -> AcceptP2PSwapResult {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                return if content.accept(user_id, token1_txn_in) {
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
+                    AcceptP2PSwapResult::Success(P2PSwapAccepted {
+                        accepted_by: user_id,
+                        token1_txn_in,
+                    })
+                } else {
+                    AcceptP2PSwapResult::Failure(content.status.clone())
+                };
+            }
+        }
+        AcceptP2PSwapResult::SwapNotFound
+    }
+
+    pub fn complete_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        token0_txn_out: u64,
+        token1_txn_out: u64,
+        now: TimestampMillis,
+    ) -> CompleteP2PSwapResult {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                return if let Some(status) = content.complete(user_id, token0_txn_out, token1_txn_out) {
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
+                    CompleteP2PSwapResult::Success(status)
+                } else {
+                    CompleteP2PSwapResult::Failure(content.status.clone())
+                };
+            }
+        }
+        CompleteP2PSwapResult::SwapNotFound
+    }
+
+    pub fn unreserve_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                if content.unreserve(user_id) {
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
+                };
+            }
+        }
+    }
+
+    pub fn cancel_p2p_swap(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> CancelP2PSwapResult {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if message.sender == user_id {
+                if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                    return if content.cancel() {
+                        let swap_id = content.swap_id;
+                        self.last_updated_timestamps
+                            .mark_updated(thread_root_message_index, event_index, now);
+                        CancelP2PSwapResult::Success(swap_id)
+                    } else {
+                        CancelP2PSwapResult::Failure(content.status.clone())
+                    };
+                }
+            }
+        }
+        CancelP2PSwapResult::SwapNotFound
+    }
+
+    pub fn mark_p2p_swap_expired(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                if content.mark_expired() {
+                    self.last_updated_timestamps
+                        .mark_updated(thread_root_message_index, event_index, now);
+                };
+            }
+        }
+    }
+
+    pub fn set_p2p_swap_status(
+        &mut self,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        status: P2PSwapStatus,
+        now: TimestampMillis,
+    ) {
+        if let Some((message, event_index)) =
+            self.message_internal_mut(EventIndex::default(), thread_root_message_index, message_id.into())
+        {
+            if let MessageContentInternal::P2PSwap(content) = &mut message.content {
+                content.status = status;
+                self.last_updated_timestamps
+                    .mark_updated(thread_root_message_index, event_index, now);
+            }
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -1100,6 +1319,12 @@ impl ChatEvents {
             .map(|(m, e)| (e, m.message_index, m.message_id))
     }
 
+    pub fn contains_message_id(&self, thread_root_message_index: Option<MessageIndex>, message_id: MessageId) -> bool {
+        self.events_list(EventIndex::default(), thread_root_message_index)
+            .map(|e| e.contains_message_id(message_id))
+            .unwrap_or_default()
+    }
+
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
@@ -1463,7 +1688,7 @@ pub enum ReservePrizeResult {
 
 #[allow(clippy::large_enum_variant)]
 pub enum ClaimPrizeResult {
-    Success(EventWrapper<Message>),
+    Success(MessageIndex, EventWrapper<Message>),
     MessageNotFound,
     ReservationNotFound,
 }

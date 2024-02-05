@@ -27,7 +27,11 @@ import type {
     Offline,
 } from "../response";
 import { emptyChatMetrics } from "../../utils";
-import type { CommunityIdentifier, CommunitySummary } from "../community";
+import type {
+    CommunityCanisterCommunitySummaryUpdates,
+    CommunityIdentifier,
+    CommunitySummary,
+} from "../community";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -44,6 +48,7 @@ export type MessageContent =
     | VideoContent
     | AudioContent
     | DeletedContent
+    | BlockedContent
     | PlaceholderContent
     | PollContent
     | CryptocurrencyContent
@@ -51,6 +56,8 @@ export type MessageContent =
     | ProposalContent
     | PrizeContent
     | PrizeContentInitial
+    | P2PSwapContent
+    | P2PSwapContentInitial
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
@@ -65,6 +72,23 @@ export interface PrizeContentInitial {
     caption?: string;
     transfer: PendingCryptocurrencyTransfer;
     prizes: bigint[];
+}
+
+export interface P2PSwapContentInitial {
+    kind: "p2p_swap_content_initial";
+    token0: TokenInfo;
+    token1: TokenInfo;
+    token0Amount: bigint;
+    token1Amount: bigint;
+    caption?: string;
+    expiresIn: bigint;
+}
+
+export interface TokenInfo {
+    fee: bigint;
+    decimals: number;
+    symbol: string;
+    ledger: string;
 }
 
 export type CaptionedContent =
@@ -96,6 +120,7 @@ export function isCaptionedContent(content: MessageContent): content is Captione
         case "crypto_content":
         case "giphy_content":
         case "prize_content":
+        case "p2p_swap_content":
             return true;
         default:
             return false;
@@ -268,6 +293,62 @@ export interface PrizeContent {
     caption?: string;
 }
 
+export interface P2PSwapContent {
+    kind: "p2p_swap_content";
+    token0: TokenInfo;
+    token1: TokenInfo;
+    token0Amount: bigint;
+    token1Amount: bigint;
+    caption?: string;
+    expiresAt: bigint;
+    status: P2PSwapStatus;
+    swapId: number;
+    token0TxnIn: TransactionId;
+}
+
+export type TransactionId = bigint;
+
+export type P2PSwapStatus =
+    | P2PSwapOpen
+    | P2PSwapReserved
+    | P2PSwapAccepted
+    | P2PSwapCancelled
+    | P2PSwapExpired
+    | P2PSwapCompleted;
+
+export interface P2PSwapOpen {
+    kind: "p2p_swap_open";
+}
+
+export interface P2PSwapReserved {
+    kind: "p2p_swap_reserved";
+    reservedBy: string;
+}
+
+export interface P2PSwapAccepted {
+    kind: "p2p_swap_accepted";
+    acceptedBy: string;
+    token1TxnIn: TransactionId;
+}
+
+export interface P2PSwapCancelled {
+    kind: "p2p_swap_cancelled";
+    token0TxnOut?: TransactionId;
+}
+
+export interface P2PSwapExpired {
+    kind: "p2p_swap_expired";
+    token0TxnOut?: TransactionId;
+}
+
+export interface P2PSwapCompleted {
+    kind: "p2p_swap_completed";
+    acceptedBy: string;
+    token1TxnIn: TransactionId;
+    token0TxnOut: TransactionId;
+    token1TxnOut: TransactionId;
+}
+
 export interface ProposalContent {
     kind: "proposal_content";
     governanceCanisterId: string;
@@ -289,6 +370,7 @@ export interface ProposalCommon {
     rewardStatus: ProposalRewardStatus;
     summary: string;
     proposer: string;
+    payloadTextRendering?: string;
 }
 
 export type ManageNeuronResponse =
@@ -356,7 +438,6 @@ export enum NnsProposalTopic {
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
     action: number;
-    payloadTextRendering?: string;
 }
 
 export interface ImageContent extends DataContent {
@@ -396,6 +477,10 @@ export type DeletedContent = {
     kind: "deleted_content";
     deletedBy: string;
     timestamp: bigint;
+};
+
+export type BlockedContent = {
+    kind: "blocked_content";
 };
 
 export type PollContent = {
@@ -566,23 +651,25 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    linkRemoved: boolean;
     cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
+    p2pSwapStatus?: P2PSwapStatus;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: Partial<ThreadSummary>;
-    lastUpdated: number;
     tips?: TipsReceived;
+    hiddenMessageRevealed?: boolean;
+    lastUpdated: number;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
 
-export type DirectChatEvent = Message | DirectChatCreated | EmptyEvent;
-
-export type GroupChatEvent =
+export type ChatEvent =
     | Message
+    | DirectChatCreated
     | GroupChatCreated
     | MembersAdded
     | MemberJoined
@@ -601,7 +688,6 @@ export type GroupChatEvent =
     | PermissionsChanged
     | GroupVisibilityChanged
     | GroupInviteCodeChanged
-    | DirectChatCreated
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
@@ -609,8 +695,6 @@ export type GroupChatEvent =
     | UsersInvitedEvent
     | MembersAddedToDefaultChannel
     | EmptyEvent;
-
-export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
 export type MembersAdded = {
     kind: "members_added";
@@ -839,6 +923,7 @@ export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Map<string, UpdatedEvent[]>;
     anyUpdates: boolean;
+    suspensionChanged: boolean | undefined;
 };
 
 export type ChatStateFull = {
@@ -878,7 +963,7 @@ export type DirectChatsInitial = {
     pinned: DirectChatIdentifier[];
 };
 
-export type ChatIdentifier = ChannelIdentifier | DirectChatIdentifier | GroupChatIdentifier;
+export type ChatIdentifier = MultiUserChatIdentifier | DirectChatIdentifier;
 export type MultiUserChatIdentifier = ChannelIdentifier | GroupChatIdentifier;
 
 export type ExpiredEventsRange = { kind: "expired_events_range"; start: number; end: number };
@@ -986,6 +1071,7 @@ export type UserCanisterCommunitySummary = {
     channels: UserCanisterChannelSummary[];
     pinned: ChannelIdentifier[];
     archived: boolean;
+    localUserIndex: string;
 };
 
 export type CommunitiesInitial = {
@@ -1000,6 +1086,7 @@ export type InitialStateResponse = {
     directChats: DirectChatsInitial;
     favouriteChats: FavouriteChatsInitial;
     timestamp: bigint;
+    suspended: boolean;
 };
 
 export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
@@ -1013,6 +1100,7 @@ export type UpdatesSuccessResponse = {
     groupChats: GroupChatsUpdates;
     avatarId: OptionUpdate<bigint>;
     directChats: DirectChatsUpdates;
+    suspended: boolean | undefined;
 };
 
 export type DirectChatsUpdates = {
@@ -1061,6 +1149,7 @@ export type UserCanisterGroupChatSummary = {
     threadsRead: Record<number, number>;
     archived: boolean;
     dateReadPinned: bigint | undefined;
+    localUserIndex: string;
 };
 
 export type UserCanisterGroupChatSummaryUpdates = {
@@ -1224,6 +1313,7 @@ export type GroupChatSummary = DataContent &
         previewed: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        localUserIndex: string;
     };
 
 export function nullMembership(): ChatMembership {
@@ -1287,6 +1377,7 @@ export type GroupCanisterGroupChatSummary = AccessControlled &
         rulesAccepted: boolean;
         eventsTTL?: bigint;
         eventsTtlLastUpdated: bigint;
+        localUserIndex: string;
     };
 
 export type UpdatedEvent = {
@@ -1477,7 +1568,9 @@ export type SendMessageResponse =
     | ChatFrozen
     | RulesNotAccepted
     | Offline
-    | CommunityRulesNotAccepted;
+    | CommunityRulesNotAccepted
+    | P2PSwapSetUpFailed
+    | DuplicateMessageId;
 
 export type SendMessageSuccess = {
     kind: "success";
@@ -1554,7 +1647,9 @@ export type GateCheckFailedReason =
     | "not_diamond"
     | "no_sns_neuron_found"
     | "dissolve_delay_not_met"
-    | "min_stake_not_met";
+    | "min_stake_not_met"
+    | "payment_failed"
+    | "insufficient_balance";
 
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
@@ -1568,6 +1663,15 @@ export type RulesNotAccepted = {
 
 export type CommunityRulesNotAccepted = {
     kind: "community_rules_not_accepted";
+};
+
+export type P2PSwapSetUpFailed = {
+    kind: "p2p_swap_setup_failed";
+    text: string;
+};
+
+export type DuplicateMessageId = {
+    kind: "duplicate_message_id";
 };
 
 export type GateUpdatedEvent = {
@@ -1914,3 +2018,90 @@ export type PublicGroupSummaryResponse =
 export type GroupMoved = { kind: "group_moved"; location: ChannelIdentifier };
 
 export type TipMessageResponse = Success | Failure;
+
+export type GroupAndCommunitySummaryUpdatesArgs = {
+    canisterId: string;
+    isCommunity: boolean;
+    inviteCode: bigint | undefined;
+    updatesSince: bigint | undefined;
+};
+
+export type GroupAndCommunitySummaryUpdatesResponse =
+    | {
+          kind: "group";
+          value: GroupCanisterGroupChatSummary;
+      }
+    | {
+          kind: "group_updates";
+          value: GroupCanisterGroupChatSummaryUpdates;
+      }
+    | {
+          kind: "community";
+          value: CommunitySummary;
+      }
+    | {
+          kind: "community_updates";
+          value: CommunityCanisterCommunitySummaryUpdates;
+      }
+    | {
+          kind: "no_updates";
+      }
+    | {
+          kind: "not_found";
+      }
+    | { kind: "error"; error: string };
+
+export type AcceptP2PSwapResponse =
+    | { kind: "success"; token1TxnIn: TransactionId }
+    | { kind: "already_reserved"; reservedBy: string }
+    | {
+          kind: "already_accepted";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+      }
+    | {
+          kind: "already_completed";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+          token0TxnOut: TransactionId;
+          token1TxnOut: TransactionId;
+      }
+    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
+    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
+    | { kind: "swap_not_found" }
+    | { kind: "channel_not_found" }
+    | { kind: "chat_not_found" }
+    | { kind: "user_suspended" }
+    | { kind: "user_not_in_group" }
+    | { kind: "user_not_in_community" }
+    | { kind: "user_not_in_channel" }
+    | { kind: "chat_frozen" }
+    | { kind: "insufficient_funds" }
+    | { kind: "internal_error"; text: string };
+
+export type CancelP2PSwapResponse =
+    | { kind: "success" }
+    | { kind: "already_reserved"; reservedBy: string }
+    | {
+          kind: "already_accepted";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+      }
+    | {
+          kind: "already_completed";
+          acceptedBy: string;
+          token1TxnIn: TransactionId;
+          token0TxnOut: TransactionId;
+          token1TxnOut: TransactionId;
+      }
+    | { kind: "swap_cancelled"; token0TxnOut?: TransactionId }
+    | { kind: "swap_expired"; token0TxnOut?: TransactionId }
+    | { kind: "swap_not_found" }
+    | { kind: "chat_not_found" }
+    | { kind: "channel_not_found" }
+    | { kind: "user_suspended" }
+    | { kind: "user_not_in_group" }
+    | { kind: "user_not_in_community" }
+    | { kind: "user_not_in_channel" }
+    | { kind: "chat_frozen" }
+    | { kind: "internal_error"; text: string };

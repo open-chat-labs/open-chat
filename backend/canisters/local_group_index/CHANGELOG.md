@@ -7,6 +7,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1012](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1012-local_group_index)] - 2024-01-18
+
+### Added
+
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+
+## [[2.0.978](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.978-local_group_index)] - 2023-12-19
+
+### Changed
+
+- Add `escrow_canister_id` to Group & Community canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.954](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.954-local_group_index)] - 2023-12-01
+
+### Changed
+
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+
+## [[2.0.944](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.944-local_group_index)] - 2023-11-24
+
+### Changed
+
 - Avoid reseeding random number generator after each upgrade ([#4755](https://github.com/open-chat-labs/open-chat/pull/4755))
 - Update dependencies ([#4770](https://github.com/open-chat-labs/open-chat/pull/4770))
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))

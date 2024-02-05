@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import AreYouSure from "../AreYouSure.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { type OpenChat } from "openchat-client";
+    import { i18nKey } from "../../i18n/i18n";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -34,8 +34,8 @@
 </script>
 
 <AreYouSure
-    title={$_("rules.acceptTitle")}
-    message={client.combineRulesText($currentChatRules, $currentCommunityRules)}
-    yesLabel={$_("rules.accept")}
-    noLabel={$_("rules.reject")}
+    title={i18nKey("rules.acceptTitle")}
+    message={i18nKey(client.combineRulesText($currentChatRules, $currentCommunityRules))}
+    yesLabel={i18nKey("rules.accept")}
+    noLabel={i18nKey("rules.reject")}
     action={onAction} />

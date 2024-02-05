@@ -18,6 +18,7 @@ pub struct Args {
     pub mentioned: Vec<User>,
     pub community_rules_accepted: Option<Version>,
     pub channel_rules_accepted: Option<Version>,
+    pub message_filter_failed: Option<u64>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -33,11 +34,12 @@ pub enum Response {
     TransferFailed(String),
     TransferCannotBeZero,
     TransferCannotBeToSelf,
+    P2PSwapSetUpFailed(String),
     UserSuspended,
     CommunityFrozen,
     RulesNotAccepted,
     CommunityRulesNotAccepted,
-    InternalError(String, CompletedCryptoTransaction),
+    Retrying(String, CompletedCryptoTransaction),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -1,6 +1,47 @@
 export const idlFactory = ({ IDL }) => {
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
+  const AcceptP2PSwapArgs = IDL.Record({
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const AcceptSwapSuccess = IDL.Record({ 'token1_txn_in' : IDL.Nat64 });
+  const CanisterId = IDL.Principal;
+  const UserId = CanisterId;
+  const SwapStatusErrorReserved = IDL.Record({ 'reserved_by' : UserId });
+  const SwapStatusErrorAccepted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_in' : IDL.Nat64,
+  });
+  const SwapStatusErrorCancelled = IDL.Record({
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
+  });
+  const SwapStatusErrorCompleted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_out' : IDL.Nat64,
+    'token0_txn_out' : IDL.Nat64,
+    'token1_txn_in' : IDL.Nat64,
+  });
+  const SwapStatusErrorExpired = IDL.Record({
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
+  });
+  const SwapStatusError = IDL.Variant({
+    'Reserved' : SwapStatusErrorReserved,
+    'Accepted' : SwapStatusErrorAccepted,
+    'Cancelled' : SwapStatusErrorCancelled,
+    'Completed' : SwapStatusErrorCompleted,
+    'Expired' : SwapStatusErrorExpired,
+  });
+  const AcceptP2PSwapResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : AcceptSwapSuccess,
+    'UserSuspended' : IDL.Null,
+    'StatusError' : SwapStatusError,
+    'SwapNotFound' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'InsufficientFunds' : IDL.Null,
+  });
   const AddReactionArgs = IDL.Record({
     'username' : IDL.Text,
     'display_name' : IDL.Opt(IDL.Text),
@@ -19,8 +60,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
   });
-  const CanisterId = IDL.Principal;
-  const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
@@ -36,6 +75,17 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
+  });
+  const CancelP2PSwapArgs = IDL.Record({
+    'message_id' : MessageId,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const CancelP2PSwapResponse = IDL.Variant({
+    'UserNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : IDL.Null,
+    'StatusError' : SwapStatusError,
+    'SwapNotFound' : IDL.Null,
   });
   const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
@@ -262,6 +312,7 @@ export const idlFactory = ({ IDL }) => {
     'show_votes_before_end_date' : IDL.Bool,
     'end_date' : IDL.Opt(TimestampMillis),
     'anonymous' : IDL.Bool,
+    'allow_user_to_change_vote' : IDL.Bool,
     'options' : IDL.Vec(IDL.Text),
   });
   const PollContent = IDL.Record({
@@ -270,6 +321,46 @@ export const idlFactory = ({ IDL }) => {
     'config' : PollConfig,
   });
   const TextContent = IDL.Record({ 'text' : IDL.Text });
+  const P2PSwapReserved = IDL.Record({ 'reserved_by' : UserId });
+  const P2PSwapAccepted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_in' : IDL.Nat64,
+  });
+  const P2PSwapCancelled = IDL.Record({
+    'token0_txn_out' : IDL.Opt(IDL.Nat64),
+  });
+  const P2PSwapCompleted = IDL.Record({
+    'accepted_by' : UserId,
+    'token1_txn_out' : IDL.Nat64,
+    'token0_txn_out' : IDL.Nat64,
+    'token1_txn_in' : IDL.Nat64,
+  });
+  const P2PSwapExpired = P2PSwapCancelled;
+  const P2PSwapStatus = IDL.Variant({
+    'Reserved' : P2PSwapReserved,
+    'Open' : IDL.Null,
+    'Accepted' : P2PSwapAccepted,
+    'Cancelled' : P2PSwapCancelled,
+    'Completed' : P2PSwapCompleted,
+    'Expired' : P2PSwapExpired,
+  });
+  const TokenInfo = IDL.Record({
+    'fee' : IDL.Nat,
+    'decimals' : IDL.Nat8,
+    'token' : Cryptocurrency,
+    'ledger' : CanisterId,
+  });
+  const P2PSwapContent = IDL.Record({
+    'status' : P2PSwapStatus,
+    'token0_txn_in' : IDL.Nat64,
+    'swap_id' : IDL.Nat32,
+    'token0_amount' : IDL.Nat,
+    'token0' : TokenInfo,
+    'token1' : TokenInfo,
+    'caption' : IDL.Opt(IDL.Text),
+    'token1_amount' : IDL.Nat,
+    'expires_at' : TimestampMillis,
+  });
   const ImageContent = IDL.Record({
     'height' : IDL.Nat32,
     'mime_type' : IDL.Text,
@@ -317,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : ProposalId,
     'url' : IDL.Text,
     'status' : ProposalDecisionStatus,
+    'payload_text_rendering' : IDL.Opt(IDL.Text),
     'tally' : Tally,
     'title' : IDL.Text,
     'created' : TimestampMillis,
@@ -424,6 +516,7 @@ export const idlFactory = ({ IDL }) => {
     'File' : FileContent,
     'Poll' : PollContent,
     'Text' : TextContent,
+    'P2PSwap' : P2PSwapContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
     'Custom' : CustomMessageContent,
@@ -442,7 +535,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'content' : MessageContent }),
     'MessageHardDeleted' : IDL.Null,
-    'MessageNotDeleted' : IDL.Null,
   });
   const DisableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
   const DisableInviteCodeResponse = IDL.Variant({
@@ -450,6 +542,15 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
+  });
+  const Milliseconds = IDL.Nat64;
+  const P2PSwapContentInitial = IDL.Record({
+    'token0_amount' : IDL.Nat,
+    'token0' : TokenInfo,
+    'token1' : TokenInfo,
+    'caption' : IDL.Opt(IDL.Text),
+    'token1_amount' : IDL.Nat,
+    'expires_in' : Milliseconds,
   });
   const PrizeContentInitial = IDL.Record({
     'end_date' : TimestampMillis,
@@ -463,6 +564,7 @@ export const idlFactory = ({ IDL }) => {
     'File' : FileContent,
     'Poll' : PollContent,
     'Text' : TextContent,
+    'P2PSwap' : P2PSwapContentInitial,
     'Image' : ImageContent,
     'Prize' : PrizeContentInitial,
     'Custom' : CustomMessageContent,
@@ -595,8 +697,10 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
+    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
+    'p2p_swap' : IDL.Opt(PermissionRole),
   });
   const GroupPermissions = IDL.Record({
     'mention_all_members' : PermissionRole,
@@ -650,16 +754,26 @@ export const idlFactory = ({ IDL }) => {
     'credential' : IDL.Text,
     'issuer' : IDL.Text,
   });
-  const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
+  const TokenBalanceGate = IDL.Record({
+    'min_balance' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+  });
+  const PaymentGate = IDL.Record({
+    'fee' : IDL.Nat,
+    'ledger_canister_id' : CanisterId,
+    'amount' : IDL.Nat,
+  });
   const AccessGate = IDL.Variant({
     'VerifiedCredential' : VerifiedCredentialGate,
     'SnsNeuron' : SnsNeuronGate,
+    'TokenBalance' : TokenBalanceGate,
     'DiamondMember' : IDL.Null,
+    'Payment' : PaymentGate,
   });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
@@ -835,6 +949,7 @@ export const idlFactory = ({ IDL }) => {
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'local_user_index_canister_id' : CanisterId,
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -1023,6 +1138,7 @@ export const idlFactory = ({ IDL }) => {
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
+    'message_filter_failed' : IDL.Opt(IDL.Nat64),
     'mentioned' : IDL.Vec(User),
     'sender_display_name' : IDL.Opt(IDL.Text),
     'forwarding' : IDL.Bool,
@@ -1128,6 +1244,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'rules_accepted' : IDL.Bool,
     'membership' : IDL.Opt(GroupMembership),
+    'local_user_index_canister_id' : CanisterId,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -1305,8 +1422,10 @@ export const idlFactory = ({ IDL }) => {
     'giphy' : PermissionRoleUpdate,
     'custom_deleted' : IDL.Vec(IDL.Text),
     'default' : IDL.Opt(PermissionRole),
+    'p2p_trade' : PermissionRoleUpdate,
     'image' : PermissionRoleUpdate,
     'prize' : PermissionRoleUpdate,
+    'p2p_swap' : PermissionRoleUpdate,
   });
   const OptionalMessagePermissionsUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -1376,8 +1495,18 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Null,
   });
   return IDL.Service({
+    'accept_p2p_swap' : IDL.Func(
+        [AcceptP2PSwapArgs],
+        [AcceptP2PSwapResponse],
+        [],
+      ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'cancel_p2p_swap' : IDL.Func(
+        [CancelP2PSwapArgs],
+        [CancelP2PSwapResponse],
+        [],
+      ),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'claim_prize' : IDL.Func([ClaimPrizeArgs], [ClaimPrizeResponse], []),
     'convert_into_community' : IDL.Func(

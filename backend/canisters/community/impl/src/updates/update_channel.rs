@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
 use group_chat_core::UpdateResult;
 use ic_cdk_macros::update;
+use types::OptionUpdate;
 
 #[update]
 #[trace]
@@ -44,9 +45,15 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 UpdateResult::Success(result) => {
-                    if result.newly_public && channel.chat.gate.is_none() {
-                        for m in state.data.members.iter_mut() {
-                            join_channel_unchecked(channel, m, true, now);
+                    if channel.chat.is_public.value && channel.chat.gate.is_none() {
+                        // If the channel has just been made public or had its gate removed, join
+                        // existing community members to the channel
+                        if result.newly_public || matches!(result.gate_update, OptionUpdate::SetToNone) {
+                            for m in state.data.members.iter_mut() {
+                                if !m.channels_removed.iter().any(|c| c.value == channel.id) {
+                                    join_channel_unchecked(channel, m, true, now);
+                                }
+                            }
                         }
                     }
 

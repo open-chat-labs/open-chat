@@ -1,7 +1,8 @@
 <script lang="ts">
     import { getContext, onDestroy } from "svelte";
-    import { _ } from "svelte-i18n";
     import { OpenChat, Poller, Version } from "openchat-client";
+    import Translatable from "./Translatable.svelte";
+    import { i18nKey } from "../i18n/i18n";
 
     const VERSION_INTERVAL = 60 * 1000;
     const client = getContext<OpenChat>("client");
@@ -57,10 +58,11 @@
 {#if showBanner}
     <div class="upgrade-banner">
         <div class="inner">
-            <span class="message">{$_("updateRequired", { values: { countdown } })}</span>
+            <span class="message"
+                ><Translatable resourceKey={i18nKey("updateRequired", { countdown })} /></span>
             <span class="update-now">
                 <a href="/" on:click|preventDefault={() => window.location.reload()}
-                    >{$_("updateNow")}</a>
+                    ><Translatable resourceKey={i18nKey("updateNow")} /></a>
             </span>
         </div>
     </div>

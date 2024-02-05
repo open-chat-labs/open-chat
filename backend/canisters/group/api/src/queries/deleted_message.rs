@@ -15,7 +15,6 @@ pub enum Response {
     CallerNotInGroup,
     NotAuthorized,
     MessageNotFound,
-    MessageNotDeleted,
     MessageHardDeleted,
 }
 

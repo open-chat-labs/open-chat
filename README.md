@@ -6,9 +6,9 @@ OpenChat is a fully featured chat application running end-to-end on the Internet
 
 ## Prerequisites
 
-#### DFX 0.15.0
+#### DFX 0.16.0
 
-To install, run `DFX_VERSION=0.15.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
+To install, run `DFX_VERSION=0.16.0 sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"`
 
 #### Rust
 
@@ -35,7 +35,7 @@ To start again with a fresh install, stop DFX, then run `rm -rf .dfx`, then star
 We need builds to be deterministic so that code running inside a canister can be verified by comparing the
 wasm hash locally with the wasm hash exposed by the IC.
 
-You can build the OpenChat canister wasms by running `./scripts/docker-build.sh`
+You can build the OpenChat canister wasms by running `./scripts/docker-build-all-wasms.sh`
 
 ## License
 

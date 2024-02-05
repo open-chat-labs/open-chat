@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # cd into root of OpenChat repo
 SCRIPT=$(readlink -f "$0")

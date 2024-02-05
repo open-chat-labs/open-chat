@@ -23,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
   const ChatId = CanisterId;
   const AssignPlatformModeratorsGroupArgs = IDL.Record({ 'group_id' : ChatId });
   const AssignPlatformModeratorsGroupResponse = IDL.Variant({
+    'AlreadySet' : ChatId,
     'Success' : IDL.Null,
   });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
@@ -34,6 +35,23 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const EmptyArgs = IDL.Record({});
+  const DiamondMembershipSubscription = IDL.Variant({
+    'OneYear' : IDL.Null,
+    'ThreeMonths' : IDL.Null,
+    'Disabled' : IDL.Null,
+    'OneMonth' : IDL.Null,
+  });
+  const DiamondMembershipDetails = IDL.Record({
+    'pay_in_chat' : IDL.Bool,
+    'subscription' : DiamondMembershipSubscription,
+    'recurring' : IDL.Opt(DiamondMembershipSubscription),
+    'expires_at' : TimestampMillis,
+  });
+  const DiamondMembershipStatusFull = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'Active' : DiamondMembershipDetails,
+  });
   const BuildVersion = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -53,18 +71,11 @@ export const idlFactory = ({ IDL }) => {
     'suspended_by' : UserId,
     'reason' : IDL.Text,
   });
-  const DiamondMembershipPlanDuration = IDL.Variant({
-    'OneYear' : IDL.Null,
-    'ThreeMonths' : IDL.Null,
-    'OneMonth' : IDL.Null,
-  });
-  const DiamondMembershipDetails = IDL.Record({
-    'recurring' : IDL.Opt(DiamondMembershipPlanDuration),
-    'expires_at' : TimestampMillis,
-  });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
+      'is_platform_operator' : IDL.Bool,
+      'diamond_membership_status' : DiamondMembershipStatusFull,
       'wasm_version' : BuildVersion,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
@@ -93,6 +104,7 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({
         'one_year' : IDL.Nat64,
         'token' : Cryptocurrency,
+        'lifetime' : IDL.Nat64,
         'one_month' : IDL.Nat64,
         'three_months' : IDL.Nat64,
       })
@@ -100,6 +112,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const DiamondMembershipPlanDuration = IDL.Variant({
+    'OneYear' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'ThreeMonths' : IDL.Null,
+    'OneMonth' : IDL.Null,
+  });
   const PayForDiamondMembershipArgs = IDL.Record({
     'token' : Cryptocurrency,
     'duration' : DiamondMembershipPlanDuration,
@@ -110,13 +128,10 @@ export const idlFactory = ({ IDL }) => {
     'PaymentAlreadyInProgress' : IDL.Null,
     'CurrencyNotSupported' : IDL.Null,
     'Success' : DiamondMembershipDetails,
+    'AlreadyLifetimeDiamondMember' : IDL.Null,
     'PriceMismatch' : IDL.Null,
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
-    'CannotExtend' : IDL.Record({
-      'can_extend_at' : TimestampMillis,
-      'diamond_membership_expires_at' : TimestampMillis,
-    }),
     'UserNotFound' : IDL.Null,
     'InsufficientFunds' : IDL.Nat64,
   });
@@ -172,13 +187,23 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemovePlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const ReportedMessagesArgs = IDL.Record({ 'user_id' : IDL.Opt(UserId) });
+  const ReportedMessagesResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'json' : IDL.Text }),
+  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
   });
+  const DiamondMembershipStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Lifetime' : IDL.Null,
+    'Active' : IDL.Null,
+  });
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
     'diamond_member' : IDL.Bool,
+    'diamond_membership_status' : DiamondMembershipStatus,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'display_name' : IDL.Opt(IDL.Text),
@@ -191,11 +216,28 @@ export const idlFactory = ({ IDL }) => {
       'users' : IDL.Vec(UserSummary),
     }),
   });
+  const DiamondMembershipFeesByDuration = IDL.Record({
+    'one_year' : IDL.Nat64,
+    'lifetime' : IDL.Nat64,
+    'one_month' : IDL.Nat64,
+    'three_months' : IDL.Nat64,
+  });
+  const SetDiamondMembershipFeesArgs = IDL.Record({
+    'fees' : IDL.Record({
+      'icp_fees' : DiamondMembershipFeesByDuration,
+      'chat_fees' : DiamondMembershipFeesByDuration,
+    }),
+  });
+  const SetDiamondMembershipFeesResponse = IDL.Variant({
+    'Invalid' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const SetDisplayNameArgs = IDL.Record({ 'display_name' : IDL.Opt(IDL.Text) });
   const SetDisplayNameResponse = IDL.Variant({
     'DisplayNameInvalid' : IDL.Null,
     'Success' : IDL.Null,
     'DisplayNameTooLong' : IDL.Nat16,
+    'Unauthorized' : IDL.Null,
     'DisplayNameTooShort' : IDL.Nat16,
     'UserNotFound' : IDL.Null,
   });
@@ -242,6 +284,15 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'UserNotFound' : IDL.Null,
   });
+  const UpdateDiamondMembershipSubscriptionArgs = IDL.Record({
+    'pay_in_chat' : IDL.Opt(IDL.Bool),
+    'subscription' : IDL.Opt(DiamondMembershipSubscription),
+  });
+  const UpdateDiamondMembershipSubscriptionResponse = IDL.Variant({
+    'NotDiamondMember' : IDL.Null,
+    'Success' : IDL.Null,
+    'AlreadyLifetimeDiamondMember' : IDL.Null,
+  });
   const UserArgs = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
     'user_id' : IDL.Opt(UserId),
@@ -254,28 +305,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CanisterId,
     'NewRegistrationsClosed' : IDL.Null,
   });
-  const UsersArgs = IDL.Record({
-    'user_groups' : IDL.Vec(
-      IDL.Record({
-        'users' : IDL.Vec(UserId),
-        'updated_since' : TimestampMillis,
-      })
-    ),
-  });
-  const PartialUserSummary = IDL.Record({
-    'username' : IDL.Opt(IDL.Text),
-    'diamond_member' : IDL.Bool,
-    'user_id' : UserId,
-    'is_bot' : IDL.Bool,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'suspended' : IDL.Bool,
-  });
-  const UsersResponse = IDL.Variant({
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'users' : IDL.Vec(PartialUserSummary),
-    }),
-  });
   const UsersV2Args = IDL.Record({
     'user_groups' : IDL.Vec(
       IDL.Record({
@@ -283,6 +312,7 @@ export const idlFactory = ({ IDL }) => {
         'updated_since' : TimestampMillis,
       })
     ),
+    'users_suspended_since' : IDL.Opt(TimestampMillis),
   });
   const UsersV2Response = IDL.Variant({
     'Success' : IDL.Record({
@@ -367,7 +397,17 @@ export const idlFactory = ({ IDL }) => {
         [RemovePlatformOperatorResponse],
         [],
       ),
+    'reported_messages' : IDL.Func(
+        [ReportedMessagesArgs],
+        [ReportedMessagesResponse],
+        ['query'],
+      ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_diamond_membership_fees' : IDL.Func(
+        [SetDiamondMembershipFeesArgs],
+        [SetDiamondMembershipFeesResponse],
+        [],
+      ),
     'set_display_name' : IDL.Func(
         [SetDisplayNameArgs],
         [SetDisplayNameResponse],
@@ -395,13 +435,17 @@ export const idlFactory = ({ IDL }) => {
         [UnsuspendUserResponse],
         [],
       ),
+    'update_diamond_membership_subscription' : IDL.Func(
+        [UpdateDiamondMembershipSubscriptionArgs],
+        [UpdateDiamondMembershipSubscriptionResponse],
+        [],
+      ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
     'user_registration_canister' : IDL.Func(
         [EmptyArgs],
         [UserRegistrationCanisterResponse],
         ['query'],
       ),
-    'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
     'users_v2' : IDL.Func([UsersV2Args], [UsersV2Response], ['query']),
   });
 };

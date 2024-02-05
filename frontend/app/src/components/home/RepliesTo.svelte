@@ -4,9 +4,9 @@
     import {
         type RehydratedReplyContext,
         OpenChat,
-        type ChatIdentifier,
         routeForChatIdentifier,
         chatIdentifiersEqual,
+        type ChatIdentifier,
     } from "openchat-client";
     import { rtlStore } from "../../stores/rtl";
     import Link from "../Link.svelte";
@@ -18,10 +18,10 @@
 
     const client = getContext<OpenChat>("client");
 
-    export let messageId: bigint;
     export let chatId: ChatIdentifier;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
+    export let intersecting: boolean;
 
     let debug = false;
 
@@ -29,6 +29,7 @@
     $: chatListScope = client.chatListScope;
     $: me = repliesTo.senderId === $currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
+    $: isP2PSwap = repliesTo.content.kind === "p2p_swap_content";
     $: communityMembers = client.currentCommunityMembers;
     $: displayName = me
         ? client.toTitleCase($_("you"))
@@ -48,7 +49,6 @@
     function zoomToMessage() {
         if (chatIdentifiersEqual(repliesTo.sourceContext.chatId, chatId)) {
             dispatch("goToMessageIndex", {
-                messageId,
                 index: repliesTo.messageIndex,
             });
         } else {
@@ -62,6 +62,7 @@
         class="reply-wrapper"
         class:me
         class:rtl={$rtlStore}
+        class:p2pSwap={isP2PSwap}
         class:crypto={repliesTo.content.kind === "crypto_content"}>
         <h4 class="username" class:text-content={isTextContent}>
             {displayName}
@@ -70,12 +71,14 @@
             <ChatMessageContent
                 {me}
                 {readonly}
-                {chatId}
+                messageContext={repliesTo.sourceContext}
+                {intersecting}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}
                 senderId={repliesTo.senderId}
                 edited={repliesTo.edited}
                 fill={false}
+                failed={false}
                 truncate
                 reply
                 myUserId={$currentUser.userId}
@@ -105,6 +108,8 @@
         cursor: pointer;
         margin-bottom: $sp3;
         overflow: hidden;
+        @include nice-scrollbar();
+        max-height: 300px;
 
         &.me {
             background-color: var(--currentChat-msg-me-bg);
@@ -116,6 +121,10 @@
             content: "";
             display: table;
             clear: both;
+        }
+
+        &.p2pSwap {
+            width: 350px;
         }
     }
 

@@ -6,11 +6,9 @@ import type {
     ChatSummary,
     CommunitySummary,
     CommunityMap,
-    DiamondMembershipDetails,
     DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
-    Message,
     MessageContext,
     ThreadSyncDetails,
     UserLookup,
@@ -19,6 +17,7 @@ import type {
     Member,
     VersionedRules,
     CreatedUser,
+    DiamondMembershipStatus,
 } from "openchat-shared";
 import { selectedAuthProviderStore } from "./stores/authProviders";
 import {
@@ -43,18 +42,16 @@ import {
     chatsLoading,
     uninitializedDirectChats,
     confirmedThreadEventIndexesLoadedStore,
-    selectedThreadRootEvent,
     selectedMessageContext,
     allChats,
     currentChatMembers,
-    currentChatDraftMessage,
     currentChatRules,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
 import { anonUser, currentUser, platformModerator, suspendedUser, userStore } from "./stores/user";
 import { blockedUsers } from "./stores/blockedUsers";
-import { diamondMembership, isDiamond } from "./stores/diamond";
+import { diamondStatus, isDiamond, isLifetimeDiamond } from "./stores/diamond";
 import type DRange from "drange";
 import {
     communities,
@@ -64,9 +61,9 @@ import {
     currentCommunityRules,
 } from "./stores/community";
 import { type GlobalState, chatListScopeStore, globalStateStore } from "./stores/global";
-import type { DraftMessage, DraftMessagesByThread } from "./stores/draftMessageFactory";
-import { draftThreadMessages } from "./stores/draftThreadMessages";
-import { networkStatus, type NetworkStatus } from "./stores/network";
+import { offlineStore } from "./stores/network";
+import { type DraftMessages, draftMessagesStore } from "./stores/draftMessages";
+import { locale } from "svelte-i18n";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -94,7 +91,6 @@ export class LiveState {
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedMessageContext: MessageContext | undefined;
-    selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: ChatMap<Set<number>>;
     currentChatMembers!: Member[];
     currentChatRules!: VersionedRules | undefined;
@@ -103,8 +99,9 @@ export class LiveState {
     chatsInitialised!: boolean;
     chatsLoading!: boolean;
     blockedUsers!: Set<string>;
-    diamondMembership!: DiamondMembershipDetails | undefined;
+    diamondStatus!: DiamondMembershipStatus;
     isDiamond!: boolean;
+    isLifetimeDiamond!: boolean;
     confirmedThreadEventIndexesLoaded!: DRange;
     communities!: CommunityMap<CommunitySummary>;
     chatListScope!: ChatListScope;
@@ -112,17 +109,17 @@ export class LiveState {
     allChats!: ChatMap<ChatSummary>;
     selectedCommunity!: CommunitySummary | undefined;
     currentCommunityMembers!: Map<string, Member>;
-    currentChatDraftMessage!: DraftMessage | undefined;
-    draftThreadMessages!: DraftMessagesByThread;
+    draftMessages!: DraftMessages;
     currentCommunityRules!: VersionedRules | undefined;
     user!: CreatedUser;
     anonUser!: boolean;
     suspendedUser!: boolean;
     platformModerator!: boolean;
-    networkStatus!: NetworkStatus;
+    offlineStore!: boolean;
+    locale!: string;
 
     constructor() {
-        networkStatus.subscribe((status) => (this.networkStatus = status));
+        offlineStore.subscribe((offline) => (this.offlineStore = offline));
         currentUser.subscribe((user) => (this.user = user));
         anonUser.subscribe((anon) => (this.anonUser = anon));
         suspendedUser.subscribe((suspended) => (this.suspendedUser = suspended));
@@ -151,7 +148,6 @@ export class LiveState {
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedMessageContext.subscribe((data) => (this.selectedMessageContext = data));
-        selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatMembers.subscribe((data) => (this.currentChatMembers = data));
         currentChatRules.subscribe((data) => (this.currentChatRules = data));
@@ -162,16 +158,17 @@ export class LiveState {
         chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
         chatsLoading.subscribe((data) => (this.chatsLoading = data));
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
-        diamondMembership.subscribe((data) => (this.diamondMembership = data));
+        diamondStatus.subscribe((data) => (this.diamondStatus = data));
         isDiamond.subscribe((data) => (this.isDiamond = data));
+        isLifetimeDiamond.subscribe((data) => (this.isDiamond = data));
         communities.subscribe((data) => (this.communities = data));
         chatListScopeStore.subscribe((scope) => (this.chatListScope = scope));
         globalStateStore.subscribe((data) => (this.globalState = data));
         allChats.subscribe((data) => (this.allChats = data));
         selectedCommunity.subscribe((data) => (this.selectedCommunity = data));
         currentCommunityMembers.subscribe((data) => (this.currentCommunityMembers = data));
-        currentChatDraftMessage.subscribe((data) => (this.currentChatDraftMessage = data));
-        draftThreadMessages.subscribe((data) => (this.draftThreadMessages = data));
+        draftMessagesStore.subscribe((data) => (this.draftMessages = data));
         currentCommunityRules.subscribe((data) => (this.currentCommunityRules = data));
+        locale.subscribe((data) => (this.locale = data ?? "en"));
     }
 }

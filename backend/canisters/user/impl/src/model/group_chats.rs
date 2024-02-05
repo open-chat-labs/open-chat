@@ -2,7 +2,7 @@ use crate::model::group_chat::GroupChat;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{ChatId, MessageIndex, TimestampMillis, Timestamped};
+use types::{CanisterId, ChatId, MessageIndex, TimestampMillis, Timestamped};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupChats {
@@ -19,6 +19,10 @@ struct RemovedGroup {
 }
 
 impl GroupChats {
+    pub fn exists(&self, chat_id: &ChatId) -> bool {
+        self.group_chats.contains_key(chat_id)
+    }
+
     pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
@@ -40,10 +44,6 @@ impl GroupChats {
             .collect()
     }
 
-    pub fn get(&self, chat_id: &ChatId) -> Option<&GroupChat> {
-        self.group_chats.get(chat_id)
-    }
-
     pub fn get_mut(&mut self, chat_id: &ChatId) -> Option<&mut GroupChat> {
         self.group_chats.get_mut(chat_id)
     }
@@ -54,16 +54,22 @@ impl GroupChats {
             || self.removed.last().map(|g| g.timestamp > since).unwrap_or_default()
     }
 
-    pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
-        self.join(chat_id, None, now);
+    pub fn create(&mut self, chat_id: ChatId, local_user_index_canister_id: CanisterId, now: TimestampMillis) -> bool {
+        self.join(chat_id, local_user_index_canister_id, None, now);
         self.groups_created += 1;
         true
     }
 
-    pub fn join(&mut self, chat_id: ChatId, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> bool {
+    pub fn join(
+        &mut self,
+        chat_id: ChatId,
+        local_user_index_canister_id: CanisterId,
+        read_up_to: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> bool {
         match self.group_chats.entry(chat_id) {
             Vacant(e) => {
-                e.insert(GroupChat::new(chat_id, read_up_to, now));
+                e.insert(GroupChat::new(chat_id, local_user_index_canister_id, read_up_to, now));
                 self.removed.retain(|g| g.chat_id != chat_id);
                 true
             }
@@ -79,10 +85,6 @@ impl GroupChats {
         group
     }
 
-    pub fn exists(&self, chat_id: &ChatId) -> bool {
-        self.group_chats.contains_key(chat_id)
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &GroupChat> {
         self.group_chats.values()
     }
@@ -93,10 +95,6 @@ impl GroupChats {
 
     pub fn len(&self) -> usize {
         self.group_chats.len()
-    }
-
-    pub fn has(&self, chat_id: &ChatId) -> bool {
-        self.group_chats.contains_key(chat_id)
     }
 
     pub fn pin(&mut self, chat_id: ChatId, now: TimestampMillis) {

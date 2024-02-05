@@ -9,3 +9,4 @@ export * from "./notifications";
 export * from "./set";
 export * from "./string";
 export * from "./promise";
+export * from "./network";

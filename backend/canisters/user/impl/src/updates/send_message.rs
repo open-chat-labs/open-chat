@@ -1,23 +1,25 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::{DeleteFileReferencesJob, RemoveExpiredEventsJob, RetrySendingFailedMessagesJob};
+use crate::timer_job_types::{
+    DeleteFileReferencesJob, MarkP2PSwapExpiredJob, NotifyEscrowCanisterOfDepositJob, RemoveExpiredEventsJob,
+};
+use crate::updates::send_message_with_transfer::set_up_p2p_swap;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{PushMessageArgs, Reader};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use rand::Rng;
-use tracing::error;
 use types::{
-    BlobReference, CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, EventWrapper, Message,
-    MessageContentInitial, MessageIndex, TimestampMillis, UserId,
+    BlobReference, CanisterId, Chat, ChatId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction,
+    EventWrapper, Message, MessageContent, MessageContentInitial, MessageId, MessageIndex, P2PSwapLocation, TimestampMillis,
+    UserId,
 };
-use user_canister::c2c_send_messages;
-use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
+use user_canister::c2c_send_messages_v2::{self, C2CReplyContext, SendMessageArgs};
 use user_canister::send_message_v2::{Response::*, *};
+use user_canister::UserCanisterEvent;
 use utils::consts::{MEMO_MESSAGE, OPENCHAT_BOT_USER_ID};
-use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
@@ -45,37 +47,69 @@ async fn send_message_v2(mut args: Args) -> Response {
     };
 
     let mut completed_transfer = None;
+    let mut p2p_swap_id = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContentInitial::Crypto(c) = &mut args.content {
-        if user_type.is_self() {
-            return InvalidRequest("Cannot send crypto to yourself".to_string());
-        }
-        let mut pending_transaction = match &c.transfer {
-            CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
-            _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
-        };
-        if !pending_transaction.validate_recipient(args.recipient) {
-            return InvalidRequest("Transaction is not to the user's account".to_string());
-        }
-        // When transferring to bot users, each user transfers to their own subaccount, this way it
-        // is trivial for the bots to keep track of each user's funds
-        if user_type.is_bot() {
-            pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
-        }
-
-        // We have to use `process_transaction_without_caller_check` because we may be within a
-        // reply callback due to calling `c2c_lookup_user` earlier.
-        completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
-            Ok(completed) => {
-                c.transfer = CryptoTransaction::Completed(completed.clone());
-                Some(completed)
+    match &mut args.content {
+        MessageContentInitial::Crypto(c) => {
+            if user_type.is_self() {
+                return InvalidRequest("Cannot send crypto to yourself".to_string());
             }
-            Err(failed) => return TransferFailed(failed.error_message().to_string()),
-        };
-    }
+            let mut pending_transaction = match &c.transfer {
+                CryptoTransaction::Pending(t) => t.clone().set_memo(&MEMO_MESSAGE),
+                _ => return InvalidRequest("Transaction must be of type 'Pending'".to_string()),
+            };
+            if !pending_transaction.validate_recipient(args.recipient) {
+                return InvalidRequest("Transaction is not to the user's account".to_string());
+            }
+            // When transferring to bot users, each user transfers to their own subaccount, this way it
+            // is trivial for the bots to keep track of each user's funds
+            if user_type.is_bot() {
+                pending_transaction.set_recipient(args.recipient.into(), Principal::from(my_user_id).into());
+            }
 
-    mutate_state(|state| send_message_impl(args, completed_transfer, user_type, state))
+            // We have to use `process_transaction_without_caller_check` because we may be within a
+            // reply callback due to calling `c2c_lookup_user` earlier.
+            completed_transfer = match process_transaction_without_caller_check(pending_transaction).await {
+                Ok(completed) => {
+                    c.transfer = CryptoTransaction::Completed(completed.clone());
+                    Some(completed)
+                }
+                Err(failed) => return TransferFailed(failed.error_message().to_string()),
+            };
+        }
+        MessageContentInitial::P2PSwap(p) => {
+            let (escrow_canister_id, now) = read_state(|state| (state.data.escrow_canister_id, state.env.now()));
+            let create_swap_args = escrow_canister::create_swap::Args {
+                location: P2PSwapLocation::from_message(Chat::Direct(args.recipient.into()), None, args.message_id),
+                token0: p.token0.clone(),
+                token0_amount: p.token0_amount,
+                token1: p.token1.clone(),
+                token1_amount: p.token1_amount,
+                expires_at: now + p.expires_in,
+                additional_admins: Vec::new(),
+                canister_to_notify: Some(args.recipient.into()),
+            };
+            match set_up_p2p_swap(escrow_canister_id, create_swap_args).await {
+                Ok((swap_id, pending_transaction)) => {
+                    (completed_transfer, p2p_swap_id) =
+                        match process_transaction_without_caller_check(pending_transaction).await {
+                            Ok(completed) => {
+                                NotifyEscrowCanisterOfDepositJob::run(swap_id);
+                                (Some(completed), Some(swap_id))
+                            }
+                            Err(failed) => {
+                                return TransferFailed(failed.error_message().to_string());
+                            }
+                        };
+                }
+                Err(error) => return error.into(),
+            }
+        }
+        _ => {}
+    };
+
+    mutate_state(|state| send_message_impl(args, completed_transfer, p2p_swap_id, user_type, state))
 }
 
 enum UserType {
@@ -113,15 +147,19 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
             "Messaging the OpenChat Bot is not currently supported".to_string(),
         ));
     }
+    if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
+        if chat
+            .events
+            .contains_message_id(args.thread_root_message_index, args.message_id)
+        {
+            return ValidateRequestResult::Invalid(DuplicateMessageId);
+        }
+    }
 
     let now = state.env.now();
 
-    if matches!(args.content, MessageContentInitial::Prize(_)) {
-        return ValidateRequestResult::Invalid(InvalidRequest("Cannot send a prize message in a direct chat".to_string()));
-    }
-
     let my_user_id: UserId = state.env.canister_id().into();
-    if let Err(error) = args.content.validate_for_new_direct_message(my_user_id, args.forwarding, now) {
+    if let Err(error) = args.content.validate_for_new_message(true, false, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -131,21 +169,28 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
             ContentValidationError::PrizeEndDateInThePast => unreachable!(),
-            ContentValidationError::UnauthorizedToSendProposalMessages => {
-                InvalidRequest("User unauthorized to send proposal messages".to_string())
-            }
             ContentValidationError::Unauthorized => {
                 InvalidRequest("User unauthorized to send messages of this type".to_string())
             }
         })
     } else if args.recipient == my_user_id {
-        if matches!(args.content, MessageContentInitial::Crypto(_)) {
+        if matches!(
+            args.content,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::P2PSwap(_)
+        ) {
             ValidateRequestResult::Invalid(TransferCannotBeToSelf)
         } else {
             ValidateRequestResult::Valid(my_user_id, UserType::_Self)
         }
     } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
-        let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
+        let user_type = if chat.is_bot {
+            if matches!(args.content, MessageContentInitial::P2PSwap(_)) {
+                return ValidateRequestResult::Invalid(InvalidRequest("Cannot open a P2P swap with a bot".to_string()));
+            }
+            UserType::Bot
+        } else {
+            UserType::User
+        };
         ValidateRequestResult::Valid(my_user_id, user_type)
     } else {
         ValidateRequestResult::RecipientUnknown(my_user_id, state.data.local_user_index_canister_id)
@@ -155,18 +200,24 @@ fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult 
 fn send_message_impl(
     args: Args,
     completed_transfer: Option<CompletedCryptoTransaction>,
+    p2p_swap_id: Option<u32>,
     user_type: UserType,
     state: &mut RuntimeState,
 ) -> Response {
     let now = state.env.now();
     let my_user_id = state.env.canister_id().into();
     let recipient = args.recipient;
+    let content = if let Some(transfer) = completed_transfer.clone() {
+        MessageContentInternal::new_with_transfer(args.content.clone(), transfer, p2p_swap_id, now)
+    } else {
+        args.content.clone().try_into().unwrap()
+    };
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
         message_id: args.message_id,
         sender: my_user_id,
-        content: args.content.clone().into(),
+        content: content.clone(),
         mentioned: Vec::new(),
         replies_to: args.replies_to.as_ref().map(|r| r.into()),
         forwarded: args.forwarding,
@@ -188,6 +239,8 @@ fn send_message_impl(
     }
 
     register_timer_jobs(
+        args.recipient.into(),
+        args.message_id,
         &message_event,
         Vec::new(),
         is_next_event_to_expire,
@@ -199,7 +252,7 @@ fn send_message_impl(
         let send_message_args = SendMessageArgs {
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
-            content: args.content.into(),
+            content,
             replies_to: args.replies_to.and_then(|r| {
                 if let Some((chat, thread_root_message_index)) = r.chat_if_other {
                     Some(C2CReplyContext::OtherChat(chat, thread_root_message_index, r.event_index))
@@ -218,35 +271,29 @@ fn send_message_impl(
                 }
             }),
             forwarding: args.forwarding,
+            message_filter_failed: args.message_filter_failed,
             correlation_id: args.correlation_id,
         };
 
-        if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-            chat.mark_message_pending(send_message_args.clone());
+        let sender_name = state.data.username.value.clone();
+        let sender_display_name = state.data.display_name.value.clone();
 
-            let sender_name = state.data.username.value.clone();
-            let sender_display_name = state.data.display_name.value.clone();
-
-            if user_type.is_bot() {
-                ic_cdk::spawn(send_to_bot_canister(
-                    recipient,
-                    message_event.event.message_index,
-                    bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
-                ));
-            } else {
-                // Send this message along with any others which are still pending
-                let pending_messages = chat.get_pending_messages();
-                ic_cdk::spawn(send_to_recipients_canister(
-                    recipient,
-                    c2c_send_messages::Args::new(
-                        pending_messages,
-                        sender_name,
-                        sender_display_name,
-                        state.data.avatar.value.as_ref().map(|d| d.id),
-                    ),
-                    0,
-                ));
-            }
+        if user_type.is_bot() {
+            ic_cdk::spawn(send_to_bot_canister(
+                recipient,
+                message_event.event.message_index,
+                bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
+            ));
+        } else {
+            state.push_user_canister_event(
+                recipient.into(),
+                UserCanisterEvent::SendMessages(Box::new(c2c_send_messages_v2::Args {
+                    messages: vec![send_message_args],
+                    sender_name,
+                    sender_display_name,
+                    sender_avatar_id: state.data.avatar.value.as_ref().map(|d| d.id),
+                })),
+            );
         }
     }
 
@@ -270,45 +317,6 @@ fn send_message_impl(
     }
 }
 
-pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_messages::Args, attempt: u32) {
-    // Note: We ignore any Blocked responses - it means the sender won't know they're blocked
-    // but maybe that is not so bad. Otherwise we would have to wait for the call to the
-    // recipient canister which would double the latency of every message.
-    if let Err(error) = user_canister_c2c_client::c2c_send_messages(recipient.into(), &args).await {
-        let retry_interval = match attempt {
-            0 => Some(10 * SECOND_IN_MS),
-            1 => Some(20 * SECOND_IN_MS),
-            2 => Some(30 * SECOND_IN_MS),
-            3 => Some(MINUTE_IN_MS),
-            4 => Some(2 * MINUTE_IN_MS),
-            _ => None,
-        };
-        if let Some(interval) = retry_interval {
-            mutate_state(|state| {
-                let now = state.env.now();
-                state.data.timer_jobs.enqueue_job(
-                    TimerJob::RetrySendingFailedMessages(Box::new(RetrySendingFailedMessagesJob {
-                        recipient,
-                        attempt: attempt + 1,
-                    })),
-                    now + interval,
-                    now,
-                );
-            });
-        } else {
-            error!(?error, ?recipient, "Failed to send message to recipient even after retrying");
-        }
-    } else {
-        mutate_state(|state| {
-            if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-                for message_id in args.messages.iter().map(|m| m.message_id) {
-                    chat.mark_message_confirmed(message_id);
-                }
-            }
-        });
-    }
-}
-
 async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, args: bot_api::handle_direct_message::Args) {
     match bot_c2c_client::handle_direct_message(recipient.into(), &args).await {
         Ok(bot_api::handle_direct_message::Response::Success(result)) => {
@@ -319,7 +327,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                         sender: recipient,
                         thread_root_message_index: None,
                         message_id: message.message_id.unwrap_or_else(|| state.env.rng().gen()),
-                        content: message.content.into(),
+                        content: message.content.try_into().unwrap(),
                         mentioned: Vec::new(),
                         replies_to: None,
                         forwarded: false,
@@ -335,7 +343,6 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
                     // Mark that the bot has read the message we just sent
                     chat.mark_read_up_to(message_index, false, now);
-                    chat.mark_message_confirmed(args.message_id);
                 }
             });
         }
@@ -346,6 +353,8 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
 }
 
 pub(crate) fn register_timer_jobs(
+    chat_id: ChatId,
+    message_id: MessageId,
     message_event: &EventWrapper<Message>,
     file_references: Vec<BlobReference>,
     is_next_event_to_expire: bool,
@@ -365,5 +374,17 @@ pub(crate) fn register_timer_jobs(
     if let Some(expiry) = message_event.expires_at.filter(|_| is_next_event_to_expire) {
         timer_jobs.cancel_jobs(|j| matches!(j, TimerJob::RemoveExpiredEvents(_)));
         timer_jobs.enqueue_job(TimerJob::RemoveExpiredEvents(RemoveExpiredEventsJob), expiry, now);
+    }
+
+    if let MessageContent::P2PSwap(c) = &message_event.event.content {
+        timer_jobs.enqueue_job(
+            TimerJob::MarkP2PSwapExpired(Box::new(MarkP2PSwapExpiredJob {
+                chat_id,
+                thread_root_message_index: None,
+                message_id,
+            })),
+            c.expires_at,
+            now,
+        );
     }
 }

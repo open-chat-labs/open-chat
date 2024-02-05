@@ -5,13 +5,99 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Handle `DiamondMembershipPaymentReceived` events from non-local users ([#5322](https://github.com/open-chat-labs/open-chat/pull/5322))
+
+## [[2.0.1041](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1041-local_user_index)] - 2024-02-02
+
+### Changed
+
+- Add `timestamp` to `chat_events` responses ([#5309](https://github.com/open-chat-labs/open-chat/pull/5309))
+
+## [[2.0.1031](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1031-local_user_index)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+
+### Changed
+
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+## [[2.0.1019](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1019-local_user_index)] - 2024-01-24
+
+### Changed
+
+- Upgrade Diamond members first ([#5214](https://github.com/open-chat-labs/open-chat/pull/5214))
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+
+### Removed
+
+- Remove `DiamondMembershipExpiryDate` event which is no longer needed ([#5245](https://github.com/open-chat-labs/open-chat/pull/5245))
+
+## [[2.0.1011](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1011-local_user_index)] - 2024-01-18
+
+### Added
+
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Add Escrow canister Id to metrics ([#5202](https://github.com/open-chat-labs/open-chat/pull/5202))
+
+### Changed
+
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+
+## [[2.0.976](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.976-local_user_index)] - 2023-12-19
+
+### Added
+
+- Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
+- Add `c2c_diamond_membership_expiry_dates` ([#5036](https://github.com/open-chat-labs/open-chat/pull/5036))
+
+### Changed
+
+- Add `escrow_canister_id` to User canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- Store Diamond membership expiry dates in LocalUserIndex canisters ([#5025](https://github.com/open-chat-labs/open-chat/pull/5025))
+- Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.959](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.959-local_user_index)] - 2023-12-05
+
+### Added
+
+- Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876))
+
+### Changed
+
+- Remove `display_name` from `register_user` args ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
+
+## [[2.0.948](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.948-local_user_index)] - 2023-11-28
+
+### Added
+
+- Support getting batches of chat events via LocalUserIndex ([#4848](https://github.com/open-chat-labs/open-chat/pull/4848))
+
+### Changed
+
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+
+## [[2.0.943](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.943-local_user_index)] - 2023-11-24
+
+### Changed
+
+- Add crypto payment access gate ([#4823](https://github.com/open-chat-labs/open-chat/pull/4823))
+
 ## [[2.0.940](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.940-local_user_index)] - 2023-11-21
 
 ### Changed
 
 - Refund ckBTC which Dfinity provided for the Bitcoin Miami promotion ([#4795](https://github.com/open-chat-labs/open-chat/pull/4795))
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
-- Add crypto payment access gate ([#4823](https://github.com/open-chat-labs/open-chat/pull/4823))
 
 ## [[2.0.936](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.936-local_user_index)] - 2023-11-16
 

@@ -9,7 +9,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::c2c_join_channel::{Response::*, *};
-use gated_groups::{check_if_passes_gate, CheckGateArgs, CheckIfPassesGateResult};
+use gated_groups::{check_if_passes_gate, check_if_passes_gate_synchronously, CheckGateArgs, CheckIfPassesGateResult};
 use group_chat_core::AddResult;
 use types::{AccessGate, ChannelId, MemberJoined, TimestampMillis};
 
@@ -19,7 +19,7 @@ async fn c2c_join_channel(args: Args) -> Response {
     run_regular_jobs();
 
     if read_state(|state| state.data.members.get_by_user_id(&args.user_id).is_some()) {
-        check_gate_then_join_channel(args.channel_id, args.principal).await
+        check_gate_then_join_channel(&args).await
     } else {
         match join_community(community_canister::c2c_join_community::Args {
             user_id: args.user_id,
@@ -27,11 +27,12 @@ async fn c2c_join_channel(args: Args) -> Response {
             invite_code: args.invite_code,
             is_platform_moderator: args.is_platform_moderator,
             is_bot: args.is_bot,
+            diamond_membership_expires_at: args.diamond_membership_expires_at,
         })
         .await
         {
             community_canister::c2c_join_community::Response::Success(_) => {
-                let response = check_gate_then_join_channel(args.channel_id, args.principal).await;
+                let response = check_gate_then_join_channel(&args).await;
                 if matches!(response, Success(_) | AlreadyInChannel(_)) {
                     let summary = read_state(|state| {
                         let member = state.data.members.get_by_user_id(&args.user_id);
@@ -43,7 +44,7 @@ async fn c2c_join_channel(args: Args) -> Response {
                 }
             }
             community_canister::c2c_join_community::Response::AlreadyInCommunity(_) => {
-                check_gate_then_join_channel(args.channel_id, args.principal).await
+                check_gate_then_join_channel(&args).await
             }
             community_canister::c2c_join_community::Response::GateCheckFailed(r) => GateCheckFailed(r),
             community_canister::c2c_join_community::Response::NotInvited => NotInvited,
@@ -55,17 +56,26 @@ async fn c2c_join_channel(args: Args) -> Response {
     }
 }
 
-pub(crate) fn join_channel_auto(channel_id: ChannelId, user_principal: Principal) {
-    match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
+pub(crate) fn join_channel_synchronously(
+    channel_id: ChannelId,
+    user_principal: Principal,
+    diamond_membership_expires_at: Option<TimestampMillis>,
+) {
+    match read_state(|state| is_permitted_to_join(channel_id, user_principal, diamond_membership_expires_at, state)) {
         Ok(None) => {}
+        Ok(Some(args)) if args.gate.synchronous() => {
+            if !matches!(check_if_passes_gate_synchronously(args), CheckIfPassesGateResult::Success) {
+                return;
+            }
+        }
         _ => return,
     };
 
     mutate_state(|state| commit(channel_id, user_principal, state));
 }
 
-async fn check_gate_then_join_channel(channel_id: ChannelId, user_principal: Principal) -> Response {
-    match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
+async fn check_gate_then_join_channel(args: &Args) -> Response {
+    match read_state(|state| is_permitted_to_join(args.channel_id, args.principal, args.diamond_membership_expires_at, state)) {
         Ok(Some(check_gate_args)) => match check_if_passes_gate(check_gate_args).await {
             CheckIfPassesGateResult::Success => {}
             CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
@@ -75,12 +85,13 @@ async fn check_gate_then_join_channel(channel_id: ChannelId, user_principal: Pri
         Err(response) => return response,
     };
 
-    mutate_state(|state| commit(channel_id, user_principal, state))
+    mutate_state(|state| commit(args.channel_id, args.principal, state))
 }
 
 fn is_permitted_to_join(
     channel_id: ChannelId,
     user_principal: Principal,
+    diamond_membership_expires_at: Option<TimestampMillis>,
     state: &RuntimeState,
 ) -> Result<Option<CheckGateArgs>, Response> {
     if state.data.is_frozen() {
@@ -108,10 +119,10 @@ fn is_permitted_to_join(
             } else {
                 Ok(channel.chat.gate.as_ref().map(|g| CheckGateArgs {
                     gate: g.clone(),
-                    user_index_canister: state.data.user_index_canister_id,
                     user_id: member.user_id,
+                    diamond_membership_expires_at,
                     this_canister: state.env.canister_id(),
-                    now_nanos: state.env.now_nanos(),
+                    now: state.env.now(),
                 }))
             }
         } else {

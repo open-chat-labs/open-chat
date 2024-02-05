@@ -52,9 +52,11 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 wasm_version: state.data.local_user_index_canister_wasm_for_new_canisters.version,
                 user_index_canister_id: state.env.canister_id(),
                 group_index_canister_id: state.data.group_index_canister_id,
+                identity_canister_id: state.data.identity_canister_id,
                 notifications_canister_id: args.notifications_canister_id,
                 proposals_bot_canister_id: state.data.proposals_bot_canister_id,
                 cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
+                escrow_canister_id: state.data.escrow_canister_id,
                 internet_identity_canister_id: state.data.internet_identity_canister_id,
                 test_mode: state.data.test_mode,
             },
@@ -79,7 +81,7 @@ fn commit(canister_id: CanisterId, wasm_version: BuildVersion, state: &mut Runti
                 }),
             )
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
+        crate::jobs::sync_events_to_local_user_index_canisters::try_run_now(state);
 
         Success
     } else {

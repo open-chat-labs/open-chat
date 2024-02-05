@@ -121,6 +121,10 @@
     export function getBoundingClientRect() {
         return containerDiv.getBoundingClientRect();
     }
+
+    export function getDomElement() {
+        return containerDiv;
+    }
 </script>
 
 <div class:fill class="noselect" bind:this={containerDiv}>

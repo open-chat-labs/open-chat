@@ -2,11 +2,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-didc bind ../../backend/canisters/user_index/api/can.did -t ts > ./src/services/userIndex/candid/types.d.ts
-didc bind ../../backend/canisters/user_index/api/can.did -t js > ./src/services/userIndex/candid/idl.js
-
-didc bind ../../backend/canisters/user/api/can.did -t ts > ./src/services/user/candid/types.d.ts
-didc bind ../../backend/canisters/user/api/can.did -t js > ./src/services/user/candid/idl.js
+didc bind ../../backend/canisters/community/api/can.did -t ts > ./src/services/community/candid/types.d.ts
+didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/community/candid/idl.js
 
 didc bind ../../backend/canisters/group/api/can.did -t ts > ./src/services/group/candid/types.d.ts
 didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group/candid/idl.js
@@ -38,6 +35,12 @@ didc bind ../../backend/canisters/storage_bucket/api/can.did -t js > ./src/servi
 didc bind ../../backend/canisters/storage_index/api/can.did -t ts > ./src/services/storageIndex/candid/types.d.ts
 didc bind ../../backend/canisters/storage_index/api/can.did -t js > ./src/services/storageIndex/candid/idl.js
 
+didc bind ../../backend/canisters/user/api/can.did -t ts > ./src/services/user/candid/types.d.ts
+didc bind ../../backend/canisters/user/api/can.did -t js > ./src/services/user/candid/idl.js
+
+didc bind ../../backend/canisters/user_index/api/can.did -t ts > ./src/services/userIndex/candid/types.d.ts
+didc bind ../../backend/canisters/user_index/api/can.did -t js > ./src/services/userIndex/candid/idl.js
+
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
 
@@ -50,8 +53,14 @@ didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nns
 didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
 didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 
-didc bind ../../backend/canisters/community/api/can.did -t ts > ./src/services/community/candid/types.d.ts
-didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/community/candid/idl.js
+didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t ts > ./src/services/dexes/icpSwap/index/candid/types.d.ts
+didc bind ./src/services/dexes/icpSwap/index/candid/can.did -t js > ./src/services/dexes/icpSwap/index/candid/idl.js
+
+didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t ts > ./src/services/dexes/icpSwap/pool/candid/types.d.ts
+didc bind ./src/services/dexes/icpSwap/pool/candid/can.did -t js > ./src/services/dexes/icpSwap/pool/candid/idl.js
+
+didc bind ./src/services/icpcoins/candid/can.did -t ts > ./src/services/icpcoins/candid/types.d.ts
+didc bind ./src/services/icpcoins/candid/can.did -t js > ./src/services/icpcoins/candid/idl.js
 
 SEARCH='const Notification'
 REPLACE='import { IDL } from "@dfinity\/candid"\n\nexport const Notification'

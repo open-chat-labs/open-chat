@@ -7,6 +7,103 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+- Transfer prizes to community during import ([#5317](https://github.com/open-chat-labs/open-chat/pull/5317))
+
+### Changed
+
+- Hack to cater for SNEED's unique handling of transfer fees ([#5280](https://github.com/open-chat-labs/open-chat/pull/5280))
+- Add `minimum_yes_proportion_of_total` to SNS proposals ([#5284](https://github.com/open-chat-labs/open-chat/pull/5284))
+
+## [[2.0.1022](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1022-group)] - 2024-01-24
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid sending prize winner notifications ([#5236](https://github.com/open-chat-labs/open-chat/pull/5236))
+- Add timer job to mark P2P swaps as expired ([#5246](https://github.com/open-chat-labs/open-chat/pull/5246))
+
+### Fixed
+
+- Fix p2p swaps in threads which weren't being marked as updated ([#5235](https://github.com/open-chat-labs/open-chat/pull/5235))
+
+## [[2.0.1016](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1016-group)] - 2024-01-19
+
+### Added
+
+- Show proposal payloads for NNS proposals ([#5072](https://github.com/open-chat-labs/open-chat/pull/5072))
+- Add TokenBalance access gate ([#5120](https://github.com/open-chat-labs/open-chat/pull/5120))
+- Expose details of timer jobs for public Groups ([#5154](https://github.com/open-chat-labs/open-chat/pull/5154))
+- Notify group when p2p swap status changes ([#5201](https://github.com/open-chat-labs/open-chat/pull/5201))
+- Implement `cancel_p2p_swap` for groups ([#5204](https://github.com/open-chat-labs/open-chat/pull/5204))
+
+### Changed
+
+- Don't mark messages as edited if only link removed ([#5119](https://github.com/open-chat-labs/open-chat/pull/5119))
+- Increase max message length to 10k characters ([#5140](https://github.com/open-chat-labs/open-chat/pull/5140))
+- Return success from `deleted_message` even if message not deleted ([#5145](https://github.com/open-chat-labs/open-chat/pull/5145))
+- Change `expires_at` to `expires_in` for p2p trade initial ([#5147](https://github.com/open-chat-labs/open-chat/pull/5147))
+- Use `message_id` in `accept_p2p_trade_offer` args ([#5162](https://github.com/open-chat-labs/open-chat/pull/5162))
+- Ensure swap responses contain all transaction ids ([#5174](https://github.com/open-chat-labs/open-chat/pull/5174))
+- Use "swap" instead of "trade" in vars and types ([#5175](https://github.com/open-chat-labs/open-chat/pull/5175))
+- Only use transaction index for p2p swaps and drop usage of hash ([#5203](https://github.com/open-chat-labs/open-chat/pull/5203))
+
+### Fixed
+
+- Prevent latest messages of payment gated groups from being public ([#5080](https://github.com/open-chat-labs/open-chat/pull/5080))
+- Fix bug where `cancel_job` would fail to find the job to cancel ([#5148](https://github.com/open-chat-labs/open-chat/pull/5148))
+
+## [[2.0.986](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.986-group)] - 2023-12-19
+
+### Added
+
+- Support getting batches of summary updates via LocalUserIndex ([#4983](https://github.com/open-chat-labs/open-chat/pull/4983))
+- Add support for P2P trades ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+
+### Changed
+
+- Reduce cut of payment gate fee for SNS from 20% -> 2% ([#4991](https://github.com/open-chat-labs/open-chat/pull/4991))
+- Suppress notifications and @s for suspect messages ([#5006](https://github.com/open-chat-labs/open-chat/pull/5006))
+- Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
+
+### Fixed
+
+- Fix for NNS proposal deadlines not being updated ([#4978](https://github.com/open-chat-labs/open-chat/pull/4978))
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.966](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.966-group)] - 2023-12-07
+
+### Fixed
+
+- Fix bug which allowed anyone to mention @everyone ([#4930](https://github.com/open-chat-labs/open-chat/pull/4930))
+
+## [[2.0.957](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.957-group)] - 2023-12-05
+
+### Added
+
+- Add `c2c_send_message` with improved API for c2c calls vs `send_message_v2` ([#4895](https://github.com/open-chat-labs/open-chat/pull/4895))
+
+### Changed
+
+- Burn any CHAT going to the treasury ([#4891](https://github.com/open-chat-labs/open-chat/pull/4891))
+- Move prize winner messages to be in a thread on each prize message ([#4915](https://github.com/open-chat-labs/open-chat/pull/4915))
+
+## [[2.0.950](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.950-group)] - 2023-11-28
+
+### Added
+
+- Support getting batches of chat events via LocalUserIndex ([#4848](https://github.com/open-chat-labs/open-chat/pull/4848))
+
+### Changed
+
+- Make events private for payment gated chats ([#4843](https://github.com/open-chat-labs/open-chat/pull/4843))
+- In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+- Add `local_user_index_canister_id` to group summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
+
+## [[2.0.946](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.946-group)] - 2023-11-24
+
+### Added
+
 - Support cancelling invites ([#4831](https://github.com/open-chat-labs/open-chat/pull/4831))
 
 ### Changed

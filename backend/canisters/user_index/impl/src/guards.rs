@@ -40,6 +40,14 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_identity_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_identity_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the identity canister".to_string())
+    }
+}
+
 pub fn caller_is_platform_moderator() -> Result<(), String> {
     if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
@@ -69,5 +77,13 @@ pub fn caller_is_user_canister_or_group_index() -> Result<(), String> {
         Ok(())
     } else {
         Err("Caller is not a user canister or the group index canister".to_string())
+    }
+}
+
+pub fn caller_is_translations_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_translations_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the translations canister".to_string())
     }
 }

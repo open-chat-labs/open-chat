@@ -38,6 +38,7 @@ pub struct MessagePermissions {
     pub crypto: Option<GroupPermissionRole>,
     pub giphy: Option<GroupPermissionRole>,
     pub prize: Option<GroupPermissionRole>,
+    pub p2p_swap: Option<GroupPermissionRole>,
     pub custom: Vec<CustomPermission>,
 }
 
@@ -47,7 +48,7 @@ pub struct CustomPermission {
     pub role: GroupPermissionRole,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalGroupPermissions {
     pub change_roles: Option<GroupPermissionRole>,
     pub update_group: Option<GroupPermissionRole>,
@@ -61,7 +62,7 @@ pub struct OptionalGroupPermissions {
     pub thread_permissions: OptionUpdate<OptionalMessagePermissions>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct OptionalMessagePermissions {
     pub default: Option<GroupPermissionRole>,
     pub text: OptionUpdate<GroupPermissionRole>,
@@ -73,6 +74,8 @@ pub struct OptionalMessagePermissions {
     pub crypto: OptionUpdate<GroupPermissionRole>,
     pub giphy: OptionUpdate<GroupPermissionRole>,
     pub prize: OptionUpdate<GroupPermissionRole>,
+    pub p2p_swap: OptionUpdate<GroupPermissionRole>,
+    pub p2p_trade: OptionUpdate<GroupPermissionRole>,
     pub custom_updated: Vec<CustomPermission>,
     pub custom_deleted: Vec<String>,
 }
@@ -108,6 +111,7 @@ impl Default for MessagePermissions {
             crypto: None,
             giphy: None,
             prize: None,
+            p2p_swap: None,
             custom: Vec::new(),
         }
     }

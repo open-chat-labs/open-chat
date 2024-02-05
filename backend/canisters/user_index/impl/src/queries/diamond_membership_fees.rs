@@ -1,21 +1,31 @@
 use ic_cdk_macros::query;
-use types::{Cryptocurrency, DiamondMembershipPlanDuration};
+use types::Cryptocurrency;
 use user_index_canister::diamond_membership_fees::{Response::*, *};
+
+use crate::{read_state, RuntimeState};
 
 #[query]
 fn diamond_membership_fees(_args: Args) -> Response {
+    read_state(diamond_membership_fees_impl)
+}
+
+fn diamond_membership_fees_impl(state: &RuntimeState) -> Response {
+    let fees = &state.data.diamond_membership_fees;
+
     let fees = vec![
         DiamondMembershipFees {
             token: Cryptocurrency::CHAT,
-            one_month: DiamondMembershipPlanDuration::OneMonth.chat_price_e8s(),
-            three_months: DiamondMembershipPlanDuration::ThreeMonths.chat_price_e8s(),
-            one_year: DiamondMembershipPlanDuration::OneYear.chat_price_e8s(),
+            one_month: fees.chat_fees.one_month,
+            three_months: fees.chat_fees.three_months,
+            one_year: fees.chat_fees.one_year,
+            lifetime: fees.chat_fees.lifetime,
         },
         DiamondMembershipFees {
             token: Cryptocurrency::InternetComputer,
-            one_month: DiamondMembershipPlanDuration::OneMonth.icp_price_e8s(),
-            three_months: DiamondMembershipPlanDuration::ThreeMonths.icp_price_e8s(),
-            one_year: DiamondMembershipPlanDuration::OneYear.icp_price_e8s(),
+            one_month: fees.icp_fees.one_month,
+            three_months: fees.icp_fees.three_months,
+            one_year: fees.icp_fees.one_year,
+            lifetime: fees.icp_fees.lifetime,
         },
     ];
 

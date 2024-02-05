@@ -18,6 +18,8 @@
     import BalanceWithRefresh from "./BalanceWithRefresh.svelte";
     import TextArea from "../TextArea.svelte";
     import CryptoSelector from "./CryptoSelector.svelte";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -41,7 +43,7 @@
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: UserSummary | undefined = undefined;
     let validAmount: boolean = false;
-    $: cryptoLookup = client.cryptoLookup;
+    $: cryptoLookup = client.enhancedCryptoLookup;
     $: tokenDetails = $cryptoLookup[ledger];
     $: symbol = tokenDetails.symbol;
     $: howToBuyUrl = tokenDetails.howToBuyUrl;
@@ -129,7 +131,7 @@
         <span class="header" slot="header">
             <div class="left">
                 <div class="main-title">
-                    <div>{$_("tokenTransfer.send")}</div>
+                    <div><Translatable resourceKey={i18nKey("tokenTransfer.send")} /></div>
                     <div>
                         <CryptoSelector bind:ledger />
                     </div>
@@ -140,7 +142,7 @@
                 bind:this={balanceWithRefresh}
                 {ledger}
                 value={remainingBalance}
-                label={$_("cryptoAccount.shortBalanceLabel")}
+                label={i18nKey("cryptoAccount.shortBalanceLabel")}
                 bold
                 showTopUp
                 on:click={() => (confirming = false)}
@@ -152,16 +154,21 @@
                 {#if zero || toppingUp}
                     <AccountInfo {ledger} user={$user} />
                     {#if zero}
-                        <p>{$_("tokenTransfer.zeroBalance", { values: { token: symbol } })}</p>
+                        <p>
+                            <Translatable
+                                resourceKey={i18nKey("tokenTransfer.zeroBalance", {
+                                    token: symbol,
+                                })} />
+                        </p>
                     {/if}
-                    <p>{$_("tokenTransfer.makeDeposit")}</p>
+                    <p><Translatable resourceKey={i18nKey("tokenTransfer.makeDeposit")} /></p>
                     <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-                        {$_("howToBuyToken", { values: { token: symbol } })}
+                        <Translatable resourceKey={i18nKey("howToBuyToken", { token: symbol })} />
                     </a>
                 {:else}
                     {#if multiUserChat}
                         <div class="receiver">
-                            <Legend label={$_("tokenTransfer.receiver")} />
+                            <Legend label={i18nKey("tokenTransfer.receiver")} />
                             <SingleUserSelector
                                 bind:selectedReceiver={receiver}
                                 autofocus={multiUserChat} />
@@ -177,16 +184,16 @@
                             bind:amount={draftAmount} />
                     </div>
                     <div class="message">
-                        <Legend label={$_("tokenTransfer.message")} />
+                        <Legend label={i18nKey("tokenTransfer.message")} />
                         <TextArea
                             maxlength={200}
                             rows={3}
                             autofocus={false}
-                            placeholder={$_("tokenTransfer.messagePlaceholder")}
+                            placeholder={i18nKey("tokenTransfer.messagePlaceholder")}
                             bind:value={message} />
                     </div>
                     {#if error}
-                        <ErrorMessage>{$_(error)}</ErrorMessage>
+                        <ErrorMessage><Translatable resourceKey={i18nKey(error)} /></ErrorMessage>
                     {/if}
                     {#if confirming}
                         <div class="confirming">
@@ -194,7 +201,10 @@
                                 <Alert size={$iconSize} color={"var(--warn"} />
                             </div>
                             <div class="alert-txt">
-                                {$_("tokenTransfer.warning", { values: { token: symbol } })}
+                                <Translatable
+                                    resourceKey={i18nKey("tokenTransfer.warning", {
+                                        token: symbol,
+                                    })} />
                             </div>
                         </div>
                     {/if}
@@ -204,23 +214,24 @@
         <span slot="footer">
             <ButtonGroup>
                 <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={cancel}
-                    >{$_("cancel")}</Button>
+                    ><Translatable resourceKey={i18nKey("cancel")} /></Button>
                 {#if toppingUp || zero}
                     <Button
                         small={!$mobileWidth}
                         disabled={refreshing}
                         loading={refreshing}
                         tiny={$mobileWidth}
-                        on:click={reset}>{$_("refresh")}</Button>
+                        on:click={reset}><Translatable resourceKey={i18nKey("refresh")} /></Button>
                 {:else}
                     <Button
                         small={!$mobileWidth}
                         disabled={!valid}
                         tiny={$mobileWidth}
                         on:click={send}
-                        >{confirming
-                            ? $_("tokenTransfer.confirm")
-                            : $_("tokenTransfer.send")}</Button>
+                        ><Translatable
+                            resourceKey={i18nKey(
+                                confirming ? "tokenTransfer.confirm" : "tokenTransfer.send",
+                            )} /></Button>
                 {/if}
             </ButtonGroup>
         </span>

@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
 use types::{
-    AccessGate, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary, TimestampMillis,
+    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, Message, MessageIndex, Milliseconds, PublicGroupSummary,
+    TimestampMillis,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -38,13 +39,13 @@ impl CachedHotGroups {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CachedPublicGroupSummary {
     pub chat_id: ChatId,
+    pub local_user_index_canister_id: CanisterId,
     pub last_updated: TimestampMillis,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
     pub latest_message_index: Option<MessageIndex>,
     pub participant_count: u32,
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub events_ttl_last_updated: TimestampMillis,
     pub gate: Option<AccessGate>,
 }
@@ -53,6 +54,7 @@ impl From<PublicGroupSummary> for CachedPublicGroupSummary {
     fn from(summary: PublicGroupSummary) -> Self {
         CachedPublicGroupSummary {
             chat_id: summary.chat_id,
+            local_user_index_canister_id: summary.local_user_index_canister_id,
             last_updated: summary.last_updated,
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,

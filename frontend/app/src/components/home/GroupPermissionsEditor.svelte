@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
     import { type ChatPermissions, chatRoles } from "openchat-client";
     import Toggle from "../Toggle.svelte";
     import TabHeader from "../TabHeader.svelte";
+    import { i18nKey } from "../../i18n/i18n";
 
     export let permissions: ChatPermissions;
     export let isPublic: boolean;
@@ -30,162 +30,176 @@
 
 <TabHeader
     bind:selected={selectedTab}
-    items={[$_("permissions.general"), $_("permissions.message"), $_("permissions.thread")]} />
+    items={[
+        i18nKey("permissions.general"),
+        i18nKey("permissions.message"),
+        i18nKey("permissions.thread"),
+    ]} />
 
 <div class="permissions">
     {#if selectedTab === 0}
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.changeRoles")}
+            label={i18nKey("permissions.changeRoles")}
             bind:rolePermission={permissions.changeRoles} />
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.updateGroup")}
+            label={i18nKey("permissions.updateGroup")}
             bind:rolePermission={permissions.updateGroup} />
         {#if !isPublic}
             <SelectPermissionRole
                 {roles}
-                label={$_("permissions.inviteUsers")}
+                label={i18nKey("permissions.inviteUsers")}
                 bind:rolePermission={permissions.inviteUsers} />
         {/if}
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.removeMembers")}
+            label={i18nKey("permissions.removeMembers")}
             bind:rolePermission={permissions.removeMembers} />
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.deleteMessages")}
+            label={i18nKey("permissions.deleteMessages")}
             bind:rolePermission={permissions.deleteMessages} />
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.pinMessages")}
+            label={i18nKey("permissions.pinMessages")}
             bind:rolePermission={permissions.pinMessages} />
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.reactToMessages")}
+            label={i18nKey("permissions.reactToMessages")}
             bind:rolePermission={permissions.reactToMessages} />
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.mentionAllMembers", { values: { mention: "@everyone" } })}
+            label={i18nKey("permissions.mentionAllMembers", { mention: "@everyone" })}
             bind:rolePermission={permissions.mentionAllMembers} />
     {:else if selectedTab === 1}
         <SelectPermissionRole
             {roles}
-            label={$_("permissions.messagePermissions.default")}
+            label={i18nKey("permissions.messagePermissions.default")}
             bind:rolePermission={permissions.messagePermissions.default} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.text")}
+            label={i18nKey("permissions.messagePermissions.text")}
             bind:rolePermission={permissions.messagePermissions.text} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.image")}
+            label={i18nKey("permissions.messagePermissions.image")}
             bind:rolePermission={permissions.messagePermissions.image} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.video")}
+            label={i18nKey("permissions.messagePermissions.video")}
             bind:rolePermission={permissions.messagePermissions.video} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.audio")}
+            label={i18nKey("permissions.messagePermissions.audio")}
             bind:rolePermission={permissions.messagePermissions.audio} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.file")}
+            label={i18nKey("permissions.messagePermissions.file")}
             bind:rolePermission={permissions.messagePermissions.file} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.poll")}
+            label={i18nKey("permissions.messagePermissions.poll")}
             bind:rolePermission={permissions.messagePermissions.poll} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.crypto")}
+            label={i18nKey("permissions.messagePermissions.crypto")}
             bind:rolePermission={permissions.messagePermissions.crypto} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.giphy")}
+            label={i18nKey("permissions.messagePermissions.giphy")}
             bind:rolePermission={permissions.messagePermissions.giphy} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.prize")}
+            label={i18nKey("permissions.messagePermissions.prize")}
             bind:rolePermission={permissions.messagePermissions.prize} />
         <SelectPermissionRole
             {roles}
             defaultRole={permissions.messagePermissions.default}
-            label={$_("permissions.messagePermissions.memeFighter")}
+            label={i18nKey("permissions.messagePermissions.memeFighter")}
             bind:rolePermission={permissions.messagePermissions.memeFighter} />
+        <SelectPermissionRole
+            {roles}
+            defaultRole={permissions.messagePermissions.default}
+            label={i18nKey("permissions.messagePermissions.p2pSwap")}
+            bind:rolePermission={permissions.messagePermissions.p2pSwap} />
     {:else if selectedTab === 2}
         <Toggle
             id="override-chat-messages"
             small
             on:change={onOverrideChatMessagesChanged}
-            label={$_("permissions.overrideChatMessages")}
+            label={i18nKey("permissions.overrideChatMessages")}
             bind:checked={overrideChatMessages} />
 
         {#if permissions.threadPermissions !== undefined}
             <SelectPermissionRole
                 {roles}
-                label={$_("permissions.threadPermissions.default")}
+                label={i18nKey("permissions.threadPermissions.default")}
                 bind:rolePermission={permissions.threadPermissions.default} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.text")}
+                label={i18nKey("permissions.threadPermissions.text")}
                 bind:rolePermission={permissions.threadPermissions.text} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.image")}
+                label={i18nKey("permissions.threadPermissions.image")}
                 bind:rolePermission={permissions.threadPermissions.image} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.video")}
+                label={i18nKey("permissions.threadPermissions.video")}
                 bind:rolePermission={permissions.threadPermissions.video} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.audio")}
+                label={i18nKey("permissions.threadPermissions.audio")}
                 bind:rolePermission={permissions.threadPermissions.audio} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.file")}
+                label={i18nKey("permissions.threadPermissions.file")}
                 bind:rolePermission={permissions.threadPermissions.file} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.poll")}
+                label={i18nKey("permissions.threadPermissions.poll")}
                 bind:rolePermission={permissions.threadPermissions.poll} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.crypto")}
+                label={i18nKey("permissions.threadPermissions.crypto")}
                 bind:rolePermission={permissions.threadPermissions.crypto} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.giphy")}
+                label={i18nKey("permissions.threadPermissions.giphy")}
                 bind:rolePermission={permissions.threadPermissions.giphy} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.prize")}
+                label={i18nKey("permissions.threadPermissions.prize")}
                 bind:rolePermission={permissions.threadPermissions.prize} />
             <SelectPermissionRole
                 {roles}
                 defaultRole={permissions.threadPermissions.default}
-                label={$_("permissions.threadPermissions.memeFighter")}
+                label={i18nKey("permissions.threadPermissions.memeFighter")}
                 bind:rolePermission={permissions.threadPermissions.memeFighter} />
+            <SelectPermissionRole
+                {roles}
+                defaultRole={permissions.threadPermissions.default}
+                label={i18nKey("permissions.threadPermissions.p2pSwap")}
+                bind:rolePermission={permissions.threadPermissions.p2pSwap} />
         {/if}
     {/if}
 </div>

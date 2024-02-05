@@ -251,6 +251,7 @@ type ChatEventWrapper = record {
 
 type GroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
@@ -286,6 +287,7 @@ type GroupChatSummary = record {
 
 type GroupCanisterGroupChatSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
@@ -350,6 +352,7 @@ type GroupCanisterGroupChatSummaryUpdates = record {
 
 type CommunityCanisterCommunitySummary = record {
     community_id : CommunityId;
+    local_user_index_canister_id : CanisterId;
     name : text;
     description : text;
     avatar_id : opt nat;
@@ -713,6 +716,7 @@ type PinnedMessageUpdate = variant {
 
 type PublicGroupSummary = record {
     chat_id : ChatId;
+    local_user_index_canister_id : CanisterId;
     last_updated : TimestampMillis;
     name : text;
     description : text;
@@ -785,6 +789,7 @@ type MessageContentInitial = variant {
     Giphy : GiphyContent;
     GovernanceProposal : ProposalContent;
     Prize : PrizeContentInitial;
+    P2PSwap : P2PSwapContentInitial;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
     Custom : CustomMessageContent;
@@ -805,6 +810,7 @@ type MessageContent = variant {
     PrizeWinner : PrizeWinnerContent;
     MessageReminderCreated : MessageReminderCreated;
     MessageReminder : MessageReminder;
+    P2PSwap : P2PSwapContent;
     Custom : CustomMessageContent;
     ReportedMessage : ReportedMessage;
 };
@@ -942,6 +948,7 @@ type NnsProposal = record {
     reward_status : ProposalRewardStatus;
     tally : Tally;
     deadline : TimestampMillis;
+    payload_text_rendering : opt text;
     last_updated : TimestampMillis;
 };
 
@@ -958,6 +965,8 @@ type SnsProposal = record {
     tally : Tally;
     deadline : TimestampMillis;
     payload_text_rendering : opt text;
+    minimum_yes_proportion_of_total : nat32;
+    minimum_yes_proportion_of_exercised : nat32;
     last_updated : TimestampMillis;
 };
 
@@ -1056,15 +1065,7 @@ type UserSummary = record {
     is_bot : bool;
     suspended : bool;
     diamond_member : bool;
-};
-
-type PartialUserSummary = record {
-    user_id : UserId;
-    username : opt text;
-    avatar_id : opt nat;
-    is_bot : bool;
-    suspended : bool;
-    diamond_member : bool;
+    diamond_membership_status : DiamondMembershipStatus;
 };
 
 type BuildVersion = record {
@@ -1233,6 +1234,7 @@ type MessagePermissions = record {
     crypto : opt PermissionRole;
     giphy : opt PermissionRole;
     prize : opt PermissionRole;
+    p2p_swap : opt PermissionRole;
     custom : vec CustomPermission;
 };
 
@@ -1265,6 +1267,8 @@ type OptionalMessagePermissions = record {
     crypto : PermissionRoleUpdate;
     giphy : PermissionRoleUpdate;
     prize : PermissionRoleUpdate;
+    p2p_swap : PermissionRoleUpdate;
+    p2p_trade : PermissionRoleUpdate;
     custom_updated : vec CustomPermission;
     custom_deleted : vec text;
 };
@@ -1426,13 +1430,35 @@ type PrizeWinnerContent = record {
 
 type DiamondMembershipDetails = record {
     expires_at : TimestampMillis;
-    recurring : opt DiamondMembershipPlanDuration;
+    recurring : opt DiamondMembershipSubscription;
+    pay_in_chat : bool;
+    subscription : DiamondMembershipSubscription;
 };
 
 type DiamondMembershipPlanDuration = variant {
     OneMonth;
     ThreeMonths;
     OneYear;
+    Lifetime;
+};
+
+type DiamondMembershipSubscription = variant {
+    Disabled;
+    OneMonth;
+    ThreeMonths;
+    OneYear;
+};
+
+type DiamondMembershipStatus = variant {
+    Inactive;
+    Active;
+    Lifetime;
+};
+
+type DiamondMembershipStatusFull = variant {
+    Inactive;
+    Active : DiamondMembershipDetails;
+    Lifetime;
 };
 
 type AccessGate = variant {
@@ -1440,6 +1466,7 @@ type AccessGate = variant {
     VerifiedCredential : VerifiedCredentialGate;
     SnsNeuron : SnsNeuronGate;
     Payment : PaymentGate;
+    TokenBalance : TokenBalanceGate;
 };
 
 type AccessGateUpdate = variant {
@@ -1470,12 +1497,18 @@ type PaymentGate = record {
     fee : nat;
 };
 
+type TokenBalanceGate = record {
+    ledger_canister_id : CanisterId;
+    min_balance : nat;
+};
+
 type GateCheckFailedReason = variant {
     NotDiamondMember;
     NoSnsNeuronsFound;
     NoSnsNeuronsWithRequiredStakeFound;
     NoSnsNeuronsWithRequiredDissolveDelayFound;
-    PaymentFailed : TransferFromError;
+    PaymentFailed : ICRC2_TransferFromError;
+    InsufficientBalance : nat;
 };
 
 type MessageReminderCreated = record {
@@ -1516,6 +1549,70 @@ type MessageReport = record {
     notes : opt text;
 };
 
+type P2PSwapContentInitial = record {
+    token0 : TokenInfo;
+    token0_amount : nat;
+    token1 : TokenInfo;
+    token1_amount : nat;
+    expires_in : Milliseconds;
+    caption : opt text;
+};
+
+type P2PSwapContent = record {
+    swap_id : nat32;
+    token0 : TokenInfo;
+    token0_amount : nat;
+    token0_txn_in : nat64;
+    token1 : TokenInfo;
+    token1_amount : nat;
+    expires_at : TimestampMillis;
+    status : P2PSwapStatus;
+    caption : opt text;
+};
+
+type P2PSwapStatus = variant {
+    Open;
+    Cancelled : P2PSwapCancelled;
+    Expired : P2PSwapExpired;
+    Reserved : P2PSwapReserved;
+    Accepted : P2PSwapAccepted;
+    Completed : P2PSwapCompleted;
+};
+
+type ReserveP2PSwapResult = variant {
+    Success : ReserveP2PSwapSuccess;
+    Failure : P2PSwapStatus;
+    SwapNotFound;
+};
+
+type ReserveP2PSwapSuccess = record {
+    content : P2PSwapContent;
+    created : TimestampMillis;
+    created_by : UserId;
+};
+
+type P2PSwapCancelled = record {
+    token0_txn_out : opt nat64;
+};
+
+type P2PSwapExpired = P2PSwapCancelled;
+
+type P2PSwapReserved = record {
+    reserved_by : UserId;
+};
+
+type P2PSwapAccepted = record {
+    accepted_by : UserId;
+    token1_txn_in : nat64;
+};
+
+type P2PSwapCompleted = record {
+    accepted_by : UserId;
+    token1_txn_in : nat64;
+    token0_txn_out : nat64;
+    token1_txn_out : nat64;
+};
+
 type EmptyArgs = record {};
 
 type CommunityMatch = record {
@@ -1539,6 +1636,7 @@ type GroupMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    subtype : opt GroupSubtype;
 };
 
 type ChannelMatch = record {
@@ -1548,6 +1646,7 @@ type ChannelMatch = record {
     avatar_id : opt nat;
     member_count : nat32;
     gate : opt AccessGate;
+    subtype : opt GroupSubtype;
 };
 
 type ThreadPreview = record {
@@ -1573,4 +1672,47 @@ type OptionalMessagePermissionsUpdate = variant {
     NoChange;
     SetToNone;
     SetToSome : OptionalMessagePermissions;
+};
+
+type TokenInfo = record {
+    token : Cryptocurrency;
+    ledger : CanisterId;
+    decimals : nat8;
+    fee : nat;
+};
+
+type AcceptSwapSuccess = record {
+    token1_txn_in : nat64;
+};
+
+type SwapStatusError = variant {
+    Reserved : SwapStatusErrorReserved;
+    Accepted : SwapStatusErrorAccepted;
+    Completed : SwapStatusErrorCompleted;
+    Expired : SwapStatusErrorExpired;
+    Cancelled : SwapStatusErrorCancelled;
+};
+
+type SwapStatusErrorReserved = record {
+    reserved_by : UserId;
+};
+
+type SwapStatusErrorAccepted = record {
+    accepted_by : UserId;
+    token1_txn_in : nat64;
+};
+
+type SwapStatusErrorCompleted = record {
+    accepted_by : UserId;
+    token1_txn_in : nat64;
+    token0_txn_out : nat64;
+    token1_txn_out : nat64;
+};
+
+type SwapStatusErrorExpired = record {
+    token0_txn_out : opt nat64;
+};
+
+type SwapStatusErrorCancelled = record {
+    token0_txn_out : opt nat64;
 };

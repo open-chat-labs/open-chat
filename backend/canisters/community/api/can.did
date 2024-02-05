@@ -15,7 +15,6 @@ type DeletedMessageResponse = variant {
     UserNotInChannel;
     NotAuthorized;
     MessageNotFound;
-    MessageNotDeleted;
     MessageHardDeleted;
 };
 
@@ -281,6 +280,41 @@ type ThreadPreviewsResponse = variant {
     ReplicaNotUpToDate : TimestampMillis;
 };
 
+type AcceptP2PSwapArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type AcceptP2PSwapResponse = variant {
+    Success : AcceptSwapSuccess;
+    InsufficientFunds;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChannelNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    UserSuspended;
+    ChatFrozen;
+    InternalError : text;
+};
+
+type CancelP2PSwapArgs = record {
+    channel_id : ChannelId;
+    thread_root_message_index : opt MessageIndex;
+    message_id : MessageId;
+};
+
+type CancelP2PSwapResponse = variant {
+    Success;
+    StatusError : SwapStatusError;
+    SwapNotFound;
+    ChannelNotFound;
+    UserNotInCommunity;
+    UserNotInChannel;
+    ChatFrozen;
+};
+
 type AddMembersToChannelArgs = record {
     channel_id : ChannelId;
     user_ids : vec UserId;
@@ -299,6 +333,7 @@ type AddMembersToChannelResponse = variant {
     ChannelNotFound;
     UserLimitReached : nat32;
     NotAuthorized;
+    InternalError : text;
 };
 
 type AddMembersToChannelPartialSuccess = record {
@@ -448,6 +483,7 @@ type CreateChannelResponse = variant {
     UserSuspended;
     NotAuthorized;
     CommunityFrozen;
+    InternalError : text;
 };
 
 type CreateUserGroupArgs = record {
@@ -745,6 +781,7 @@ type SendMessageArgs = record {
     forwarding : bool;
     community_rules_accepted : opt Version;
     channel_rules_accepted : opt Version;
+    message_filter_failed : opt nat64;
 };
 
 type SendMessageResponse = variant {
@@ -967,9 +1004,11 @@ service : {
     summary_updates : (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     thread_previews : (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
 
+    accept_p2p_swap : (AcceptP2PSwapArgs) -> (AcceptP2PSwapResponse);
     add_members_to_channel : (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction : (AddReactionArgs) -> (AddReactionResponse);
     block_user : (BlockUserArgs) -> (BlockUserResponse);
+    cancel_p2p_swap : (CancelP2PSwapArgs) -> (CancelP2PSwapResponse);
     change_channel_role : (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
     change_role : (ChangeRoleArgs) -> (ChangeRoleResponse);
     claim_prize : (ClaimPrizeArgs) -> (ClaimPrizeResponse);

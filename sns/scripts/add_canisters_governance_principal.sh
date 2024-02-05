@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Set env variables based on .env file
 set -o allexport; source .env; set +o allexport

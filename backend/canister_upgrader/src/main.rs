@@ -14,11 +14,13 @@ async fn main() {
         CanisterName::CyclesDispenser => {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }
+        CanisterName::Escrow => upgrade_escrow_canister(identity, opts.url, opts.escrow, opts.version).await,
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
         }
         CanisterName::GroupIndex => upgrade_group_index_canister(identity, opts.url, opts.group_index, opts.version).await,
+        CanisterName::Identity => upgrade_identity_canister(identity, opts.url, opts.identity, opts.version).await,
         CanisterName::MarketMaker => upgrade_market_maker_canister(identity, opts.url, opts.market_maker, opts.version).await,
         CanisterName::NeuronController => {
             upgrade_neuron_controller_canister(identity, opts.url, opts.neuron_controller, opts.version).await
@@ -34,6 +36,7 @@ async fn main() {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
         CanisterName::Registry => upgrade_registry_canister(identity, opts.url, opts.registry, opts.version).await,
+        CanisterName::Translations => upgrade_registry_canister(identity, opts.url, opts.translations, opts.version).await,
         CanisterName::StorageBucket => {
             upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
@@ -66,6 +69,9 @@ struct Opts {
     notifications_index: CanisterId,
 
     #[arg(long)]
+    identity: CanisterId,
+
+    #[arg(long)]
     online_users: CanisterId,
 
     #[arg(long)]
@@ -81,10 +87,16 @@ struct Opts {
     registry: CanisterId,
 
     #[arg(long)]
+    translations: CanisterId,
+
+    #[arg(long)]
     market_maker: CanisterId,
 
     #[arg(long)]
     neuron_controller: CanisterId,
+
+    #[arg(long)]
+    escrow: CanisterId,
 
     #[arg(long)]
     canister_to_upgrade: CanisterName,

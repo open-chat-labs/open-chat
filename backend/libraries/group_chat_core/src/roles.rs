@@ -1,5 +1,6 @@
+use chat_events::MessageContentInternal;
 use serde::{Deserialize, Serialize};
-use types::{GroupPermissionRole, GroupPermissions, GroupRole, MessageContentInitial};
+use types::{GroupPermissionRole, GroupPermissions, GroupRole};
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRoleInternal {
@@ -93,7 +94,7 @@ impl GroupRoleInternal {
         self.is_permitted(permissions.pin_messages)
     }
 
-    pub fn can_send_message(&self, message: &MessageContentInitial, is_thread: bool, permissions: &GroupPermissions) -> bool {
+    pub fn can_send_message(&self, message: &MessageContentInternal, is_thread: bool, permissions: &GroupPermissions) -> bool {
         let ps = if is_thread && permissions.thread_permissions.is_some() {
             permissions.thread_permissions.as_ref().unwrap()
         } else {
@@ -101,25 +102,28 @@ impl GroupRoleInternal {
         };
 
         let sender_role = match message {
-            MessageContentInitial::Text(_) => ps.text.unwrap_or(ps.default),
-            MessageContentInitial::Image(_) => ps.image.unwrap_or(ps.default),
-            MessageContentInitial::Video(_) => ps.video.unwrap_or(ps.default),
-            MessageContentInitial::Audio(_) => ps.audio.unwrap_or(ps.default),
-            MessageContentInitial::File(_) => ps.file.unwrap_or(ps.default),
-            MessageContentInitial::Poll(_) => ps.poll.unwrap_or(ps.default),
-            MessageContentInitial::Crypto(_) => ps.crypto.unwrap_or(ps.default),
-            MessageContentInitial::Deleted(_) => GroupPermissionRole::None,
-            MessageContentInitial::Giphy(_) => ps.giphy.unwrap_or(ps.default),
-            MessageContentInitial::GovernanceProposal(_) => GroupPermissionRole::Owner,
-            MessageContentInitial::Prize(_) => ps.prize.unwrap_or(ps.default),
-            MessageContentInitial::MessageReminderCreated(_) => GroupPermissionRole::None,
-            MessageContentInitial::MessageReminder(_) => GroupPermissionRole::Members,
-            MessageContentInitial::Custom(mc) => ps
+            MessageContentInternal::Text(_) => ps.text.unwrap_or(ps.default),
+            MessageContentInternal::Image(_) => ps.image.unwrap_or(ps.default),
+            MessageContentInternal::Video(_) => ps.video.unwrap_or(ps.default),
+            MessageContentInternal::Audio(_) => ps.audio.unwrap_or(ps.default),
+            MessageContentInternal::File(_) => ps.file.unwrap_or(ps.default),
+            MessageContentInternal::Poll(_) => ps.poll.unwrap_or(ps.default),
+            MessageContentInternal::Crypto(_) => ps.crypto.unwrap_or(ps.default),
+            MessageContentInternal::Giphy(_) => ps.giphy.unwrap_or(ps.default),
+            MessageContentInternal::Prize(_) => ps.prize.unwrap_or(ps.default),
+            MessageContentInternal::P2PSwap(_) => ps.p2p_swap.unwrap_or(ps.default),
+            MessageContentInternal::Custom(mc) => ps
                 .custom
                 .iter()
                 .find(|cp| cp.subtype == mc.kind)
                 .map(|cp| cp.role)
                 .unwrap_or(ps.default),
+            MessageContentInternal::Deleted(_)
+            | MessageContentInternal::GovernanceProposal(_)
+            | MessageContentInternal::MessageReminderCreated(_)
+            | MessageContentInternal::MessageReminder(_)
+            | MessageContentInternal::PrizeWinner(_)
+            | MessageContentInternal::ReportedMessage(_) => GroupPermissionRole::None,
         };
 
         self.is_permitted(sender_role)

@@ -2,9 +2,10 @@
     import { rtlStore } from "../../../stores/rtl";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { getContext } from "svelte";
-    import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
     import { now500 } from "../../../stores/time";
+    import Translatable from "../../Translatable.svelte";
+    import { i18nKey } from "../../../i18n/i18n";
 
     export let adoptPercent: number;
     export let rejectPercent: number;
@@ -35,10 +36,12 @@
 
     <div class="remaining">
         {#if !votingEnded}
-            <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
+            <span class="label"
+                ><Translatable resourceKey={i18nKey("proposal.votingPeriodRemaining")} /></span>
             <span class="value">{client.formatTimeRemaining($now500, deadline)}</span>
         {:else}
-            <span class="label">{$_("proposal.votingPeriodEnded")}</span>
+            <span class="label"
+                ><Translatable resourceKey={i18nKey("proposal.votingPeriodEnded")} /></span>
             <span class="value"
                 >{client.toDateString(deadlineDate)}
                 {client.toShortTimeString(deadlineDate)}</span>

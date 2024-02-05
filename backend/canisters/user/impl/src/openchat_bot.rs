@@ -1,8 +1,9 @@
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
+use chat_events::{MessageContentInternal, TextContentInternal};
 use ic_ledger_types::Tokens;
-use types::{ChannelId, CommunityId, EventWrapper, Message, MessageContent, SuspensionDuration, TextContent, UserId};
-use user_canister::c2c_send_messages::C2CReplyContext;
+use types::{ChannelId, CommunityId, EventWrapper, Message, SuspensionDuration, UserId};
+use user_canister::c2c_send_messages_v2::C2CReplyContext;
 use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
@@ -115,7 +116,7 @@ You can appeal this suspension by sending a direct message to the @OpenChat Twit
 }
 
 pub(crate) fn send_message(
-    content: MessageContent,
+    content: MessageContentInternal,
     mute_notification: bool,
     state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
@@ -123,12 +124,12 @@ pub(crate) fn send_message(
 }
 
 pub(crate) fn send_text_message(text: String, mute_notification: bool, state: &mut RuntimeState) -> EventWrapper<Message> {
-    let content = MessageContent::Text(TextContent { text });
+    let content = MessageContentInternal::Text(TextContentInternal { text });
     send_message(content, mute_notification, state)
 }
 
 pub(crate) fn send_message_with_reply(
-    content: MessageContent,
+    content: MessageContentInternal,
     replies_to: Option<C2CReplyContext>,
     mute_notification: bool,
     state: &mut RuntimeState,

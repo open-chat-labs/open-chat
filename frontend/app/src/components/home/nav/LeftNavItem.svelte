@@ -1,8 +1,11 @@
 <script lang="ts">
+    import { _ } from "svelte-i18n";
     import { emptyUnreadCounts } from "openchat-client";
     import UnreadCount from "../UnreadCount.svelte";
+    import type { ResourceKey } from "../../../i18n/i18n";
+    import Translatable from "../../Translatable.svelte";
 
-    export let label: string;
+    export let label: ResourceKey;
     export let selected: boolean = false;
     export let separator: boolean = false;
     export let unread = emptyUnreadCounts();
@@ -10,11 +13,11 @@
 </script>
 
 <div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
-    <div class="icon" title={label}>
+    <div class="icon" title={$_(label.key, label.params)}>
         <slot />
         <UnreadCount {unread} />
     </div>
-    <div class="label">{label}</div>
+    <div class="label"><Translatable resourceKey={label} /></div>
     <div class="menu"><slot name="menu" /></div>
 </div>
 

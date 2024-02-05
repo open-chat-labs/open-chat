@@ -3,12 +3,10 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
-use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
-use msgpack::serialize_then_unwrap;
-use types::{CanisterId, EventIndex, MessageId};
-use user_canister::c2c_delete_messages;
+use types::EventIndex;
 use user_canister::delete_messages::{Response::*, *};
+use user_canister::{c2c_delete_messages, UserCanisterEvent};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -59,7 +57,6 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
                         message_id,
-                        delete_files: true,
                     })),
                     remove_deleted_message_content_at,
                     now,
@@ -75,7 +72,13 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                     .collect();
 
                 if !my_messages.is_empty() {
-                    delete_on_recipients_canister(args.user_id.into(), my_messages, &state.data.fire_and_forget_handler);
+                    state.push_user_canister_event(
+                        args.user_id.into(),
+                        UserCanisterEvent::DeleteMessages(Box::new(c2c_delete_messages::Args {
+                            message_ids: my_messages,
+                            correlation_id: 0,
+                        })),
+                    );
                 }
             }
         }
@@ -84,20 +87,4 @@ fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
     } else {
         ChatNotFound
     }
-}
-
-fn delete_on_recipients_canister(
-    canister_id: CanisterId,
-    message_ids: Vec<MessageId>,
-    fire_and_forget_handler: &FireAndForgetHandler,
-) {
-    let args = c2c_delete_messages::Args {
-        message_ids,
-        correlation_id: 0,
-    };
-    fire_and_forget_handler.send(
-        canister_id,
-        "c2c_delete_messages_msgpack".to_string(),
-        serialize_then_unwrap(args),
-    );
 }

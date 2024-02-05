@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Set current directory to the directory this script is in
 SCRIPT=$(readlink -f "$0")

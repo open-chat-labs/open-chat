@@ -13,6 +13,7 @@ pub struct Args {
     pub content: MessageContentInitial,
     pub replies_to: Option<ReplyContext>,
     pub forwarding: bool,
+    pub message_filter_failed: Option<u64>,
     pub correlation_id: u64,
 }
 
@@ -30,6 +31,8 @@ pub enum Response {
     TransferFailed(String),
     TransferCannotBeZero,
     TransferCannotBeToSelf,
+    P2PSwapSetUpFailed(String),
+    DuplicateMessageId,
     UserSuspended,
     InternalError(String),
 }

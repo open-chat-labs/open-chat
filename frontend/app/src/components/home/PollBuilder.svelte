@@ -15,6 +15,8 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import type { PollContent, TotalPollVotes } from "openchat-client";
     import Legend from "../Legend.svelte";
+    import { i18nKey, type ResourceKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const dispatch = createEventDispatcher();
     const MAX_QUESTION_LENGTH = 250;
@@ -38,7 +40,7 @@
 
     let poll: CandidatePoll = emptyPoll();
     let nextAnswer: string = "";
-    let answerError: string | undefined = "";
+    let answerError: ResourceKey | undefined = undefined;
     let selectedDuration: Duration = "oneDay";
     let showSettings = false;
 
@@ -48,7 +50,7 @@
 
     export function resetPoll() {
         selectedDuration = "oneDay";
-        answerError = "";
+        answerError = undefined;
         nextAnswer = "";
         poll = emptyPoll();
         showSettings = false;
@@ -79,7 +81,7 @@
             nextAnswer = "";
             return true;
         } else {
-            answerError = "poll.invalidAnswer";
+            answerError = i18nKey("poll.invalidAnswer");
             return false;
         }
     }
@@ -148,7 +150,7 @@
 {#if open}
     <Overlay>
         <ModalContent>
-            <span slot="header">{$_("poll.create")}</span>
+            <span slot="header"><Translatable resourceKey={i18nKey("poll.create")} /></span>
             <span slot="body">
                 <div class="buttons">
                     <ButtonGroup align={"start"}>
@@ -156,29 +158,33 @@
                             small={!$mobileWidth}
                             tiny={$mobileWidth}
                             secondary={showSettings}
-                            on:click={() => (showSettings = false)}>{$_("poll.poll")}</Button>
+                            on:click={() => (showSettings = false)}
+                            ><Translatable resourceKey={i18nKey("poll.poll")} /></Button>
                         <Button
                             small={!$mobileWidth}
                             secondary={!showSettings}
                             tiny={$mobileWidth}
-                            on:click={() => (showSettings = true)}>{$_("poll.settings")}</Button>
+                            on:click={() => (showSettings = true)}
+                            ><Translatable resourceKey={i18nKey("poll.settings")} /></Button>
                     </ButtonGroup>
                 </div>
                 {#if !showSettings}
                     <form>
                         <div class="section underline">
-                            <Legend label={$_("poll.questionLabel")} />
+                            <Legend label={i18nKey("poll.questionLabel")} />
                             <Input
                                 bind:value={poll.pollQuestion}
                                 autofocus
                                 minlength={0}
                                 maxlength={MAX_QUESTION_LENGTH}
                                 countdown
-                                placeholder={$_("poll.optionalQuestion")} />
+                                placeholder={i18nKey("poll.optionalQuestion")} />
                         </div>
 
                         <div class="section">
-                            <Legend label={$_("poll.answersLabel")} rules={$_("poll.atLeastTwo")} />
+                            <Legend
+                                label={i18nKey("poll.answersLabel")}
+                                rules={i18nKey("poll.atLeastTwo")} />
                             {#each [...poll.pollAnswers] as answer (answer)}
                                 <div class="answer">
                                     <div class="answer-text">
@@ -199,13 +205,15 @@
                                             maxlength={MAX_ANSWER_LENGTH}
                                             countdown
                                             on:enter={addAnswer}
-                                            placeholder={$_(
+                                            placeholder={i18nKey(
                                                 poll.pollAnswers.size === MAX_ANSWERS
                                                     ? "poll.maxReached"
-                                                    : "poll.answerText"
+                                                    : "poll.answerText",
                                             )}>
                                             {#if answerError !== undefined}
-                                                <ErrorMessage>{$_(answerError)}</ErrorMessage>
+                                                <ErrorMessage
+                                                    ><Translatable
+                                                        resourceKey={answerError} /></ErrorMessage>
                                             {/if}
                                         </Input>
                                     </div>
@@ -223,29 +231,29 @@
                         small
                         id={"anonymous"}
                         on:change={() => (poll.anonymous = !poll.anonymous)}
-                        label={$_("poll.anonymous")}
+                        label={i18nKey("poll.anonymous")}
                         checked={poll.anonymous} />
 
                     <Toggle
                         small
                         id={"allow-multiple"}
-                        label={$_("poll.allowMultipleVotes")}
+                        label={i18nKey("poll.allowMultipleVotes")}
                         on:change={() =>
                             (poll.allowMultipleVotesPerUser = !poll.allowMultipleVotesPerUser)}
                         checked={poll.allowMultipleVotesPerUser} />
 
-                    <!-- <Toggle
+                    <Toggle
                         small
                         id={"allow-change"}
                         disabled={poll.allowMultipleVotesPerUser}
-                        label={$_("poll.allowChangeVotes")}
+                        label={i18nKey("poll.allowChangeVotes")}
                         on:change={() => (poll.allowUserToChangeVote = !poll.allowUserToChangeVote)}
-                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} /> -->
+                        checked={!poll.allowMultipleVotesPerUser && poll.allowUserToChangeVote} />
 
                     <Toggle
                         small
                         id={"limited-duration"}
-                        label={$_("poll.limitedDuration")}
+                        label={i18nKey("poll.limitedDuration")}
                         on:change={() => (poll.limitedDuration = !poll.limitedDuration)}
                         checked={poll.limitedDuration} />
 
@@ -253,19 +261,19 @@
                         <Toggle
                             small
                             id={"show-before-end"}
-                            label={$_("poll.showBeforeEnd")}
+                            label={i18nKey("poll.showBeforeEnd")}
                             on:change={() =>
                                 (poll.showVotesBeforeEndDate = !poll.showVotesBeforeEndDate)}
                             checked={poll.showVotesBeforeEndDate} />
 
-                        <Legend label={$_("poll.pollDuration")} />
+                        <Legend label={i18nKey("poll.pollDuration")} />
                         {#each durations as d}
                             <Radio
                                 on:change={() => (selectedDuration = d)}
                                 value={d}
                                 checked={selectedDuration === d}
                                 id={`duration_${d}`}
-                                label={$_(`poll.${d}`)}
+                                label={i18nKey(`poll.${d}`)}
                                 group={"poll_duration"} />
                         {/each}
                     {/if}

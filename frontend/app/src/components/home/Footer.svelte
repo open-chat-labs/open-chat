@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import ReplyingTo from "./ReplyingTo.svelte";
     import MessageEntry from "./MessageEntry.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
     import DraftMediaMessage from "./DraftMediaMessage.svelte";
     import { toastStore } from "../../stores/toast";
     import EmojiPicker from "./EmojiPicker.svelte";
@@ -17,6 +18,11 @@
         AttachmentContent,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
+    import HoverIcon from "../HoverIcon.svelte";
+    import ModalContent from "../ModalContent.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { i18nKey } from "../../i18n/i18n";
+    import Translatable from "../Translatable.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -55,15 +61,13 @@
                     if (client.canSendMessage(chat.id, mode, permission)) {
                         dispatch("fileSelected", content);
                     } else {
-                        const errorMessage = $_("permissions.notPermitted", {
-                            values: {
-                                permission: $_(`permissions.threadPermissions.${permission}`),
-                            },
+                        const errorMessage = i18nKey("permissions.notPermitted", {
+                            permission: $_(`permissions.threadPermissions.${permission}`),
                         });
                         toastStore.showFailureToast(errorMessage);
                     }
                 })
-                .catch((err) => toastStore.showFailureToast(err));
+                .catch((err) => toastStore.showFailureToast(i18nKey(err)));
         }
     }
 
@@ -95,20 +99,36 @@
     }
 </script>
 
+{#if messageAction === "emoji"}
+    <div class={`emoji-overlay ${mode}`}>
+        <ModalContent hideFooter hideHeader fill>
+            <span slot="body">
+                <div class="emoji-header">
+                    <h4><Translatable resourceKey={i18nKey("pickEmoji")} /></h4>
+                    <span title={$_("close")} class="close-emoji">
+                        <HoverIcon on:click={() => (messageAction = undefined)}>
+                            <Close size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                </div>
+                <EmojiPicker on:emojiSelected={emojiSelected} {mode} />
+            </span>
+            <span slot="footer" />
+        </ModalContent>
+    </div>
+{/if}
+
 <div class="footer">
     <div class="footer-overlay">
         {#if editingEvent === undefined && (replyingTo || attachment !== undefined)}
             <div class="draft-container">
                 {#if replyingTo}
-                    <ReplyingTo chatId={chat.id} readonly on:cancelReply {user} {replyingTo} />
+                    <ReplyingTo readonly on:cancelReply {user} {replyingTo} />
                 {/if}
                 {#if attachment !== undefined}
                     <DraftMediaMessage content={attachment} />
                 {/if}
             </div>
-        {/if}
-        {#if messageAction === "emoji"}
-            <EmojiPicker {mode} on:emojiSelected={emojiSelected} />
         {/if}
     </div>
     <MessageEntry
@@ -134,6 +154,7 @@
         on:searchChat
         on:tokenTransfer
         on:createPrizeMessage
+        on:createP2PSwapMessage
         on:attachGif
         on:makeMeme
         on:clearAttachment
@@ -147,6 +168,15 @@
 <style lang="scss">
     :global(body.witch .middle .footer) {
         @include z-index("footer");
+    }
+
+    :global(.emoji-overlay .modal-content) {
+        border: var(--bw) solid var(--bd);
+    }
+
+    :global(.emoji-overlay.thread .modal-content) {
+        width: 100%;
+        border-radius: var(--modal-rd) var(--modal-rd) 0 0;
     }
 
     .footer {
@@ -163,6 +193,36 @@
         align-content: center;
         align-items: flex-start;
         background-color: var(--entry-bg);
+    }
+
+    .emoji-overlay {
+        position: absolute;
+        bottom: toRem(70);
+        left: toRem(10);
+        width: 100%;
+        @include z-index("footer-overlay");
+
+        @include mobile() {
+            left: 0;
+            bottom: toRem(60);
+        }
+
+        .emoji-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: $sp3 $sp4;
+            background-color: var(--section-bg);
+
+            .close-emoji {
+                flex: 0 0 20px;
+            }
+        }
+
+        &.thread {
+            bottom: toRem(60);
+            left: 0;
+        }
     }
 
     .draft-container {

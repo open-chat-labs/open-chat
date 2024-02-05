@@ -243,6 +243,13 @@ impl CompletedCryptoTransaction {
             CompletedCryptoTransaction::ICRC1(t) => t.fee,
         }
     }
+
+    pub fn index(&self) -> u64 {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.block_index,
+            CompletedCryptoTransaction::ICRC1(t) => t.block_index,
+        }
+    }
 }
 
 impl FailedCryptoTransaction {
@@ -400,6 +407,12 @@ pub mod icrc1 {
     impl From<FailedCryptoTransaction> for super::FailedCryptoTransaction {
         fn from(value: FailedCryptoTransaction) -> Self {
             super::FailedCryptoTransaction::ICRC1(value)
+        }
+    }
+
+    impl From<Account> for CryptoAccount {
+        fn from(value: Account) -> Self {
+            CryptoAccount::Account(value)
         }
     }
 }

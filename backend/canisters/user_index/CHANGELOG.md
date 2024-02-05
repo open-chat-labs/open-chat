@@ -5,9 +5,144 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `c2c_send_openchat_bot_messages` endpoint ([#5319](https://github.com/open-chat-labs/open-chat/pull/5319))
+
+### Changed
+
+- Push `DiamondMembershipPaymentReceived` events to all LocalUserIndexes ([#5322](https://github.com/open-chat-labs/open-chat/pull/5322))
+
+## [[2.0.1040](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1039-user_index)] - 2024-02-02
+
+### Added
+
+- Transfer balance from old Diamond membership payments to treasury ([#5307](https://github.com/open-chat-labs/open-chat/pull/5307))
+
+### Changed
+
+- Remove excess 0's from token amount in referral reward messages ([#5308](https://github.com/open-chat-labs/open-chat/pull/5308))
+
+## [[2.0.1039](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1039-user_index)] - 2024-02-01
+
+### Changed
+
+- Reduce size of user data when serialized ([#5289](https://github.com/open-chat-labs/open-chat/pull/5289))
+- Log the users whose Diamond membership payments failed ([#5305](https://github.com/open-chat-labs/open-chat/pull/5305))
+
+### Fixed
+
+- Unblock payments for users whose previous Diamond payments failed ([#5295](https://github.com/open-chat-labs/open-chat/pull/5295))
+
+## [[2.0.1024](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1024-user_index)] - 2024-01-25
+
+### Added
+
+- Implement ability to update user principals ([#5220](https://github.com/open-chat-labs/open-chat/pull/5220))
+- Sync user principals to the Identity canister ([#5264](https://github.com/open-chat-labs/open-chat/pull/5264))
+
+### Changed
+
+- Rename `service_principals` to `governance_principals` in init args ([#5251](https://github.com/open-chat-labs/open-chat/pull/5251))
+- Avoid usages of `make_c2c_call` and use macro instead ([#5252](https://github.com/open-chat-labs/open-chat/pull/5252))
+
+### Fixed
+
+- Fix message reporting ([#5258](https://github.com/open-chat-labs/open-chat/pull/5258))
+
+## [[2.0.1018](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1018-user_index)] - 2024-01-24
+
+### Changed
+
+- Simplify timer jobs + make them more efficient ([#5233](https://github.com/open-chat-labs/open-chat/pull/5233))
+- Avoid setting up canister timer unless job already in progress ([#5243](https://github.com/open-chat-labs/open-chat/pull/5243))
+
+### Removed
+
+- Remove `DiamondMembershipExpiryDate` event which is no longer needed ([#5245](https://github.com/open-chat-labs/open-chat/pull/5245))
+
+### Fixed
+
+- Notify community canisters when a user is unsuspended ([#5227](https://github.com/open-chat-labs/open-chat/pull/5227))
+- Unsuspend user who was only partially unsuspended due to bug ([#5247](https://github.com/open-chat-labs/open-chat/pull/5247))
+- Unsuspend more users who were also affected ([#5248](https://github.com/open-chat-labs/open-chat/pull/5248))
+
+## [[2.0.1007](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1007-user_index)] - 2024-01-16
+
+### Added
+
+- Add endpoint for viewing moderation reports ([#5188](https://github.com/open-chat-labs/open-chat/pull/5188))
+
+### Changed
+
+- Add `is_platform_operator` to `current_user` response ([#5161](https://github.com/open-chat-labs/open-chat/pull/5161))
+
+## [[2.0.1000](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.1000-user_index)] - 2024-01-05
+
+### Added
+
+- Add endpoint for platform_ops to set diamond fees ([#5108](https://github.com/open-chat-labs/open-chat/pull/5108))
+
+### Changed
+
+- Better formatting of proposal payloads ([#5115](https://github.com/open-chat-labs/open-chat/pull/5115))
+
+## [[2.0.977](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.977-user_index)] - 2023-12-19
+
+### Changed
+
+- Some adjustments to modclub submissions ([#5000](https://github.com/open-chat-labs/open-chat/pull/5000))
+- Add `escrow_canister_id` to LocalUserIndex canister init args ([#4897](https://github.com/open-chat-labs/open-chat/pull/4897))
+- Store Diamond membership expiry dates in LocalUserIndex canisters ([#5025](https://github.com/open-chat-labs/open-chat/pull/5025))
+- Make Diamond membership gate check synchronous ([#5027](https://github.com/open-chat-labs/open-chat/pull/5027))
+- Reduce Diamond membership fees due to ICP price increase ([#5032](https://github.com/open-chat-labs/open-chat/pull/5032))
+
+### Fixed
+
+- Fix incorrect `local_user_index_canister_id` values ([#5009](https://github.com/open-chat-labs/open-chat/pull/5009))
+
+## [[2.0.969](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.969-user_index)] - 2023-12-12
+
+### Changed
+
+- Pay rewards based on one year if referred user becomes lifetime member ([#4979](https://github.com/open-chat-labs/open-chat/pull/4979))
+
+### Removed
+
+- Remove code needed to initialise `local_user_index_canister_id` values ([#4981](https://github.com/open-chat-labs/open-chat/pull/4981))
+
+## [[2.0.964](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.964-user_index)] - 2023-12-06
+
+### Added
+
+- Expose number of lifetime Diamond members in metrics ([#4929](https://github.com/open-chat-labs/open-chat/pull/4929))
+- Optionally return suspended users from `users_v2` ([#4945](https://github.com/open-chat-labs/open-chat/pull/4945))
+
+## [[2.0.955](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.955-user_index)] - 2023-12-05
+
+### Added
+
+- Expose count of new users per day ([#4873](https://github.com/open-chat-labs/open-chat/pull/4873))
+- Introduce `Lifetime Diamond Membership` ([#4876](https://github.com/open-chat-labs/open-chat/pull/4876))
+- Support updating Diamond membership subscription ([#4884](https://github.com/open-chat-labs/open-chat/pull/4884))
+- Add `diamond_membership_status` to `current_user` response ([#4896](https://github.com/open-chat-labs/open-chat/pull/4896))
+- Expose list of registered bot users ([#4919](https://github.com/open-chat-labs/open-chat/pull/4919))
+
+### Changed
+
+- Top up NNS neuron when users pay ICP for lifetime Diamond membership ([#4880](https://github.com/open-chat-labs/open-chat/pull/4880))
+- Add `diamond_membership_status` to user summaries ([#4887](https://github.com/open-chat-labs/open-chat/pull/4887))
+- Allow extending Diamond membership even if > 3 month remaining ([#4909](https://github.com/open-chat-labs/open-chat/pull/4909))
+- Require Diamond membership to set a display name ([#4910](https://github.com/open-chat-labs/open-chat/pull/4910))
+
+## [[2.0.952](https://github.com/open-chat-labs/open-chat/releases/tag/v2.0.952-user_index)] - 2023-11-28
+
 ### Changed
 
 - Regenerate random number generator seed across upgrades ([#4814](https://github.com/open-chat-labs/open-chat/pull/4814))
+- Enable rule violation suspensions ([#4846](https://github.com/open-chat-labs/open-chat/pull/4846))
+- In modclub reports only show public message links ([#4847](https://github.com/open-chat-labs/open-chat/pull/4847))
+- Add `local_user_index_canister_id` to group/community summaries ([#4857](https://github.com/open-chat-labs/open-chat/pull/4857))
 
 ### Removed
 

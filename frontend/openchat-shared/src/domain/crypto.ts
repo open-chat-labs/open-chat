@@ -13,6 +13,8 @@ export const GHOST_SYMBOL = "GHOST";
 export const LEDGER_CANISTER_ICP = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const LEDGER_CANISTER_CHAT = "2ouva-viaaa-aaaaq-aaamq-cai";
 
+export const DEFAULT_TOKENS = ["CHAT", "ICP", "ckBTC", "ckETH"];
+
 export type CryptocurrencyDetails = {
     name: string;
     symbol: string;
@@ -23,8 +25,19 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     infoUrl: string;
     transactionUrlFormat: string;
+    supportedStandards: string[];
     added: bigint;
     lastUpdated: bigint;
+};
+
+export type EnhancedTokenDetails = CryptocurrencyDetails & {
+    balance: bigint;
+    dollarBalance: number;
+    icpBalance: number;
+    btcBalance: number;
+    ethBalance: number;
+    zero: boolean;
+    urlFormat: string;
 };
 
 export type NervousSystemSummary = {
@@ -47,30 +60,6 @@ export type NervousSystemDetails = {
     submittingProposalsEnabled: boolean;
     token: CryptocurrencyDetails;
 };
-
-// approximate dollar exchange rates - until we come up with something better
-const dollarToICP = 0.22;
-
-export const dollarExchangeRates: Record<string, number> = {
-    icp: to2SigFigs(dollarToICP),
-    chat: to2SigFigs(dollarToICP / 0.0525),
-    hot: to2SigFigs(dollarToICP / 0.0045),
-    kinic: to2SigFigs(dollarToICP / 0.32),
-    ckbtc: to2SigFigs(dollarToICP / 8290),
-    dkp: to2SigFigs(dollarToICP / 480),
-    ghost: to2SigFigs(dollarToICP / 0.0000165),
-    mod: to2SigFigs(dollarToICP / 0.004),
-    cat: to2SigFigs(dollarToICP / 0.006),
-    boom: to2SigFigs(dollarToICP / 0.0026),
-    icx: to2SigFigs(dollarToICP / 0.0088),
-    nua: to2SigFigs(dollarToICP / 0.01),
-    sonic: to2SigFigs(dollarToICP / 0.021),
-    sneed: to2SigFigs(dollarToICP / 30),
-};
-
-function to2SigFigs(num: number): number {
-    return parseFloat(num.toPrecision(2));
-}
 
 type AccountTransactionCommon = {
     timestamp: Date;
@@ -117,3 +106,8 @@ export type AccountTransactions = {
 };
 
 export type AccountTransactionResult = Failure | (Success & AccountTransactions);
+
+export type TokenExchangeRates = {
+    toICP: number | undefined;
+    toUSD: number | undefined;
+};
