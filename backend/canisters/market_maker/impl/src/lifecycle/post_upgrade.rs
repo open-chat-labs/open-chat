@@ -1,12 +1,12 @@
 use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::{exchanges, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use market_maker_canister::post_upgrade::Args;
-use market_maker_canister::{ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use stable_memory::get_reader;
+use std::time::Duration;
 use tracing::info;
 use utils::cycles::init_cycles_dispenser_client;
 
@@ -26,11 +26,5 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    // Post release - remove this
-    mutate_state(|state| {
-        if let Some(mut config) = state.data.exchange_config.get(&ICDEX_EXCHANGE_ID).cloned() {
-            config.enabled = false;
-            state.data.exchange_config.insert(ICDEX_EXCHANGE_V2_ID, config);
-        }
-    });
+    ic_cdk_timers::set_timer(Duration::ZERO, || ic_cdk::spawn(exchanges::icdex::deposit_funds()));
 }
