@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Transfer balance from old Diamond membership payments to treasury ([#5307](https://github.com/open-chat-labs/open-chat/pull/5307))
+- Add `c2c_send_openchat_bot_messages` endpoint ([#5319](https://github.com/open-chat-labs/open-chat/pull/5319))
 
 ### Changed
 
