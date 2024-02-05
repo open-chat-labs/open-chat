@@ -275,7 +275,7 @@
         "buychat_a": "现在您必须首先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买 ICP</a> ，然后您可以在各种去中心化交易所（DEX）上兑换 CHAT。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">国际快递公司</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPS交换</a></li></ul>DFINITY 正在为 ICRC1 代币（包括 CHAT）添加对<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>的支持，使其更容易与集中式交易所 (CEX) 集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上交易 ICP 或 USDT。",
         "diamond_q": "什么是钻石会员？",
         "translation_q": "如何纠正翻译错误？",
-        "translation_a": "我们的翻译默认由谷歌翻译提供，有时谷歌没有足够的上下文来做好翻译工作。通常需要母语人士才能提供更好的翻译。如果您在个人资料中选择了我们不支持英语的语言之一，您会注意到您的个人资料中还有一个开关可以激活翻译校正模式。启用此模式后，您将在 UI 中已翻译的每个标签旁边看到一个小翻译图标。如果您单击此图标，您将能够提交建议的更正。尝试提出一个既准确又适合用户界面的建议。您可以检查您的建议是否到位，并根据需要多次重复该过程。您的建议将由团队审核，如果获得批准将被采纳。我们非常感谢您花时间让我们的翻译变得更好 - 没有您我们就无法做到这一点。"
+        "translation_a": "我们的翻译默认由谷歌翻译提供，有时谷歌没有足够的上下文来做好翻译工作。通常需要母语人士才能提供更好的翻译。如果您在个人资料中选择了我们不支持英语的语言之一，您会注意到您的个人资料中还有一个开关可以激活翻译校正模式。启用此模式后，您将在 UI 中已翻译的每个标签旁边看到一个小翻译图标。如果您单击此图标，您将能够提交建议的更正。尝试提出一个既准确又适合用户界面的建议。您可以检查您的建议是否到位，并根据需要多次重复该过程。您的建议将由团队审核，如果获得批准将被采纳。对于您提供的每项经批准的更正，您都将在 CHAT 中获得奖励。我们非常感谢您花时间让我们的翻译变得更好 - 没有您我们就无法做到这一点。"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
