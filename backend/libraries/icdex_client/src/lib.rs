@@ -116,6 +116,22 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         Ok(())
     }
 
+    pub async fn account_balances(&self) -> CallResult<Vec<(CanisterId, u128)>> {
+        let response =
+            icdex_canister_c2c_client::accountBalance(self.dex_canister_id, &self.this_canister_id.to_string()).await?;
+
+        Ok(vec![
+            (
+                self.base_token.ledger,
+                u128::try_from((response.token0.available + response.token0.locked).0).unwrap(),
+            ),
+            (
+                self.quote_token.ledger,
+                u128::try_from((response.token1.available + response.token1.locked).0).unwrap(),
+            ),
+        ])
+    }
+
     fn convert_order(&self, order: TradingOrder) -> Order {
         let (order_type, amount) = match order.remaining.quantity {
             OrderQuantity::Buy(n, _) => (OrderType::Bid, n),
