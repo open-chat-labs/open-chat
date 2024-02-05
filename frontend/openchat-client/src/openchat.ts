@@ -563,6 +563,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     private loadedIdentity(id: Identity) {
+        console.log("principal: ", id.getPrincipal().toString());
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();
         this.identityState.set(anon ? { kind: "anon" } : { kind: "loading_user" });

@@ -1,12 +1,12 @@
 type Locale = string;
 type TranslationKey = string;
 export type TranslationCorrection = {
+    id: bigint;
     locale: string;
     key: string;
     value: string;
     proposedBy: string;
-    proposedAt: number;
-    status: "pending" | "approved" | "rejected" | "deployed";
+    proposedAt: bigint;
 };
 
 export type Translation = {

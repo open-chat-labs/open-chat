@@ -54,14 +54,20 @@
         if ($locale && $editingLabel) {
             busy = true;
             client
-                .setTranslationCorrection($locale, $editingLabel.key, suggestion)
-                .then((success) => {
-                    if (success) {
+                .proposeTranslationCorrection($locale, $editingLabel.key, suggestion)
+                .then((resp) => {
+                    if (resp === "success") {
                         saved = true;
                     } else {
-                        toastStore.showFailureToast(
-                            i18nKey("Sorry we were unable to save your suggestion"),
-                        );
+                        if (resp === "already_proposed") {
+                            toastStore.showFailureToast(
+                                i18nKey("This correction has already been suggested"),
+                            );
+                        } else {
+                            toastStore.showFailureToast(
+                                i18nKey("Sorry we were unable to save your suggestion"),
+                            );
+                        }
                     }
                 })
                 .finally(() => (busy = false));
@@ -127,7 +133,7 @@
                         <Button on:click={close}>{"Close"}</Button>
                     {:else}
                         <Button secondary on:click={close}>{"Cancel"}</Button>
-                        <Button disabled={!valid} on:click={save}>{"Save"}</Button>
+                        <Button loading={busy} disabled={!valid} on:click={save}>{"Save"}</Button>
                     {/if}
                 </ButtonGroup>
             </div>

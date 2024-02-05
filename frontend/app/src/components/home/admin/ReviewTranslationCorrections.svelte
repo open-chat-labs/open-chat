@@ -4,20 +4,16 @@
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import EyeOutline from "svelte-material-icons/EyeOutline.svelte";
-    import Send from "svelte-material-icons/Send.svelte";
     import Translate from "svelte-material-icons/Translate.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import type {
-        OpenChat,
-        TranslationCorrection,
-        TranslationCorrections,
-        TranslationRejectionReason,
-    } from "openchat-client";
+    import type { CandidateTranslations, OpenChat, TranslationCorrection } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
+    import { toastStore } from "../../../stores/toast";
+    import { i18nKey } from "../../../i18n/i18n";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,52 +25,57 @@
     let verifications: Record<string, string> = {};
 
     onMount(() => {
-        client.getTranslationCorrections().then((res) => {
+        client.getProposedTranslationCorrections().then((res) => {
             corrections = flattenCorrections(res);
         });
     });
 
-    function flattenCorrections(corrections: TranslationCorrections): TranslationCorrection[] {
-        // return [
-        //     {
-        //         locale: "fr",
-        //         key: "group.welcome",
-        //         value: "Ta mère était fossoyeuse {groupName}",
-        //         proposedBy: "cpmcr-yeaaa-aaaaa-qaala-cai",
-        //         proposedAt: Date.now(),
-        //         status: "pending",
-        //     },
-        // ];
-        return Object.values(corrections)
-            .flatMap((val) => Object.values(val))
-            .filter((c) => c.status !== "deployed");
+    function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
+        return corrections.flatMap((group) =>
+            group.candidates.map((correction) => ({
+                id: correction.id,
+                locale: group.locale,
+                key: group.key,
+                value: correction.value,
+                proposedBy: correction.proposedBy,
+                proposedAt: correction.proposedAt,
+            })),
+        );
     }
 
-    function approveCorrection(correction: TranslationCorrection) {
-        // correction.status = "approved";
-        // corrections = corrections;
-        client
-            .approveTranslationCorrection(correction)
-            .then((res) => (corrections = flattenCorrections(res)));
+    function removeCorrection(id: bigint) {
+        corrections = corrections.filter((c) => c.id !== id);
     }
 
-    function markDeployed(correction: TranslationCorrection) {
-        console.log("Let's deploy: ", correction);
+    function approveCorrection({ id }: TranslationCorrection) {
+        client.approveTranslationCorrection(id).then((success) => {
+            if (success) {
+                removeCorrection(id);
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey("Sorry we were unable to approve this correction"),
+                );
+            }
+        });
     }
 
-    function rejectCorrection(
-        correction: TranslationCorrection,
-        reason: TranslationRejectionReason,
-    ) {
-        client
-            .rejectTranslationCorrection(correction, reason)
-            .then((res) => (corrections = flattenCorrections(res)));
+    function rejectCorrection({ id }: TranslationCorrection) {
+        client.rejectTranslationCorrection(id).then((success) => {
+            if (success) {
+                removeCorrection(id);
+            } else {
+                toastStore.showFailureToast(
+                    i18nKey("Sorry we were unable to reject this correction"),
+                );
+            }
+        });
     }
 
     function previewCorrection(correction: TranslationCorrection) {
         // This will pretend that the value is english and apply it to the english i18n dictionary temporarily.
         // This is just so that we have the option to look at it in the UI to check for layout problems
-        client.previewTranslationCorrection({ ...correction, locale: "en" });
+        // client.previewTranslationCorrection({ ...correction, locale: "en" });
+        console.log("preview: ", correction);
     }
 
     function verifyCorrection(correction: TranslationCorrection) {
@@ -128,7 +129,7 @@
         </thead>
         <tbody>
             {#each corrections as correction}
-                <tr class={correction.status}>
+                <tr>
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
                     <td class="english">{$_(correction.key, { locale: "en" })}</td>
@@ -143,7 +144,7 @@
                     <td class="proposed_by"
                         >{$userStore[correction.proposedBy]?.username ?? correction.proposedBy}</td>
                     <td class="proposed_at"
-                        >{client.toDatetimeString(new Date(correction.proposedAt))}</td>
+                        >{client.toDatetimeString(new Date(Number(correction.proposedAt)))}</td>
                     <td class="action">
                         <MenuIcon position="bottom" align="end">
                             <span slot="icon">
@@ -153,66 +154,44 @@
                             </span>
                             <span slot="menu">
                                 <Menu>
-                                    {#if correction.status === "pending"}
-                                        <MenuItem on:click={() => previewCorrection(correction)}>
-                                            <EyeOutline
+                                    <MenuItem on:click={() => previewCorrection(correction)}>
+                                        <EyeOutline
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <span slot="text">Preview</span>
+                                    </MenuItem>
+                                    {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
+                                        <MenuItem on:click={() => (verifying = undefined)}>
+                                            <Translate
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <span slot="text">Preview</span>
+                                            <span slot="text">Show proposed</span>
                                         </MenuItem>
-                                        {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
-                                            <MenuItem on:click={() => (verifying = undefined)}>
-                                                <Translate
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"}
-                                                    slot="icon" />
-                                                <span slot="text">Show proposed</span>
-                                            </MenuItem>
-                                        {:else}
-                                            <MenuItem on:click={() => verifyCorrection(correction)}>
-                                                <Translate
-                                                    size={$iconSize}
-                                                    color={"var(--icon-inverted-txt)"}
-                                                    slot="icon" />
-                                                <span slot="text">Show suggestion in English</span>
-                                            </MenuItem>
-                                        {/if}
-                                        <MenuItem on:click={() => approveCorrection(correction)}>
-                                            <Check
+                                    {:else}
+                                        <MenuItem on:click={() => verifyCorrection(correction)}>
+                                            <Translate
                                                 size={$iconSize}
                                                 color={"var(--icon-inverted-txt)"}
                                                 slot="icon" />
-                                            <span slot="text">Approve</span>
-                                        </MenuItem>
-                                        <MenuItem
-                                            on:click={() =>
-                                                rejectCorrection(correction, "bad_translation")}>
-                                            <Close
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <span slot="text">Reject - bad translation</span>
-                                        </MenuItem>
-                                        <MenuItem
-                                            on:click={() =>
-                                                rejectCorrection(correction, "layout_problem")}>
-                                            <Close
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <span slot="text">Reject - layout problem</span>
+                                            <span slot="text">Show suggestion in English</span>
                                         </MenuItem>
                                     {/if}
-                                    {#if correction.status === "approved"}
-                                        <MenuItem on:click={() => markDeployed(correction)}>
-                                            <Send
-                                                size={$iconSize}
-                                                color={"var(--icon-inverted-txt)"}
-                                                slot="icon" />
-                                            <span slot="text">Deploy</span>
-                                        </MenuItem>
-                                    {/if}
+                                    <MenuItem on:click={() => approveCorrection(correction)}>
+                                        <Check
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <span slot="text">Approve</span>
+                                    </MenuItem>
+                                    <MenuItem on:click={() => rejectCorrection(correction)}>
+                                        <Close
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <span slot="text">Reject</span>
+                                    </MenuItem>
                                 </Menu>
                             </span>
                         </MenuIcon>
