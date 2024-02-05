@@ -22,6 +22,8 @@ export type CandidateTranslation = {
     proposedBy: string;
 };
 
+export type RejectReason = "too_long" | "incorrect_meaning";
+
 export type CandidateTranslations = {
     locale: string;
     key: string;

@@ -1,11 +1,13 @@
-import type {
-    ApproveResponse,
-    CandidateTranslation,
-    MarkDeployedResponse,
-    PendingDeploymentResponse,
-    ProposeResponse,
-    ProposedResponse,
-    RejectResponse,
+import {
+    UnsupportedValueError,
+    type ApproveResponse,
+    type CandidateTranslation,
+    type MarkDeployedResponse,
+    type PendingDeploymentResponse,
+    type ProposeResponse,
+    type ProposedResponse,
+    type RejectReason,
+    type RejectResponse,
 } from "openchat-shared";
 import type {
     ApiApproveResponse,
@@ -14,6 +16,7 @@ import type {
     ApiPendingDeploymentResponse,
     ApiProposeResponse,
     ApiProposedResponse,
+    ApiRejectReason,
     ApiRejectResponse,
 } from "./candid/idl";
 
@@ -88,6 +91,20 @@ export function rejectResponse(candid: ApiRejectResponse): RejectResponse {
     }
     console.warn("reject translation failed with: ", candid);
     return "failure";
+}
+
+export function apiRejectReason(domain: RejectReason): ApiRejectReason {
+    if (domain === "incorrect_meaning") {
+        return {
+            IncorrectMeaning: null,
+        };
+    }
+    if (domain === "too_long") {
+        return {
+            TooLong: null,
+        };
+    }
+    throw new UnsupportedValueError("Unknown reject reason: ", domain);
 }
 
 export function markDeployedResponse(candid: ApiMarkDeployedResponse): MarkDeployedResponse {

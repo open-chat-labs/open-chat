@@ -368,6 +368,7 @@ import type {
     GroupChatDetailsResponse,
     CandidateTranslations,
     ProposeResponse,
+    RejectReason,
 } from "openchat-shared";
 import {
     AuthProvider,
@@ -5596,10 +5597,11 @@ export class OpenChat extends OpenChatAgentWorker {
             .catch(() => []);
     }
 
-    rejectTranslationCorrection(id: bigint): Promise<boolean> {
+    rejectTranslationCorrection(id: bigint, reason: RejectReason): Promise<boolean> {
         return this.sendRequest({
             kind: "rejectTranslation",
             id,
+            reason,
         })
             .then((res) => res === "success")
             .catch(() => false);

@@ -150,6 +150,7 @@ import type {
     PendingDeploymentResponse,
     ProposeResponse,
     ProposedResponse,
+    RejectReason,
     RejectResponse,
     TranslationCorrections,
 } from "./i18n";
@@ -341,6 +342,7 @@ type ApproveTranslation = {
 type RejectTranslation = {
     kind: "rejectTranslation";
     id: bigint;
+    reason: RejectReason;
 };
 
 type MarkTranslationsDeployed = {

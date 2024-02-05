@@ -55,7 +55,11 @@ export const idlFactory = ({ IDL }) => {
     'Success' : ProposedSuccessResult,
     'InternalError' : IDL.Text,
   });
-  const RejectArgs = IDL.Record({ 'id' : IDL.Nat64 });
+  const RejectReason = IDL.Variant({
+    'TooLong' : IDL.Null,
+    'IncorrectMeaning' : IDL.Null,
+  });
+  const RejectArgs = IDL.Record({ 'id' : IDL.Nat64, 'reason' : RejectReason });
   const RejectResponse = IDL.Variant({
     'NotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,

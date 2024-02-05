@@ -8,9 +8,11 @@ import type {
     PendingDeploymentResponse,
     ProposedResponse,
     ProposeResponse,
+    RejectReason,
     RejectResponse,
 } from "openchat-shared";
 import {
+    apiRejectReason,
     approveResponse,
     markDeployedResponse,
     pendingDeploymentResponse,
@@ -52,10 +54,11 @@ export class TranslationsClient extends CandidService {
         );
     }
 
-    reject(id: bigint): Promise<RejectResponse> {
+    reject(id: bigint, reason: RejectReason): Promise<RejectResponse> {
         return this.handleResponse(
             this.translationService.reject({
                 id,
+                reason: apiRejectReason(reason),
             }),
             rejectResponse,
         );

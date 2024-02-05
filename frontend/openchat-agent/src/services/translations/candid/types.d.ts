@@ -1309,7 +1309,9 @@ export interface Record {
 }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RejectArgs { 'id' : bigint }
+export interface RejectArgs { 'id' : bigint, 'reason' : RejectReason }
+export type RejectReason = { 'TooLong' : null } |
+  { 'IncorrectMeaning' : null };
 export type RejectResponse = { 'NotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |

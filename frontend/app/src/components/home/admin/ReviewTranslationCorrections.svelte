@@ -9,7 +9,12 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Menu from "../../Menu.svelte";
     import MenuItem from "../../MenuItem.svelte";
-    import type { CandidateTranslations, OpenChat, TranslationCorrection } from "openchat-client";
+    import type {
+        CandidateTranslations,
+        OpenChat,
+        RejectReason,
+        TranslationCorrection,
+    } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
@@ -59,8 +64,8 @@
         });
     }
 
-    function rejectCorrection({ id }: TranslationCorrection) {
-        client.rejectTranslationCorrection(id).then((success) => {
+    function rejectCorrection({ id }: TranslationCorrection, reason: RejectReason) {
+        client.rejectTranslationCorrection(id, reason).then((success) => {
             if (success) {
                 removeCorrection(id);
             } else {
@@ -185,12 +190,22 @@
                                             slot="icon" />
                                         <span slot="text">Approve</span>
                                     </MenuItem>
-                                    <MenuItem on:click={() => rejectCorrection(correction)}>
+                                    <MenuItem
+                                        on:click={() =>
+                                            rejectCorrection(correction, "incorrect_meaning")}>
                                         <Close
                                             size={$iconSize}
                                             color={"var(--icon-inverted-txt)"}
                                             slot="icon" />
-                                        <span slot="text">Reject</span>
+                                        <span slot="text">Reject (meaning)</span>
+                                    </MenuItem>
+                                    <MenuItem
+                                        on:click={() => rejectCorrection(correction, "too_long")}>
+                                        <Close
+                                            size={$iconSize}
+                                            color={"var(--icon-inverted-txt)"}
+                                            slot="icon" />
+                                        <span slot="text">Reject (layout)</span>
                                     </MenuItem>
                                 </Menu>
                             </span>
