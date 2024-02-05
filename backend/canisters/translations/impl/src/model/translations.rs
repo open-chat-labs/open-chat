@@ -62,15 +62,13 @@ impl Translations {
     }
 
     pub fn approve(&mut self, id: u64, user_id: UserId, now: TimestampMillis) -> ApproveResponse {
-        let translation = if let Some(translation) = self.translations.get(id as usize) {
-            if !matches!(translation.status, TranslationStatus::Proposed) {
-                return ApproveResponse::NotProposed;
-            } else {
-                translation
-            }
-        } else {
+        let Some(translation) = self.translations.get(id as usize) else {
             return ApproveResponse::NotFound;
         };
+
+        if !matches!(translation.status, TranslationStatus::Proposed) {
+            return ApproveResponse::NotProposed;
+        }
 
         let proposed_by = translation.proposed.who;
         let tuple = (translation.locale.clone(), translation.key.clone());
