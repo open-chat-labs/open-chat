@@ -117,8 +117,7 @@ fn process_charge(
         let result = diamond_membership.hydrate(now).unwrap();
 
         state.data.users.mark_updated(&user_id, now);
-        state.push_event_to_local_user_index(
-            user_id,
+        state.push_event_to_all_local_user_indexes(
             Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
                 timestamp: now,
@@ -130,6 +129,7 @@ fn process_charge(
                 recurring,
                 send_bot_message: true,
             }),
+            None,
         );
 
         if let Some(user) = state.data.users.get_by_user_id(&user_id) {

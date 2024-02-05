@@ -130,19 +130,21 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .global_users
                 .set_diamond_membership_expiry_date(ev.user_id, ev.expires_at);
 
-            state.push_event_to_user(
-                ev.user_id,
-                UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
-                    timestamp: ev.timestamp,
-                    expires_at: ev.expires_at,
-                    token: ev.token,
-                    amount_e8s: ev.amount_e8s,
-                    block_index: ev.block_index,
-                    duration: ev.duration,
-                    recurring: ev.recurring,
-                    send_bot_message: ev.send_bot_message,
-                })),
-            );
+            if state.data.local_users.contains(&ev.user_id) {
+                state.push_event_to_user(
+                    ev.user_id,
+                    UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
+                        timestamp: ev.timestamp,
+                        expires_at: ev.expires_at,
+                        token: ev.token,
+                        amount_e8s: ev.amount_e8s,
+                        block_index: ev.block_index,
+                        duration: ev.duration,
+                        recurring: ev.recurring,
+                        send_bot_message: ev.send_bot_message,
+                    })),
+                );
+            }
         }
         Event::OpenChatBotMessage(ev) => {
             state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
@@ -158,6 +160,12 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .data
                 .global_users
                 .update_user_principal(update.old_principal, update.new_principal);
+        }
+        Event::DiamondMembershipExpiryDate(user_id, expires_at) => {
+            state
+                .data
+                .global_users
+                .set_diamond_membership_expiry_date(user_id, expires_at);
         }
     }
 }
