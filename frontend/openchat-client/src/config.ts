@@ -9,6 +9,7 @@ export type OpenChatConfig = {
     notificationsCanister: string;
     onlineCanister: string;
     userIndexCanister: string;
+    translationsCanister: string;
     registryCanister: string;
     internetIdentityUrl: string;
     nfidUrl: string;
