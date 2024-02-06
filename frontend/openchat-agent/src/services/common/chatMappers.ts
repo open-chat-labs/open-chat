@@ -1555,8 +1555,12 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
-                    issuer: domain.credential.issuerOrigin,
-                    credential: domain.credential.credentialType,
+                    issuer_origin: domain.credential.issuerOrigin,
+                    credential_type: domain.credential.credentialType,
+                    credential_arguments: apiOptional((args: Record<string, string | number>) => {
+                        const encoder = new TextEncoder();
+                        return encoder.encode(JSON.stringify(args));
+                    }, domain.credential.credentialArguments),
                 },
             },
         ];
@@ -1590,9 +1594,12 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
-                issuer: domain.credential.issuerOrigin,
-                credential: domain.credential.credentialType,
-                // credential_arguments: JSON.stringify(domain.credential.credentialArguments),
+                issuer_origin: domain.credential.issuerOrigin,
+                credential_type: domain.credential.credentialType,
+                credential_arguments: apiOptional((args: Record<string, string | number>) => {
+                    const encoder = new TextEncoder();
+                    return encoder.encode(JSON.stringify(args));
+                }, domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1616,6 +1623,15 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
+export function credentialArguments(
+    candid: number[] | Uint8Array,
+): Record<string, string | number> {
+    const data = new Uint8Array(candid);
+    const decoder = new TextDecoder();
+    const json = decoder.decode(data);
+    return JSON.parse(json) as Record<string, string | number>;
+}
+
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
         return {
@@ -1634,8 +1650,12 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
         return {
             kind: "credential_gate",
             credential: {
-                issuerOrigin: candid.VerifiedCredential.issuer,
-                credentialType: candid.VerifiedCredential.credential,
+                issuerOrigin: candid.VerifiedCredential.issuer_origin,
+                credentialType: candid.VerifiedCredential.credential_type,
+                credentialArguments: optional(
+                    candid.VerifiedCredential.credential_arguments,
+                    credentialArguments,
+                ),
             },
         };
     }

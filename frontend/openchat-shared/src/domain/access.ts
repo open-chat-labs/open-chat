@@ -16,7 +16,7 @@ export type NftGate = { kind: "nft_gate" };
 export type Credential = {
     issuerOrigin: string;
     credentialType: string;
-    credentialArguments?: unknown;
+    credentialArguments?: Record<string, string | number>;
 };
 
 export type CredentialGate = {

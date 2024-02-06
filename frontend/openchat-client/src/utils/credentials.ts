@@ -42,9 +42,6 @@ function getEventHandler(
                             credentialSpec: {
                                 credentialType,
                                 arguments: credentialArguments,
-                                // arguments: {
-                                //     employerName: "DFINITY Foundation",
-                                // },
                             },
                             derivationOrigin,
                         },

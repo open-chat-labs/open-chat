@@ -1326,11 +1326,13 @@ export interface SnsProposal {
   'title' : string,
   'created' : TimestampMillis,
   'action' : bigint,
+  'minimum_yes_proportion_of_total' : number,
   'last_updated' : TimestampMillis,
   'deadline' : TimestampMillis,
   'reward_status' : ProposalRewardStatus,
   'summary' : string,
   'proposer' : SnsNeuronId,
+  'minimum_yes_proportion_of_exercised' : number,
 }
 export type Subaccount = Uint8Array | number[];
 export interface Subscription {
@@ -1452,8 +1454,9 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential' : string,
-  'issuer' : string,
+  'credential_arguments' : [] | [Uint8Array | number[]],
+  'issuer_origin' : string,
+  'credential_type' : string,
 }
 export type Version = number;
 export interface VersionedRules {

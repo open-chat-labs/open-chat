@@ -245,11 +245,13 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'created' : TimestampMillis,
     'action' : IDL.Nat64,
+    'minimum_yes_proportion_of_total' : IDL.Nat32,
     'last_updated' : TimestampMillis,
     'deadline' : TimestampMillis,
     'reward_status' : ProposalRewardStatus,
     'summary' : IDL.Text,
     'proposer' : SnsNeuronId,
+    'minimum_yes_proportion_of_exercised' : IDL.Nat32,
   });
   const Proposal = IDL.Variant({ 'NNS' : NnsProposal, 'SNS' : SnsProposal });
   const ProposalContent = IDL.Record({
@@ -523,8 +525,9 @@ export const idlFactory = ({ IDL }) => {
     'previous_name' : IDL.Text,
   });
   const VerifiedCredentialGate = IDL.Record({
-    'credential' : IDL.Text,
-    'issuer' : IDL.Text,
+    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'issuer_origin' : IDL.Text,
+    'credential_type' : IDL.Text,
   });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({
