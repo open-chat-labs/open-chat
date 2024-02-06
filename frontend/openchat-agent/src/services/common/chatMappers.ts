@@ -1555,8 +1555,8 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
-                    issuer: domain.issuerOrigin,
-                    credential: domain.credentialId,
+                    issuer: domain.credential.issuerOrigin,
+                    credential: domain.credential.credentialType,
                 },
             },
         ];
@@ -1590,8 +1590,9 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
-                issuer: domain.issuerOrigin,
-                credential: domain.credentialId,
+                issuer: domain.credential.issuerOrigin,
+                credential: domain.credential.credentialType,
+                // credential_arguments: JSON.stringify(domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1632,8 +1633,10 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("VerifiedCredential" in candid) {
         return {
             kind: "credential_gate",
-            issuerOrigin: candid.VerifiedCredential.issuer,
-            credentialId: candid.VerifiedCredential.credential,
+            credential: {
+                issuerOrigin: candid.VerifiedCredential.issuer,
+                credentialType: candid.VerifiedCredential.credential,
+            },
         };
     }
     if ("Payment" in candid) {

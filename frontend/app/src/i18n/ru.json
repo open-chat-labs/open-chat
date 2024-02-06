@@ -958,8 +958,6 @@
         "credentialParamCredential": "Учетные данные: {credential}",
         "credentialIssuer": "Эмитент учетных данных",
         "requiredCredential": "Требуемые учетные данные",
-        "credentialCheckMessage": "Чтобы присоединиться к этому {level}, вам необходимо подтвердить учетные данные «{credential}» от эмитента {issuer}.",
-        "credentialGateInfo": "Присоединиться смогут только пользователи, которые могут предоставить учетные данные «{credential}» от {issuer}.",
         "approvePaymentTitle": "Подтвердить платеж",
         "paymentApprovalMessage": "Чтобы присоединиться к этому {level}, вам необходимо заплатить токены **{amount}** {token}.",
         "paymentDistributionMessage": "Из них 98 % достаётся владельцам {level}, а 2 % — в казну OpenChat SNS.",

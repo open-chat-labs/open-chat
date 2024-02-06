@@ -17,7 +17,8 @@ function getEventHandler(
     id: number,
     principal: string,
     issuerOrigin: string,
-    credentialId: string,
+    credentialType: string,
+    credentialArguments: unknown,
     derivationOrigin: string | undefined,
     url: URL,
     onSuccess: (result: string) => void,
@@ -36,14 +37,14 @@ function getEventHandler(
                         params: {
                             issuer: {
                                 origin: issuerOrigin,
-                                credentialId: credentialId,
                             },
                             credentialSubject: principal,
                             credentialSpec: {
-                                credentialType: credentialId,
-                                arguments: {
-                                    employerName: "DFINITY Foundation",
-                                },
+                                credentialType,
+                                arguments: credentialArguments,
+                                // arguments: {
+                                //     employerName: "DFINITY Foundation",
+                                // },
                             },
                             derivationOrigin,
                         },
@@ -117,7 +118,8 @@ export function verifyCredential(
     iiUrl: string,
     principal: string,
     issuerOrigin: string,
-    credentialId: string,
+    credentialType: string,
+    credentialArguments: unknown,
     derivationOrigin: string | undefined,
 ): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
@@ -128,7 +130,7 @@ export function verifyCredential(
             iiUrl,
             principal,
             issuerOrigin,
-            credentialId,
+            credentialType,
         );
 
         reqId = reqId + 1;
@@ -141,7 +143,8 @@ export function verifyCredential(
             reqId,
             principal,
             issuerOrigin,
-            credentialId,
+            credentialType,
+            credentialArguments,
             derivationOrigin,
             url,
             onSuccess(resolve),

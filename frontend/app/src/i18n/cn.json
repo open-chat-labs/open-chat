@@ -958,8 +958,6 @@
         "credentialParamCredential": "凭证：{credential}",
         "credentialIssuer": "凭证颁发者",
         "requiredCredential": "所需凭证",
-        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者 {credential} 的“{issuer}”凭证",
-        "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入",
         "approvePaymentTitle": "批准付款",
         "paymentApprovalMessage": "为了加入此 {level}，您需要支付 **{amount}** {token} 代币。",
         "paymentDistributionMessage": "其中，98% 归 {level} 所有者所有，2% 归 OpenChat SNS 金库。",

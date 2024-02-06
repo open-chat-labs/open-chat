@@ -1187,7 +1187,8 @@ export class OpenChat extends OpenChatAgentWorker {
             this.config.internetIdentityUrl,
             this._identity!.getPrincipal().toString(),
             gate.issuerOrigin,
-            gate.credentialId,
+            gate.credentialType,
+            gate.credentialArguments,
             this.config.iiDerivationOrigin,
         );
     }

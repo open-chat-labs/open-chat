@@ -956,8 +956,6 @@
         "credentialParamCredential": "אישור: {credential}",
         "credentialIssuer": "מנפיק אישורים",
         "requiredCredential": "אישור נדרש",
-        "credentialCheckMessage": "על מנת להצטרף ל-{level} הזה, עליך לאמת את האישור \"{credential}\" מהמנפיק {issuer}",
-        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" מ-{issuer} יורשו להצטרף",
         "approvePaymentTitle": "אשר תשלום",
         "paymentApprovalMessage": "כדי להצטרף ל-{level} הזה, אתה נדרש לשלם אסימונים של **{amount}** {token}.",
         "paymentDistributionMessage": "מתוכם, 98% הולכים לבעלים של {level} ו-2% לאוצר OpenChat SNS.",

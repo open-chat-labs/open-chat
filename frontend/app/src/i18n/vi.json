@@ -959,8 +959,6 @@
         "credentialParamCredential": "Thông tin xác thực: {credential}",
         "credentialIssuer": "Nhà phát hành chứng chỉ",
         "requiredCredential": "Thông tin xác thực bắt buộc",
-        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\" từ nhà phát hành {issuer}",
-        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ {issuer} mới được phép tham gia",
         "approvePaymentTitle": "Phê duyệt thanh toán",
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
         "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",

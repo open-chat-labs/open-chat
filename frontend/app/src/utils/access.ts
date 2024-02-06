@@ -1,6 +1,11 @@
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import type { AccessGate, CryptocurrencyDetails, NervousSystemDetails } from "openchat-client";
+import type {
+    AccessGate,
+    Credential,
+    CryptocurrencyDetails,
+    NervousSystemDetails,
+} from "openchat-client";
 
 export type GateBinding = {
     key: string;
@@ -93,34 +98,33 @@ const nftGate: GateBinding = {
 const credentialGate: GateBinding = {
     label: "access.credential",
     key: "credential_gate",
-    gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
+    gate: {
+        kind: "credential_gate",
+        credential: {
+            issuerOrigin: "",
+            credentialType: "",
+        },
+    },
     enabled: true,
 };
 
-export type Credential = {
-    name: string;
-    value: string;
-};
-
-export type CredentialIssuer = {
-    name: string;
-    origin: string;
-    credentials: Credential[];
-};
+export type CredentialIssuer = Credential & { name: string };
 
 export const credentialIssuers: CredentialIssuer[] = [
     {
-        name: "Employment Info Ltd",
-        // origin: "https://v2yvn-myaaa-aaaad-aad4q-cai.icp0.io",
-        origin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
-        credentials: [
-            { value: "VerifiedEmployee", name: "Is verified employee" },
-            // { value: "SomeOther", name: "Some other thing" },
-        ],
+        name: "Is DFINITY employee",
+        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
+        credentialType: "VerifiedEmployee",
+        credentialArguments: {
+            employerName: "DFINITY Foundation",
+        },
     },
-    // {
-    //     name: "MODCLUB",
-    //     origin: "https://modclub.com",
-    //     credentials: [{ value: "IsHuman", name: "Is a human" }],
-    // },
+    {
+        name: "Is early adopter",
+        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
+        credentialType: "Early adopter",
+        credentialArguments: {
+            employerName: "DFINITY Foundation",
+        },
+    },
 ];

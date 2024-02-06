@@ -960,8 +960,6 @@
         "credentialParamCredential": "Anmeldedaten: {credential}",
         "credentialIssuer": "Aussteller der Berechtigungsnachweise",
         "requiredCredential": "Erforderlicher Ausweis",
-        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ vom Aussteller {issuer} überprüfen.",
-        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten",
         "approvePaymentTitle": "Zahlung genehmigen",
         "paymentApprovalMessage": "Um diesem {level} beizutreten, müssen Sie **{amount}** {token}-Token bezahlen.",
         "paymentDistributionMessage": "Davon gehen 98 % an den/die Eigentümer von {level} und 2 % an die Kasse von OpenChat SNS.",
