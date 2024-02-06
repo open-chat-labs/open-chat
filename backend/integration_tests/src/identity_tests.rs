@@ -6,6 +6,20 @@ use std::ops::Deref;
 use types::Empty;
 
 #[test]
+fn delegation_signed_successfully() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
+
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+
+    client::identity::happy_path::migrate_legacy_principal(env, &user, canister_ids.identity);
+
+    let delegation = client::identity::happy_path::prepare_delegation(env, &user, canister_ids.identity);
+
+    client::identity::happy_path::get_delegation(env, user.principal, canister_ids.identity, delegation);
+}
+
+#[test]
 fn new_users_synced_to_identity_canister() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
