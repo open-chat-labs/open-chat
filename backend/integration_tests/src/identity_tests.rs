@@ -14,9 +14,9 @@ fn delegation_signed_successfully() {
 
     client::identity::happy_path::migrate_legacy_principal(env, &user, canister_ids.identity);
 
-    let delegation = client::identity::happy_path::prepare_delegation(env, &user, canister_ids.identity);
+    let prepare_result = client::identity::happy_path::prepare_delegation(env, &user, canister_ids.identity);
 
-    client::identity::happy_path::get_delegation(env, user.principal, canister_ids.identity, delegation);
+    client::identity::happy_path::get_delegation(env, &user, canister_ids.identity, prepare_result.expiration);
 }
 
 #[test]

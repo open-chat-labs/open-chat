@@ -15,9 +15,13 @@ pub mod happy_path {
     use identity_canister::{Delegation, SignedDelegation};
     use pocket_ic::PocketIc;
     use serde_bytes::ByteBuf;
-    use types::CanisterId;
+    use types::{CanisterId, TimestampMillis};
 
-    pub fn prepare_delegation(env: &mut PocketIc, user: &User, identity_canister_id: CanisterId) -> Delegation {
+    pub fn prepare_delegation(
+        env: &mut PocketIc,
+        user: &User,
+        identity_canister_id: CanisterId,
+    ) -> identity_canister::prepare_delegation::SuccessResult {
         let response = super::prepare_delegation(
             env,
             user.principal,
@@ -29,18 +33,26 @@ pub mod happy_path {
         );
 
         match response {
-            identity_canister::prepare_delegation::Response::Success(delegation) => delegation,
+            identity_canister::prepare_delegation::Response::Success(result) => result,
             response => panic!("'prepare_delegation' error: {response:?}"),
         }
     }
 
     pub fn get_delegation(
         env: &PocketIc,
-        sender: Principal,
+        user: &User,
         identity_canister_id: CanisterId,
-        delegation: Delegation,
+        expiration: TimestampMillis,
     ) -> SignedDelegation {
-        let response = super::get_delegation(env, sender, identity_canister_id, &delegation);
+        let response = super::get_delegation(
+            env,
+            user.principal,
+            identity_canister_id,
+            &identity_canister::get_delegation::Args {
+                session_key: ByteBuf::from(user.public_key.clone()),
+                expiration,
+            },
+        );
 
         match response {
             identity_canister::get_delegation::Response::Success(signed_delegation) => signed_delegation,

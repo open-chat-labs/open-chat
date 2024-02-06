@@ -2,6 +2,7 @@ use crate::{delegation_signature_msg_hash, mutate_state, Delegation, RuntimeStat
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use identity_canister::prepare_delegation::{Response::*, *};
+use serde_bytes::ByteBuf;
 use types::Milliseconds;
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
@@ -37,5 +38,8 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
     state.data.signature_map.add_signature(&seed, msg_hash);
     state.data.update_root_hash();
 
-    Success(delegation)
+    Success(SuccessResult {
+        user_key: ByteBuf::from(state.der_encode_canister_sig_key(seed)),
+        expiration,
+    })
 }
