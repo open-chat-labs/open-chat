@@ -33,7 +33,7 @@ import type {
     ApiLookupChannelByGroupIdResponse,
 } from "./candid/idl";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
-import { accessGate } from "../common/chatMappers";
+import { accessGate, groupSubtype } from "../common/chatMappers";
 
 export function activeGroupsResponse(candid: ApiActiveGroupsResponse): ActiveGroupsResponse {
     return {
@@ -287,6 +287,7 @@ function groupMatch(candid: ApiGroupMatch): GroupMatch {
         chatId: { kind: "group_chat", groupId: candid.id.toString() },
         name: candid.name,
         description: candid.description,
+        subtype: optional(candid.subtype, groupSubtype),
         blobReference: optional(candid.avatar_id, (blobId) => ({
             blobId,
             canisterId: candid.id.toString(),

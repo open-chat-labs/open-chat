@@ -50,7 +50,13 @@ pub struct EventsWindowArgs {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(Vec<EventsResponse>),
+    Success(SuccessResult),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub responses: Vec<EventsResponse>,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

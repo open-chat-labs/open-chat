@@ -8,7 +8,7 @@ use types::UserId;
 
 #[query(composite = true, guard = "caller_is_openchat_user")]
 async fn chat_events(args: Args) -> Response {
-    let user = read_state(|state| state.calling_user());
+    let (user, now) = read_state(|state| (state.calling_user(), state.env.now()));
 
     let futures: Vec<_> = args
         .requests
@@ -16,9 +16,12 @@ async fn chat_events(args: Args) -> Response {
         .map(|r| make_c2c_call(r, user.principal, user.user_id))
         .collect();
 
-    let results = futures::future::join_all(futures).await;
+    let responses = futures::future::join_all(futures).await;
 
-    Success(results)
+    Success(SuccessResult {
+        responses,
+        timestamp: now,
+    })
 }
 
 async fn make_c2c_call(events_args: EventsArgs, principal: Principal, user_id: UserId) -> EventsResponse {

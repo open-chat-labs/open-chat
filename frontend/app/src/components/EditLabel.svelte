@@ -1,6 +1,7 @@
 <script lang="ts">
     import { locale, _ } from "svelte-i18n";
     import { editingLabel, i18nKey, supportedLanguages } from "../i18n/i18n";
+    import Translate from "svelte-material-icons/Translate.svelte";
     import Button from "./Button.svelte";
     import ButtonGroup from "./ButtonGroup.svelte";
     import ModalContent from "./ModalContent.svelte";
@@ -53,14 +54,20 @@
         if ($locale && $editingLabel) {
             busy = true;
             client
-                .setTranslationCorrection($locale, $editingLabel.key, suggestion)
-                .then((success) => {
-                    if (success) {
+                .proposeTranslationCorrection($locale, $editingLabel.key, suggestion)
+                .then((resp) => {
+                    if (resp === "success") {
                         saved = true;
                     } else {
-                        toastStore.showFailureToast(
-                            i18nKey("Sorry we were unable to save your suggestion"),
-                        );
+                        if (resp === "already_proposed") {
+                            toastStore.showFailureToast(
+                                i18nKey("This correction has already been suggested"),
+                            );
+                        } else {
+                            toastStore.showFailureToast(
+                                i18nKey("Sorry we were unable to save your suggestion"),
+                            );
+                        }
                     }
                 })
                 .finally(() => (busy = false));
@@ -71,7 +78,10 @@
 {#if $editingLabel !== undefined}
     <Overlay dismissible on:close={close}>
         <ModalContent on:close>
-            <div class="header" slot="header">Suggest a translation correction</div>
+            <div class="header" slot="header">
+                <Translate color={"var(--icon-txt)"} size="1em" />
+                <span>Suggest a translation correction</span>
+            </div>
             <div slot="body">
                 {#if !saved}
                     <p>
@@ -123,7 +133,7 @@
                         <Button on:click={close}>{"Close"}</Button>
                     {:else}
                         <Button secondary on:click={close}>{"Cancel"}</Button>
-                        <Button disabled={!valid} on:click={save}>{"Save"}</Button>
+                        <Button loading={busy} disabled={!valid} on:click={save}>{"Save"}</Button>
                     {/if}
                 </ButtonGroup>
             </div>
@@ -133,11 +143,16 @@
 
 <style lang="scss">
     p {
-        margin-bottom: $sp3;
+        margin-bottom: $sp4;
     }
 
     .value {
         color: var(--accent);
         font-weight: 500;
+    }
+
+    .header {
+        display: flex;
+        gap: $sp3;
     }
 </style>

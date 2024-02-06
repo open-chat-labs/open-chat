@@ -3,6 +3,7 @@ import Communities from "./Communities.svelte";
 import CommunitiesReleased from "./CommunitiesReleased.svelte";
 import Governance from "./Governance.svelte";
 import WebsiteReleases from "./WebsiteReleases.svelte";
+import Translation from "./Translation.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -13,6 +14,13 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
+    translations: {
+        slug: "translations",
+        title: "Translations",
+        author: "@julian_jelfs",
+        date: new Date(2024, 1, 31),
+        component: Translation,
+    },
     communities_released: {
         slug: "communities_released",
         title: "Communities released!",

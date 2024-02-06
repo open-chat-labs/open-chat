@@ -54,6 +54,7 @@ export class OpenChatAgentWorker extends EventTarget {
                     notificationsCanister: this.config.notificationsCanister,
                     onlineCanister: this.config.onlineCanister,
                     userIndexCanister: this.config.userIndexCanister,
+                    translationsCanister: this.config.translationsCanister,
                     registryCanister: this.config.registryCanister,
                     internetIdentityUrl: this.config.internetIdentityUrl,
                     nfidUrl: this.config.nfidUrl,
