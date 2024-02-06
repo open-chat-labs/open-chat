@@ -12,7 +12,7 @@ generate_update_call!(prepare_delegation);
 pub mod happy_path {
     use crate::User;
     use candid::Principal;
-    use identity_canister::{Delegation, SignedDelegation};
+    use identity_canister::SignedDelegation;
     use pocket_ic::PocketIc;
     use serde_bytes::ByteBuf;
     use types::{CanisterId, TimestampMillis};
