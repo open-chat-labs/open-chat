@@ -1,9 +1,46 @@
+type Nanoseconds = nat64;
+type PublicKey = blob;
+type TimestampNanoseconds = nat64;
+
 type CheckAuthPrincipalResponse = variant {
     Success;
     Legacy;
     NotFound;
 };
 
+type GetDelegationArgs = record {
+    session_key : PublicKey;
+    expiration : TimestampNanoseconds;
+};
+
+type GetDelegationResponse = variant {
+    Success : SignedDelegation;
+    NotFound;
+};
+
+type SignedDelegation = record {
+    delegation : record {
+        pubkey : PublicKey;
+        expiration : TimestampNanoseconds;
+    };
+    signature : blob;
+};
+
+type PrepareDelegationArgs = record {
+    session_key : PublicKey;
+    max_time_to_live : opt Nanoseconds;
+};
+
+type PrepareDelegationResponse = variant {
+    Success : record {
+        user_key : PublicKey;
+        expiration : TimestampNanoseconds;
+    };
+    NotFound;
+};
+
 service : {
     check_auth_principal : (record {}) -> (CheckAuthPrincipalResponse) query;
+    get_delegation : (GetDelegationArgs) -> (GetDelegationResponse) query;
+    prepare_delegation : (PrepareDelegationArgs) -> (PrepareDelegationResponse) query;
 }

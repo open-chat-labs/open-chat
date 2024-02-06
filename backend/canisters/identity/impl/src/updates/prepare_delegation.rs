@@ -3,11 +3,11 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use identity_canister::prepare_delegation::{Response::*, *};
 use serde_bytes::ByteBuf;
-use types::Milliseconds;
+use types::{Milliseconds, Nanoseconds};
 use utils::time::{DAY_IN_MS, NANOS_PER_MILLISECOND};
 
-const DEFAULT_EXPIRATION_PERIOD: Milliseconds = 30 * DAY_IN_MS;
-const MAX_EXPIRATION_PERIOD: Milliseconds = 90 * DAY_IN_MS;
+const DEFAULT_EXPIRATION_PERIOD: Nanoseconds = 30 * DAY_IN_MS * NANOS_PER_MILLISECOND;
+const MAX_EXPIRATION_PERIOD: Nanoseconds = 90 * DAY_IN_MS * NANOS_PER_MILLISECOND;
 
 #[update]
 #[trace]
@@ -31,7 +31,7 @@ fn prepare_delegation_impl(args: Args, state: &mut RuntimeState) -> Response {
     let expiration = state.env.now().saturating_add(delta);
     let delegation = Delegation {
         pubkey: args.session_key,
-        expiration: expiration * NANOS_PER_MILLISECOND,
+        expiration,
     };
     let msg_hash = delegation_signature_msg_hash(&delegation);
 

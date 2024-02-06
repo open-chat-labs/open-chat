@@ -140,6 +140,7 @@ pub type FileId = u128;
 pub type Hash = [u8; 32];
 pub type ICP = Tokens;
 pub type Milliseconds = u64;
+pub type Nanoseconds = u64;
 pub type NnsNeuronId = u64;
 pub type ProposalId = u64;
 pub type SnsNeuronId = [u8; 32];

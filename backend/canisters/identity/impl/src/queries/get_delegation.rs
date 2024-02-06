@@ -3,7 +3,6 @@ use ic_cdk_macros::query;
 use identity_canister::get_delegation::{Response::*, *};
 use identity_canister::{Delegation, SignedDelegation};
 use serde_bytes::ByteBuf;
-use utils::time::NANOS_PER_MILLISECOND;
 
 #[query]
 fn get_delegation(args: Args) -> Response {
@@ -19,7 +18,7 @@ fn get_delegation_impl(args: Args, state: &RuntimeState) -> Response {
 
     let delegation = Delegation {
         pubkey: args.session_key,
-        expiration: args.expiration * NANOS_PER_MILLISECOND,
+        expiration: args.expiration,
     };
     let message_hash = delegation_signature_msg_hash(&delegation);
     let seed = state.data.calculate_seed(user.index);
