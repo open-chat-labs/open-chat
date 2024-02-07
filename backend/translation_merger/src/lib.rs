@@ -150,7 +150,7 @@ async fn write_translation_files(
             let group_vec: Vec<_> = group.collect();
             let (k0, v0) = group_vec[0];
 
-            let value = if group_vec.len() == 1 && k0.matches(".").count() <= depth {
+            let value = if group_vec.len() == 1 && k0.matches('.').count() <= depth {
                 Value::String(v0.clone())
             } else {
                 build_object(group_vec, depth + 1)
