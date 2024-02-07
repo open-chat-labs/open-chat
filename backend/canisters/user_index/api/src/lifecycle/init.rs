@@ -16,6 +16,7 @@ pub struct Args {
     pub escrow_canister_id: CanisterId,
     pub nns_governance_canister_id: CanisterId,
     pub internet_identity_canister_id: CanisterId,
+    pub translations_canister_id: CanisterId,
     pub wasm_version: BuildVersion,
     pub test_mode: bool,
 }

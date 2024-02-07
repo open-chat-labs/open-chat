@@ -146,7 +146,16 @@ import type { CandidateProposal } from "./proposals";
 import type { OptionUpdate } from "./optionUpdate";
 import type { AccountTransactionResult, CryptocurrencyDetails, TokenExchangeRates } from "./crypto";
 import type { DexId } from "./dexes";
-import type { TranslationCorrection, TranslationCorrections } from "./i18n";
+import type {
+    ApproveResponse,
+    MarkDeployedResponse,
+    PendingDeploymentResponse,
+    ProposeResponse,
+    ProposedResponse,
+    RejectReason,
+    RejectResponse,
+    TranslationCorrections,
+} from "./i18n";
 /**
  * Worker request types
  */
@@ -310,31 +319,44 @@ export type WorkerRequest =
     | DeleteDirectChat
     | GetDiamondMembershipFees
     | GetReportedMessages
-    | SetTranslationCorrection
-    | ApproveTranslationCorrection
-    | RejectTranslationCorrection
-    | GetTranslationCorrections
     | GetExchangeRates
     | AcceptP2PSwap
-    | CancelP2PSwap;
+    | CancelP2PSwap
+    | ProposeTranslation
+    | ApproveTranslation
+    | RejectTranslation
+    | MarkTranslationsDeployed
+    | GetProposedTranslations
+    | GetTranslationsPendingDeployment;
 
-type GetTranslationCorrections = {
-    kind: "getTranslationCorrections";
+type ProposeTranslation = {
+    kind: "proposeTranslation";
+    locale: string;
+    key: string;
+    value: string;
 };
 
-type SetTranslationCorrection = {
-    kind: "setTranslationCorrection";
-    correction: TranslationCorrection;
+type ApproveTranslation = {
+    kind: "approveTranslation";
+    id: bigint;
 };
 
-type ApproveTranslationCorrection = {
-    kind: "approveTranslationCorrection";
-    correction: TranslationCorrection;
+type RejectTranslation = {
+    kind: "rejectTranslation";
+    id: bigint;
+    reason: RejectReason;
 };
 
-type RejectTranslationCorrection = {
-    kind: "rejectTranslationCorrection";
-    correction: TranslationCorrection;
+type MarkTranslationsDeployed = {
+    kind: "markTranslationsDeployed";
+};
+
+type GetProposedTranslations = {
+    kind: "getProposedTranslations";
+};
+
+type GetTranslationsPendingDeployment = {
+    kind: "getTranslationsPendingDeployment";
 };
 
 type LoadSavedCryptoAccounts = {
@@ -1196,7 +1218,13 @@ export type WorkerResponseInner =
     | TranslationCorrections
     | AcceptP2PSwapResponse
     | CancelP2PSwapResponse
-    | Record<string, TokenExchangeRates>;
+    | Record<string, TokenExchangeRates>
+    | ProposeResponse
+    | ApproveResponse
+    | RejectResponse
+    | MarkDeployedResponse
+    | ProposedResponse
+    | PendingDeploymentResponse;
 
 export type WorkerResponse = Response<WorkerResponseInner>;
 
@@ -1783,14 +1811,18 @@ export type WorkerResult<T> = T extends PinMessage
     ? string
     : T extends GetExchangeRates
     ? Record<string, TokenExchangeRates>
-    : T extends SetTranslationCorrection
-    ? boolean
-    : T extends ApproveTranslationCorrection
-    ? TranslationCorrections
-    : T extends RejectTranslationCorrection
-    ? TranslationCorrections
-    : T extends GetTranslationCorrections
-    ? TranslationCorrections
+    : T extends ProposeTranslation
+    ? ProposeResponse
+    : T extends ApproveTranslation
+    ? ApproveResponse
+    : T extends RejectTranslation
+    ? RejectResponse
+    : T extends GetProposedTranslations
+    ? ProposedResponse
+    : T extends MarkTranslationsDeployed
+    ? MarkDeployedResponse
+    : T extends GetTranslationsPendingDeployment
+    ? PendingDeploymentResponse
     : T extends AcceptP2PSwap
     ? AcceptP2PSwapResponse
     : T extends CancelP2PSwap

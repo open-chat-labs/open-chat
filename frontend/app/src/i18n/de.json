@@ -220,7 +220,9 @@
         "referral_rewards_q": "Was sind Empfehlungsprämien?",
         "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br> Wie könnten Sie das tun? Es gibt viele Möglichkeiten. Sie können Freunden und Familie davon erzählen, über OpenChat twittern, ein Video über OpenChat erstellen, in dem Sie beschreiben, was Sie daran lieben, und es auf TikTok oder YouTube teilen. Sie könnten auf Twitch streamen, einen Blog-Beitrag schreiben, einen Podcast erstellen, einen Twitter-Bereich hosten oder sogar ein echtes Treffen veranstalten. Wir freuen uns darauf, all die kreativen Ideen zu sehen, die Sie haben, um die Nachricht bekannt zu machen!<br><br> In Zukunft bieten wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer an, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen.",
         "buychat_a": "Im Moment müssen Sie zunächst <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP kaufen</a> , das Sie dann an verschiedenen dezentralen Börsen (DEXes) gegen CHAT eintauschen können.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY fügt Unterstützung für die <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta-API</a> für ICRC1-Tokens (einschließlich CHAT) hinzu, wodurch die Integration in Centralized Exchanges (CEXes) erheblich vereinfacht wird. Sobald dies geschehen ist, ist es wahrscheinlich, dass CHAT für den Handel an CEXes für ICP oder USDT verfügbar sein wird.",
-        "diamond_q": "Was ist eine Diamond-Mitgliedschaft?"
+        "diamond_q": "Was ist eine Diamond-Mitgliedschaft?",
+        "translation_q": "Wie kann ich einen Übersetzungsfehler korrigieren?",
+        "translation_a": "Unsere Übersetzungen werden standardmäßig von Google Translate bereitgestellt und manchmal gibt es einfach nicht genug Kontext, damit Google gute Arbeit leisten könnte. Für eine bessere Übersetzung ist oft ein Muttersprachler erforderlich. Wenn Sie in Ihrem Profil eine unserer nicht-englischen unterstützten Sprachen ausgewählt haben, werden Sie feststellen, dass es in Ihrem Profil auch einen Schalter gibt, um den Übersetzungskorrekturmodus zu aktivieren. Wenn dieser Modus aktiviert ist, sehen Sie neben jedem übersetzten Label in der Benutzeroberfläche ein kleines Übersetzungssymbol. Wenn Sie auf dieses Symbol klicken, können Sie einen Korrekturvorschlag einreichen. Versuchen Sie, einen Vorschlag zu unterbreiten, der sowohl korrekt ist als auch gut in die Benutzeroberfläche passt. Sie können überprüfen, wie Ihr Vorschlag aussieht, und den Vorgang beliebig oft wiederholen. Ihr Vorschlag wird vom Team geprüft und bei Genehmigung angenommen. Für jede genehmigte Korrektur, die Sie bereitstellen, werden Sie im CHAT belohnt. Wir wissen es wirklich zu schätzen, dass Sie sich die Zeit genommen haben, unsere Übersetzungen zu verbessern – ohne Sie könnten wir das nicht schaffen."
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -958,8 +960,6 @@
         "credentialParamCredential": "Anmeldedaten: {credential}",
         "credentialIssuer": "Aussteller der Berechtigungsnachweise",
         "requiredCredential": "Erforderlicher Ausweis",
-        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ vom Aussteller {issuer} überprüfen.",
-        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ von {issuer} angeben können, dürfen beitreten",
         "approvePaymentTitle": "Zahlung genehmigen",
         "paymentApprovalMessage": "Um diesem {level} beizutreten, müssen Sie **{amount}** {token}-Token bezahlen.",
         "paymentDistributionMessage": "Davon gehen 98 % an den/die Eigentümer von {level} und 2 % an die Kasse von OpenChat SNS.",
@@ -975,7 +975,10 @@
         "tokenComingSoon": "{token} (bald verfügbar)",
         "payAndJoin": "Bezahlen und mitmachen",
         "openAccess": "Keine (Open Access)",
-        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze."
+        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze.",
+        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ überprüfen",
+        "credentialCheckFailed": "Leider konnten wir die Anmeldeinformationen „{credential}“ nicht überprüfen und Sie können diesem {level} daher nicht beitreten.",
+        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ angeben können, dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",
@@ -1209,6 +1212,7 @@
     "removePreviewQuestion": "Vorschau entfernen?",
     "showPreview": "Vorschau zeigen",
     "excessiveLinksNote": "Linkvorschauen werden für Nachrichten mit mehr als 5 Links ausgeblendet.",
+    "toggleTranslationEditMode": "Übersetzungskorrekturen umschalten",
     "hours": "Std",
     "minutes": "Protokoll",
     "days": "Tage",

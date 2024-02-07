@@ -275,7 +275,9 @@
         "referral_rewards_q": "紹介報酬とは何ですか?",
         "referral_rewards_a": "ダイヤモンド メンバーは、紹介したユーザーがダイヤモンド メンバーになるたびに特典を獲得できます。 OpenChat に参加してから 1 年以内にダイヤモンドの支払いの半分を受け取ります。紹介リンクは、メインメニューの「プロフィール設定」の「友達/家族を招待」セクションにあります。<br><br>どうすればこんなことができるでしょうか？たくさんの方法があります。友達や家族に伝えたり、OpenChat についてツイートしたり、OpenChat の気に入っている点を説明するビデオを作成して、TikTok や YouTube に共有したりできます。 Twitch でストリーミングしたり、ブログ投稿を書いたり、ポッドキャストを作成したり、Twitter スペースをホストしたり、実際の交流会を開催したりすることもできます。この情報を広めるために皆さんが思いついた創造的なアイデアをお待ちしています。<br><br>将来的には、ダイヤモンド メンバーになるかどうかに関係なく、紹介したすべてのユーザーに紹介報酬を提供できるようになります。ただし、これは簡単に悪用できるため、最初に何らかの「ユニークな人格の証明」を導入する必要があります。",
         "buychat_a": "現時点では、まず<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入する</a>必要があります。その後、さまざまな分散型取引所 (DEX) で CHAT と交換できます。<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSワップ</a></li></ul>DFINITY は、ICRC1 トークン (CHAT を含む) の<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>のサポートを追加し、集中型取引所 (CEX) との統合をより簡単にします。これが実現すると、CHAT で ICP または USDT の CEX を取引できるようになる可能性があります。",
-        "diamond_q": "ダイヤモンド会員とは何ですか？"
+        "diamond_q": "ダイヤモンド会員とは何ですか？",
+        "translation_q": "翻訳エラーを修正するにはどうすればよいですか?",
+        "translation_a": "私たちの翻訳はデフォルトで Google 翻訳によって提供されますが、Google が適切に翻訳するには十分なコンテキストがない場合があります。より良い翻訳を提供するには、多くの場合、母国語を話す人が必要です。プロフィールで英語以外のサポート対象言語のいずれかを選択した場合は、プロフィールに翻訳修正モードを有効にするためのトグルがあることに気づくでしょう。このモードを有効にすると、翻訳された UI 内の各ラベルの横に小さな翻訳アイコンが表示されます。このアイコンをクリックすると、提案された修正を送信できるようになります。正確で UI にうまく適合する提案を考え出すようにしてください。提案がどのように配置されるかを確認し、必要に応じて何度でも手順を繰り返すことができます。あなたの提案はチームによって検討され、承認された場合には採用されます。承認された修正を提供するたびに、チャットで報酬が与えられます。私たちの翻訳をより良くするために時間を割いていただき、本当に感謝しています。皆様なしでは翻訳は不可能でした。"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
@@ -957,8 +959,6 @@
         "credentialParamCredential": "資格情報: {credential}",
         "credentialIssuer": "資格情報の発行者",
         "requiredCredential": "必要な資格情報",
-        "credentialCheckMessage": "この {level} に参加するには、発行者 {credential} からの「{issuer}」資格情報を確認する必要があります。",
-        "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます",
         "approvePaymentTitle": "支払いの承認",
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
         "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
@@ -974,7 +974,10 @@
         "tokenComingSoon": "{token} (近日公開予定)",
         "payAndJoin": "お金を払って参加する",
         "openAccess": "なし（オープンアクセス）",
-        "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。"
+        "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。",
+        "credentialCheckMessage": "この {level} に参加するには、「{credential}」資格情報を確認する必要があります",
+        "credentialCheckFailed": "申し訳ありませんが、「{credential}」資格情報を確認できなかったため、この {level} に参加できません。",
+        "credentialGateInfo": "「{credential}」資格情報を提供できるユーザーのみが参加を許可されます"
     },
     "communities": {
         "explore": "コミュニティを探索する",
@@ -1208,6 +1211,7 @@
     "removePreviewQuestion": "プレビューを削除しますか?",
     "showPreview": "ショープレビュー",
     "excessiveLinksNote": "リンクが 5 つを超えるメッセージのリンク プレビューは非表示になります。",
+    "toggleTranslationEditMode": "翻訳修正の切り替え",
     "hours": "時間",
     "minutes": "分",
     "days": "日々",

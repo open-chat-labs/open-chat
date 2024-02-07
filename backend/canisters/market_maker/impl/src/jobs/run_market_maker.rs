@@ -7,7 +7,7 @@ use std::cmp::{max, min, Reverse};
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::{AggregatedOrders, CancelOrderRequest, MakeOrderRequest, Milliseconds, Order, OrderType};
 use utils::time::MINUTE_IN_MS;
 
@@ -24,7 +24,7 @@ fn run() {
     }
 }
 
-fn get_active_exchanges(state: &RuntimeState) -> Vec<(Box<dyn Exchange>, Config)> {
+fn get_active_exchanges(state: &RuntimeState) -> Vec<(ExchangeId, Box<dyn Exchange>, Config)> {
     let now = state.env.now();
 
     state
@@ -41,21 +41,21 @@ fn get_active_exchanges(state: &RuntimeState) -> Vec<(Box<dyn Exchange>, Config)
                 .get(&id)
                 .map_or(true, |ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
         })
-        .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (e, c.clone())))
+        .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (id, e, c.clone())))
         .collect()
 }
 
-async fn run_async(exchanges: Vec<(Box<dyn Exchange>, Config)>) {
-    futures::future::join_all(exchanges.into_iter().map(|(e, c)| async {
-        let exchange_id = e.exchange_id();
-        let _ = run_single(e, c).await;
-        mark_market_maker_complete(&exchange_id);
+async fn run_async(exchanges: Vec<(ExchangeId, Box<dyn Exchange>, Config)>) {
+    futures::future::join_all(exchanges.into_iter().map(|(id, e, c)| async move {
+        if let Err(error) = run_single(id, e, c).await {
+            error!(exchange_id = %id, ?error, "Error running market maker");
+        }
+        mark_market_maker_complete(&id);
     }))
     .await;
 }
 
-async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
-    let exchange_id = exchange_client.exchange_id();
+async fn run_single(exchange_id: ExchangeId, exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
     trace!(%exchange_id, "Running market maker");
 
     let my_previous_open_orders = mutate_state(|state| {

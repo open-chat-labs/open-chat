@@ -27,6 +27,7 @@ fn init(args: Args) {
         args.escrow_canister_id,
         args.nns_governance_canister_id,
         args.internet_identity_canister_id,
+        args.translations_canister_id,
         args.test_mode,
     );
 

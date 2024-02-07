@@ -183,8 +183,6 @@ import type {
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     CommunityCanisterCommunitySummaryUpdates,
-    TranslationCorrections,
-    TranslationCorrection,
     AcceptP2PSwapResponse,
     CancelP2PSwapResponse,
     ChatEventsArgs,
@@ -214,6 +212,7 @@ import {
 import { AnonUserClient } from "./user/anonUser.client";
 import { excludeLatestKnownUpdateIfBeforeFix } from "./common/replicaUpToDateChecker";
 import { ICPCoinsClient } from "./icpcoins/icpcoins.client";
+import { TranslationsClient } from "./translations/translations.client";
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
@@ -234,6 +233,7 @@ export class OpenChatAgent extends EventTarget {
     private _communityInvite: CommunityInvite | undefined;
     private db: Database;
     private _logger: Logger;
+    public translationsClient: TranslationsClient;
 
     constructor(
         private identity: Identity,
@@ -250,6 +250,7 @@ export class OpenChatAgent extends EventTarget {
         this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._registryClient = RegistryClient.create(identity, config);
         this._icpcoinsClient = ICPCoinsClient.create(identity, config);
+        this.translationsClient = new TranslationsClient(identity, config);
         this._ledgerClients = {};
         this._ledgerIndexClients = {};
         this._groupClients = {};
@@ -3089,33 +3090,6 @@ export class OpenChatAgent extends EventTarget {
 
     exchangeRates(): Promise<Record<string, TokenExchangeRates>> {
         return this._icpcoinsClient.exchangeRates();
-    }
-
-    setTranslationCorrection(correction: TranslationCorrection): Promise<boolean> {
-        console.log("Setting translation correction: ", correction);
-        // TODO - for now I'm just going to record these corrections in indexed db
-        // eventually we will want an api, but let's get the shape right first
-        return Promise.resolve(true);
-    }
-
-    rejectTranslationCorrection(
-        correction: TranslationCorrection,
-    ): Promise<TranslationCorrections> {
-        console.log("Rejecting translation correction: ", correction);
-        // TODO - for now I'm just going to record these corrections in indexed db
-        // eventually we will want an api, but let's get the shape right first
-        return this.getTranslationCorrections();
-    }
-
-    approveTranslationCorrection(
-        correction: TranslationCorrection,
-    ): Promise<TranslationCorrections> {
-        console.log("Approving translation correction: ", correction);
-        return this.getTranslationCorrections();
-    }
-
-    getTranslationCorrections(): Promise<TranslationCorrections> {
-        return Promise.resolve({});
     }
 
     reportedMessages(userId: string | undefined): Promise<string> {

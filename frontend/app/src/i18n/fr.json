@@ -219,7 +219,9 @@
         "referral_rewards_q": "Que sont les récompenses de parrainage ?",
         "referral_rewards_a": "En tant que membre Diamond, vous pouvez gagner des récompenses pour chaque utilisateur que vous parrainez et qui devient lui-même membre Diamond. Vous recevrez la moitié de tous les paiements Diamond effectués au cours de la première année suivant votre adhésion à OpenChat. Vous pouvez trouver votre lien de parrainage dans la section « inviter des amis/famille » de vos « paramètres de profil » dans le menu principal.<br><br> Comment pourriez-vous faire cela ? Il y a beaucoup de façons. Vous pouvez en parler à vos amis et à votre famille, tweeter à propos d&#39;OpenChat, créer une vidéo sur OpenChat décrivant ce que vous aimez et la partager sur TikTok ou YouTube. Vous pouvez diffuser sur Twitch, rédiger un article de blog, créer un podcast, héberger un espace Twitter ou même organiser une véritable rencontre. Nous avons hâte de voir toutes les idées créatives que vous proposerez pour faire passer le message !<br><br> À l&#39;avenir, nous offrirons des récompenses de parrainage à tous les utilisateurs que vous parrainez, qu&#39;ils deviennent ou non membres Diamond. Cependant, comme cela est facilement exploitable, nous devrons d&#39;abord introduire une sorte de « preuve de personnalité unique ».",
         "buychat_a": "À l&#39;heure actuelle, vous devez d&#39;abord <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acheter de l&#39;ICP</a> que vous pouvez ensuite échanger contre du CHAT sur divers échanges décentralisés (DEX).<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">Échange ICPS</a></li></ul> DFINITY ajoute la prise en charge de l&#39; <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> pour les jetons ICRC1 (qui inclut CHAT), ce qui les rend beaucoup plus faciles à intégrer aux échanges centralisés (CEX). Une fois que cela se sera produit, il est probable que CHAT soit disponible pour échanger sur des CEX contre des ICP ou des USDT.",
-        "diamond_q": "Qu’est-ce que l’adhésion Diamant ?"
+        "diamond_q": "Qu’est-ce que l’adhésion Diamant ?",
+        "translation_q": "Comment puis-je corriger une erreur de traduction ?",
+        "translation_a": "Nos traductions sont fournies par défaut par Google Translate et parfois il n'y a tout simplement pas assez de contexte pour que Google fasse du bon travail. Il faut souvent un locuteur natif pour fournir une meilleure traduction. Si vous avez sélectionné l'une de nos langues prises en charge autre que l'anglais dans votre profil, vous remarquerez qu'il existe également une bascule dans votre profil pour activer le mode de correction de traduction. Lorsque ce mode est activé, vous verrez une petite icône de traduction à côté de chaque étiquette dans l'interface utilisateur qui a été traduite. Si vous cliquez sur cette icône, vous pourrez alors soumettre une suggestion de correction. Essayez de proposer une suggestion à la fois précise et qui s'intègre bien dans l'interface utilisateur. Vous pouvez vérifier à quoi ressemble votre suggestion et répéter la procédure autant de fois que vous le souhaitez. Votre suggestion sera examinée par l’équipe et sera adoptée si elle est approuvée. Vous serez récompensé dans CHAT pour chaque correction approuvée que vous fournissez. Nous apprécions vraiment que vous preniez le temps d'améliorer nos traductions - nous ne pourrions pas le faire sans vous."
     },
     "roadmap": "Feuille de route",
     "here": "ici",
@@ -956,8 +958,6 @@
         "credentialParamCredential": "Identifiant : {credential}",
         "credentialIssuer": "Émetteur de titres de compétences",
         "requiredCredential": "Titre requis",
-        "credentialCheckMessage": "Pour rejoindre ce {level}, vous devez vérifier les informations d'identification \"{credential}\" de l'émetteur {issuer}.",
-        "credentialGateInfo": "Seuls les utilisateurs pouvant fournir les identifiants « {credential} » de {issuer} seront autorisés à rejoindre",
         "approvePaymentTitle": "Approuver le paiement",
         "paymentApprovalMessage": "Pour rejoindre ce {level}, vous devez payer des jetons **{amount}** {token}.",
         "paymentDistributionMessage": "Sur cette somme, 98 % vont au(x) propriétaire(s) {level} et 2 % à la trésorerie d&#39;OpenChat SNS.",
@@ -973,7 +973,10 @@
         "tokenComingSoon": "{token} (à venir)",
         "payAndJoin": "Payez et adhérez",
         "openAccess": "Aucun (accès libre)",
-        "subscriptionComingSoon": "Modèle d'abonnement à venir."
+        "subscriptionComingSoon": "Modèle d'abonnement à venir.",
+        "credentialCheckMessage": "Pour rejoindre ce {level}, vous devez vérifier les informations d'identification \"{credential}\".",
+        "credentialCheckFailed": "Désolé, nous n'avons pas pu vérifier les informations d'identification \"{credential}\" et vous ne pourrez donc pas rejoindre ce {level}.",
+        "credentialGateInfo": "Seuls les utilisateurs pouvant fournir les identifiants « {credential} » seront autorisés à rejoindre"
     },
     "communities": {
         "explore": "Explorer les communautés",
@@ -1207,6 +1210,7 @@
     "removePreviewQuestion": "Supprimer l'aperçu ?",
     "showPreview": "Afficher l'aperçu",
     "excessiveLinksNote": "Les aperçus des liens sont masqués pour les messages contenant plus de 5 liens.",
+    "toggleTranslationEditMode": "Activer/désactiver les corrections de traduction",
     "hours": "Heures",
     "minutes": "Minutes",
     "days": "Jours",

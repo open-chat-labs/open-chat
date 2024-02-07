@@ -82,7 +82,7 @@ export const idlFactory = ({ IDL }) => {
     'expires_in' : IDL.Opt(Milliseconds),
     'spender' : Account,
   });
-  const ApproveError = IDL.Variant({
+  const ICRC2_ApproveError = IDL.Variant({
     'GenericError' : IDL.Record({
       'message' : IDL.Text,
       'error_code' : IDL.Nat,
@@ -97,7 +97,7 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
   });
   const ApproveTransferResponse = IDL.Variant({
-    'ApproveError' : ApproveError,
+    'ApproveError' : ICRC2_ApproveError,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
@@ -161,8 +161,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const Rules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const VerifiedCredentialGate = IDL.Record({
-    'credential' : IDL.Text,
-    'issuer' : IDL.Text,
+    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'issuer_origin' : IDL.Text,
+    'credential_type' : IDL.Text,
   });
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -254,7 +255,6 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
-    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
     'p2p_swap' : IDL.Opt(PermissionRole),

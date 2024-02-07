@@ -70,6 +70,7 @@ async fn install_service_canisters_impl(
         escrow_canister_id: canister_ids.escrow,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
+        translations_canister_id: canister_ids.translations,
         wasm_version: version,
         test_mode,
     };

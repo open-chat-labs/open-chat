@@ -14,12 +14,6 @@ use user_canister::{
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
-fn c2c_notify_events(args: Args) -> Response {
-    mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
-}
-
-#[update_msgpack(guard = "caller_is_user_index_canister")]
-#[trace]
 fn c2c_notify_user_index_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
 }
@@ -130,19 +124,21 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
                 .global_users
                 .set_diamond_membership_expiry_date(ev.user_id, ev.expires_at);
 
-            state.push_event_to_user(
-                ev.user_id,
-                UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
-                    timestamp: ev.timestamp,
-                    expires_at: ev.expires_at,
-                    token: ev.token,
-                    amount_e8s: ev.amount_e8s,
-                    block_index: ev.block_index,
-                    duration: ev.duration,
-                    recurring: ev.recurring,
-                    send_bot_message: ev.send_bot_message,
-                })),
-            );
+            if state.data.local_users.contains(&ev.user_id) {
+                state.push_event_to_user(
+                    ev.user_id,
+                    UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
+                        timestamp: ev.timestamp,
+                        expires_at: ev.expires_at,
+                        token: ev.token,
+                        amount_e8s: ev.amount_e8s,
+                        block_index: ev.block_index,
+                        duration: ev.duration,
+                        recurring: ev.recurring,
+                        send_bot_message: ev.send_bot_message,
+                    })),
+                );
+            }
         }
         Event::OpenChatBotMessage(ev) => {
             state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));

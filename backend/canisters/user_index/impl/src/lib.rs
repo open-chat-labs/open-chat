@@ -87,6 +87,11 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
+    pub fn is_caller_translations_canister(&self) -> bool {
+        let caller = self.env.caller();
+        caller == self.data.translations_canister_id
+    }
+
     pub fn is_caller_identity_canister(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.identity_canister_id
@@ -190,6 +195,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 storage_index: self.data.storage_index_canister_id,
                 escrow: self.data.escrow_canister_id,
+                translations: self.data.translations_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
             pending_modclub_submissions: self.data.pending_modclub_submissions_queue.len(),
@@ -214,6 +220,8 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub storage_index_canister_id: CanisterId,
     pub escrow_canister_id: CanisterId,
+    #[serde(default = "translations_canister_id")]
+    pub translations_canister_id: CanisterId,
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     #[serde(default)]
@@ -243,6 +251,10 @@ struct Data {
     pub legacy_principals_synced: bool,
 }
 
+fn translations_canister_id() -> CanisterId {
+    Principal::from_text("lxq5i-mqaaa-aaaaf-bih7q-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -258,6 +270,7 @@ impl Data {
         escrow_canister_id: CanisterId,
         nns_governance_canister_id: CanisterId,
         internet_identity_canister_id: CanisterId,
+        translations_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -275,6 +288,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id,
             escrow_canister_id,
+            translations_canister_id,
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -360,6 +374,7 @@ impl Default for Data {
             total_cycles_spent_on_canisters: 0,
             storage_index_canister_id: Principal::anonymous(),
             escrow_canister_id: Principal::anonymous(),
+            translations_canister_id: Principal::anonymous(),
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_updates_queue: UserPrincipalUpdatesQueue::default(),
@@ -454,4 +469,5 @@ pub struct CanisterIds {
     pub storage_index: CanisterId,
     pub escrow: CanisterId,
     pub internet_identity: CanisterId,
+    pub translations: CanisterId,
 }

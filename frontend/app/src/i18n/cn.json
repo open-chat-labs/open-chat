@@ -273,7 +273,9 @@
         "referral_rewards_q": "什么是推荐奖励？",
         "referral_rewards_a": "作为钻石会员，您可以为您推荐的每位后来成为钻石会员的用户赚取奖励。您将在加入 OpenChat 的第一年内收到他们支付的钻石付款的一半。您可以在主菜单“个人资料设置”的“邀请朋友/家人”部分找到您的推荐链接。<br><br>你会怎么做？有很多方法。您可以告诉朋友和家人、发布有关 OpenChat 的推文、创建有关 OpenChat 的视频来描述您喜欢它的地方，并将其分享到 TikTok 或 YouTube。您可以在 Twitch 上进行直播、撰写博客文章、创建播客、开设 Twitter 空间，甚至举办现实生活中的聚会。我们期待看到您提出的所有创意想法！<br><br>未来我们将为您推荐的所有用户开放推荐奖励，无论他们是否成为钻石会员。然而，由于这很容易被利用，我们首先需要引入某种类型的“独特人格证明”。",
         "buychat_a": "现在您必须首先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买 ICP</a> ，然后您可以在各种去中心化交易所（DEX）上兑换 CHAT。<ul><li><a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">国际快递公司</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPS交换</a></li></ul>DFINITY 正在为 ICRC1 代币（包括 CHAT）添加对<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a>的支持，使其更容易与集中式交易所 (CEX) 集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上交易 ICP 或 USDT。",
-        "diamond_q": "什么是钻石会员？"
+        "diamond_q": "什么是钻石会员？",
+        "translation_q": "如何纠正翻译错误？",
+        "translation_a": "我们的翻译默认由谷歌翻译提供，有时谷歌没有足够的上下文来做好翻译工作。通常需要母语人士才能提供更好的翻译。如果您在个人资料中选择了我们不支持英语的语言之一，您会注意到您的个人资料中还有一个开关可以激活翻译校正模式。启用此模式后，您将在 UI 中已翻译的每个标签旁边看到一个小翻译图标。如果您单击此图标，您将能够提交建议的更正。尝试提出一个既准确又适合用户界面的建议。您可以检查您的建议是否到位，并根据需要多次重复该过程。您的建议将由团队审核，如果获得批准将被采纳。对于您提供的每项经批准的更正，您都将在 CHAT 中获得奖励。我们非常感谢您花时间让我们的翻译变得更好 - 没有您我们就无法做到这一点。"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -956,8 +958,6 @@
         "credentialParamCredential": "凭证：{credential}",
         "credentialIssuer": "凭证颁发者",
         "requiredCredential": "所需凭证",
-        "credentialCheckMessage": "为了加入此 {level}，您需要验证颁发者 {credential} 的“{issuer}”凭证",
-        "credentialGateInfo": "仅允许提供来自 {credential} 的“{issuer}”凭据的用户加入",
         "approvePaymentTitle": "批准付款",
         "paymentApprovalMessage": "为了加入此 {level}，您需要支付 **{amount}** {token} 代币。",
         "paymentDistributionMessage": "其中，98% 归 {level} 所有者所有，2% 归 OpenChat SNS 金库。",
@@ -973,7 +973,10 @@
         "tokenComingSoon": "{token}（即将推出）",
         "payAndJoin": "付款并加入",
         "openAccess": "无（开放获取）",
-        "subscriptionComingSoon": "订阅模式即将推出。"
+        "subscriptionComingSoon": "订阅模式即将推出。",
+        "credentialCheckMessage": "为了加入此 {level}，您需要验证“{credential}”凭据",
+        "credentialCheckFailed": "抱歉，我们无法验证“{credential}”凭据，因此您将无法加入此 {level}。",
+        "credentialGateInfo": "仅允许提供“{credential}”凭据的用户加入"
     },
     "communities": {
         "explore": "探索社区",
@@ -1208,6 +1211,7 @@
     "removePreviewQuestion": "删除预览？",
     "showPreview": "显示预览",
     "excessiveLinksNote": "对于超过 5 个链接的邮件，链接预览会隐藏。",
+    "toggleTranslationEditMode": "切换翻译更正",
     "hours": "小时",
     "minutes": "分钟",
     "days": "天",
