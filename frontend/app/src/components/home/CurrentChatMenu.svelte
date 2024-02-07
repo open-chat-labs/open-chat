@@ -127,12 +127,7 @@
                 if (success) {
                     toastStore.showSuccessToast(i18nKey("blockUserSucceeded"));
                 } else {
-                    toastStore.showFailureToast(
-                        i18nKey("blockUserFailed"),
-                        new Error(
-                            "Something terrible went wrong while I was trying to block a user and it didn't work",
-                        ),
-                    );
+                    toastStore.showFailureToast(i18nKey("blockUserFailed"));
                 }
             });
         }
