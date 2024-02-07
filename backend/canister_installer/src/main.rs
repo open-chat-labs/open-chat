@@ -24,6 +24,7 @@ async fn main() {
         neuron_controller: opts.neuron_controller,
         escrow: opts.escrow,
         translations: opts.translations,
+        event_relay: opts.event_relay,
         nns_root: opts.nns_root,
         nns_governance: opts.nns_governance,
         nns_internet_identity: opts.nns_internet_identity,
@@ -96,6 +97,9 @@ struct Opts {
 
     #[arg(long)]
     translations: CanisterId,
+
+    #[arg(long)]
+    event_relay: CanisterId,
 
     #[arg(long)]
     nns_root: CanisterId,
