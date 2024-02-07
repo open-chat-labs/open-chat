@@ -56,7 +56,7 @@ fn post_upgrade(args: Args) {
                     user_id: swap.created_by,
                     timestamp: now,
                     token_info: swap.token0.clone(),
-                    amount: swap.amount0 - swap.token0.fee,
+                    amount: swap.amount0,
                     swap_id: swap.id,
                     reason: PendingPaymentReason::Refund,
                 });
