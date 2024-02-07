@@ -7,13 +7,13 @@ IDENTITY=${1:-default}
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR
+cd $SCRIPT_DIR/..
 
 TRANSLATIONS_CANISTER_ID=$(dfx canister --network ic id translations)
 
 cargo run \
-  --manifest-path ../backend/translation_merger/Cargo.toml -- \
+  --manifest-path backend/translation_merger/Cargo.toml -- \
   --translations-canister-id $TRANSLATIONS_CANISTER_ID \
   --url https://ic0.app/ \
   --controller $IDENTITY \
-  --directory ../frontend/app/src/i18n \
+  --directory frontend/app/src/i18n \
