@@ -140,6 +140,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/translation_merger",
 ]
 resolver = "2"
 
