@@ -1246,5 +1246,6 @@
         "unknown_accept_error": "接受交换报价时出错",
         "unknown_cancel_error": "取消掉期优惠时出错",
         "confirmSend": "当您创建此优惠时，{amount} {token}（包括 2 笔交易费用）将从您的钱包转移到 OpenChat 托管罐。它将一直保留在那里，直到要约过期、您取消要约或要约被接受。你想继续吗？"
-    }
+    },
+    "reportBug": "如果您认为这是一个错误，请单击此处报告完整的详细信息"
 }

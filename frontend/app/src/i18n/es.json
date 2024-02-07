@@ -1247,5 +1247,6 @@
         "unknown_accept_error": "Error al aceptar la oferta de intercambio",
         "unknown_cancel_error": "Error al cancelar la oferta de intercambio",
         "confirmSend": "Cuando cree esta oferta, {amount} {token} (incluye 2 tarifas de transacción) se transferirá de su billetera al contenedor de depósito en garantía de OpenChat. Permanecerá allí hasta que la oferta caduque, usted la cancele o se acepte la oferta. ¿Desea continuar?"
-    }
+    },
+    "reportBug": "Si cree que se trata de un error, haga clic aquí para informar todos los detalles."
 }
