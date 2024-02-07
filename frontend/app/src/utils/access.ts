@@ -105,7 +105,7 @@ const credentialGate: GateBinding = {
             credentialType: "",
         },
     },
-    enabled: true,
+    enabled: false,
 };
 
 export type CredentialIssuer = Credential & { name: string };
