@@ -2,10 +2,10 @@
 
 # Extract the args or use defaults
 CANISTER_ID=$1
-SUMMARY=${2:-"The CyclesDispenser holds a whitelist of canisters which are allowed to request cycles top ups. This proposal adds the new MarketMaker canister to that list."}
+SUMMARY=${2:-"The CyclesDispenser holds a whitelist of canisters which are allowed to request cycles top ups. This proposal adds the new Translations canister to that list."}
 
 # Build the title
-TITLE="Add MarketMaker canister to CyclesDispenser's whitelist"
+TITLE="Add Translations canister to CyclesDispenser's whitelist"
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")

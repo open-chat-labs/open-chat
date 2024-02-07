@@ -1426,32 +1426,44 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                 executeThenReply(payload, correlationId, agent.exchangeRates());
                 break;
 
-            case "setTranslationCorrection":
+            case "proposeTranslation":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.setTranslationCorrection(payload.correction),
+                    agent.translationsClient.propose(payload.locale, payload.key, payload.value),
                 );
                 break;
 
-            case "approveTranslationCorrection":
+            case "approveTranslation":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.approveTranslationCorrection(payload.correction),
+                    agent.translationsClient.approve(payload.id),
                 );
                 break;
 
-            case "rejectTranslationCorrection":
+            case "rejectTranslation":
                 executeThenReply(
                     payload,
                     correlationId,
-                    agent.rejectTranslationCorrection(payload.correction),
+                    agent.translationsClient.reject(payload.id, payload.reason),
                 );
                 break;
 
-            case "getTranslationCorrections":
-                executeThenReply(payload, correlationId, agent.getTranslationCorrections());
+            case "getProposedTranslations":
+                executeThenReply(payload, correlationId, agent.translationsClient.proposed());
+                break;
+
+            case "markTranslationsDeployed":
+                executeThenReply(payload, correlationId, agent.translationsClient.markDeployed());
+                break;
+
+            case "getTranslationsPendingDeployment":
+                executeThenReply(
+                    payload,
+                    correlationId,
+                    agent.translationsClient.pendingDeployment(),
+                );
                 break;
 
             case "acceptP2PSwap":

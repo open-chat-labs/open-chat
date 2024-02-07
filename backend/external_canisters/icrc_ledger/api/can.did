@@ -14,7 +14,7 @@ type Account = record {
     subaccount : opt Subaccount;
 };
 
-type TransferArgs = record {
+type ICRC1_TransferArgs = record {
     from_subaccount : opt Subaccount;
     to : Account;
     amount : nat;
@@ -23,7 +23,7 @@ type TransferArgs = record {
     created_at_time : opt Timestamp;
 };
 
-type TransferError = variant {
+type ICRC1_TransferError = variant {
     BadFee : record { expected_fee : nat };
     BadBurn : record { min_burn_amount : nat };
     InsufficientFunds : record { balance : nat };
@@ -41,7 +41,7 @@ type Value = variant {
     Blob : blob;
 };
 
-type ApproveArgs = record {
+type ICRC2_ApproveArgs = record {
     from_subaccount : opt blob;
     spender : Account;
     amount : nat;
@@ -52,7 +52,7 @@ type ApproveArgs = record {
     created_at_time : opt nat64;
 };
 
-type ApproveError = variant {
+type ICRC2_ApproveError = variant {
     BadFee : record { expected_fee : nat };
     InsufficientFunds : record { balance : nat };
     AllowanceChanged : record { current_allowance : nat };
@@ -64,7 +64,7 @@ type ApproveError = variant {
     GenericError : record { error_code : nat; message : text };
 };
 
-type TransferFromArgs = record {
+type ICRC2_TransferFromArgs = record {
     spender_subaccount : opt blob;
     from : Account;
     to : Account;
@@ -74,7 +74,7 @@ type TransferFromArgs = record {
     created_at_time : opt nat64;
 };
 
-type TransferFromError = variant {
+type ICRC2_TransferFromError = variant {
     BadFee : record { expected_fee : nat };
     BadBurn : record { min_burn_amount : nat };
     InsufficientFunds : record { balance : nat };
@@ -93,8 +93,8 @@ service : {
     icrc1_decimals : () -> (nat8) query;
     icrc1_fee : () -> (nat) query;
     icrc1_supported_standards : () -> (vec record { name : text; url : text }) query;
-    icrc1_transfer : (TransferArgs) -> (variant { Ok : nat; Err : TransferError });
+    icrc1_transfer : (ICRC1_TransferArgs) -> (variant { Ok : nat; Err : ICRC1_TransferError });
 
-    icrc2_approve : (ApproveArgs) -> (variant { Ok : nat; Err : ApproveError });
-    icrc2_transfer_from : (TransferFromArgs) -> (variant { Ok : nat; Err : TransferFromError });
+    icrc2_approve : (ICRC2_ApproveArgs) -> (variant { Ok : nat; Err : ICRC2_ApproveError });
+    icrc2_transfer_from : (ICRC2_TransferFromArgs) -> (variant { Ok : nat; Err : ICRC2_TransferFromError });
 };

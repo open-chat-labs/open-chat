@@ -106,7 +106,7 @@ impl DiamondMembershipPlanDuration {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[repr(u8)]
 pub enum DiamondMembershipSubscription {
     #[default]

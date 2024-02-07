@@ -79,3 +79,11 @@ pub fn caller_is_user_canister_or_group_index() -> Result<(), String> {
         Err("Caller is not a user canister or the group index canister".to_string())
     }
 }
+
+pub fn caller_is_translations_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_translations_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not the translations canister".to_string())
+    }
+}

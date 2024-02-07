@@ -1,15 +1,14 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{BuildVersion, CanisterId, CyclesTopUp, UserId};
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct LocalUserIndexMap {
     index_map: HashMap<CanisterId, LocalUserIndex>,
     user_to_index: HashMap<UserId, CanisterId>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LocalUserIndex {
     user_count: u32,
     full: bool,

@@ -1,6 +1,6 @@
+use candid::Nat;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use icdex_canister::{ICDexOrderType, MakeOrderResponse, OrderPrice, OrderQuantity, TradingOrder};
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use types::{AggregatedOrders, CancelOrderRequest, CanisterId, MakeOrderRequest, Order, OrderType, TokenInfo};
 
 pub struct ICDexClient<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> {
@@ -49,11 +49,16 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
     }
 
     pub async fn my_open_orders(&self) -> CallResult<Vec<Order>> {
-        let args = (self.this_canister_id.to_string(), None, None);
+        let args = (self.this_canister_id.to_string(), None, Some(Nat::from(250u32)));
 
         let orders = icdex_canister_c2c_client::pending(self.dex_canister_id, args).await?.0;
 
-        Ok(orders.data.into_iter().map(|(_, o)| self.convert_order(o)).collect())
+        Ok(orders
+            .data
+            .into_iter()
+            .map(|(_, o)| self.convert_order(o))
+            .filter(|o| o.amount > 0)
+            .collect())
     }
 
     pub async fn orderbook(&self) -> CallResult<AggregatedOrders> {
@@ -84,32 +89,6 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
     }
 
     pub async fn make_order(&self, order: MakeOrderRequest) -> CallResult<()> {
-        let (account, nonce) =
-            icdex_canister_c2c_client::getTxAccount(self.dex_canister_id, (self.this_canister_id.to_string(),))
-                .await
-                .map(|(a, _, n, _)| (a, n))?;
-
-        let (ledger_canister_id, amount) = match order.order_type {
-            OrderType::Bid => (
-                self.quote_token.ledger,
-                order.amount * order.price / self.base_token_units_per_whole(),
-            ),
-            OrderType::Ask => (self.base_token.ledger, order.amount),
-        };
-        icrc_ledger_canister_c2c_client::icrc1_transfer(
-            ledger_canister_id,
-            &TransferArg {
-                from_subaccount: None,
-                to: account,
-                fee: None,
-                created_at_time: None,
-                memo: None,
-                amount: amount.into(),
-            },
-        )
-        .await?
-        .map_err(|t| (RejectionCode::Unknown, format!("{t:?}")))?;
-
         let quantity = match order.order_type {
             OrderType::Bid => OrderQuantity::Buy(order.amount.into(), 0u32.into()),
             OrderType::Ask => OrderQuantity::Sell(order.amount.into()),
@@ -117,21 +96,14 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
         // Convert the price per whole into the price per `smallest_order_size`
         let price = (order.price * self.smallest_order_size / self.base_token_units_per_whole()).into();
 
-        let args = (
-            OrderPrice { price, quantity },
-            ICDexOrderType::Limit,
-            None,
-            Some(nonce),
-            None,
-            None,
-        );
+        let args = (OrderPrice { price, quantity }, ICDexOrderType::Limit, None, None, None, None);
 
-        match icdex_canister_c2c_client::trade(self.dex_canister_id, args).await?.0 {
+        match icdex_canister_c2c_client::trade(self.dex_canister_id, args.clone()).await?.0 {
             MakeOrderResponse::Ok(_) => {
                 (self.on_order_made)(order);
                 Ok(())
             }
-            MakeOrderResponse::Err(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+            MakeOrderResponse::Err(e) => Err((RejectionCode::Unknown, format!("Args: {args:?}. Error: {e:?}"))),
         }
     }
 
@@ -142,6 +114,22 @@ impl<M: Fn(MakeOrderRequest), C: Fn(CancelOrderRequest)> ICDexClient<M, C> {
 
         (self.on_order_cancelled)(order);
         Ok(())
+    }
+
+    pub async fn account_balances(&self) -> CallResult<Vec<(CanisterId, u128)>> {
+        let response =
+            icdex_canister_c2c_client::accountBalance(self.dex_canister_id, &self.this_canister_id.to_string()).await?;
+
+        Ok(vec![
+            (
+                self.base_token.ledger,
+                u128::try_from((response.token0.available + response.token0.locked).0).unwrap(),
+            ),
+            (
+                self.quote_token.ledger,
+                u128::try_from((response.token1.available + response.token1.locked).0).unwrap(),
+            ),
+        ])
     }
 
     fn convert_order(&self, order: TradingOrder) -> Order {

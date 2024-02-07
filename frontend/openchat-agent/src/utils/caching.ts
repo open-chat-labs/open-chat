@@ -334,47 +334,56 @@ export async function getCachedEventsWindow(
     const start = Date.now();
     const resolvedDb = await db;
 
-    const backwardsPromise = iterateCachedEvents(
-        resolvedDb,
-        eventIndexRange,
-        context,
-        startIndex - 1,
-        false,
-        maxEvents / 2,
-        maxMessages / 2,
-        maxMissing / 2,
-    );
-    const forwardsPromise = iterateCachedEvents(
-        resolvedDb,
-        eventIndexRange,
-        context,
-        startIndex,
-        true,
-        maxEvents / 2,
-        maxMessages / 2,
-        maxMissing / 2,
-    );
-
-    const [[bEvents, bExpiredEventRanges, bMissing], [fEvents, fExpiredEventRanges, fMissing]] =
-        await Promise.all([backwardsPromise, forwardsPromise]);
-
-    const events = bEvents.concat(fEvents);
-    const expiredEventRanges = bExpiredEventRanges.concat(fExpiredEventRanges);
-    const missing = new Set([...bMissing, ...fMissing]);
-
-    if (missing.size === 0) {
-        console.debug("CACHE: hit: ", events.length, Date.now() - start);
+    const promises = [] as Promise<
+        [EnhancedWrapper<ChatEvent>[], ExpiredEventsRange[], Set<number>]
+    >[];
+    if (eventIndexRange[0] <= startIndex - 1) {
+        promises.push(
+            iterateCachedEvents(
+                resolvedDb,
+                eventIndexRange,
+                context,
+                startIndex - 1,
+                false,
+                maxEvents / 2,
+                maxMessages / 2,
+                maxMissing / 2,
+            ),
+        );
+    }
+    if (eventIndexRange[1] >= startIndex) {
+        promises.push(
+            iterateCachedEvents(
+                resolvedDb,
+                eventIndexRange,
+                context,
+                startIndex,
+                true,
+                maxEvents / 2,
+                maxMessages / 2,
+                maxMissing / 2,
+            ),
+        );
     }
 
-    return [
-        {
-            events: events as EnhancedWrapper<ChatEvent>[],
-            expiredEventRanges,
-            expiredMessageRanges: [],
-            latestEventIndex: undefined,
-        },
-        missing,
-    ];
+    const results: EventsSuccessResult<ChatEvent> = {
+        events: [],
+        expiredEventRanges: [],
+        expiredMessageRanges: [],
+        latestEventIndex: undefined,
+    };
+    const missing = new Set<number>();
+    for (const [events, expiredEventRanges, missing] of await Promise.all(promises)) {
+        events.forEach((e) => results.events.push(e));
+        expiredEventRanges.forEach((r) => results.expiredEventRanges.push(r));
+        missing.forEach((m) => missing.add(m));
+    }
+
+    if (missing.size === 0) {
+        console.debug("CACHE: hit: ", results.events.length, Date.now() - start);
+    }
+
+    return [results, missing];
 }
 
 export async function getCachedEventByIndex(
@@ -445,7 +454,7 @@ export async function getNearestCachedEventIndexForMessageIndex(
     iterations = 0,
 ): Promise<number | undefined> {
     const eventIndex = await getCachedEventIndexByMessageIndex(db, context, messageIndex);
-    if (eventIndex === undefined && iterations === 0) {
+    if (eventIndex === undefined && iterations === 0 && messageIndex > 0) {
         console.debug(
             "EV: we didn't find the event index for ",
             messageIndex,

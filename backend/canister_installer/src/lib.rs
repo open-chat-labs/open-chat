@@ -70,6 +70,7 @@ async fn install_service_canisters_impl(
         escrow_canister_id: canister_ids.escrow,
         nns_governance_canister_id: canister_ids.nns_governance,
         internet_identity_canister_id: canister_ids.nns_internet_identity,
+        translations_canister_id: canister_ids.translations,
         wasm_version: version,
         test_mode,
     };
@@ -111,6 +112,8 @@ async fn install_service_canisters_impl(
 
     let translations_canister_wasm = get_canister_wasm(CanisterName::Translations, version);
     let translations_init_args = translations_canister::init::Args {
+        deployment_operators: vec![principal],
+        user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         wasm_version: version,
         test_mode,

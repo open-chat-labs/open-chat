@@ -26,8 +26,9 @@ impl AccessGate {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct VerifiedCredentialGate {
-    pub issuer: String,
-    pub credential: String,
+    pub issuer_origin: String,
+    pub credential_type: String,
+    pub credential_arguments: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]

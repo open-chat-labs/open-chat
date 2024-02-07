@@ -8,7 +8,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{CanisterId, TimestampNanos};
-use utils::consts::{MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
+use utils::consts::{MEMO_GROUP_IMPORT_INTO_COMMUNITY, MEMO_JOINING_FEE, SNS_GOVERNANCE_CANISTER_ID};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -95,5 +95,6 @@ async fn make_payment(ledger_canister: CanisterId, transfer_args: TransferArg) -
 fn memo(reason: PendingPaymentReason) -> Memo {
     match reason {
         PendingPaymentReason::AccessGate => MEMO_JOINING_FEE.to_vec().into(),
+        PendingPaymentReason::TransferToCommunityBeingImportedInto => MEMO_GROUP_IMPORT_INTO_COMMUNITY.to_vec().into(),
     }
 }

@@ -3757,6 +3757,8 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icdex_canister",
+ "icdex_canister_c2c_client",
  "icdex_client",
  "icrc-ledger-types",
  "icrc_ledger_canister_c2c_client",
@@ -6636,6 +6638,7 @@ name = "translations_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "candid_gen",
  "serde",
  "types",
 ]
@@ -6649,11 +6652,17 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "fire_and_forget_handler",
  "http_request",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "icrc-ledger-types",
+ "icrc_ledger_canister",
+ "icrc_ledger_canister_c2c_client",
+ "itertools",
+ "msgpack",
  "rand",
  "serde",
  "serializer",
@@ -6661,6 +6670,8 @@ dependencies = [
  "tracing",
  "translations_canister",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 

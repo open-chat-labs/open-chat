@@ -4,12 +4,14 @@ type ChatEventsArgs = record {
     requests : vec ChatEventsArgsInner;
 };
 
+type EventsContext = variant {
+    Direct : UserId;
+    Group : record { ChatId; opt MessageIndex; };
+    Channel : record { CommunityId; ChannelId; opt MessageIndex};
+};
+
 type ChatEventsArgsInner = record {
-    context : variant {
-        Direct : UserId;
-        Group : record { ChatId; opt MessageIndex; };
-        Channel : record { CommunityId; ChannelId; opt MessageIndex};
-    };
+    context : EventsContext;
     args: variant {
         Page : record {
             start_index: EventIndex;
@@ -30,7 +32,10 @@ type ChatEventsArgsInner = record {
 };
 
 type ChatEventsResponse = variant {
-    Success : vec ChatEventsResponseInner;
+    Success : record {
+        responses: vec ChatEventsResponseInner;
+        timestamp: TimestampMillis;
+    };
 };
 
 type ChatEventsResponseInner = variant {

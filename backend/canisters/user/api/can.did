@@ -145,7 +145,7 @@ type ApproveTransferArgs = record {
 
 type ApproveTransferResponse = variant {
     Success;
-    ApproveError : ApproveError;
+    ApproveError : ICRC2_ApproveError;
     InternalError : text;
 };
 

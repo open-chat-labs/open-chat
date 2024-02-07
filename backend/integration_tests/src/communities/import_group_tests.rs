@@ -1,13 +1,19 @@
 use crate::env::ENV;
-use crate::rng::random_string;
-use crate::utils::tick_many;
+use crate::rng::{random_message_id, random_string};
+use crate::utils::{now_millis, now_nanos, tick_many};
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use std::ops::Deref;
-use types::{ChatId, CommunityId};
+use types::{
+    icrc1, ChatId, CommunityId, CryptoTransaction, Cryptocurrency, MessageContentInitial, PendingCryptoTransaction,
+    PrizeContentInitial,
+};
 use user_canister::mark_read::ChatMessagesRead;
+use utils::time::HOUR_IN_MS;
 
 #[test]
 fn import_group_succeeds() {
@@ -143,6 +149,88 @@ fn read_up_to_data_maintained_after_import() {
 
     let channel = community.channels.iter().find(|c| c.channel_id == channel_id).unwrap();
     assert_eq!(channel.read_by_me_up_to, Some(4.into()));
+}
+
+#[test]
+fn pending_prizes_transferred_to_community() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        user3,
+        group_id,
+        community_id,
+        ..
+    } = init_test_data(env, canister_ids, *controller);
+
+    let token = Cryptocurrency::InternetComputer;
+    let fee = token.fee().unwrap();
+    let message_id = random_message_id();
+    let prizes = [100000; 2];
+    let amount_to_transfer = prizes.iter().sum::<u64>() as u128 + fee * prizes.len() as u128;
+
+    client::user::send_message_with_transfer_to_group(
+        env,
+        user1.principal,
+        user1.canister(),
+        &user_canister::send_message_with_transfer_to_group::Args {
+            group_id,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInitial::Prize(PrizeContentInitial {
+                prizes: prizes.into_iter().map(Tokens::from_e8s).collect(),
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::ICRC1(icrc1::PendingCryptoTransaction {
+                    ledger: canister_ids.icp_ledger,
+                    token: token.clone(),
+                    amount: amount_to_transfer,
+                    to: Account::from(Principal::from(group_id)),
+                    fee,
+                    memo: None,
+                    created: now_nanos(env),
+                })),
+                end_date: now_millis(env) + HOUR_IN_MS,
+                caption: None,
+                diamond_only: false,
+            }),
+            sender_name: user1.username(),
+            sender_display_name: None,
+            replies_to: None,
+            mentioned: Vec::new(),
+            correlation_id: 0,
+            rules_accepted: None,
+            message_filter_failed: None,
+        },
+    );
+
+    let import_group_response = client::community::import_group(
+        env,
+        user1.principal,
+        community_id.into(),
+        &community_canister::import_group::Args { group_id },
+    );
+
+    let channel_id = match import_group_response {
+        community_canister::import_group::Response::Success(result) => result.channel_id,
+        response => panic!("{response:?}"),
+    };
+
+    tick_many(env, 10);
+
+    let community_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
+    assert_eq!(community_balance, amount_to_transfer - token.fee().unwrap());
+
+    client::community::happy_path::claim_prize(env, user2.principal, community_id, channel_id, message_id);
+    client::community::happy_path::claim_prize(env, user3.principal, community_id, channel_id, message_id);
+
+    let community_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, Principal::from(community_id));
+    assert_eq!(community_balance, 0);
 }
 
 fn init_test_data(env: &mut PocketIc, canister_ids: &CanisterIds, controller: Principal) -> TestData {
