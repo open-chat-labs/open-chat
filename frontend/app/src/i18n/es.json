@@ -960,8 +960,6 @@
         "credentialParamCredential": "Credencial: {credential}",
         "credentialIssuer": "Emisor de credenciales",
         "requiredCredential": "Credencial requerida",
-        "credentialCheckMessage": "Para unirse a este {level}, debe verificar la credencial \"{credential}\" del emisor {issuer}",
-        "credentialGateInfo": "Solo podrán unirse los usuarios que puedan proporcionar la credencial \"{credential}\" de {issuer}",
         "approvePaymentTitle": "Aprobar pago",
         "paymentApprovalMessage": "Para unirse a este {level}, debe pagar tokens **{amount}** {token}.",
         "paymentDistributionMessage": "De esto, el 98 % va a los propietarios de {level} y el 2 % a la tesorería de OpenChat SNS.",
@@ -977,7 +975,10 @@
         "tokenComingSoon": "{token} (próximamente)",
         "payAndJoin": "Paga y únete",
         "openAccess": "Ninguno (acceso abierto)",
-        "subscriptionComingSoon": "Próximamente modelo de suscripción."
+        "subscriptionComingSoon": "Próximamente modelo de suscripción.",
+        "credentialCheckMessage": "Para unirse a este {level}, debe verificar la credencial \"{credential}\"",
+        "credentialCheckFailed": "Lo sentimos, no pudimos verificar la credencial \"{credential}\" y por lo tanto no podrás unirte a este {level}.",
+        "credentialGateInfo": "Solo se permitirá unirse a los usuarios que puedan proporcionar la credencial \"{credential}\""
     },
     "communities": {
         "explore": "Explora comunidades",

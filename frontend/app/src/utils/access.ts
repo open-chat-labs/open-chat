@@ -1,6 +1,11 @@
 import { get } from "svelte/store";
 import { _ } from "svelte-i18n";
-import type { AccessGate, CryptocurrencyDetails, NervousSystemDetails } from "openchat-client";
+import type {
+    AccessGate,
+    Credential,
+    CryptocurrencyDetails,
+    NervousSystemDetails,
+} from "openchat-client";
 
 export type GateBinding = {
     key: string;
@@ -10,32 +15,29 @@ export type GateBinding = {
 };
 
 export function getGateBindings(): GateBinding[] {
-    return [
-        noGate,
-        diamondGate,
-        neuronGateFolder,
-        paymentGateFolder,
-        // credentialGate,
-        nftGate,
-    ];
+    return [noGate, diamondGate, neuronGateFolder, paymentGateFolder, credentialGate, nftGate];
 }
 
-export function getNeuronGateBindings(nervousSystemLookup: Record<string, NervousSystemDetails>): GateBinding[] {
-    return Object.values(nervousSystemLookup)
-        .map((ns) => {
-            return {
-                label: formatLabel(ns.token.name, ns.isNns),
-                gate: {
-                    kind: "neuron_gate",
-                    governanceCanister: ns.governanceCanisterId,
-                },
-                key: ns.governanceCanisterId,
-                enabled: !ns.isNns,
-            };
-        });
+export function getNeuronGateBindings(
+    nervousSystemLookup: Record<string, NervousSystemDetails>,
+): GateBinding[] {
+    return Object.values(nervousSystemLookup).map((ns) => {
+        return {
+            label: formatLabel(ns.token.name, ns.isNns),
+            gate: {
+                kind: "neuron_gate",
+                governanceCanister: ns.governanceCanisterId,
+            },
+            key: ns.governanceCanisterId,
+            enabled: !ns.isNns,
+        };
+    });
 }
 
-export function getPaymentGateBindings(cryptoLookup: Record<string, CryptocurrencyDetails>, nsLedgers: Set<string>): GateBinding[] {
+export function getPaymentGateBindings(
+    cryptoLookup: Record<string, CryptocurrencyDetails>,
+    nsLedgers: Set<string>,
+): GateBinding[] {
     return Object.values(cryptoLookup)
         .filter((c) => c.supportedStandards.includes("ICRC-2") || nsLedgers.has(c.ledger))
         .map((c) => {
@@ -55,7 +57,7 @@ export function getPaymentGateBindings(cryptoLookup: Record<string, Cryptocurren
 }
 
 function formatLabel(token: string, comingSoon: boolean): string {
-    return comingSoon ? get(_)("access.tokenComingSoon", { values: { token }}) : token;
+    return comingSoon ? get(_)("access.tokenComingSoon", { values: { token } }) : token;
 }
 
 const noGate: GateBinding = {
@@ -93,36 +95,36 @@ const nftGate: GateBinding = {
     enabled: false,
 };
 
-// const credentialGate: GateBinding = {
-//     label: "access.credential",
-//     key: "credential_gate",
-//     gate: { kind: "credential_gate", issuerOrigin: "", credentialId: "" },
-//     enabled: true,
-// };
-
-export type Credential = {
-    name: string;
-    value: string;
+const credentialGate: GateBinding = {
+    label: "access.credential",
+    key: "credential_gate",
+    gate: {
+        kind: "credential_gate",
+        credential: {
+            issuerOrigin: "",
+            credentialType: "",
+        },
+    },
+    enabled: false,
 };
 
-export type CredentialIssuer = {
-    name: string;
-    value: string;
-    credentials: Credential[];
-};
+export type CredentialIssuer = Credential & { name: string };
 
 export const credentialIssuers: CredentialIssuer[] = [
     {
-        name: "Employment Info Ltd",
-        value: "https://employment.info",
-        credentials: [
-            { value: "VerifiedEmployee", name: "Is verified employee" },
-            { value: "SomeOther", name: "Some other thing" },
-        ],
+        name: "Is DFINITY employee",
+        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
+        credentialType: "VerifiedEmployee",
+        credentialArguments: {
+            employerName: "DFINITY Foundation",
+        },
     },
     {
-        name: "MODCLUB",
-        value: "https://modclub.com",
-        credentials: [{ value: "IsHuman", name: "Is a human" }],
+        name: "Is early adopter",
+        issuerOrigin: "https://vu2yf-xiaaa-aaaad-aad5q-cai.icp0.io",
+        credentialType: "Early adopter",
+        credentialArguments: {
+            employerName: "DFINITY Foundation",
+        },
     },
 ];

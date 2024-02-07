@@ -523,8 +523,9 @@ export const idlFactory = ({ IDL }) => {
     'previous_name' : IDL.Text,
   });
   const VerifiedCredentialGate = IDL.Record({
-    'credential' : IDL.Text,
-    'issuer' : IDL.Text,
+    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'issuer_origin' : IDL.Text,
+    'credential_type' : IDL.Text,
   });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({

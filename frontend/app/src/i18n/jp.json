@@ -959,8 +959,6 @@
         "credentialParamCredential": "資格情報: {credential}",
         "credentialIssuer": "資格情報の発行者",
         "requiredCredential": "必要な資格情報",
-        "credentialCheckMessage": "この {level} に参加するには、発行者 {credential} からの「{issuer}」資格情報を確認する必要があります。",
-        "credentialGateInfo": "{credential} から「{issuer}」資格情報を提供できるユーザーのみが参加を許可されます",
         "approvePaymentTitle": "支払いの承認",
         "paymentApprovalMessage": "この {level} に参加するには、**{amount}** {token} トークンを支払う必要があります。",
         "paymentDistributionMessage": "このうち 98% は {level} の所有者に、2% は OpenChat SNS の財務省に寄付されます。",
@@ -976,7 +974,10 @@
         "tokenComingSoon": "{token} (近日公開予定)",
         "payAndJoin": "お金を払って参加する",
         "openAccess": "なし（オープンアクセス）",
-        "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。"
+        "subscriptionComingSoon": "サブスクリプションモデルも近日登場予定。",
+        "credentialCheckMessage": "この {level} に参加するには、「{credential}」資格情報を確認する必要があります",
+        "credentialCheckFailed": "申し訳ありませんが、「{credential}」資格情報を確認できなかったため、この {level} に参加できません。",
+        "credentialGateInfo": "「{credential}」資格情報を提供できるユーザーのみが参加を許可されます"
     },
     "communities": {
         "explore": "コミュニティを探索する",
