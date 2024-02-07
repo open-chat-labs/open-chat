@@ -7,6 +7,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import { i18nKey } from "../../i18n/i18n";
     import Translatable from "../Translatable.svelte";
+    import { credentialIssuers } from "../../utils/access";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -17,8 +18,15 @@
     let failed = false;
     let verifying = false;
 
+    $: issuer = credentialIssuers.find(
+        (i) =>
+            i.credentialType === gate.credential.credentialType &&
+            i.issuerOrigin === gate.credential.issuerOrigin,
+    );
+
     function verify() {
         verifying = true;
+        failed = false;
         client
             .verifyAccessGate(gate)
             .then((credential) => {
@@ -41,20 +49,30 @@
         </div>
     </div>
     <div slot="body">
-        <Translatable
-            resourceKey={i18nKey(
-                "access.credentialCheckMessage",
-                {
-                    credential: gate.credentialId,
-                    issuer: gate.issuerOrigin,
-                },
-                level,
-                true,
-            )} />
-        {#if failed}
-            <ErrorMessage>
-                <Translatable resourceKey={i18nKey("failed to verify the credential")} />
-            </ErrorMessage>
+        {#if issuer !== undefined}
+            {#if failed}
+                <ErrorMessage>
+                    <Translatable
+                        resourceKey={i18nKey(
+                            "access.credentialCheckFailed",
+                            {
+                                credential: issuer.name,
+                            },
+                            level,
+                            true,
+                        )} />
+                </ErrorMessage>
+            {:else}
+                <Translatable
+                    resourceKey={i18nKey(
+                        "access.credentialCheckMessage",
+                        {
+                            credential: issuer.name,
+                        },
+                        level,
+                        true,
+                    )} />
+            {/if}
         {/if}
     </div>
     <div slot="footer">

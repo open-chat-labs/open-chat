@@ -14,6 +14,7 @@
     import Diamond from "../icons/Diamond.svelte";
     import Translatable from "../Translatable.svelte";
     import { i18nKey } from "../../i18n/i18n";
+    import CredentialGatePopup from "./CredentialGatePopup.svelte";
 
     export let gate: AccessGate;
     export let position: Position = "top";
@@ -79,11 +80,7 @@
             <div slot="target" class="credential">🔒️</div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    <Translatable
-                        resourceKey={i18nKey("access.credentialGateInfo", {
-                            issuer: gate.issuerOrigin,
-                            credential: gate.credentialId,
-                        })} />
+                    <CredentialGatePopup {gate} />
                 </TooltipPopup>
             </div>
         </TooltipWrapper>

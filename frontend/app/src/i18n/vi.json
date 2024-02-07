@@ -216,7 +216,9 @@
         "referral_rewards_q": "Phần thưởng giới thiệu là gì?",
         "referral_rewards_a": "Là thành viên Kim cương, bạn có thể kiếm được phần thưởng cho mỗi người dùng mà bạn giới thiệu, những người sẽ trở thành thành viên Kim cương. Bạn sẽ nhận được một nửa số khoản thanh toán Kim cương mà họ thực hiện trong năm đầu tiên tham gia OpenChat. Bạn có thể tìm thấy liên kết giới thiệu của mình trong phần &quot;mời bạn bè/gia đình&quot; trong &quot;cài đặt hồ sơ&quot; từ menu chính.<br><br> Làm thế nào bạn có thể làm điều này? Có rất nhiều cách. Bạn có thể kể với bạn bè và gia đình, tweet về OpenChat, tạo video về OpenChat mô tả những điều bạn yêu thích về nó và chia sẻ nó lên TikTok hoặc YouTube. Bạn có thể phát trực tiếp trên Twitch hoặc viết một bài đăng trên blog hoặc tạo một podcast hoặc tổ chức một không gian trên Twitter hoặc thậm chí tổ chức một buổi gặp mặt ngoài đời thực. Chúng tôi mong được nhìn thấy tất cả những ý tưởng sáng tạo mà bạn nghĩ ra để truyền tải thông tin!<br><br> Trong tương lai, chúng tôi sẽ mở rộng phần thưởng giới thiệu cho tất cả người dùng mà bạn giới thiệu bất kể họ có trở thành thành viên Kim cương hay không. Tuy nhiên, vì điều này có thể dễ dàng khai thác nên trước tiên chúng tôi cần giới thiệu một số loại &quot;bằng chứng về tư cách cá nhân độc nhất&quot;.",
         "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> , sau đó bạn có thể đổi lấy CHAT trên các Sàn giao dịch phi tập trung (DEX) khác nhau.<ul><li> <a target=\"_blank\" href=\"https://iclight.io/ICDex/CHAT/ICP\">ICDex</a></li><li> <a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li></ul> DFINITY đang bổ sung hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> cho mã thông báo ICRC1 (bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn nhiều với Sàn giao dịch tập trung (CEX). Một khi điều này xảy ra, rất có thể CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
-        "diamond_q": "Thành viên kim cương là gì?"
+        "diamond_q": "Thành viên kim cương là gì?",
+        "translation_q": "Làm cách nào để sửa lỗi dịch thuật?",
+        "translation_a": "Bản dịch của chúng tôi được Google dịch cung cấp theo mặc định và đôi khi không có đủ ngữ cảnh để Google thực hiện tốt công việc. Thường cần một người nói tiếng mẹ đẻ mới có thể cung cấp bản dịch tốt hơn. Nếu bạn đã chọn một trong những ngôn ngữ không được hỗ trợ bằng tiếng Anh của chúng tôi trong hồ sơ của mình, bạn sẽ nhận thấy rằng cũng có một nút chuyển đổi trong hồ sơ của bạn để kích hoạt chế độ sửa bản dịch. Khi bật chế độ này, bạn sẽ thấy một biểu tượng dịch nhỏ bên cạnh mỗi nhãn trong giao diện người dùng đã được dịch. Nếu bạn nhấp vào biểu tượng này thì bạn sẽ có thể gửi đề xuất chỉnh sửa. Hãy cố gắng đưa ra gợi ý vừa chính xác vừa phù hợp với giao diện người dùng. Bạn có thể kiểm tra xem đề xuất của mình có hiệu lực như thế nào và lặp lại quy trình bao nhiêu lần tùy thích. Đề xuất của bạn sẽ được nhóm xem xét và sẽ được thông qua nếu được chấp thuận. Bạn sẽ được thưởng bằng CHAT cho mỗi chỉnh sửa được phê duyệt mà bạn cung cấp. Chúng tôi thực sự đánh giá cao việc bạn dành thời gian để cải thiện bản dịch của chúng tôi - chúng tôi không thể làm điều đó nếu không có bạn."
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",
@@ -957,8 +959,6 @@
         "credentialParamCredential": "Thông tin xác thực: {credential}",
         "credentialIssuer": "Nhà phát hành chứng chỉ",
         "requiredCredential": "Thông tin xác thực bắt buộc",
-        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\" từ nhà phát hành {issuer}",
-        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" từ {issuer} mới được phép tham gia",
         "approvePaymentTitle": "Phê duyệt thanh toán",
         "paymentApprovalMessage": "Để tham gia {level} này, bạn phải thanh toán mã thông báo **{amount}** {token}.",
         "paymentDistributionMessage": "Trong số này, 98% thuộc về (các) chủ sở hữu {level} và 2% thuộc về kho bạc OpenChat SNS.",
@@ -974,7 +974,10 @@
         "tokenComingSoon": "{token} (sắp ra mắt)",
         "payAndJoin": "Thanh toán và tham gia",
         "openAccess": "Không có (truy cập mở)",
-        "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt."
+        "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt.",
+        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\"",
+        "credentialCheckFailed": "Rất tiếc, chúng tôi không thể xác minh thông tin xác thực \"{credential}\" và do đó bạn sẽ không thể tham gia {level} này.",
+        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" mới được phép tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",
@@ -1208,6 +1211,7 @@
     "removePreviewQuestion": "Xóa bản xem trước?",
     "showPreview": "Hiển thị bản xem trước",
     "excessiveLinksNote": "Bản xem trước liên kết bị ẩn đối với các thư có hơn 5 liên kết.",
+    "toggleTranslationEditMode": "Chuyển đổi sửa bản dịch",
     "hours": "Giờ",
     "minutes": "Phút",
     "days": "Ngày",
@@ -1242,5 +1246,6 @@
         "unknown_accept_error": "Lỗi chấp nhận đề nghị trao đổi",
         "unknown_cancel_error": "Lỗi hủy ưu đãi trao đổi",
         "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} (bao gồm 2 phí giao dịch) sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ưu đãi được chấp nhận. Bạn có muốn tiếp tục?"
-    }
+    },
+    "reportBug": "Nếu bạn cho rằng đây là lỗi, hãy nhấp vào đây để báo cáo chi tiết đầy đủ"
 }

@@ -52,7 +52,7 @@ export const idlFactory = ({ IDL }) => {
     'added_by_name' : IDL.Text,
     'added_by_display_name' : IDL.Opt(IDL.Text),
   });
-  const TransferFromError = IDL.Variant({
+  const ICRC2_TransferFromError = IDL.Variant({
     'GenericError' : IDL.Record({
       'message' : IDL.Text,
       'error_code' : IDL.Nat,
@@ -68,7 +68,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GateCheckFailedReason = IDL.Variant({
     'NotDiamondMember' : IDL.Null,
-    'PaymentFailed' : TransferFromError,
+    'PaymentFailed' : ICRC2_TransferFromError,
     'InsufficientBalance' : IDL.Nat,
     'NoSnsNeuronsFound' : IDL.Null,
     'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
@@ -255,7 +255,6 @@ export const idlFactory = ({ IDL }) => {
     'crypto' : IDL.Opt(PermissionRole),
     'giphy' : IDL.Opt(PermissionRole),
     'default' : PermissionRole,
-    'p2p_trade' : IDL.Opt(PermissionRole),
     'image' : IDL.Opt(PermissionRole),
     'prize' : IDL.Opt(PermissionRole),
     'p2p_swap' : IDL.Opt(PermissionRole),
@@ -275,8 +274,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventIndex = IDL.Nat32;
   const VerifiedCredentialGate = IDL.Record({
-    'credential' : IDL.Text,
-    'issuer' : IDL.Text,
+    'credential_arguments' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'issuer_origin' : IDL.Text,
+    'credential_type' : IDL.Text,
   });
   const Milliseconds = IDL.Nat64;
   const SnsNeuronGate = IDL.Record({

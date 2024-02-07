@@ -17,7 +17,9 @@ function getEventHandler(
     id: number,
     principal: string,
     issuerOrigin: string,
-    credentialId: string,
+    credentialType: string,
+    credentialArguments: unknown,
+    derivationOrigin: string | undefined,
     url: URL,
     onSuccess: (result: string) => void,
     _onError: (err: unknown) => void,
@@ -28,21 +30,24 @@ function getEventHandler(
             console.debug("VC: message from correct origin received", ev.data);
             if ("method" in ev.data) {
                 if (ev.data.method === "vc-flow-ready") {
-                    iiWindow?.postMessage(
-                        {
-                            id,
-                            jsonrpc: "2.0",
-                            method: "request_credential",
-                            params: {
-                                issuer: {
-                                    issuerOrigin: issuerOrigin,
-                                    credentialId: credentialId,
-                                },
-                                credentialSubject: principal,
+                    const msg = {
+                        id,
+                        jsonrpc: "2.0",
+                        method: "request_credential",
+                        params: {
+                            issuer: {
+                                origin: issuerOrigin,
                             },
+                            credentialSubject: principal,
+                            credentialSpec: {
+                                credentialType,
+                                arguments: credentialArguments,
+                            },
+                            derivationOrigin,
                         },
-                        url.origin,
-                    );
+                    };
+                    console.debug("VC: sending request_credential msg: ", msg);
+                    iiWindow?.postMessage(msg, url.origin);
                 }
             }
             if ("result" in ev.data && "verifiablePresentation" in ev.data.result) {
@@ -95,7 +100,9 @@ export function verifyCredential(
     iiUrl: string,
     principal: string,
     issuerOrigin: string,
-    credentialId: string,
+    credentialType: string,
+    credentialArguments: unknown,
+    derivationOrigin: string | undefined,
 ): Promise<string | undefined> {
     return new Promise((resolve, reject) => {
         cleanUp();
@@ -105,7 +112,7 @@ export function verifyCredential(
             iiUrl,
             principal,
             issuerOrigin,
-            credentialId,
+            credentialType,
         );
 
         reqId = reqId + 1;
@@ -118,7 +125,9 @@ export function verifyCredential(
             reqId,
             principal,
             issuerOrigin,
-            credentialId,
+            credentialType,
+            credentialArguments,
+            derivationOrigin,
             url,
             onSuccess(resolve),
             onError(reject),

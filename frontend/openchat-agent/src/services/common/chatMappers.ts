@@ -1252,7 +1252,6 @@ function apiMessagePermissions(permissions: MessagePermissions): ApiMessagePermi
         giphy: apiOptional(apiPermissionRole, permissions.giphy),
         prize: apiOptional(apiPermissionRole, permissions.prize),
         p2p_swap: apiOptional(apiPermissionRole, permissions.p2pSwap),
-        p2p_trade: [],
         custom:
             permissions.memeFighter !== undefined
                 ? [{ subtype: "meme_fighter", role: apiPermissionRole(permissions.memeFighter) }]
@@ -1556,8 +1555,12 @@ export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
         return [
             {
                 VerifiedCredential: {
-                    issuer: domain.issuerOrigin,
-                    credential: domain.credentialId,
+                    issuer_origin: domain.credential.issuerOrigin,
+                    credential_type: domain.credential.credentialType,
+                    credential_arguments: apiOptional((args: Record<string, string | number>) => {
+                        const encoder = new TextEncoder();
+                        return encoder.encode(JSON.stringify(args));
+                    }, domain.credential.credentialArguments),
                 },
             },
         ];
@@ -1591,8 +1594,12 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "credential_gate")
         return {
             VerifiedCredential: {
-                issuer: domain.issuerOrigin,
-                credential: domain.credentialId,
+                issuer_origin: domain.credential.issuerOrigin,
+                credential_type: domain.credential.credentialType,
+                credential_arguments: apiOptional((args: Record<string, string | number>) => {
+                    const encoder = new TextEncoder();
+                    return encoder.encode(JSON.stringify(args));
+                }, domain.credential.credentialArguments),
             },
         };
     if (domain.kind === "neuron_gate") {
@@ -1616,6 +1623,15 @@ export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
+export function credentialArguments(
+    candid: number[] | Uint8Array,
+): Record<string, string | number> {
+    const data = new Uint8Array(candid);
+    const decoder = new TextDecoder();
+    const json = decoder.decode(data);
+    return JSON.parse(json) as Record<string, string | number>;
+}
+
 export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
         return {
@@ -1633,8 +1649,14 @@ export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("VerifiedCredential" in candid) {
         return {
             kind: "credential_gate",
-            issuerOrigin: candid.VerifiedCredential.issuer,
-            credentialId: candid.VerifiedCredential.credential,
+            credential: {
+                issuerOrigin: candid.VerifiedCredential.issuer_origin,
+                credentialType: candid.VerifiedCredential.credential_type,
+                credentialArguments: optional(
+                    candid.VerifiedCredential.credential_arguments,
+                    credentialArguments,
+                ),
+            },
         };
     }
     if ("Payment" in candid) {
