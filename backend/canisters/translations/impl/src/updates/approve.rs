@@ -24,14 +24,16 @@ async fn approve(args: Args) -> Response {
     };
 
     mutate_state(|state| match state.data.translations.approve(args.id, user_id, now) {
-        ApproveResponse::Success(proposed_by) => {
-            state.data.pending_payments_queue.push(PendingPayment {
-                recipient_account: proposed_by.into(),
-                timestamp: now,
-                currency: Cryptocurrency::CHAT,
-                amount: 100_000_000, // 1 CHAT
-                reason: PendingPaymentReason::Approval,
-            });
+        ApproveResponse::Success(result) => {
+            if !result.previously_approved {
+                state.data.pending_payments_queue.push(PendingPayment {
+                    recipient_account: result.proposed_by.into(),
+                    timestamp: now,
+                    currency: Cryptocurrency::CHAT,
+                    amount: 100_000_000, // 1 CHAT
+                    reason: PendingPaymentReason::Approval,
+                });
+            }
             Success
         }
         ApproveResponse::NotProposed => NotProposed,

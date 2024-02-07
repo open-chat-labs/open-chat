@@ -2,7 +2,7 @@ use crate::exchanges::Exchange;
 use crate::model::orders_log::OrdersLog;
 use canister_state_macros::canister_state;
 use icdex_client::ICDexClient;
-use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
+use market_maker_canister::{ExchangeId, ICDEX_EXCHANGE_ID, ICDEX_EXCHANGE_V2_ID};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, VecDeque};
@@ -38,25 +38,14 @@ impl RuntimeState {
 
     pub fn get_exchange_client(&self, exchange_id: ExchangeId) -> Option<Box<dyn Exchange>> {
         match exchange_id {
-            ICDEX_EXCHANGE_ID => Some(Box::new(ICDexClient::new(
-                self.env.canister_id(),
+            ICDEX_EXCHANGE_ID => Some(self.create_icdex_client(
+                ICDEX_EXCHANGE_ID,
                 CanisterId::from_text("3we4s-lyaaa-aaaak-aegrq-cai").unwrap(),
-                TokenInfo {
-                    token: Cryptocurrency::InternetComputer,
-                    ledger: self.data.icp_ledger_canister_id,
-                    decimals: 8,
-                    fee: 10_000,
-                },
-                TokenInfo {
-                    token: Cryptocurrency::CHAT,
-                    ledger: self.data.chat_ledger_canister_id,
-                    decimals: 8,
-                    fee: 100_000,
-                },
-                10_000_000,
-                |order| on_order_made(ICDEX_EXCHANGE_ID, order),
-                |order| on_order_cancelled(ICDEX_EXCHANGE_ID, order),
-            ))),
+            )),
+            ICDEX_EXCHANGE_V2_ID => Some(self.create_icdex_client(
+                ICDEX_EXCHANGE_V2_ID,
+                CanisterId::from_text("52ypw-riaaa-aaaar-qadjq-cai").unwrap(),
+            )),
             _ => None,
         }
     }
@@ -78,6 +67,28 @@ impl RuntimeState {
                 chat_ledger: self.data.chat_ledger_canister_id,
             },
         }
+    }
+
+    fn create_icdex_client(&self, exchange_id: ExchangeId, dex_canister_id: CanisterId) -> Box<dyn Exchange> {
+        Box::new(ICDexClient::new(
+            self.env.canister_id(),
+            dex_canister_id,
+            TokenInfo {
+                token: Cryptocurrency::InternetComputer,
+                ledger: self.data.icp_ledger_canister_id,
+                decimals: 8,
+                fee: 10_000,
+            },
+            TokenInfo {
+                token: Cryptocurrency::CHAT,
+                ledger: self.data.chat_ledger_canister_id,
+                decimals: 8,
+                fee: 100_000,
+            },
+            10_000_000,
+            move |order| on_order_made(exchange_id, order),
+            move |order| on_order_cancelled(exchange_id, order),
+        ))
     }
 }
 
@@ -141,7 +152,7 @@ pub struct CanisterIds {
     pub chat_ledger: CanisterId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct Config {
     enabled: bool,
     price_increment: u64,

@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface AcceptP2PSwapArgs {
   'channel_id' : ChannelId,
@@ -92,27 +93,6 @@ export interface AddedToChannelNotification {
   'community_name' : string,
   'channel_avatar_id' : [] | [bigint],
 }
-export interface ApproveArgs {
-  'fee' : [] | [bigint],
-  'memo' : [] | [Uint8Array | number[]],
-  'from_subaccount' : [] | [Uint8Array | number[]],
-  'created_at_time' : [] | [bigint],
-  'amount' : bigint,
-  'expected_allowance' : [] | [bigint],
-  'expires_at' : [] | [bigint],
-  'spender' : Account,
-}
-export type ApproveError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
-  { 'TooOld' : null } |
-  { 'Expired' : { 'ledger_time' : bigint } } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -822,7 +802,7 @@ export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
 export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
-  { 'PaymentFailed' : TransferFromError } |
+  { 'PaymentFailed' : ICRC2_TransferFromError } |
   { 'InsufficientBalance' : bigint } |
   { 'NoSnsNeuronsFound' : null } |
   { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
@@ -1081,6 +1061,65 @@ export interface ICPRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : ICP,
 }
+export interface ICRC1_TransferArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Subaccount],
+  'created_at_time' : [] | [Timestamp],
+  'amount' : bigint,
+}
+export type ICRC1_TransferError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface ICRC2_ApproveArgs {
+  'fee' : [] | [bigint],
+  'memo' : [] | [Uint8Array | number[]],
+  'from_subaccount' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+  'expected_allowance' : [] | [bigint],
+  'expires_at' : [] | [bigint],
+  'spender' : Account,
+}
+export type ICRC2_ApproveError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'AllowanceChanged' : { 'current_allowance' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'Expired' : { 'ledger_time' : bigint } } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
+export interface ICRC2_TransferFromArgs {
+  'to' : Account,
+  'fee' : [] | [bigint],
+  'spender_subaccount' : [] | [Uint8Array | number[]],
+  'from' : Account,
+  'memo' : [] | [Uint8Array | number[]],
+  'created_at_time' : [] | [bigint],
+  'amount' : bigint,
+}
+export type ICRC2_TransferFromError = {
+    'GenericError' : { 'message' : string, 'error_code' : bigint }
+  } |
+  { 'TemporarilyUnavailable' : null } |
+  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
+  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
+  { 'Duplicate' : { 'duplicate_of' : bigint } } |
+  { 'BadFee' : { 'expected_fee' : bigint } } |
+  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
+  { 'TooOld' : null } |
+  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface Icrc1Account {
   'owner' : Principal,
   'subaccount' : [] | [Uint8Array | number[]],
@@ -1243,7 +1282,6 @@ export interface MessagePermissions {
   'crypto' : [] | [PermissionRole],
   'giphy' : [] | [PermissionRole],
   'default' : PermissionRole,
-  'p2p_trade' : [] | [PermissionRole],
   'image' : [] | [PermissionRole],
   'prize' : [] | [PermissionRole],
   'p2p_swap' : [] | [PermissionRole],
@@ -1982,44 +2020,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface TransferArgs {
-  'to' : Account,
-  'fee' : [] | [bigint],
-  'memo' : [] | [Uint8Array | number[]],
-  'from_subaccount' : [] | [Subaccount],
-  'created_at_time' : [] | [Timestamp],
-  'amount' : bigint,
-}
-export type TransferError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : Timestamp } } |
-  { 'TooOld' : null } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
-export interface TransferFromArgs {
-  'to' : Account,
-  'fee' : [] | [bigint],
-  'spender_subaccount' : [] | [Uint8Array | number[]],
-  'from' : Account,
-  'memo' : [] | [Uint8Array | number[]],
-  'created_at_time' : [] | [bigint],
-  'amount' : bigint,
-}
-export type TransferFromError = {
-    'GenericError' : { 'message' : string, 'error_code' : bigint }
-  } |
-  { 'TemporarilyUnavailable' : null } |
-  { 'InsufficientAllowance' : { 'allowance' : bigint } } |
-  { 'BadBurn' : { 'min_burn_amount' : bigint } } |
-  { 'Duplicate' : { 'duplicate_of' : bigint } } |
-  { 'BadFee' : { 'expected_fee' : bigint } } |
-  { 'CreatedInFuture' : { 'ledger_time' : bigint } } |
-  { 'TooOld' : null } |
-  { 'InsufficientFunds' : { 'balance' : bigint } };
 export interface UnblockUserArgs { 'user_id' : UserId }
 export type UnblockUserResponse = { 'CannotUnblockSelf' : null } |
   { 'NotAuthorized' : null } |
@@ -2169,8 +2169,9 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface VerifiedCredentialGate {
-  'credential' : string,
-  'issuer' : string,
+  'credential_arguments' : [] | [Uint8Array | number[]],
+  'issuer_origin' : string,
+  'credential_type' : string,
 }
 export type Version = number;
 export interface VersionedRules {
@@ -2319,3 +2320,5 @@ export interface _SERVICE {
     UpdateUserGroupResponse
   >,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];

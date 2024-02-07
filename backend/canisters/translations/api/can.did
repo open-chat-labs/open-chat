@@ -28,6 +28,12 @@ type ApproveResponse = variant {
 
 type RejectArgs = record {
     id : nat64;
+    reason : RejectReason;
+};
+
+type RejectReason = variant {
+    TooLong;
+    IncorrectMeaning;
 };
 
 type RejectResponse = variant {

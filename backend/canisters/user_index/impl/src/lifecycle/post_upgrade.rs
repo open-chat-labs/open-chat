@@ -4,7 +4,6 @@ use crate::{mutate_state, Data};
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use itertools::Itertools;
 use stable_memory::get_reader;
 use tracing::info;
 use user_index_canister::post_upgrade::Args;
@@ -37,21 +36,5 @@ fn post_upgrade(args: Args) {
 
             crate::jobs::sync_legacy_user_principals::start_job_if_required(state);
         }
-
-        let users_whose_payments_failed: Vec<_> = state
-            .data
-            .users
-            .iter()
-            .filter(|u| u.diamond_membership_details.payment_in_progress())
-            .map(|u| u.user_id)
-            .collect();
-
-        for user_id in users_whose_payments_failed.iter() {
-            if let Some(membership) = state.data.users.diamond_membership_details_mut(user_id) {
-                membership.set_payment_in_progress(false);
-            }
-        }
-
-        info!(users_whose_payments_failed = ?users_whose_payments_failed.into_iter().map(|u| u.to_string()).collect_vec());
     });
 }
