@@ -576,7 +576,10 @@
         "requiredCredential": "आवश्यक क्रेडेंशियल",
         "paymentFailed": "भुगतान विफल रही",
         "payAndJoin": "भुगतान करें और शामिल हों",
-        "tokenComingSoon": "{token} (जल्द ही आ रहा है)"
+        "tokenComingSoon": "{token} (जल्द ही आ रहा है)",
+        "credentialCheckMessage": "इस {level} में शामिल होने के लिए आपको \"{credential}\" क्रेडेंशियल सत्यापित करना आवश्यक है",
+        "credentialCheckFailed": "क्षमा करें, हम \"{credential}\" क्रेडेंशियल को सत्यापित करने में असमर्थ रहे और इसलिए आप इस {level} में शामिल नहीं हो पाएंगे।",
+        "credentialGateInfo": "केवल वे उपयोगकर्ता जो \"{credential}\" क्रेडेंशियल प्रदान कर सकते हैं, उन्हें शामिल होने की अनुमति दी जाएगी"
     },
     "updateNow": "अभी पुनः लोड करें",
     "updateRequired": "OpenChat का एक नया संस्करण उपलब्ध है - {countdown}s में पुनः लोड किया जा रहा है",

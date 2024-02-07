@@ -973,7 +973,10 @@
         "tokenComingSoon": "{token}（即将推出）",
         "payAndJoin": "付款并加入",
         "openAccess": "无（开放获取）",
-        "subscriptionComingSoon": "订阅模式即将推出。"
+        "subscriptionComingSoon": "订阅模式即将推出。",
+        "credentialCheckMessage": "为了加入此 {level}，您需要验证“{credential}”凭据",
+        "credentialCheckFailed": "抱歉，我们无法验证“{credential}”凭据，因此您将无法加入此 {level}。",
+        "credentialGateInfo": "仅允许提供“{credential}”凭据的用户加入"
     },
     "communities": {
         "explore": "探索社区",

@@ -975,7 +975,10 @@
         "tokenComingSoon": "{token} (bald verfügbar)",
         "payAndJoin": "Bezahlen und mitmachen",
         "openAccess": "Keine (Open Access)",
-        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze."
+        "subscriptionComingSoon": "Abonnementmodell folgt in Kürze.",
+        "credentialCheckMessage": "Um diesem {level} beizutreten, müssen Sie die Anmeldeinformationen „{credential}“ überprüfen",
+        "credentialCheckFailed": "Leider konnten wir die Anmeldeinformationen „{credential}“ nicht überprüfen und Sie können diesem {level} daher nicht beitreten.",
+        "credentialGateInfo": "Nur Benutzer, die die Anmeldeinformationen „{credential}“ angeben können, dürfen beitreten"
     },
     "communities": {
         "explore": "Entdecken Sie Communities",

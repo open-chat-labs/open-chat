@@ -973,7 +973,10 @@
         "tokenComingSoon": "{token} (à venir)",
         "payAndJoin": "Payez et adhérez",
         "openAccess": "Aucun (accès libre)",
-        "subscriptionComingSoon": "Modèle d'abonnement à venir."
+        "subscriptionComingSoon": "Modèle d'abonnement à venir.",
+        "credentialCheckMessage": "Pour rejoindre ce {level}, vous devez vérifier les informations d'identification \"{credential}\".",
+        "credentialCheckFailed": "Désolé, nous n'avons pas pu vérifier les informations d'identification \"{credential}\" et vous ne pourrez donc pas rejoindre ce {level}.",
+        "credentialGateInfo": "Seuls les utilisateurs pouvant fournir les identifiants « {credential} » seront autorisés à rejoindre"
     },
     "communities": {
         "explore": "Explorer les communautés",

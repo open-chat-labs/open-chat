@@ -974,7 +974,10 @@
         "tokenComingSoon": "{token} (sắp ra mắt)",
         "payAndJoin": "Thanh toán và tham gia",
         "openAccess": "Không có (truy cập mở)",
-        "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt."
+        "subscriptionComingSoon": "Mô hình đăng ký sắp ra mắt.",
+        "credentialCheckMessage": "Để tham gia {level} này, bạn phải xác minh thông tin xác thực \"{credential}\"",
+        "credentialCheckFailed": "Rất tiếc, chúng tôi không thể xác minh thông tin xác thực \"{credential}\" và do đó bạn sẽ không thể tham gia {level} này.",
+        "credentialGateInfo": "Chỉ những người dùng có thể cung cấp thông tin xác thực \"{credential}\" mới được phép tham gia"
     },
     "communities": {
         "explore": "Khám phá cộng đồng",

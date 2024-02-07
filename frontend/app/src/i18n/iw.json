@@ -971,7 +971,10 @@
         "tokenComingSoon": "{token} (בקרוב)",
         "payAndJoin": "שלם והצטרף",
         "openAccess": "אין (גישה פתוחה)",
-        "subscriptionComingSoon": "דגם מנוי בקרוב."
+        "subscriptionComingSoon": "דגם מנוי בקרוב.",
+        "credentialCheckMessage": "על מנת להצטרף ל-{level} הזה, עליך לאמת את האישור \"{credential}\".",
+        "credentialCheckFailed": "מצטערים, לא הצלחנו לאמת את האישור \"{credential}\" ולכן לא תוכל להצטרף ל-{level} הזה.",
+        "credentialGateInfo": "רק משתמשים שיכולים לספק את האישורים \"{credential}\" יורשו להצטרף"
     },
     "communities": {
         "explore": "חקור קהילות",
