@@ -2,7 +2,6 @@ use crate::lifecycle::{init_env, init_state};
 use crate::memory::get_upgrades_memory;
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::mutate_state;
-use crate::timer_job_types::{ExpireSwapJob, TimerJob};
 use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
