@@ -1245,5 +1245,6 @@
         "unknown_accept_error": "Erreur lors de l'acceptation de l'offre d'échange",
         "unknown_cancel_error": "Erreur lors de l'annulation de l'offre d'échange",
         "confirmSend": "Lorsque vous créez cette offre, {amount} {token} (comprend 2 frais de transaction) sera transféré de votre portefeuille vers le canister OpenChat Escrow. Il y restera jusqu'à ce que l'offre expire, que vous annuliez l'offre ou que l'offre soit acceptée. Voulez-vous continuer?"
-    }
+    },
+    "reportBug": "Si vous pensez qu'il s'agit d'un bug, cliquez ici pour signaler tous les détails"
 }

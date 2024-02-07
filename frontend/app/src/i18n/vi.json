@@ -1246,5 +1246,6 @@
         "unknown_accept_error": "Lỗi chấp nhận đề nghị trao đổi",
         "unknown_cancel_error": "Lỗi hủy ưu đãi trao đổi",
         "confirmSend": "Khi bạn tạo ưu đãi này, {amount} {token} (bao gồm 2 phí giao dịch) sẽ được chuyển từ ví của bạn sang hộp Ký quỹ OpenChat. Nó sẽ ở đó cho đến khi ưu đãi hết hạn, bạn hủy ưu đãi hoặc ưu đãi được chấp nhận. Bạn có muốn tiếp tục?"
-    }
+    },
+    "reportBug": "Nếu bạn cho rằng đây là lỗi, hãy nhấp vào đây để báo cáo chi tiết đầy đủ"
 }

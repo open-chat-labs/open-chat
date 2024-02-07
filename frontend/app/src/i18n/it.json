@@ -1245,5 +1245,6 @@
         "unknown_accept_error": "Errore nell'accettazione dell'offerta di scambio",
         "unknown_cancel_error": "Errore durante l'annullamento dell'offerta di scambio",
         "confirmSend": "Quando crei questa offerta, {amount} {token} (include 2 commissioni di transazione) verrà trasferito dal tuo portafoglio al contenitore di deposito a garanzia di OpenChat. Rimarrà lì fino alla scadenza dell'offerta, all'annullamento dell'offerta o all'accettazione dell'offerta. Desideri procedere?"
-    }
+    },
+    "reportBug": "Se pensi che si tratti di un bug, clicca qui per segnalare tutti i dettagli"
 }

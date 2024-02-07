@@ -1247,5 +1247,6 @@
         "unknown_accept_error": "Fehler beim Annehmen des Tauschangebots",
         "unknown_cancel_error": "Fehler beim Stornieren des Tauschangebots",
         "confirmSend": "Wenn Sie dieses Angebot erstellen, wird {amount} {token} (inklusive 2 Transaktionsgebühren) von Ihrem Wallet in den OpenChat-Escrow-Kanister übertragen. Es bleibt dort, bis entweder das Angebot abläuft, Sie das Angebot stornieren oder das Angebot angenommen wird. Möchten Sie fortfahren?"
-    }
+    },
+    "reportBug": "Wenn Sie glauben, dass es sich hierbei um einen Fehler handelt, klicken Sie hier, um die vollständigen Details zu melden"
 }
