@@ -1,21 +1,19 @@
 #!/bin/bash
 
-# Pass in network name, IC url, identity name
-# eg './merge-latest-translations.sh local http://127.0.0.1:8080/ openchat'
+# Pass in the dfx identity name
+# eg './merge-latest-translations-local.sh openchat'
 
-NETWORK=$1
-IC_URL=$2
-IDENTITY=$3
+IDENTITY=${1:-default}
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
-cd $SCRIPT_DIR/..
+cd $SCRIPT_DIR
 
-TRANSLATIONS_CANISTER_ID=$(dfx canister --network $NETWORK id translations)
+TRANSLATIONS_CANISTER_ID=$(dfx canister --network ic id translations)
 
 cargo run \
-  --manifest-path backend/translation_merger/Cargo.toml -- \
+  --manifest-path ../backend/translation_merger/Cargo.toml -- \
   --translations-canister-id $TRANSLATIONS_CANISTER_ID \
-  --url $IC_URL \
+  --url https://ic0.app/ \
   --controller $IDENTITY \
-  --directory frontend/app/src/i18n \
+  --directory ../frontend/app/src/i18n \
