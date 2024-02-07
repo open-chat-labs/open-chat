@@ -96,21 +96,6 @@ function checkInterruption(reject: (err: unknown) => void): void {
     }
 }
 
-/* 
-Unexpected error: flow request 
-[ { 
-    "code": "invalid_type", 
-    "expected": "string", 
-    "received": "undefined", 
-    "path": [ "params", "issuer", "origin" ], 
-    "message": "Required" 
-}, { 
-    "code": "invalid_type", 
-    "expected": "object", 
-    "received": "undefined", 
-    "path": [ "params", "credentialSpec" ], "message": "Required" } ]
-*/
-
 export function verifyCredential(
     iiUrl: string,
     principal: string,
