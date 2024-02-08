@@ -407,6 +407,7 @@ import {
     isPaymentGate,
     ONE_MINUTE_MILLIS,
     ONE_HOUR,
+    LEDGER_CANISTER_CHAT,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -4274,6 +4275,15 @@ export class OpenChat extends OpenChatAgentWorker {
                 return val;
             })
             .catch(() => 0n);
+    }
+
+    refreshTranslationsBalance(): Promise<bigint> {
+        return this.sendRequest({
+            kind: "refreshAccountBalance",
+            ledger: LEDGER_CANISTER_CHAT,
+            principal: this.config.translationsCanister,
+        })
+        .catch(() => 0n);
     }
 
     async getAccountTransactions(
