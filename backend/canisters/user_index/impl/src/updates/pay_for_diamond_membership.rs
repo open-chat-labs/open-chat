@@ -20,12 +20,11 @@ use utils::time::DAY_IN_MS;
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
-    let user_id = match read_state(|state| {
+    let Some(user_id) = read_state(|state| {
         let caller = state.env.caller();
         state.data.users.get_by_principal(&caller).map(|u| u.user_id)
-    }) {
-        Some(u) => u,
-        _ => return UserNotFound,
+    }) else {
+        return UserNotFound;
     };
 
     pay_for_diamond_membership_impl(args, user_id, true).await
