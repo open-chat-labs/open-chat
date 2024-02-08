@@ -1,6 +1,7 @@
 use crate::model::last_online_dates::LastOnlineDates;
 use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
 use canister_state_macros::canister_state;
+use event_sink_client_cdk_runtime::CdkRuntime;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{BuildVersion, CanisterId, Cycles, TimestampMillis, Timestamped};
@@ -52,19 +53,32 @@ struct Data {
     pub principal_to_user_id_map: PrincipalToUserIdMap,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "event_sink_client")]
+    pub event_sink_client: event_sink_client::Client<CdkRuntime>,
     pub mark_as_online_count: u64,
     pub cached_active_users: ActiveUsers,
     pub rng_seed: [u8; 32],
     pub test_mode: bool,
 }
 
+fn event_sink_client() -> event_sink_client::Client<CdkRuntime> {
+    let event_relay_canister_id = CanisterId::from_text("6ofpc-2aaaa-aaaaf-biibq-cai").unwrap();
+    event_sink_client::ClientBuilder::new(event_relay_canister_id, CdkRuntime::default()).build()
+}
+
 impl Data {
-    pub fn new(user_index_canister_id: CanisterId, cycles_dispenser_canister_id: CanisterId, test_mode: bool) -> Data {
+    pub fn new(
+        user_index_canister_id: CanisterId,
+        event_relay_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
+        test_mode: bool,
+    ) -> Data {
         Data {
             last_online_dates: LastOnlineDates::default(),
             principal_to_user_id_map: PrincipalToUserIdMap::default(),
             user_index_canister_id,
             cycles_dispenser_canister_id,
+            event_sink_client: event_sink_client::ClientBuilder::new(event_relay_canister_id, CdkRuntime::default()).build(),
             mark_as_online_count: 0,
             cached_active_users: ActiveUsers::default(),
             rng_seed: [0; 32],
