@@ -95,13 +95,13 @@ export function getStoredLocale(): string {
     return setDialectIfMatchesBrowserLocale(fromStorage);
 }
 
-export function setLocale(code: string): void {
+export async function setLocale(code: string): Promise<void> {
     code = setDialectIfMatchesBrowserLocale(code);
 
     localStorage.setItem(configKeys.locale, code);
 
     if (get(locale) !== code) {
-        locale.set(code);
+        await locale.set(code);
     }
 }
 

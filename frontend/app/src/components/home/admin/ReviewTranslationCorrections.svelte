@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { _ } from "svelte-i18n";
+    import { _, locale } from "svelte-i18n";
     import MenuIcon from "../../MenuIcon.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import Check from "svelte-material-icons/Check.svelte";
@@ -29,11 +29,24 @@
 
     let verifications: Record<string, string> = {};
 
-    onMount(() => {
-        client.getProposedTranslationCorrections().then((res) => {
+    onMount(async () => {
+        client.getProposedTranslationCorrections().then(async (res) => {
             corrections = flattenCorrections(res);
+            await loadRequiredLocales(corrections);
         });
     });
+
+    // Since the locales are lazy loaded, we need to determine the locales for which we have corrections
+    // and trigger the loading of the current translations for each of those locales.
+    async function loadRequiredLocales(corrections: TranslationCorrection[]): Promise<void> {
+        const currentLocale = $locale;
+        const locales = corrections.reduce((all, c) => {
+            all.add(c.locale);
+            return all;
+        }, new Set<string>());
+        await Promise.all([...locales].map((l) => locale.set(l)));
+        await locale.set(currentLocale);
+    }
 
     function flattenCorrections(corrections: CandidateTranslations[]): TranslationCorrection[] {
         return corrections.flatMap((group) =>
@@ -134,7 +147,7 @@
                 <tr>
                     <td class="locale">{correction.locale}</td>
                     <td class="key">{correction.key}</td>
-                    <td class="english">{$_(correction.key, { locale: "en" })}</td>
+                    <td class="english">{$_(correction.key, { locale: "en-GB" })}</td>
                     <td class="current">{$_(correction.key, { locale: correction.locale })}</td>
                     <td class="proposed">
                         {#if verifying !== undefined && verifying.locale === correction.locale && verifying.key === correction.key}
